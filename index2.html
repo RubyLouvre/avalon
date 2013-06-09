@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>scope</title>
+        <script src="avalon.js" type="text/javascript"></script>
+        <script>
+            avalon.ready(function() {
+                avalon.define("simple", function(vm) {
+                    vm.firstName = "司徒"
+                    vm.lastName = "正美"
+                    vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
+                        set: function(val) {//里面必须用this指向scope，不能使用scope
+                            var array = (val || "").split(" ");
+                            this.firstName = array[0] || "";
+                            this.lastName = array[1] || "";
+                        },
+                        get: function() {
+                            return this.firstName + " " + this.lastName;
+                        }
+                    }
+                });
+
+                avalon.define("array", function(vm) {
+                    vm.array = ["1", "2", "3", "4"]
+                    "push,unshift,remove,ensure".replace(/\w+/g, function(method) {
+                        vm[method] = function(e) {
+                            if (this.value && e.which == 13) {//this为input元素
+                                vm.array[method](this.value);
+                                this.value = "";
+                            }
+                        }
+                    })
+                    vm.removeAt = function(e) {
+                        if (isFinite(this.value) && e.which == 13) {//this为input元素
+                            vm.array.removeAt(Number(this.value))
+                            this.value = "";
+                        }
+                    }
+                    "pop,shift,sort,reverse".replace(/\w+/g, function(method) {
+                        vm[method] = function(e) {
+                            vm.array[method]();
+                        }
+                    })
+                });
+
+                avalon.define("function", function(vm) {
+                    vm.nick = "司徒正美"
+                    vm.qq = function() {
+                        return vm.nick + "是群主"
+                    }
+                });
+                avalon.define("property", function(vm) {
+                    vm.$skipArray = ["nick", "sex"]
+                    vm.nick = "司徒正美"
+                    vm.sex = "男"
+                    vm.country = "中国"
+                });
+                avalon.scan();
+            })
+
+        </script>
+    </head>
+    <body>
+        <fieldset ms-controller="simple">
+            <legend>例子</legend>
+            <p>First name: <input ms-model="firstName" /></p>
+            <p>Last name: <input ms-model="lastName"  /></p>
+            <p>Hello,    <input ms-model="fullName"></p>
+            <div>{{firstName +" | "+ lastName }}</div>
+        </fieldset>
+        <fieldset ms-controller="array">
+            <legend>例子</legend>
+            <ul ms-each-el="array">
+                <li>数组的第{{$index+1}}个元素为{{el}}</li>
+            </ul>
+            <p>对数组进行push操作，并回车<input ms-keypress="push"></p>
+            <p>对数组进行unshift操作，并回车<input ms-keypress="unshift"></p>
+            <p>对数组进行ensure操作，并回车<input ms-keypress="ensure"><br/>
+                (只有数组不存在此元素才push进去)</p>
+            <p>对数组进行remove操作，并回车<input ms-keypress="remove"></p>
+            <p>对数组进行removeAt操作，并回车<input ms-keypress="removeAt"></p>
+            <p><button type="button" ms-click="sort">对数组进行sort操作</button></p>
+            <p><button type="button" ms-click="reverse">对数组进行reverse操作</button></p>
+            <p><button type="button" ms-click="shift">对数组进行shift操作</button></p>
+            <p><button type="button" ms-click="pop">对数组进行pop操作</button></p>
+            <p>当前数组的长度为{{array.size()}}，注意 我们无法修改数组length的固有行为，因此它无法同步视图，需要用size方法。</p>
+        </fieldset>
+        <fieldset ms-controller="function">
+            <legend>例子</legend>
+            <input ms-model="nick" />
+            <p>{{qq()}}</p>
+        </fieldset>
+        <fieldset ms-controller="property">
+            <legend>例子</legend>
+            <input ms-model="nick" />
+            <input ms-model="sex" />
+            <input ms-model="country" />
+            <p>{{nick}}   {{sex}}  {{country}}</p>
+        </fieldset>
+    </body>
+</html>
