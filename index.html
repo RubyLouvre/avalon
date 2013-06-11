@@ -1,50 +1,45 @@
+
 <!DOCTYPE html>
 <html>
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js" type="text/javascript"></script>
+        <script src="avalon2.js"></script>
         <script>
-            avalon.define("simple", function(vm) {
-                vm.firstName = "司徒"
-                vm.lastName = "正美"
-                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    get: function() {
-                        return this.firstName + " " + this.lastName;
-                    }
-                }
-                vm.toggle=false
-                vm.content = "<em>这是斜体</em>这是正常"
-                vm.numberCheck = function(e){
-                    console.log(e.which)
-                }
-
+            var b = {name: "xxx", name: "ooo"}
+            var array = [{name: "aaa"}, {name: "bbb"}, {name: "ccc"}]
+            var a = avalon.define("xxx", function(vm) {
+                vm.firstName = "司徒";
+                vm.lastName = "正美";
+                vm.nick = b;
+                vm.array = array;
             });
+
+            /*  console.log(a.nick.$json === b);
+             console.log(a.array.$json == array)
+             console.log(a.array.$json[0] === array[0])
+             console.log(a.array[0].$json === array[0])
+             console.log(JSON.stringify(a.$json))*/
+            a.array.push({name: "ddd"}, {name: "eee"});
+            //    console.log(a.array);
+            //  console.log(a.array.$json)
+            setTimeout(function() {
+                a.array.unshift({name: 2222}, {name: 1111}, {name: 3333});
+                a.array.sort(function(a, b) {
+                    return   a.name > b.name ? -1 : 1
+                })
+            }, 2000)
+
+            //     setTimeout(function() {
+            //         a.array.reverse();
+            //     }, 3000)
 
         </script>
     </head>
-    <body ms-controller="simple">
-        <input ms-keydown="numberCheck" />
-        <div ms-class-aaa="lastName" ms-if="toggle">111</div>
-        <p>First name: <input ms-model="firstName" /></p>
-        <p>Last name: <input ms-model="lastName"  /></p>
-        <p>Hello, <input ms-value="fullName"></p>
-       
-        <div>{{firstName +" | "+ lastName  }}</div>
-        <p ms-html="content"></p>
-        <p>{{content}}</p>
-        <div><b>不影响其他节点</b>{{content|html}}</div>
-<script>
-
-</script>
-<select name="select" prev="0" ms-css-z-index="222">
-          <option selected>内容1111111</option>
-          <option>内容2222222</option>
-          <option>内容3333333</option>
-</select>
-
-
-
-
+    <body ms-controller="xxx">
+        <div>TODO write content</div>
+        <ul ms-each-el="array">
+            <li>{{el.name}}<input ms-model="el.name"></li>
+        </ul>
     </body>
 </html>

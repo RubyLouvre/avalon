@@ -90,7 +90,7 @@ avalon.history = new function() {
                     firstCheck = true;
                 } else {
                     var path = hash.split("#")[2];
-                    avalon.Router.navigate(typeof path === "string" ? path : new Date-0);
+                    avalon.Router.navigate(typeof path === "string" ? path : new Date - 0);
                     setHistory(last_hash = hash, history_hash);
                 }
             } else if (history_hash !== last_hash) {//如果按下回退键，
@@ -105,29 +105,33 @@ avalon.history = new function() {
             if (started)
                 avalon.error("start已经触发过了");
             started = true;
-            createIframe();
-            this.html5mode = !!html5mode;
-            if (window.opera || window.VBArray || !supportPushState) {
-                this.html5mode = false;
-            }
-            //如果我们想在改动URL时不刷新地址
-            // http://foo.com/bar?baz=23#bar
-            // http://foo.com/#!/bar?bar=23#bar
-
-            this.checkUrl = function() {
-                if (!firstCheck) {
-                    return firstCheck = true
+            var self = this;
+            avalon.ready(function() {
+                createIframe();
+                self.html5mode = !!html5mode;
+                if (window.opera || window.VBArray || !supportPushState) {
+                    self.html5mode = false;
                 }
-                var path = getHash(getFragment(), true);
-                avalon.Router.navigate(path)
-            }
-            if (this.html5mode) { //如果支持pushState
-                //http://caniuse.com/#search=pushstate
-                window.addEventListener("popstate", this.checkUrl);
-            } else if (window.opera || document.documentMode >= 8) {
-                //http://caniuse.com/#search=pushstate
-                this.checkUrl = avalon.bind(window, "hashchange", this.checkUrl);
-            }
+                //如果我们想在改动URL时不刷新地址
+                // http://foo.com/bar?baz=23#bar
+                // http://foo.com/#!/bar?bar=23#bar
+
+                self.checkUrl = function() {
+                    if (!firstCheck) {
+                        return firstCheck = true;
+                    }
+                    var path = getHash(getFragment(), true);
+                    avalon.Router.navigate(path);
+                };
+                if (self.html5mode) { //如果支持pushState
+                    //http://caniuse.com/#search=pushstate
+                    window.addEventListener("popstate", self.checkUrl);
+                } else if (window.opera || document.documentMode >= 8) {
+                    //http://caniuse.com/#search=pushstate
+                    self.checkUrl = avalon.bind(window, "hashchange", self.checkUrl);
+                }
+            });
+
         },
         stop: function() {
             //停止事件监听或interval
