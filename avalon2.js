@@ -1881,10 +1881,19 @@
         "sort,reverse".replace(rword, function(method) {
             collection[method] = function() {
                 list[method].apply(this, arguments);
-                list[method].apply(list, arguments);
-                this.forEach(function(el, i) {
-                    notifySubscribers(collection, "set", [i, el]);
-                })
+                var neo = this.map(function(el) {
+                    return el && el.$json ? el.$json : el;
+                });
+                var n = list.length;
+                for (var i = 0; i < n; i++) {
+                    var a = list[i], b = neo[i];
+                    if (a !== b) {
+                        list.splice(i, 1);
+                        list.push(a);
+                        notifySubscribers(collection, "reroder", [i]);
+                        i = i - 1;
+                    }
+                }
                 return this;
             };
         });
@@ -1993,6 +2002,14 @@
             var models = updateListView.$models;
             var firstNode = parent.firstChild;
             switch (method) {
+                case "reroder":
+                //    console.log(args)
+                    var node = parent.children[args[0]]
+            //      var a =  findItem(parent, args[0]);
+             //     console.log(a)
+                   // var node = findIndex(parent, args[0]);
+                    parent.appendChild(node);
+                    break;
                 case "set":
                     var model = models[args[0]];
                     if (model) {
@@ -2069,6 +2086,17 @@
             }
         }
     }
+//    function findItem(elem, index) { //寻找路标
+//        var i = 0
+//     for (var node = elem.firstChild; node; node = node.nextSibling) {
+//            if (node.nodeType == 8 && node.id.indexOf(node.nodeValue ) ==0 ) {
+//                i ++;
+//                if(i == index){
+//                    return node
+//                }
+//            }
+//        }
+//    }
 
     function resetIndex(elem, name, add) { //重置路标
         var index = add || 0;

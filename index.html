@@ -7,7 +7,7 @@
         <script src="avalon2.js"></script>
         <script>
             var b = {name: "xxx", name: "ooo"}
-            var array = [{name: "aaa"}, {name: "bbb"}, {name: "ccc"}]
+            var array = [ 2,6,8,4,5,1,7,0]
             var a = avalon.define("xxx", function(vm) {
                 vm.firstName = "司徒";
                 vm.lastName = "正美";
@@ -20,26 +20,25 @@
              console.log(a.array.$json[0] === array[0])
              console.log(a.array[0].$json === array[0])
              console.log(JSON.stringify(a.$json))*/
-            a.array.push({name: "ddd"}, {name: "eee"});
+        //    a.array.push({name: "ddd"}, {name: "eee"});
             //    console.log(a.array);
             //  console.log(a.array.$json)
             setTimeout(function() {
-                a.array.unshift({name: 2222}, {name: 1111}, {name: 3333});
-                a.array.sort(function(a, b) {
-                    return   a.name > b.name ? -1 : 1
-                })
+              a.array.sort()
             }, 2000)
 
             //     setTimeout(function() {
             //         a.array.reverse();
             //     }, 3000)
-
+// AB --> BA replaceChild
+// ABC --> ACB replaceChild
+// BCAD --> ABCD A insertBefore B
         </script>
     </head>
     <body ms-controller="xxx">
         <div>TODO write content</div>
         <ul ms-each-el="array">
-            <li>{{el.name}}<input ms-model="el.name"></li>
+            <li>{{el}}</li>
         </ul>
     </body>
 </html>
