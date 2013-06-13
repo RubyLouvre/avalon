@@ -1870,7 +1870,7 @@
                     ret = list[method].apply(this, vmargs);
                     notifySubscribers(this, method, vmargs, len);
                 } else {
-                    this[method]();
+                    list[method].call(this);
                     ret = list[method]();
                     notifySubscribers(this, method, arguments, len);
                 }
@@ -1989,8 +1989,7 @@
             return list;
         }
         var view = documentFragment.cloneNode(false);
-        var comment = DOC.createComment(list.$id);
-        view.appendChild(comment);
+
         while (parent.firstChild) {
             view.appendChild(parent.firstChild);
         }
@@ -1999,19 +1998,19 @@
 
         function updateListView(method, args, len) {
             var id = list.$id;
-            var models = updateListView.$models;
+            var vmodels = updateListView.vmodels;
             var firstNode = parent.firstChild;
             switch (method) {
                 case "reroder":
-                //    console.log(args)
-                    var node = parent.children[args[0]]
-            //      var a =  findItem(parent, args[0]);
-             //     console.log(a)
-                   // var node = findIndex(parent, args[0]);
-                    parent.appendChild(node);
+                    var i = args[0]
+                    var a = vmodels.splice(i, 1);
+                    vmodels.push(a[0]);
+                    var frag = getItemView(parent, vmodels, i);
+                    parent.appendChild(frag);
+                    resetItemIndex(vmodels)
                     break;
                 case "set":
-                    var model = models[args[0]];
+                    var model = vmodels[args[0]];
                     if (model) {
                         var n = model.$itemName;
                         model[n] = args[1];
@@ -2020,31 +2019,32 @@
                 case "push":
                     //在后面添加
                     forEach(args, function(index, item) {
-                        addItemView(len + index, item, list, data, models);
+                        addItemView(len + index, item, list, data, vmodels);
                     });
                     break;
                 case "unshift":
                     //在前面添加
-                    resetIndex(parent, id, list.length - len);
+                    resetItemIndex(vmodels, 0, list.length - len);
                     list.place = firstNode;
                     forEach(args, function(index, item) {
-                        addItemView(index, item, list, data, models);
+                        addItemView(index, item, list, data, vmodels);
                     });
                     list.place = null;
                     break;
                 case "pop":
                     //去掉最后一个
-                    var node = findIndex(parent, len - 1);
+                    var node = getItemView(parent, vmodels, vmodels.length - 1);
                     if (node) {
-                        removeItemView(node, id + len);
-                        models.pop();
+                        vmodels.pop();
                     }
                     break;
                 case "shift":
                     //去掉前面一个
-                    firstNode && removeItemView(firstNode, id + 1);
-                    resetIndex(parent, id);
-                    models.shift();
+                    var node = getItemView(parent, vmodels, 0);
+                    if (node) {
+                        vmodels.shift();
+                        resetItemIndex(vmodels);
+                    }
                     break;
                 case "splice":
                     var start = args[0],
@@ -2052,27 +2052,30 @@
                             adds = [].slice.call(args, 2);
                     var deleteCount = second >= 0 ? second : len - start;
                     if (deleteCount) {
-                        var node = findIndex(parent, start);
+                        var node = getItemView(parent, vmodels, start, deleteCount);
                         if (node) {
-                            models.splice(start, deleteCount);
-                            removeItemView(node, id + (start + second));
-                            resetIndex(parent, id);
+                            vmodels.splice(start, deleteCount);
+                            resetItemIndex(vmodels, start, start);
                         }
                     }
                     if (adds.length) {
-                        list.place = findIndex(parent, start);
+//                        console.log(start)
+                        var a = getIndexItem(parent, vmodels, start);
+//                        console.log(a)
+                        list.place = a
                         updateListView("push", adds, start);
-                        resetIndex(parent, id);
+//                        console.log(vmodels)
+                        resetItemIndex(vmodels, start, start);
                         list.place = null;
                     }
                     break;
                 case "clear":
-                    models.length = 0;
+                    vmodels.length = 0;
                     emptyNode(parent);
                     break;
             }
         }
-        updateListView.$models = [];
+        updateListView.vmodels = [];
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView);
         }
@@ -2086,17 +2089,34 @@
             }
         }
     }
-//    function findItem(elem, index) { //寻找路标
-//        var i = 0
-//     for (var node = elem.firstChild; node; node = node.nextSibling) {
-//            if (node.nodeType == 8 && node.id.indexOf(node.nodeValue ) ==0 ) {
-//                i ++;
-//                if(i == index){
-//                    return node
-//                }
-//            }
-//        }
-//    }
+    //取得目标子视图的第一个节点
+    function getIndexItem(parent, vmodels, index) { //
+        var nodes = parent.childNodes;
+        var length = vmodels.length;
+        var group = nodes.length / length;
+        var node = nodes[ group * index];
+        return node;
+    }
+    //将目标子视图的所有元素转换为一个文档碎片返回
+    function getItemView(parent, vmodels, index, number) {
+        var nodes = parent.childNodes;
+        var length = vmodels.length;
+        var group = nodes.length / length;
+        var node = nodes[ group * index];
+
+        var view = vmodels[index].$view;
+        var array = [node];
+        number = number || 1;
+        length = group * number;
+        for (var i = 1; i < length; i++) {
+            node = node.nextSibling;
+            array.push(node);
+        }
+        for (var i = 0, node; node = array[i++]; ) {
+            view.appendChild(node);
+        }
+        return view;
+    }
 
     function resetIndex(elem, name, add) { //重置路标
         var index = add || 0;
@@ -2110,20 +2130,27 @@
             }
         }
     }
-
-    function removeItemView(node, id, next) {
-        var parent = node.parentNode;
-        while (next = node.nextSibling) {
-            if (next.nodeType === 8 && next.id === id) {
-                break;
-            } else {
-                parent.removeChild(next);
-            }
+    function resetItemIndex(vmodels, pos, index) { //重置路标
+        pos = pos || 0;
+        index = index || 0;
+        for (var el; el = vmodels[pos++]; ) {
+            el.$index = index++;
         }
-        parent.removeChild(node);
     }
 
-    function addItemView(index, item, list, data, models) {
+//    function removeItemView(node, id, next) {
+//        var parent = node.parentNode;
+//        while (next = node.nextSibling) {
+//            if (next.nodeType === 8 && next.id === id) {
+//                break;
+//            } else {
+//                parent.removeChild(next);
+//            }
+//        }
+//        parent.removeChild(node);
+//    }
+
+    function addItemView(index, item, list, data, vmodels) {
         var scopes = data.scopes;
         var parent = data.element;
         var scope = createItemModel(index, item, list, data.args);
@@ -2131,7 +2158,8 @@
         var view = data.view.cloneNode(true);
         var nodes = view.childNodes;
         scopes = [scope].concat(scopes);
-        models.splice(index, 0, scope);
+        vmodels.splice(index, 0, scope);
+        scope.$view = view;
         if (!parent.inprocess) {
             parent.inprocess = 1; //locked!
             var hidden = parent.hidden; //http://html5accessibility.com/
@@ -2142,10 +2170,6 @@
                 scanTag(node, scopes); //扫描文本节点
             } else if (node.nodeType === 3) {
                 textNodes.push(node);
-            } else if (node.nodeType === 8) {
-                node.id = node.nodeValue + index; //设置路标
-                node.$scope = scope;
-                node.$view = view.cloneNode(false);
             }
         }
         parent.insertBefore(view, list.place || null);
@@ -2163,6 +2187,7 @@
         var itemName = args[0] || "$data";
         var source = {};
         source.$index = index;
+        source.$view = {};
         source.$itemName = itemName;
         source[itemName] = {
             get: function() {

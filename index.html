@@ -7,7 +7,8 @@
         <script src="avalon2.js"></script>
         <script>
             var b = {name: "xxx", name: "ooo"}
-            var array = [ 2,6,8,4,5,1,7,0]
+            var array = [1,2,3,4,5]
+       //  var array = [3,1,2,0]
             var a = avalon.define("xxx", function(vm) {
                 vm.firstName = "司徒";
                 vm.lastName = "正美";
@@ -15,30 +16,23 @@
                 vm.array = array;
             });
 
-            /*  console.log(a.nick.$json === b);
-             console.log(a.array.$json == array)
-             console.log(a.array.$json[0] === array[0])
-             console.log(a.array[0].$json === array[0])
-             console.log(JSON.stringify(a.$json))*/
-        //    a.array.push({name: "ddd"}, {name: "eee"});
-            //    console.log(a.array);
-            //  console.log(a.array.$json)
-            setTimeout(function() {
-              a.array.sort()
-            }, 2000)
 
-            //     setTimeout(function() {
-            //         a.array.reverse();
-            //     }, 3000)
-// AB --> BA replaceChild
-// ABC --> ACB replaceChild
-// BCAD --> ABCD A insertBefore B
+            setTimeout(function() {
+         //    a.array.unshift("eee");
+             a.array.splice(1,1,"a","b")
+           //   a.array.sort()
+              //  console.log(JSON.stringify(a.array))
+            }, 2000)
+            setTimeout(function() {
+            //  a.array.pop()
+
+            }, 4000)
         </script>
     </head>
     <body ms-controller="xxx">
         <div>TODO write content</div>
         <ul ms-each-el="array">
-            <li>{{el}}</li>
+            <li>{{el}}  {{$index}}</li>
         </ul>
     </body>
 </html>
