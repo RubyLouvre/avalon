@@ -877,7 +877,7 @@
                                 var old = value;
                                 if (valueType === "Array" || valueType === "Object") {
                                     if (value && value.$id) {
-                                        updatevmodel(value, neo, Array.isArray(neo));
+                                        updateViewModel(value, neo, Array.isArray(neo));
                                     } else if (Array.isArray(neo)) {
                                         value = Collection(neo, vmodel, name);
                                     } else {
@@ -1066,6 +1066,7 @@
         var a = elem.getAttribute(prefix + "skip");
         var b = elem.getAttribute(prefix + "important");
         var c = elem.getAttribute(prefix + "controller");
+        
         //这三个绑定优先处理，其中a > b > c
         if (typeof a === "string") {
             return;
@@ -1313,7 +1314,7 @@
             val;
         //取得ViewModel的名字
         scopes.forEach(function(scope) {
-            var scopeName = scope.$id + "" + random;
+            var scopeName = scope.$id.replace(/-/g,"_") + "" + random;
             if (names.indexOf(scopeName) === -1) {
                 names.push(scopeName);
                 args.push(scope);
@@ -1942,7 +1943,6 @@
         if (typeof array == "object") {
             list = array[0].apply(array[0], array[1]);
         }
-
         if (typeof list !== "object") {
             return list;
         }

@@ -4,12 +4,12 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon2.js"></script>
+        <script src="avalon.js"></script>
         <script>
             var b = {name: "xxx", name: "ooo"}
             var array = [1,2,3,4,5]
        //  var array = [3,1,2,0]
-            var a = avalon.define("xxx", function(vm) {
+            var a = avalon.define("metroContainer-A", function(vm) {
                 vm.firstName = "司徒";
                 vm.lastName = "正美";
                 vm.nick = b;
@@ -29,7 +29,7 @@
             }, 4000)
         </script>
     </head>
-    <body ms-controller="xxx">
+    <body ms-controller="metroContainer-A">
         <div>TODO write content</div>
         <ul ms-each-el="array">
             <li>{{el}}  {{$index}}</li>

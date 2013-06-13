@@ -39,6 +39,7 @@
                 scope.getShowItems = function() {
                     var i = scope.pageIndex, c = scope.pageCount;
                     var array = scope.$json.items.slice(i * c, (i + 1) * c)
+                 //   console.log(array)
                     scope.showItems = array;
                 }
                 scope.addItem = function() {
