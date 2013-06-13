@@ -1,7 +1,6 @@
 //==================================================
-// avalon 0.7 独立版  by 司徒正美 2013.5.24
+// avalon 0.73 独立版  by 司徒正美 2013.6.13
 // 疑问:
-//    是否成熟? 成熟
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
 //==================================================
@@ -2435,4 +2434,4 @@
 //2013.5.22 0.6.3 fix getValueFunction bug; fix  avalon.bind return false bug;fix ms-css bug
 //2013.5.25 0.7 添加template绑定, 优化渲染速度,插入与移除节点的操作
 //2013 6 2 3群月王 ms-visible bug
-//黄轩http://www.cnblogs.com/lcllao/archive/2012/09/30/2709187.html
+//2013 6 13 073 重构了each绑定,添加了$model,$vmodel属性，移除了options绑定
