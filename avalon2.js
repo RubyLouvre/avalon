@@ -2051,20 +2051,16 @@
                             second = args[1],
                             adds = [].slice.call(args, 2);
                     var deleteCount = second >= 0 ? second : len - start;
-                    if (deleteCount) {
+                    if (deleteCount) {//连续删除几个
                         var node = getItemView(parent, vmodels, start, deleteCount);
                         if (node) {
                             vmodels.splice(start, deleteCount);
                             resetItemIndex(vmodels, start, start);
                         }
                     }
-                    if (adds.length) {
-//                        console.log(start)
-                        var a = getIndexItem(parent, vmodels, start);
-//                        console.log(a)
-                        list.place = a
+                    if (adds.length) {//连续添加几个
+                        list.place = getIndexItem(parent, vmodels, start);
                         updateListView("push", adds, start);
-//                        console.log(vmodels)
                         resetItemIndex(vmodels, start, start);
                         list.place = null;
                     }
@@ -2103,7 +2099,6 @@
         var length = vmodels.length;
         var group = nodes.length / length;
         var node = nodes[ group * index];
-
         var view = vmodels[index].$view;
         var array = [node];
         number = number || 1;
@@ -2138,17 +2133,6 @@
         }
     }
 
-//    function removeItemView(node, id, next) {
-//        var parent = node.parentNode;
-//        while (next = node.nextSibling) {
-//            if (next.nodeType === 8 && next.id === id) {
-//                break;
-//            } else {
-//                parent.removeChild(next);
-//            }
-//        }
-//        parent.removeChild(node);
-//    }
 
     function addItemView(index, item, list, data, vmodels) {
         var scopes = data.scopes;
