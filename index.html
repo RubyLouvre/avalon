@@ -23,6 +23,7 @@
            //   a.array.sort()
               //  console.log(JSON.stringify(a.array))
             }, 2000)
+            console.log(a.array.size)
             setTimeout(function() {
             //  a.array.pop()
 
@@ -30,6 +31,9 @@
         </script>
     </head>
     <body ms-controller="metroContainer-A">
+        <br/>
+        <hr/>
+        <img src=""/>
         <div>TODO write content</div>
         <ul ms-each-el="array">
             <li>{{el}}  {{$index}}</li>
