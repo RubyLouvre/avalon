@@ -1051,7 +1051,7 @@
                     if (filters && filters.indexOf("html") !== -1) {
                         avalon.Array.remove(filters, "html")
                         binding.type = "html"
-                        binding.replace = true
+                        binding.replaceNodes = true
                     }
                     bindings.push(binding) //收集带有插值表达式的文本
                 }
@@ -1380,12 +1380,19 @@
         "html": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
-                if (data.replace) {
+                if (data.replaceNodes) {
                     domParser.innerHTML = val
+                    var replaceNodes = []
                     while (domParser.firstChild) {
+                        replaceNodes.push(domParser.firstChild)
                         documentFragment.appendChild(domParser.firstChild)
                     }
-                    elem.replaceChild(documentFragment, data.node)
+                    elem.insertBefore(documentFragment, data.replaceNodes[0]);
+                    for (var i = 0, node; node = data.replaceNodes[i++]; ) {
+                        elem.removeChild(node)
+                    }
+                    data.replaceNodes = replaceNodes
+
                 } else {
                     elem.innerHTML = val
                 }
