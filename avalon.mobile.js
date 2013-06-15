@@ -1,8 +1,5 @@
 //==================================================
-// avalon 0.73 独立版  by 司徒正美 2013.6.13
-// 疑问:
-//    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
-//    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
+// avalon 073 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -49,7 +46,6 @@
     }
     avalon.type = getType;
     avalon.isWindow = function(obj) {
-
         return rwindow.test(serialize.call(obj))
     }
 
@@ -171,9 +167,7 @@
                 }
                 return ret
             }
-
             el.addEventListener(type, callback, !!phase)
-
             return callback
         },
         unbind: function(el, type, fn, phase) {
@@ -455,8 +449,8 @@
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
-        var node = this[0],
-                doc = node && node.ownerDocument
+        var node = this[0]
+        var doc = node && node.ownerDocument
         var pos = {
             left: 0,
             top: 0
@@ -2218,22 +2212,4 @@
         avalon.scan(document.body)
     })
 })(document)
-//2012.8.31 完成 v1
-//https://github.com/RubyLouvre/mass-Framework/commit/708e203a0e274b69729d08de8fe1cde2722520d2
-//2012.9.22 完成 v2 90%代码重写，使用新的思路收集依赖完成双向绑定链
-//2012.12.11 完成 v3 50% 代码重写 数据绑定部分焕然一新，属性名得到绑定器，
-//2012.12.13 把所有公开API放到MVVM二级命名空间上
-//2012.12.15 添加toJS方法，为collection补上sort erase reverse方法
-//2013.4,23 v4 https://github.com/RubyLouvre/mass-Framework/blob/1.3/avalon.js
-//2013.4.29 合并options与selecting绑定，为each绑定产生的子ViewModel添加$first, $last属性，
-//写死它的$index, $remove属性，重构generateID
-//2013.4.30 重构scanTag, generateID，更改fixEvent的条件
-//2013.5.1 v5 发布 https://github.com/RubyLouvre/mass-Framework/blob/1.4/avalon.js 添加一个jquery like对象
-//2013.5.3 v5.1 性能大幅提升 新的路标系统 hidden的运用 重构model绑定的select 重构addItemView
-//2013.5.9 v6 添加ms-hover绑定, 重构mouseenter, mouseleave事件，对data方法进行增强
-//2013.5.15 v6.1 添加ms-active
-//2013.5.21 v6.2 添加$json与多级监听
-//2013.5.22 0.6.3 fix getValueFunction bug  fix  avalon.bind return false bug fix ms-css bug
-//2013.5.25 0.7 添加template绑定, 优化渲染速度,插入与移除节点的操作
-//2013 6 2 3群月王 ms-visible bug
-//2013 6 13 073 重构了each绑定,添加了$model,$vmodel属性，移除了options绑定
+//2012 6 15
