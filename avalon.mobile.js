@@ -830,7 +830,7 @@
             }
         })
 
-        vmodel = defineProperties(vmodel, Descriptions)
+        vmodel = Object.defineProperties(vmodel, Descriptions)
         VBPublics.forEach(function(name) {
             if (!watchOne[name]) {
                 vmodel[name] = scope[name]
@@ -1881,9 +1881,8 @@
         var scopes = data.scopes
         var parent = data.element
         var scope = createItemModel(index, item, list, data.args)
-        var textNodes = []
         var view = data.view.cloneNode(true)
-        var nodes = view.childNodes
+        var nodes = [].slice.call(view.childNodes)
         scopes = [scope].concat(scopes)
         vmodels.splice(index, 0, scope)
         scope.$view = view
@@ -1892,16 +1891,13 @@
             var hidden = parent.hidden //http://html5accessibility.com/
             parent.hidden = true //作用类似于display:none
         }
+        parent.insertBefore(view, list.place || null)
         for (var i = 0, node; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
-                scanTag(node, scopes) //扫描文本节点
+                scanTag(node, scopes) //扫描元素节点
             } else if (node.nodeType === 3) {
-                textNodes.push(node)
+                scanText(node, scopes) //扫描文本节点
             }
-        }
-        parent.insertBefore(view, list.place || null)
-        for (var i = 0; node = textNodes[i++]; ) {
-            scanText(node, scopes) //扫描文本节点
         }
         if (parent.inprocess) {
             parent.hidden = hidden

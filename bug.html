@@ -1,0 +1,57 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.mobile.js"></script>
+        <script>
+
+            avalon.ready(function() {
+                var TYPE = {
+                    Folder: true,
+                    File: false
+                };
+                var randomFolderContent = function(num) {   //随即生成数据
+                    var num = num || Math.floor(Math.random() * 20);
+                    var content = [];
+                    var cache;
+                    for (var i = 0; i < num; i += 1) {
+                        cache = Math.random();
+                        content[i] = {//数据结构
+                            type: (cache > 0.8) ? TYPE.Folder : TYPE.File,
+                            name: ((cache + "").split(".")[1] - 1).toString(36),
+                            content: []
+                        }
+                    }
+                    return content;
+                };
+
+                var tree = avalon.define("tree", function(vm) {
+
+                    vm.array = [{type: true, name: 111}, {type: false, name: 222}, {type: true, name: 333}]
+                });
+
+                avalon.scan();
+            })
+        </script>
+    </head>
+    <body ms-controller="tree">
+        <h1>TREE VIEW</h1>
+        <ul ms-each-el="array">
+            <li ms-if="el.type"><!-- mark -->
+                <span>{{el.name}}</span>
+            </li>
+        </ul>
+        <div ms-each-el="array">
+            <p ms-if="el.type"><!-- mark -->
+                <span>{{el.name}}</span>
+            </p>
+            {{el.name}} {{$index}}
+            <p>===============</p>
+        </div>
+    </body>
+</html>

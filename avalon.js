@@ -27,6 +27,7 @@
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
     var rwindow = /^[object (Window|DOMWindow|global)]$/
+
     function noop() {
     }
 
@@ -41,6 +42,7 @@
     }
     avalon.fn = avalon.prototype = avalon.init.prototype
     //率先添加三个判定类型的方法
+
     function getType(obj) { //取得类型
         if (obj == null) {
             return String(obj)
@@ -54,6 +56,7 @@
     avalon.isWindow = function(obj) {
         return obj && obj === obj.window
     }
+
     function isWindow(obj) {
         return rwindow.test(serialize.call(obj))
     }
@@ -1524,8 +1527,10 @@
             var placehoder = DOC.createComment("@")
             var parent = data.element.parentNode
             watchView(data.value, vmodels, data, function(val, elem) {
+
                 if (val) { //添加 如果它不在DOM树中
                     if (!elem.parentNode || elem.parentNode.nodeType === 11) {
+                        console.log(elem)
                         parent.replaceChild(elem, placehoder)
                         elem.noRemove = 0
                     }
@@ -1696,15 +1701,15 @@
                     var replaceNodes = []
                     while (domParser.firstChild) {
                         replaceNodes.push(domParser.firstChild)
-                        documentFragment.appendChild(domParser.firstChild)  
+                        documentFragment.appendChild(domParser.firstChild)
                     }
                     elem.insertBefore(documentFragment, data.replaceNodes[0]);
-                    for(var i = 0, node ; node = data.replaceNodes[i++];){
+                    for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
                     data.replaceNodes = replaceNodes
 
-                }else{
+                } else {
                     elem.innerHTML = val
                 }
             })
@@ -2065,7 +2070,6 @@
             return list
         }
         var view = documentFragment.cloneNode(false)
-
         while (parent.firstChild) {
             view.appendChild(parent.firstChild)
         }
@@ -2196,9 +2200,7 @@
         var scopes = data.scopes
         var parent = data.element
         var scope = createItemModel(index, item, list, data.args)
-        var textNodes = []
         var view = data.view.cloneNode(true)
-        var nodes = view.childNodes
         scopes = [scope].concat(scopes)
         vmodels.splice(index, 0, scope)
         scope.$view = view
@@ -2207,16 +2209,17 @@
             var hidden = parent.hidden //http://html5accessibility.com/
             parent.hidden = true //作用类似于display:none
         }
-        for (var i = 0, node; node = nodes[i++]; ) {
-            if (node.nodeType === 1) {
-                scanTag(node, scopes) //扫描文本节点
-            } else if (node.nodeType === 3) {
-                textNodes.push(node)
-            }
+        var nodes = []
+        for (var i = 0, node; node = view.childNodes[i++]; ) {
+            nodes.push(node);
         }
         parent.insertBefore(view, list.place || null)
-        for (var i = 0; node = textNodes[i++]; ) {
-            scanText(node, scopes) //扫描文本节点
+        for (var i = 0; node = nodes[i++]; ) {
+            if (node.nodeType === 1) {
+                scanTag(node, scopes) //扫描元素节点
+            } else if (node.nodeType === 3) {
+                scanText(node, scopes) //扫描文本节点
+            }
         }
         if (parent.inprocess) {
             parent.hidden = hidden
