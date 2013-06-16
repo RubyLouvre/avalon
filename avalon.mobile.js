@@ -890,9 +890,20 @@
         scanTag(elem, vmodels)
     }
     var regbind = /\{\{[^}]*\}\}|\sms-/
-
-    function scanTag(elem, scopes) {
-        scopes = scopes || []
+    var stopScan = avalon.oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
+    function scanNodes(parent, vmodels, callback) {
+        var nodes = [].slice.call(parent.childNodes);
+        callback && callback();
+        for (var i = 0, node; node = nodes[i++]; ) {
+            if (node.nodeType === 1) {
+                scanTag(node, vmodels) //扫描元素节点
+            } else if (node.nodeType === 3) {
+                scanText(node, vmodels) //扫描文本节点
+            }
+        }
+    }
+    function scanTag(elem, vmodels) {
+        vmodels = vmodels || []
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttribute(prefix + "important")
         var c = elem.getAttribute(prefix + "controller")
@@ -904,35 +915,22 @@
             if (!avalon.models[b]) {
                 return
             } else {
-                scopes = [avalon.models[b]]
+                vmodels = [avalon.models[b]]
                 elem.removeAttribute(prefix + "important")
             }
         } else if (c) {
-            var newScope = avalon.models[c]
-            if (!newScope) {
+            var newVmodel = avalon.models[c]
+            if (!newVmodel) {
                 return
             }
-            scopes = [newScope].concat(scopes)
+            vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, scopes) //扫描特点节点
+        scanAttr(elem, vmodels) //扫描特性节点
         if (!stopScan[elem.tagName] && regbind.test(elem.innerHTML)) {
-            var textNodes = []
-            var nodes = elem.childNodes
-            for (var i = 0, node; node = nodes[i++]; ) {
-                //  for (var node = elem.firstChild  node  node = node.nextSibling) {
-                if (node.nodeType === 1) {
-                    scanTag(node, scopes) //扫描元素节点
-                } else if (node.nodeType === 3) {
-                    textNodes.push(node)
-                }
-            }
-            for (var i = 0; node = textNodes[i++]; ) { //延后执行
-                scanText(node, scopes) //扫描文本节点
-            }
+            scanNodes(elem, vmodels)
         }
     }
-    var stopScan = avalon.oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
     //扫描元素节点中直属的文本节点，并进行抽取
     var regOpenTag = /([^{]*)\{\{/
     var regCloseTag = /([^}]*)\}\}/
@@ -1877,28 +1875,22 @@
     }
 
 
-    function addItemView(index, item, list, data, vmodels) {
-        var scopes = data.scopes
+    function addItemView(index, item, list, data, items) {
+        var vmodels = data.scopes
         var parent = data.element
-        var scope = createItemModel(index, item, list, data.args)
+        var vmodel = createItemModel(index, item, list, data.args)
         var view = data.view.cloneNode(true)
-        var nodes = [].slice.call(view.childNodes)
-        scopes = [scope].concat(scopes)
-        vmodels.splice(index, 0, scope)
-        scope.$view = view
+        vmodels = [vmodel].concat(vmodels)
+        items.splice(index, 0, vmodel)
+        vmodel.$view = view
         if (!parent.inprocess) {
             parent.inprocess = 1 //locked!
             var hidden = parent.hidden //http://html5accessibility.com/
             parent.hidden = true //作用类似于display:none
         }
-        parent.insertBefore(view, list.place || null)
-        for (var i = 0, node; node = nodes[i++]; ) {
-            if (node.nodeType === 1) {
-                scanTag(node, scopes) //扫描元素节点
-            } else if (node.nodeType === 3) {
-                scanText(node, scopes) //扫描文本节点
-            }
-        }
+        scanNodes(view, vmodels, function() {
+            parent.insertBefore(view, list.place || null)
+        });
         if (parent.inprocess) {
             parent.hidden = hidden
             parent.inprocess = 0

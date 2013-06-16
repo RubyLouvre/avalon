@@ -1173,10 +1173,26 @@
         var vmodels = vmodel ? [].concat(vmodel) : []
         scanTag(elem, vmodels)
     }
+    function scanNodes(parent, vmodels, callback) {
+        var nodes = []
+        for (var i = 0, node; node = parent.childNodes[i++]; ) {
+            nodes.push(node);
+        }
+        callback && callback();
+        for (var i = 0; node = nodes[i++]; ) {
+            if (node.nodeType === 1) {
+                scanTag(node, vmodels) //扫描元素节点
+            } else if (node.nodeType === 3) {
+                scanText(node, vmodels) //扫描文本节点
+            }
+        }
+    }
     var regbind = /\{\{[^}]*\}\}|\sms-/
+    var stopScan = avalon.oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
 
-    function scanTag(elem, scopes) {
-        scopes = scopes || []
+
+    function scanTag(elem, vmodels) {
+        vmodels = vmodels || []
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttribute(prefix + "important")
         var c = elem.getAttribute(prefix + "controller")
@@ -1188,35 +1204,22 @@
             if (!avalon.models[b]) {
                 return
             } else {
-                scopes = [avalon.models[b]]
+                vmodels = [avalon.models[b]]
                 elem.removeAttribute(prefix + "important")
             }
         } else if (c) {
-            var newScope = avalon.models[c]
-            if (!newScope) {
+            var newVmodel = avalon.models[c]
+            if (!newVmodel) {
                 return
             }
-            scopes = [newScope].concat(scopes)
+            vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, scopes) //扫描特点节点
+        scanAttr(elem, vmodels) //扫描特性节点
         if (!stopScan[elem.tagName] && regbind.test(elem.innerHTML)) {
-            var textNodes = []
-            var nodes = elem.childNodes
-            for (var i = 0, node; node = nodes[i++]; ) {
-                //  for (var node = elem.firstChild  node  node = node.nextSibling) {
-                if (node.nodeType === 1) {
-                    scanTag(node, scopes) //扫描元素节点
-                } else if (node.nodeType === 3) {
-                    textNodes.push(node)
-                }
-            }
-            for (var i = 0; node = textNodes[i++]; ) { //延后执行
-                scanText(node, scopes) //扫描文本节点
-            }
+            scanNodes(elem, vmodels)
         }
     }
-    var stopScan = avalon.oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
     //扫描元素节点中直属的文本节点，并进行抽取
     var regOpenTag = /([^{]*)\{\{/
     var regCloseTag = /([^}]*)\}\}/
@@ -1531,7 +1534,6 @@
 
                 if (val) { //添加 如果它不在DOM树中
                     if (!elem.parentNode || elem.parentNode.nodeType === 11) {
-                        console.log(elem)
                         parent.replaceChild(elem, placehoder)
                         elem.noRemove = 0
                     }
@@ -1644,14 +1646,14 @@
         "bind": function(data, vmodels) {
             var fn = data.value.trim(),
                     name = data.args[0]
-            for (var i = 0, scope; scope = vmodels[i++]; ) {
-                if (scope.hasOwnProperty(fn)) {
-                    fn = scope[fn]
+            for (var i = 0, vm; vm = vmodels[i++]; ) {
+                if (vm.hasOwnProperty(fn)) {
+                    fn = vm[fn]
                     break
                 }
             }
             if (typeof fn === "function") {
-                scope.$watch(name, function(neo, old) {
+                vm.$watch(name, function(neo, old) {
                     fn.call(data.element, neo, old)
                 })
             }
@@ -2197,36 +2199,28 @@
     }
 
 
-    function addItemView(index, item, list, data, vmodels) {
-        var scopes = data.scopes
+    function addItemView(index, item, list, data, items) {
+        var vmodels = data.scopes
         var parent = data.element
-        var scope = createItemModel(index, item, list, data.args)
+        var vmodel = createItemModel(index, item, list, data.args)
         var view = data.view.cloneNode(true)
-        scopes = [scope].concat(scopes)
-        vmodels.splice(index, 0, scope)
-        scope.$view = view
+        vmodels = [vmodel].concat(vmodels)
+        items.splice(index, 0, vmodel)
+        vmodel.$view = view
         if (!parent.inprocess) {
             parent.inprocess = 1 //locked!
             var hidden = parent.hidden //http://html5accessibility.com/
             parent.hidden = true //作用类似于display:none
         }
-        var nodes = []
-        for (var i = 0, node; node = view.childNodes[i++]; ) {
-            nodes.push(node);
-        }
-        parent.insertBefore(view, list.place || null)
-        for (var i = 0; node = nodes[i++]; ) {
-            if (node.nodeType === 1) {
-                scanTag(node, scopes) //扫描元素节点
-            } else if (node.nodeType === 3) {
-                scanText(node, scopes) //扫描文本节点
-            }
-        }
+        scanNodes(view, vmodels, function() {
+            parent.insertBefore(view, list.place || null)
+        });
         if (parent.inprocess) {
             parent.hidden = hidden
             parent.inprocess = 0
         }
     }
+
     //为子视图创建一个ViewModel
 
     function createItemModel(index, item, list, args) {
