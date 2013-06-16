@@ -252,7 +252,7 @@
         }
     }
     avalon.forEach = function(obj, fn) {
-        window.console && console.log("此方法已过时,请使用avalon.each")
+        window.console && console.log("此方法已废弃,请使用avalon.each")
         forEach(obj, fn)
     }
     avalon.each = forEach

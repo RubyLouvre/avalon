@@ -375,7 +375,25 @@
             return get ? val : this
         }
     })
-
+    if (root.dataset) {
+        avalon.data = function(name, val) {
+            var dataset = this[0].dataset;
+            switch (arguments.length) {
+                case 2:
+                    dataset[name] = val
+                    return this
+                case 1:
+                    val = dataset[name]
+                    return parseData(val)
+                case 0:
+                    var ret = {}
+                    for (var name in dataset) {
+                        ret[name] = parseData(dataset[name])
+                    }
+                    return ret
+            }
+        }
+    }
     function parseData(val) {
         var _eval = false
         if (rparse.test(val) || +val + "" === val) {
