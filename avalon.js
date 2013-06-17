@@ -655,7 +655,8 @@
             return getType(a) === "array"
         }
     }
-    if (!avalon.bind) {
+
+    if (!noop.bind) {
         Function.prototype.bind = function(scope) {
             if (arguments.length < 2 && scope === void 0)
                 return this
@@ -677,7 +678,7 @@
         var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
         return Function("fn,scope", fun)
     }
-    if ([].each) {
+    if (![].map) {
         avalon.mix(Array.prototype, {
             //定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
@@ -854,10 +855,10 @@
         }
         deps.unshift(scope)
         factory(scope) //得到所有定义
-        var model = modelFactory(scope) //转为一个ViewModel
+        var model = modelFactory(scope) //偷天换日，将scope换为model
         stopRepeatAssign = true
         deps[0] = model
-        factory.apply(0, deps) //重置它的上下文
+        factory.apply(0, deps) //
         deps.shift()
         stopRepeatAssign = false
         model.$id = name
@@ -1156,7 +1157,7 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && (el.sourceIndex === 0 || el.parentNode === null)) {
+                if (el && (!el.noRemove) && (el.parentNode === null || el.sourceIndex === 0)) {
                     avalon.Array.remove(list, fn)
                     avalon.log(fn + "")
                 } else {
@@ -1925,7 +1926,7 @@
 
     function syncModel(val, i) {
         var type = getType(val)
-        if (/array|object/.test(type)) {
+        if (type === "array" || type === "object") {
             val = val.$id ? val : modelFactory(val, val, type === "array")
             this[i] = val.$model
         }

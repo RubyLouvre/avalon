@@ -683,7 +683,7 @@
         }
         deps.unshift(scope)
         factory(scope) //得到所有定义
-        var model = modelFactory(scope) //转为一个ViewModel
+        var model = modelFactory(scope) //偷天换日，将scope换为model
         stopRepeatAssign = true
         deps[0] = model
         factory.apply(0, deps) //重置它的上下文
@@ -890,7 +890,7 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && (el.sourceIndex === 0 || el.parentNode === null)) {
+                if (el && (!el.noRemove) && el.parentNode === null) {
                     avalon.Array.remove(list, fn)
                     avalon.log(fn + "")
                 } else {
