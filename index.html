@@ -3,7 +3,9 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="json2.js"></script>
+        <script src="avalon.mobile.js"></script>
+
         <script>
             avalon.define("SpicyCtrl", function($scope) {
                 $scope.spice = 'very';
@@ -11,16 +13,15 @@
                     $scope.spice = 'chili';
                 }
                 $scope.jalapenoSpicy = function() {
-                    $scope.spice = 'jalapeño';
+                    $scope.spice = 'xxxx';
                 }
             })
-           
         </script>
     </head>
 
     <body ms-controller="SpicyCtrl">
         <button ms-click="chiliSpicy">Chili</button>
-        <button ms-click="jalapenoSpicy">Jalapeño</button>
+        <button ms-click="jalapenoSpicy">Jalapeo</button>
         <p>The food is {{spice}} spicy!</p>
     </body>
 </html>
