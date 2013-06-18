@@ -6,7 +6,6 @@
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
-    var readyList = []
     var expose = new Date - 0
     var subscribers = "$" + expose
     //这两个都与计算属性息息相关
@@ -17,6 +16,7 @@
     var oproto = Object.prototype;
     var ohasOwn = oproto.hasOwnProperty
     var prefix = "ms-"
+
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var serialize = oproto.toString
@@ -137,26 +137,44 @@
         return target
     }
 
+    function log(a) {
+        window.console && console.log(a)
+    }
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
         ui: {},
         models: {},
-        log: function log(a) {
-            window.console && console.log(a)
+        log: log,
+        slice: W3C ? function(nodes, start, end) {
+            return [].slice.call(nodes, start, end);
+        } : function(nodes, start, end) {
+            var ret = [],
+                    n = nodes.length;
+            if (end === void 0 || typeof end === "number" && isFinite(end)) {
+                start = parseInt(start, 10) || 0;
+                end = end == void 0 ? n : parseInt(end, 10);
+                if (start < 0) {
+                    start += n;
+                }
+                if (end > n) {
+                    end = n;
+                }
+                if (end < 0) {
+                    end += n;
+                }
+                for (var i = start; i < end; ++i) {
+                    ret[i - start] = nodes[i];
+                }
+            }
+            return ret;
         },
         noop: noop,
         error: function(str, e) { //如果不用Error对象封装一下，str在控制台下可能会乱码
             throw new (e || Error)(str)
         },
         ready: function(fn) {
-            if (typeof fn === "function") {
-                if (Array.isArray(readyList)) {
-                    readyList.push(fn)
-                } else {
-                    fn()
-                }
-            }
+            require("!ready", fn)
         },
         oneObject: function(array, val) {
             if (typeof array === "string") {
@@ -209,7 +227,7 @@
         } : function(el, type, fn) {
             el.detachEvent("on" + type, fn || noop)
         },
-        nextTick: typeof setImmediate === "function" ? setImmediate.bind(window) : function(fn) {
+        nextTick: function(fn) {
             setTimeout(fn, 0)
         }
     })
@@ -259,17 +277,382 @@
         forEach(obj, fn)
     }
     avalon.each = forEach
-
-    function fireReady() {
-        if (readyList) {
-            for (var i = 0, fn; fn = readyList[i++]; ) {
-                fn()
-            }
-            readyList = null
+    /*********************************************************************
+     *                      模块加载系统                                *
+     **********************************************************************/
+    var head = DOC.head || DOC.getElementsByTagName("head")[0] //HEAD元素
+    var loadings = [] //正在加载中的模块列表
+    var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
+    var rmakeid = /(#.+|\W)/g //用于处理掉href中的hash与所有特殊符号
+    var basepath
+    var modules = avalon.modules = {
+        "!ready": {
+            exports: avalon
         }
     }
-    avalon.bind(window, "load", fireReady)
-    avalon.bind(window, "DOMContentLoaded", fireReady)
+
+    function kernel(settings) {
+        for (var p in settings) {
+            if (!ohasOwn.call(settings, p))
+                continue
+            var val = settings[p]
+            if (typeof kernel.plugin[p] === "function") {
+                kernel.plugin[p](val)
+            } else {
+                kernel[p] = val
+            }
+        }
+        return this
+    }
+    kernel.plugin = {}
+    kernel.alias = {}
+    ~function() {
+        var cur = getCurrentScript(true)
+        if (!cur) { //处理window safari的Error没有stack的问题
+            cur = avalon.slice(document.scripts).pop().src
+        }
+        var url = cur.replace(/[?#].*/, "")
+        basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
+    }()
+
+    kernel.plugin["alias"] = function(val) {
+        var map = kernel.alias
+        for (var c in val) {
+            if (ohasOwn.call(val, c)) {
+                var prevValue = map[c]
+                var currValue = val[c]
+                if (prevValue) {
+                    avalon.error("注意" + c + "出经重写过")
+                }
+                map[c] = currValue
+            }
+        }
+    }
+
+    function getCurrentScript(base) {
+        // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
+        var stack
+        try {
+            a.b.c() //强制报错,以便捕获e.stack
+        } catch (e) { //safari的错误对象只有line,sourceId,sourceURL
+            stack = e.stack
+            if (!stack && window.opera) {
+                //opera 9没有e.stack,但有e.Backtrace,但不能直接取得,需要对e对象转字符串进行抽取
+                stack = (String(e).match(/of linked script \S+/g) || []).join(" ")
+            }
+        }
+        if (stack) {
+            /**e.stack最后一行在所有支持的浏览器大致如下:
+             *chrome23:
+             * at http://113.93.50.63/data.js:4:1
+             *firefox17:
+             *@http://113.93.50.63/query.js:4
+             *opera12:http://www.oldapps.com/opera.php?system=Windows_XP
+             *@http://113.93.50.63/data.js:4
+             *IE10:
+             *  at Global code (http://113.93.50.63/data.js:4:1)
+             *  //firefox4+ 可以用document.currentScript
+             */
+            stack = stack.split(/[@ ]/g).pop() //取得最后一行,最后一个空格或@之后的部分
+            stack = stack[0] === "(" ? stack.slice(1, -1) : stack.replace(/\s/, "") //去掉换行符
+            return stack.replace(/(:\d+)?:\d+$/i, "") //去掉行号与或许存在的出错字符起始位置
+        }
+        var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
+        for (var i = nodes.length, node; node = nodes[--i]; ) {
+            if ((base || node.className === subscribers) && node.readyState === "interactive") {
+                return node.className = node.src
+            }
+        }
+    }
+
+    function checkCycle(deps, nick) {
+        //检测是否存在循环依赖
+        for (var id in deps) {
+            if (deps[id] === "司徒正美" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
+                return true
+            }
+        }
+    }
+
+    function checkDeps() {
+        //检测此JS模块的依赖是否都已安装完毕,是则安装自身
+        loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
+            var obj = modules[id],
+                    deps = obj.deps
+            for (var key in deps) {
+                if (ohasOwn.call(deps, key) && modules[key].state !== 2) {
+                    continue loop
+                }
+            }
+            //如果deps是空对象或者其依赖的模块的状态都是2
+            if (obj.state !== 2) {
+                loadings.splice(i, 1) //必须先移除再安装，防止在IE下DOM树建完后手动刷新页面，会多次执行它
+                fireFactory(obj.id, obj.args, obj.factory)
+                checkDeps() //如果成功,则再执行一次,以防有些模块就差本模块没有安装好
+            }
+        }
+    }
+
+    function checkFail(node, onError, fuckIE) {
+        var id = node.src //检测是否死链
+        node.onload = node.onreadystatechange = node.onerror = null
+        if (onError || (fuckIE && !modules[id].state)) {
+            setTimeout(function() {
+                head.removeChild(node)
+            })
+            log("加载 " + id + " 失败" + onError + " " + (!modules[id].state))
+        } else {
+            return true
+        }
+    }
+
+    function loadJSCSS(url, parent, ret, shim) {
+        //1. 特别处理mass|ready标识符
+        if (url === "!ready") {
+            return url
+        }
+        //2. 转化为完整路径
+        if (kernel.alias[url]) { //别名机制
+            ret = kernel.alias[url]
+            if (typeof ret === "object") {
+                shim = ret
+                ret = ret.src
+            }
+        } else {
+            if (/^(\w+)(\d)?:.*/.test(url)) { //如果本来就是完整路径
+                ret = url
+            } else {
+                parent = parent.substr(0, parent.lastIndexOf('/'))
+                var tmp = url.charAt(0)
+                if (tmp !== "." && tmp !== "/") { //相对于根路径
+                    ret = basepath + url
+                } else if (url.slice(0, 2) === "./") { //相对于兄弟路径
+                    ret = parent + url.slice(1)
+                } else if (url.slice(0, 2) === "..") { //相对于父路径
+                    var arr = parent.replace(/\/$/, "").split("/")
+                    tmp = url.replace(/\.\.\//g, function() {
+                        arr.pop()
+                        return ""
+                    })
+                    ret = arr.join("/") + "/" + tmp
+                } else if (tmp === "/") {
+                    ret = parent + url //相对于兄弟路径
+                } else {
+                    avalon.error("不符合模块标识规则: " + url)
+                }
+            }
+        }
+        var src = ret.replace(/[?#].*/, ""),
+                ext
+        if (/\.(css|js)$/.test(src)) { // 处理"http://113.93.55.202/mass.draggable"的情况
+            ext = RegExp.$1
+        }
+        if (!ext) { //如果没有后缀名,加上后缀名
+            src += ".js"
+            ext = "js"
+        }
+        //3. 开始加载JS或CSS
+        if (ext === "js") {
+            if (!modules[src]) { //如果之前没有加载过
+                modules[src] = {
+                    id: src,
+                    parent: parent,
+                    exports: {}
+                }
+                if (shim) { //shim机制
+                    require(shim.deps || "", function() {
+                        loadJS(src, function() {
+                            modules[src].state = 2
+                            modules[src].exports = typeof shim.exports === "function" ?
+                                    shim.exports() : window[shim.exports]
+                            checkDeps()
+                        })
+                    })
+                } else {
+                    loadJS(src)
+                }
+            }
+            return src
+        } else {
+            loadCSS(src)
+        }
+    }
+
+    function loadJS(url, callback) {
+        //通过script节点加载目标模块
+        var node = DOC.createElement("script")
+        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        node[W3C ? "onload" : "onreadystatechange"] = function() {
+            if (W3C || /loaded|complete/i.test(node.readyState)) {
+                //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
+                var factory = factorys.pop()
+                factory && factory.delay(node.src)
+                if (callback) {
+                    callback()
+                }
+                if (checkFail(node, false, !W3C)) {
+                    log("已成功加载 " + node.src, 7)
+                }
+            }
+        }
+        node.onerror = function() {
+            checkFail(node, true)
+        }
+        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
+        log("正准备加载 " + node.src, 7) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+    }
+
+    function loadCSS(url) {
+        //通过link节点加载模块需要的CSS文件
+        var id = url.replace(rmakeid, "")
+        if (!DOC.getElementById(id)) {
+            var node = DOC.createElement("link")
+            node.rel = "stylesheet"
+            node.href = url
+            node.id = id
+            head.insertBefore(node, head.firstChild)
+        }
+    }
+    window.require = avalon.require = function(list, factory, parent) {
+        // 用于检测它的依赖是否都为2
+        var deps = {},
+                // 用于保存依赖模块的返回值
+                args = [],
+                // 需要安装的模块数
+                dn = 0,
+                // 已安装完的模块数
+                cn = 0,
+                id = parent || "callback" + setTimeout("1")
+        parent = parent || basepath
+        String(list).replace(rword, function(el) {
+            var url = loadJSCSS(el, parent)
+            if (url) {
+                dn++
+                if (modules[url] && modules[url].state === 2) {
+                    cn++
+                }
+                if (!deps[url]) {
+                    args.push(url)
+                    deps[url] = "司徒正美" //去重
+                }
+            }
+        })
+        modules[id] = {//创建一个对象,记录模块的加载情况与其他信息
+            id: id,
+            factory: factory,
+            deps: deps,
+            args: args,
+            state: 1
+        }
+        if (dn === cn) { //如果需要安装的等于已安装好的
+            fireFactory(id, args, factory) //安装到框架中
+        } else {
+            //放到检测列队中,等待checkDeps处理
+            loadings.unshift(id)
+        }
+        checkDeps()
+    }
+    avalon.config = require.config = kernel
+    /**
+     * 定义模块
+     * @param {String} id ? 模块ID
+     * @param {Array} deps ? 依赖列表
+     * @param {Function} factory 模块工厂
+     * @api public
+     */
+    window.define = require.define = function(id, deps, factory) { //模块名,依赖列表,模块本身
+        var args = avalon.slice(arguments)
+        if (typeof id === "string") {
+            var _id = args.shift()
+        }
+        if (typeof args[0] === "boolean") { //用于文件合并, 在标准浏览器中跳过补丁模块
+            if (args[0]) {
+                return
+            }
+            args.shift()
+        }
+        if (typeof args[0] === "function") {
+            args.unshift([])
+        } //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
+        //现在除了safari外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
+        //safari可通过onload+delay闭包组合解决
+        id = modules[id] && modules[id].state >= 1 ? _id : getCurrentScript()
+        factory = args[1]
+        factory.id = _id //用于调试
+        factory.delay = function(id) {
+            args.push(id)
+            var isCycle = true
+            try {
+                isCycle = checkCycle(modules[id].deps, id)
+            } catch (e) {
+            }
+            if (isCycle) {
+                avalon.error(id + "模块与之前的某些模块存在循环依赖")
+            }
+            delete factory.delay //释放内存
+            require.apply(null, args) //0,1,2 --> 1,2,0
+        }
+        if (id) {
+            factory.delay(id, args)
+        } else { //先进先出
+            factorys.push(factory)
+        }
+    }
+    define.amd = modules
+
+    function fireFactory(id, deps, factory) {
+        for (var i = 0, array = [], d; d = deps[i++]; ) {
+            array.push(modules[d].exports)
+        }
+        var module = Object(modules[id]),
+                ret = factory.apply(window, array)
+        module.state = 2
+        if (ret !== void 0) {
+            modules[id].exports = ret
+        }
+        return ret
+    }
+    //============================domReady机制===========================
+    var readyFn, ready = W3C ? "DOMContentLoaded" : "readystatechange"
+
+    function fireReady() {
+        modules["!ready"].state = 2
+        checkDeps()
+        if (readyFn) {
+            avalon.unbind(DOC, ready, readyFn)
+        }
+        fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
+    }
+
+    function doScrollCheck() {
+        try { //IE下通过doScrollCheck检测DOM树是否建完
+            root.doScroll("left")
+            fireReady()
+        } catch (e) {
+            setTimeout(doScrollCheck)
+        }
+    }
+
+    if (DOC.readyState === "complete") {
+        fireReady() //如果在domReady之外加载
+    } else {
+        readyFn = avalon.bind(DOC, ready, function() {
+            if (W3C || DOC.readyState === "complete") {
+                fireReady()
+            }
+        })
+        if (root.doScroll) {
+            try { //如果跨域会报错，那时肯定证明是存在两个窗口
+                if (self.eval === parent.eval) {
+                    doScrollCheck()
+                }
+            } catch (e) {
+                doScrollCheck()
+            }
+        }
+    }
+
     /*********************************************************************
      *                      迷你jQuery对象的原型方法                    *
      **********************************************************************/
@@ -768,30 +1151,26 @@
      *                           Define                                 *
      **********************************************************************/
 
-    avalon.define = function(name, deps, factory) {
-        var args = [].slice.call(arguments)
+    avalon.define = function(name, factory) {
+        var args = avalon.slice(arguments)
         if (typeof name !== "string") {
             name = generateID()
             args.unshift(name)
         }
-        if (!Array.isArray(args[1])) {
-            args.splice(1, 0, [])
+        if (Array.isArray(args[1])) { //向前兼容
+            args.splice(args[1])
         }
-        deps = args[1]
-        if (typeof args[2] !== "function") {
+        if (typeof args[1] !== "function") {
             avalon.error("factory必须是函数")
         }
-        factory = args[2]
+        factory = args[1]
         var scope = {
             $watch: noop
         }
-        deps.unshift(scope)
         factory(scope) //得到所有定义
         var model = modelFactory(scope) //偷天换日，将scope换为model
         stopRepeatAssign = true
-        deps[0] = model
-        factory.apply(0, deps) //
-        deps.shift()
+        factory(model)
         stopRepeatAssign = false
         model.$id = name
         return avalon.models[name] = model
@@ -1089,9 +1468,9 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && (el.parentNode === null || el.sourceIndex === 0)) {
+                if (el && (!el.noRemove) && (el.sourceIndex === 0 || el.parentNode === null)) {
                     avalon.Array.remove(list, fn)
-                    avalon.log(fn + "")
+                    log(fn + "")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -1106,6 +1485,7 @@
         var vmodels = vmodel ? [].concat(vmodel) : []
         scanTag(elem, vmodels)
     }
+
     function scanNodes(parent, vmodels, callback) {
         var nodes = []
         for (var i = 0, node; node = parent.childNodes[i++]; ) {
@@ -2011,7 +2391,6 @@
         }
         data.view = view
         data.scopes = vmodels
-
         function updateListView(method, args, len) {
             var vmodels = updateListView.vmodels
             switch (method) {
@@ -2463,6 +2842,7 @@
 
     avalon.ready(function() {
         avalon.scan(document.body)
+
     })
 })(document)
 //2012.8.31 完成 v1
