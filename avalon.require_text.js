@@ -11,14 +11,14 @@ define(function() {
     }
     require.config.plugins.text = function(url, y, checkDeps) {
         var xhr = new (self.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+        var id = url.replace(/[?#].*/, "")
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 var status = xhr.status;
                 if (status > 399 && status < 600) {
                     //An http 4xx or 5xx error. Signal an error.
-                    avalon.error(url + ' HTTP status: ' + status);
+                    avalon.error(url + ' HTTP status: ' + status)
                 } else {
-                    var id = url.replace(/[?#].*/, "")
                     var modules = avalon.modules
                     modules[id].state = 2
                     modules[id].exports = jsEscape(xhr.responseText)
@@ -26,7 +26,8 @@ define(function() {
                 }
             }
         }
-        xhr.open("GET", url, true);
-        xhr.send();
+        xhr.open("GET", url, true)
+        xhr.send()
+        return id
     }
 })
