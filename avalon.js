@@ -304,30 +304,70 @@
         }
         return this
     }
-    kernel.plugin = {}
+    var plugins = {
+        js: function(url, shim) {
+            var id = cleanUrl(url)
+            if (!modules[id]) { //如果之前没有加载过
+                modules[id] = {
+                    id: id,
+                    parent: parent,
+                    exports: {}
+                }
+                if (shim) { //shim机制
+                    require(shim.deps || "", function() {
+                        loadJS(url, id, function() {
+                            modules[id].state = 2
+                            modules[id].exports = typeof shim.exports === "function" ?
+                                    shim.exports() : window[shim.exports]
+                            checkDeps()
+                        })
+                    })
+                } else {
+                    loadJS(url, id)
+                }
+            }
+            return id
+        },
+        css: function(url) {
+            var id = url.replace(rmakeid, "")
+            if (!DOC.getElementById(id)) {
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                node.id = id
+                head.insertBefore(node, head.firstChild)
+            }
+        },
+        alias: function(val) {
+            var map = kernel.alias
+            for (var c in val) {
+                if (ohasOwn.call(val, c)) {
+                    var prevValue = map[c]
+                    var currValue = val[c]
+                    if (prevValue) {
+                        avalon.error("注意" + c + "出经重写过")
+                    }
+                    map[c] = currValue
+                }
+            }
+        }
+    }
+    plugins.css.ext = ".css"
+    plugins.js.ext = ".js"
+    kernel.plugins = plugins
     kernel.alias = {}
+    function cleanUrl(url) {
+        return (url || "").replace(/[?#].*/, "")
+    }
     new function() {
         var cur = getCurrentScript(true)
         if (!cur) { //处理window safari的Error没有stack的问题
             cur = avalon.slice(document.scripts).pop().src
         }
-        var url = cur.replace(/[?#].*/, "")
+        var url = cleanUrl(cur)
         basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
     }
 
-    kernel.plugin["alias"] = function(val) {
-        var map = kernel.alias
-        for (var c in val) {
-            if (ohasOwn.call(val, c)) {
-                var prevValue = map[c]
-                var currValue = val[c]
-                if (prevValue) {
-                    avalon.error("注意" + c + "出经重写过")
-                }
-                map[c] = currValue
-            }
-        }
-    }
 
     function getCurrentScript(base) {
         // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
@@ -394,7 +434,7 @@
     }
 
     function checkFail(node, onError, fuckIE) {
-        var id = node.src //检测是否死链
+        var id = cleanUrl(node.src) //检测是否死链
         node.onload = node.onreadystatechange = node.onerror = null
         if (onError || (fuckIE && !modules[id].state)) {
             setTimeout(function() {
@@ -406,7 +446,7 @@
         }
     }
 
-    function loadJSCSS(url, parent, ret, shim) {
+    function loadResources(url, parent, ret, shim) {
         //1. 特别处理mass|ready标识符
         if (url === "ready!") {
             return url
@@ -418,75 +458,54 @@
                 shim = ret
                 ret = ret.src
             }
+        }
+        //3.  处理text!  css! 等资源
+        var plugin
+        url = url.replace(/^\w+!/, function(a) {
+            plugin = a.slice(0,-1)
+            return ""
+        })
+        plugin = plugin || "js"
+        plugin = plugins[plugin] || noop;
+        //4. 补全路径
+        if (/^(\w+)(\d)?:.*/.test(url)) {
+            ret = url
         } else {
-            var plugin
-            url = url.replace(/^\w+!/, function(a) {
-                plugin = a
-                return ""
-            })
-            console.log(url)
-            if (/^(\w+)(\d)?:.*/.test(url)) { //如果本来就是完整路径
-                ret = url
+            parent = parent.substr(0, parent.lastIndexOf('/'))
+            var tmp = url.charAt(0)
+            if (tmp !== "." && tmp !== "/") { //相对于根路径
+                ret = basepath + url
+            } else if (url.slice(0, 2) === "./") { //相对于兄弟路径
+                ret = parent + url.slice(1)
+            } else if (url.slice(0, 2) === "..") { //相对于父路径
+                var arr = parent.replace(/\/$/, "").split("/")
+                tmp = url.replace(/\.\.\//g, function() {
+                    arr.pop()
+                    return ""
+                })
+                ret = arr.join("/") + "/" + tmp
+            } else if (tmp === "/") {
+                ret = parent + url //相对于兄弟路径
             } else {
-                parent = parent.substr(0, parent.lastIndexOf('/'))
-                var tmp = url.charAt(0)
-                if (tmp !== "." && tmp !== "/") { //相对于根路径
-                    ret = basepath + url
-                } else if (url.slice(0, 2) === "./") { //相对于兄弟路径
-                    ret = parent + url.slice(1)
-                } else if (url.slice(0, 2) === "..") { //相对于父路径
-                    var arr = parent.replace(/\/$/, "").split("/")
-                    tmp = url.replace(/\.\.\//g, function() {
-                        arr.pop()
-                        return ""
-                    })
-                    ret = arr.join("/") + "/" + tmp
-                } else if (tmp === "/") {
-                    ret = parent + url //相对于兄弟路径
-                } else {
-                    avalon.error("不符合模块标识规则: " + url)
-                }
+                avalon.error("不符合模块标识规则: " + url)
             }
         }
-
-        var src = ret.replace(/[?#].*/, ""),
-                ext
-        if (/\.(css|js)$/.test(src)) { // 处理"http://113.93.55.202/mass.draggable"的情况
-            ext = RegExp.$1
-        }
-        if (!ext) { //如果没有后缀名,加上后缀名
-            src += ".js"
-            ext = "js"
-        }
-        //3. 开始加载JS或CSS
-        if (ext === "js") {
-            if (!modules[src]) { //如果之前没有加载过
-                modules[src] = {
-                    id: src,
-                    parent: parent,
-                    exports: {}
-                }
-                if (shim) { //shim机制
-                    require(shim.deps || "", function() {
-                        loadJS(src, function() {
-                            modules[src].state = 2
-                            modules[src].exports = typeof shim.exports === "function" ?
-                                    shim.exports() : window[shim.exports]
-                            checkDeps()
-                        })
-                    })
-                } else {
-                    loadJS(src)
-                }
+        //5. 补全扩展名
+        url = cleanUrl(ret)
+        var ext = plugin.ext
+        if (ext) {
+            if (url.slice(0 - ext.length) !== ext) {
+                ret += ext;
             }
-            console.log(src)
-            return src
-        } else {
-            loadCSS(src)
         }
+        //6. 缓存处理
+        if (kernel.nocache) {
+            ret += (ret.indexOf("?") === -1 ? "?" : "&") + (new Date - 0)
+        }
+        return  plugin(ret, modules, shim, checkDeps)
     }
 
-    function loadJS(url, callback) {
+    function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
@@ -494,38 +513,23 @@
             if (W3C || /loaded|complete/i.test(node.readyState)) {
                 //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
                 var factory = factorys.pop()
-                factory && factory.delay(node.src)
+                factory && factory.delay(id)
                 if (callback) {
                     callback()
                 }
                 if (checkFail(node, false, !W3C)) {
-                    log("已成功加载 " + node.src, 7)
+                    log("已成功加载 " + url)
                 }
             }
         }
         node.onerror = function() {
             checkFail(node, true)
         }
-        if (kernel.nocache) {
-            url += (url.indexOf("?") === -1 ? "?" : "&")
-                    + (new Date - 0)
-        }
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-        log("正准备加载 " + node.src, 7) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+        log("正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
-    function loadCSS(url) {
-        //通过link节点加载模块需要的CSS文件
-        var id = url.replace(rmakeid, "")
-        if (!DOC.getElementById(id)) {
-            var node = DOC.createElement("link")
-            node.rel = "stylesheet"
-            node.href = url
-            node.id = id
-            head.insertBefore(node, head.firstChild)
-        }
-    }
     window.require = avalon.require = function(list, factory, parent) {
         // 用于检测它的依赖是否都为2
         var deps = {},
@@ -538,10 +542,9 @@
                 id = parent || "callback" + setTimeout("1")
         parent = parent || basepath
         String(list).replace(rword, function(el) {
-            var url = loadJSCSS(el, parent)
+            var url = loadResources(el, parent)
             if (url) {
                 dn++
-
                 if (modules[url] && modules[url].state === 2) {
                     cn++
                 }
@@ -576,10 +579,10 @@
      */
     window.define = require.define = function(id, deps, factory) { //模块名,依赖列表,模块本身
         var args = avalon.slice(arguments)
-      
+
         if (typeof id === "string") {
             var _id = args.shift()
-            
+
         }
         if (typeof args[0] === "boolean") { //用于文件合并, 在标准浏览器中跳过补丁模块
             if (args[0]) {
@@ -592,7 +595,7 @@
         } //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
         //现在除了safari外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
         //safari可通过onload+delay闭包组合解决
-        id = modules[id] && modules[id].state >= 1 ? _id : getCurrentScript()
+        id = modules[id] && modules[id].state >= 1 ? _id : cleanUrl(getCurrentScript())
         factory = args[1]
         factory.id = _id //用于调试
         factory.delay = function(id) {
