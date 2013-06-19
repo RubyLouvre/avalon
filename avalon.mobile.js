@@ -126,7 +126,7 @@
             throw new (e || Error)(str)
         },
         ready: function(fn) {
-            require("!ready", fn)
+            require("ready!", fn)
         },
         oneObject: function(array, val) {
             if (typeof array === "string") {
@@ -233,7 +233,7 @@
     var rmakeid = /(#.+|\W)/g //用于处理掉href中的hash与所有特殊符号
     var basepath
     var modules = avalon.modules = {
-        "!ready": {
+        "ready!": {
             exports: avalon
         }
     }
@@ -351,7 +351,7 @@
 
     function loadJSCSS(url, parent, ret, shim) {
         //1. 特别处理mass|ready标识符
-        if (url === "!ready") {
+        if (url === "ready!") {
             return url
         }
         //2. 转化为完整路径
@@ -559,7 +559,7 @@
     //============================domReady机制===========================
 
     function fireReady() {
-        modules["!ready"].state = 2
+        modules["ready!"].state = 2
         checkDeps()
         fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
     }

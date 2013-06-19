@@ -286,7 +286,7 @@
     var rmakeid = /(#.+|\W)/g //用于处理掉href中的hash与所有特殊符号
     var basepath
     var modules = avalon.modules = {
-        "!ready": {
+        "ready!": {
             exports: avalon
         }
     }
@@ -419,6 +419,12 @@
                 ret = ret.src
             }
         } else {
+            var plugin
+            url = url.replace(/^\w+!/, function(a) {
+                plugin = a
+                return ""
+            })
+            console.log(url)
             if (/^(\w+)(\d)?:.*/.test(url)) { //如果本来就是完整路径
                 ret = url
             } else {
@@ -442,6 +448,7 @@
                 }
             }
         }
+
         var src = ret.replace(/[?#].*/, ""),
                 ext
         if (/\.(css|js)$/.test(src)) { // 处理"http://113.93.55.202/mass.draggable"的情况
@@ -472,6 +479,7 @@
                     loadJS(src)
                 }
             }
+            console.log(src)
             return src
         } else {
             loadCSS(src)
@@ -568,8 +576,10 @@
      */
     window.define = require.define = function(id, deps, factory) { //模块名,依赖列表,模块本身
         var args = avalon.slice(arguments)
+      
         if (typeof id === "string") {
             var _id = args.shift()
+            
         }
         if (typeof args[0] === "boolean") { //用于文件合并, 在标准浏览器中跳过补丁模块
             if (args[0]) {
