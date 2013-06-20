@@ -5,25 +5,37 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
         <script>
-            require.config.nocache = 1
-            require("aaa, css!eee, avalon.require_text", function(){
-                console.log("执行回调")
-            })
-            var a = avalon.define("aaa", function(vm) {
-                vm.friends = [{name: 'John', age: 25}, {name: 'Mary', age: 28}, {name: "Nasami", age: 30}]
-            })
-            setTimeout(function() {
-                a.friends.push({name: "dsfs", age: 44})
-            }, 1000)
- 
+
+
         </script>
     </head>
-    <body ms-controller="aaa">
-        I have {{friends.length}} friends. They are:
-        <ul ms-each-friend="friends">
-            <li >
-                [{{$index + 1}}] {{friend.name}} who is {{friend.age}} years old.
-            </li>
-        </ul>
+    <body ms-controller="xxx">
+        <table>
+            <thead>
+                <tr><th>First name</th><th>Last name</th></tr>
+            </thead>
+            <tbody ms-each-p="people">
+                <tr>
+                    <td >{{p.firstName}}</td>
+                    <td >{{p.lastName}}</td>
+                </tr>
+            </tbody>
+
+        </table>
+
+        <script type="text/javascript">
+            alert(document.documentElement.hidden)
+          var vmodel =  avalon.define("xxx", function(vm) {
+                vm.people = [{firstName: 'Bert', lastName: 'Bertington'},
+                    {firstName: 'Charles', lastName: 'Charlesforth'},
+                    {firstName: 'Denise', lastName: 'Dentiste'}
+                ]
+            })
+            setTimeout(function(){
+                  vmodel.people[0].firstName = "ddddd"
+            },1000)
+          
+
+        </script>
     </body>
 </html>

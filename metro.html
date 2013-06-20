@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>1111</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            .brick100_100{
+                width: 100px;
+                height:100px;
+                background: red;
+                float:left;         
+                margin-right:10px;
+                display: inline-block;
+                margin-bottom:10px;
+            }
+            .brick210_100{
+                width: 210px;
+                height:100px;
+                background: #1BCB51;
+                float:left;
+                margin-right:10px;
+                margin-bottom:10px;
+                display: inline-block;
+            }
+            .brick210_210{
+                width: 210px;
+                height:210px;
+                background: yellow;
+                float:left;
+                margin-right:10px;
+                margin-bottom:10px;
+                display: inline-block;
+            }
+            .column{
+                width: 220px;
+                min-height:440px;
+                max-height: 600px;
+                float:left;
+            }
+            .columm-parent {
+                width: 1100px;
+                height:440px;
+                background-color: Silver;
+            }
+
+            .multicol {
+                columns: 220px;
+                font:12px/16px Verdana, Arial, Sans-Serif;
+                vertical-align:text-top;
+                height:550px;
+            }
+            app{
+                display:block;
+            }
+        </style>
+
+        <script src="lib/jquery/jquery.js"></script>
+        <script src="lib/jquery/jquery.ui-1.10.3.js"></script>
+
+        <script>
+            $(function() {
+                var all = $('.column > app').draggable({
+                    start: function() {
+                        console.log($(this).css("top"))
+                        console.log(getAppRects())
+                    },
+                    zIndex: 100,
+                    stop: function(e) {
+                        var $el = $(this);
+
+                        $el.css("top", -1000)
+                        var node = document.elementFromPoint(e.pageX, e.pageY);
+
+                        if (node) {
+                            if (node.tagName === "APP") {
+                                $(node).before(this);
+                            }
+                            if (node.tagName === "SECTION") {
+                                $(node).append(this);
+                            }
+                        }
+
+                        all.css("position", "static")
+                        reorderColumn($("section:first-child"))
+                        all.css({
+                            position: "relative",
+                            top: 0,
+                            left: 0
+                        })
+
+                    }
+                });
+                function getAppRects() {
+                  return   [].map.call(document.querySelectorAll("app"), function(el) {
+                        var $el = $(el)
+                        var offset = $el.offset();
+                        return {
+                            node: el, rect: [offset.left, offset.top, offset.left + $el.width(), offset.top + $el.height()], width: $el.width()
+                        }
+                    })
+                }
+                function addBlankRects(array){
+                    var blankGroup = []
+                    var group = blankGroup
+                    for(var i = 0, el; el = array[i++];){
+                        if(group === blankGroup){
+                            
+                        }
+                    }
+                }
+                //取得每列内容的实际高
+                function getColumnHeight(node) {
+                    var ret = 0, skip
+                    [].forEach.call(node.children, function(elem) {
+                        var array = elem.className.match(/brick(\d+)_(\d+)/)
+                        var w = +array[1]
+                        var h = +array[2]
+                        if (h === 100 && w === 100) {
+                            //如果是并排着两个100*100的砖头，那么只加其中一个
+                            if (!skip) {
+                                ret += h;
+                                skip = true
+                            } else {
+                                skip = false
+                            }
+                        } else {
+                            skip = false
+                            ret += h
+                        }
+                    })
+                    console.log(ret)
+                    return ret
+                }
+                // 调整每列的砖头数
+                // 如果少于400，那么从右边一列最前的几个挪到当前列；
+                // 如果大于400，那么将当前最后几个挪到右边一列
+                function reorderColumn(curr) {
+                    var node = curr[0], next = curr.next()
+                    if (node) {
+                        for (var i = 0; i < 4; i++) {
+                            if (getColumnHeight(node) < 410) {
+                                curr.append(next.children().first())
+                            }
+                        }
+                        for (var i = 0; i < 4; i++) {
+                            if (getColumnHeight(node) > 410) {
+                                next.prepend(curr.children().last())
+                            }
+                        }
+                        next[0] && reorderColumn(next)
+                    }
+                }
+            })
+        </script>
+    </head>
+    <body>
+
+        <div class="columm-parent">
+            <section  class="column" style="background: #dff0d8;">
+                <app class="brick100_100"></app>
+                <app class="brick210_210"></app>
+               <app class="brick210_100"></app>
+            </section>
+            <section  class="column" style="background: #f2dede">
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+                <app class="brick210_100"></app>
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+            </section>
+            <section  class="column" style="background: #a9ea00;">
+               
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+                <app class="brick100_100"></app><app class="brick100_100"></app>
+            </section>
+            <section  class="column" style="background: #faf8e3;">
+                <app class="brick210_100"></app>
+                <app class="brick210_210"></app>
+                <app class="brick210_100"></app>
+            </section>
+            <section  class="column" style="background: #d9edf7;">
+                  <app class="brick100_100"></app> <app class="brick210_100"></app>
+            </section>
+        </div>
+    </body>
+</html>
