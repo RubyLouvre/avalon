@@ -612,7 +612,6 @@
         hasClass: function(cls) {
             var el = this[0] || {}
             return el.nodeType === 1 && el.classList.contains(cls)
-
         },
         addClass: function(cls) {
             var el = this[0]
@@ -629,7 +628,6 @@
                 cls.replace(rword, function(c) {
                     node.classList.remove(c)
                 })
-
             }
             return this
         },
@@ -1744,6 +1742,14 @@
         watchView(data.value, vmodels, data, function(val, elem) {
             elem.disabled = !val
         })
+    }
+    if (typeof DOC.createElement("div").hidden === "boolean") {
+        bindingHandlers.visible = function(data, vmodels) {
+            var elem = data.element
+            watchView(data.value, vmodels, data, function(val) {
+                elem.hidden = !val
+            })
+        }
     }
     /////////////////////////// string preperty binding///////////////////////////
     //与href绑定器 用法差不多的其他字符串属性的绑定器

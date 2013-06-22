@@ -1363,8 +1363,7 @@
             fn.locked = 1
             delete Publish[expose]
         })
-        vmodel.$json = model
-        vmodel.$model = model
+        vmodel.$model =  vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$watch = Observable.$watch.bind(vmodel)
         vmodel.$unwatch = Observable.$unwatch.bind(vmodel)
