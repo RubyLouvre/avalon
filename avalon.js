@@ -82,7 +82,7 @@
     }
     if (/[native code]/.test(Object.getPrototypeOf)) {
         avalon.isPlainObject = function(obj) {
-            return obj && Object.getPrototypeOf({}) === oproto
+            return obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
     }
     avalon.mix = avalon.fn.mix = function() {
@@ -122,6 +122,7 @@
                         continue
                     }
                     if (deep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+                        console.log(name)
                         if (copyIsArray) {
                             copyIsArray = false
                             clone = src && Array.isArray(src) ? src : []
@@ -139,6 +140,8 @@
         }
         return target
     }
+
+
 
     avalon.mix({
         rword: rword,
@@ -1175,7 +1178,7 @@
             args.unshift(name)
         }
         if (Array.isArray(args[1])) { //向前兼容
-            args.splice(1,1)
+            args.splice(1, 1)
         }
         if (typeof args[1] !== "function") {
             avalon.error("factory必须是函数")
@@ -1363,7 +1366,7 @@
             fn.locked = 1
             delete Publish[expose]
         })
-        vmodel.$model =  vmodel.$json = model
+        vmodel.$model = vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$watch = Observable.$watch.bind(vmodel)
         vmodel.$unwatch = Observable.$unwatch.bind(vmodel)

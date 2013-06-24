@@ -54,10 +54,10 @@
         return rwindow.test(serialize.call(obj))
     }
 
-    //判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例。
+    //判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例
 
     avalon.isPlainObject = function(obj) {
-        return obj && Object.getPrototypeOf({}) === oproto
+        return obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
     }
 
     avalon.mix = avalon.fn.mix = function() {
