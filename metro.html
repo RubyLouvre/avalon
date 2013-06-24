@@ -1,85 +1,110 @@
+
 <!DOCTYPE html>
 <html>
     <head>
-        <title>1111</title>
+        <title>metro</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <style>
-            .brick100_100{
-                width: 100px;
-                height:100px;
+            .app_small{
+                width: 150px;
+                height:150px;
                 background: red;
-                float:left;         
-                margin-right:10px;
-                display: inline-block;
-                margin-bottom:10px;
+
             }
-            .brick210_100{
-                width: 210px;
-                height:100px;
+            app:hover{
+                outline: 3px #3a3a3a solid;
+            }
+
+            .noapp {
+                 opacity: 0;
+               /* background:blue!important;*/
+            }
+            .app_middle{
+                width: 310px;
+                height:150px;
                 background: #1BCB51;
-                float:left;
-                margin-right:10px;
-                margin-bottom:10px;
-                display: inline-block;
             }
-            .brick210_210{
-                width: 210px;
-                height:210px;
+            .app_big{
+                width: 310px;
+                height:310px;
                 background: yellow;
-                float:left;
-                margin-right:10px;
-                margin-bottom:10px;
-                display: inline-block;
             }
             .column{
-                width: 220px;
-                min-height:440px;
-                max-height: 600px;
+                width: 320px;
+                padding-top: 10px;
+                padding-left: 10px;
+                min-height:640px;
+                max-height: 650px;
                 float:left;
             }
-            .columm-parent {
-                width: 1100px;
-                height:440px;
+            .columms {
+                width: 1700px;
+                height:640px;
                 background-color: Silver;
             }
 
-            .multicol {
-                columns: 220px;
-                font:12px/16px Verdana, Arial, Sans-Serif;
-                vertical-align:text-top;
-                height:550px;
-            }
+
             app{
                 display:block;
+                float:left;         
+                margin-right:10px;
+                margin-bottom:10px;
             }
         </style>
 
-        <script src="lib/jquery/jquery.js"></script>
-        <script src="lib/jquery/jquery.ui-1.10.3.js"></script>
+        <script src="jquery.js"></script>
+        <script src="jquery.ui-1.10.3.js"></script>
 
         <script>
             $(function() {
-                var all = $('.column > app').draggable({
+                //得到放置用的元素
+                function getAppDropper(x, y, array) {
+                    for (var i = 0, el; el = array[i++]; ) {
+                        if (contains(x, y, el.rect)) {
+                            return el.node;
+                        }
+                    }
+                }
+                //判定一点是否在一个矩形内
+                function contains(x, y, rect) {
+                    return x >= rect[0] && x <= rect[2] && y >= rect[1] && y <= rect[3]
+                }
+
+                var apps, startX, startY
+                var all = $('.app_small, .app_big, .app_middle').draggable({
                     start: function() {
-                        console.log($(this).css("top"))
-                        console.log(getAppRects())
+                        apps = fillBlanks()
+                        var offset = $(this).offset()
+                        //startX, startY用于判定移动的方向
+                        startX = offset.left;
+                        startY = offset.top;
                     },
                     zIndex: 100,
                     stop: function(e) {
-                        var $el = $(this);
-
-                        $el.css("top", -1000)
-                        var node = document.elementFromPoint(e.pageX, e.pageY);
-
-                        if (node) {
-                            if (node.tagName === "APP") {
-                                $(node).before(this);
-                            }
-                            if (node.tagName === "SECTION") {
-                                $(node).append(this);
+                        var $el = $(this),
+                                big = /app_big|app_middle/.test(this.className),
+                                offset = $el.offset(),
+                                point = big ? [offset.left, offset.top] : [offset.left + $el.width() / 2, offset.top + $el.height() / 2],
+                                dropper = getAppDropper(point[0], point[1], apps)
+                        if (dropper) {
+                            if (dropper.tagName === "APP") {
+                                var offset = $(this).offset();
+                                var upOrDown = offset.top - startY; //如果是正数，说明往下移动
+                                var leftOrRight = offset.left - startX;////如果是正数，说明往右移动
+                                var beforeOrAfter
+                                if (Math.abs(upOrDown) > 140) {
+                                    beforeOrAfter = upOrDown > 0; //往下移动， 就插入后面， 否则前面
+                                } else {
+                                    beforeOrAfter = leftOrRight > 0; //往右移动， 就插入后面， 否则前面
+                                }
+                                if (beforeOrAfter) {//往下移动， 就插入在放置对象的后面，否则放在前面
+                                    dropper.parentNode.insertBefore(this, dropper.nextElementSibling)
+                                } else {
+                                    dropper.parentNode.insertBefore(this, dropper)
+                                }
                             }
                         }
-
+                        removeBlanks()
                         all.css("position", "static")
                         reorderColumn($("section:first-child"))
                         all.css({
@@ -87,63 +112,151 @@
                             top: 0,
                             left: 0
                         })
-
                     }
                 });
-                function getAppRects() {
-                  return   [].map.call(document.querySelectorAll("app"), function(el) {
-                        var $el = $(el)
-                        var offset = $el.offset();
-                        return {
-                            node: el, rect: [offset.left, offset.top, offset.left + $el.width(), offset.top + $el.height()], width: $el.width()
+                //填充空白APP，充当占位符，方便拖放操作
+                function fillBlanks() {
+                    fillBigBlanks()
+                    var apps = getDescs()
+                    fillSmallBlanks(apps)
+                    return getDescs()
+                }
+
+                //取得APP的数据描述，包括节点，类型，在屏幕的位置大小
+                function getDesc(node) {
+                    var $el = $(node)
+                    var offset = $el.offset()
+                    var width = $el.width()
+                    var height = $el.height()
+                    return {
+                        node: node,
+                        width: width,
+                        height: height,
+                        noapp: /noapp/.test(node.className),
+                        type: node.className.match(/app_(\w+)/)[1],
+                        rect: [offset.left, offset.top, offset.left + width, offset.top + height]
+                    }
+                }
+                //取得所有APP的数据描述，包括节点，类型，　所在行，所在列，在屏幕的位置大小
+                function getDescs() {
+                    var apps = [];//添加行号与列号，如果是small类型，只有在同一列并且两个并在一起，才递增行号
+                    [].forEach.call(document.querySelectorAll("section"), function(el, c) {
+                        var r = -1, firstSmall = false;
+                        [].forEach.call(el.children, function(app) {
+                            var obj = getDesc(app);
+                            if (obj.type == "small") {
+                                if (!firstSmall) {
+                                    obj.row = ++r
+                                    obj.left = true;
+                                    firstSmall = true
+                                } else {
+                                    obj.row = r
+                                    obj.left = false
+                                    firstSmall = false
+                                }
+                            } else {
+                                obj.row = ++r
+                                firstSmall = false
+                            }
+                            obj.col = c
+                            apps.push(obj)
+                        })
+                    })
+                    return apps;
+                }
+
+                function fillBigBlanks() {
+                    //先填充体积大的
+                    [].forEach.call(document.querySelectorAll("section"), function(el, i) {
+                        var rows = 4 - getColumnRows(el);
+                        if (rows > 2) {
+                            $(el).append('<app class="app_big noapp"></app>')
+                        } else if (rows > 1) {
+                            $(el).append('<app class="app_middle noapp" ></app>')
                         }
                     })
                 }
-                function addBlankRects(array){
-                    var blankGroup = []
-                    var group = blankGroup
-                    for(var i = 0, el; el = array[i++];){
-                        if(group === blankGroup){
-                            
+
+                function fillSmallBlanks(apps) {
+                    var row = []
+                    for (var i = 0, el; el = apps[i++]; ) {
+                        var flagFill = false
+                        if (!row[0]) {
+                            // 当前行的第一个为small类型的APP, 表明它后面有可能需要填充
+                            if (el.type === "small") {
+                                row.push(el)
+                            }
+                        } else {
+                            //这里一共有四种情况
+                            if (el.type === "small") {
+                                //① small small    这种情况，因为两个small已经占满一行，那么直接忽略
+                                //② middle        | small small
+                                //   big           | 这种情况，空白在某列的最下一行的右边，而紧挨着的small在另一列，需要填充 
+                                //   small blank   |
+                                if (el.row !== row[0].row) {
+                                    flagFill = true
+                                }
+                                row.length = 0
+                            } else {
+                                //③ small blank 这两种情况，在同一列中，某一行只有一个small, 
+                                //   middle      然后下面就middle或big类型的APP， 那么需要填充
+                                //④ small blank
+                                //   big
+                                flagFill = true
+                                row.length = 0
+                            }
+                            if (flagFill) {
+                                var index = apps.indexOf(el);
+                                var before = apps[index - 1]
+                                var $el = $('<app class="app_small noapp" ></app>').insertAfter(before.node);
+                                var obj = getDesc($el[0]);
+                                obj.row = before.row;
+                                obj.col = before.col;
+                                apps.splice(index, 0, obj)
+                            }
                         }
                     }
                 }
-                //取得每列内容的实际高
-                function getColumnHeight(node) {
-                    var ret = 0, skip
+                function removeBlanks() {
+                    [].forEach.call(document.querySelectorAll(".noapp"), function(el) {
+                        el.parentNode.removeChild(el)
+                    })
+                }
+
+                //取得每列有多少行， big当成两行来计算
+                function getColumnRows(node) {
+                    var rows = 0, changeRow = true;
                     [].forEach.call(node.children, function(elem) {
-                        var array = elem.className.match(/brick(\d+)_(\d+)/)
-                        var w = +array[1]
-                        var h = +array[2]
-                        if (h === 100 && w === 100) {
+                        var type = elem.className.match(/app_(\w+)/)[1]
+                        if (type == "small") {
                             //如果是并排着两个100*100的砖头，那么只加其中一个
-                            if (!skip) {
-                                ret += h;
-                                skip = true
+                            if (changeRow) {
+                                rows += 1;
+                                changeRow = false
                             } else {
-                                skip = false
+                                changeRow = true
                             }
                         } else {
-                            skip = false
-                            ret += h
+                            changeRow = true
+                            rows += type == "big" ? 2 : 1
                         }
                     })
-                    console.log(ret)
-                    return ret
+
+                    return rows
                 }
                 // 调整每列的砖头数
-                // 如果少于400，那么从右边一列最前的几个挪到当前列；
-                // 如果大于400，那么将当前最后几个挪到右边一列
+                // 如果少于4，那么从右边一列最前的几个挪到当前列； 
+                // 如果大于4，那么将当前最后几个挪到右边一列
                 function reorderColumn(curr) {
                     var node = curr[0], next = curr.next()
                     if (node) {
-                        for (var i = 0; i < 4; i++) {
-                            if (getColumnHeight(node) < 410) {
+                        for (var i = 0; i < 6; i++) {
+                            if (getColumnRows(node) < 4) {
                                 curr.append(next.children().first())
                             }
                         }
-                        for (var i = 0; i < 4; i++) {
-                            if (getColumnHeight(node) > 410) {
+                        for (var i = 0; i < 6; i++) {
+                            if (getColumnRows(node) > 4) {
                                 next.prepend(curr.children().last())
                             }
                         }
@@ -155,31 +268,31 @@
     </head>
     <body>
 
-        <div class="columm-parent">
+        <div class="columms">
             <section  class="column" style="background: #dff0d8;">
-                <app class="brick100_100"></app>
-                <app class="brick210_210"></app>
-               <app class="brick210_100"></app>
+                <app class="app_small"></app>
+                <app class="app_big"></app>
+                <app class="app_middle"></app>
             </section>
             <section  class="column" style="background: #f2dede">
-                <app class="brick100_100"></app><app class="brick100_100"></app>
-                <app class="brick210_100"></app>
-                <app class="brick100_100"></app><app class="brick100_100"></app>
-                <app class="brick100_100"></app><app class="brick100_100"></app>
+                <app class="app_small xxx"></app><app class="app_small"></app>
+                <app class="app_middle"></app>
+                <app class="app_small"></app><app class="app_small"></app>
+                <app class="app_small"></app><app class="app_small"></app>
             </section>
             <section  class="column" style="background: #a9ea00;">
-               
-                <app class="brick100_100"></app><app class="brick100_100"></app>
-                <app class="brick100_100"></app><app class="brick100_100"></app>
-                <app class="brick100_100"></app><app class="brick100_100"></app>
+
+                <app class="app_small">A</app><app class="app_small">B</app>
+                <app class="app_small">C</app><app class="app_small">D</app>
+                <app class="app_small"></app><app class="app_small"></app>
             </section>
             <section  class="column" style="background: #faf8e3;">
-                <app class="brick210_100"></app>
-                <app class="brick210_210"></app>
-                <app class="brick210_100"></app>
+                <app class="app_middle"></app>
+                <app class="app_big"></app>
+                <app class="app_middle"></app>
             </section>
             <section  class="column" style="background: #d9edf7;">
-                  <app class="brick100_100"></app> <app class="brick210_100"></app>
+                <app class="app_small"></app> <app class="app_middle"></app>
             </section>
         </div>
     </body>

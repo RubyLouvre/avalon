@@ -24,18 +24,26 @@
         </table>
 
         <script type="text/javascript">
-          
-          var vmodel =  avalon.define("xxx", function(vm) {
+     
+            var vmodel = avalon.define("xxx", function(vm) {
+                vm.$skipArray = ["people"]
                 vm.people = [{firstName: 'Bert', lastName: 'Bertington'},
                     {firstName: 'Charles', lastName: 'Charlesforth'},
                     {firstName: 'Denise', lastName: 'Dentiste'}
                 ]
+                vm.xxx = []
+                vm.aaa = function(){
+                    vm.xxx = vm.people.slice(1)
+                }
             })
-            setTimeout(function(){
-                  vmodel.people[0].firstName = "ddddd"
-            },1000)
+            
+            setTimeout(function() {
+                vmodel.aaa();
+                console.log(vmodel.xxx)
+                console.log(vmodel.people)
+              //  vmodel.people[0].firstName = "ddddd"
+            }, 1000)
           
-
         </script>
     </body>
 </html>

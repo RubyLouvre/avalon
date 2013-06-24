@@ -23,6 +23,7 @@
 
 
             var grid = avalon.define("grid", function(scope) {
+                scope.$skipArray = ["items"]
                 scope.items = [
                     {name: "Well-Travelled Kitten", sales: 352, price: 75.95},
                     {name: "Speedy Coyote", sales: 89, price: 190.00},
@@ -38,19 +39,18 @@
                 scope.pages = [];//装着所有页码,以零开始
                 scope.getShowItems = function() {
                     var i = scope.pageIndex, c = scope.pageCount;
-                    var array = scope.$json.items.slice(i * c, (i + 1) * c)
-                 //   console.log(array)
-                    scope.showItems = array;
+                    var array = scope.items.slice(i * c, (i + 1) * c)
+                    scope.showItems = avalon.mix(true, [], array)
                 }
                 scope.addItem = function() {
                     var a = {name: "New item", sales: 0, price: 100};
                     scope.items.push(a);
-                    scope.showItems.push(a);
+                    scope.showItems.push(avalon.mix(true, {}, a));
                     scope.getPages();
                 };
                 scope.removeItem = function(e) {
                     e.preventDefault()
-                    var item = this.$scope.$remove();
+                    var item = this.$vmodel.$remove();
                     scope.items.remove(item);
                     if (!scope.showItems.length) {
                         if (Math.ceil(scope.items.length / scope.pageCount) === scope.pageIndex) {
@@ -62,7 +62,7 @@
 
                 };
                 scope.getPages = function() {
-                    var total = Math.ceil(scope.items.size() / scope.pageCount);
+                    var total = Math.ceil(scope.items.length / scope.pageCount);
                     scope.pages = avalon.range(total);//用法与python, underscorejs一致,生成一个整数数组
                 }
                 function compare(a, b) {

@@ -302,6 +302,7 @@
     plugins.css.ext = ".css"
     plugins.js.ext = ".js"
     kernel.plugins = plugins
+    kernel.compact = true
     kernel.alias = {}
 
     function cleanUrl(url) {
@@ -1148,8 +1149,10 @@
             fn.locked = 1
             delete Publish[expose]
         })
-        vmodel.$json = model
         vmodel.$model = model
+        if (kernel.compact) {
+            vmodel.$json = model
+        }
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$watch = Observable.$watch
         vmodel.$unwatch = Observable.$unwatch
@@ -1269,8 +1272,8 @@
                 value = value.replace(regCloseTag, function(a, b) {
                     if (b) {
                         var leach = []
-                        if (b.indexOf("|") > 0) {
-                            b = b.replace(/\|\s*(\w+)\s*(\([^)]+\))?/g, function(c, d, e) {
+                        if (b.indexOf("|") > 0) {// 注意排除短路与
+                            b = b.replace(/[^|]\|\s*(\w+)\s*(\([^)]+\))?/g, function(c, d, e) {
                                 leach.push(d + (e || ""))
                                 return ""
                             })
@@ -1400,6 +1403,7 @@
         }
         if (!array && !tokens) {
             array = parseExpr(text, scopes, data)
+
         }
         if (!array && tokens) {
             array = tokens.map(function(token) {
@@ -1925,7 +1929,10 @@
         var collection = list.map(syncModel, list) //转换里面的元素为VM
         collection.$id = generateID()
         collection[subscribers] = []
-        collection.$model = collection.$json = list
+        collection.$model = list
+        if (kernel.compact) {
+            collection.$json = list
+        }
         var dynamic = modelFactory({
             length: list.length
         })

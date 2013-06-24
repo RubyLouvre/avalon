@@ -1585,8 +1585,8 @@
                 value = value.replace(regCloseTag, function(a, b) {
                     if (b) {
                         var leach = []
-                        if (b.indexOf("|") > 0) {
-                            b = b.replace(/\|\s*(\w+)\s*(\([^)]+\))?/g, function(c, d, e) {
+                        if (b.indexOf("|") > 0 ) {// 注意排除短路与
+                            b = b.replace(/[^|]\|\s*(\w+)\s*(\([^)]+\))?/g, function(c, d, e) {
                                 leach.push(d + (e || ""))
                                 return ""
                             })
