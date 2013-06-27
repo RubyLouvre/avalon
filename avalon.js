@@ -122,7 +122,7 @@
                         continue
                     }
                     if (deep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
-                        console.log(name)
+
                         if (copyIsArray) {
                             copyIsArray = false
                             clone = src && Array.isArray(src) ? src : []
@@ -1585,7 +1585,7 @@
                 value = value.replace(regCloseTag, function(a, b) {
                     if (b) {
                         var leach = []
-                        if (b.indexOf("|") > 0 ) {// 注意排除短路与
+                        if (b.indexOf("|") > 0) {// 注意排除短路与
                             b = b.replace(/[^|]\|\s*(\w+)\s*(\([^)]+\))?/g, function(c, d, e) {
                                 leach.push(d + (e || ""))
                                 return ""
@@ -1909,16 +1909,17 @@
             })
         },
         "on": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(fn, elem) {
-                var type = data.args[0]
-                if (type && typeof fn === "function") { //第一种形式
-                    if (!elem.$vmodels) {
-                        elem.$vmodel = elem.$scope = vmodels[0]
-                        elem.$vmodels = vmodels
-                    }
-                    avalon.bind(elem, type, fn)
-                }
+            var callback, type = data.args[0], elem = data.element
+            watchView(data.value, vmodels, data, function(fn) {
+                callback = fn
             })
+            if (!elem.$vmodels) {
+                elem.$vmodel = elem.$scope = vmodels[0]
+                elem.$vmodels = vmodels
+            }
+            if (type && typeof callback === "function") {
+                avalon.bind(elem, type, callback)
+            }
         },
         "data": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {

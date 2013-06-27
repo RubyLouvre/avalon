@@ -5,6 +5,22 @@
         <title>metro</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <style>
+
+            .column{
+                width: 340px;
+                padding-top: 20px;
+                min-height:530px;
+                max-height: 600px;
+                float:left;
+            }
+            .columms {
+                margin-top: 5em;
+                overflow:hidden;
+                padding-left: 20px;
+                width: 1650px;
+                height:530px;
+                background-color:#dff0d8;
+            }
             .app_small{
                 width: 150px;
                 height:150px;
@@ -12,172 +28,236 @@
 
             }
             app:hover{
-                outline: 3px #3a3a3a solid;
+                outline: 5px #A4D3EE solid;
             }
 
             .noapp {
-                 opacity: 0;
-               /* background:blue!important;*/
+                opacity: 0;
+                /* background:blue!important;*/
             }
             .app_middle{
-                width: 310px;
+                width: 320px;
                 height:150px;
                 background: #1BCB51;
             }
             .app_big{
-                width: 310px;
-                height:310px;
+                width: 320px;
+                height:320px;
                 background: yellow;
             }
-            .column{
-                width: 320px;
-                padding-top: 10px;
-                padding-left: 10px;
-                min-height:640px;
-                max-height: 650px;
-                float:left;
-            }
-            .columms {
-                width: 1700px;
-                height:640px;
-                background-color: Silver;
-            }
+
 
 
             app{
                 display:block;
-                float:left;         
-                margin-right:10px;
-                margin-bottom:10px;
+                float:left;     
+                margin-right:20px;
+                margin-bottom:20px;
             }
         </style>
 
         <script src="jquery.js"></script>
-        <script src="jquery.ui-1.10.3.js"></script>
-
+        <!--        <script src="jquery.ui-1.10.3.js"></script>-->
+        <script src="draggable.js"></script>
         <script>
-            $(function() {
-                //得到放置用的元素
-                function getAppDropper(x, y, array) {
-                    for (var i = 0, el; el = array[i++]; ) {
-                        if (contains(x, y, el.rect)) {
-                            return el.node;
-                        }
-                    }
-                }
-                //判定一点是否在一个矩形内
-                function contains(x, y, rect) {
-                    return x >= rect[0] && x <= rect[2] && y >= rect[1] && y <= rect[3]
-                }
 
-                var apps, startX, startY
-                var all = $('.app_small, .app_big, .app_middle').draggable({
-                    start: function() {
-                        apps = fillBlanks()
-                        var offset = $(this).offset()
-                        //startX, startY用于判定移动的方向
-                        startX = offset.left;
-                        startY = offset.top;
-                    },
-                    zIndex: 100,
-                    stop: function(e) {
-                        var $el = $(this),
-                                big = /app_big|app_middle/.test(this.className),
-                                offset = $el.offset(),
-                                point = big ? [offset.left, offset.top] : [offset.left + $el.width() / 2, offset.top + $el.height() / 2],
-                                dropper = getAppDropper(point[0], point[1], apps)
-                        if (dropper) {
-                            if (dropper.tagName === "APP") {
-                                var offset = $(this).offset();
-                                var upOrDown = offset.top - startY; //如果是正数，说明往下移动
-                                var leftOrRight = offset.left - startX;////如果是正数，说明往右移动
-                                var beforeOrAfter
-                                if (Math.abs(upOrDown) > 140) {
-                                    beforeOrAfter = upOrDown > 0; //往下移动， 就插入后面， 否则前面
-                                } else {
-                                    beforeOrAfter = leftOrRight > 0; //往右移动， 就插入后面， 否则前面
-                                }
-                                if (beforeOrAfter) {//往下移动， 就插入在放置对象的后面，否则放在前面
-                                    dropper.parentNode.insertBefore(this, dropper.nextElementSibling)
-                                } else {
-                                    dropper.parentNode.insertBefore(this, dropper)
-                                }
+            function Metro(opts) {
+                //rows: Number 一列可以容纳多少行， 其中big app占两行
+                //element: Element 容器元素
+                //columnWidth: Number 每列的宽度
+                //apps: Array<Object> 所有应用的 数据描述
+                //
+                //   app 的  数据描述
+                //
+                //   left  Boolean   应用于small类型,因为一行可以排两个,用于判定是放在左边还是右边
+                //   col  Number  位于第几列(section) 它以rows息息相关
+                //   row Number   第几行
+                //   type String "small" "middle" "big"
+                opts = opts || {};
+                this.element = $(opts.element)
+                this.rows = opts.rows;
+                this.apps = opts.apps
+                this.columnWidth = opts.columnWidth
+                this.init()
+            }
+            Metro.prototype = {
+                constructor: Metro,
+                cols: {},
+                compare: function(a, b) {// 对所有APP按用户预定义的位置进行排序
+                    return ((~~a.col) * 1000 + (~~a.row) * 100 + (a.left ? 0 : 1)) -
+                            ((~~b.col) * 1000 + (~~b.row) * 100 + (a.left ? 0 : 1))
+                },
+                init: function() {
+                    //之前的row, col, left仅供参考， 只是保证它们从左到右，从上到下排列
+                    this.apps.sort(this.compare)
+                    var element = this.element.width(0)
+                    //添加随机背景颜色
+                    var rgb = function rgb() {
+                        return Math.floor(Math.random() * 256)
+                    };
+                    function color() {
+                        return "rgb(" + [rgb(), rgb(), rgb()] + ")";
+                    }
+                    //开始创建section与app元素
+                    for (var i = 0, app; app = this.apps[i++]; ) {
+                        if (!this.cols[app.col]) {//创建新的一列，用于放置app元素，并撑开.columns元素
+                            this.cols[app.col] = $('<section  class="column" style="background: #dff0d8;"></section>').appendTo(element)
+                            element.width("+=" + this.columnWidth)
+
+                        }
+                        var col = this.cols[app.col];
+                        $('<app class="app_' + app.type + '" style="background:' + color() + '"></app>').appendTo(col)
+
+                    }
+                    //根据实际情况对所有APP进行重排列
+                    this.adjustColumnRows()
+                },
+                //调整APP的位置   
+                adjustColumnRows: function() {
+                    var cols = this.element.find("section")
+                    //添加多余的列，防止每列可容纳的行数被调少时， 有些APP没有位置放
+                    for (var i = 0, n = cols.length; i < n; i++) {
+                        this.element.append('<section  class="column" style="background: #dff0d8;"></section>')
+                    }
+
+                    this._adjustColumnRows(cols.eq(0))
+
+                    //移除没有APP的空列
+                    this.element.find("section:empty").remove()
+                    //重新调整容器的宽度
+                    this.element.width(this.element.find("section").length * this.columnWidth)
+                    this.bindDragEvent()
+                },
+                //调整每列的行数，多行的APP移到下一列的前面几行去
+                _adjustColumnRows: function(curr) {
+                    var node = curr[0], next = curr.next()
+                    if (node) {
+                        for (var i = 0; i < 6; i++) {
+                            if (this.getColumnRows(node) < this.rows) {
+                                curr.append(next.children().first())
                             }
                         }
-                        removeBlanks()
-                        all.css("position", "static")
-                        reorderColumn($("section:first-child"))
-                        all.css({
-                            position: "relative",
-                            top: 0,
-                            left: 0
-                        })
+                        for (var i = 0; i < 6; i++) {
+                            if (this.getColumnRows(node) > this.rows) {
+                                next.prepend(curr.children().last())
+                            }
+                        }
+                        if (next && next.find("app").length) {
+                            this._adjustColumnRows(next)
+                        }
                     }
-                });
-                //填充空白APP，充当占位符，方便拖放操作
-                function fillBlanks() {
-                    fillBigBlanks()
-                    var apps = getDescs()
-                    fillSmallBlanks(apps)
-                    return getDescs()
-                }
-
-                //取得APP的数据描述，包括节点，类型，在屏幕的位置大小
-                function getDesc(node) {
-                    var $el = $(node)
-                    var offset = $el.offset()
-                    var width = $el.width()
-                    var height = $el.height()
-                    return {
-                        node: node,
-                        width: width,
-                        height: height,
-                        noapp: /noapp/.test(node.className),
-                        type: node.className.match(/app_(\w+)/)[1],
-                        rect: [offset.left, offset.top, offset.left + width, offset.top + height]
-                    }
-                }
-                //取得所有APP的数据描述，包括节点，类型，　所在行，所在列，在屏幕的位置大小
-                function getDescs() {
-                    var apps = [];//添加行号与列号，如果是small类型，只有在同一列并且两个并在一起，才递增行号
-                    [].forEach.call(document.querySelectorAll("section"), function(el, c) {
-                        var r = -1, firstSmall = false;
-                        [].forEach.call(el.children, function(app) {
-                            var obj = getDesc(app);
-                            if (obj.type == "small") {
-                                if (!firstSmall) {
-                                    obj.row = ++r
-                                    obj.left = true;
-                                    firstSmall = true
-                                } else {
-                                    obj.row = r
-                                    obj.left = false
-                                    firstSmall = false
-                                }
+                },
+                //取得每列的行数
+                getColumnRows: function(node) {
+                    var rows = 0, changeRow = true;
+                    [].forEach.call(node.children, function(elem) {
+                        var type = elem.className.match(/app_(\w+)/)[1]
+                        if (type == "small") {
+                            //如果是并排着两个small app，那么只加其中一个
+                            if (changeRow) {
+                                rows += 1;
+                                changeRow = false
                             } else {
-                                obj.row = ++r
-                                firstSmall = false
+                                changeRow = true
                             }
-                            obj.col = c
-                            apps.push(obj)
-                        })
-                    })
-                    return apps;
-                }
-
-                function fillBigBlanks() {
-                    //先填充体积大的
-                    [].forEach.call(document.querySelectorAll("section"), function(el, i) {
-                        var rows = 4 - getColumnRows(el);
-                        if (rows > 2) {
-                            $(el).append('<app class="app_big noapp"></app>')
-                        } else if (rows > 1) {
-                            $(el).append('<app class="app_middle noapp" ></app>')
+                        } else {
+                            changeRow = true
+                            rows += type == "big" ? 2 : 1
                         }
                     })
-                }
+                    return rows
+                },
+                bindDragEvent: function() {
 
-                function fillSmallBlanks(apps) {
+                    function getDropper(array, node, x, y) {
+                        for (var i = 0, el; el = array[i++]; ) {
+                            if (el.node !== node && contains(x, y, el.rect)) {
+                                return el
+                            }
+                        }
+                    }
+                    function getDragger(array, node) {
+                        for (var i = 0, el; el = array[i++]; ) {
+                            if (el.node === node) {
+                                return el
+                            }
+                        }
+                    }
+                    //判定一点是否在一个矩形内
+                    function contains(x, y, rect) {
+                        return x >= rect[0] && x <= rect[2] && y >= rect[1] && y <= rect[3]
+                    }
+                    var ui = this, apps;
+
+                    var all = this.element.find("app").draggable({
+                        start: function() {
+                            apps = ui.addPlaceHolders() //添加占位符
+                        },
+                        zIndex: 100,
+                        stop: function(e) {
+                            var $el = $(this)
+                            var big = /app_big|app_middle/.test(this.className)
+                            var offset = $el.offset()
+                            var point = big ? [offset.left, offset.top] : [offset.left + this.clientWidth / 2, offset.top + this.clientHeight / 2]
+                            var dropper = getDropper(apps, this, point[0], point[1])
+                            if (dropper) {
+                                var node = dropper.node, parent = node.parentNode
+                                if (node.classList.contains("noapp")) {
+                                    if (node.replaceNode) {
+                                        node.replaceNode(this)
+                                    } else {
+                                        parent.replaceChild(this, node)
+                                    }
+                                } else {
+                                    var dragger = getDragger(apps, this);
+                                    var beforeOrAfter = ui.compare(dropper, dragger)
+
+                                    if (beforeOrAfter > 0) {//往下移动， 就插入在放置对象的后面，否则放在前面
+                                        parent.insertBefore(this, node.nextElementSibling)
+                                    } else {
+                                        parent.insertBefore(this, node)
+
+                                    }
+                                }
+                            }
+
+                            ui.removePlaceHolders() //移除占位符
+                            all.css("position", "static")
+                            ui._adjustColumnRows(ui.element.find("section").eq(0))
+                            all.css({
+                                position: "relative",
+                                top: 0,
+                                left: 0
+                            })
+                        }
+                    }
+                    );
+                },
+                //添加占位符，方便放置拖动块
+                addPlaceHolders: function() {
+                    this.addBigPlaceHolders()
+                    var apps = this.getDescs()
+                    this.addSmallPlaceHolders(apps)
+                    return this.getDescs()
+                },
+                //移除所有占位符
+                removePlaceHolders: function() {
+                    this.element.find(".noapp").remove()
+                },
+                //添加大的占位符
+                addBigPlaceHolders: function() {
+                    var ui = this
+                    this.element.find("section").each(function() {
+                        var rows = ui.rows - ui.getColumnRows(this);
+                        if (rows > 2) {
+                            $(this).append('<app class="app_big noapp"></app>')
+                        } else if (rows > 1) {
+                            $(this).append('<app class="app_middle noapp" ></app>')
+                        }
+                    })
+                },
+                //添加小的占位符
+                addSmallPlaceHolders: function(apps) {
                     var row = []
                     for (var i = 0, el; el = apps[i++]; ) {
                         var flagFill = false
@@ -209,91 +289,80 @@
                                 var index = apps.indexOf(el);
                                 var before = apps[index - 1]
                                 var $el = $('<app class="app_small noapp" ></app>').insertAfter(before.node);
-                                var obj = getDesc($el[0]);
+                                var obj = this.getDesc($el[0]);
                                 obj.row = before.row;
                                 obj.col = before.col;
                                 apps.splice(index, 0, obj)
                             }
                         }
                     }
-                }
-                function removeBlanks() {
-                    [].forEach.call(document.querySelectorAll(".noapp"), function(el) {
-                        el.parentNode.removeChild(el)
-                    })
-                }
-
-                //取得每列有多少行， big当成两行来计算
-                function getColumnRows(node) {
-                    var rows = 0, changeRow = true;
-                    [].forEach.call(node.children, function(elem) {
-                        var type = elem.className.match(/app_(\w+)/)[1]
-                        if (type == "small") {
-                            //如果是并排着两个100*100的砖头，那么只加其中一个
-                            if (changeRow) {
-                                rows += 1;
-                                changeRow = false
+                },
+                //取得所有APP的数据描述，包括节点，类型，　所在行，所在列，在屏幕的位置大小
+                getDescs: function() {
+                    var apps = [];
+                    var ui = this;
+                    this.element.find("section").each(function(c) {
+                        var r = -1, firstSmall = false;
+                        [].forEach.call(this.children, function(app) {
+                            var obj = ui.getDesc(app);
+                            if (obj.type == "small") {
+                                if (!firstSmall) {
+                                    obj.row = ++r
+                                    obj.left = true;
+                                    firstSmall = true
+                                } else {
+                                    obj.row = r
+                                    obj.left = false
+                                    firstSmall = false
+                                }
                             } else {
-                                changeRow = true
+                                obj.row = ++r
+                                firstSmall = false
                             }
-                        } else {
-                            changeRow = true
-                            rows += type == "big" ? 2 : 1
-                        }
+                            obj.col = c
+                            apps.push(obj)
+                        })
                     })
 
-                    return rows
-                }
-                // 调整每列的砖头数
-                // 如果少于4，那么从右边一列最前的几个挪到当前列； 
-                // 如果大于4，那么将当前最后几个挪到右边一列
-                function reorderColumn(curr) {
-                    var node = curr[0], next = curr.next()
-                    if (node) {
-                        for (var i = 0; i < 6; i++) {
-                            if (getColumnRows(node) < 4) {
-                                curr.append(next.children().first())
-                            }
-                        }
-                        for (var i = 0; i < 6; i++) {
-                            if (getColumnRows(node) > 4) {
-                                next.prepend(curr.children().last())
-                            }
-                        }
-                        next[0] && reorderColumn(next)
+                    return apps;
+                },
+                //取得APP的数据描述，包括节点，类型，在屏幕的位置大小
+                getDesc: function(node) {
+                    var $el = $(node)
+                    var offset = $el.offset()
+                    var width = $el.width()
+                    var height = $el.height()
+                    return {
+                        node: node,
+                        width: width,
+                        height: height,
+                        noapp: /noapp/.test(node.className),
+                        type: node.className.match(/app_(\w+)/)[1],
+                        rect: [offset.left, offset.top, offset.left + width, offset.top + height]
                     }
                 }
+            }
+
+            $(function() {
+                new Metro({
+                    element: document.querySelector(".columms"),
+                    columnWidth: 340,
+                    rows: 3,
+                    apps: [{type: "small", col: 0}, {type: "small", col: 0}, {type: "big", col: 0},
+                        {type: "middle", col: 0}, {type: "middle", col: 0}, {type: "small", col: 1}, {type: "small", col: 1},
+                        {type: "middle", col: 1}, {type: "middle", col: 1}, {type: "middle", col: 1},
+                        {type: "big", col: 2}, {type: "big", col: 2},
+                        {type: "middle", col: 3}, {type: "middle", col: 3}, {type: "small", col: 3}, {type: "small", col: 3}
+                    ]
+                })
+
             })
         </script>
     </head>
     <body>
 
         <div class="columms">
-            <section  class="column" style="background: #dff0d8;">
-                <app class="app_small"></app>
-                <app class="app_big"></app>
-                <app class="app_middle"></app>
-            </section>
-            <section  class="column" style="background: #f2dede">
-                <app class="app_small xxx"></app><app class="app_small"></app>
-                <app class="app_middle"></app>
-                <app class="app_small"></app><app class="app_small"></app>
-                <app class="app_small"></app><app class="app_small"></app>
-            </section>
-            <section  class="column" style="background: #a9ea00;">
 
-                <app class="app_small">A</app><app class="app_small">B</app>
-                <app class="app_small">C</app><app class="app_small">D</app>
-                <app class="app_small"></app><app class="app_small"></app>
-            </section>
-            <section  class="column" style="background: #faf8e3;">
-                <app class="app_middle"></app>
-                <app class="app_big"></app>
-                <app class="app_middle"></app>
-            </section>
-            <section  class="column" style="background: #d9edf7;">
-                <app class="app_small"></app> <app class="app_middle"></app>
-            </section>
         </div>
     </body>
 </html>
