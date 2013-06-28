@@ -3,47 +3,81 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="avalon2.js"></script>
+        <style>
+            body{
+                background-image:url(about:blank); /* for IE6 */ 
+            }
+
+
+            .fixed{
+                left: -100%;
+                position: fixed;
+                right: 100%;
+
+            }
+
+            .relative{
+                position: relative;
+                right: -100%;
+
+            }
+
+
+            .content{
+                padding:80px;
+                background-color: lightblue;
+
+            }
+
+
+        </style>
         <script>
 
 
         </script>
     </head>
     <body ms-controller="xxx">
-        <table>
-            <thead>
-                <tr><th>First name</th><th>Last name</th></tr>
-            </thead>
-            <tbody ms-each-p="people">
-                <tr>
-                    <td >{{p.firstName}}</td>
-                    <td >{{p.lastName}}</td>
-                </tr>
-            </tbody>
+        <button onclick="document.getElementById('dialog').style.display = 'block'">open</button>
 
-        </table>
+        <div class="fixed" id="dialog">
+            <div class="relative">
+                <div class="content"> 
+                    <button style='position: absolute;right:0;top:0' type='button' onclick="document.getElementById('dialog').style.display = 'none'">close</button>
+                    <table>
+                        <thead>
+                            <tr><th>First name</th><th>Last name</th></tr>
+                        </thead>
+                        <tbody ms-each-p="people">
+                            <tr>
+                                <td >{{p.firstName}}</td>
+                                <td >{{p.lastName}}</td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
 
         <script type="text/javascript">
-     
+
             var vmodel = avalon.define("xxx", function(vm) {
                 vm.$skipArray = ["people"]
                 vm.people = [{firstName: 'Bert', lastName: 'Bertington'},
                     {firstName: 'Charles', lastName: 'Charlesforth'},
                     {firstName: 'Denise', lastName: 'Dentiste'}
                 ]
-                vm.xxx = []
-                vm.aaa = function(){
+                vm.close = true
+
+                vm.aaa = function() {
                     vm.xxx = vm.people.slice(1)
                 }
             })
-            
-            setTimeout(function() {
-                vmodel.aaa();
-                console.log(vmodel.xxx)
-                console.log(vmodel.people)
-              //  vmodel.people[0].firstName = "ddddd"
-            }, 1000)
-          
+
+
+
         </script>
     </body>
 </html>

@@ -1299,8 +1299,10 @@
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-                                notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, neo, value)
+                                avalon.nextTick(function() {
+                                    notifySubscribers(accessor) //通知顶层改变
+                                    vmodel.$events && vmodel.$fire(name, neo, value)
+                                })
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
@@ -1333,8 +1335,10 @@
                                     value = neo
                                 }
                                 model[name] = value && value.$id ? value.$model : value
-                                notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, value, old)
+                                avalon.nextTick(function() {
+                                    notifySubscribers(accessor) //通知顶层改变
+                                    vmodel.$events && vmodel.$fire(name, value, old)
+                                })
                             }
                         } else {
                             collectSubscribers(accessor) //收集视图函数
