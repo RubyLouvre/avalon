@@ -1,5 +1,5 @@
 //==================================================
-// avalon 073 ，mobile
+// avalon 081 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -219,7 +219,7 @@
         }
     }
     avalon.forEach = function(obj, fn) {
-        window.console && console.log("此方法已过时,请使用avalon.each")
+        log("此方法已过时,请使用avalon.each")
         forEach(obj, fn)
     }
     avalon.each = forEach
@@ -1437,16 +1437,7 @@
 
             var fn = array[0],
                     args = array[1]
-            if (text == "test1 && test2") {
-                fn = function(obj) {
-                    //  console.log(JSON.stringify(obj))
-                    return obj.test1 && obj.test2
-                }
-                console.log(fn + "")
-            }
-
             updateView = function() {
-                //  console.log(fn+"")
                 callback(fn.apply(fn, args), data.element)
             }
         }
