@@ -1735,6 +1735,12 @@
 
     }
     function uniqArray(arr, vm) {
+        var length = arr.length;
+        if (length <= 1) {
+            return arr
+        } else if (length === 2) {
+            return arr[0] !== arr[1] ? arr : [arr[0]]
+        }
         var uniq = {}
         return arr.filter(function(el) {
             if (!uniq[vm ? el.$id : el]) {
@@ -1745,8 +1751,9 @@
         })
     }
     //取得求值函数及其传参
+    var rvar = /^\w+$/
     function parseExpr(code, scopes, data) {
-        var vars = getVariables(code), assigns = [], names = [], args = [], prefix = ""
+        var vars = rvar.test(code) ? [code] : getVariables(code), assigns = [], names = [], args = [], prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
         vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
         for (var i = 0, n = scopes.length; i < n; i++) {
