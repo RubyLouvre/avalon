@@ -1,5 +1,5 @@
 //==================================================
-// avalon 081 ，mobile
+// avalon 082 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1379,45 +1379,129 @@
     /*********************************************************************
      *                          Parse                                    *
      **********************************************************************/
+    var keywords =
+            // 关键字
+            'break,case,catch,continue,debugger,default,delete,do,else,false'
+            + ',finally,for,function,if,in,instanceof,new,null,return,switch,this'
+            + ',throw,true,try,typeof,var,void,while,with'
 
-    function getValueFunction(name, scopes) { //得到求值函数,及其作用域
-        var n = name.split(".")
-        for (var i = 0, scope, ok; scope = scopes[i++]; ) {
-            try {
-                if (scope.hasOwnProperty(n[0]) && (n.length < 2 || scope[n[0]].hasOwnProperty(n[1]))) {
-                    var fn = Function("scope", "value", "if(arguments.length === 1){ return scope." + name + " }else{ scope." + name + " = value  }")
-                    fn(scope)
-                    ok = scope
-                    break
-                }
-            } catch (e) {
+            // 保留字
+            + ',abstract,boolean,byte,char,class,const,double,enum,export,extends'
+            + ',final,float,goto,implements,import,int,interface,long,native'
+            + ',package,private,protected,public,short,static,super,synchronized'
+            + ',throws,transient,volatile'
+
+            // ECMA 5 - use strict
+            + ',arguments,let,yield'
+
+            + ',undefined';
+    var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g;
+    var rsplit = /[^\w$]+/g;
+    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g');
+    var rnumber = /\b\d[^,]*/g;
+    var rcomma = /^,+|,+$/g;
+    var getVariables = function(code) {
+        code = code
+                .replace(rrexpstr, '')
+                .replace(rsplit, ',')
+                .replace(rkeywords, '')
+                .replace(rnumber, '')
+                .replace(rcomma, '')
+
+        return code ? code.split(/,+/) : []
+    };
+
+    //添加赋值语句
+    function addAssign(vars, scope, name) {
+        var ret = [], prefix = " = " + name + "."
+        for (var i = vars.length; name = vars[--i]; ) {
+            name = vars[i]
+            if (scope.hasOwnProperty(name)) {
+                ret.push(name + prefix + name)
+                vars.splice(i, 1)
             }
         }
-        if (ok) {
-            return [fn, ok]
+        return ret
+
+    }
+    function uniqArray(arr, vm) {
+        var uniq = {}
+        return arr.filter(function(el) {
+            if (!uniq[vm ? el.$id : el]) {
+                uniq[vm ? el.$id : el] = 1
+                return true;
+            }
+            return false
+        })
+    }
+    //取得求值函数及其传参
+    function parseExpr(code, scopes, data) {
+        var vars = getVariables(code), assigns = [], names = [], args = [], prefix = ""
+        //args 是一个对象数组， names 是将要生成的求值函数的参数
+        vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
+        for (var i = 0, n = scopes.length; i < n; i++) {
+            if (vars.length) {
+                var name = "vm" + expose + "_" + i
+                names.push(name)
+                args.push(scopes[i])
+                assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
+            }
+        }
+        var prefix = assigns.join(", ")
+        if (prefix) {
+            prefix = "var " + prefix
+        }
+        if (data.filters) {
+            code = "\nvar ret" + expose + " = " + code
+            var textBuffer = [],
+                    fargs
+            textBuffer.push(code, "\r\n")
+            for (var i = 0, fname; fname = data.filters[i++]; ) {
+                var start = fname.indexOf("(")
+                if (start !== -1) {
+                    fargs = fname.slice(start + 1, fname.lastIndexOf(")")).trim()
+                    fargs = "," + fargs
+                    fname = fname.slice(0, start).trim()
+                } else {
+                    fargs = ""
+                }
+                textBuffer.push(" if(filters", expose, ".", fname, "){\r\n\ttry{ret", expose,
+                        " = filters", expose, ".", fname, "(ret", expose, fargs, ")}catch(e){} \r\n}\r\n")
+            }
+            code = textBuffer.join("")
+            code += "\nreturn ret" + expose
+            names.push("filters" + expose)
+            args.push(avalon.filters)
+            delete data.filters //释放内存
+        } else {
+            code = "\nreturn " + code
+        }
+        try {
+            var fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            fn.apply(fn, args)
+            return [fn, args]
+        } catch (e) {
+            data.remove = false
+        } finally {
+            textBuffer = names = null //释放内存
         }
     }
 
     function watchView(text, scopes, data, callback, tokens) {
-        var updateView, array, filters = data.filters,
-                updateView = avalon.noop
-        if (!filters && !tokens) {
-            array = getValueFunction(text.trim(), scopes)
-            if (array) {
-                array = [array[0],
-                    [array[1]]
-                ] //强制转数组,方便使用apply
-            }
-        }
-        if (!array && !tokens) {
+        var array, updateView = avalon.noop
+        if (!tokens) {
             array = parseExpr(text, scopes, data)
-
-        }
-        if (!array && tokens) {
+            if (array) {
+                var fn = array[0],
+                        args = array[1]
+                updateView = function() {
+                    callback(fn.apply(fn, args), data.element)
+                }
+            }
+        } else {
             array = tokens.map(function(token) {
                 return token.expr ? parseExpr(token.value, scopes, data) || "" : token.value
             })
-
             updateView = (function(a, b) {
                 return function() {
                     var ret = "",
@@ -1433,14 +1517,8 @@
                     return b(ret, data.element)
                 }
             })(array, callback)
-        } else if (array) {
-
-            var fn = array[0],
-                    args = array[1]
-            updateView = function() {
-                callback(fn.apply(fn, args), data.element)
-            }
         }
+
         updateView.toString = function() {
             return "eval(" + text + ")"
         } //方便调试
@@ -1452,56 +1530,6 @@
         updateView()
         openComputedCollect = false
         delete Publish[expose]
-    }
-
-    function parseExpr(text, scopes, data) {
-        var names = [],
-                args = [],
-                random = new Date - 0,
-                val
-        //取得ViewModel的名字
-        scopes.forEach(function(scope) {
-            var scopeName = scope.$id.replace(/-/g, "_") + "" + random
-            if (names.indexOf(scopeName) === -1) {
-                names.push(scopeName)
-                args.push(scope)
-            }
-        })
-        text = "var ret" + random + " = " + text + "\r\n"
-        for (var i = 0, name; name = names[i++]; ) {
-            text = "with(" + name + "){\r\n" + text + "}\r\n"
-        }
-        if (data.filters) {
-            var textBuffer = [],
-                    fargs
-            textBuffer.push(text, "\r\n")
-            for (var i = 0, f; f = data.filters[i++]; ) {
-                var start = f.indexOf("(")
-                if (start !== -1) {
-                    fargs = f.slice(start + 1, f.lastIndexOf(")")).trim()
-                    fargs = "," + fargs
-                    f = f.slice(0, start).trim()
-                } else {
-                    fargs = ""
-                }
-                textBuffer.push(" if(filters", random, ".", f, "){\r\n\ttry{ret", random,
-                        " = filters", random, ".", f, "(ret", random, fargs, ")}catch(e){} \r\n}\r\n")
-            }
-            text = textBuffer.join("")
-            names.push("filters" + random)
-            args.push(avalon.filters)
-            delete data.filters //释放内存
-        }
-        try {
-            text += "\r\nreturn ret" + random
-            var fn = Function.apply(Function, names.concat(text))
-            val = fn.apply(fn, args)
-            return [fn, args]
-        } catch (e) {
-            data.remove = false
-        } finally {
-            textBuffer = names = null //释放内存
-        }
     }
     /*********************************************************************
      *                         Bind                                    *
@@ -1778,15 +1806,15 @@
         var element = data.element
         var tagName = element.tagName
         if (typeof modelBinding[tagName] === "function") {
-            var array = getValueFunction(data.value.trim(), vmodels)
+            var array = parseExpr(data.value, vmodels, data)
             if (array) {
-                modelBinding[tagName](element, array[0], array[1])
+                modelBinding[tagName](element, array[1][0], data.value.trim())
             }
         }
     }
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-    modelBinding.INPUT = function(element, fn, scope) {
+    modelBinding.INPUT = function(element, vmodel, prop) {
         if (element.name === void 0) {
             element.name = generateID()
         }
@@ -1795,12 +1823,12 @@
         //当value变化时改变model的值
         var updateModel = function() {
             if (god.data("observe") !== false) {
-                fn(scope, element.value)
+                vmodel[prop] = element.value
             }
         }
         //当model变化时,它就会改变value的值
         var updateView = function() { //先执行updateView
-            var neo = fn(scope)
+            var neo = vmodel[prop]
             if (neo !== element.value) {
                 element.value = neo
             }
@@ -1825,12 +1853,12 @@
             }
         } else if (type === "radio") {
             updateView = function() {
-                element.checked = !!fn(scope)
+                element.checked = !!vmodel[prop]
             }
             updateModel = function() {
                 if (god.data("observe") !== false) {
                     var val = !element.beforeChecked
-                    fn(scope, val)
+                    vmodel[prop] = val
                     element.beforeChecked = element.checked = val
                 }
             }
@@ -1848,11 +1876,11 @@
             updateModel = function() {
                 if (god.data("observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
-                    avalon.Array[method](fn(scope), element.value)
+                    avalon.Array[method](vmodel[prop], element.value)
                 }
             }
             updateView = function() {
-                var array = [].concat(fn(scope)) //强制转换为数组
+                var array = [].concat(vmodel[prop]) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
             god.bind("click", updateModel) //IE6-8
@@ -2068,8 +2096,7 @@
     }
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
-        var value = data.value
-        var array = parseExpr(value, vmodels, data)
+        var array = parseExpr(data.value, vmodels, data)
         var list
         if (typeof array == "object") {
             list = array[0].apply(array[0], array[1])
