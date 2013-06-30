@@ -10,7 +10,7 @@
             }
 
 
-            .fixed{
+/*            .fixed{
                 left: -100%;
                 position: fixed;
                 right: 100%;
@@ -28,7 +28,7 @@
                 padding:80px;
                 background-color: lightblue;
 
-            }
+            }*/
 
 
         </style>
@@ -59,9 +59,33 @@
                 </div>
             </div>
         </div>
-
+        <hr/>
+        <div id="Avalon" ms-controller="array">
+            <h3>
+                Avalon
+            </h3>
+            <span ms-each-el="array">
+                {{el}}
+            </span>
+        </div>
 
         <script type="text/javascript">
+            var model = avalon.define("array", function(vm) {
+                vm.array = [];
+                vm.push = function(item) {
+                 
+                    model.array.push(item);
+                }
+
+            });
+            avalon.ready(function() {
+                for (var i = 0; i < 50; i++) {
+               //   setTimeout(function(){
+                       model.push(i)
+               //   })//  console.log(i)
+                   
+                }
+            })
 
             var vmodel = avalon.define("xxx", function(vm) {
                 vm.$skipArray = ["people"]

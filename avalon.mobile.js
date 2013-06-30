@@ -1057,90 +1057,92 @@
                 VBPublics = Object.keys(watchOne) //用于IE6-8
         model = model || {}
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
-        forEach(scope, function(name, value) {
-            if (!watchOne[name]) {
-                model[name] = value
-            }
-            var valueType = getType(value)
-            if (valueType === "function") {
-                VBPublics.push(name) //函数无需要转换
-            } else {
-                if (skipArray.indexOf(name) !== -1) {
-                    return VBPublics.push(name)
+        for (var i in scope) {
+            (function(name, value) {
+                if (!watchOne[name]) {
+                    model[name] = value
                 }
-                if (name.charAt(0) === "$" && !systemOne[name]) {
-                    return VBPublics.push(name)
-                }
-                var accessor, oldArgs
-                if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
-                    var setter = value.set,
-                            getter = value.get
-                    accessor = function(neo) { //创建计算属性
-                        if (arguments.length) {
-                            if (stopRepeatAssign) {
-                                return //阻止重复赋值
-                            }
-                            if (typeof setter === "function") {
-                                setter.call(vmodel, neo)
-                            }
-                            if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
-                                oldArgs = neo
-                                avalon.nextTick(function() {
-                                    notifySubscribers(accessor) //通知顶层改变
-                                    vmodel.$events && vmodel.$fire(name, neo, value)
-                                })
-                            }
-                        } else {
-                            if (openComputedCollect || !accessor.locked) {
-                                collectSubscribers(accessor)
-                            }
-                            return value = model[name] = getter.call(vmodel) //保存新值到model[name]
-                        }
-                    }
-                    accessor.nick = name
-                    callGetters.push(accessor)
+                var valueType = getType(value)
+                if (valueType === "function") {
+                    VBPublics.push(name) //函数无需要转换
                 } else {
-                    value = NaN
-                    callSetters.push(name)
-                    accessor = function(neo) { //创建监控属性或数组
-                        if (arguments.length) {
-                            if (stopRepeatAssign) {
-                                return //阻止重复赋值
-                            }
-                            if (value !== neo) {
-                                var old = value
-                                if (valueType === "array" || valueType === "object") {
-                                    if (value && value.$id) {
-                                        updateViewModel(value, neo, Array.isArray(neo))
-                                    } else if (Array.isArray(neo)) {
-                                        value = Collection(neo, vmodel, name)
-                                    } else {
-                                        value = modelFactory(neo, neo)
-                                    }
-                                } else {
-                                    value = neo
+                    if (skipArray.indexOf(name) !== -1) {
+                        return VBPublics.push(name)
+                    }
+                    if (name.charAt(0) === "$" && !systemOne[name]) {
+                        return VBPublics.push(name)
+                    }
+                    var accessor, oldArgs
+                    if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
+                        var setter = value.set,
+                                getter = value.get
+                        accessor = function(neo) { //创建计算属性
+                            if (arguments.length) {
+                                if (stopRepeatAssign) {
+                                    return //阻止重复赋值
                                 }
-                                model[name] = value && value.$id ? value.$model : value
-                                avalon.nextTick(function() {
-                                    notifySubscribers(accessor) //通知顶层改变
-                                    vmodel.$events && vmodel.$fire(name, value, old)
-                                })
-
+                                if (typeof setter === "function") {
+                                    setter.call(vmodel, neo)
+                                }
+                                if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
+                                    oldArgs = neo
+                                    avalon.nextTick(function() {
+                                        notifySubscribers(accessor) //通知顶层改变
+                                        vmodel.$events && vmodel.$fire(name, neo, value)
+                                    })
+                                }
+                            } else {
+                                if (openComputedCollect || !accessor.locked) {
+                                    collectSubscribers(accessor)
+                                }
+                                return value = model[name] = getter.call(vmodel) //保存新值到model[name]
                             }
-                        } else {
-                            collectSubscribers(accessor) //收集视图函数
-                            return value
+                        }
+                        accessor.nick = name
+                        callGetters.push(accessor)
+                    } else {
+                        value = NaN
+                        callSetters.push(name)
+                        accessor = function(neo) { //创建监控属性或数组
+                            if (arguments.length) {
+                                if (stopRepeatAssign) {
+                                    return //阻止重复赋值
+                                }
+                                if (value !== neo) {
+                                    var old = value
+                                    if (valueType === "array" || valueType === "object") {
+                                        if (value && value.$id) {
+                                            updateViewModel(value, neo, Array.isArray(neo))
+                                        } else if (Array.isArray(neo)) {
+                                            value = Collection(neo, vmodel, name)
+                                        } else {
+                                            value = modelFactory(neo, neo)
+                                        }
+                                    } else {
+                                        value = neo
+                                    }
+                                    model[name] = value && value.$id ? value.$model : value
+                                    avalon.nextTick(function() {
+                                        notifySubscribers(accessor) //通知顶层改变
+                                        vmodel.$events && vmodel.$fire(name, value, old)
+                                    })
+
+                                }
+                            } else {
+                                collectSubscribers(accessor) //收集视图函数
+                                return value
+                            }
                         }
                     }
+                    accessor[subscribers] = []
+                    Descriptions[name] = {
+                        set: accessor,
+                        get: accessor,
+                        enumerable: true
+                    }
                 }
-                accessor[subscribers] = []
-                Descriptions[name] = {
-                    set: accessor,
-                    get: accessor,
-                    enumerable: true
-                }
-            }
-        })
+            })(i, scope[i])
+        }
 
         vmodel = Object.defineProperties(vmodel, Descriptions)
         VBPublics.forEach(function(name) {
