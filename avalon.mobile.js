@@ -1501,7 +1501,7 @@
     function watchView(text, scopes, data, callback, tokens) {
         var array, updateView = avalon.noop
         if (!tokens) {
-            array = parseExpr(text, scopes, data)
+            array = parseExpr(text.trim(), scopes, data)
             if (array) {
                 var fn = array[0],
                         args = array[1]
@@ -1511,7 +1511,7 @@
             }
         } else {
             array = tokens.map(function(token) {
-                return token.expr ? parseExpr(token.value, scopes, data) || "" : token.value
+                return token.expr ? parseExpr(token.value.trim(), scopes, data) || "" : token.value
             })
             updateView = (function(a, b) {
                 return function() {

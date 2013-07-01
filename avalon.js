@@ -377,7 +377,7 @@
             // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
             var stack
             try {
-                a.b.c() //强制报错,以便捕获e.stack
+                avalon["x"+Math.random()]() //强制报错,以便捕获e.stack
             } catch (e) { //safari的错误对象只有line,sourceId,sourceURL
                 stack = e.stack
                 if (!stack && window.opera) {
