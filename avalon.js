@@ -1356,7 +1356,7 @@
             }
         }
         for (var i in scope) {
-            loop(i, scope)
+            loop(i, scope[i])
         }
 
         vmodel = defineProperties(vmodel, Descriptions, VBPublics)
