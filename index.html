@@ -3,105 +3,68 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="jquery.js"></script>
         <style>
+            *{
+                margin:0px;
+                padding: 0px;
+            }
+            html{
+                width:100%;
+                height:100%;
+            }
             body{
-                background-image:url(about:blank); /* for IE6 */ 
-            }
-
-
-/*            .fixed{
-                left: -100%;
-                position: fixed;
-                right: 100%;
+                width:100%;
+                height:100%;
+                background: red;
 
             }
-
-            .relative{
-                position: relative;
-                right: -100%;
-
+            table{
+                table-layout: fixed;
+                border-collapse:collapse;
+                width:100%;
+                height: 100%;
+                border:1px solid blue;
             }
-
-
-            .content{
-                padding:80px;
-                background-color: lightblue;
-
-            }*/
+            .toolArea{
+                height:60px;
+                background: green;
+            }
+            .commonUseArea{
+                width:100px;
+                background: #e8e8e8;
+                overflow: auto;
+            }
+            .dustbinArea{
+                height:60px;
+                background:blueviolet;
+            }
 
 
         </style>
         <script>
 
-
+            $(function() {
+                var el = $(".commonUseArea");
+                el.height(el.height())
+            })
         </script>
     </head>
-    <body ms-controller="xxx">
-        <button onclick="document.getElementById('dialog').style.display = 'block'">open</button>
+    <body >
+        <table>
+            <tr>
+                <td class="toolArea"></td>
+                <td rowspan="2" class="commonUseArea">
+                    <div style="width:10px;height:800px;"></div>
+                </td>
+            </tr>
+            <tr>
+                <td class="mainArea"></td>
+            </tr>
+            <tr>
+                <td class="dustbinArea"></td><td>xxx</td>
+            </tr>
+        </table>
 
-        <div class="fixed" id="dialog">
-            <div class="relative">
-                <div class="content"> 
-                    <button style='position: absolute;right:0;top:0' type='button' onclick="document.getElementById('dialog').style.display = 'none'">close</button>
-                    <table>
-                        <thead>
-                            <tr><th>First name</th><th>Last name</th></tr>
-                        </thead>
-                        <tbody ms-each-p="people">
-                            <tr>
-                                <td >{{p.firstName}}</td>
-                                <td >{{p.lastName}}</td>
-                            </tr>
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        </div>
-        <hr/>
-        <div id="Avalon" ms-controller="array">
-            <h3>
-                Avalon
-            </h3>
-            <span ms-each-el="array">
-                {{el}}
-            </span>
-        </div>
-
-        <script type="text/javascript">
-            var model = avalon.define("array", function(vm) {
-                vm.array = [];
-                vm.push = function(item) {
-                 
-                    model.array.push(item);
-                }
-
-            });
-            avalon.ready(function() {
-                for (var i = 0; i < 50; i++) {
-               //   setTimeout(function(){
-                       model.push(i)
-               //   })//  console.log(i)
-                   
-                }
-            })
-
-            var vmodel = avalon.define("xxx", function(vm) {
-                vm.$skipArray = ["people"]
-                vm.people = [{firstName: 'Bert', lastName: 'Bertington'},
-                    {firstName: 'Charles', lastName: 'Charlesforth'},
-                    {firstName: 'Denise', lastName: 'Dentiste'}
-                ]
-                vm.close = true
-
-                vm.aaa = function() {
-                    vm.xxx = vm.people.slice(1)
-                }
-            })
-
-
-
-        </script>
     </body>
 </html>
