@@ -3,7 +3,7 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="jquery.js"></script>
+        <script src="avalon.js"></script>
         <style>
             *{
                 margin:0px;
@@ -44,10 +44,17 @@
         </style>
         <script>
 
-            $(function() {
-                var el = $(".commonUseArea");
-                el.height(el.height())
-            })
+         var model =  avalon.define("xxxx", function(vm){
+               vm.xxx = {
+                   a:444
+               }
+           })
+           setTimeout(function(){
+               model.xxx = {
+                   b:435,
+                   a:6565
+               }
+           },1000)
         </script>
     </head>
     <body >

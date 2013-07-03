@@ -2340,7 +2340,6 @@
                     var vmargs = margs.map(syncModel, margs)
 
                     list[method].apply(list, arguments)
-                    //  console.log(list.join(","))
                     ret = list[method].apply(this, vmargs)
                     notifySubscribers(this, method, vmargs, len)
 
