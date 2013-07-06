@@ -1,5 +1,5 @@
 //==================================================
-// avalon 082 ，mobile
+// avalon 083 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1278,18 +1278,21 @@
         }
     }
 
-      var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
 
     function scanExpr(value) {
-        var tokens = []
+        var tokens = [], left
         if (rexpr.test(value)) {
             do {
                 value.replace(rexpr, function(a, b) {
-                    tokens.push({
-                        value: RegExp.leftContext,
-                        expr: false
-                    })
-                    value = RegExp.rightContext;
+                    left = RegExp.leftContext
+                    value = RegExp.rightContext
+                    if (left) {
+                        tokens.push({
+                            value: left,
+                            expr: false
+                        })
+                    }
                     if (b) {
                         var leach = []
                         if (b.indexOf("|") > 0) { // 注意排除短路与
@@ -1301,9 +1304,9 @@
                         tokens.push({
                             value: b,
                             expr: true,
-                            filters: leach.length ? leach: void 0
+                            filters: leach.length ? leach : void 0
                         })
-                        
+
                     }
                     return ""
                 });
@@ -1716,10 +1719,7 @@
                 })
             }
         },
-        //切换类名，有三种形式
-        //1、ms-class-xxx="flag" 根据flag的值决定是添加或删除类名xxx 
-        //2、ms-class=obj obj为一个{xxx:true, yyy:false}的对象，根据其值添加或删除其键名
-        //3、ms-class=str str是一个类名或多个类名的集合，全部添加
+        //切换类名，ms-class-xxx="flag" 根据flag的值决定是添加或删除类名xxx 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
         "class": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
