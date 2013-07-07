@@ -1610,6 +1610,9 @@
                 }
             })
         },
+        // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
+        // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
+        // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
         "attr": function(data, vmodels) {
             data.remove = false
             watchView(data.value, vmodels, data, function(val, elem) {
@@ -1719,7 +1722,7 @@
                 })
             }
         },
-        //切换类名，ms-class-xxx="flag" 根据flag的值决定是添加或删除类名xxx 
+        //根据VM的属性值或表达式的值切换类名，ms-class-xxx="flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
         "class": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
@@ -1734,6 +1737,7 @@
                 avalon(elem).toggleClass(cls, !!val)
             })
         },
+        //在移出移入时切换类名
         "hover": function(data) {
             var god = avalon(data.element)
             god.bind("mouseenter", function() {
@@ -1743,6 +1747,7 @@
                 god.removeClass(data.value)
             })
         },
+        //在聚焦失焦中切换类名
         "active": function(data) {
             var elem = data.element
             var god = avalon(elem)
@@ -2514,9 +2519,9 @@
                 } else {
                     date = jsonStringToDate(date)
                 }
+                date = new Date(date)
             }
-
-            if (getType(date) === "number") {
+            if (typeof date === "number") {
                 date = new Date(date)
             }
             if (getType(date) !== "date") {
