@@ -1100,21 +1100,26 @@
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
                             }
+                            var antiquity = value;
                             if (typeof setter === "function") {
                                 setter.call(vmodel, neo)
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-                                avalon.nextTick(function() {
-                                    notifySubscribers(accessor) //通知顶层改变
-                                    vmodel.$events && vmodel.$fire(name, neo, value)
-                                })
+                                notifySubscribers(accessor) //通知顶层改变
+                                value = model[name] = getter.call(vmodel)
+                                vmodel.$events && vmodel.$fire(name, value, antiquity)
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
                                 collectSubscribers(accessor)
                             }
-                            return value = model[name] = getter.call(vmodel) //保存新值到model[name]
+                            neo = getter.call(vmodel)
+                            if (value !== neo) {
+                                vmodel.$events && vmodel.$fire(name, neo, value)
+                                value = neo
+                            }
+                            return model[name] = value
                         }
                     }
                     accessor.nick = name
@@ -1281,7 +1286,8 @@
     var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
 
     function scanExpr(value) {
-        var tokens = [], left
+        var tokens = [],
+                left
         if (rexpr.test(value)) {
             do {
                 value.replace(rexpr, function(a, b) {
@@ -1311,6 +1317,7 @@
                     return ""
                 });
             } while (value.indexOf(closeTag) > -1);
+
             if (value) {
                 tokens.push({
                     value: value,
@@ -1365,6 +1372,7 @@
     function extractTextBindings(textNode) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
+
         if (tokens.length) {
             while (tokens.length) { //将文本转换为文本节点，并替换原来的文本节点
                 var token = tokens.shift()
@@ -1382,7 +1390,7 @@
                     if (filters && filters.indexOf("html") !== -1) {
                         avalon.Array.remove(filters, "html")
                         binding.type = "html"
-                        binding.replaceNodes = true
+                        binding.replaceNodes = [node]
                     }
                     bindings.push(binding) //收集带有插值表达式的文本
                 }
@@ -1708,8 +1716,7 @@
         },
         //ms-bind-name="callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var fn = data.value.trim(),
-                    name = data.args[0]
+            var fn = data.value.trim()
             for (var i = 0, scope; scope = vmodels[i++]; ) {
                 if (scope.hasOwnProperty(fn)) {
                     fn = scope[fn]
@@ -1717,7 +1724,8 @@
                 }
             }
             if (typeof fn === "function") {
-                scope.$watch(name, function(neo, old) {
+                fn.call(data.element)
+                scope.$watch(data.args[0], function(neo, old) {
                     fn.call(data.element, neo, old)
                 })
             }

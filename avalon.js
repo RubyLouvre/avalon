@@ -1316,19 +1316,26 @@
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
                             }
+                            var antiquity = value;
                             if (typeof setter === "function") {
                                 setter.call(vmodel, neo)
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, neo, value)
+                                value = model[name] = getter.call(vmodel)
+                                vmodel.$events && vmodel.$fire(name, value, antiquity)
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
                                 collectSubscribers(accessor)
                             }
-                            return value = model[name] = getter.call(vmodel) //保存新值到model[name]
+                            neo = getter.call(vmodel)
+                            if (value !== neo) {
+                                vmodel.$events && vmodel.$fire(name, neo, value)
+                                value = neo
+                            }
+                            return model[name] = value
                         }
                     }
                     accessor.nick = name
@@ -2058,16 +2065,16 @@
         },
         //ms-bind-name="callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var fn = data.value.trim(),
-                    name = data.args[0]
-            for (var i = 0, vm; vm = vmodels[i++]; ) {
-                if (vm.hasOwnProperty(fn)) {
-                    fn = vm[fn]
+            var fn = data.value.trim()
+            for (var i = 0, scope; scope = vmodels[i++]; ) {
+                if (scope.hasOwnProperty(fn)) {
+                    fn = scope[fn]
                     break
                 }
             }
             if (typeof fn === "function") {
-                vm.$watch(name, function(neo, old) {
+                fn.call(data.element)
+                scope.$watch(data.args[0], function(neo, old) {
                     fn.call(data.element, neo, old)
                 })
             }
@@ -2967,5 +2974,6 @@
 //avalon.type( 返回的类型是小写), avalon.isPlainObject, avalon.mix, 
 //avvalon.fn.mix(这两个方法与jQuery的extend方法完全一致)，
 //avalon.slice(与数组的slice用法一致，但可以切换类数组对象)， require， define全局方法
-//重构parser, modelBindings
+//082 重构parser
+//083 重构计算属性， bind绑定， fix scanExpr与date过滤器的BUG，添加include绑定
 
