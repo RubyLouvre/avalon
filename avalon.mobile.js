@@ -1078,7 +1078,7 @@
         model = model || {}
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
-        function loop(name, value) {
+         function loop(name, value) {
             if (!watchOne[name]) {
                 model[name] = value
             }
@@ -1107,9 +1107,11 @@
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-                                notifySubscribers(accessor) //通知顶层改变
+
                                 value = model[name] = getter.call(vmodel)
+                                notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$events && vmodel.$fire(name, value, antiquity)
+
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
@@ -1146,11 +1148,10 @@
                                 } else {
                                     value = neo
                                 }
+
                                 model[name] = value && value.$id ? value.$model : value
-                                avalon.nextTick(function() {
-                                    notifySubscribers(accessor) //通知顶层改变
-                                    vmodel.$events && vmodel.$fire(name, value, old)
-                                })
+                                notifySubscribers(accessor) //通知顶层改变
+                                vmodel.$events && vmodel.$fire(name, value, old)
 
                             }
                         } else {

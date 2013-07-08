@@ -463,7 +463,7 @@
                     openTag = array[0]
                     closeTag = array[1]
                     var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
+                            c = escapeRegExp(closeTag)
                     rexpr = new RegExp(o + "(.*?)" + c)
                     rbind = new RegExp(o + ".*?" + c + "|\\sms-")
                 }
@@ -1322,9 +1322,11 @@
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-                                notifySubscribers(accessor) //通知顶层改变
+
                                 value = model[name] = getter.call(vmodel)
+                                notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$events && vmodel.$fire(name, value, antiquity)
+
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
@@ -1361,9 +1363,11 @@
                                 } else {
                                     value = neo
                                 }
+
                                 model[name] = value && value.$id ? value.$model : value
                                 notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$events && vmodel.$fire(name, value, old)
+
                             }
                         } else {
                             collectSubscribers(accessor) //收集视图函数
@@ -2198,7 +2202,7 @@
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
         var element = data.element, tagName = element.tagName
-        if(data.type === "model"){
+        if (data.type === "model") {
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         if (typeof modelBinding[tagName] === "function") {
