@@ -240,7 +240,7 @@
             if (!ohasOwn.call(settings, p))
                 continue
             var val = settings[p]
-            if (typeof kernel.plugin[p] === "function") {
+            if (typeof kernel.plugins[p] === "function") {
                 kernel.plugin[p](val)
             } else {
                 kernel[p] = val
@@ -306,6 +306,16 @@
                         map[c] = currValue
                     }
                 }
+            },
+            interpolate: function(array) {
+                if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
+                    openTag = array[0]
+                    closeTag = array[1]
+                    var o = escapeRegExp(openTag),
+                            c = escapeRegExp(closeTag)
+                    rexpr = new RegExp(o + "(.*?)" + c)
+                    rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+                }
             }
         }
         plugins.css.ext = ".css"
@@ -313,17 +323,8 @@
         kernel.plugins = plugins
         kernel.compact = true
         kernel.alias = {}
-        kernel.interpolate = function(array) {
-            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
-                openTag = array[0]
-                closeTag = array[1]
-                var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
-                rexpr = new RegExp(o + "([^" + closeTag + "]+)" + c)
-                rbind = new RegExp(o + "[^" + closeTag + "]+" + c + "|\\sms-")
-            }
-        }
-        kernel.interpolate(["{{", "}}"])
+
+        kernel.plugins['interpolate'](["{{", "}}"])
 
         function cleanUrl(url) {
             return (url || "").replace(/[?#].*/, "")
@@ -2614,3 +2615,4 @@
 })(document)
 //2012 6 15
 //fix 管道符与短路与相混淆的BUG， 重构on绑定
+//elementTransitions.js ， 各种封装好的页面转换特效。http://dan-silver.github.io/ElementTransitions.js/
