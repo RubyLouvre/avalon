@@ -390,8 +390,8 @@
             if (!ohasOwn.call(settings, p))
                 continue
             var val = settings[p]
-            if (typeof kernel.plugin[p] === "function") {
-                kernel.plugin[p](val)
+            if (typeof kernel.plugins[p] === "function") {
+                kernel.plugins[p](val)
             } else {
                 kernel[p] = val
             }
@@ -457,23 +457,23 @@
                         map[c] = currValue
                     }
                 }
+            },
+            interpolate: function(array) {
+                if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
+                    openTag = array[0]
+                    closeTag = array[1]
+                    var o = escapeRegExp(openTag),
+                        c = escapeRegExp(closeTag)
+                    rexpr = new RegExp(o + "(.*?)" + c)
+                    rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+                }
             }
         }
         plugins.css.ext = ".css"
         plugins.js.ext = ".js"
         kernel.plugins = plugins
         kernel.alias = {}
-        kernel.interpolate = function(array) {
-            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
-                openTag = array[0]
-                closeTag = array[1]
-                var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
-                rexpr = new RegExp(o + "([^" + closeTag + "]+)" + c)
-                rbind = new RegExp(o + "[^" + closeTag + "]+" + c + "|\\sms-")
-            }
-        }
-        kernel.interpolate(["{{", "}}"])
+        kernel.plugins['interpolate'](["{{", "}}"])
 
         function cleanUrl(url) {
             return (url || "").replace(/[?#].*/, "")
