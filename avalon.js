@@ -1959,7 +1959,7 @@
         "attr": function(data, vmodels) {
             data.remove = false
             watchView(data.value, vmodels, data, function(val, elem) {
-                var attrName = data.node.name
+                var attrName = data.args.join("-")
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (toRemove)
                     elem.removeAttribute(attrName)
@@ -1999,8 +1999,17 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val) {
-                data.node.nodeValue = val
+            var node = data.node
+            watchView(data.value, vmodels, data, function(val, elem) {
+                if (node.nodeType === 2) {
+                    if ("textContent" in elem) {
+                        elem.textContent = val
+                    } else {
+                        elem.innerText = val
+                    }
+                } else {
+                    node.nodeValue = val
+                }
             })
         },
         //控制元素显示或隐藏
@@ -2187,9 +2196,11 @@
     /////////////////////////// model binding  ///////////////////////////
 
     //将模型中的字段与input, textarea的value值关联在一起
-    var modelBinding = bindingHandlers.model = function(data, vmodels) {
-        var element = data.element
-        var tagName = element.tagName
+    var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
+        var element = data.element, tagName = element.tagName
+        if(data.type === "model"){
+            log("ms-model已经被废弃，请使用ms-duplex")
+        }
         if (typeof modelBinding[tagName] === "function") {
             var array = parseExpr(data.value, vmodels, data)
             if (array) {
@@ -2975,5 +2986,5 @@
 //avvalon.fn.mix(这两个方法与jQuery的extend方法完全一致)，
 //avalon.slice(与数组的slice用法一致，但可以切换类数组对象)， require， define全局方法
 //082 重构parser
-//083 重构计算属性， bind绑定， fix scanExpr与date过滤器的BUG，添加include绑定
+//083 重构计算属性， bind绑定, text绑定， fix scanExpr, attr绑定与date过滤器的BUG，添加include绑定
 

@@ -1624,7 +1624,7 @@
         "attr": function(data, vmodels) {
             data.remove = false
             watchView(data.value, vmodels, data, function(val, elem) {
-                var attrName = data.node.name
+                var attrName = data.args.join("-")
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (toRemove) {
                     elem.removeAttribute(attrName)
@@ -1657,8 +1657,13 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val) {
-                data.node.nodeValue = val
+            var node = data.node
+            watchView(data.value, vmodels, data, function(val, elem) {
+                if (node.nodeType === 2) {
+                    elem.textContent = val
+                } else {
+                    node.nodeValue = val
+                }
             })
         },
         //控制元素显示或隐藏
@@ -1846,9 +1851,11 @@
     /////////////////////////// model binding  ///////////////////////////
 
     //将模型中的字段与input, textarea的value值关联在一起
-    var modelBinding = bindingHandlers.model = function(data, vmodels) {
-        var element = data.element
-        var tagName = element.tagName
+    var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
+        var element = data.element, tagName = element.tagName
+        if (data.type === "model") {
+            log("ms-model已经被废弃，请使用ms-duplex")
+        }
         if (typeof modelBinding[tagName] === "function") {
             var array = parseExpr(data.value, vmodels, data)
             if (array) {
