@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html id="html">
+    <head>
+        <meta charset="utf-8">
+        <title>测试用例-yuewang</title>
+        <style>
+
+        </style>
+    </head>
+    <body>
+
+        <script src="avalon.mobile.js"></script>
+        <script>
+
+            avalon.define("test", function(vm) {
+                vm.array = [{value: "aaa", text: "111"}, {value: "bbb", text: "222"}, {value: "bbb", text: "333"}]
+            })
+            avalon.define("index", function(vm) {
+                vm.message = "XXXX";
+            });
+            require("avalon.testui", function() {
+                avalon.define("bbb", function(vm) {
+                    vm.$opts = {
+                        name: "这是控件的内容"
+                    }
+                })
+                avalon.scan()
+            })
+
+
+        </script>
+        <div ms-controller="test">
+            <select ms-each-el="array">
+                <option ms-value="el.value">{{$index}}、{{el.value}}</option>
+            </select>
+        </div>
+        <script type="text/avalon" id="index">
+            <div ms-controller="index">
+            <h2>message:{{message}}</h2>
+            <input ms-model="message">
+            </div>
+        </script>
+        <div  ms-include="'index'"></div>
+        <div ms-controller="bbb" ms-ui-$opts="testui" data-id="ddd"></div>
+    </body>
+</html>
