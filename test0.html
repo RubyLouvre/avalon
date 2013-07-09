@@ -25,6 +25,7 @@
                     }
                 })
                 avalon.scan()
+                console.log(avalon.vmodels.ddd)
             })
 
 
@@ -37,7 +38,7 @@
         <script type="text/avalon" id="index">
             <div ms-controller="index">
             <h2>message:{{message}}</h2>
-            <input ms-model="message">
+            <input ms-duplex="message">
             </div>
         </script>
         <div  ms-include="'index'"></div>
