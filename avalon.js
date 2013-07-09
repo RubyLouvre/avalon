@@ -1584,7 +1584,7 @@
             elem.removeAttribute(prefix + "controller")
         }
         scanAttr(elem, vmodels) //扫描特性节点
-        if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+        if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
             scanNodes(elem, vmodels)
         }
     }
@@ -2058,7 +2058,9 @@
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
+                            alert(el.text)
                             elem.innerHTML = el && el.innerHTML;
+                            
                             avalon.scan(elem, vmodels)
                         })
                     }

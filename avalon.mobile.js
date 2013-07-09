@@ -1273,7 +1273,7 @@
             elem.removeAttribute(prefix + "controller")
         }
         scanAttr(elem, vmodels) //扫描特性节点
-        if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+        if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
             scanNodes(elem, vmodels)
         }
     }
