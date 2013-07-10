@@ -1816,7 +1816,7 @@
             var elem = data.element //取得被绑定元素
             var id = (elem.getAttribute("data-id") || "").trim()
             if (!id) { //取得此控件的VM的ID
-                id || uiName + setTimeout("1") //没有就随机生成一个
+                id = uiName + setTimeout("1") //没有就随机生成一个
                 elem.setAttribute("data-id", id)
             }
             elem[id + "vmodels"] = vmodels //将它临时保存起来
