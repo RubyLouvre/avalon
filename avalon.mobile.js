@@ -1,5 +1,5 @@
 //==================================================
-// avalon 083 ，mobile
+// avalon 084 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -432,10 +432,10 @@
                 }
                 //2. 转化为完整路径
                 if (kernel.alias[url]) { //别名机制
-                    ret = kernel.alias[url]
-                    if (typeof ret === "object") {
-                        shim = ret
-                        ret = ret.src
+                    url = kernel.alias[url]
+                    if (typeof url === "object") {
+                        shim = url
+                        url = url.src
                     }
                 }
                 //3.  处理text!  css! 等资源
@@ -444,6 +444,7 @@
                     plugin = a.slice(0, -1)
                     return ""
                 })
+                
                 plugin = plugin || "js"
                 plugin = plugins[plugin] || noop;
                 //4. 补全路径

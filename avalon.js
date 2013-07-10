@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.83 独立版  by 司徒正美 2013.6.28
+// avalon 0.84 独立版  by 司徒正美 2013.6.28
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -583,10 +583,10 @@
                 }
                 //2. 转化为完整路径
                 if (kernel.alias[url]) { //别名机制
-                    ret = kernel.alias[url]
-                    if (typeof ret === "object") {
-                        shim = ret
-                        ret = ret.src
+                    url = kernel.alias[url]
+                    if (typeof url === "object") {
+                        shim = url
+                        url = url.src
                     }
                 }
                 //3.  处理text!  css! 等资源
