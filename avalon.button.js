@@ -1,18 +1,18 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         disabled: false
     };
-    avalon.ui.button = function(element, id) {
+    avalon.ui.button = function(element, id, vmodels, opts) {
 
         var $element = avalon(element),
-            model, el, checkbox;
+                model, el, checkbox;
         var title = element.title,
-            html = element.innerHTML;
+                html = element.innerHTML;
         var fragment = document.createDocumentFragment();
         element.title = "";
         //处理配置
-        var options = avalon.mix({}, defaults);
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults, $element.data());
+
         //处理radio, checkbox
         var isRadio = element.type === "radio";
         var isCheckbox = element.type === "checkbox";
@@ -105,7 +105,7 @@
             model = avalon.define(id, function(vm) {
                 vm.disabled = options.disabled;
                 vm.radioActived = 0;
-                vm.checked = !! (checkbox || {}).checked;
+                vm.checked = !!(checkbox || {}).checked;
                 vm.$radios = [];
             });
         }
@@ -134,18 +134,19 @@
         });
         return model
     };
-})(window.avalon);
 
-(function(avalon) {
     avalon.ui.buttonset = function(element, id) {
         var $element = avalon(element);
         $element.addClass("ui-buttonset");
         var children = element.children;
-        for (var i = 0, el; el = children[i++];) {
+        for (var i = 0, el; el = children[i++]; ) {
             el.setAttribute("data-corner-class", "true");
         }
         children[0].setAttribute("data-corner-class", "ui-corner-left");
         children[children.length - 1].setAttribute("data-corner-class", "ui-corner-right");
     };
-})(window.avalon);
+    return avalon
+})
+
+        
 //X-tag和Web组件帮你提速应用开发 http://mozilla.com.cn/post/51451/
