@@ -1009,7 +1009,7 @@
             tr: DOC.createElement("tbody"),
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
-            _default: DOC.createElement("div")
+            "*": DOC.createElement("div")
         };
         object.optgroup = object.option;
         object.tbody = object.tfoot = tagHooks.colgroup = object.caption = object.thead;
