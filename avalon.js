@@ -1166,8 +1166,10 @@
      *                          数组增强                        *
      **********************************************************************/
     avalon.Array = {
-        sortBy: function(target, fn, scope) {
+        sortBy: function(target, fn, scope, trend) {
             //根据指定条件进行排序，通常用于对象数组。
+            //默认是按递增来排
+            trend === typeof trend === "boolean" ? trend : false
             var array = target.map(function(item, index) {
                 return {
                     el: item,
@@ -1176,14 +1178,15 @@
             }).sort(function(left, right) {
                 var a = left.re,
                         b = right.re
-                return a < b ? -1 : a > b ? 1 : 0
+                var ret = a < b ? -1 : a > b ? 1 : 0
+                return trend ? ret : ret * -1
             })
             return avalon.Array.pluck(array, 'el')
         },
         pluck: function(target, name) {
             //取得对象数组的每个元素的指定属性，组成数组返回。
             return target.filter(function(item) {
-                return item[name] != null
+                return item[name] !== void 0
             })
         },
         ensure: function(target) {
@@ -1775,7 +1778,7 @@
                         type = args.shift()
                     }
                     isBinding = typeof bindingHandlers[type] === "function"
-                } 
+                }
 //                if (rexpr.test(attr.value)) {
 //                    type = isBinding = "attr"
 //                }
