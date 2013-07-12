@@ -1433,9 +1433,10 @@
                         type = args.shift()
                     }
                     isBinding = typeof bindingHandlers[type] === "function"
-                } else if (rexpr.test(attr.value)) {
-                    type = isBinding = "attr"
-                }
+                } 
+//                else if (rexpr.test(attr.value)) {
+//                    type = isBinding = "attr"
+//                }
                 if (isBinding) {
                     bindings.push({
                         type: type,

@@ -991,7 +991,10 @@
         return null
     }
     cssHooks["@:set"] = function(node, name, value) {
-        node.style[name] = value
+        try {//node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine 在旧式IE下会抛异常
+            node.style[name] = value
+        } catch (e) {
+        }
     }
     if (window.getComputedStyle) {
         cssHooks["@:get"] = function(node, name) {
@@ -1772,9 +1775,10 @@
                         type = args.shift()
                     }
                     isBinding = typeof bindingHandlers[type] === "function"
-                } else if (rexpr.test(attr.value)) {
-                    type = isBinding = "attr"
-                }
+                } 
+//                if (rexpr.test(attr.value)) {
+//                    type = isBinding = "attr"
+//                }
                 if (isBinding) {
                     bindings.push({
                         type: type,
@@ -2642,7 +2646,7 @@
                     break
                 case "push":
                     //在后面添加
-                    for(var i = 0, n = args.length; i < n ; i++){
+                    for (var i = 0, n = args.length; i < n; i++) {
                         addItemView(len + i, args[i], list, data, vmodels)
                     }
 //                    forEach(args, function(index, item) {
@@ -3104,3 +3108,5 @@
 //avalon.slice(与数组的slice用法一致，但可以切换类数组对象)， require， define全局方法
 //082 重构parser
 //083 重构计算属性， bind绑定, text绑定， fix scanExpr, attr绑定与date过滤器的BUG，添加include绑定
+//084 重构ui绑定 fix scanTag bug(它把script, style等标签内容都扫描了) ms-include 的值必须不为空值，否则不做任何操作。
+//085 fix scanNodes（旧式IE下UI死锁） style[name] = value旧式IE抛错， 旧式IE下有些元素的innerHTML是只读的，会抛错
