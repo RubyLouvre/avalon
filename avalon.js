@@ -18,7 +18,7 @@
     var oproto = Object.prototype;
     var ohasOwn = oproto.hasOwnProperty
     var prefix = "ms-"
-
+    var oldIE = !+"\v1"
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var serialize = oproto.toString
@@ -1206,12 +1206,12 @@
         }
     }
     /************************************************************************
-                    parseHTML
+     parseHTML
      ****************************************************************************/
     var rtagName = /<([\w:]+)/,
             //取得其tagName
             rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-            rcreate = !+"\v1" ? /(<(?:script|link|style|meta|noscript))/ig : /[^\d\D]/,
+            rcreate = oldIE ? /(<(?:script|link|style|meta|noscript))/ig : /[^\d\D]/,
             types = avalon.oneObject("text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript", "text/vbscript"),
             //需要处理套嵌关系的标签
             rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
@@ -1226,7 +1226,7 @@
         tr: [2, "<table><tbody>"],
         td: [3, "<table><tbody><tr>"],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
-        _default: !+"\v1" ? [1, "X<div>"] : [0, ""] //div可以不用闭合
+        _default: oldIE ? [1, "X<div>"] : [0, ""] //div可以不用闭合
     }
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
@@ -1245,7 +1245,7 @@
                 fragment = documentFragment.cloneNode(false),
                 wrapper = domParser,
                 firstChild;
-        if (!+"\v1") { //fix IE
+        if (oldIE) { //fix IE
             html = html.replace(rcreate, "<br class=fix_noscope>$1"); //在link style script等标签之前添加一个补丁
         }
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "");
@@ -1269,7 +1269,7 @@
         //移除我们为了符合套嵌关系而添加的标签
         for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
         }
-        if (!+"\v1") { //fix IE
+        if (oldIE) { //fix IE
             for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
                 if (el.className && el.className === "fix_noscope") {
                     el.parentNode.removeChild(el);
@@ -1282,7 +1282,7 @@
         return fragment;
     }
     avalon.innerHTML = function(node, html) {
-        if (!+"\v1" && (!rcreate.test(html) && !rnest.test(html))) {
+        if (oldIE && (!rcreate.test(html) && !rnest.test(html))) {
             try {
                 node.innerHTML = html;
                 return;
@@ -1398,6 +1398,7 @@
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, value) {
+
             if (!watchOne[name]) {
                 model[name] = value
             }
@@ -1492,6 +1493,7 @@
         }
 
         vmodel = defineProperties(vmodel, Descriptions, VBPublics)
+
         VBPublics.forEach(function(name) {
             if (!watchOne[name]) {
                 vmodel[name] = scope[name]
@@ -1646,18 +1648,27 @@
     }
 
     function scanNodes(parent, vmodels, callback) {
-        var nodes = []
+        var tags = [], texts = []
         for (var i = 0, node; node = parent.childNodes[i++]; ) {
-            nodes.push(node);
-        }
-        callback && callback();
-        for (var i = 0; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
-                scanTag(node, vmodels) //扫描元素节点
+                tags.push(node)
             } else if (node.nodeType === 3) {
-                scanText(node, vmodels) //扫描文本节点
+                texts.push(node)
             }
         }
+        callback && callback();
+        tags.forEach(function(node) {
+            if (oldIE) {
+                avalon.nextTick(function() {
+                    scanTag(node, vmodels) //扫描元素节点
+                })
+            } else {
+                scanTag(node, vmodels) //扫描元素节点
+            }
+        })
+        texts.forEach(function(node) {
+            scanText(node, vmodels) //扫描文本节点
+        })
     }
 
     var stopScan = avalon.oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
@@ -1684,6 +1695,7 @@
             if (!newVmodel) {
                 return
             }
+
             vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
@@ -2594,6 +2606,7 @@
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
+
         var list
         if (typeof array == "object") {
             list = array[0].apply(array[0], array[1])
@@ -2629,9 +2642,12 @@
                     break
                 case "push":
                     //在后面添加
-                    forEach(args, function(index, item) {
-                        addItemView(len + index, item, list, data, vmodels)
-                    })
+                    for(var i = 0, n = args.length; i < n ; i++){
+                        addItemView(len + i, args[i], list, data, vmodels)
+                    }
+//                    forEach(args, function(index, item) {
+//                        addItemView(len + index, item, list, data, vmodels)
+//                    })
                     break
                 case "unshift":
                     //在前面添加
