@@ -1012,7 +1012,7 @@
             "*": DOC.createElement("div")
         };
         object.optgroup = object.option;
-        object.tbody = object.tfoot = tagHooks.colgroup = object.caption = object.thead;
+        object.tbody = object.tfoot = object.colgroup = object.caption = object.thead;
         object.th = object.td;
         return object
     }
