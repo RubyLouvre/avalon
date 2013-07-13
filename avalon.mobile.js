@@ -735,7 +735,7 @@
                     if (type === "number" && !isFinite(value + "")) {
                         return
                     }
-                    if (isFinite(type) && !cssNumber[prop]) {
+                    if (isFinite(value) && !cssNumber[prop]) {
                         value += "px"
                     }
                     fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
