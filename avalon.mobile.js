@@ -267,7 +267,7 @@
         var rmakeid = /(#.+|\W)/g //用于处理掉href中的hash与所有特殊符号
         var basepath
         var plugins = {
-            js: function(url, shim) {
+            js: function(url, checkDeps, shim) {
                 var id = cleanUrl(url)
                 if (!modules[id]) { //如果之前没有加载过
                     modules[id] = {
@@ -482,7 +482,7 @@
             if (kernel.nocache) {
                 ret += (ret.indexOf("?") === -1 ? "?" : "&") + Date.now()
             }
-            return plugin(ret, modules, shim, checkDeps)
+            return plugin(ret, checkDeps, shim)
         }
 
         function loadJS(url, id, callback) {
