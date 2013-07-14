@@ -1,5 +1,5 @@
 //==================================================
-// avalon 084 ，mobile
+// avalon 085 ，mobile
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1301,6 +1301,7 @@
         }
     }
 
+    var flagTransation = false
     function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
@@ -1308,9 +1309,9 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && el.parentNode === null) {
+                if ((!flagTransation) && el && (!el.noRemove) && el.parentNode === null) {
                     avalon.Array.remove(list, fn)
-                    avalon.log(fn + "")
+                    log(fn + "")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -1378,50 +1379,54 @@
     }
 
     var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
-
-    function scanExpr(value) {
-        var tokens = [],
-                left
-        if (rexpr.test(value)) {
+    function scanExpr(str) {
+        var tokens = [], value, start = 0, stop
+        if (rexpr.test(str)) {
             do {
-                value.replace(rexpr, function(a, b) {
-                    left = RegExp.leftContext
-                    value = RegExp.rightContext
-                    if (left) {
-                        tokens.push({
-                            value: left,
-                            expr: false
+                var stop = str.indexOf(openTag, start)
+                if (stop === -1) {
+                    break
+                }
+                value = str.slice(start, stop)
+                if (value) {// {{ 左边的文本
+                    tokens.push({
+                        value: value,
+                        expr: false
+                    })
+                }
+                start = stop + openTag.length
+                stop = str.indexOf(closeTag, start)
+                if (stop === -1) {
+                    break
+                }
+                value = str.slice(start, stop)
+                if (value) {//{{ }} 之间的表达式
+                    var leach = []
+                    if (value.indexOf("|") > 0) { // 注意排除短路与
+                        value = value.replace(rfilters, function(c, d, e) {
+                            leach.push(d + (e || ""))
+                            return c.charAt(0)
                         })
                     }
-                    if (b) {
-                        var leach = []
-                        if (b.indexOf("|") > 0) { // 注意排除短路与
-                            b = b.replace(rfilters, function(c, d, e) {
-                                leach.push(d + (e || ""))
-                                return c.charAt(0)
-                            })
-                        }
-                        tokens.push({
-                            value: b,
-                            expr: true,
-                            filters: leach.length ? leach : void 0
-                        })
-
-                    }
-                    return ""
-                });
-            } while (value.indexOf(closeTag) > -1);
-
-            if (value) {
+                    tokens.push({
+                        value: value,
+                        expr: true,
+                        filters: leach.length ? leach : void 0
+                    })
+                }
+                start = stop + closeTag.length;
+            } while (1);
+            value = str.slice(start);
+            if (value) { //}} 右边的文本
                 tokens.push({
                     value: value,
                     expr: false
                 })
             }
         }
-
         return tokens
     }
+
 
     function scanAttr(el, vmodels) {
         var bindings = []
@@ -2088,130 +2093,168 @@
     /*********************************************************************
      *                 与each绑定息息相关的监控数组              *
      **********************************************************************/
-    /**用于同步集合中的每个元素对应的模型
-     *@param val {Any} 集合中的某个元素，可以是一个VM，也可以是一个普通对象，或者说简单的数据类型，
-     *@param i {Number} 元素对应的索引值
-     **/
-
-    function syncModel(val, i) {
+   
+    function convert(val) {
         var type = getType(val)
-        if (/array|object/.test(type)) {
+        if (type === "array" || type === "object") {
             val = val.$id ? val : modelFactory(val, val, type === "array")
-            this[i] = val.$model
         }
         return val
     }
-
-    function Collection(list, model, prop) {
-        var collection = list.map(syncModel, list) //转换里面的元素为VM
-        collection.$id = generateID()
-        collection[subscribers] = []
-        collection.$model = list
-        if (kernel.compact) {
-            collection.$json = list
+     function isInteger(i) {
+        return  (i === +i) && !(i % 1)
+    }
+    var isEqual = Object.is || function(x, y) {//只要用于处理NaN 与 NaN 比较, chrome19+, firefox22
+        if (x === y) {
+            return x !== 0 || 1 / x === 1 / y;
+        }
+        return x !== x && y !== y;
+    };
+    //To obtain the corresponding index of the VM
+    function getVMIndex(a, bbb, start) {
+        for (var i = start, n = bbb.length; i < n; i++) {
+            var b = bbb[i];
+            var check = b && b.v ? b.v : b
+            if (isEqual(a, check)) {
+                return i
+            }
+        }
+    }
+    function Collection(model) {
+        var array = []
+        array.$id = generateID()
+        array[subscribers] = []
+        array.$model = array.$json = model
+        array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
+        for (var i in Observable) {
+            array[i] = Observable[i]
         }
         var dynamic = modelFactory({
-            length: list.length
+            length: model.length
         })
-        dynamic.$watch("length", function() {
-            model && model.$fire(prop + ".length")
+        dynamic.$watch("length", function(a, b) {
+            array.$fire("length", a, b)
         })
-        "push,pop,shift,unshift,splice".replace(rword, function(method) {
-            collection[method] = function() {
-                var len = this.length,
-                        ret
-                if (/push|unshift|splice/.test(method)) {
-                    var margs = [].slice.call(arguments)
-                    var vmargs = margs.map(syncModel, margs)
-                    list[method].apply(list, margs)
-                    ret = list[method].apply(this, vmargs)
-                    notifySubscribers(this, method, vmargs, len)
-                } else {
-                    list[method].call(this)
-                    ret = list[method]()
-                    notifySubscribers(this, method, arguments, len)
-                }
-                dynamic.length = this.length
-                return ret
+        array._splice = array.splice
+        array.add = function(arr, insertPos) {
+            insertPos = typeof insertPos === "number" ? insertPos : this.length;
+            notifySubscribers(this, "begin")
+            for (var i = 0, n = arr.length; i < n; i++) {
+                var el = convert(arr[i])
+                var pos = insertPos + i
+                this._splice(pos, 0, el)
+                notifySubscribers(this, "insert", pos, el)
             }
-        })
+            notifySubscribers(this, "commit", insertPos)
+            if (!this.stopFireLength) {
+                return dynamic.length = this.length
+            }
+        }
+        array.isCollection = true;
+        array.del = function(pos, length) {
+            var ret = []
+            for (var i = 0; i < length; i++) {
+                ret[i] = this[pos]
+                this._splice(pos, 1)
+                notifySubscribers(this, "remove", pos)
+            }
+            if (!this.stopFireLength) {
+                dynamic.length = this.length
+            }
+            return ret;
+        }
+        array.push = function() {
+            model.push.apply(model, arguments)
+            return this.add([].slice.call(arguments)) //返回长度
+        }
+        array.unshift = function() {
+            model.unshift.apply(model, arguments)
+            return this.add([].slice.call(arguments), 0) //返回长度
+        }
+        array.shift = function() {
+            model.shift()
+            var el = this.del(0, 1)
+            notifySubscribers(this, "index")
+            return el[0]  //返回被移除的元素
+        }
+        array.pop = function() {
+            var el = model.pop()
+            this.del(this.length - 1, 1)
+            return el[0] //返回被移除的元素
+        }
+        array.splice = function(a, b) {
+            // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
+         if (isInteger(a)) {//如果是整数
+                var n = this.length
+                if (a < 0) {
+                    a = a * -1 >= n ? 0 : a + n
+                } else {
+                    a = a > n ? n : a
+                }
+            } else {
+                a = 0
+            }
+            var removeArray = model.splice.apply(model, arguments), ret = []
+            this.stopFireLength = true;//确保在这个方法中 , $watch("length",fn)只触发一次
+            if (removeArray.length) {
+                ret = this.del(a, removeArray.length)
+                if (arguments.length <= 2) {//如果没有执行添加操作，需要手动resetIndex
+                    notifySubscribers(this, "index")
+                }
+            }
+            if (arguments.length > 2) {
+                this.add([].slice.call(arguments, 2), a)
+            }
+            this.stopFireLength = false;
+            dynamic.length = this.length
+            return ret//返回被移除的元素
+        }
         "sort,reverse".replace(rword, function(method) {
-            collection[method] = function() {
-                list[method].apply(this, arguments)
-                var neo = this.map(function(el) {
-                    return el && el.$model ? el.$model : el
-                })
-                var n = list.length
-                for (var i = 0; i < n; i++) {
-                    var a = list[i],
-                            b = neo[i]
-                    if (a !== b) {
-                        list.splice(i, 1)
-                        list.push(a)
-                        notifySubscribers(collection, "reroder", [i])
-                        i = i - 1
+            array[method] = function() {
+                model[method].apply(model, arguments)
+                var sorted = false;
+                for (var i = 0, n = this.length; i < n; i++) {
+                    var a = model[i];
+                    var b = this[i]
+                    var b = b && b.$model ? b.$model : b
+                    if (!isEqual(a, b)) {
+                        sorted = true
+                        var index = getVMIndex(a, this, i)
+                        var remove = this._splice(index, 1)[0]
+                        array._splice(i, 0, remove)
+                        notifySubscribers(this, "move", i, index)
                     }
+                }
+                if (sorted) {
+                    notifySubscribers(this, "index")
                 }
                 return this
             }
         })
-        collection.isCollection = true
-        collection.clear = function() {
-            this.length = dynamic.length = 0 //清空数组
-            notifySubscribers(this, "clear", [])
-            return this
-        }
-        collection.update = function(val) {
-            Array.isArray(val) && updateViewModel(this, val, true)
-            return this
-        }
-        collection.sortBy = function(fn, scope) { //按某属性排序
-            this.update(avalon.Array.sortBy(list, fn, scope))
-            return this
-        }
-        collection.contains = function(el) { //判定是否包含
+        array.contains = function(el) { //判定是否包含
             return this.indexOf(el) !== -1
         }
-        collection.ensure = function(el) {
-            if (!this.contains(el)) { //只有不存在才push
-                this.push(el)
-            }
-            return this
-        }
-        collection.set = function(index, val) {
-            if (index >= 0 && index < this.length) {
-                if (/array|object/.test(getType(val))) {
-                    model && model.$fire(prop + ".changed")
-                    if (val.$model) {
-                        val = val.$model
-                    }
-                    updateViewModel(this[index], val, Array.isArray(val))
-                } else if (this[index] !== val) {
-                    this[index] = val
-                    model && model.$fire(prop + ".changed")
-                    notifySubscribers(this, "set", arguments)
-                }
-            }
-            return this
-        }
-        collection.size = function() { //取得数组长度，这个函数可以同步视图，length不能
+        array.size = function() { //取得数组长度，这个函数可以同步视图，length不能
             return dynamic.length
         }
-        collection.remove = function(item) { //移除第一个等于给定值的元素
-            var index = this.indexOf(item)
-            return this.removeAt(index)
-        }
-        collection.removeAt = function(index) { //移除指定索引上的元素
-            if (index >= 0 && (index % 1 === 0)) {
-                list.splice(index, 1)
-                this.splice(index, 1) //DOM操作非常重,因此只有非负整数才删除
-                return this
+        array.remove = function(el) { //移除第一个等于给定值的元素
+            var index = this.indexOf(el)
+            if (index >= 0) {
+                return this.removeAt(index)
             }
         }
-        collection.removeAll = function(all) { //移除N个元素
+        array.removeAt = function(index) { //移除指定索引上的元素
+            this.splice(index, 1) //DOM操作非常重,因此只有非负整数才删除
+        }
+        array.clear = function() {
+            this.length = dynamic.length = 0 //清空数组
+            notifySubscribers(this, "clear")
+            return this
+        }
+        array.removeAll = function(all) { //移除N个元素
             if (Array.isArray(all)) {
                 all.forEach(function(el) {
-                    collection.remove(el)
+                    array.remove(el)
                 })
             } else if (typeof all === "function") {
                 for (var i = this.length - 1; i >= 0; i--) {
@@ -2224,139 +2267,155 @@
                 this.clear()
             }
         }
-        return collection
+        array.ensure = function(el) {
+            if (!this.contains(el)) { //只有不存在才push
+                this.push(el)
+            }
+            return this
+        }
+        array.set = function(index, val) {
+            if (index >= 0 && index < this.length) {
+                if (/array|object/.test(getType(val))) {
+                    if (val.$model) {
+                        val = val.$model
+                    }
+                    updateViewModel(this[index], val, Array.isArray(val))
+                } else if (this[index] !== val) {
+                    this[index] = val
+                    notifySubscribers(this, "set", index, val)
+                }
+            }
+            return this
+        }
+        return array;
     }
     //////////////////////////// each binding  ////////////////////////
     //https://developer.mozilla.org/en-US/docs/DOM/range.deleteContents
 
+    /*
+     * 
+     var aaa=[1,2,3,4,5,1];
+     var aas = aaa.slice(0);
+     var bbb = [{v:2},{v:3},{v:1},{v:1},{v:5},{v:4}];
+     bbb.map(function(a) {
+     var i = aas.indexOf(a.v);
+     aas[i] = null;
+     a.sv = i;
+     return a
+     });
+     bbb.sort(function(a, b) {
+     return a.sv - b.sv;
+     });
+     bbb.map(function(a) {
+     delete a.sv;
+     });
+     console.log(bbb);
+     * 
+     */
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
+
         var list
         if (typeof array == "object") {
             list = array[0].apply(array[0], array[1])
         }
+
         if (typeof list !== "object") {
             return list
         }
         var view = documentFragment.cloneNode(false)
-
         while (parent.firstChild) {
             view.appendChild(parent.firstChild)
         }
-        data.view = view
+        data.vTemplate = view
         data.scopes = vmodels
 
-        function updateListView(method, args, len) {
-            var vmodels = updateListView.vmodels
+        function updateListView(method, pos, el) {
+            var tmodels = updateListView.tmodels
+
             switch (method) {
-                case "reroder":
-                    var i = args[0]
-                    var a = vmodels.splice(i, 1)
-                    vmodels.push(a[0])
-                    var frag = getItemView(parent, vmodels, i)
-                    parent.appendChild(frag)
-                    resetItemIndex(vmodels)
+                case "move":
+                    var t = tmodels.splice(el, 1)
+                    if (t) {
+                        tmodels.splice(pos, 0, t[0])
+                        var vRemove = t[0].$view
+                        var group = data.group
+                        removeView(vRemove, parent, group, el)
+                        var node = parent.childNodes[ group * pos]
+                        parent.insertBefore(vRemove, node)
+                    }
                     break
+                case "begin":
+                    list.vTransation = data.vTemplate.cloneNode(false)
+                    flagTransation = true
                 case "set":
-                    var model = vmodels[args[0]]
+                    var model = tmodels[pos]
                     if (model) {
                         var n = model.$itemName
-                        model[n] = args[1]
+                        model[n] = el
                     }
                     break
-                case "push":
-                    //在后面添加
-                    forEach(args, function(index, item) {
-                        addItemView(len + index, item, list, data, vmodels)
-                    })
+                case "insert":
+                    //将子视图插入到文档碎片中
+                    var tmodel = createVModel(pos, el, list, data.args)
+                    var tview = data.vTemplate.cloneNode(true)
+                    tmodel.$view = tview
+                    vmodels = [tmodel].concat(vmodels)
+                    tmodels.splice(pos, 0, tmodel)
+                    scanNodes(tview, vmodels);
+                    data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
+                    list.vTransation.appendChild(tview)
                     break
-                case "unshift":
-                    //在前面添加
-                    resetItemIndex(vmodels, 0, list.length - len)
-                    list.place = parent.firstChild
-                    forEach(args, function(index, item) {
-                        addItemView(index, item, list, data, vmodels)
-                    })
-                    list.place = null
+                case "commit":
+                    pos = ~~pos
+                    //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
+                    var insertNode = parent.childNodes[ data.group * pos] || null
+                    parent.insertBefore(list.vTransation, insertNode)
+                    flagTransation = false
+                    resetItemIndex(tmodels)
                     break
-                case "pop":
-                    //去掉最后一个
-                    var node = getItemView(parent, vmodels, vmodels.length - 1)
-                    if (node) {
-                        vmodels.pop()
+                case "remove":
+                    pos = ~~pos
+                    var t = tmodels.splice(pos, 1) //移除对应的子VM
+                    if (t.length) {
+                        var vRemove = t[0].$view
+                        removeView(vRemove, parent, data.group, pos)
                     }
                     break
-                case "shift":
-                    //去掉前面一个
-                    var node = getItemView(parent, vmodels, 0)
-                    if (node) {
-                        vmodels.shift()
-                        resetItemIndex(vmodels)
-                    }
-                    break
-                case "splice":
-                    var start = args[0],
-                            second = args[1],
-                            adds = [].slice.call(args, 2)
-                    var deleteCount = second >= 0 ? second : len - start
-                    if (deleteCount) { //连续删除几个
-                        var node = getItemView(parent, vmodels, start, deleteCount)
-                        if (node) {
-                            vmodels.splice(start, deleteCount)
-                            resetItemIndex(vmodels, start, start)
-                        }
-                    }
-                    if (adds.length) { //连续添加几个
-                        list.place = getIndexItem(parent, vmodels, start)
-                        updateListView("push", adds, start)
-                        resetItemIndex(vmodels, start, start)
-                        list.place = null
-                    }
-                    break
+                case "index":
+                    resetItemIndex(tmodels)
+                    break;
                 case "clear":
-                    vmodels.length = 0
+                    tmodels.length = 0
                     avalon.clearChild(parent)
                     break
             }
         }
-        updateListView.vmodels = []
+        updateListView.tmodels = [] //循环绑定的视图刷新函数维护一个临时生成的VM集合
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView)
         }
-        updateListView("push", list, 0)
+        notifySubscribers(list, "begin")
+        for (var i = 0, n = list.length; i < n; i++) {
+            notifySubscribers(list, "insert", i, list[i])
+        }
+        notifySubscribers(list, "commit", 0)
     }
 
-    //取得目标子视图的第一个节点
-
-    function getIndexItem(parent, vmodels, index) { //
+    function removeView(vRemove, parent, group, pos) {
         var nodes = parent.childNodes
-        var length = vmodels.length
-        var group = nodes.length / length
-        var node = nodes[group * index]
-        return node
-    }
-    //将目标子视图的所有元素转换为一个文档碎片返回
-
-    function getItemView(parent, vmodels, index, number) {
-        var nodes = parent.childNodes
-        var length = vmodels.length
-        var group = nodes.length / length
-        var node = nodes[group * index]
-        var view = vmodels[index].$view
-        var array = [node]
-        number = number || 1
-        length = group * number
-        for (var i = 1; i < length; i++) {
+        var node = nodes[group * pos] //第一个要移除的子节点
+        var removeNodes = [node]
+        for (var i = 1; i < group; i++) {
             node = node.nextSibling
-            array.push(node)
+            removeNodes.push(node)
         }
-        for (var i = 0, node; node = array[i++]; ) {
-            view.appendChild(node)
+        for (var i = 0, node; node = removeNodes[i++]; ) {
+            vRemove.appendChild(node) //通常添加到文档碎片实现移除
         }
-        return view
+        return vRemove;
     }
-
 
     function resetItemIndex(vmodels, pos, add) { //重置路标
         pos = pos || 0
@@ -2366,31 +2425,9 @@
         }
     }
 
-
-    function addItemView(index, item, list, data, items) {
-        var vmodels = data.scopes
-        var parent = data.element
-        var vmodel = createItemModel(index, item, list, data.args)
-        var view = data.view.cloneNode(true)
-        vmodels = [vmodel].concat(vmodels)
-        items.splice(index, 0, vmodel)
-        vmodel.$view = view
-        if (!parent.inprocess) {
-            parent.inprocess = 1 //locked!
-            var hidden = parent.hidden //http://html5accessibility.com/
-            parent.hidden = true //作用类似于display:none
-        }
-        scanNodes(view, vmodels, function() {
-            parent.insertBefore(view, list.place || null)
-        });
-        if (parent.inprocess) {
-            parent.hidden = hidden
-            parent.inprocess = 0
-        }
-    }
     //为子视图创建一个ViewModel
 
-    function createItemModel(index, item, list, args) {
+    function createVModel(index, item, list, args) {
         var itemName = args[0] || "$data"
         var source = {}
         source.$index = index
@@ -2419,7 +2456,6 @@
         }
         return modelFactory(source)
     }
-
 
     /*********************************************************************
      *                            Filters                              *

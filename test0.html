@@ -9,39 +9,34 @@
     </head>
     <body>
 
-        <script src="avalon.mobile.js"></script>
+        <script src="avalon.js"></script>
+    
         <script>
 
             avalon.define("test", function(vm) {
+                vm.aaa = "<span>111</span><span>222</span><span>333</span><script>alert(1)<\/script>"
                 vm.array = [{value: "aaa", text: "111"}, {value: "bbb", text: "222"}, {value: "bbb", text: "333"}]
             })
             avalon.define("index", function(vm) {
                 vm.message = "XXXX";
             });
-            require("avalon.testui", function() {
-                avalon.define("bbb", function(vm) {
-                    vm.$opts = {
-                        name: "这是控件的内容"
-                    }
-                })
-                avalon.scan()
-                console.log(avalon.vmodels.ddd)
-            })
-
+   
 
         </script>
         <div ms-controller="test">
             <select ms-each-el="array">
                 <option ms-value="el.value">{{$index}}、{{el.value}}</option>
             </select>
+            <div ms-html="aaa"></div>
         </div>
         <script type="text/avalon" id="index">
             <div ms-controller="index">
             <h2>message:{{message}}</h2>
             <input ms-duplex="message">
+            <style>body{background:red}</style>
             </div>
         </script>
         <div  ms-include="'index'"></div>
-        <div ms-controller="bbb" ms-ui-$opts="testui" data-id="ddd"></div>
+      
     </body>
 </html>

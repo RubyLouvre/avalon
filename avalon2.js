@@ -2474,10 +2474,6 @@
     /*********************************************************************
      *                 与each绑定息息相关的监控数组              *
      **********************************************************************/
-    /**用于同步集合中的每个元素对应的模型
-     *@param val {Any} 集合中的某个元素，可以是一个VM，也可以是一个普通对象，或者说简单的数据类型，
-     *@param i {Number} 元素对应的索引值
-     **/
 
     function convert(val) {
         var type = getType(val)
@@ -2777,15 +2773,6 @@
         notifySubscribers(list, "commit", 0)
     }
 
-    //取得目标子视图的第一个节点
-
-    function getIndexItem(parent, vmodels, index) {
-        var nodes = parent.childNodes
-        var length = vmodels.length
-        var group = nodes.length / length
-        var node = nodes[group * index]
-        return node
-    }
     function removeView(vRemove, parent, group, pos) {
         var nodes = parent.childNodes
         var node = nodes[group * pos] //第一个要移除的子节点
@@ -2806,19 +2793,6 @@
         for (var el; el = vmodels[pos++]; ) {
             el.$index = add++
         }
-    }
-    //创建子视图（documentFragment）,并在它离开DOM树时进行渲染
-    function createView(index, elem, list, data, tmodels) {
-        var vmodels = data.scopes
-        var tmodel = createVModel(index, elem, list, data.args)
-        var tview = data.vTemplate.cloneNode(true)
-        tmodel.$view = tview
-        vmodels = [tmodel].concat(vmodels)
-        tmodels.splice(index, 0, tmodel)
-        scanNodes(tview, vmodels);
-
-        data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
-        return tview;
     }
 
     //为子视图创建一个ViewModel

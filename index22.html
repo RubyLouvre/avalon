@@ -8,13 +8,32 @@
     <body>
         <div ms-controller="box">
             <div ms-each-el="array">
-                <p>{{el}}</p>
+                <p>${{$index}}  ——  {{el}}</p>
             </div>
         </div>
         <script>
-            avalon.define("box", function(vm) {
-              vm.array = [1,2,3,4,5]
+
+
+
+            var a = avalon.define("box", function(vm) {
+                vm.array = ["aaaa", "bbbb", "cccc", "dddd", "eeee"]
             })
+
+            setTimeout(function() {
+                a.array.push(6, 7, 8, 9)
+            }, 1000)
+            setTimeout(function() {
+                a.array.shift()
+            }, 2000)
+            setTimeout(function() {
+                a.array.unshift("a", "b", "c", "d")
+            }, 3000)
+            setTimeout(function() {
+                a.array.pop()
+            }, 4000)
+            setTimeout(function() {
+                a.array.sort()
+            }, 5000)
         </script>
     </body>
 </html>

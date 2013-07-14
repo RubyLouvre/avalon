@@ -33,7 +33,9 @@
                     })
                     vm.removeAt = function(e) {
                         if (isFinite(this.value) && e.which == 13) {//this为input元素
-                            vm.array.removeAt(Number(this.value))
+                            var a = ~~this.value
+                            avalon.log(a)
+                            vm.array.removeAt(a)
                             this.value = "";
                         }
                     }
