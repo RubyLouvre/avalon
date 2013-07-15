@@ -1105,12 +1105,12 @@
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
+            var callbacks = this.$events[type] || []
             if (n === 0) {
                 this.$events = {}
             } else if (n === 1) {
-                this.$events[type] = []
+                callbacks = []
             } else {
-                var callbacks = this.$events[type] || []
                 var i = callbacks.length
                 while (--i > -1) {
                     if (callbacks[i] === callback) {
@@ -2093,7 +2093,7 @@
     /*********************************************************************
      *                 与each绑定息息相关的监控数组              *
      **********************************************************************/
-   
+
     function convert(val) {
         var type = getType(val)
         if (type === "array" || type === "object") {
@@ -2101,7 +2101,7 @@
         }
         return val
     }
-     function isInteger(i) {
+    function isInteger(i) {
         return  (i === +i) && !(i % 1)
     }
     var isEqual = Object.is || function(x, y) {//只要用于处理NaN 与 NaN 比较, chrome19+, firefox22
@@ -2184,7 +2184,7 @@
         }
         array.splice = function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-         if (isInteger(a)) {//如果是整数
+            if (isInteger(a)) {//如果是整数
                 var n = this.length
                 if (a < 0) {
                     a = a * -1 >= n ? 0 : a + n

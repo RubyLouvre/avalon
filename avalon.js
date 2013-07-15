@@ -1339,12 +1339,12 @@
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
+            var callbacks = this.$events[type] || []
             if (n === 0) {
                 this.$events = {}
             } else if (n === 1) {
-                this.$events[type] = []
+                callbacks = []
             } else {
-                var callbacks = this.$events[type] || []
                 var i = callbacks.length
                 while (--i > -1) {
                     if (callbacks[i] === callback) {
@@ -2170,7 +2170,7 @@
             watchView(text, vmodels, data, function(val, elem) {
                 if (name === "css") {
                     avalon(elem).css(data.args.join("-"), val)
-                } else if (name == "include" && val) {
+                } else if (name === "include" && val) {
                     if (data.args + "" === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
                         ajax.onreadystatechange = function() {
@@ -2625,7 +2625,6 @@
             }
         }
         array.removeAt = function(index) { //移除指定索引上的元素
-            console.log(index+"!!!!!!!")
             this.splice(index, 1) //DOM操作非常重,因此只有非负整数才删除
         }
         array.clear = function() {
@@ -2717,27 +2716,10 @@
             var tmodels = updateListView.tmodels
 
             switch (method) {
-                case "move":
-                    var t = tmodels.splice(el, 1)
-                    if (t) {
-                        tmodels.splice(pos, 0, t[0])
-                        var vRemove = t[0].$view
-                        var group = data.group
-                        removeView(vRemove, parent, group, el)
-                        var node = parent.childNodes[ group * pos]
-                        parent.insertBefore(vRemove, node)
-                    }
-                    break
+
                 case "begin":
                     list.vTransation = data.vTemplate.cloneNode(false)
                     flagTransation = true
-                case "set":
-                    var model = tmodels[pos]
-                    if (model) {
-                        var n = model.$itemName
-                        model[n] = el
-                    }
-                    break
                 case "insert":
                     //将子视图插入到文档碎片中
                     var tmodel = createVModel(pos, el, list, data.args)
@@ -2756,6 +2738,24 @@
                     parent.insertBefore(list.vTransation, insertNode)
                     flagTransation = false
                     resetItemIndex(tmodels)
+                    break
+                case "move":
+                    var t = tmodels.splice(el, 1)
+                    if (t) {
+                        tmodels.splice(pos, 0, t[0])
+                        var vRemove = t[0].$view
+                        var group = data.group
+                        removeView(vRemove, parent, group, el)
+                        var node = parent.childNodes[ group * pos]
+                        parent.insertBefore(vRemove, node)
+                    }
+                    break
+                case "set":
+                    var model = tmodels[pos]
+                    if (model) {
+                        var n = model.$itemName
+                        model[n] = el
+                    }
                     break
                 case "remove":
                     pos = ~~pos
