@@ -75,7 +75,7 @@
         <fieldset ms-controller="array">
             <legend>例子</legend>
             <ul ms-each-el="array">
-                <li>数组的第{{$index+1}}个元素为{{el}}</li>
+                <li ms-click="$remove">数组的第{{$index+1}}个元素为{{el}}</li>
             </ul>
             <p>对数组进行push操作，并回车<input ms-keypress="push"></p>
             <p>对数组进行unshift操作，并回车<input ms-keypress="unshift"></p>

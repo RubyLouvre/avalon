@@ -54,7 +54,7 @@
 
 
 
-        <!--
+
          <ol class="header">
              <li><a href="#top0">关于AvalonJs</a></li>
              <li><a href="#top1">开始的例子</a></li>    
@@ -114,6 +114,7 @@
              14.2. 基本定义
              14.3. 基本使用
              14.4. 定义和使用时的占位量
+             http://zouyesheng.com/angular.html
          </div>
          <h3 id="top0">关于AvalonJS</h3>
          <p>avalon是一个迷你的MVVM框架，虽然从发布到现在，它臌胀了不少，但它现在还是比knockout小许多。avalon开发过程一直遵循三个原则：1，复杂即错误，2，数据结构优于算法，3，出奇制胜。这三大原则保证avalon具有良好的维护性，扩展性，与众不同。</p>
@@ -131,11 +132,11 @@
              <li>angular: google组织开发的框架，体现其算法至上的时候到了。里面一共有两个parser, 一个是ngSanitize/sanitize.js下的HTML parser, 一个是ng/parse.js(它要配合compile.js使用)的JS　parser。第一个parser负责绑定抽取，第二个负责从Ctrl函数，工厂函数，服务函数及$watch回调中分解出无数setter, getter，
                  确认它们的依赖关系，放进观察者模式中。它的观察者无比强大，由于它的VM能继承，于是通过继承链实现四通发达的消息广播。它还实现了一个基于LRU的缓存系统，因为google最喜欢以空间换时间了，另一方面说明它要缓存的东西太多了，非常吃内存。
                  公司内部用angular实现的grid，200行在PC中就拖不动了。它还用到许多时髦的东东，如HTML5 history API, 迷你版Q Promise。内部是极其复杂。
-                 不过最大的问题是，它是基于parser，静态编译，这意思着什么呢？不抗压缩！为了，它引进了IOC，官网上给出的简单例子其实在项目完全不可用，我们需要使用另一种更复杂的写法，方便编泽器从它们得到不被压缩的部分，
+                 不过最大的问题是，它是基于parser，静态编译，这意思着什么呢？不抗压缩！为此，它引进了IOC，官网上给出的简单例子其实在项目完全不可用，我们需要使用另一种更复杂的写法，方便编泽器从它们得到不被压缩的部分，
                  让它在压缩情况也能正常运行。由于基于编译，许多行为都不是即时的，可预见的。用户写的那些控制器函数，都是为编译做准备。由于基于编译，它不得不要求我们对具有兼容问题的一些全局函数，方法进行屏蔽，用它的给出的服务替代它们，如
                  window对应$window, document对应$document, location对应$location, setTimout对应$timeout……如果不遵循这规则，它可能运行不了，你需要手动使用$digest手动触发。
                  不过对于一些复杂的回调，$digest也奈何不了，但又不报错，基本无法调试，只能撞大运般地一点点改……<br/>
-                 评价：非常恶心的框架，是google继于GWT、Closure、Dart发明的又一垃圾 ！
+                 评价：上手难度非常高，团队中没有JS高手慎用
              </li>
          </ol>
          <p>现在的avalon是我在完全消化了knockout发展起来的，准确来说，是0.4版，通过Object.defineProperties与VBScript实现了与普通对象看起来没什么两样的VM，VM里面充满了访问器属性，而访问器属性肯定对应一个setter,一个getter，
@@ -295,7 +296,7 @@
              here, {{ 1 + 1 }}
          &lt;/script&gt;
  
-         &lt;div  ms-include="'tml'"&gt;&lt;/div&gt;
+         &lt;div  ms-include="'tpl'"&gt;&lt;/div&gt;
          </pre>
          <p>注意，ms-include的值要用引号括起，表示这只是一个字符串，这时它就会搜索页面的具有此ID的节点，取其innerHTML，放进ms-include所在的元素内部。否则这个tpl会被当成一个变量，
              框架就会在VM中检测有没有此属性，有就取其值，重复上面的步骤。如果成功，页面会出现here, 2的字样。
@@ -739,7 +740,7 @@
              });
              </pre>
          </fieldset>
-        -->
+ 
     </body>
 
 
