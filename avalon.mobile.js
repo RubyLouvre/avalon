@@ -1233,7 +1233,8 @@
                                     if (value && value.$id) {
                                         updateViewModel(value, neo, Array.isArray(neo))
                                     } else if (Array.isArray(neo)) {
-                                        value = Collection(neo, vmodel, name)
+                                        value = Collection(neo)
+                                        value._add(neo)
                                     } else {
                                         value = modelFactory(neo, neo)
                                     }
@@ -2136,7 +2137,7 @@
             array.$fire("length", a, b)
         })
         array._splice = array.splice
-        array.add = function(arr, insertPos) {
+        array._add = function(arr, insertPos) {
             insertPos = typeof insertPos === "number" ? insertPos : this.length;
             notifySubscribers(this, "begin")
             for (var i = 0, n = arr.length; i < n; i++) {
@@ -2151,7 +2152,7 @@
             }
         }
         array.isCollection = true;
-        array.del = function(pos, length) {
+        array._del = function(pos, length) {
             var ret = []
             for (var i = 0; i < length; i++) {
                 ret[i] = this[pos]
@@ -2165,21 +2166,21 @@
         }
         array.push = function() {
             model.push.apply(model, arguments)
-            return this.add([].slice.call(arguments)) //返回长度
+            return this._add([].slice.call(arguments)) //返回长度
         }
         array.unshift = function() {
             model.unshift.apply(model, arguments)
-            return this.add([].slice.call(arguments), 0) //返回长度
+            return this._add([].slice.call(arguments), 0) //返回长度
         }
         array.shift = function() {
             model.shift()
-            var el = this.del(0, 1)
+            var el = this._del(0, 1)
             notifySubscribers(this, "index")
             return el[0]  //返回被移除的元素
         }
         array.pop = function() {
             var el = model.pop()
-            this.del(this.length - 1, 1)
+            this._del(this.length - 1, 1)
             return el[0] //返回被移除的元素
         }
         array.splice = function(a, b) {
@@ -2197,13 +2198,13 @@
             var removeArray = model.splice.apply(model, arguments), ret = []
             this.stopFireLength = true;//确保在这个方法中 , $watch("length",fn)只触发一次
             if (removeArray.length) {
-                ret = this.del(a, removeArray.length)
+                ret = this._del(a, removeArray.length)
                 if (arguments.length <= 2) {//如果没有执行添加操作，需要手动resetIndex
                     notifySubscribers(this, "index")
                 }
             }
             if (arguments.length > 2) {
-                this.add([].slice.call(arguments, 2), a)
+                this._add([].slice.call(arguments, 2), a)
             }
             this.stopFireLength = false;
             dynamic.length = this.length
@@ -2333,29 +2334,11 @@
 
         function updateListView(method, pos, el) {
             var tmodels = updateListView.tmodels
-
             switch (method) {
-                case "move":
-                    var t = tmodels.splice(el, 1)
-                    if (t) {
-                        tmodels.splice(pos, 0, t[0])
-                        var vRemove = t[0].$view
-                        var group = data.group
-                        removeView(vRemove, parent, group, el)
-                        var node = parent.childNodes[ group * pos]
-                        parent.insertBefore(vRemove, node)
-                    }
-                    break
                 case "begin":
                     list.vTransation = data.vTemplate.cloneNode(false)
                     flagTransation = true
-                case "set":
-                    var model = tmodels[pos]
-                    if (model) {
-                        var n = model.$itemName
-                        model[n] = el
-                    }
-                    break
+                    break;
                 case "insert":
                     //将子视图插入到文档碎片中
                     var tmodel = createVModel(pos, el, list, data.args)
@@ -2374,6 +2357,24 @@
                     parent.insertBefore(list.vTransation, insertNode)
                     flagTransation = false
                     resetItemIndex(tmodels)
+                    break
+                case "move":
+                    var t = tmodels.splice(el, 1)
+                    if (t) {
+                        tmodels.splice(pos, 0, t[0])
+                        var vRemove = t[0].$view
+                        var group = data.group
+                        removeView(vRemove, parent, group, el)
+                        var node = parent.childNodes[ group * pos]
+                        parent.insertBefore(vRemove, node)
+                    }
+                    break
+                case "set":
+                    var model = tmodels[pos]
+                    if (model) {
+                        var n = model.$itemName
+                        model[n] = el
+                    }
                     break
                 case "remove":
                     pos = ~~pos
