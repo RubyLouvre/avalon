@@ -1339,12 +1339,12 @@
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
-            var callbacks = this.$events[type] || []
             if (n === 0) {
                 this.$events = {}
             } else if (n === 1) {
-                callbacks = []
+                this.$events[type] = []
             } else {
+                var callbacks = this.$events[type] || []
                 var i = callbacks.length
                 while (--i > -1) {
                     if (callbacks[i] === callback) {
