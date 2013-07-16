@@ -2686,7 +2686,6 @@
                     if (val.$model) {
                         val = val.$model
                     }
-                    console.log('index ' + index + "  " + JSON.stringify(val))
                     updateViewModel(this[index], val, Array.isArray(val))
                 } else if (this[index] !== val) {
                     this[index] = val
