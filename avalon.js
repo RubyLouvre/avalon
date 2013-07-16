@@ -2361,10 +2361,10 @@
                 god = avalon(element)
         //当value变化时改变model的值
         var updateModel = function() {
-            if (god.data("observe") !== false) {
+            if( god.data("observe") !== false) {
                 fn(scope, element.value)
             }
-        }
+        
         //当model变化时,它就会改变value的值
         var updateView = function() { //先执行updateView
             var neo = fn(scope)
@@ -2381,7 +2381,11 @@
                 if (window.addEventListener) { //先执行W3C
                     element.addEventListener("input", updateModel, false)
                 } else {
-                    element.attachEvent("onpropertychange", updateModel)
+                    element.attachEvent("onpropertychange", function(){
+                        if(e.propertyName === "value"){
+                            updateModel()
+                        }
+                    })
                 }
                 if (DOC.documentMode >= 9) { //IE9 10
                     element.attachEvent("onkeydown", function(e) {
