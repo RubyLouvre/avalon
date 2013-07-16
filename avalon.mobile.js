@@ -247,7 +247,7 @@
         return (target + "").replace(rregexp, "\\$1");
     }
     var plugins = {
-        js: function(url, checkDeps, shim) {
+        js: function(url, shim) {
             var id = cleanUrl(url)
             if (!modules[id]) { //如果之前没有加载过
                 modules[id] = {
