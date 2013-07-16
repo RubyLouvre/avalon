@@ -17,6 +17,7 @@
     var prefix = "ms-"
     var root = DOC.documentElement
     var serialize = oproto.toString
+    var head = DOC.head //HEAD元素
     var documentFragment = DOC.createDocumentFragment()
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
         class2type["[object " + name + "]"] = name.toLowerCase()
@@ -126,9 +127,6 @@
         error: function(str, e) { //如果不用Error对象封装一下，str在控制台下可能会乱码
             throw new (e || Error)(str)
         },
-        ready: function(fn) {
-            innerRequire("ready!", fn)
-        },
         oneObject: function(array, val) {
             if (typeof array === "string") {
                 array = array.match(rword) || []
@@ -224,22 +222,9 @@
         forEach(obj, fn)
     }
     avalon.each = forEach
-
     /*********************************************************************
-     *                      模块加载系统                                *
+     *                      Configure                                 *
      **********************************************************************/
-    var head = DOC.head //HEAD元素
-    var innerRequire
-
-    var modules = avalon.modules = {
-        "ready!": {
-            exports: avalon
-        },
-        "avalon": {
-            exports: avalon,
-            state: 2
-        }
-    }
 
     function kernel(settings) {
         for (var p in settings) {
@@ -261,85 +246,99 @@
         //将字符串安全格式化为正则表达式的源码
         return (target + "").replace(rregexp, "\\$1");
     }
+    var plugins = {
+        js: function(url, checkDeps, shim) {
+            var id = cleanUrl(url)
+            if (!modules[id]) { //如果之前没有加载过
+                modules[id] = {
+                    id: id,
+                    parent: parent,
+                    exports: {}
+                }
+                if (shim) { //shim机制
+                    innerRequire(shim.deps || "", function() {
+                        loadJS(url, id, function() {
+                            modules[id].state = 2
+                            modules[id].exports = typeof shim.exports === "function" ?
+                                    shim.exports() : window[shim.exports]
+                            checkDeps()
+                        })
+                    })
+                } else {
+                    loadJS(url, id)
+                }
+            }
+            return id
+        },
+        css: function(url) {
+            var id = url.replace(/(#.+|\W)/g, "") ////用于处理掉href中的hash与所有特殊符号
+            if (!DOC.getElementById(id)) {
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                node.id = id
+                head.appendChild(node)
+            }
+        },
+        alias: function(val) {
+            var map = kernel.alias
+            for (var c in val) {
+                if (ohasOwn.call(val, c)) {
+                    var prevValue = map[c]
+                    var currValue = val[c]
+                    if (prevValue) {
+                        avalon.error("注意" + c + "出经重写过")
+                    }
+                    map[c] = currValue
+                }
+            }
+        },
+        loader: function(bool) {
+            if (bool) {
+                window.define = innerRequire.define;
+                window.require = innerRequire;
+            } else {
+                window.define = otherDefine
+                window.require = otherRequire
+            }
+        },
+        interpolate: function(array) {
+            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
+                openTag = array[0]
+                closeTag = array[1]
+                var o = escapeRegExp(openTag),
+                        c = escapeRegExp(closeTag)
+                rexpr = new RegExp(o + "(.*?)" + c)
+                rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+            }
+        }
+    }
+    plugins.css.ext = ".css"
+    plugins.js.ext = ".js"
+    kernel.plugins = plugins
+    kernel.compact = true
+    kernel.alias = {}
+    kernel.plugins['interpolate'](["{{", "}}"])
+    avalon.config = kernel
+    /*********************************************************************
+     *                      AMD Loader                                   *
+     **********************************************************************/
+
+    var innerRequire
+    var modules = avalon.modules = {
+        "ready!": {
+            exports: avalon
+        },
+        "avalon": {
+            exports: avalon,
+            state: 2
+        }
+    }
+
     new function() {
         var loadings = [] //正在加载中的模块列表
         var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
-        var rmakeid = /(#.+|\W)/g //用于处理掉href中的hash与所有特殊符号
         var basepath
-        var plugins = {
-            js: function(url, checkDeps, shim) {
-                var id = cleanUrl(url)
-                if (!modules[id]) { //如果之前没有加载过
-                    modules[id] = {
-                        id: id,
-                        parent: parent,
-                        exports: {}
-                    }
-                    if (shim) { //shim机制
-                        innerRequire(shim.deps || "", function() {
-                            loadJS(url, id, function() {
-                                modules[id].state = 2
-                                modules[id].exports = typeof shim.exports === "function" ?
-                                        shim.exports() : window[shim.exports]
-                                checkDeps()
-                            })
-                        })
-                    } else {
-                        loadJS(url, id)
-                    }
-                }
-                return id
-            },
-            css: function(url) {
-                var id = url.replace(rmakeid, "")
-                if (!DOC.getElementById(id)) {
-                    var node = DOC.createElement("link")
-                    node.rel = "stylesheet"
-                    node.href = url
-                    node.id = id
-                    head.appendChild(node)
-                }
-            },
-            alias: function(val) {
-                var map = kernel.alias
-                for (var c in val) {
-                    if (ohasOwn.call(val, c)) {
-                        var prevValue = map[c]
-                        var currValue = val[c]
-                        if (prevValue) {
-                            avalon.error("注意" + c + "出经重写过")
-                        }
-                        map[c] = currValue
-                    }
-                }
-            },
-            loader: function(bool) {
-                if (bool) {
-                    window.define = innerRequire.define;
-                    window.require = innerRequire;
-                } else {
-                    window.define = otherDefine
-                    window.require = otherRequire
-                }
-            },
-            interpolate: function(array) {
-                if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
-                    openTag = array[0]
-                    closeTag = array[1]
-                    var o = escapeRegExp(openTag),
-                            c = escapeRegExp(closeTag)
-                    rexpr = new RegExp(o + "(.*?)" + c)
-                    rbind = new RegExp(o + ".*?" + c + "|\\sms-")
-                }
-            }
-        }
-        plugins.css.ext = ".css"
-        plugins.js.ext = ".js"
-        kernel.plugins = plugins
-        kernel.compact = true
-        kernel.alias = {}
-
-        kernel.plugins['interpolate'](["{{", "}}"])
 
         function cleanUrl(url) {
             return (url || "").replace(/[?#].*/, "")
@@ -482,7 +481,7 @@
             if (kernel.nocache) {
                 ret += (ret.indexOf("?") === -1 ? "?" : "&") + Date.now()
             }
-            return plugin(ret, checkDeps, shim)
+            return plugin(ret, shim)
         }
 
         function loadJS(url, id, callback) {
@@ -546,7 +545,7 @@
             }
             checkDeps()
         }
-        avalon.config = innerRequire.config = kernel
+
         /**
          * 定义模块
          * @param {String} id ? 模块ID
@@ -608,26 +607,9 @@
             }
             return ret
         }
-
-        //============================domReady机制===========================
-
-        function fireReady() {
-            modules["ready!"].state = 2
-            checkDeps()
-            fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
-        }
-
-        if (DOC.readyState === "complete") {
-            fireReady() //如果在domReady之外加载
-        } else {
-            DOC.addEventListener("DOMContentLoaded", function() {
-                fireReady()
-            })
-        }
+        innerRequire.config = kernel
+        innerRequire.checkDeps = checkDeps
     }
-    avalon.config({
-        loader: true
-    })
 
     /*********************************************************************
      *                      迷你jQuery对象的原型方法                    *
@@ -803,7 +785,7 @@
             return val
         }
     }
-    //=============================css相关=======================
+    //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']
     var cssMap = {
@@ -945,7 +927,7 @@
     }
 
     /*********************************************************************
-     *                          数组增强                        *
+     *                          Array helper                            *
      **********************************************************************/
     avalon.Array = {
         sortBy: function(target, fn, scope, trend) {
@@ -994,7 +976,7 @@
         }
     }
     /************************************************************************
-     parseHTML
+     *                                parseHTML                                 *
      ****************************************************************************/
     var rtagName = /<([\w:]+)/,
             //取得其tagName
@@ -1302,6 +1284,7 @@
             list && avalon.Array.ensure(list, Publish[expose]) //只有数组不存在此元素才push进去
         }
     }
+
     function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
@@ -1445,9 +1428,6 @@
                     }
                     isBinding = typeof bindingHandlers[type] === "function"
                 }
-                //                else if (rexpr.test(attr.value)) {
-                //                    type = isBinding = "attr"
-                //                }
                 if (isBinding) {
                     bindings.push({
                         type: type,
@@ -1676,12 +1656,10 @@
         delete Publish[expose]
     }
     /*********************************************************************
-     *                         Bind                                    *
+     *                            Bind                                    *
      **********************************************************************/
     //将视图中的需要局部刷新的部分与ViewModel用绑定处理函数连结在一起,生成updateView函数,
     //而它内部调用着之前编译好的函数compileFn，双向产生依赖，成为双向绑定链的最顶层
-
-    //on binding相关
 
     //visible binding相关
     var cacheDisplay = avalon.oneObject("a,abbr,b,span,strong,em,font,i,kbd", "inline")
@@ -1935,9 +1913,8 @@
             }
         }
     }
-    /*********************************************************************
-     *                         boolean preperty binding            *
-     **********************************************************************/
+    //=========================boolean preperty binding ====================
+
     //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.disabled
@@ -1955,14 +1932,13 @@
             })
         }
     }
-    /////////////////////////// string preperty binding///////////////////////////
+    //=========================string preperty binding ====================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
     "title,alt,src,value,css,include".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.href
     })
-    /////////////////////////// model binding  ///////////////////////////
-
+    //========================= model binding ====================
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
         var element = data.element,
@@ -2082,7 +2058,7 @@
         delete Publish[expose]
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
-    //////////////////////////// 常用事件 binding  ////////////////////////
+    //========================= event binding ====================
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change".
             replace(rword, function(name) {
         bindingHandlers[name] = function(data) {
@@ -2313,7 +2289,7 @@
         }
         return array;
     }
-    //////////////////////////// each binding  ////////////////////////
+    //========================= each binding ====================
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
@@ -2336,7 +2312,7 @@
         function updateListView(method, pos, el) {
             var tmodels = updateListView.tmodels
             switch (method) {
-               case "add":
+                case "add":
                     pos = ~~pos
                     var vTransation = documentFragment.cloneNode(false),
                             arr = el
@@ -2346,7 +2322,7 @@
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
-                        scanNodes(tview, [arr[i],tmodel].concat(vmodels));
+                        scanNodes(tview, [arr[i], tmodel].concat(vmodels));
                         if (typeof data.group !== "number") {
                             data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -2720,6 +2696,30 @@
         filters.date.locate = locate
     }
 
+
+    /*********************************************************************
+     *                    DOMReady                                         *
+     **********************************************************************/
+
+    function fireReady() {
+        modules["ready!"].state = 2
+        innerRequire.checkDeps()
+        fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
+    }
+
+    if (DOC.readyState === "complete") {
+        fireReady() //如果在domReady之外加载
+    } else {
+        DOC.addEventListener("DOMContentLoaded", function() {
+            fireReady()
+        })
+    }
+    avalon.ready = function(fn) {
+        innerRequire("ready!", fn)
+    }
+    avalon.config({
+        loader: true
+    })
     avalon.ready(function() {
         avalon.scan(document.body)
     })
