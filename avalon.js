@@ -1915,6 +1915,7 @@
                     expose + "." + code + " = arguments[1]\n }else{\nreturn vm" + expose + "." + code + "\n}")
             args = scopes
         } else {
+            var text = code
             var vars = getVariables(code),
                     assigns = [],
                     names = [],
@@ -2361,10 +2362,10 @@
                 god = avalon(element)
         //当value变化时改变model的值
         var updateModel = function() {
-            if( god.data("observe") !== false) {
+            if (god.data("observe") !== false) {
                 fn(scope, element.value)
             }
-        
+        }
         //当model变化时,它就会改变value的值
         var updateView = function() { //先执行updateView
             var neo = fn(scope)
@@ -2381,8 +2382,8 @@
                 if (window.addEventListener) { //先执行W3C
                     element.addEventListener("input", updateModel, false)
                 } else {
-                    element.attachEvent("onpropertychange", function(){
-                        if(e.propertyName === "value"){
+                    element.attachEvent("onpropertychange", function(e) {
+                        if (e.propertyName === "value") {
                             updateModel()
                         }
                     })
@@ -2685,6 +2686,7 @@
                     if (val.$model) {
                         val = val.$model
                     }
+                    console.log('index ' + index + "  " + JSON.stringify(val))
                     updateViewModel(this[index], val, Array.isArray(val))
                 } else if (this[index] !== val) {
                     this[index] = val
@@ -2731,7 +2733,7 @@
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
-                        scanNodes(tview, [tmodel].concat(vmodels));
+                        scanNodes(tview, [arr[i],tmodel].concat(vmodels));
                         if (typeof data.group !== "number") {
                             data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -3108,8 +3110,8 @@
 
     avalon.ready(function() {
         avalon.scan(document.body)
-    })
-})(document)
+    });
+})(document);
 //2012.8.31 完成 v1
 //https://github.com/RubyLouvre/mass-Framework/commit/708e203a0e274b69729d08de8fe1cde2722520d2
 //2012.9.22 完成 v2 90%代码重写，使用新的思路收集依赖完成双向绑定链

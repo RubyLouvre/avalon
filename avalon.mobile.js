@@ -2346,7 +2346,7 @@
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
-                        scanNodes(tview, [tmodel].concat(vmodels));
+                        scanNodes(tview, [arr[i],tmodel].concat(vmodels));
                         if (typeof data.group !== "number") {
                             data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
                         }
