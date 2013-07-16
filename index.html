@@ -3,7 +3,7 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+        <script src="avalon.js"></script>
         <style>
             .header a{
                 color:#000;
@@ -16,36 +16,9 @@
             }
         </style>
         <script>
-            var aaa = [1, 2, 3, 4, 5, 1]
-            var bbb = [{v: 2}, {v: 3}, {v: 1}, {v: 1}, {v: 5}, {v: 4}]
-            var swapTime = 0
-            var isEqual = Object.is || function(x, y) {//只要用于处理NaN 与 NaN 比较
-                if (x === y) {
-                    return x !== 0 || 1 / x === 1 / y;
-                }
-                return x !== x && y !== y;
-            };
-            for (var i = 0, n = bbb.length; i < n; i++) {
-                var a = aaa[i];
-                var b = bbb[i]
-                var b = b && b.v ? b.v : b
-                if (!isEqual(a, b)) {
-                    console.log(++swapTime)
-                    var index = getIndex(a, bbb, i);
-                    var el = bbb.splice(index, 1)
-                    bbb.splice(i, 0, el[0])
-                }
-            }
-            function getIndex(a, bbb, start) {
-                for (var i = start, n = bbb.length; i < n; i++) {
-                    var b = bbb[i];
-                    var check = b && b.v ? b.v : b
-                    if (isEqual(a, check)) {
-                        return i
-                    }
-                }
-            }
-            console.log(JSON.stringify(bbb))
+require("aaa", function(){
+    console.log("bbbbbb")
+})
 
 
         </script>
@@ -231,6 +204,37 @@
     //1在命名上没有区分avalon.define的返回值与它回调中的参数，
     //2one方法的定义位置不对（这是考虑到兼容IE6-8，要求所有浏览器保持行为一致）
         </pre>
+         <p>此外，<b>不要在avalon.define方法里面执行函数或方法</b>，因此框架会对define执行了两次，第1次用于取得用户对vm对象(factory的传参)的设置，第2次用于重置里面的vm对象为真正的VM。看源码：</p>
+       <pre class="brush:js;gutter:false;toolbar:false;">
+    avalon.define = function(name, factory) {
+        var args = avalon.slice(arguments)
+        if (typeof name !== "string") {
+            name = generateID()
+            args.unshift(name)
+        }
+        factory = args[1]
+        var scope = {
+            $watch: noop
+        }
+        factory(scope) //第1次！！！！！！！！！！！！！！
+        var model = modelFactory(scope) //偷天换日，将scope换为model
+        stopRepeatAssign = true
+        factory(model)  //第2次！！！！！！！！1
+        stopRepeatAssign = false
+        model.$id = name
+        return VMODELS[name] = model
+    }
+       </pre>
+       <p>因此下面的写法会执行两次alert</p>
+       <pre class="brush:js;gutter:false;toolbar:false;">     
+
+         function check(){ alert("！！！！！！！！！！！")}
+         var model = avalon.define("xxx", function(vm){
+             vm.bool = true;
+             check()//这个方法不应该写在这里，请放在avalon.define外面
+             vm.array = [1,2,3]
+         })
+       </pre>
         <h3 id="top4">数据模型</h3>
         <p>当我们要用AJAX与后端交互时，如果直接把VM传上去太大了，这时我们需要把它对应的纯数组的JS对象。在VM中有个叫$model的属性，这是一个对象，就是数据模型M了。当我们更改VM时，框架就会自动同步M</p>
 

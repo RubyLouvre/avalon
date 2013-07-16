@@ -247,39 +247,6 @@
         return (target + "").replace(rregexp, "\\$1");
     }
     var plugins = {
-        js: function(url, shim) {
-            var id = cleanUrl(url)
-            if (!modules[id]) { //如果之前没有加载过
-                modules[id] = {
-                    id: id,
-                    parent: parent,
-                    exports: {}
-                }
-                if (shim) { //shim机制
-                    innerRequire(shim.deps || "", function() {
-                        loadJS(url, id, function() {
-                            modules[id].state = 2
-                            modules[id].exports = typeof shim.exports === "function" ?
-                                    shim.exports() : window[shim.exports]
-                            checkDeps()
-                        })
-                    })
-                } else {
-                    loadJS(url, id)
-                }
-            }
-            return id
-        },
-        css: function(url) {
-            var id = url.replace(/(#.+|\W)/g, "") ////用于处理掉href中的hash与所有特殊符号
-            if (!DOC.getElementById(id)) {
-                var node = DOC.createElement("link")
-                node.rel = "stylesheet"
-                node.href = url
-                node.id = id
-                head.appendChild(node)
-            }
-        },
         alias: function(val) {
             var map = kernel.alias
             for (var c in val) {
@@ -313,8 +280,7 @@
             }
         }
     }
-    plugins.css.ext = ".css"
-    plugins.js.ext = ".js"
+
     kernel.plugins = plugins
     kernel.compact = true
     kernel.alias = {}
@@ -343,6 +309,41 @@
         function cleanUrl(url) {
             return (url || "").replace(/[?#].*/, "")
         }
+        plugins.js = function(url, shim) {
+            var id = cleanUrl(url)
+            if (!modules[id]) { //如果之前没有加载过
+                modules[id] = {
+                    id: id,
+                    parent: parent,
+                    exports: {}
+                }
+                if (shim) { //shim机制
+                    innerRequire(shim.deps || "", function() {
+                        loadJS(url, id, function() {
+                            modules[id].state = 2
+                            modules[id].exports = typeof shim.exports === "function" ?
+                                    shim.exports() : window[shim.exports]
+                            innerRequire.checkDeps()
+                        })
+                    })
+                } else {
+                    loadJS(url, id)
+                }
+            }
+            return id
+        }
+        plugins.css = function(url) {
+            var id = url.replace(/(#.+|\W)/g, "") ////用于处理掉href中的hash与所有特殊符号
+            if (!DOC.getElementById(id)) {
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                node.id = id
+                head.insertBefore(node, head.firstChild)
+            }
+        }
+        plugins.css.ext = ".css"
+        plugins.js.ext = ".js"
         var cur = getCurrentScript(true)
         if (!cur) { //处理window safari的Error没有stack的问题
             cur = avalon.slice(document.scripts).pop().src
@@ -792,7 +793,7 @@
         "float": 'cssFloat',
         background: "backgroundColor"
     }
-    var cssNumber = avalon.oneObject("columnCount,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+    var cssNumber = avalon.oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
     function cssName(name, host, camelCase) {
         if (cssMap[name]) {
