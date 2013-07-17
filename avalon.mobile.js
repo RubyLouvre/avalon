@@ -321,8 +321,9 @@
                     innerRequire(shim.deps || "", function() {
                         loadJS(url, id, function() {
                             modules[id].state = 2
-                            modules[id].exports = typeof shim.exports === "function" ?
-                                    shim.exports() : window[shim.exports]
+                            if (shim.exports)
+                                modules[id].exports = typeof shim.exports === "function" ?
+                                        shim.exports() : window[shim.exports]
                             innerRequire.checkDeps()
                         })
                     })
@@ -2323,7 +2324,7 @@
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
-                        scanNodes(tview, [ tmodel, arr[i]].concat(vmodels));
+                        scanNodes(tview, [tmodel, arr[i]].concat(vmodels));
                         if (typeof data.group !== "number") {
                             data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
                         }

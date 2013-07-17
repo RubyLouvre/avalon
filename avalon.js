@@ -472,8 +472,9 @@
                     innerRequire(shim.deps || "", function() {
                         loadJS(url, id, function() {
                             modules[id].state = 2
-                            modules[id].exports = typeof shim.exports === "function" ?
-                                    shim.exports() : window[shim.exports]
+                            if (shim.exports)
+                                modules[id].exports = typeof shim.exports === "function" ?
+                                        shim.exports() : window[shim.exports]
                             innerRequire.checkDeps()
                         })
                     })

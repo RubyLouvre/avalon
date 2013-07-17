@@ -23,6 +23,9 @@
 
                 avalon.define("array", function(vm) {
                     vm.array = ["1", "2", "3", "4"]
+                    vm.del = function() {
+                        this.$vmodel.$remove()
+                    }
                     "push,unshift,remove,ensure".replace(/\w+/g, function(method) {
                         vm[method] = function(e) {
                             if (this.value && e.which == 13) {//this为input元素
@@ -57,6 +60,13 @@
                     vm.sex = "男"
                     vm.country = "中国"
                 });
+                   avalon.define("object", function(vm) {
+                    vm.array = [{text:"xxxx"},{text:"yyy"}]
+                    vm.change = function(){
+                        console.log("ddddddddd")
+                        this.$vmodel.el.text = "9999"
+                    }
+                });
                 avalon.scan();
             })
         </script>
@@ -68,13 +78,13 @@
             <p>Last name: <input ms-model="lastName"  /></p>
             <p>Hello,    <input ms-model="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
-            
+
         </fieldset>
-        
+
         <fieldset ms-controller="array">
             <legend>例子</legend>
             <ul ms-each-el="array">
-                <li ms-click="$remove">数组的第{{$index+1}}个元素为{{el}}</li>
+                <li ms-click="del">数组的第{{$index+1}}个元素为{{el}}</li>
             </ul>
             <p>对数组进行push操作，并回车<input ms-keypress="push"></p>
             <p>对数组进行unshift操作，并回车<input ms-keypress="unshift"></p>
@@ -100,6 +110,11 @@
             <input ms-model="country" />
             <p>{{nick}}   {{sex}}  {{country}}</p>
         </fieldset>
-        
+        <fieldset ms-controller="object">
+            <legend>例子</legend>
+            <div ms-each-el="array">
+                <div ms-click="change">{{el.text}}</div>
+            </div>
+        </fieldset>
     </body>
 </html>
