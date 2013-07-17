@@ -668,7 +668,25 @@ require("aaa", function(){
         </fieldset>
         <p>如果想<strong style="color:red">禁止使用avalon自带的加载器</strong>，可以在第一次调用require方法之前，执行如下代码：</p>
         <pre class="brush:javascript;gutter:false;toolbar:false">
-             avalon.config({loader: false})
+             
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;script src="require.js"&gt;&lt;/script&gt;
+        &lt;script src="avalon.mobile.js"&gt;&lt;/script&gt;
+        &lt;script&gt;
+            avalon.config({loader: false})
+            alert(require)
+            avalon.define("xxx", function(vm){
+                vm.aaa = "司徒正美"
+            })
+        &lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body ms-controller="xxx" &gt;
+        &lt;div&gt;{{aaa}}&lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
         </pre>
         <fieldset>
             <legend>例子</legend>
