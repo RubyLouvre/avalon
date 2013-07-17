@@ -17,6 +17,7 @@
             avalon.ready(function() {
                 avalon.define("test", function(vm) {
                     vm.url = "template1"
+
                     vm.name = "司徒正美"
                     vm.password = '12345678'
                     vm.array = [1,2,3,4,5,6,7]
@@ -27,15 +28,9 @@
         </script>
         <div ms-controller="test">
             <select ms-model="url">
-                <option>
-                    template1
-                </option>
-                <option>
-                    template2
-                </option>
-                <option>
-                    template3
-                </option>
+                <option>template1</option>
+                <option>template2</option>
+                <option>template3</option>
             </select>
             <div ms-include-src="{{url}}.html"></div>
         </div>
