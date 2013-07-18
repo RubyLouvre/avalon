@@ -36,6 +36,7 @@
         window.console && console.log(a + "")
     }
 
+
     /*********************************************************************
      *                 命名空间                                            *
      **********************************************************************/
@@ -143,6 +144,19 @@
         return target
     }
     var types = {}
+
+    function resetNumber(a, n) {
+        if ((a === +a) && !(a % 1)) { //如果是整数
+            if (a < 0) {
+                a = a * -1 >= n ? 0 : a + n
+            } else {
+                a = a > n ? n : a
+            }
+        } else {
+            a = 0
+        }
+        return a
+    }
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -153,21 +167,10 @@
         } : function(nodes, start, end) {
             var ret = [],
                     n = nodes.length;
-            if (end === void 0 || typeof end === "number" && isFinite(end)) {
-                start = parseInt(start, 10) || 0;
-                end = end == void 0 ? n : parseInt(end, 10);
-                if (start < 0) {
-                    start += n;
-                }
-                if (end > n) {
-                    end = n;
-                }
-                if (end < 0) {
-                    end += n;
-                }
-                for (var i = start; i < end; ++i) {
-                    ret[i - start] = nodes[i];
-                }
+            start = resetNumber(start, n)
+            end = resetNumber(end, n)
+            for (var i = start; i < end; ++i) {
+                ret[i - start] = nodes[i];
             }
             return ret;
         },
@@ -2486,9 +2489,6 @@
         return val
     }
 
-    function isInteger(i) {
-        return (i === +i) && !(i % 1)
-    }
     var isEqual = Object.is || function(x, y) { //只要用于处理NaN 与 NaN 比较, chrome19+, firefox22
         if (x === y) {
             return x !== 0 || 1 / x === 1 / y;
@@ -2569,18 +2569,10 @@
             this._del(this.length - 1, 1)
             return el[0] //返回被移除的元素
         }
+
         array.splice = function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-            if (isInteger(a)) { //如果是整数
-                var n = this.length
-                if (a < 0) {
-                    a = a * -1 >= n ? 0 : a + n
-                } else {
-                    a = a > n ? n : a
-                }
-            } else {
-                a = 0
-            }
+            a = resetNumber(a, this.length)
             var removed = model.splice.apply(model, arguments),
                     ret = []
             this.stopFireLength = true; //确保在这个方法中 , $watch("length",fn)只触发一次

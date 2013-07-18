@@ -2112,8 +2112,17 @@
         return val
     }
 
-    function isInteger(i) {
-        return (i === +i) && !(i % 1)
+    function resetNumber(a, n) {
+        if ((a === +a) && !(a % 1)) { //如果是整数
+            if (a < 0) {//范围调整为 [-a, a]
+                a = a * -1 >= n ? 0 : a + n 
+            } else {
+                a = a > n ? n : a
+            }
+        } else {
+            a = 0
+        }
+        return a
     }
     var isEqual = Object.is || function(x, y) { //只要用于处理NaN 与 NaN 比较, chrome19+, firefox22
         if (x === y) {
@@ -2196,16 +2205,7 @@
         }
         array.splice = function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-            if (isInteger(a)) { //如果是整数
-                var n = this.length
-                if (a < 0) {
-                    a = a * -1 >= n ? 0 : a + n
-                } else {
-                    a = a > n ? n : a
-                }
-            } else {
-                a = 0
-            }
+            a = resetNumber(a, this.length)
             var removed = model.splice.apply(model, arguments),
                     ret = []
             this.stopFireLength = true; //确保在这个方法中 , $watch("length",fn)只触发一次
