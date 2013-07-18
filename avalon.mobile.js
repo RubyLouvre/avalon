@@ -888,9 +888,8 @@
     }
     var valHooks = {
         "option:get": function(node) {
-            var val = node.attributes.value
-            //黑莓手机4.7下val会返回undefined,但我们依然可用node.value取值
-            return !val || val.specified ? node.value : node.text
+            //IE9-10 如果不指定value，它会自造一个value，在node.text两边加空白返回给你
+            return node.hasAttribute("value") ? node.value : node.text;
         },
         "select:get": function(node, value) {
             var option, options = node.options,

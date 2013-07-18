@@ -1088,9 +1088,13 @@
     }
     var valHooks = {
         "option:get": function(node) {
-            var val = node.attributes.value
-            //黑莓手机4.7下val会返回undefined,但我们依然可用node.value取值
-            return !val || val.specified ? node.value : node.text
+            // IE 9-10下如果option元素没有定义value而在设置innerText时没有把两边的空白去掉，那么
+            // 取el.text，浏览器会进行trim, 并且伪造一个value值，此值会在刚才trim的结果两边添加了一些空白
+            if (node.hasAttribute) {
+                return node.hasAttribute("value") ? node.value : node.text;
+            }
+            var val = node.attributes.value//specified 在较新的浏览器总是返回true, 因此不可靠，需要用hasAttribute
+            return val === void 0 ? node.text : val.specified ? node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,

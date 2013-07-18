@@ -4,98 +4,96 @@ function Deferred() {
 Deferred.ok = function(x) {
     return x
 };
-
 Deferred.ng = function(x) {
     throw  x
 };
-
 Deferred.prototype = {
-    _id: 0xe38286e381ae,
     init: function() {
-        this._next = null;
         this.callback = {
-            ok: Deferred.ok,
-            ng: Deferred.ng
+            resolve: Deferred.ok,
+            reject: Deferred.ng
         };
+        var that = this
+        this.promise = {
+            then: function(onResolve, onReject) {
+                if (! that.timestamp ) {
+                    that.timestamp = new Date - 0
+                }
+                return that._post(onResolve, onReject)
+            },
+            _next: null
+        }
         return this;
-    },
-    resolve: function(val) {
-        return this._fire("ok", val)
-    },
-    reject: function(err) {
-        return this._fire("ng", err)
     },
     cancel: function() {
         (this.canceller || function() {
         }).apply(this);
         return this.init();
     },
-    promise: function() {
-        if (!this._promise) {
-            var that = this
-
-            this._promise = {
-                then: function(onResolve, onReject) {
-                    if (typeof that.timestamp === "funciton") {
-                        that.timestamp = new Date - 0
-                    }
-                    return that._post(onResolve, onReject)
-                }
-            }
-        }
-        return this._promise
-    },
     _post: function(fn1, fn2) {
-        this._next = new Deferred();
+        var deferred = this.promise._next = new Deferred();
         if (typeof fn1 === "function") {
-            this._next.callback.ok = fn1;
+            deferred.callback.resolve = fn1;
         }
         if (typeof fn1 === "function") {
-            this._next.callback.ng = fn2;
+            deferred.callback.reject = fn2;
         }
-        return this._next.promise();
+        return deferred.promise;
     },
     _fire: function(okng, value) {
-        var next = "ok";
+        var next = "resolve";
         try {
             value = this.callback[okng].call(this, value);
         } catch (e) {
-            next = "ng";
+            next = "reject";
             value = e;
         }
         if (Deferred.isDeferred(value)) {
-            value._next = this._next;
+            value._next = this.promise._next
         } else {
-            if (this._next)
-                this._next._fire(next, value);
+            if (this.promise._next)
+                this.promise._next._fire(next, value);
         }
         return this;
     }
 };
+"resolve,reject".replace(/\w+/g, function(method) {
+    Deferred.prototype[method] = function(val) {
+        if (!this.timestamp) {
+            var that = this;
+            setTimeout(function() {
+                that._fire(method, val)
+            }, 0)
+        } else {
+            return this._fire(method, val)
+        }
+    }
+})
 Deferred.isDeferred = function(obj) {
     return !!(obj && typeof obj.then === "function");
 };
-
 function aaa() {
     var d = Deferred();
-    console.log("11111111111111111")
     setTimeout(function() {
         d.resolve(10)
     }, 1000)
-    return d.promise()
+    return d.promise
 }
 aaa().then(function(a) {
     console.log(a)
     return a + 10
+}, function(e) {
+    console.log("xxxxxx" + e)
+    return e
 }).then(function(a) {
     console.log(a)
+    return a
 }).then(function(a) {
-    var d = Deferred(), t = new Date();
+    var dd = Deferred(), t = new Date();
     setTimeout(function() {
-        console.log("11111111111")
-        d.resolve(a + 100)
+        dd.resolve(a + 100)
     }, 2000);
-     return d.promise()
+    return dd.promise
 }).then(function(a) {
-    console.log(a)
+    console.log(a + "!!!!!!!")
 })
