@@ -170,9 +170,9 @@
             start = resetNumber(start, n)
             end = resetNumber(end, n)
             for (var i = start; i < end; ++i) {
-                ret[i - start] = nodes[i];
+                ret[i - start] = nodes[i]
             }
-            return ret;
+            return ret
         },
         noop: noop,
         error: function(str, e) { //如果不用Error对象封装一下，str在控制台下可能会乱码
@@ -1490,10 +1490,10 @@
         })
         vmodel.$model = vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
-        vmodel.$watch = Observable.$watch.bind(vmodel)
-        vmodel.$unwatch = Observable.$unwatch.bind(vmodel)
-        vmodel.$fire = Observable.$fire.bind(vmodel)
         vmodel.$id = generateID()
+        for (var i in Observable) {
+            vmodel[i] = Observable[i].bind(vmodel)
+        }
         vmodel.hasOwnProperty = function(name) {
             return name in vmodel.$model
         }

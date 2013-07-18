@@ -1269,10 +1269,10 @@
             vmodel.$json = model
         }
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
-        vmodel.$watch = Observable.$watch
-        vmodel.$unwatch = Observable.$unwatch
-        vmodel.$fire = Observable.$fire
         vmodel.$id = generateID()
+        for (var i in Observable) {
+            vmodel[i] = Observable[i]
+        }
         vmodel.hasOwnProperty = function(name) {
             return name in vmodel.$model
         }
@@ -2115,7 +2115,7 @@
     function resetNumber(a, n) {
         if ((a === +a) && !(a % 1)) { //如果是整数
             if (a < 0) {//范围调整为 [-a, a]
-                a = a * -1 >= n ? 0 : a + n 
+                a = a * -1 >= n ? 0 : a + n
             } else {
                 a = a > n ? n : a
             }
