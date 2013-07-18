@@ -142,7 +142,7 @@
         }
         return target
     }
-
+    var types = {}
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -212,7 +212,7 @@
                 return ret
             }
             if (W3C) { //addEventListener对return false不做处理，需要自己fix
-                el.addEventListener(type, callback, !!phase)
+                el.addEventListener(types[type] || type, callback, !!phase)
             } else {
                 try {
                     el.attachEvent("on" + type, callback)
@@ -222,7 +222,7 @@
             return callback
         },
         unbind: W3C ? function(el, type, fn, phase) {
-            el.removeEventListener(type, fn || noop, !!phase)
+            el.removeEventListener(types[type] || type, fn || noop, !!phase)
         } : function(el, type, fn) {
             el.detachEvent("on" + type, fn || noop)
         },
@@ -2135,7 +2135,14 @@
             }
             watchView(text, vmodels, data, function(val, elem) {
                 if (name === "css") {
-                    avalon(elem).css(data.args.join("-"), val)
+                    var args = data.args.join("-")
+                    if (args) {
+                        avalon(elem).css(data.args.join("-"), val)
+                    } else {
+
+                    }
+
+
                 } else if (name === "include" && val) {
                     if (data.args + "" === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
@@ -2410,7 +2417,18 @@
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
-
+    try {
+        var eventName = {
+            AnimationEvent: 'animationend',
+            WebKitAnimationEvent: 'webkitAnimationEnd'
+        };
+        for (var name in eventName) {
+            DOC.createEvent(name);
+            types.animationend = eventName[name]
+            break
+        }
+    } catch (e) {
+    }
     function fixEvent(event) {
         var target = event.target = event.srcElement
         event.which = event.charCode != null ? event.charCode : event.keyCode
@@ -2428,7 +2446,7 @@
         }
         return event
     }
-    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change".
+    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
         bindingHandlers[name] = function(data) {
             data.args = [name]

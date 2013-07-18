@@ -116,7 +116,7 @@
         }
         return target
     }
-
+    var types = {}
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -166,11 +166,11 @@
                 }
                 return ret
             }
-            el.addEventListener(type, callback, !!phase)
+            el.addEventListener(types[type] || type, callback, !!phase)
             return callback
         },
         unbind: function(el, type, fn, phase) {
-            el.removeEventListener(type, fn || noop, !!phase)
+            el.removeEventListener(types[type] || type, fn || noop, !!phase)
         },
         nextTick: function(fn) {
             setTimeout(fn, 0)
@@ -2060,14 +2060,26 @@
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================
-    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change".
+    try {
+        var eventName = {
+            AnimationEvent: 'animationend',
+            WebKitAnimationEvent: 'webkitAnimationEnd'
+        };
+        for (var name in eventName) {
+            DOC.createEvent(name);
+            types.animationend = eventName[name]
+            break
+        }
+    } catch (e) {
+    }
+    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
         bindingHandlers[name] = function(data) {
             data.args = [name]
             bindingHandlers.on.apply(0, arguments)
         }
     })
-    if (!("onmouseenter" in root)) {
+    if (!("onmouseenter" in root)) {//chrome 30  终于支持mouseenter
         var oldBind = avalon.bind
         var events = {
             mouseenter: "mouseover",
