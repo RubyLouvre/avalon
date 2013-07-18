@@ -2744,7 +2744,7 @@
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView)
         }
-        notifySubscribers(list, "add", 0, list)
+        updateListView("add", 0, list)
     }
 
     function removeView(vRemove, parent, group, pos, n) {
