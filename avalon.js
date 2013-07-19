@@ -21,6 +21,7 @@
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var serialize = oproto.toString
+    var aslice = [].slice
     var head = DOC.head || DOC.getElementsByTagName("head")[0] //HEAD元素
     var documentFragment = DOC.createDocumentFragment()
     var DONT_ENUM = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
@@ -175,7 +176,7 @@
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
-            return [].slice.call(nodes, start, end);
+            return aslice.call(nodes, start, end);
         } : function(nodes, start, end) {
             var ret = [],
                     n = nodes.length;
@@ -718,7 +719,7 @@
          * @api public
          */
         innerRequire.define = function(id, deps, factory) { //模块名,依赖列表,模块本身
-            var args = [].slice.call(arguments)
+            var args = aslice.call(arguments)
 
             if (typeof id === "string") {
                 var _id = args.shift()
@@ -1173,7 +1174,7 @@
         },
         ensure: function(target) {
             //只有当前数组不存在此元素时只添加它
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             args.forEach(function(el) {
                 if (!~target.indexOf(el)) {
                     target.push(el)
@@ -1285,7 +1286,7 @@
      **********************************************************************/
 
     avalon.define = function(name, factory) {
-        var args = [].slice.call(arguments)
+        var args = aslice.call(arguments)
         if (typeof name !== "string") {
             name = generateID()
             args.unshift(name)
@@ -1338,7 +1339,7 @@
         $fire: function(type) {
             var callbacks = this.$events[type] || [] //防止影响原数组
             var all = this.$events.$all || []
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1615,7 +1616,7 @@
     function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
@@ -2587,7 +2588,7 @@
                 }
             }
             if (arguments.length > 2) {
-                this._add([].slice.call(arguments, 2), a)
+                this._add(aslice.call(arguments, 2), a)
             }
             this.stopFireLength = false;
             dynamic.length = this.length

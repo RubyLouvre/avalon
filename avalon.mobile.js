@@ -17,6 +17,7 @@
     var prefix = "ms-"
     var root = DOC.documentElement
     var serialize = oproto.toString
+    var aslice = [].slice
     var head = DOC.head //HEAD元素
     var documentFragment = DOC.createDocumentFragment()
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
@@ -169,7 +170,7 @@
             return result
         },
         slice: function(nodes, start, end) {
-            return [].slice.call(nodes, start, end);
+            return aslice.call(nodes, start, end);
         },
         bind: function(el, type, fn, phase) {
             function callback(ex) {
@@ -978,7 +979,7 @@
         },
         ensure: function(target) {
             //只有当前数组不存在此元素时只添加它
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             args.forEach(function(el) {
                 if (!~target.indexOf(el)) {
                     target.push(el)
@@ -1129,7 +1130,7 @@
         $fire: function(type) {
             var callbacks = this.$events[type] || [] //防止影响原数组
             var all = this.$events.$all || []
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1311,7 +1312,7 @@
     function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
-            var args = [].slice.call(arguments, 1)
+            var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
@@ -1336,7 +1337,7 @@
     var stopScan = oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
 
     function scanNodes(parent, vmodels, callback) {
-        var nodes = [].slice.call(parent.childNodes);
+        var nodes = aslice.call(parent.childNodes);
         callback && callback();
         for (var i = 0, node; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
@@ -2227,7 +2228,7 @@
                 }
             }
             if (arguments.length > 2) {
-                this._add([].slice.call(arguments, 2), a)
+                this._add(aslice.call(arguments, 2), a)
             }
             this.stopFireLength = false;
             dynamic.length = this.length
