@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.85 独立版  by 司徒正美 2013.7.14
+// avalon 0.9 独立版  by 司徒正美 2013.7.20
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -2762,7 +2762,7 @@
         if (Array.isArray(list)) {
             updateListView("add", 0, list)
         } else {
-            var vTransation = documentFragment.cloneNode(false),mapper = {}
+            var vTransation = documentFragment.cloneNode(false), mapper = {}
             function loop(key, val) {
                 var tmodel = createWithModel(key, val)
                 mapper[key] = tmodel
@@ -3183,4 +3183,7 @@
 //082 重构parser
 //083 重构计算属性， bind绑定, text绑定， fix scanExpr, attr绑定与date过滤器的BUG，添加include绑定
 //084 重构ui绑定 fix scanTag bug(它把script, style等标签内容都扫描了) ms-include 的值必须不为空值，否则不做任何操作。
-//085 fix scanNodes（旧式IE下UI死锁） style[name] = value旧式IE抛错， 旧式IE下有些元素的innerHTML是只读的，会抛错 fix amd bug
+//085 fix scanNodes（旧式IE下UI死锁） style[name] = value旧式IE抛错， 旧式IE下有些元素的innerHTML是只读的，会抛错 fix amd bug，重构each绑定与Collection
+//7 19 v0.9 继续使用082的scanNodes 优化each绑定与Collection 添加animationend事件支持 添加ms-with绑定 fix IE9-10获取option元素的value的BUG， 
+//改良 AMD加载器与jQuery这些在内部使用了全局define方法的库的兼容问题， 抽象setNumber方法来处理数组方法的参数 
+//分割Configue, AMDLoad, DomReady等模块，让框架的可读性更强
