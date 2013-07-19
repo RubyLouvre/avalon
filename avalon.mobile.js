@@ -1161,11 +1161,11 @@
             }
         }
     }
-    var systemOne = oneObject("$index,$remove,$first,$last")
-    var watchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
+    var watchEachOne = oneObject("$index,$remove,$first,$last")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
 
-    function modelFactory(scope, model, isArray) {
-        if (isArray) {
+    function modelFactory(scope, model, watchMore) {
+        if (Array.isArray(scope)) {
             return Collection(scope)
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
@@ -1173,12 +1173,13 @@
                 Descriptions = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
-                VBPublics = Object.keys(watchOne) //用于IE6-8
+                VBPublics = Object.keys(unwatchOne) //用于IE6-8
         model = model || {}
+        watchMore = watchMore || {}
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, value) {
-            if (!watchOne[name]) {
+            if (!unwatchOne[name]) {
                 model[name] = value
             }
             var valueType = getType(value)
@@ -1188,7 +1189,7 @@
                 if (skipArray.indexOf(name) !== -1) {
                     return VBPublics.push(name)
                 }
-                if (name.charAt(0) === "$" && !systemOne[name]) {
+                if (name.charAt(0) === "$" && !watchMore[name]) {
                     return VBPublics.push(name)
                 }
                 var accessor, oldArgs
@@ -1206,11 +1207,9 @@
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-
                                 value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$events && vmodel.$fire(name, value, antiquity)
-
                             }
                         } else {
                             if (openComputedCollect || !accessor.locked) {
@@ -1274,7 +1273,7 @@
 
         vmodel = Object.defineProperties(vmodel, Descriptions)
         VBPublics.forEach(function(name) {
-            if (!watchOne[name]) {
+            if (!unwatchOne[name]) {
                 vmodel[name] = scope[name]
             }
         })
@@ -1669,7 +1668,7 @@
         }
 
         updateView.toString = function() {
-            return "eval(" + text + ")"
+            return data.type + " binding to eval(" + text + ")"
         } //方便调试
         //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
         //将它移出订阅者列表
@@ -1912,6 +1911,9 @@
                 }
             })
         },
+        "with": function(data, vmodels) {
+            bindingHandlers.each(data, vmodels, true)
+        },
         "ui": function(data, vmodels, opts) {
             var uiName = data.value.trim() //取得UI控制的名称
             var elem = data.element //取得被绑定元素
@@ -2131,7 +2133,7 @@
     function convert(val) {
         var type = getType(val)
         if (type === "array" || type === "object") {
-            val = val.$id ? val : modelFactory(val, val, type === "array")
+            val = val.$id ? val : modelFactory(val, val)
         }
         return val
     }
@@ -2397,7 +2399,27 @@
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView)
         }
-        updateListView("add", 0, list)
+        if (Array.isArray(list)) {
+            updateListView("add", 0, list)
+        } else {
+            var vTransation = documentFragment.cloneNode(false), mapper = {}
+            function loop(key, val) {
+                var tmodel = createWithModel(key, val)
+                mapper[key] = tmodel
+                list.$watch(key, function(neo) {
+                    mapper[key].$val = neo
+                })
+                var tview = data.vTemplate.cloneNode(true)
+                scanNodes(tview, [tmodel, val].concat(vmodels))
+                vTransation.appendChild(tview)
+            }
+            for (var key in list) {
+                if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                    loop(key, list[key])
+                }
+            }
+            parent.appendChild(vTransation)
+        }
     }
 
     function removeView(vRemove, parent, group, pos, n) {
@@ -2415,8 +2437,16 @@
     }
 
     //为子视图创建一个ViewModel
+    function createWithModel(key, val) {
+        return modelFactory({
+            $key: key,
+            $val: val
+        }, 0, {
+            $val: 1
+        })
+    }
 
-    function createVModel(index, item, list, args) {
+    function createEachModel(index, item, list, args) {
         var itemName = args[0] || "$data"
         var source = {}
         source.$index = index
@@ -2443,7 +2473,7 @@
         source.$remove = function() {
             return list.remove(item)
         }
-        return modelFactory(source)
+        return modelFactory(source, 0, watchEachOne)
     }
 
     /*********************************************************************
