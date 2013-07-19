@@ -144,7 +144,7 @@
     }
     var eventMap = {}
 
-        function resetNumber(a, n) {
+        function resetNumber(a, n, end) {
             if ((a === +a) && !(a % 1)) { //如果是整数
                 if (a < 0) {
                     a = a * -1 >= n ? 0 : a + n
@@ -152,7 +152,7 @@
                     a = a > n ? n : a
                 }
             } else {
-                a = 0
+                a = end ? n:  0
             }
             return a
         }
@@ -179,7 +179,7 @@
             var ret = [],
                 n = nodes.length;
             start = resetNumber(start, n)
-            end = resetNumber(end, n)
+            end = resetNumber(end, n, 1)
             for (var i = start; i < end; ++i) {
                 ret[i - start] = nodes[i]
             }
@@ -751,7 +751,6 @@
                 if (isCycle) {
                     avalon.error(d + "模块与之前的某些模块存在循环依赖")
                 }
-                console.log(args)
                 delete factory.delay //释放内存
                 innerRequire.apply(null, args) //0,1,2 --> 1,2,0
             }
@@ -1280,7 +1279,7 @@
      **********************************************************************/
 
     avalon.define = function(name, factory) {
-        var args = avalon.slice(arguments)
+        var args = [].slice.call(arguments)
         if (typeof name !== "string") {
             name = generateID()
             args.unshift(name)
@@ -1371,6 +1370,7 @@
             if (isArray) {
                 return Collection(scope)
             }
+            console.log("modelFactory")
             var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
                 Descriptions = {}, //内部用于转换的对象
@@ -1496,6 +1496,7 @@
             vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
             vmodel.$id = generateID()
             for (var i in Observable) {
+                console.log(i)
                 vmodel[i] = Observable[i].bind(vmodel)
             }
             vmodel.hasOwnProperty = function(name) {
@@ -3125,6 +3126,7 @@
         loader: true
     })
     avalon.ready(function() {
+        
         avalon.scan(document.body)
     });
 })(document);
