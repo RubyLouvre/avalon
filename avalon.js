@@ -1370,7 +1370,6 @@
             if (isArray) {
                 return Collection(scope)
             }
-            console.log("modelFactory")
             var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
                 Descriptions = {}, //内部用于转换的对象
@@ -1496,7 +1495,6 @@
             vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
             vmodel.$id = generateID()
             for (var i in Observable) {
-                console.log(i)
                 vmodel[i] = Observable[i].bind(vmodel)
             }
             vmodel.hasOwnProperty = function(name) {
