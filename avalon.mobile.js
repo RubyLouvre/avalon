@@ -2084,17 +2084,17 @@
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================
-    try {
-        var eventName = {
-            AnimationEvent: 'animationend',
-            WebKitAnimationEvent: 'webkitAnimationEnd'
-        };
-        for (var name in eventName) {
+    var eventName = {
+        AnimationEvent: 'animationend',
+        WebKitAnimationEvent: 'webkitAnimationEnd'
+    };
+    for (var name in eventName) {
+        try {
             DOC.createEvent(name);
             eventMap.animationend = eventName[name]
             break
+        } catch (e) {
         }
-    } catch (e) {
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
