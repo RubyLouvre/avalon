@@ -1420,7 +1420,7 @@
 
                                 value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, value, antiquity, name)
+                                vmodel.$events && vmodel.$fire(name, value, antiquity)
 
                             }
                         } else {
@@ -1429,7 +1429,7 @@
                             }
                             neo = getter.call(vmodel)
                             if (value !== neo) {
-                                vmodel.$events && vmodel.$fire(name, neo, value, name)
+                                vmodel.$events && vmodel.$fire(name, neo, value)
                                 value = neo
                             }
                             return model[name] = value
@@ -1462,7 +1462,7 @@
 
                                 model[name] = value && value.$id ? value.$model : value
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, value, old, name)
+                                vmodel.$events && vmodel.$fire(name, value, old)
 
                             }
                         } else {
@@ -2676,7 +2676,7 @@
 
     //====================== each binding  =================================
 
-    bindingHandlers["each"] = function(data, vmodels, isWithBinding) {
+    bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
 
@@ -2758,13 +2758,11 @@
         updateListView.tmodels = [] //循环绑定的视图刷新函数维护一个临时生成的VM集合
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView)
-
         }
         if (Array.isArray(list)) {
             updateListView("add", 0, list)
         } else {
-            var vTransation = documentFragment.cloneNode(false)
-            var mapper = {}
+            var vTransation = documentFragment.cloneNode(false),mapper = {}
             function loop(key, val) {
                 var tmodel = createWithModel(key, val)
                 mapper[key] = tmodel
@@ -2772,7 +2770,7 @@
                     mapper[key].$val = neo
                 })
                 var tview = data.vTemplate.cloneNode(true)
-                scanNodes(tview, [tmodel, val].concat(vmodels));
+                scanNodes(tview, [tmodel, val].concat(vmodels))
                 vTransation.appendChild(tview)
             }
             for (var key in list) {
@@ -2781,7 +2779,6 @@
                 }
             }
             parent.appendChild(vTransation)
-
         }
     }
 
