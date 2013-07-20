@@ -409,7 +409,7 @@
                     var prevValue = map[c]
                     var currValue = val[c]
                     if (prevValue) {
-                        avalon.error("注意" + c + "出经重写过")
+                        avalon.error("注意 " + c + " 已经重写过")
                     }
                     map[c] = currValue
                 }
