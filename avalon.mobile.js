@@ -1161,7 +1161,7 @@
             }
         }
     }
-    var watchEachOne = oneObject("$index,$remove,$first,$last")
+  
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
 
     function modelFactory(scope, model, watchMore) {
@@ -2345,7 +2345,7 @@
                             arr = el
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos;
-                        var tmodel = createVModel(ii, arr[i], list, data.args)
+                        var tmodel = createEachModel(ii, arr[i], list, data.args)
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
@@ -2445,7 +2445,7 @@
             $val: 1
         })
     }
-
+    var watchEachOne = oneObject("$index,$remove,$first,$last")
     function createEachModel(index, item, list, args) {
         var itemName = args[0] || "$data"
         var source = {}

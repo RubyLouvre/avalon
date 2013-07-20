@@ -1370,7 +1370,7 @@
             }
         }
     }
-    var watchEachOne = oneObject("$index,$remove,$first,$last")
+    
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
 
     function modelFactory(scope, model, watchMore) {
@@ -2806,7 +2806,7 @@
             $val: 1
         })
     }
-
+    var watchEachOne = oneObject("$index,$remove,$first,$last")
     function createEachModel(index, item, list, args) {
         var itemName = args[0] || "$data"
         var source = {}

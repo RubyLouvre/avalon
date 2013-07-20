@@ -16,17 +16,18 @@
             }
         </style>
         <script>
-require("aaa", function(){
-    console.log("bbbbbb")
-})
-
 
         </script>
     </head>
     <body >
 
 
+        <select>
+            <option id="aaa">
+                aaaa
 
+            </option>
+        </select>
 
         <ol class="header">
             <li><a href="#top0">关于AvalonJs</a></li>
@@ -49,11 +50,12 @@ require("aaa", function(){
             <li><a href="#top17">字符串属性绑定(ms-title, ms-src, ms-href……)</a></li>
             <li><a href="#top18">万能属性绑定(ms-attr)</a></li>
             <li><a href="#top19">万能绑定(ms-bind)</a></li>
-            <li><a href="#top20">循环绑定(ms-each)</a></li>
-            <li><a href="#top21">UI绑定(ms-ui)</a></li>
-            <li><a href="#top22">$watch</a></li>
-            <li><a href="#top23">过滤器</a></li>
-            <li><a href="#top24">AMD加载器</a></li>
+            <li><a href="#top20">数组循环绑定(ms-each)</a></li>
+            <li><a href="#top21">对象循环绑定(ms-with)</a></li>
+            <li><a href="#top22">UI绑定(ms-ui)</a></li>
+            <li><a href="#top23">$watch</a></li>
+            <li><a href="#top24">过滤器</a></li>
+            <li><a href="#top25">AMD加载器</a></li>
 
         </ol>
 
@@ -204,8 +206,8 @@ require("aaa", function(){
     //1在命名上没有区分avalon.define的返回值与它回调中的参数，
     //2one方法的定义位置不对（这是考虑到兼容IE6-8，要求所有浏览器保持行为一致）
         </pre>
-         <p>此外，<b>不要在avalon.define方法里面执行函数或方法</b>，因此框架会对define执行了两次，第1次用于取得用户对vm对象(factory的传参)的设置，第2次用于重置里面的vm对象为真正的VM。看源码：</p>
-       <pre class="brush:js;gutter:false;toolbar:false;">
+        <p>此外，<b>不要在avalon.define方法里面执行函数或方法</b>，因此框架会对define执行了两次，第1次用于取得用户对vm对象(factory的传参)的设置，第2次用于重置里面的vm对象为真正的VM。看源码：</p>
+        <pre class="brush:js;gutter:false;toolbar:false;">
     avalon.define = function(name, factory) {
         var args = avalon.slice(arguments)
         if (typeof name !== "string") {
@@ -224,9 +226,9 @@ require("aaa", function(){
         model.$id = name
         return VMODELS[name] = model
     }
-       </pre>
-       <p>因此下面的写法会执行两次alert</p>
-       <pre class="brush:js;gutter:false;toolbar:false;">     
+        </pre>
+        <p>因此下面的写法会执行两次alert</p>
+        <pre class="brush:js;gutter:false;toolbar:false;">     
 
          function check(){ alert("！！！！！！！！！！！")}
          var model = avalon.define("xxx", function(vm){
@@ -234,7 +236,7 @@ require("aaa", function(){
              check()//这个方法不应该写在这里，请放在avalon.define外面
              vm.array = [1,2,3]
          })
-       </pre>
+        </pre>
         <h3 id="top4">数据模型</h3>
         <p>当我们要用AJAX与后端交互时，如果直接把VM传上去太大了，这时我们需要把它对应的纯数组的JS对象。在VM中有个叫$model的属性，这是一个对象，就是数据模型M了。当我们更改VM时，框架就会自动同步M</p>
 
@@ -418,7 +420,7 @@ require("aaa", function(){
              });
             </pre>   
         </div>
-        <h3 id="top20">循环绑定(ms-each)</h3>
+        <h3 id="top20">数组循环绑定(ms-each)</h3>
         <p>用法为ms-each-xxx="array", 其中xxx可以随意改，如item, el, 它是用于在子元素中进行引用。array对应VM中的一个普通数组或一个监控数组。详见<a href="http://rubylouvre.github.io/mvvm/avalon.each.html">这里</a>。</p>
         <pre class="brush:html;gutter:false;toolbar:false">
  
@@ -487,7 +489,49 @@ require("aaa", function(){
             &lt;/ul&gt;
         &lt;/fieldset&gt;
         </pre>
-        <h3 id="top21">UI绑定(ms-ui)</h3>
+        <h3 id="top21">对象循环绑定(ms-with)</h3>
+        <p>语法为 ms-with="obj" 子元素里面用$key, $val分别引用键名，键值</p>
+        <pre class="brush:html;gutter:false;toolbar:false;">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;script type='text/javascript' src="avalon.js"&gt;&lt;/script&gt;
+        &lt;script&gt;
+            var a = avalon.define("xxx", function(vm) {
+                vm.obj = {
+                    aaa: "xxx",
+                    bbb: "yyy",
+                    ccc: "zzz"
+                }
+                vm.first = "司徒正美"
+            })
+            setTimeout(function() {
+                a.obj.aaa = "7777777777"
+                a.first = "清风火忌"
+            }, 1000)
+            setTimeout(function() {
+                a.obj.bbb = "8888888"
+            }, 3000)
+        &lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body ms-controller="xxx"&gt;
+        &lt;div ms-with="obj"&gt;
+            &lt;div&gt;{{$key}} {{$val}}&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;hr/&gt;
+        &lt;div ms-with="obj"&gt;
+            &lt;div&gt;{{$key}} {{$val}}&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;hr/&gt;
+        &lt;div ms-with="obj"&gt;
+            &lt;div&gt;{{$key}} {{$val}}&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+        </pre>
+        <h3 id="top22">UI绑定(ms-ui)</h3>
         <p>它的格式为ms-ui-$opts="uiName", 其他$opts可有可无，存在时对应VM中的一个对象，建议将它设置为不可监控的，因为它只是作为一个配置对象。uiName为控件的名字。</p>
         <p>此外，在绑定元素上还应该设置一个data-id属性，用于指定生成的UI控件对应的VM的名字。你也可以设置更多的data-*属性，方便用于配置UI。</p>
         <p>下面是一个完整的实例用于教导你如何定义使用一个UI。</p>
@@ -542,9 +586,9 @@ require("aaa", function(){
  
             </pre>
         </fieldset>
-        <h3 id="top22">$watch</h3>
+        <h3 id="top23">$watch</h3>
         <p>这是一个位于VM的方法，用于监听VM的某人属性的变化，回调中有两个传参，新属性值与旧属性值，里面的this指向VM，详见<a href="http://rubylouvre.github.io/mvvm/avalon.watch.html">这里</a>。</p>
-        <h3 id="top23">过滤器</h3>
+        <h3 id="top24">过滤器</h3>
         <p>avalon从angular中抄来管道符风格的过滤器，但有点不一样。
             它只能用于{{}}插值表达式。如果不存在参数，要求直接跟|filter，如果存在参传，则要用小括号括起，参数要有逗号，这与一般的函数调用差不多，如|truncate(20,"……")</p>
         <p>avalon自带以下几个过滤器</p>
@@ -632,7 +676,7 @@ require("aaa", function(){
                   return ret;
                }
         </pre>
-        <h3 id="top24">AMD 加载器</h3>
+        <h3 id="top25">AMD 加载器</h3>
         <p>avalon装备了AMD模范的加载咕咕，这涉及到两个全局方法 require与define</p>
         <p>require(deps, callback)</p>
         <p>deps 必需。String|Array。依赖列表，可以是具体路径或模块标识，如果想用字符串表示多个模块，则请用“,”隔开它们。</p>
@@ -816,7 +860,6 @@ require("aaa", function(){
         </fieldset>
 
     </body>
-
 
 
 </html>
