@@ -12,56 +12,60 @@ Deferred.prototype = {
         this.callback = {
             resolve: Deferred.ok,
             reject: Deferred.ng,
-            notify:  Deferred.ok
+            notify: Deferred.ok,
+            ensure: Deferred.ok
         };
 
         var that = this
         this.state = "pending"
         this.promise = {
             then: function(onResolve, onReject, onNotify) {
-                       that.timestate = new Date - 0
+
                 return that._post(onResolve, onReject, onNotify)
+            },
+            otherwise: function(onReject) {
+
+                return that._post(null, onReject, null)
+            },
+            //https://github.com/cujojs/when/issues/103
+            ensure: function(onEnsure) {
+                return that._post(0, 0, 0, onEnsure)
             },
             _next: null
         }
         return this;
     },
-    cancel: function() {
-        (this.canceller || function() {
-        }).apply(this);
-        return this.init();
-    },
-    _post: function(fn0, fn1, fn2) {
+    _post: function(fn0, fn1, fn2, fn3) {
+        this.timestate = new Date - 0
         var deferred
         if (this.callback.resolve === Deferred.ok &&
-            this.callback.reject === Deferred.ng &&
-            this.callback.notify === Deferred.ok
-            ) {
+                this.callback.reject === Deferred.ng &&
+                this.callback.notify === Deferred.ok &&
+                this.callback.ensure === Deferred.ok
+                ) {
             deferred = this;
-        }   else{
+        } else {
             deferred = this.promise._next = new Deferred();
         }
 
         var index = -1, fns = arguments;
-        "resolve,reject,notify".replace(/\w+/g,function(method){
-           var fn = fns[++index];
+        "resolve,reject,notify, ensure".replace(/\w+/g, function(method) {
+            var fn = fns[++index];
             if (typeof fn === "function") {
                 deferred.callback[method] = fn;
             }
         })
         return deferred.promise;
     },
-    _fire:  function(method, value) {
+    _fire: function(method, value) {
         var next = "resolve";
         try {
-               //  console.log(this.state == "pending" || method == "notify")
-            if(this.state == "pending" || method == "notify") {
-               var fn = this.callback[method]
-              //  console.log(fn+"")
+            if (this.state == "pending" || method == "notify") {
+                var fn = this.callback[method]
                 value = fn.call(this, value);
-                if(method  !== "notify"){
+                if (method !== "notify") {
                     this.state = method
-                }   else{
+                } else {
                     next = "notify"
                 }
             }
@@ -69,44 +73,56 @@ Deferred.prototype = {
             next = "reject";
             value = e;
         }
+        var ensure = this.callback.ensure
+        if (Deferred.ok !== ensure) {
+            try {
+                ensure.call(this)
+            } catch (e) {
+                next = "reject";
+                value = e;
+            }
+        }
 
-        if (Deferred.isDeferred(value)) {
+
+        if (Deferred.isPromise(value)) {
             value._next = this.promise._next
         } else {
 
             if (this.promise._next) {
-
-               this.promise._next._fire(next, value);
+                this.promise._next._fire(next, value);
             }
 
         }
         return this;
     }
 };
+//http://thanpol.as/javascript/promises-a-performance-hits-you-should-be-aware-of/
 "resolve,reject,notify".replace(/\w+/g, function(method) {
     Deferred.prototype[method] = function(val) {
-      if (!this.timestate) {
+        //http://promisesaplus.com/ 4.1
+        if (!this.timestate) {
             var that = this;
             setTimeout(function() {
                 that._fire(method, val)
             }, 0)
-       } else {
-          return this._fire(method, val)
-      }
+        } else {
+            return this._fire(method, val)
+        }
     }
 })
-Deferred.isDeferred = function(obj) {
+Deferred.isPromise = function(obj) {
     return !!(obj && typeof obj.then === "function");
 };
+
 function some(any, promises) {
     var deferred = Deferred(), n = 0, result = [], end
-    function loop(promise) {
+    function loop(promise, index) {
         promise.then(function(ret) {
             if (!end) {
-                result.push(ret);
+                result[index] = ret//保证回调的顺序
                 n++;
                 if (any || n >= promises.length) {
-                    deferred.resolve(result);
+                    deferred.resolve(any ? ret : result);
                     end = true
                 }
             }
@@ -116,7 +132,7 @@ function some(any, promises) {
         })
     }
     for (var i = 0, l = promises.length; i < l; i++) {
-        loop(promises[i])
+        loop(promises[i], i)
     }
     return deferred.promise;
 }
@@ -125,88 +141,48 @@ Deferred.all = function() {
 }
 Deferred.any = function() {
     return some(true, arguments)
-}
-function aaa() {
-    var d = Deferred();
-    setTimeout(function() {
-        d.resolve(10)
-    }, 1000)
-    return d.promise
-}
-function bbb() {
-    var d = Deferred();
-    setTimeout(function() {
-        d.resolve(20)
-    }, 2000)
-    return d.promise
-}
-function ccc() {
-    var d = Deferred();
-    setTimeout(function() {
-        d.resolve(210)
-    }, 500)
-    return d.promise
-}
-
-/*
-//实现1
-aaa().then(function(a) {
-    console.log(a)
-    return a + 10
-}, function(e) {
-    console.log("xxxxxx" + e)
-    return e
-}).then(function(a) {
-    console.log(a)
-    return a
-}).then(function(a) {
-    var dd = Deferred(), t = new Date();
-    setTimeout(function() {
-        dd.resolve(a + 100)
-    }, 2000);
-    return dd.promise
-}).then(function(a) {
-    console.log(a + "!!!!!!!")
-})     */
-     /*
-   // 实现2
-        Deferred.all(aaa(), bbb()).then(function(a,b){
-                         console.log(a)
-
-        })
-               */
-/*
-Deferred.any(aaa(), bbb(),ccc()).then(function(a,b){
-    console.log(a)
-
-})        */
-
-function doSomething() {
-    var dfd = Deferred();
-
-    var count = 0;
-    var intervalId = setInterval(function() {
-
-        dfd.notify(count++);
-        count > 10 && clearInterval(intervalId);
-    }, 500);
-
-    return dfd.promise;
 };
+(function() {
+    return
+    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    if (BrowserMutationObserver) {//chrome firefox
+        Deferred.nextTick = function(callback) {
+            var input = document.createElement("input")
+            var observer = new BrowserMutationObserver(function(mutations) {
+                mutations.forEach(function() {
+                    callback()
+                });
+            });
+            observer.observe(input, {attributes: true});
+            input.setAttribute("value", Math.random())
+        }
+    } else if (window.VBArray) {//IE
+        Deferred.nextTick = function(callback) {
+            var node = document.createElement("script");
+            node.onreadystatechange = function() {
+                callback()
+                node.onreadystatechange = null
+                node.parentNode && node.parentNode.removeChild(node);
+                node = null;
+            };
+            document.documentElement.appendChild(node);
+        }
+    } else if (window.postMessage && window.addEventListener) {//safar opera
+        Deferred.nextTick = function(callback) {
+            function onGlobalMessage(event) {
+                if (typeof event.data === "string" && event.data.indexOf("usePostMessage") === 0) {
+                    callback()
+                }
+            }
+            window.addEventListener("message", onGlobalMessage);
+            var now = new Date - 0;
+            window.postMessage("usePostMessage" + now, "*");
+        }
+    } else {
+        Deferred.nextTick = function(callback) {
+            setTimeout(callback, 0)
+        }
+    }
 
-var promise = doSomething();
 
-promise.then(function(a) {
-    console.log(a+" resolve 0");
-    return 10
-}, function(a){
-    console.log(a+" reject 0")
-}, function(a){
-    console.log(a+" notify  0")
-}).then(function(a){
-        console.log(a+" resolve 1");
-    }, function(a){
-        console.log(a+" reject 1")
-    }, function(a){
-        console.log(a+" notify  11111111")
-    })
+})();

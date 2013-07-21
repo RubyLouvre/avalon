@@ -4,14 +4,302 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="deferred.js">
-
-        </script>
-
+        <!--        <script src="deferred.js">
+        
+                </script>-->
+        <!-- <script src="when.js">
+ 
+         </script>-->
         <script>
+            window.onload = function() {
+                if (!window.console) {
+                    window.console = {
+                        log: function(str) {
+                            var div = document.createElement("div")
+                            div.innerHTML = str;
+                            document.body.appendChild(div);
+                        }
+                    }
+                }
+                var avalon = {}
+                var taskList = []
+                window.addEventListener("message", function() {
+                    if (typeof event.data === "string" && event.data.indexOf("usePostMessage") === 0) {
+                        var fn
+                        console.log("1111111111")
+                        while (fn = taskList.shift()) {
+                            fn();
+                        }
+                    }
+                });
+                avalon.nextTick = function(callback) {
+                    taskList.push(callback);
+                    var now = new Date - 0;
+                    window.postMessage("usePostMessage" + now, "*");
+                }
+                avalon.nextTick(function() {
+                    console.log(1)
+                })
+                avalon.nextTick(function() {
+                    console.log(2)
+                })
+                  avalon.nextTick(function() {
+                    console.log(3)
+                })
+                return
+                console.log("111111111111111111")
+                function useMutationObserver(a) {
+                    var input = document.createElement("input")
+                    var now = new Date - 0
+                    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+                    if (!BrowserMutationObserver)
+                        return
+                    var observer = new BrowserMutationObserver(function(mutations) {
+                        mutations.forEach(function() {
+                            console.log(new Date - now + " useMutationObserver")
+                        });
+                    });
+                    observer.observe(input, {attributes: true});
+
+                    input.setAttribute("value", Math.random())
+                }
+                useMutationObserver();
 
 
 
+//                function useScriptReadystatechange() {
+//                    var now = new Date - 0;
+//                    var node = document.createElement("script");
+//                    node.onreadystatechange = node.onerror = function() {
+//                        console.log(new Date - now + " useScriptReadystatechange")
+//                        node.onreadystatechange = node.onerror = function() {
+//                        };
+//                        node.parentNode && node.parentNode.removeChild(node);
+//                        node = null;
+//                    };
+//                    //  node.src = "xxx"
+//                    document.documentElement.appendChild(node);
+//                }
+//
+//
+//                useScriptReadystatechange()
+
+
+
+                function usePostMessage() {
+                    // Installs an event handler on `global` for the `message` event: see
+                    // * https://developer.mozilla.org/en/DOM/window.postMessage
+                    // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+                    if (!window.postMessage)
+                        return
+                    function onGlobalMessage(event) {
+                        if (typeof event.data === "string" && event.data.indexOf("usePostMessage") === 0) {
+                            console.log(new Date - now + " usePostMessage")
+                        }
+                    }
+                    if (window.addEventListener) {
+                        window.addEventListener("message", onGlobalMessage, false);
+                    } else {
+                        window.attachEvent("onmessage", onGlobalMessage);
+                    }
+                    var now = new Date - 0;
+                    window.postMessage("usePostMessage" + now, "*");
+                }
+
+
+
+                usePostMessage();
+                function useSetImmediate() {
+
+                    if (window.setImmediate) {
+                        var now = new Date - 0
+                        setImmediate(function() {
+                            console.log(new Date - now + " useSetImmediate")
+                        });
+                    }
+                }
+                useSetImmediate();
+
+                function useMessageChannel() {
+                    //http://caniuse.com/channel-messaging
+                    if (!window.MessageChannel)
+                        return
+                    var channel = new MessageChannel();
+                    channel.port1.onmessage = function(event) {
+                        if (typeof event.data === "string" && event.data.indexOf("MessageChannel") === 0) {
+                            console.log(new Date - now + " useMessageChannel")
+                        }
+                    };
+                    var now = new Date - 0
+                    channel.port2.postMessage("MessageChannel" + now);
+                }
+                useMessageChannel();
+
+                function useImageError() {
+                    var img = new Image();
+                    var now = new Date - 0
+
+                    img.onerror = function() {
+                        img.onerror = function() {
+                        }
+                        console.log((new Date - now) + " useImageError")
+                        img = null;
+                    };
+                    img.src = "data:image/png," + Math.random();
+                }
+                useImageError();
+
+                function useSetTimeout() {
+                    var now = new Date - 0
+                    setTimeout(function() {
+                        console.log((new Date - now) + " useSetTimeout")
+                    }, 0)
+                }
+                useSetTimeout()
+                return
+
+                var Deferred = typeof when !== "undefined" ? when.defer : Deferred;
+                var testName = "settle2"
+                function  doSomething() {
+                    var dfd = Deferred();
+                    setTimeout(function() {
+                        dfd.resolve(1000)
+                    }, 1000)
+                    return dfd.promise;
+                }
+
+                function aaa() {
+                    var d = Deferred();
+                    setTimeout(function() {
+                        d.resolve(1000)
+                    }, 1000)
+                    return d.promise
+                }
+                function bbb() {
+                    var d = Deferred();
+                    setTimeout(function() {
+                        d.resolve(2000)
+                    }, 2000)
+                    return d.promise
+                }
+                function ccc() {
+                    var d = Deferred();
+                    setTimeout(function() {
+                        d.resolve(500)
+                    }, 500)
+                    return d.promise
+                }
+
+
+                switch (testName) {
+                    case "then":
+                        aaa().then(function(a) {
+                            console.log(a + "resolve 1")
+                            return a + 10
+                        }, function(e) {
+                            console.log(e + "reject 1")
+                            return e
+                        }).then(function(a) {
+                            console.log(a + "resolve 2")
+                            return a
+                        }).then(function(a) {
+                            var dd = Deferred(), t = new Date();
+                            setTimeout(function() {
+                                dd.resolve(a + 100)
+                            }, 2000);
+                            return dd.promise
+                        }).then(function(a) {
+                            console.log(a + "delay2000")
+                        })
+                        break;
+                    case "otherwise":
+                        aaa().then(function(a) {
+                            console.log(a + "resolve 1")
+                            throw "error!"
+                            return a + 10
+                        }, function(e) {
+                            console.log(e + "reject 1")
+                            return e
+                        }).otherwise(function(e) {
+                            console.log(e + " otherwise")
+                        })
+                        break;
+                    case "otherwise2":
+                        (function() {
+                            var dfd = Deferred()
+                            setTimeout(function() {
+                                dfd.reject("error")
+                            }, 1000)
+                            return dfd.promise
+                        })().otherwise(function() {
+                            console.log("000000000000")
+                        }).then(function() {
+                            console.log("111111111111")
+                        }, function() {
+                            console.log("222222222222")
+                        })
+                        break;
+                    case "reject":
+                        break;
+                    case "notify":
+                        function startNotify() {
+                            var dfd = Deferred(), count = 0;
+                            var intervalId = setInterval(function() {
+                                dfd.notify(count++);
+                                count > 10 && clearInterval(intervalId);
+                            }, 500);
+
+                            return dfd.promise;
+                        }
+                        startNotify().then(function(a) {
+                            console.log(a + " resolve 0");
+                            return 10
+                        }, function(a) {
+                            console.log(a + " reject 0")
+                        }, function(a) {
+                            console.log(a + " notify  0")
+                        }).then(function(a) {
+                            console.log(a + " resolve 1");
+                        }, function(a) {
+                            console.log(a + " reject 1")
+                        }, function(a) {
+                            console.log(a + " notify  11111111")
+                        })
+                        break;
+                    case "ensure":
+                        doSomething().then(function() {
+                            console.log("then")
+                        }).otherwise(function() {
+                            console.log("otherwise")
+                        }).ensure(function() {
+                            console.log("ensure")
+                        }).then(function() {
+                            console.log("then2")
+                        }).ensure(function() {
+                            console.log("ensure2")
+                        })
+                        break;
+                    case "ensure2":
+                        doSomething().ensure(function() {
+                            console.log("ensure")
+                            throw "ensure error"
+                        }).otherwise(function(e) {
+                            console.log(e)
+                        })
+                        break;
+                    case "any":
+                        Deferred.any(aaa(), bbb(), ccc()).then(function(a, b) {
+                            console.log(a)
+                        })
+                        break;
+                    case "all":
+                        Deferred.all(aaa(), bbb(), ccc()).then(function(a, b) {
+                            console.log(a)
+                        })
+                        break;
+
+                }
+            }
 
         </script>
     </head>

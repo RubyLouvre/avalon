@@ -231,12 +231,39 @@
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
         } : function(el, type, fn) {
             el.detachEvent("on" + type, fn || noop)
-        },
-        //https://github.com/NobleJS/setImmediate/blob/master/setImmediate.js
-        nextTick: function(fn) {
-            setTimeout(fn, 0)
         }
     })
+
+
+    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    if (BrowserMutationObserver) {
+        avalon.nextTick = function(callback) {
+            var input = DOC.createElement("input")
+            var observer = new BrowserMutationObserver(function(mutations) {
+                mutations.forEach(function() {
+                    callback()
+                });
+            });
+            observer.observe(input, {attributes: true});
+            input.setAttribute("value", Math.random())
+        }
+    } else if (window.VBArray) {
+        avalon.nextTick = function(callback) {
+            var node = DOC.createElement("script");
+            node.onreadystatechange = function() {
+                callback()
+                node.onreadystatechange = null
+                root.removeChild(node)
+                node = null
+            };
+            root.appendChild(node);
+        }
+    } else {
+        avalon.nextTick = function(callback) {
+            setTimeout(callback, 0)
+        }
+    }
+
     var VMODELS = avalon.vmodels = avalon.models = {}
 
     function isArraylike(obj) {
@@ -1370,7 +1397,7 @@
             }
         }
     }
-    
+
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
 
     function modelFactory(scope, model, watchMore) {
