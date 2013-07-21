@@ -14,13 +14,12 @@ Deferred.prototype = {
             reject: Deferred.ng,
             notify:  Deferred.ok
         };
-        this.state = "pending"
+
         var that = this
+        this.state = "pending"
         this.promise = {
             then: function(onResolve, onReject, onNotify) {
-                if (! that.timestamp ) {
-                    that.timestamp = new Date - 0
-                }
+                       that.timestate = new Date - 0
                 return that._post(onResolve, onReject, onNotify)
             },
             _next: null
@@ -33,53 +32,67 @@ Deferred.prototype = {
         return this.init();
     },
     _post: function(fn0, fn1, fn2) {
-        var deferred = this.promise._next = new Deferred();
-        if (typeof fn0 === "function") {
-            deferred.callback.resolve = fn0;
+        var deferred
+        if (this.callback.resolve === Deferred.ok &&
+            this.callback.reject === Deferred.ng &&
+            this.callback.notify === Deferred.ok
+            ) {
+            deferred = this;
+        }   else{
+            deferred = this.promise._next = new Deferred();
         }
-        if (typeof fn1 === "function") {
-            deferred.callback.reject = fn1;
-        }
-        if (typeof fn2 === "function") {
-            deferred.callback.notify = fn2;
-        }
+
+        var index = -1, fns = arguments;
+        "resolve,reject,notify".replace(/\w+/g,function(method){
+           var fn = fns[++index];
+            if (typeof fn === "function") {
+                deferred.callback[method] = fn;
+            }
+        })
         return deferred.promise;
     },
-    _fire:  function(okng, value) {
+    _fire:  function(method, value) {
         var next = "resolve";
         try {
-
-            if(this.state == "pending" || okng == "notify") {
-               var fn = this.callback[okng]
+               //  console.log(this.state == "pending" || method == "notify")
+            if(this.state == "pending" || method == "notify") {
+               var fn = this.callback[method]
+              //  console.log(fn+"")
                 value = fn.call(this, value);
-                console.log(fn+"")
-                if(okng !== "notify"){
-                    this.state = okng
+                if(method  !== "notify"){
+                    this.state = method
+                }   else{
+                    next = "notify"
                 }
             }
         } catch (e) {
             next = "reject";
             value = e;
         }
+
         if (Deferred.isDeferred(value)) {
             value._next = this.promise._next
         } else {
-            if (this.promise._next)
-                this.promise._next._fire(next, value);
+
+            if (this.promise._next) {
+
+               this.promise._next._fire(next, value);
+            }
+
         }
         return this;
     }
 };
 "resolve,reject,notify".replace(/\w+/g, function(method) {
     Deferred.prototype[method] = function(val) {
-        if (!this.timestamp) {
+      if (!this.timestate) {
             var that = this;
             setTimeout(function() {
                 that._fire(method, val)
             }, 0)
-        } else {
-            return this._fire(method, val)
-        }
+       } else {
+          return this._fire(method, val)
+      }
     }
 })
 Deferred.isDeferred = function(obj) {
@@ -173,7 +186,7 @@ function doSomething() {
 
     var count = 0;
     var intervalId = setInterval(function() {
-     //   console.log("1111111111111")
+
         dfd.notify(count++);
         count > 10 && clearInterval(intervalId);
     }, 500);
@@ -183,10 +196,17 @@ function doSomething() {
 
 var promise = doSomething();
 
-promise.then(function(prog) {
-    console.log(prog);
-}, 0, function(a){
-
-    console.log(a+"  !!!!!!!!!!!1")
-    return "xxxxxxxxx"
-});
+promise.then(function(a) {
+    console.log(a+" resolve 0");
+    return 10
+}, function(a){
+    console.log(a+" reject 0")
+}, function(a){
+    console.log(a+" notify  0")
+}).then(function(a){
+        console.log(a+" resolve 1");
+    }, function(a){
+        console.log(a+" reject 1")
+    }, function(a){
+        console.log(a+" notify  11111111")
+    })
