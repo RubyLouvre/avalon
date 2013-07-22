@@ -347,18 +347,12 @@
     }
 
     if (!noop.bind) {
-        Function.prototype.bind = function(scope) {
-            if (arguments.length < 2 && scope === void 0)
-                return this
-            var fn = this,
-                    argv = arguments
+        Function.prototype.bind = function() {
+            var fn = this, args = []
+            args.push.apply(args, arguments)
             return function() {
-                var args = [],
-                        i
-                for (i = 1; i < argv.length; i++)
-                    args.push(argv[i])
-                for (i = 0; i < arguments.length; i++)
-                    args.push(arguments[i])
+                args.push.apply(args, arguments)
+                var scope = args.shift();
                 return fn.apply(scope, args)
             }
         }
@@ -1390,6 +1384,7 @@
                 a.set(i, b[i])
             }
         } else {
+           // console.log()
             for (var i in b) {
                 if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && i !== "$id") {
                     a[i] = b[i]
@@ -1398,7 +1393,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$accessor")
 
     function modelFactory(scope, model, watchMore) {
         if (Array.isArray(scope)) {
@@ -1529,6 +1524,7 @@
         vmodel.$model = vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$id = generateID()
+        vmodel.$accessor = Descriptions
         for (var i in Observable) {
             vmodel[i] = Observable[i].bind(vmodel)
         }
