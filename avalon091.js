@@ -1393,19 +1393,16 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$accessor")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$descriptors")
 
-    function addAccess(scope, model, vmodel, VBPublics, watchMore) {
-        var callGetters = [], callSetters = [], accesses = {}
+    function descriptorFactory(scope, model, vmodel, VBPublics, watchMore) {
+        var callGetters = [], callSetters = [], descriptors = {}
         function loop(name, value) {
             if (!unwatchOne[name]) {
                 model[name] = value
             }
-            var valueType = getType(value), accessor, oldArgs
-            if (valueType === "function") {
-                VBPublics[name] = 1
-            }
-            if (name.charAt(0) === "$" && !watchMore[name]) {
+            var valueType = getType(value), descriptor, oldArgs
+            if (valueType === "function"|| (name.charAt(0) === "$" && !watchMore[name])) {
                 VBPublics[name] = 1
             }
             if (VBPublics[name] === 1) {
@@ -1414,7 +1411,7 @@
             if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
                 var setter = value.set,
                         getter = value.get
-                accessor = function(neo) { //创建计算属性
+                descriptor = function(neo) { //创建计算属性
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return //阻止重复赋值
@@ -1426,12 +1423,12 @@
                         if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                             oldArgs = neo
                             value = model[name] = getter.call(vmodel)
-                            notifySubscribers(accessor) //通知顶层改变
+                            notifySubscribers(descriptor) //通知顶层改变
                             vmodel.$events && vmodel.$fire(name, value, antiquity)
                         }
                     } else {
-                        if (openComputedCollect || !accessor.locked) {
-                            collectSubscribers(accessor)
+                        if (openComputedCollect || !descriptor.locked) {
+                            collectSubscribers(descriptor)
                         }
                         neo = getter.call(vmodel)
                         if (value !== neo) {
@@ -1441,8 +1438,8 @@
                         return model[name] = value
                     }
                 }
-                accessor.nick = name
-                callGetters.push(accessor)
+                descriptor.nick = name
+                callGetters.push(descriptor)
             } else {
                 value = NaN
                 callSetters.push(name)
@@ -1466,19 +1463,19 @@
                                 value = neo
                             }
                             model[name] = value && value.$id ? value.$model : value
-                            notifySubscribers(accessor) //通知顶层改变
+                            notifySubscribers(descriptor) //通知顶层改变
                             vmodel.$events && vmodel.$fire(name, value, old)
                         }
                     } else {
-                        collectSubscribers(accessor) //收集视图函数
+                        collectSubscribers(descriptor) //收集视图函数
                         return value
                     }
                 }
             }
-            accessor[subscribers] = []
-            accesses[name] = {
-                set: accessor,
-                get: accessor,
+            descriptor[subscribers] = []
+            descriptors[name] = {
+                set: descriptor,
+                get: descriptor,
                 enumerable: true
             }
         }
@@ -1502,11 +1499,11 @@
         var vmodel = {}
         model = model || {}
         //在这里我们继续为VBPublics添加函数
-        var arr = addAccess(scope, model, vmodel, VBPublics, watchMore || {})
+        var arr = descriptorFactory(scope, model, vmodel, VBPublics, watchMore || {})
         var callGetters = arr[0]
         var callSetters = arr[1]
-        var accesses = arr[2]
-        vmodel = defineProperties(vmodel, accesses, Object.keys(VBPublics))
+        var descriptors = arr[2]
+        vmodel = defineProperties(vmodel, descriptors, Object.keys(VBPublics))
         for (var name in VBPublics) {
             if (!unwatchOne[name]) {
                 vmodel[name] = scope[name]
@@ -1524,7 +1521,7 @@
         vmodel.$model = vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$id = generateID()
-        vmodel.$accessor = accesses
+        vmodel.$descriptors = descriptors
         for (var i in Observable) {
             vmodel[i] = Observable[i].bind(vmodel)
         }
