@@ -1601,8 +1601,7 @@
     function parseExpr(code, scopes, data, getset) {
         // if (scopes.length == 1 && rprops.test(code)) {
         if (getset) {
-            var fn = Function("vm" + expose, "if(arguments.length === 2){\n vm" +
-                    expose + "." + code + " = arguments[1]\n }else{\nreturn vm" + expose + "." + code + "\n}")
+            var fn = Function("a","b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
         } else {
             var vars = getVariables(code),

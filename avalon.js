@@ -347,12 +347,18 @@
     }
 
     if (!noop.bind) {
-        Function.prototype.bind = function() {
-            var fn = this, args = []
-            args.push.apply(args, arguments)
+        Function.prototype.bind = function(scope) {
+            if (arguments.length < 2 && scope === void 0)
+                return this
+            var fn = this,
+                    argv = arguments
             return function() {
-                args.push.apply(args, arguments)
-                var scope = args.shift()
+                var args = [],
+                        i
+                for (i = 1; i < argv.length; i++)
+                    args.push(argv[i])
+                for (i = 0; i < arguments.length; i++)
+                    args.push(arguments[i])
                 return fn.apply(scope, args)
             }
         }
@@ -1384,7 +1390,7 @@
                 a.set(i, b[i])
             }
         } else {
-           // console.log()
+            // console.log()
             for (var i in b) {
                 if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && i !== "$id") {
                     a[i] = b[i]
@@ -1909,8 +1915,7 @@
     function parseExpr(code, scopes, data, setget) {
         // if (scopes.length == 1 && rprops.test(code)) {
         if (setget) {
-            var fn = Function("vm" + expose, "if(arguments.length === 2){\n vm" +
-                    expose + "." + code + " = arguments[1]\n }else{\nreturn vm" + expose + "." + code + "\n}")
+            var fn = Function("a","b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
         } else {
             var vars = getVariables(code),
