@@ -1416,7 +1416,6 @@
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
-
             if (!unwatchOne[name]) {
                 model[name] = val
             }
