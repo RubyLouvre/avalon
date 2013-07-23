@@ -1442,22 +1442,23 @@
 
     function descriptorFactory(scope, model, VBPublics, watchMore) {
         var callGetters = [], callSetters = [], descriptors = {}
-        function loop(name, value) {
+        function loop(name, val) {
             if (!unwatchOne[name]) {
-                model[name] = value
+                model[name] = val
             }
-            var valueType = getType(value), descriptor, oldArgs
+            var valueType = getType(val), descriptor, oldArgs
             if (valueType === "function" || (name.charAt(0) === "$" && !watchMore[name])) {
                 VBPublics[name] = 1
             }
             if (VBPublics[name] === 1) {
                 return
             }
-            if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
-                var setter = value.set,
-                        getter = value.get
+            if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+                var setter = val.set,
+                        getter = val.get
 
                 descriptor = function(neo) { //创建计算属性
+                    var value = descriptor.value;
                     var vmodel = descriptor.vmodel
                     if (arguments.length) {
                         if (stopRepeatAssign) {
@@ -1467,9 +1468,11 @@
                         if (typeof setter === "function") {
                             setter.call(vmodel, neo)
                         }
-                        if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
-                            oldArgs = neo
-                            value = model[name] = getter.call(vmodel)
+                        var fn = vmodel.$fire
+                        vmodel.$fire = noop
+                        var value = descriptor()
+                        vmodel.$fire = fn;
+                        if (value !== antiquity) {
                             notifySubscribers(descriptor) //通知顶层改变
                             vmodel.$events && vmodel.$fire(name, value, antiquity)
                         }
@@ -1477,20 +1480,20 @@
                         if (openComputedCollect || !descriptor.locked) {
                             collectSubscribers(descriptor)
                         }
-                        neo = getter.call(vmodel)
+                        neo =  descriptor.value = model[name] = getter.call(vmodel)
                         if (value !== neo) {
                             vmodel.$events && vmodel.$fire(name, neo, value)
-                            value = neo
                         }
-                        return model[name] = value
+                        return  neo
                     }
                 }
                 descriptor.nick = name
                 callGetters.push(descriptor)
             } else {
-                value = NaN
+                //   value = NaN
                 callSetters.push(name)
                 descriptor = function(neo) { //创建监控属性或数组
+                    var value = descriptor.value
                     var vmodel = descriptor.vmodel
                     if (arguments.length) {
                         if (stopRepeatAssign) {
@@ -1506,11 +1509,13 @@
                                     value._add(neo)
                                 } else {
                                     value = modelFactory(neo, neo)
+
                                 }
                             } else {
                                 value = neo
                             }
                             model[name] = value && value.$id ? value.$model : value
+                            descriptor.value = value
                             notifySubscribers(descriptor) //通知顶层改变
                             vmodel.$events && vmodel.$fire(name, value, old)
                         }
@@ -1520,11 +1525,8 @@
                     }
                 }
             }
-            try {
-                descriptor[subscribers] = []
-            } catch (e) {
-                console.log(name)
-            }
+            descriptor[subscribers] = []
+            descriptor.value = NaN;
             descriptors[name] = {
                 set: descriptor,
                 get: descriptor,

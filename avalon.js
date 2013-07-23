@@ -1415,26 +1415,24 @@
         watchMore = watchMore || {}
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
-        function loop(name, value) {
+        function loop(name, val) {
 
             if (!unwatchOne[name]) {
-                model[name] = value
+                model[name] = val
             }
-            var valueType = getType(value)
+            var valueType = getType(val)
             if (valueType === "function") {
                 VBPublics.push(name) //函数无需要转换
             } else {
-                if (skipArray.indexOf(name) !== -1) {
-                    return VBPublics.push(name)
-                }
-                if (name.charAt(0) === "$" && !watchMore[name]) {
+                if (skipArray.indexOf(name) !== -1 || (name.charAt(0) === "$" && !watchMore[name])) {
                     return VBPublics.push(name)
                 }
                 var accessor, oldArgs
-                if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
-                    var setter = value.set,
-                            getter = value.get
+                if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+                    var setter = val.set
+                    var getter = val.get
                     accessor = function(neo) { //创建计算属性
+                        var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
@@ -1445,30 +1443,25 @@
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
-
-                                value = model[name] = getter.call(vmodel)
+                                value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, value, antiquity)
-
+                                vmodel.$fire && vmodel.$fire(name, value, antiquity)
                             }
                         } else {
-                            if (openComputedCollect || !accessor.locked) {
+                            if (openComputedCollect) {
                                 collectSubscribers(accessor)
                             }
-                            neo = getter.call(vmodel)
+                            neo = accessor.value = model[name] = getter.call(vmodel)
                             if (value !== neo) {
-                                vmodel.$events && vmodel.$fire(name, neo, value)
-                                value = neo
+                               vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
-                            return model[name] = value
+                            return neo
                         }
                     }
-                    accessor.nick = name
                     callGetters.push(accessor)
                 } else {
-                    value = NaN
-                    callSetters.push(name)
                     accessor = function(neo) { //创建监控属性或数组
+                        var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
@@ -1487,17 +1480,17 @@
                                 } else {
                                     value = neo
                                 }
-
+                                accessor.value = value
                                 model[name] = value && value.$id ? value.$model : value
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$events && vmodel.$fire(name, value, old)
-
+                                vmodel.$fire && vmodel.$fire(name, value, old)
                             }
                         } else {
                             collectSubscribers(accessor) //收集视图函数
                             return value
                         }
                     }
+                    callSetters.push(name)
                 }
                 accessor[subscribers] = []
                 Descriptions[name] = {
@@ -1521,10 +1514,11 @@
         callSetters.forEach(function(prop) {
             vmodel[prop] = scope[prop] //为空对象赋值
         })
+
         callGetters.forEach(function(fn) {
             Publish[expose] = fn
-            callSetters = vmodel[fn.nick]
-            fn.locked = 1
+            callSetters = fn()
+            collectSubscribers(fn)
             delete Publish[expose]
         })
         vmodel.$model = vmodel.$json = model
@@ -1915,7 +1909,7 @@
     function parseExpr(code, scopes, data, setget) {
         // if (scopes.length == 1 && rprops.test(code)) {
         if (setget) {
-            var fn = Function("a","b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
+            var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
         } else {
             var vars = getVariables(code),
