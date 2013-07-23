@@ -415,12 +415,12 @@
         }
         return this
     }
-    var openTag, closeTag, rexpr, rbind, rregexp = /([-.*+?^${}()|[\]\/\\])/g
+    var openTag, closeTag, rexpr, rbind, rregexp = /[-.*+?^${}()|[\]\/\\]/g
 
     function escapeRegExp(target) {
         //http://stevenlevithan.com/regex/xregexp/
         //将字符串安全格式化为正则表达式的源码
-        return (target + "").replace(rregexp, "\\$1")
+        return (target + "").replace(rregexp, "\\$&")
     }
     var plugins = {
         alias: function(val) {
