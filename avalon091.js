@@ -1370,7 +1370,7 @@
         }
     }
 
-    function updateViewModel(a, b, isArray) {
+    function updateViewModel(a, b, isArray, accessor) {
         if (isArray) {
             var an = a.length,
                     bn = b.length
@@ -1384,25 +1384,70 @@
                 a.set(i, b[i])
             }
         } else {
-            // console.log()
+            var addedProperty = {}, modifyProperty = {}, flagAdd = false;
             for (var i in b) {
-                if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && i !== "$id") {
-                    a[i] = b[i]
+                if (b.hasOwnProperty(i)) {
+                    if (a.hasOwnProperty(i)) {
+                        if (b[i] !== a[i]) {
+                            modifyProperty[i] = b[i]
+                        }
+                    } else {
+                        flagAdd = true;
+                        addedProperty[i] = b[i]
+                    }
                 }
             }
+            if (flagAdd) {
+                var VBPublics = getVBPublics(unwatchOne, a.$skipArray || b.$skipArray)
+                var arr = descriptorFactory(modifyProperty, a.$model, VBPublics, {})
+                var callGetters = arr[0]
+                var callSetters = arr[1]
+                var descriptors = arr[2]
+                var vmodel = {}
+                vmodel = defineProperties(vmodel, descriptors, Object.keys(VBPublics))
+                for (var name in VBPublics) {
+                    if (!unwatchOne[name]) {
+                        vmodel[name] = modifyProperty[name]
+                    }
+                }
+                for (var i in descriptors) {
+                    descriptors[i].get.vmodel = vmodel
+                }
+                callSetters.forEach(function(prop) {
+                    vmodel[prop] = modifyProperty[prop] //为空对象赋值
+                })
+                callGetters.forEach(function(fn) {
+                    Publish[expose] = fn
+                    callSetters = vmodel[fn.nick]
+                    fn.locked = 1
+                    delete Publish[expose]
+                })
+                vmodel.$model = vmodel.$json = a.$model
+                vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
+                vmodel.$id = generateID()
+                vmodel.$descriptors = descriptors
+                for (var i in Observable) {
+                    vmodel[i] = Observable[i].bind(vmodel)
+                }
+                vmodel.hasOwnProperty = function(name) {
+                    return name in vmodel.$model
+                }
+                return vmodel
+            }
+
         }
     }
 
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$descriptors")
 
-    function descriptorFactory(scope, model, vmodel, VBPublics, watchMore) {
+    function descriptorFactory(scope, model, VBPublics, watchMore) {
         var callGetters = [], callSetters = [], descriptors = {}
         function loop(name, value) {
             if (!unwatchOne[name]) {
                 model[name] = value
             }
             var valueType = getType(value), descriptor, oldArgs
-            if (valueType === "function"|| (name.charAt(0) === "$" && !watchMore[name])) {
+            if (valueType === "function" || (name.charAt(0) === "$" && !watchMore[name])) {
                 VBPublics[name] = 1
             }
             if (VBPublics[name] === 1) {
@@ -1411,7 +1456,9 @@
             if (valueType === "object" && typeof value.get === "function" && Object.keys(value).length <= 2) {
                 var setter = value.set,
                         getter = value.get
+
                 descriptor = function(neo) { //创建计算属性
+                    var vmodel = descriptor.vmodel
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return //阻止重复赋值
@@ -1443,7 +1490,8 @@
             } else {
                 value = NaN
                 callSetters.push(name)
-                accessor = function(neo) { //创建监控属性或数组
+                descriptor = function(neo) { //创建监控属性或数组
+                    var vmodel = descriptor.vmodel
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return //阻止重复赋值
@@ -1472,7 +1520,11 @@
                     }
                 }
             }
-            descriptor[subscribers] = []
+            try {
+                descriptor[subscribers] = []
+            } catch (e) {
+                console.log(name)
+            }
             descriptors[name] = {
                 set: descriptor,
                 get: descriptor,
@@ -1482,24 +1534,27 @@
         for (var i in scope) {
             loop(i, scope[i])
         }
-        return [callGetters, callSetters, accesses]
+        return [callGetters, callSetters, descriptors]
     }
-
+    function getVBPublics(unwatchOne, $skipArray) {
+        var ret = avalon.mix({}, unwatchOne)
+        for (var name in $skipArray) {
+            if ($skipArray.hasOwnProperty(name)) {
+                ret[name] = 1
+            }
+        }
+        return ret;
+    }
     function modelFactory(scope, model, watchMore) {
         if (Array.isArray(scope)) {
             return Collection(scope)
         }
         //一开始VBPublics里面全是忽略监控的属性
-        var VBPublics = avalon.mix({}, unwatchOne)
-        for (var name in scope.$skipArray) {
-            if (scope.$skipArray.hasOwnProperty(name)) {
-                VBPublics[name] = 1
-            }
-        }
+        var VBPublics = getVBPublics(unwatchOne, scope.$skipArray)
         var vmodel = {}
         model = model || {}
         //在这里我们继续为VBPublics添加函数
-        var arr = descriptorFactory(scope, model, vmodel, VBPublics, watchMore || {})
+        var arr = descriptorFactory(scope, model, VBPublics, watchMore || {})
         var callGetters = arr[0]
         var callSetters = arr[1]
         var descriptors = arr[2]
@@ -1508,6 +1563,9 @@
             if (!unwatchOne[name]) {
                 vmodel[name] = scope[name]
             }
+        }
+        for (var i in descriptors) {
+            descriptors[i].get.vmodel = vmodel
         }
         callSetters.forEach(function(prop) {
             vmodel[prop] = scope[prop] //为空对象赋值
