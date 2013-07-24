@@ -29,6 +29,7 @@
         </style>
     </head>
     <body>
+        <script src="avalon.js"></script>
         <form class="msform" ms-controller="test" ms-on-submit="beforeSubmit" action="www.baidu.com">
             <div class="error">{{errMsg}}</div>
             <div>姓&emsp;&emsp;名：<input name="name" ms-duplex="name" 
@@ -59,7 +60,7 @@
             <center><button type="submit">提交</button></center>
         </form>
 
-        <script src="avalon.js"></script>
+
         <script>
             avalon.define("test", function(vm) {
                 vm.name = ""
@@ -68,6 +69,7 @@
                 //vm.
                 vm.reset = function() {
                     var field = this.name
+                    vm.errMsg = ""
                     if (vm[field + "ErrorMsg"]) {//只有出错了才进行处理
                         vm[field] = "";// 请空输入框
                         vm[field + "ErrorMsg"] = ""//清空错误提示消息
