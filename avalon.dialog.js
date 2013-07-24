@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         toggle: true,
         width: 300,
@@ -40,10 +40,9 @@
     var domParser = document.createElement("div");
     domParser.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
     var overlay = domParser.firstChild;//全部dialog共用
-    avalon.ui.dialog = function(element, id, opts, model) {
+    avalon.ui.dialog = function(element, id, vmodels, opts) {
         var $element = avalon(element);
-        var options = avalon.mix({}, defaults);
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults, $element.data());
         options.toggle = !!options.autoOpen;
         if (!options.title) {
             options.title = element.title || "&nbsp;";
@@ -180,5 +179,7 @@
     }
     var overlayInstances = avalon.ui.dialog.overlayInstances = [];
 
-})(window.avalon);
+    return avalon
+})
+
 //http://www.slipjs.com/jz.html

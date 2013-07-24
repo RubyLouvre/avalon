@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         perPages: 10, //每页显示多少条目
@@ -14,7 +14,7 @@
     };
 
     var domParser = document.createElement("div");
-    avalon.ui.pagination = function(element, id, opts, model) {
+    avalon.ui.pagination =  function(element, id, vmodels, opts) {
         var $element = avalon(element);
         var options = avalon.mix({}, defaults);
         if (typeof opts === "object") {
@@ -28,7 +28,7 @@
 
         $element.addClass("ui-widget-header ui-corner-all ui-buttonset ");
         element.style.cssText += "padding:6px 4px"
-        model = avalon.define(id, function(vm) {
+     var   model = avalon.define(id, function(vm) {
             avalon.mix(vm, options);
 
             function getShowPages() {
@@ -120,4 +120,5 @@
         return model;
     };
 
-})(this.avalon);
+    return avalon
+})

@@ -1,14 +1,13 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         active: 0
     };
-    avalon.ui.accordion = function(element, id) {
+    avalon.ui.accordion =  function(element, id, vmodels, opts) {
         var $element = avalon(element),
                 model, el
         var fragment = document.createDocumentFragment();
         //处理配置
-        var options = avalon.mix({}, defaults);
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults, $element.data());
         $element.addClass(" ui-accordion ui-widget ui-helper-reset");
         var el, tabs = [],
                 tabpanels = [];
@@ -44,4 +43,5 @@
             avalon.scan(element, model);
         });
     }
-})(this.avalon)
+    return avalon
+})
