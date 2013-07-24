@@ -1728,7 +1728,10 @@
         }
         return cacheDisplay[nodeName]
     }
-
+    var supportDisplay = (function(td) {
+        return window.getComputedStyle ?
+                window.getComputedStyle(td, null).display == "table-cell" : true
+    })(DOC.createElement("td"))
 
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
@@ -1817,7 +1820,10 @@
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
             var elem = data.element
-            var display = avalon(elem).css("display")
+            if (!supportDisplay && !root.contains(elem)) {//fuck firfox 全家！
+                var display = parseDisplay(elem.tagName)
+            }
+            display = display || avalon(elem).css("display")
             display = display === "none" ? parseDisplay(elem.tagName) : display
             watchView(data.value, vmodels, data, function(val) {
                 elem.style.display = val ? display : "none"
