@@ -1544,7 +1544,7 @@
 
         callGetters.forEach(function(fn) {
             Publish[expose] = fn
-            callSetters = fn()
+            fn()
             collectSubscribers(fn)
             delete Publish[expose]
         })
