@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         active: 0,
         event: "click", //可以使用click, mouseover
@@ -6,7 +6,7 @@
         bottom: false,
         removable: false
     };
-    avalon.ui.tabs = function(element, id, opts) {
+    avalon.ui.tabs =  function(element, id, vmodels, opts) {
         var el, tabsParent, tabs = [], tabpanels = [];
         var $element = avalon(element);
         //1,设置参数对象options = defaults + opts + $element.data()
@@ -78,4 +78,6 @@
         });
         return model;
     };
-})(window.avalon);
+
+    return avalon
+})

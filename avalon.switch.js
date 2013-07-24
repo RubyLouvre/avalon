@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         disabled: false,
@@ -19,7 +19,7 @@
         var head = document.head || document.getElementsByTagName("head")[0];
         head.appendChild(style);
     });
-    avalon.ui["switch"] = function(element, id, opts) {
+    avalon.ui["switch"] =  function(element, id, vmodels, opts) {
 
         var $element = avalon(element);
         var options = avalon.mix({}, defaults);
@@ -88,5 +88,6 @@
         });
     };
 
-})(self.avalon);
+    return avalon
+})
 

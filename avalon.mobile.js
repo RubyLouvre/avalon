@@ -1228,7 +1228,10 @@
                             }
                             var antiquity = value
                             if (typeof setter === "function") {
+                                var backup = vmodel.$events[name]
+                                vmodel.$events[name] = []//防止内部冒泡而触发多次$fire
                                 setter.call(vmodel, neo)
+                                vmodel.$events[name] = backup
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo
@@ -1242,7 +1245,7 @@
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
                             if (value !== neo) {
-                               vmodel.$fire && vmodel.$fire(name, neo, value)
+                                vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
                             return neo
                         }
@@ -1597,7 +1600,7 @@
     function parseExpr(code, scopes, data, getset) {
         // if (scopes.length == 1 && rprops.test(code)) {
         if (getset) {
-            var fn = Function("a","b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
+            var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
         } else {
             var vars = getVariables(code),

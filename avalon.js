@@ -84,7 +84,7 @@
         }
         return true
     }
-    if (/\[native code\]/.test(Object.getPrototypeOf) ) {
+    if (/\[native code\]/.test(Object.getPrototypeOf)) {
         avalon.isPlainObject = function(obj) {
             return obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
@@ -1367,6 +1367,7 @@
             var callbacks = this.$events[type] || [] //防止影响原数组
             var all = this.$events.$all || []
             var args = aslice.call(arguments, 1)
+
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1410,7 +1411,7 @@
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
             for (var i in updated) {
-               a[i] = updated[i]
+                a[i] = updated[i]
             }
             return a
         }
@@ -1455,7 +1456,10 @@
                             }
                             var antiquity = value
                             if (typeof setter === "function") {
+                                var backup = vmodel.$events[name]
+                                vmodel.$events[name] = []//防止内部冒泡而触发多次$fire
                                 setter.call(vmodel, neo)
+                                vmodel.$events[name] = backup
                             }
                             if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
                                 oldArgs = neo

@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         minWidth: 225,
@@ -14,7 +14,7 @@
     };
     var domParser = document.createElement("div");
 
-    avalon.ui["select"] = function(element, id, opts, model) {
+    avalon.ui["select"] = function(element, id, vmodels, opts) {
         var $element = avalon(element);
         var options = avalon.mix({}, defaults);
         if (typeof opts === "object") {
@@ -169,5 +169,6 @@
         return model;
     };
 
-})(window.avalon);
+    return avalon
+})
 //http://www.erichynds.com/examples/jquery-ui-multiselect-widget/demos/#single

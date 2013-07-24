@@ -1,4 +1,4 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         distance: 0,
@@ -12,7 +12,7 @@
     }
     var domParser = document.createElement("div");
 
-    avalon.ui["slider"] = function(element, id, opt, model) {
+    avalon.ui["slider"] = function(element, id, vmodels, opts) {
         var $element = avalon(element);
         var options = avalon.mix({}, defaults);
         avalon.mix(options, $element.data());
@@ -87,7 +87,7 @@
             //   console.log(parseFloat(val.toFixed(3))+" step "+n)
             return parseFloat(val.toFixed(3));
         }
-        model = avalon.define(id, function(vm) {
+        var model = avalon.define(id, function(vm) {
             vm.disabled = element.disabled;
             vm.percent = twohandlebars ? value2Percent(values[1] - values[0]) : value2Percent(value);
             vm.percent0 = twohandlebars ? value2Percent(values[0]) : 0;
@@ -148,7 +148,8 @@
         return model;
     };
 
-})(window.avalon);
+    return avalon
+})
 //http://xinranliu.me/?p=520
 //http://www.w3cplus.com/css3/using-flexbox.html
 //http://www.w3cplus.com/css3/css-generated-content-counters.html

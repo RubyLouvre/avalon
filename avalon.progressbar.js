@@ -1,14 +1,13 @@
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         value: 0
     };
-    avalon.ui.progressbar = function(element, id) {
+    avalon.ui.progressbar = function(element, id, vmodels, opts) {
         var $element = avalon(element),
                 model, el
         var fragment = document.createDocumentFragment();
         //处理配置
-        var options = avalon.mix({}, defaults);
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults,$element.data());
         $element.addClass("ui-progressbar ui-widget ui-widget-content ui-corner-all");
         while (el = element.firstChild) {
             fragment.appendChild(el);
@@ -31,5 +30,6 @@
         });
         return model;
     }
-})(this.avalon);
+    return avalon
+})
 //6月2日 3群 上海-Jason
