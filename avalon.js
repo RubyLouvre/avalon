@@ -84,7 +84,7 @@
         }
         return true
     }
-    if (/[native code]/.test(Object.getPrototypeOf)) {
+    if (/\[native code\]/.test(Object.getPrototypeOf) ) {
         avalon.isPlainObject = function(obj) {
             return obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
@@ -1389,30 +1389,47 @@
             for (var i = 0; i < n; i++) {
                 a.set(i, b[i])
             }
+            return a
         } else {
-            // console.log()
+            var added = {}, updated = {}, flagAdd = false;
             for (var i in b) {
-                if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && i !== "$id") {
-                    a[i] = b[i]
+                if (b.hasOwnProperty(i)) {
+                    if (a.hasOwnProperty(i)) {
+                        if (b[i] !== a[i]) {
+                            updated[i] = b[i]
+                        }
+                    } else {
+                        flagAdd = true;
+                        added[i] = b[i]
+                    }
                 }
             }
+            if (flagAdd) {
+                var scope = a.$model
+                avalon.mix(scope, added)
+                a = modelFactory(scope, scope, {}, a.$accessor)
+            }
+            for (var i in updated) {
+               a[i] = updated[i]
+            }
+            return a
         }
     }
 
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$accessor")
 
-    function modelFactory(scope, model, watchMore) {
+    function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
             return Collection(scope)
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
-                Descriptions = {}, //内部用于转换的对象
+                accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
                 VBPublics = Object.keys(unwatchOne) //用于IE6-8
         model = model || {}
-        watchMore = watchMore || {}
+        watchMore = watchMore || {}//以$开头但要强制监听的属性
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
@@ -1452,7 +1469,7 @@
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
                             if (value !== neo) {
-                               vmodel.$fire && vmodel.$fire(name, neo, value)
+                                vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
                             return neo
                         }
@@ -1469,7 +1486,7 @@
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
                                     if (value && value.$id) {
-                                        updateViewModel(value, neo, Array.isArray(neo))
+                                        value = updateViewModel(value, neo, Array.isArray(neo))
                                     } else if (Array.isArray(neo)) {
                                         value = Collection(neo)
                                         value._add(neo)
@@ -1492,7 +1509,7 @@
                     callSetters.push(name)
                 }
                 accessor[subscribers] = []
-                Descriptions[name] = {
+                accessores[name] = {
                     set: accessor,
                     get: accessor,
                     enumerable: true
@@ -1503,7 +1520,13 @@
             loop(i, scope[i])
         }
 
-        vmodel = defineProperties(vmodel, Descriptions, VBPublics)
+        if (oldAccessores) {
+            for (var i in oldAccessores) {
+                accessores[i] = oldAccessores[i]
+            }
+        }
+
+        vmodel = defineProperties(vmodel, accessores, VBPublics)
 
         VBPublics.forEach(function(name) {
             if (!unwatchOne[name]) {
@@ -1523,7 +1546,7 @@
         vmodel.$model = vmodel.$json = model
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$id = generateID()
-        vmodel.$accessor = Descriptions
+        vmodel.$accessor = accessores
         for (var i in Observable) {
             vmodel[i] = Observable[i].bind(vmodel)
         }
