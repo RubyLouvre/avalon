@@ -607,6 +607,7 @@
             if (onError || (fuckIE && !modules[id].state)) {
                 setTimeout(function() {
                     head.removeChild(node)
+                    node = null // 处理旧式IE下的循环引用问题
                 })
                 log("加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
