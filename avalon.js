@@ -1923,8 +1923,9 @@
         }
         var uniq = {}
         return arr.filter(function(el) {
-            if (!uniq[vm ? el.$id : el]) {
-                uniq[vm ? el.$id : el] = 1
+            var key = vm ? el && el.$id : el
+            if (!uniq[key]) {
+                uniq[key] = 1
                 return true
             }
             return false
