@@ -2663,7 +2663,7 @@
                         var index = getVMIndex(a, this, i)
                         var remove = this._splice(index, 1)[0]
                         array._splice(i, 0, remove)
-                        notifySubscribers(this, "move", i, index)
+                        notifySubscribers(this, "move", index, i)
                     }
                 }
                 if (sorted) {
@@ -2793,13 +2793,13 @@
                     avalon.clearChild(parent)
                     break
                 case "move":
-                    var t = tmodels.splice(el, 1)
+                    var t = tmodels.splice(pos, 1)
                     if (t) {
-                        tmodels.splice(pos, 0, t[0])
+                        tmodels.splice(el, 0, t[0])
                         var vRemove = t[0].$view
                         var group = data.group
-                        removeView(vRemove, parent, group, el)
-                        var node = parent.childNodes[group * pos]
+                        removeView(vRemove, parent, group, pos, 1)
+                        var node = parent.childNodes[group * el]
                         parent.insertBefore(vRemove, node)
                     }
                     break
