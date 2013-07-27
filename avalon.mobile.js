@@ -1960,12 +1960,12 @@
                 if (optsName) {
                     for (var i = 0, vm; vm = vmodels[i++]; ) {
                         if (vm.hasOwnProperty(optsName)) {
-                            opts = vm[optsName]
+                            opts = vm.$model[optsName]
                             break
                         }
                     }
                 }
-                avalon.ui[uiName](elem, id, vmodels, opts)
+                avalon.ui[uiName](elem, id, vmodels, opts || {})
                 elem[id + "vmodels"] = void 0
             } else {
                 return false;
@@ -2381,7 +2381,8 @@
                         var tview = data.vTemplate.cloneNode(true)
                         tmodel.$view = tview
                         tmodels.splice(ii, 0, tmodel)
-                        scanNodes(tview, [tmodel, arr[i]].concat(vmodels));
+                        var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
+                        scanNodes(tview, base.concat(vmodels))
                         if (typeof data.group !== "number") {
                             data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
                         }
