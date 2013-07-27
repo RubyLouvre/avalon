@@ -9,9 +9,9 @@ define(["avalon"], function(avalon) {
         var title = element.title,
                 html = element.innerHTML;
         var fragment = document.createDocumentFragment();
-        element.title = "";
+     
         //处理配置
-        var options = avalon.mix({}, defaults, $element.data());
+        var options = avalon.mix({}, defaults, opts, $element.data());
 
         //处理radio, checkbox
         var isRadio = element.type === "radio";
@@ -59,7 +59,9 @@ define(["avalon"], function(avalon) {
             fragment.appendChild(span);
         }
         //如果指定了icon， icon也占用一个span
-        var iconClass = options.text === false ? "ui-button-icon-only" : typeof options.secondary === "string" ? "ui-button-text-icons" : typeof options.primary === "string" ? "ui-button-text-icon-primary" : ""
+        var iconClass = options.text === false ? "ui-button-icon-only" :
+                typeof options.secondary === "string" ? "ui-button-text-icons" : 
+                typeof options.primary === "string" ? "ui-button-text-icon-primary" : ""
         if (options.text === false) {
             element.title = title || html;
         }
@@ -119,6 +121,7 @@ define(["avalon"], function(avalon) {
             }
             element.setAttribute("ms-hover", "ui-state-hover");
             element.setAttribute("ms-class-ui-state-disabled", "disabled");
+           //   element.setAttribute("ms-active-"+activeClass , "disabled");
             if (isCheckbox) {
                 element.setAttribute("ms-class-ui-state-active", "checked");
                 checkbox.setAttribute("ms-checked", "checked");
@@ -130,7 +133,7 @@ define(["avalon"], function(avalon) {
             if (toggleButton) {
                 avalon.scan(checkbox, model);
             }
-            avalon.scan(element, model);
+            avalon.scan(element, [model].concat(vmodels));
         });
         return model
     };
@@ -147,6 +150,11 @@ define(["avalon"], function(avalon) {
     };
     return avalon
 })
-
+/**
+ data-primary="ui-icon-gear" 用于指定左边的ICON
+ data-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
+ * 
+ * 
+ */
         
 //X-tag和Web组件帮你提速应用开发 http://mozilla.com.cn/post/51451/
