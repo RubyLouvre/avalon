@@ -3,8 +3,8 @@ define(["avalon"], function(avalon) {
         active: 0, //默认打开第几个面板
         event: "click", //打开面板的事件，移过(mouseover)还是点击(click)
         collapsible: false,
-        bottom: false,//按钮位于上方还是上方
-        removable: false,//按钮的左上角是否出现X，用于移除按钮与对应面板
+        bottom: false, //按钮位于上方还是上方
+        removable: false, //按钮的左上角是否出现X，用于移除按钮与对应面板
         activate: avalon.noop// 切换面板后触发的回调
     };
     avalon.ui.tabs = function(element, id, vmodels, opts) {
@@ -30,14 +30,16 @@ define(["avalon"], function(avalon) {
         }
         //3 设置动态模板
         var tablist = '<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"' +
-                ' ms-class="{{bottom? \'ui-corner-bottom\' : \'ui-corner-all\'}}" ms-each-tab="tabs">' +
+                ' ms-class-0="ui-corner-bottom:bottom" ms-class-1="ui-corner-all:!bottom" ms-each-tab="tabs">' +
                 '<li class="ui-state-default" ' +
-                ' ms-class-1="{{bottom? \'ui-corner-bottom\' : \'ui-corner-top\' }}"' +
-                ' ms-class-2="ui-tabs-active ui-state-active: active == $index"' +
+                ' ms-class-0="ui-corner-top:!bottom"' +
+                ' ms-class-1="ui-corner-bottom:bottom"' +
+                ' ms-class-2="ui-tabs-active:active == $index"' +
+                ' ms-class-3="ui-state-active:active == $index"' +
                 ' ms-' + options.event + '="activate"' +
                 ' ms-hover="ui-state-hover"' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
                 ' >{{tab|html}}<span class="ui-icon ui-icon-close" style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"  ms-click="remove"></span></li></ul>';
- 
+
         var panels = '<div ms-each-panel="tabpanels" ><div class="ui-tabs-panel ui-widget-content"' +
                 ' ms-class="ui-corner-bottom:!bottom"' +
                 ' ms-visible="active == $index" >{{panel|html}}</div></div>';
@@ -85,23 +87,23 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /*
-<div ms-ui="tabs">
-  <ul>
-    <li>xxxxxxxxxxxx</li>
-    <li>yyyyyyyyyyyyy</li>
-    <li>zzzzzzzzzzzz</li>
-  </ul>
-  <div>
-     xxx 第1个面板
-  </div>
-  <div>
-   xxx 第2个面板
-  </div>
-  <div>
-    xxx 第3个面板
-  </div>
-</div>
-
-
-
+ <div ms-ui="tabs">
+ <ul>
+ <li>xxxxxxxxxxxx</li>
+ <li>yyyyyyyyyyyyy</li>
+ <li>zzzzzzzzzzzz</li>
+ </ul>
+ <div>
+ xxx 第1个面板
+ </div>
+ <div>
+ xxx 第2个面板
+ </div>
+ <div>
+ xxx 第3个面板
+ </div>
+ </div>
+ 
+ 
+ 
  */

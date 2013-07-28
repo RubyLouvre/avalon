@@ -8,6 +8,7 @@ define(["avalon"], function(avalon) {
                 model, el, checkbox;
         var title = element.title,
                 html = element.innerHTML;
+        element.title = "";
         var fragment = document.createDocumentFragment();
      
         //处理配置
@@ -30,7 +31,7 @@ define(["avalon"], function(avalon) {
             label.innerHTML = options.label || checkbox.value;
             checkbox.parentNode.insertBefore(label, checkbox.nextSibling);
             $element.addClass("ui-helper-hidden-accessible");
-            element = label;
+            element = label;//  偷天换日
             $element = avalon(element);
         }
         while (el = element.firstChild) {
@@ -38,14 +39,12 @@ define(["avalon"], function(avalon) {
         }
         $element.addClass("ui-button ui-widget ui-state-default");
 
-        element.title = title;
-
         //如果使用了buttonset
-        if (options.cornerClass !== false) {
-            $element.addClass("ui-corner-all");
-        }
+     
         if (typeof options.cornerClass === "string") {
             $element.addClass(options.cornerClass);
+        }else  if (options.cornerClass !== false) {
+            $element.addClass("ui-corner-all");
         }
 
         //创建按钮的内部，将它原来的内部放到一个span.ui-button-text
@@ -63,7 +62,7 @@ define(["avalon"], function(avalon) {
                 typeof options.secondary === "string" ? "ui-button-text-icons" : 
                 typeof options.primary === "string" ? "ui-button-text-icon-primary" : ""
         if (options.text === false) {
-            element.title = title || html;
+            element.title = title || html ;
         }
         if (iconClass) {
             $element.addClass(iconClass);
@@ -141,6 +140,14 @@ define(["avalon"], function(avalon) {
 /**
  data-primary="ui-icon-gear" 用于指定左边的ICON
  data-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
+
+ data-corner-class="false" 不添加ui-corner-all圆角类名
+ data-corner-class="conrer" 添加你指定的这个conrer圆角类名
+ 不写data-corner-class 添加ui-corner-all圆角类名
+
+ button, a, span等标签，取其innerHTML作为UI内容，否则需要取其title
+
+ data-text = false 决定其内部是否只显示图标
  * 
  * 
  */

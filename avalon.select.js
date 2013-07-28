@@ -1,4 +1,4 @@
-define(["avalon"], function(avalon) {
+define(["avalon", "css!avalon.select.css"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         minWidth: 225,
@@ -12,43 +12,20 @@ define(["avalon"], function(avalon) {
         onOpen: avalon.noop,
         onClose: avalon.noop
     };
-    var domParser = document.createElement("div");
 
     avalon.ui["select"] = function(element, id, vmodels, opts) {
         var $element = avalon(element);
-        var options = avalon.mix({}, defaults);
-        if (typeof opts === "object") {
-            for (var i in opts) {
-                if (i === "$id")
-                    continue;
-                options[i] = opts[i];
-            }
-        }
-        avalon.mix(options, $element.data());
-        domParser.innerHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all" aria-haspopup="true" >' +
+        var options = avalon.mix({}, defaults, opts, $element.data());
+        var buttonHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all" aria-haspopup="true" >' +
                 '<span class="ui-icon ui-icon-triangle-2-n-s"></span><span>{{caption}}</span></button>';
-        var button = domParser.removeChild(domParser.firstChild);
+        var button = avalon.parseHTML(buttonHTML).firstChild
         button.style.minWidth = options.minWidth + "px";
         button.style.width = Math.max(options.minWidth, element.offsetWidth) + "px";
         button.title = element.title;
         $element.addClass("ui-helper-hidden-accessible");
 
-        domParser.innerHTML = '<div class="ui-multiselect-menu ui-widget ui-widget-content ui-corner-all"'
-                + ' ms-visible="toggle" tabindex="-1">'
-                + '<div class="ui-widget-header ui-corner-all ui-multiselect-header ui-helper-clearfix">'
-                + '<ul class="ui-helper-reset">'
-                + '<span ms-if="!multiple">' + options.caption + '</span>'
-                + '<li ms-if="multiple"><a class="ui-multiselect-all"  href="return false" ms-click="checkAll"><span class="ui-icon ui-icon-check"></span><span>{{checkAllText}}</span></a></li>'
-                + '<li ms-if="multiple"><a class="ui-multiselect-none" href="return false" ms-click="unCheckAll"><span class="ui-icon ui-icon-closethick"></span><span>{{unCheckAllText}}</span></a></li>'
-                + '<li class="ui-multiselect-close"><a href="#" class="ui-multiselect-close" ms-click="closeMenu"><span class="ui-icon ui-icon-circle-close"></span></a></li>'
-                + '</ul></div>'
-                + '<ul class="ui-multiselect-checkboxes ui-helper-reset" ms-css-height="height" ms-each-el="list" >'
-                + '<li ms-class-ui-multiselect-optgroup-label="!el.isOption" >'
-                + '<a href="#" ms-if="!el.isOption" >{{el.text}}</a>'
-                + '<label for="rubylouvre" ms-if="el.isOption" ms-hover="ui-state-hover" ms-class-ui-state-disabled="el.disabled" ms-click="changeState" class="ui-corner-all">'
-                + '<input ms-visible="multiple" ms-disabled="el.disabled"    ms-checked="el.selected" type="checkbox"><span>{{el.text}}</span></label></li>'
-                + '</ul></div>';
-        var list = [], index = 0, els = [];
+
+        var list = [], index = 0, els = [], model
         function getOptions(i, el) {
             if (el.tagName === "OPTION") {
                 list.push({
@@ -73,8 +50,22 @@ define(["avalon"], function(avalon) {
         }
 
         avalon.each(element.childNodes, getOptions);
-
-        var menu = domParser.removeChild(domParser.firstChild);
+        var menuHTML = '<div class="ui-multiselect-menu ui-widget ui-widget-content ui-corner-all"'
+                + ' ms-visible="toggle" tabindex="-1">'
+                + '<div class="ui-widget-header ui-corner-all ui-multiselect-header ui-helper-clearfix">'
+                + '<ul class="ui-helper-reset">'
+                + '<span ms-if="!multiple">' + options.caption + '</span>'
+                + '<li ms-if="multiple"><a class="ui-multiselect-all"  href="return false" ms-click="checkAll"><span class="ui-icon ui-icon-check"></span><span>{{checkAllText}}</span></a></li>'
+                + '<li ms-if="multiple"><a class="ui-multiselect-none" href="return false" ms-click="unCheckAll"><span class="ui-icon ui-icon-closethick"></span><span>{{unCheckAllText}}</span></a></li>'
+                + '<li class="ui-multiselect-close"><a href="#" class="ui-multiselect-close" ms-click="closeMenu"><span class="ui-icon ui-icon-circle-close"></span></a></li>'
+                + '</ul></div>'
+                + '<ul class="ui-multiselect-checkboxes ui-helper-reset" ms-css-height="height" ms-each-el="list" >'
+                + '<li ms-class="ui-multiselect-optgroup-label:!el.isOption" >'
+                + '<a href="#" ms-if="!el.isOption" >{{el.text}}</a>'
+                + '<label for="rubylouvre" ms-if="el.isOption" ms-hover="ui-state-hover" ms-class="ui-state-disabled:el.disabled" ms-click="changeState" class="ui-corner-all">'
+                + '<input ms-visible="multiple" ms-disabled="el.disabled"    ms-checked="el.selected" type="checkbox"><span>{{el.text}}</span></label></li>'
+                + '</ul></div>';
+        var menu = avalon.parseHTML(menuHTML).firstChild
         menu.style.width = button.style.width;
         var curCaption = options.caption;
         var canClose = false;
@@ -82,9 +73,7 @@ define(["avalon"], function(avalon) {
         avalon.bind(button, "mouseenter", function(e) {
             canClose = false;
         });
-        avalon.bind(menu, "mouseenter", function(e) {
-            canClose = false;
-        });
+
         avalon.bind(menu, "mouseleave", function(e) {
             canClose = true;
         });
@@ -110,7 +99,7 @@ define(["avalon"], function(avalon) {
             vm.caption = getCaption();
             vm.toggleMenu = function() {
                 vm.toggle = !vm.toggle;
-            };
+            }
             vm.$watch("toggle", function(v) {
                 if (v) {
                     var offset = avalon(button).offset();
@@ -160,10 +149,14 @@ define(["avalon"], function(avalon) {
             };
         });
         avalon.ready(function() {
-            element.parentNode.insertBefore(button, element.nextSibling);
-            avalon.scan(button, model);
-            document.body.appendChild(menu);
-            avalon.scan(menu, model);
+            avalon.nextTick(function() {
+                element.parentNode.insertBefore(button, element.nextSibling);
+                var modes = [model].concat(vmodels)
+                avalon.scan(button, modes);
+                document.body.appendChild(menu);
+                avalon.scan(menu, modes);
+            })
+
         });
 
         return model;
