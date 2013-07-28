@@ -75,9 +75,9 @@
     <body>
         <fieldset ms-controller="simple">
             <legend>例子</legend>
-            <p>First name: <input ms-model="firstName" /></p>
-            <p>Last name: <input ms-model="lastName"  /></p>
-            <p>Hello,    <input ms-model="fullName"></p>
+            <p>First name: <input ms-duplex="firstName" /></p>
+            <p>Last name: <input ms-duplex="lastName"  /></p>
+            <p>Hello,    <input ms-duplex="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
 
         </fieldset>
@@ -85,7 +85,7 @@
         <fieldset ms-controller="array">
             <legend>例子</legend>
             <ul ms-each-el="array">
-                <li ms-click="del">数组的第{{$index+1}}个元素为{{el}}</li>
+                <li >数组的第{{$index+1}}个元素为{{el}}</li>
             </ul>
             <p>对数组进行push操作，并回车<input ms-keypress="push"></p>
             <p>对数组进行unshift操作，并回车<input ms-keypress="unshift"></p>
@@ -101,14 +101,14 @@
         </fieldset>
         <fieldset ms-controller="function">
             <legend>例子</legend>
-            <input ms-model="nick" />
+            <input ms-duplex="nick" />
             <p>{{qq()}}</p>
         </fieldset>
         <fieldset ms-controller="property">
             <legend>例子</legend>
-            <input ms-model="nick" />
-            <input ms-model="sex" />
-            <input ms-model="country" />
+            <input ms-duplex="nick" />
+            <input ms-duplex="sex" />
+            <input ms-duplex="country" />
             <p>{{nick}}   {{sex}}  {{country}}</p>
         </fieldset>
         <fieldset ms-controller="object">

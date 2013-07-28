@@ -1,4 +1,4 @@
-define(["avalon"], function(avalon) {
+define(["avalon", "avalon.button"], function(avalon) {
     var defaults = {
         toggle: true,
         width: 300,
@@ -10,7 +10,8 @@ define(["avalon"], function(avalon) {
         modal: false,
         autoOpen: true
     };
-    var positionfixed = true;
+    //判定是否支持css position fixed
+    var supportFixed = true;
     new function() {
         var test = document.createElement('div'),
                 control = test.cloneNode(false),
@@ -24,7 +25,7 @@ define(["avalon"], function(avalon) {
         test.style.cssText = 'position:fixed;top:42px';
         root.appendChild(test);
         root.appendChild(control);
-        positionfixed = test.offsetTop !== control.offsetTop;
+        supportFixed = test.offsetTop !== control.offsetTop;
         root.removeChild(test);
         root.removeChild(control);
         root.style.cssText = oldCssText;
@@ -32,17 +33,29 @@ define(["avalon"], function(avalon) {
             document.documentElement.removeChild(root);
         }
     };
-    if (window.Node && Node.prototype && !Node.prototype.contains) {
-        Node.prototype.contains = function(arg) {
-            return !!(this.compareDocumentPosition(arg) & 16);
-        };
+    //判定是否支持css3 transform
+    var transforms = {//IE9+ firefox3.5+ chrome4+ safari3.1+ opera10.5+
+        "transform": "transform",
+        "-moz-transform": "mozTransform",
+        "-webkit-transform": "webkitTransform",
+        "-ms-transform": "msTransform"
     }
-    var domParser = document.createElement("div");
-    domParser.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
-    var overlay = domParser.firstChild;//全部dialog共用
+    var cssText = "position:fixed; top:50%;left:50%;"
+    var supportTransform = false;
+    for (var i in transforms) {
+        if (transforms[i] in overlay.style) {
+            supportTransform = true;
+            cssText += i + ":translateX(-50%) translateY(-50%);"
+            break;
+        }
+    }
+    //遮罩层
+    var overlay = document.createElement("div");
+    overlay.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
+    overlay = overlay.firstChild;//全部dialog共用
     avalon.ui.dialog = function(element, id, vmodels, opts) {
         var $element = avalon(element);
-        var options = avalon.mix({}, defaults, $element.data());
+        var options = avalon.mix({}, defaults, opts, $element.data());
         options.toggle = !!options.autoOpen;
         if (!options.title) {
             options.title = element.title || "&nbsp;";
@@ -50,29 +63,18 @@ define(["avalon"], function(avalon) {
         if (typeof opts === "function") {
             options.close = opts;
         }
-        if (typeof opts === "object") {
-            for (var i in opts) {
-                if (i === "$id")
-                    continue;
-                options[i] = opts[i];
-            }
-        }
-
         var model;
-        domParser.innerHTML = '<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front" tabindex="-1" style="position: absolute;" ' +
+        var dialog = avalon.parseHTML('<div class="aaaa ui-dialog ui-widget ui-widget-content ui-corner-all ui-front" tabindex="-1" style="position: absolute;" ' + //style="position: absolute;" 
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
                 ' ms-css-height="height"' +
                 '><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" ms-draggable="drag" data-beforestart="beforestart" data-movable="false">' +
-                '<span class="ui-dialog-title" ms-html="title"></span>' +
+                '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
-                '</div></div>';
-        var dialog = domParser.firstChild;
-        if (options.nodeNodeType === 1) {
-            var parent = options.parent;
-        } else {
-            var parent = options.parent === "parent" ? element.parentNode : document.body;
-        }
+                '</div></div>').firstChild;
+
+        var parentNode = options.parent === "parent" ? element.parentNode : document.body;
+
         var full = false;
         $element.addClass("ui-dialog-content ui-widget-content");
         if (options.height === "auto") {
@@ -82,12 +84,14 @@ define(["avalon"], function(avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title");
+        element.removeAttribute("ms-ui");//防止死循环
         element.parentNode.removeChild(element);
         model = avalon.define(id, function(vm) {
             vm.toggle = options.toggle;
             vm.title = options.title;
             vm.width = options.width;
             vm.height = options.height;
+            vm.cssCenter = true;
             vm.close = function() {
                 vm.toggle = false;
             };
@@ -133,40 +137,52 @@ define(["avalon"], function(avalon) {
             checkFocus();
             avalon.nextTick(checkFocus);
         }
+
         function resetCenter() {
             if (full) {
-                if (positionfixed) {
-                    dialog.style.position = "fixed";
-                    var l = (avalon(window).width() - dialog.offsetWidth) / 2;
-                    var t = (avalon(window).height() - dialog.offsetHeight) / 2;
+                if (supportFixed) {
+                    if (supportTransform) {
+                        dialog.style.cssText = cssText
+                    } else {
+                        dialog.style.position = "fixed";
+                        var l = (avalon(window).width() - dialog.offsetWidth) / 2;
+                        var t = (avalon(window).height() - dialog.offsetHeight) / 2;
+                        dialog.style.left = l + "px";
+                        dialog.style.top = t + "px";
+                    }
                 } else {
                     dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"');
                     dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"');
-                    return;
                 }
             } else {
-                l = (avalon(parent).width() - dialog.offsetWidth) / 2;
-                t = (avalon(parent).height() - dialog.offsetHeight) / 2;
+                l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
+                t = (avalon(parentNode).height() - dialog.offsetHeight) / 2;
+                dialog.style.left = l + "px";
+                dialog.style.top = t + "px";
             }
-            dialog.style.left = l + "px";
-            dialog.style.top = t + "px";
+
             keepFocus();
             if (options.modal) {
-                parent.insertBefore(overlay, dialog);
+                parentNode.insertBefore(overlay, dialog);
                 overlay.style.display = "block";
                 avalon.Array.ensure(overlayInstances, options)
             }
         }
+
         avalon.ready(function() {
-            parent.appendChild(dialog);
+            parentNode.appendChild(dialog);
             dialog.appendChild(element);
             full = /body|html/i.test(dialog.offsetParent.tagName);
             if (full) {
-                dialog.firstChild.setAttribute("data-containment", "window");
+                dialog.firstChild.setAttribute("data-containment", "window");//这是给ms-draggable组件用的
             }
-            avalon.scan(dialog, model);
+            avalon.scan(dialog, [model].concat(vmodels));
+
             if (options.autoOpen) {
                 avalon.nextTick(resetCenter);
+            }
+            if (full && supportTransform) {
+                return
             }
             avalon(document.body).bind("scroll", function() {
                 options.autoOpen && resetCenter();

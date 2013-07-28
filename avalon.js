@@ -404,6 +404,11 @@
             every: iterator('', 'if(!_)return false', 'return true')
         })
     }
+    if (!root.contains) {//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+        Node.prototype.contains = function(arg) {
+            return !!(this.compareDocumentPosition(arg) & 16);
+        };
+    }
     /*********************************************************************
      *                      Configure                                 *
      **********************************************************************/
@@ -2356,6 +2361,14 @@
             }
         }
     })
+        if (typeof DOC.createElement("div").hidden === "boolean") {
+        bindingHandlers.visible = function(data, vmodels) {
+            var elem = data.element
+            watchView(data.value, vmodels, data, function(val) {
+                elem.hidden = !val
+            })
+        }
+    }
     //============================= boolean preperty binding =======================
     //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {
