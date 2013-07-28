@@ -30,17 +30,16 @@ define(["avalon"], function(avalon) {
         }
         //3 设置动态模板
         var tablist = '<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"' +
-                ' ms-class-ui-corner-all="!bottom"  ms-class-ui-corner-bottom="bottom" ms-each-tab="tabs">' +
+                ' ms-class="{{bottom? \'ui-corner-bottom\' : \'ui-corner-all\'}}" ms-each-tab="tabs">' +
                 '<li class="ui-state-default" ' +
-                ' ms-class-ui-corner-top="!bottom"' +
-                ' ms-class-ui-corner-bottom="bottom"' +
-                ' ms-class-ui-tabs-active="active == $index"' +
-                ' ms-class-ui-state-active="active == $index"' +
+                ' ms-class-1="{{bottom? \'ui-corner-bottom\' : \'ui-corner-top\' }}"' +
+                ' ms-class-2="ui-tabs-active ui-state-active: active == $index"' +
                 ' ms-' + options.event + '="activate"' +
                 ' ms-hover="ui-state-hover"' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
                 ' >{{tab|html}}<span class="ui-icon ui-icon-close" style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"  ms-click="remove"></span></li></ul>';
+ 
         var panels = '<div ms-each-panel="tabpanels" ><div class="ui-tabs-panel ui-widget-content"' +
-                ' ms-class-ui-corner-bottom="!bottom"' +
+                ' ms-class="ui-corner-bottom:!bottom"' +
                 ' ms-visible="active == $index" >{{panel|html}}</div></div>';
         //4 构建组建的ViewModel
         var vmodel = avalon.define(id, function(vm) {
@@ -76,8 +75,8 @@ define(["avalon"], function(avalon) {
                 avalon.ui.fixUiHelperClearfix = true
             }
             element.innerHTML = options.bottom ? panels + tablist : tablist + panels;
-            element.setAttribute("ms-class-ui-tabs-collapsible", "collapsible");
-            element.setAttribute("ms-class-tabs-bottom", "bottom");
+            element.setAttribute("ms-class-1", "ui-tabs-collapsible:collapsible");
+            element.setAttribute("ms-class-2", "tabs-bottom:bottom");
             avalon.scan(element, [vmodel].concat(vmodels));
         });
         return vmodel;

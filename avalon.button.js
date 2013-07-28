@@ -41,7 +41,7 @@ define(["avalon"], function(avalon) {
         element.title = title;
 
         //如果使用了buttonset
-        if (!options.cornerClass) {
+        if (options.cornerClass !== false) {
             $element.addClass("ui-corner-all");
         }
         if (typeof options.cornerClass === "string") {
@@ -81,18 +81,6 @@ define(["avalon"], function(avalon) {
             fragment.appendChild(span);
         }
 
-        $element.bind("mousedown", function(e) {
-            if (model.disabled) {
-                return false;
-            }
-            $element.addClass(activeClass);
-        });
-        $element.bind("mouseup", function(e) {
-            if (model.disabled) {
-                return false;
-            }
-            $element.removeClass(activeClass);
-        });
         if (isCheckbox) {
             $element.bind("click", function() {
                 model.checked = !model.checked
@@ -120,14 +108,14 @@ define(["avalon"], function(avalon) {
                 element.appendChild(fragment);
             }
             element.setAttribute("ms-hover", "ui-state-hover");
-            element.setAttribute("ms-class-ui-state-disabled", "disabled");
-           //   element.setAttribute("ms-active-"+activeClass , "disabled");
+            element.setAttribute("ms-class-0", "ui-state-disabled:disabled");
+            element.setAttribute("ms-active" , activeClass+ ":!disabled");
             if (isCheckbox) {
-                element.setAttribute("ms-class-ui-state-active", "checked");
+                element.setAttribute("ms-class-1", "ui-state-active:checked");
                 checkbox.setAttribute("ms-checked", "checked");
             }
             if (isRadio) {
-                element.setAttribute("ms-class-ui-state-active", "radioActived == " + radioIndex);
+                element.setAttribute("ms-class-2", "ui-state-active:radioActived == " + radioIndex);
                 element.setAttribute("ms-checked", "radioActived == " + radioIndex);
             }
             if (toggleButton) {

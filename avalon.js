@@ -1802,26 +1802,21 @@
         var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
-                var isBinding = false
                 if (attr.name.indexOf(prefix) !== -1) {
                     //如果是以指定前缀命名的
-                    var type = attr.name.replace(prefix, "")
-                    if (type.indexOf("-") > 0) { //如果还指定了参数
-                        var args = type.split("-")
-                        type = args.shift()
+                    var array = attr.name.split("-")
+                    var type = array[1]
+                    var args = array.slice(2)
+                    if (typeof bindingHandlers[type] === "function") {
+                        bindings.push({
+                            type: type,
+                            args: args || [],
+                            element: el,
+                            remove: true,
+                            node: attr,
+                            value: attr.nodeValue
+                        })
                     }
-                    isBinding = typeof bindingHandlers[type] === "function"
-                }
-
-                if (isBinding) {
-                    bindings.push({
-                        type: type,
-                        args: args || [],
-                        element: el,
-                        remove: true,
-                        node: attr,
-                        value: attr.nodeValue
-                    })
                 }
             }
         }
@@ -1933,10 +1928,8 @@
         })
     }
     //取得求值函数及其传参
-    var rprops = /(^\w[\w.]*\w$|^\w+$)/ //"aaa.eee.eee" "a" "eer"
 
     function parseExpr(code, scopes, data, setget) {
-        // if (scopes.length == 1 && rprops.test(code)) {
         if (setget) {
             var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
@@ -1945,7 +1938,8 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = ""
+                    prefix = "",
+                    originCode = code
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, n = scopes.length; i < n; i++) {
@@ -1983,9 +1977,13 @@
                 args.push(avalon.filters)
                 delete data.filters //释放内存
             } else {
-                code = "\nreturn " + code
+                code = "\nreturn " + code + ";"//IE全家 Function("return ")出错，需要Function("return ;")
             }
-            fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            try {
+                fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            } catch (e) {
+                log("转换[ " + originCode + " ]时失败")
+            }
         }
         try {
             fn.apply(fn, args)
@@ -2236,7 +2234,7 @@
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/)
+            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/), ret = false
             if (array && array[1] && array[2]) {
                 var fn = array[2]
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
@@ -2250,10 +2248,10 @@
                     scope.$watch(data.args[0], function(neo, old) {
                         fn.call(data.element, neo, old)
                     })
+                    ret = true
                 }
-            } else {
-                return false
             }
+            return ret
         },
         "html": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
@@ -2271,6 +2269,7 @@
                 }
             })
         },
+        //https://github.com/RubyLouvre/avalon/issues/27
         "with": function(data, vmodels) {
             bindingHandlers.each(data, vmodels, true)
         },
@@ -2306,46 +2305,46 @@
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     "class,hover,active".replace(rword, function(method) {
         bindingHandlers[method] = function(data, vmodels) {
-            var name = data.node.name;//注意ms-class="aaa"这个元素上方存在循环绑定
-            var oldStyle = name.replace(prefix + method, "").split("-").join("-")
+            var oldStyle = data.args.join("-")
             var elem = data.element
             if (!oldStyle || isFinite(oldStyle)) {
                 var text = data.value, toggle
-                var value = text.replace(rexprg, function(a) {
+                var noExpr = text.replace(rexprg, function(a) {
                     return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
                 })
-                var index = value.indexOf(":")//取得第一个冒号的位置
-                if (index === -1) {
-                    var left = text, right
-                } else {
-                    left = text.slice(0, index)
-                    right = text.slice(index + 1)
-                    var array = parseExpr(right, vmodels, {})
+                var colonIndex = noExpr.indexOf(":")//取得第一个冒号的位置
+                if (colonIndex === -1) {// 比如 ms-class="aaa bbb ccc" 的情况
+                    var className = text, rightExpr
+                } else {// 比如 ms-class-1="ui-state-active:checked" 的情况 
+                    className = text.slice(0, colonIndex)
+                    rightExpr = text.slice(colonIndex + 1)
+                    var array = parseExpr(rightExpr, vmodels, {})
                     var callback = array[0], args = array[1]
                 }
-                var hasExpr = rexpr.test(left)
-                var lastArgs = hasExpr ? scanExpr(left) : null;
+                var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况
+
                 watchView("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
+                    className = hasExpr ? cls : className
                     if (method === "class") {
-                        cls = hasExpr ? cls : left
-                        avalon(elem).toggleClass(cls, toggle)
+                        avalon(elem).toggleClass(className, toggle)
                     }
-                }, lastArgs)
+                }, (hasExpr ? scanExpr(className) : null))
+
                 if (method === "hover" || method === "active") {
                     if (method === "hover") {//在移出移入时切换类名
                         var event1 = "mouseenter"
                         var event2 = "mouseleave"
                     } else {//在聚焦失焦中切换类名
                         elem.tabIndex = elem.tabIndex || -1
-                        event1 = "focus", event2 = "blur"
+                        event1 = "mousedown", event2 = "mouseup"
                     }
                     var $elem = avalon(data.element)
                     $elem.bind(event1, function() {
-                        toggle && $elem.addClass(data.value)
+                        toggle && $elem.addClass(className)
                     })
                     $elem.bind(event2, function() {
-                        toggle && $elem.removeClass(data.value)
+                        toggle && $elem.removeClass(className)
                     })
                 }
 

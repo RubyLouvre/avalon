@@ -282,7 +282,7 @@
         }
         return this
     }
-    var openTag, closeTag, rexpr, rbind, rregexp = rregexp = /[-.*+?^${}()|[\]\/\\]/g
+    var openTag, closeTag, rexpr, rexprg, rbind, rregexp = rregexp = /[-.*+?^${}()|[\]\/\\]/g
 
     function escapeRegExp(target) {
         //http://stevenlevithan.com/regex/xregexp/
@@ -319,6 +319,7 @@
                 var o = escapeRegExp(openTag),
                         c = escapeRegExp(closeTag)
                 rexpr = new RegExp(o + "(.*?)" + c)
+                rexprg = new RegExp(o + "(.*?)" + c, "g")
                 rbind = new RegExp(o + ".*?" + c + "|\\sms-")
             }
         }
@@ -1462,30 +1463,25 @@
         return tokens
     }
 
-
     function scanAttr(el, vmodels) {
         var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
-                var isBinding = false
                 if (attr.name.indexOf(prefix) !== -1) {
                     //如果是以指定前缀命名的
-                    var type = attr.name.replace(prefix, "")
-                    if (type.indexOf("-") > 0) { //如果还指定了参数
-                        var args = type.split("-")
-                        type = args.shift()
+                    var array = attr.name.split("-")
+                    var type = array[1]
+                    var args = array.slice(2)
+                    if (typeof bindingHandlers[type] === "function") {
+                        bindings.push({
+                            type: type,
+                            args: args || [],
+                            element: el,
+                            remove: true,
+                            node: attr,
+                            value: attr.nodeValue
+                        })
                     }
-                    isBinding = typeof bindingHandlers[type] === "function"
-                }
-                if (isBinding) {
-                    bindings.push({
-                        type: type,
-                        args: args || [],
-                        element: el,
-                        remove: true,
-                        node: attr,
-                        value: attr.nodeValue
-                    })
                 }
             }
         }
@@ -1596,10 +1592,8 @@
         })
     }
     //取得求值函数及其传参
-    var rprops = /(^\w[\w.]*\w$|^\w+$)/ //"aaa.eee.eee" "a" "eer"
 
     function parseExpr(code, scopes, data, getset) {
-        // if (scopes.length == 1 && rprops.test(code)) {
         if (getset) {
             var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
@@ -1647,7 +1641,7 @@
                 args.push(avalon.filters)
                 delete data.filters //释放内存
             } else {
-                code = "\nreturn " + code
+                code = "\nreturn " + code + ";"//IE全家 Function("return ")出错，需要Function("return ;")
             }
             fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
         }
@@ -1774,7 +1768,6 @@
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
         "attr": function(data, vmodels) {
-            data.remove = false
             watchView(data.value, vmodels, data, function(val, elem) {
                 var attrName = data.args.join("-")
                 var toRemove = (val === false) || (val === null) || (val === void 0)
@@ -1833,26 +1826,31 @@
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a href="{{url.hostname}}/{{url.pathname}}.html">
         "href": function(data, vmodels) {
-            //如果没有则说明是使用ng-href的形式
-            var text = data.value.trim()
-            var simple = true
-            var name = data.type
-            if (rexpr.test(text) && RegExp.rightContext == "") {
-                simple = true
-                text = RegExp.$1
+            var text = data.value.trim(), simple = true, method = data.type
+            if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
+                simple = false
+                if (rexpr.test(text) && RegExp.rightContext === "") {
+                    simple = true
+                    text = RegExp.$1
+                }
             }
             watchView(text, vmodels, data, function(val, elem) {
-                if (name === "css") {
+                if (method === "css") {
                     avalon(elem).css(data.args.join("-"), val)
-                } else if (name == "include" && val) {
+                } else if (method === "include" && val) {
                     if (data.args + "" === "src") {
-                        var ajax = new XMLHttpRequest
-                        ajax.onload = function() {
-                            avalon.innerHTML(elem, ajax.responseText)
-                            avalon.scan(elem, vmodels)
+                        var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+                        ajax.onreadystatechange = function() {
+                            if (ajax.readyState === 4) {
+                                var s = ajax.status
+                                if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                                    avalon.innerHTML(elem, ajax.responseText)
+                                    avalon.scan(elem, vmodels)
+                                }
+                            }
                         }
-                        ajax.open("GET", val, true);
-                        ajax.send(null);
+                        ajax.open("GET", val, true)
+                        ajax.send(null)
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
@@ -1861,7 +1859,7 @@
                         })
                     }
                 } else {
-                    elem[name] = val
+                    elem[method] = val
                 }
             }, simple ? null : scanExpr(data.value))
         },
@@ -1874,58 +1872,25 @@
                 elem[propName] = !!val
             })
         },
-        //ms-bind-name="callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
+        //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var fn = data.value.trim()
-            for (var i = 0, scope; scope = vmodels[i++]; ) {
-                if (scope.hasOwnProperty(fn)) {
-                    fn = scope[fn]
-                    break
-                }
-            }
-            if (typeof fn === "function") {
-                fn.call(data.element)
-                scope.$watch(data.args[0], function(neo, old) {
-                    fn.call(data.element, neo, old)
-                })
-            }
-        },
-        //根据VM的属性值或表达式的值切换类名，ms-class-xxx="flag" 
-        //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-        "class": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
-                var cls = data.args.join("-")
-                if (typeof val === "function") {
-                    if (!elem.$vmodels) {
-                        elem.$vmodel = elem.$scope = vmodels[0]
-                        elem.$vmodels = vmodels
+            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/), ret = false
+            if (array && array[1] && array[2]) {
+                var fn = array[2]
+                for (var i = 0, scope; scope = vmodels[i++]; ) {
+                    if (scope.hasOwnProperty(fn)) {
+                        fn = scope[fn]
+                        break
                     }
-                    val = val.call(elem)
                 }
-                avalon(elem).toggleClass(cls, !!val)
-            })
-        },
-        //在移出移入时切换类名
-        "hover": function(data) {
-            var god = avalon(data.element)
-            god.bind("mouseenter", function() {
-                god.addClass(data.value)
-            })
-            god.bind("mouseleave", function() {
-                god.removeClass(data.value)
-            })
-        },
-        //在聚焦失焦中切换类名
-        "active": function(data) {
-            var elem = data.element
-            var god = avalon(elem)
-            elem.tabIndex = elem.tabIndex || -1
-            god.bind("focus", function() {
-                god.addClass(data.value)
-            })
-            god.bind("blur", function() {
-                god.removeClass(data.value)
-            })
+                if (typeof fn === "function") {
+                    fn.call(data.element)
+                    scope.$watch(data.args[0], function(neo, old) {
+                        fn.call(data.element, neo, old)
+                    })
+                }
+            }
+            return ret
         },
         "html": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
@@ -1972,8 +1937,63 @@
             }
         }
     }
-    //=========================boolean preperty binding ====================
+    //============================================================================
+    //根据VM的属性值或表达式的值切换类名，ms-class-xxx="flag" 
+    //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
+    "class,hover,active".replace(rword, function(method) {
+        bindingHandlers[method] = function(data, vmodels) {
+            var oldStyle = data.args.join("-")
+            var elem = data.element
+            if (!oldStyle || isFinite(oldStyle)) {
+                var text = data.value, toggle
+                var noExpr = text.replace(rexprg, function(a) {
+                    return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+                })
+                var colonIndex = noExpr.indexOf(":")//取得第一个冒号的位置
+                if (colonIndex === -1) {// 比如 ms-class="aaa bbb ccc" 的情况
+                    var className = text, rightExpr
+                } else {// 比如 ms-class-1="ui-state-active:checked" 的情况 
+                    className = text.slice(0, colonIndex)
+                    rightExpr = text.slice(colonIndex + 1)
+                    var array = parseExpr(rightExpr, vmodels, {})
+                    var callback = array[0], args = array[1]
+                }
+                var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况
 
+                watchView("", vmodels, data, function(cls) {
+                    toggle = callback ? !!callback.apply(elem, args) : true
+                    className = hasExpr ? cls : className
+                    if (method === "class") {
+                        avalon(elem).toggleClass(className, toggle)
+                    }
+                }, (hasExpr ? scanExpr(className) : null))
+
+                if (method === "hover" || method === "active") {
+                    if (method === "hover") {//在移出移入时切换类名
+                        var event1 = "mouseenter"
+                        var event2 = "mouseleave"
+                    } else {//在聚焦失焦中切换类名
+                        elem.tabIndex = elem.tabIndex || -1
+                        event1 = "mousedown", event2 = "mouseup"
+                    }
+                    var $elem = avalon(data.element)
+                    $elem.bind(event1, function() {
+                        toggle && $elem.addClass(className)
+                    })
+                    $elem.bind(event2, function() {
+                        toggle && $elem.removeClass(className)
+                    })
+                }
+
+            } else if (method === "class") {
+                log("ms-class-xxx='expr'已经不提倡使用，请改用新风格：https://github.com/RubyLouvre/avalon/issues/34")
+                watchView(data.value, vmodels, data, function(val, elem) {
+                    avalon(elem).toggleClass(oldStyle, !!val)
+                })
+            }
+        }
+    })
+    //=========================boolean preperty binding ====================
     //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.disabled
