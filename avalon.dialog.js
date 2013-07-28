@@ -33,6 +33,10 @@ define(["avalon", "avalon.button"], function(avalon) {
             document.documentElement.removeChild(root);
         }
     };
+    //遮罩层
+    var overlay = document.createElement("div");
+    overlay.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
+    overlay = overlay.firstChild;//全部dialog共用
     //判定是否支持css3 transform
     var transforms = {//IE9+ firefox3.5+ chrome4+ safari3.1+ opera10.5+
         "transform": "transform",
@@ -49,10 +53,7 @@ define(["avalon", "avalon.button"], function(avalon) {
             break;
         }
     }
-    //遮罩层
-    var overlay = document.createElement("div");
-    overlay.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
-    overlay = overlay.firstChild;//全部dialog共用
+
     avalon.ui.dialog = function(element, id, vmodels, opts) {
         var $element = avalon(element);
         var options = avalon.mix({}, defaults, opts, $element.data());
