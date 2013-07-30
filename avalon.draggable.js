@@ -167,7 +167,7 @@ define(["avalon"], function(avalon) {
             return;
         }
 
-        if (o.containment.constructor === Array) {
+        if (Array.isArray(o.containment)) {
             data.containment = o.containment;
             return;
         }
@@ -185,7 +185,7 @@ define(["avalon"], function(avalon) {
                     $offset.left,
                     $offset.top,
                     $offset.left + elem.offsetWidth - data.marginLeft,
-                    $offset.top + +elem.offsetHeight - data.marginTop
+                    $offset.top + elem.offsetHeight - data.marginTop
                 ]
             }
         }
@@ -208,7 +208,6 @@ define(["avalon"], function(avalon) {
                     opts = vm[optsName]
                     break;
                 }
-                break
             }
         }
 
@@ -263,6 +262,7 @@ define(["avalon"], function(avalon) {
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
                 clone.style.backgroundColor = "yellow"
+                avalon(clone).css("opacity", .5)
                 data.clone = clone
                 if (position !== "fixed") {
                     clone.style.position = "absolute"

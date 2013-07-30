@@ -1083,7 +1083,7 @@
             }
             return ret === "" ? "auto" : border[ret] || ret
         }
-        cssHooks["opacity:set"] = function(node, value) {
+        cssHooks["opacity:set"] = function(node, name, value) {
             node.style.filter = 'alpha(opacity=' + value * 100 + ')'
             node.style.zoom = 1
         }
