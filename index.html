@@ -32,8 +32,15 @@
             }
         </style>
         <script>
-        
-
+        var a = true
+ try {
+        document.createEvent('TouchEvent');
+      
+    }
+    catch(e) {
+        a = false
+    }
+    console.log(a)
         </script>
     </head>
     <body>

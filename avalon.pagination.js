@@ -16,15 +16,7 @@ define(["avalon"], function(avalon) {
     var domParser = document.createElement("div");
     avalon.ui.pagination =  function(element, id, vmodels, opts) {
         var $element = avalon(element);
-        var options = avalon.mix({}, defaults);
-        if (typeof opts === "object") {
-            for (var i in opts) {
-                if (i === "$id")
-                    continue;
-                options[i] = opts[i];
-            }
-        }
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults, opts, $element.data());
 
         $element.addClass("ui-widget-header ui-corner-all ui-buttonset ");
         element.style.cssText += "padding:6px 4px"
@@ -63,8 +55,8 @@ define(["avalon"], function(avalon) {
             }
             vm.jumpPage = function(event) {
                 event.preventDefault();
-                if (this.$scope.page !== vm.currentIndex) {
-                    vm.currentIndex = this.$scope.page;
+                if (this.$vmodel.page !== vm.currentIndex) {
+                    vm.currentIndex = this.$vmodel.page;
                     vm.pages = getShowPages();
                 }
             };
@@ -93,8 +85,8 @@ define(["avalon"], function(avalon) {
         var cssText = "margin:4px 4px; padding: 2px 8px;text-decoration: none;text-align:center;";
         avalon.nextTick(function() {
             element.setAttribute("ms-each-page", "pages");
-            element.innerHTML = '<a ms-href="?page={{page}}" ms-class-ui-corner-left="page == 0" ms-class-ui-corner-right="page == maxPage" ms-hover="ui-state-hover" ms-click="jumpPage" class="ui-state-default" style="' + cssText + '" ms-class-ui-state-active="currentIndex == page"' +
-                    ' >{{page+1}}</a>';
+            element.innerHTML = '<a ms-href="?page={{page}}" ms-class-1="ui-corner-left：page == 0" ms-class-2="ui-corner-right：page == maxPage" ms-hover="ui-state-hover" ms-click="jumpPage" class="ui-state-default" style="' 
+                    + cssText + '" ms-class-3="ui-state-activecurrentIndex == page"' +  ' >{{page+1}}</a>';
             avalon.scan(element, model);
             domParser.innerHTML = '<span ms-visible="firstPage" style="' + 'padding: 2px 4px;text-decoration: none;text-align:center;' + '" >…</span>' +
                     '<a href="" ms-visible="firstPage" ms-hover="ui-state-hover" class="ui-state-default" style="' + cssText + '" ms-click="jumpFirstPage" >1</a>' +
@@ -115,7 +107,7 @@ define(["avalon"], function(avalon) {
             element.appendChild(a);
             a = domParser.removeChild(domParser.lastChild);
             element.appendChild(a);
-            avalon.scan(element, model);
+            avalon.scan(element, [model].concat(vmodels));
         });
         return model;
     };

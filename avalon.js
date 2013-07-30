@@ -981,6 +981,25 @@
             return val
         }
     }
+    
+    "scrollLeft_pageXOffset,scrollTop_pageYOffset".replace(/(\w+)_(\w+)/g, function(_, method, prop) {
+        avalon.fn[method] = function(val) {
+            var node = this[0] || {}, win = getWindow(node), top = method === "scrollTop";
+            if (!arguments.length) {
+                return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
+            } else {
+                if (win) {
+                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop());
+                } else {
+                    node[method] = val;
+                }
+            }
+        };
+    });
+
+    function getWindow(node) {
+        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
+    }
     //=============================css相关=======================
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']
@@ -2306,7 +2325,7 @@
     }
 
     //============================================================================
-    //根据VM的属性值或表达式的值切换类名，ms-class-xxx="flag" 
+    //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     "class,hover,active".replace(rword, function(method) {
         bindingHandlers[method] = function(data, vmodels) {
@@ -2361,7 +2380,7 @@
             }
         }
     })
-        if (typeof DOC.createElement("div").hidden === "boolean") {
+    if (typeof DOC.createElement("div").hidden === "boolean") {
         bindingHandlers.visible = function(data, vmodels) {
             var elem = data.element
             watchView(data.value, vmodels, data, function(val) {
