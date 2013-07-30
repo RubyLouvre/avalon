@@ -49,14 +49,6 @@ define(["avalon"], function(avalon) {
 
     }
 
-
-    var clearSelection = window.getSelection ?
-            function() {
-                window.getSelection().removeAllRanges();
-            } : function() {
-        document.selection.clear();
-    }
-
     var styleEl = document.createElement("style")
     var cssText = "*{ -webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;}"
     function fixUserSelect() {
@@ -94,12 +86,11 @@ define(["avalon"], function(avalon) {
         var data = draggable.dragData
         if (!data || !data.started)
             return
-        fixUserSelect()
         //fix touchmove bug;  
         //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
         //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
         e.preventDefault();
-        clearSelection();
+        //使用document.selection.empty()来清除选择，会导致捕获失败 
         var element = data.clone || data.element
         if (data.dragX) {
             setPosition(e, element, data, "X")
@@ -116,7 +107,6 @@ define(["avalon"], function(avalon) {
         if (!data || !data.started)
             return
         restoreUserSelect()
-        clearSelection();
         var element = data.element
         if (data.dragX) {
             setPosition(e, element, data, "X", true)
@@ -236,7 +226,6 @@ define(["avalon"], function(avalon) {
         body = document.body //因为到这里时，肯定已经domReady
         $element.bind(dragstart, function(e) {
 
-
             var data = {
                 element: element,
                 $element: $element,
@@ -255,7 +244,7 @@ define(["avalon"], function(avalon) {
             if (!data.dragX && !data.dragY) {
                 data.started = false
             }
-
+            fixUserSelect()
             var position = $element.css("position")
             //如果原元素没有被定位
             if (!/^(?:r|a|f)/.test(position)) {
@@ -282,9 +271,8 @@ define(["avalon"], function(avalon) {
                 }
                 document.body.appendChild(clone)
             }
-
+            document.activeElement && document.activeElement.blur()
             var target = avalon(data.clone || data.element)
-
             data.startX = parseFloat(target.css("left"))
             data.startY = parseFloat(target.css("top"))
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
