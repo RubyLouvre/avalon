@@ -120,8 +120,9 @@ define(["avalon"], function(avalon) {
         if (data.dragY) {
             setPosition(e, element, data, "Y", true)
         }
+
         if (data.clone) {
-            data.clone.parentNode.removeChild(data.clone)
+            body.removeChild(data.clone)
         }
         draggable.plugin.call("stop", e, data)
         delete draggable.dragData
@@ -198,11 +199,12 @@ define(["avalon"], function(avalon) {
     }
 
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var fn = data.value.trim(), dragCallback
+        var fn = data.value.trim(), dragCallback, model
         for (var i = 0, vm; vm = vmodels[i++]; ) {
             if (vm.hasOwnProperty(fn)) {
                 if (typeof vm[fn] === "function") {
                     dragCallback = vm[fn]
+                    model = vm
                     break;
                 }
             }
@@ -211,6 +213,9 @@ define(["avalon"], function(avalon) {
         for (var i = 0, vm; vm = vmodels[i++]; ) {
             if (vm.hasOwnProperty(fn)) {
                 if (typeof vm[optsName] === "object") {
+                    if (!model) {
+                        model = vm
+                    }
                     opts = vm[optsName]
                     break;
                 }
@@ -230,7 +235,6 @@ define(["avalon"], function(avalon) {
         }
         body = document.body //因为到这里时，肯定已经domReady
         $element.bind(dragstart, function(e) {
-
             var data = avalon.mix({}, options, {
                 element: element,
                 $element: $element,
@@ -246,6 +250,19 @@ define(["avalon"], function(avalon) {
                 data.started = false
             }
             fixUserSelect()
+            var handle
+            if (data.handle && model) {
+                var handle = model[data.handle]
+                if (typeof handle === "function") {
+                    handle.call(element, e, data)
+                    if (data.handle && data.handle.nodeType === 1) {
+                        if (!data.handle.contains(e.target)) {
+                            return false
+                        }
+                    }
+                }
+            }
+
             var position = $element.css("position")
             //如果原元素没有被定位
             if (!/^(?:r|a|f)/.test(position)) {
@@ -271,7 +288,7 @@ define(["avalon"], function(avalon) {
                     clone.style.top = startOffset.top - data.marginTop + "px"
                     clone.style.left = startOffset.left - data.marginLeft + "px"
                 }
-                document.body.appendChild(clone)
+                body.appendChild(clone)
             }
             var activeElement = document.activeElement
             if (activeElement && activeElement !== element) {
@@ -287,9 +304,9 @@ define(["avalon"], function(avalon) {
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
             setContainment(options, data)
             draggable.dragData = data
-            draggable.start.push(options.start)
-            draggable.drag.push(options.drag)
-            draggable.stop.push(options.stop)
+            draggable.start.unshift(options.start)
+            draggable.drag.unshift(options.drag)
+            draggable.stop.unshift(options.stop)
             draggable.plugin.call("start", e, data)
         })
 
@@ -357,62 +374,8 @@ define(["avalon"], function(avalon) {
         parent = parent !== node ? parent : null;
         return(/fixed/).test(pos) || !parent ? document : parent;
     }
-    ;
-    draggable.plugin.add("scroll", {
-        start: function(e, data) {
-            var scrollParent = getScrollParent(this)
-            var offset = avalon(scrollParent).offset()
-            data.overflowX = offset.left;
-            data.overflowY = offset.top
-            data.scrollParent = scrollParent
-            data.$doc = avalon(document)
-            data.$win = avalon(window)
-        },
-        drag: function(e, data) {
-            var scrollParent = data.scrollParent
-            var $doc = data.$doc;
-            var $win = data.$win
-            var pageX = getPosition(e, "X")
-            var pageY = getPosition(e, "Y")
-            if (scrollParent !== document && scrollParent.tagName !== "HTML") {
-                if (data.dragY) {
-                    if ((data.overflowY + scrollParent.offsetHeight) - pageY < data.scrollSensitivity) {
-                        scrollParent.scrollTop = scrollParent.scrollTop + data.scrollSpeed;
-                    } else if (pageY - data.overflowY < data.scrollSensitivity) {
-                        scrollParent.scrollTop = scrollParent.scrollTop - data.scrollSpeed;
-                    }
-                }
-
-                if (data.dragX) {
-                    if ((data.overflowX + scrollParent.offsetWidth) - pageX < data.scrollSensitivity) {
-                        scrollParent.scrollLeft = scrollParent.scrollLeft + data.scrollSpeed;
-                    } else if (pageX - data.overflowX < data.scrollSensitivity) {
-                        scrollParent.scrollLeft = scrollParent.scrollLeft - data.scrollSpeed;
-                    }
-                }
-
-            } else {
-                if (data.dragY) {
-                    if (pageY - $doc.scrollTop() < data.scrollSensitivity) {
-                        $doc.scrollTop($doc.scrollTop() - data.scrollSpeed);
-                    } else if ( $win.height() - (pageY - $doc.scrollTop()) < data.scrollSensitivity) {
-                        $doc.scrollTop($doc.scrollTop() + data.scrollSpeed);
-                    }
-                }
-
-                if (data.dragX) {
-                    if ( pageX - $doc.scrollLeft() < data.scrollSensitivity) {
-                        $doc.scrollLeft($doc.scrollLeft() - data.scrollSpeed);
-                    } else if ( $win.width() - (pageX - $doc.scrollLeft()) < data.scrollSensitivity) {
-                        $doc.scrollLeft($doc.scrollLeft() + data.scrollSpeed);
-                    }
-                }
-
-            }
-
-        }
-    })
-    //  alert(draggable.start)
 
     return avalon
 })
+// handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
+ 
