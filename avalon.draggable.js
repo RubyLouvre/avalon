@@ -3,12 +3,16 @@ define(["avalon"], function(avalon) {
         ghosting: false, //是否影子拖动，动态生成一个元素，拖动此元素，当拖动结束时，让原元素到达此元素的位置上,
         delay: 0,
         axis: "xy",
-        dragstart: function() {
+        started: true,
+        start: function() {
         },
         drag: function() {
         },
-        dragend: function() {
-        }
+        stop: function() {
+        },
+        scrollPlugin: true,
+        scrollSensitivity: 20,
+        scrollSpeed: 20
     }
     var body
     var ua = navigator.userAgent;
@@ -20,19 +24,19 @@ define(["avalon"], function(avalon) {
     if (!isMobile) {
         var dragstart = "mousedown"
         var drag = "mousemove"
-        var dragend = "mouseup"
+        var dragstop = "mouseup"
     } else {
         dragstart = "touchstart"
         drag = "touchmove"
-        dragend = "touchend"
+        dragstop = "touchend"
     }
-    function getPostion(e, pos) {
+    function getPosition(e, pos) {
         var page = "page" + pos
         return isMobile ? e.changedTouches[0][page] : e[page]
     }
 
     function setPosition(e, element, data, pos, end) {
-        var page = getPostion(e, pos)
+        var page = getPosition(e, pos)
         if (data.containment) {
             var min = pos === "X" ? data.containment[0] : data.containment[1]
             var max = pos === "X" ? data.containment[2] : data.containment[3]
@@ -50,7 +54,9 @@ define(["avalon"], function(avalon) {
     }
 
     var styleEl = document.createElement("style")
-    var cssText = "*{ -webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;}"
+
+    var cssText = "*{ -webkit-touch-callout: none!important;-webkit-user-select: none!important;-khtml-user-select: none!important;" +
+            "-moz-user-select: none!important;-ms-user-select: none!important;user-select: none!important;}"
     function fixUserSelect() {
         body.appendChild(styleEl)
         //如果不插入DOM树，styleEl.styleSheet为null
@@ -98,11 +104,11 @@ define(["avalon"], function(avalon) {
         if (data.dragY) {
             setPosition(e, element, data, "Y")
         }
-        data.drag.call(data.element, e, data)
+        draggable.plugin.call("drag", e, data)
     })
 
 
-    avalon(document).bind(dragend, function(e) {
+    avalon(document).bind(dragstop, function(e) {
         var data = draggable.dragData
         if (!data || !data.started)
             return
@@ -117,7 +123,7 @@ define(["avalon"], function(avalon) {
         if (data.clone) {
             data.clone.parentNode.removeChild(data.clone)
         }
-        data.dragend.call(data.element, e, data)
+        draggable.plugin.call("stop", e, data)
         delete draggable.dragData
     })
 
@@ -225,18 +231,14 @@ define(["avalon"], function(avalon) {
         body = document.body //因为到这里时，肯定已经domReady
         $element.bind(dragstart, function(e) {
 
-            var data = {
+            var data = avalon.mix({}, options, {
                 element: element,
                 $element: $element,
-                pageX: getPostion(e, "X"),
-                pageY: getPostion(e, "Y"),
-                started: true,
+                pageX: getPosition(e, "X"),
+                pageY: getPosition(e, "Y"),
                 marginLeft: parseFloat($element.css("marginLeft")),
-                marginTop: parseFloat($element.css("marginTop")),
-                dragstart: options.dragstart,
-                drag: options.drag,
-                dragend: options.dragend
-            }
+                marginTop: parseFloat($element.css("marginTop"))
+            })
             options.axis.replace(/./g, function(a) {
                 data["drag" + a.toUpperCase() ] = true
             })
@@ -271,7 +273,10 @@ define(["avalon"], function(avalon) {
                 }
                 document.body.appendChild(clone)
             }
-            document.activeElement && document.activeElement.blur()
+            var activeElement = document.activeElement
+            if (activeElement && activeElement !== element) {
+                activeElement.blur()
+            }
             var target = avalon(data.clone || data.element)
             data.startX = parseFloat(target.css("left"))
             data.startY = parseFloat(target.css("top"))
@@ -282,10 +287,132 @@ define(["avalon"], function(avalon) {
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
             setContainment(options, data)
             draggable.dragData = data
-            data.dragstart.call(data.element, e, data)
+            draggable.start.push(options.start)
+            draggable.drag.push(options.drag)
+            draggable.stop.push(options.stop)
+            draggable.plugin.call("start", e, data)
         })
 
     }
+    //插件系统
+    draggable.start = []
+    draggable.drag = []
+    draggable.stop = []
+    draggable.plugin = {
+        add: function(name, set) {
+            for (var i in set) {
+                var fn = set[i]
+                if (typeof fn === "function" && Array.isArray(draggable[i])) {
+                    fn.isPlugin = true
+                    fn.pluginName = name + "Plugin"
+                    draggable[i].push(fn)
+                }
+            }
+        },
+        call: function(name, e, data) {
+            var array = draggable[name]
+            if (Array.isArray(array)) {
+                array.forEach(function(fn) {
+                    //用户回调总会执行，插件要看情况
+                    if (typeof fn.pluginName === "undefined" ? true : data[fn.pluginName]) {
+                        fn.call(data.element, e, data)
+                    }
+                })
+            }
+            if (name === "stop") {
+                for (var i in draggable) {
+                    array = draggable[i]
+                    if (Array.isArray(array)) {
+                        array.forEach(function(fn) {
+                            if (!fn.isPlugin) {// 用户回调都是一次性的，插件的方法永远放在列队中
+                                avalon.Array.remove(array, fn)
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+    function getScrollParent(node) {
+        var pos = avalon(node).css("position"), parent;
+        if ((window.VBArray && (/(static|relative)/).test(pos)) || (/absolute/).test(pos)) {
+            parent = node;
+            while (parent = parent.parentNode) {
+                var temp = avalon(parent);
+                var overflow = temp.css("overflow") + temp.css("overflow-y") + temp.css("overflow-x");
+                if (/(relative|absolute|fixed)/.test(temp.css("position")) && /(auto|scroll)/.test(overflow)) {
+                    break;
+                }
+            }
+        } else {
+            parent = node
+            while (parent = parent.parentNode) {
+                var temp = avalon(parent);
+                var overflow = temp.css("overflow") + temp.css("overflow-y") + temp.css("overflow-x");
+                if (/(auto|scroll)/.test(overflow)) {
+                    break;
+                }
+            }
+        }
+        parent = parent !== node ? parent : null;
+        return(/fixed/).test(pos) || !parent ? document : parent;
+    }
+    ;
+    draggable.plugin.add("scroll", {
+        start: function(e, data) {
+            var scrollParent = getScrollParent(this)
+            var offset = avalon(scrollParent).offset()
+            data.overflowX = offset.left;
+            data.overflowY = offset.top
+            data.scrollParent = scrollParent
+            data.$doc = avalon(document)
+            data.$win = avalon(window)
+        },
+        drag: function(e, data) {
+            var scrollParent = data.scrollParent
+            var $doc = data.$doc;
+            var $win = data.$win
+            var pageX = getPosition(e, "X")
+            var pageY = getPosition(e, "Y")
+            if (scrollParent !== document && scrollParent.tagName !== "HTML") {
+                if (data.dragY) {
+                    if ((data.overflowY + scrollParent.offsetHeight) - pageY < data.scrollSensitivity) {
+                        scrollParent.scrollTop = scrollParent.scrollTop + data.scrollSpeed;
+                    } else if (pageY - data.overflowY < data.scrollSensitivity) {
+                        scrollParent.scrollTop = scrollParent.scrollTop - data.scrollSpeed;
+                    }
+                }
+
+                if (data.dragX) {
+                    if ((data.overflowX + scrollParent.offsetWidth) - pageX < data.scrollSensitivity) {
+                        scrollParent.scrollLeft = scrollParent.scrollLeft + data.scrollSpeed;
+                    } else if (pageX - data.overflowX < data.scrollSensitivity) {
+                        scrollParent.scrollLeft = scrollParent.scrollLeft - data.scrollSpeed;
+                    }
+                }
+
+            } else {
+                if (data.dragY) {
+                    if (pageY - $doc.scrollTop() < data.scrollSensitivity) {
+                        $doc.scrollTop($doc.scrollTop() - data.scrollSpeed);
+                    } else if ( $win.height() - (pageY - $doc.scrollTop()) < data.scrollSensitivity) {
+                        $doc.scrollTop($doc.scrollTop() + data.scrollSpeed);
+                    }
+                }
+
+                if (data.dragX) {
+                    if ( pageX - $doc.scrollLeft() < data.scrollSensitivity) {
+                        $doc.scrollLeft($doc.scrollLeft() - data.scrollSpeed);
+                    } else if ( $win.width() - (pageX - $doc.scrollLeft()) < data.scrollSensitivity) {
+                        $doc.scrollLeft($doc.scrollLeft() + data.scrollSpeed);
+                    }
+                }
+
+            }
+
+        }
+    })
+    //  alert(draggable.start)
 
     return avalon
 })
