@@ -2380,14 +2380,7 @@
             }
         }
     })
-    if (typeof DOC.createElement("div").hidden === "boolean") {
-        bindingHandlers.visible = function(data, vmodels) {
-            var elem = data.element
-            watchView(data.value, vmodels, data, function(val) {
-                elem.hidden = !val
-            })
-        }
-    }
+
     //============================= boolean preperty binding =======================
     //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {

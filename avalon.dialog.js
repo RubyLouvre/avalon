@@ -85,6 +85,9 @@ define(["avalon", "avalon.button"], function(avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title");
+        
+        
+        
         element.removeAttribute("ms-ui");//防止死循环
         element.parentNode.removeChild(element);
         model = avalon.define(id, function(vm) {

@@ -2024,14 +2024,7 @@
             elem.disabled = !val
         })
     }
-    if (typeof DOC.createElement("div").hidden === "boolean") {
-        bindingHandlers.visible = function(data, vmodels) {
-            var elem = data.element
-            watchView(data.value, vmodels, data, function(val) {
-                elem.hidden = !val
-            })
-        }
-    }
+
     //=========================string preperty binding ====================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
