@@ -1778,7 +1778,7 @@
                 stop
         if (rexpr.test(str)) {
             do {
-                var stop = str.indexOf(openTag, start)
+                stop = str.indexOf(openTag, start)
                 if (stop === -1) {
                     break
                 }
