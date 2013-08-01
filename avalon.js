@@ -2343,6 +2343,10 @@
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
                     var array = parseExpr(rightExpr, vmodels, {})
+                    if(!Array.isArray(array)){
+                        log("'"+ (rightExpr||"").trim() + "' 不存在于VM中")
+                        return false
+                    }
                     var callback = array[0], args = array[1]
                 }
                 var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况

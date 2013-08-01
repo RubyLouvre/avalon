@@ -855,7 +855,7 @@
     });
 
     function getWindow(node) {
-        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView  : false;
+        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false;
     }
     //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
@@ -1978,6 +1978,10 @@
                     rightExpr = text.slice(colonIndex + 1)
                     var array = parseExpr(rightExpr, vmodels, {})
                     var callback = array[0], args = array[1]
+                    if (!Array.isArray(array)) {
+                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        return false
+                    }
                 }
                 var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况
 
