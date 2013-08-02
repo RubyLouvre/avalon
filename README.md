@@ -2,9 +2,10 @@
 <h1>Avalon</h1>
 <p>迷你简单易用的MVVM框架</p>
 <hr>
-avalon.js 兼容IE6，及标准浏览器
-avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器
-
+<ul>
+    <li>avalon.js 兼容IE6，及标准浏览器</li>
+    <li>avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器</li>
+</ul>
 <h3>优势</h3>
 <ul>
     <li>使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！</li>
@@ -19,8 +20,10 @@ avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器
     <li>操作数据即操作DOM，对ViewModel的操作都会同步到View与Model去。</li>
     <li>自带模块加载系统，省得与其他加载器进行整合。</li>
 </ul>
-
+<p><a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">相关PPT下载</a></p>
 <p><a href="http://rubylouvre.github.io/mvvm/">官网地址</a></p>
+<p><a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">入门教程</a></p>
+
 ```html
         <fieldset ms-controller="simple">
             <legend>例子</legend>
