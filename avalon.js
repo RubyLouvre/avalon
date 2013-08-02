@@ -69,7 +69,7 @@
         if (window.VBArray) {
             return obj == obj.document && obj.document != obj
         }
-        return  obj === obj.window
+        return  obj == obj.window//IE8- window === window.window 为false
     }
 
     function isWindow(obj) {
