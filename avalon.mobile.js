@@ -889,7 +889,9 @@
 
     function modelFactory(scope, model, watchMore) {
         if (Array.isArray(scope)) {
-            return Collection(scope)
+            var collection = Collection(scope)
+            collection._add(scope)
+            return collection
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
@@ -2214,7 +2216,8 @@
         }
         source.$last = {
             get: function() { //有时用户是传个普通数组
-                return this.$index === list.length - 1
+                var n = typeof list.size === "function" ? list.size() : list.length
+                return this.$index === n - 1
             }
         }
         source.$remove = function() {

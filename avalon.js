@@ -192,16 +192,16 @@
             throw new (e || Error)(str)
         },
         oneObject: oneObject,
-       /* avalon.range(10);
-        => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        avalon.range(1, 11);
-        => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        avalon.range(0, 30, 5);
-        => [0, 5, 10, 15, 20, 25]
-        avalon.range(0, -10, -1);
-        => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
-        avalon.range(0);
-        => []*/
+        /* avalon.range(10);
+         => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+         avalon.range(1, 11);
+         => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+         avalon.range(0, 30, 5);
+         => [0, 5, 10, 15, 20, 25]
+         avalon.range(0, -10, -1);
+         => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
+         avalon.range(0);
+         => []*/
         range: function(start, end, step) {// 用于生成整数数组
             step || (step = 1)
             if (end == null) {
@@ -244,7 +244,7 @@
         }
     })
 
-  //视浏览器情况采用最快的异步回调
+    //视浏览器情况采用最快的异步回调
     var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
     if (BrowserMutationObserver) {//chrome18+, safari6+, firefox14+,ie11+,opera15
         avalon.nextTick = function(callback) {//2-3ms
@@ -484,7 +484,7 @@
     kernel.alias = {}
     kernel.plugins['interpolate'](["{{", "}}"])
     avalon.config = kernel
-   
+
     /*********************************************************************
      *                      迷你jQuery对象的原型方法                    *
      **********************************************************************/
@@ -1116,7 +1116,9 @@
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
-            return Collection(scope)
+            var collection = Collection(scope)
+            collection._add(scope)
+            return collection
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
@@ -2012,8 +2014,8 @@
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
                     var array = parseExpr(rightExpr, vmodels, {})
-                    if(!Array.isArray(array)){
-                        log("'"+ (rightExpr||"").trim() + "' 不存在于VM中")
+                    if (!Array.isArray(array)) {
+                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
                     }
                     var callback = array[0], args = array[1]
@@ -2453,6 +2455,7 @@
     //====================== each binding  =================================
 
     bindingHandlers["each"] = function(data, vmodels) {
+
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
 
@@ -2605,7 +2608,8 @@
         }
         source.$last = {
             get: function() { //有时用户是传个普通数组
-                return this.$index === list.length - 1
+                var n = typeof list.size === "function" ?  list.size() : list.length
+                return this.$index === n - 1
             }
         }
         source.$remove = function() {
@@ -2888,7 +2892,7 @@
         locate.SHORTMONTH = locate.MONTH
         filters.date.locate = locate
     }
-     /*********************************************************************
+    /*********************************************************************
      *                      AMD Loader                                *
      **********************************************************************/
 
