@@ -66,10 +66,8 @@
         if (obj === window)
             return true
         // 利用IE678 window == document为true,document == window竟然为false的神奇特性
-        if (window.VBArray) {
-            return obj == obj.document && obj.document != obj
-        }
-        return  obj == obj.window//IE8- window === window.window 为false
+        // 标准浏览器及IE9，IE19等使用 正则检测
+        return obj == obj.document && obj.document != obj
     }
 
     function isWindow(obj) {
@@ -300,6 +298,22 @@
                 (length === 0 ||
                         typeof length === "number" && length > 0 && (length - 1) in obj)
     }
+
+//只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
+    function isArrayLike(obj) {
+        if (obj) {
+            var n = obj.length
+            if (+n === n && !(n % 1) && n >= 0) {
+                if ({}.propertyIsEnumerable.call(obj, 'length')) {
+                    return Array.isArray(obj) || typeof obj !== "function" && /^\s?function/.test(obj.item || obj.callee)
+                }
+                return true
+            }
+        }
+        return false
+    }
+
+
 
     function generateID() {
         //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
