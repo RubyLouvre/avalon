@@ -61,7 +61,15 @@
     }
     avalon.type = getType
     avalon.isWindow = function(obj) {
-        return obj && obj === obj.window
+        if (!obj)
+            return false
+        if (obj === window)
+            return true
+        // 利用IE678 window == document为true,document == window竟然为false的神奇特性
+        if (window.VBArray) {
+            return obj == obj.document && obj.document != obj
+        }
+        return  obj === obj.window
     }
 
     function isWindow(obj) {
@@ -2608,7 +2616,7 @@
         }
         source.$last = {
             get: function() { //有时用户是传个普通数组
-                var n = typeof list.size === "function" ?  list.size() : list.length
+                var n = typeof list.size === "function" ? list.size() : list.length
                 return this.$index === n - 1
             }
         }
