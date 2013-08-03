@@ -154,15 +154,15 @@
             throw new (e || Error)(str)
         },
         oneObject: oneObject,
-        /* avalon.range(10);
+        /* avalon.range(10)
          => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-         avalon.range(1, 11);
+         avalon.range(1, 11)
          => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-         avalon.range(0, 30, 5);
+         avalon.range(0, 30, 5)
          => [0, 5, 10, 15, 20, 25]
-         avalon.range(0, -10, -1);
+         avalon.range(0, -10, -1)
          => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
-         avalon.range(0);
+         avalon.range(0)
          => []*/
         range: function(start, end, step) {// 用于生成整数数组
             step || (step = 1)
@@ -180,7 +180,7 @@
             return result
         },
         slice: function(nodes, start, end) {
-            return aslice.call(nodes, start, end);
+            return aslice.call(nodes, start, end)
         },
         bind: function(el, type, fn, phase) {
             function callback(ex) {
@@ -197,7 +197,7 @@
         unbind: function(el, type, fn, phase) {
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
         }
-    });
+    })
     //视浏览器情况采用最快的异步回调
     var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
     if (BrowserMutationObserver) {
@@ -206,21 +206,21 @@
             var observer = new BrowserMutationObserver(function(mutations) {
                 mutations.forEach(function() {
                     callback()
-                });
-            });
-            observer.observe(input, {attributes: true});
+                })
+            })
+            observer.observe(input, {attributes: true})
             input.setAttribute("value", Math.random())
         }
     } else if (window.VBArray) {
         avalon.nextTick = function(callback) {
-            var node = DOC.createElement("script");
+            var node = DOC.createElement("script")
             node.onreadystatechange = function() {
                 callback()
                 node.onreadystatechange = null
                 root.removeChild(node)
                 node = null
-            };
-            root.appendChild(node);
+            }
+            root.appendChild(node)
         }
     } else {
         avalon.nextTick = function(callback) {
@@ -521,14 +521,14 @@
                 return win ? win[prop] : node[method];
             } else {
                 if (win) {
-                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop());
+                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
                 } else {
                     node[method] = val;
                 }
             }
 
-        };
-    });
+        }
+    })
 
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false;
@@ -570,7 +570,7 @@
         return ret
     }
     cssHooks["opacity:get"] = function(node) {
-        var ret = cssHooks["@:get"](node, "opacity");
+        var ret = cssHooks["@:get"](node, "opacity")
         return ret === "" ? "1" : ret;
     }
     "Width,Height".replace(rword, function(name) {
@@ -742,7 +742,7 @@
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
             "*": DOC.createElement("div")
-        };
+        }
         object.optgroup = object.option;
         object.tbody = object.tfoot = object.colgroup = object.caption = object.thead;
         object.th = object.td;
@@ -758,7 +758,7 @@
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
         var fragment = documentFragment.cloneNode(false)
-        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase();
+        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
         if (!(tag in tagHooks)) {
             tag = "*";
         }
@@ -771,19 +771,19 @@
                     neo;
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
-                    neo = script.cloneNode(false); //FF不能省略参数
+                    neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
                         if (attr.specified) { //复制其属性
                             neo[attr.name] = [attr.value];
                         }
                     }
                     neo.text = el.text; //必须指定,因为无法在attributes中遍历出来
-                    el.parentNode.replaceChild(neo, el); //替换节点
+                    el.parentNode.replaceChild(neo, el) //替换节点
                 }
             }
         }
         while (firstChild = parent.firstChild) { // 将wrapper上的节点转移到文档碎片上！
-            fragment.appendChild(firstChild);
+            fragment.appendChild(firstChild)
         }
         return fragment;
     }
@@ -918,7 +918,7 @@
                 if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                     var setter = val.set
                     var getter = val.get
-                    accessor = function(neo) { //创建计算属性
+                    accessor = function(neo) {//创建计算属性，因变量，基本上由其他监控属性触发其改变
                         var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
@@ -927,11 +927,11 @@
                             var antiquity = value
                             if (typeof setter === "function") {
                                 var backup = vmodel.$events[name]
-                                vmodel.$events[name] = []//防止内部冒泡而触发多次$fire
+                                vmodel.$events[name] = []//清空回调，防止内部冒泡而触发多次$fire
                                 setter.call(vmodel, neo)
                                 vmodel.$events[name] = backup
                             }
-                            if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
+                            if (oldArgs !== neo) {  //只检测用户的传参是否与上次是否一致
                                 oldArgs = neo
                                 value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
@@ -950,7 +950,7 @@
                     }
                     callGetters.push(accessor)
                 } else {
-                    accessor = function(neo) { //创建监控属性或数组
+                    accessor = function(neo) {  //创建监控属性或数组，自变量，由用户触发其改变
                         var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
@@ -959,19 +959,19 @@
                             if (value !== neo) {
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
-                                    if (value && value.$id) {
+                                    if (value && value.$id) {//如果已经转换过
                                         updateViewModel(value, neo, Array.isArray(neo))
-                                    } else if (Array.isArray(neo)) {
+                                    } else if (Array.isArray(neo)) {//如果是第一次转换数组
                                         value = Collection(neo)
                                         value._add(neo)
-                                    } else {
+                                    } else {//如果是第一次转换对象
                                         value = modelFactory(neo, neo)
                                     }
-                                } else {
+                                } else {//如果是其他数据类型
                                     value = neo
                                 }
                                 accessor.value = value
-                                model[name] = value && value.$id ? value.$model : value
+                                model[name] = value && value.$id ? value.$model : value//更新$model中的值
                                 notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$fire && vmodel.$fire(name, value, old)
                             }
@@ -995,16 +995,16 @@
         }
 
 
-        vmodel = Object.defineProperties(vmodel, Descriptions)
-        VBPublics.forEach(function(name) {
+        vmodel = Object.defineProperties(vmodel, Descriptions)//生成一个空的ViewModel
+        VBPublics.forEach(function(name) {//先为函数等不被监控的属性赋值
             if (!unwatchOne[name]) {
                 vmodel[name] = scope[name]
             }
         })
-        callSetters.forEach(function(prop) {
-            vmodel[prop] = scope[prop] //为空对象赋值
+        callSetters.forEach(function(prop) {//再为监控属性赋值
+            vmodel[prop] = scope[prop] 
         })
-        callGetters.forEach(function(fn) {
+        callGetters.forEach(function(fn) {//最后强逼计算属性 计算自己的值
             Publish[expose] = fn
             fn()
             collectSubscribers(fn)
@@ -1060,8 +1060,8 @@
     var stopScan = oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
 
     function scanNodes(parent, vmodels, callback) {
-        var nodes = aslice.call(parent.childNodes);
-        callback && callback();
+        var nodes = aslice.call(parent.childNodes)
+        callback && callback()
         for (var i = 0, node; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
@@ -1148,8 +1148,8 @@
                     })
                 }
                 start = stop + closeTag.length;
-            } while (1);
-            value = str.slice(start);
+            } while (1)
+            value = str.slice(start)
             if (value) { //}} 右边的文本
                 tokens.push({
                     value: value,
@@ -1242,7 +1242,7 @@
             + ',undefined';
     var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g;
     var rsplit = /[^\w$]+/g;
-    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g');
+    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
     var rnumber = /\b\d[^,]*/g;
     var rcomma = /^,+|,+$/g;
     var getVariables = function(code) {
@@ -1254,7 +1254,7 @@
                 .replace(rcomma, '')
 
         return code ? code.split(/,+/) : []
-    };
+    }
     //添加赋值语句
 
     function addAssign(vars, scope, name) {
@@ -1596,7 +1596,7 @@
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
-                    elem.insertBefore(f, data.replaceNodes[0]);
+                    elem.insertBefore(f, data.replaceNodes[0])
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
@@ -1661,7 +1661,7 @@
                         return false
                     }
                 }
-                var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况
+                var hasExpr = rexpr.test(className)//比如ms-class="width{{w}}"的情况
 
                 watchView("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
@@ -1753,7 +1753,7 @@
             var event = element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
-                element.addEventListener(event, updateModel, false);
+                element.addEventListener(event, updateModel, false)
             } else {
                 element.addEventListener("input", updateModel, false)
 
@@ -1837,10 +1837,10 @@
     var eventName = {
         AnimationEvent: 'animationend',
         WebKitAnimationEvent: 'webkitAnimationEnd'
-    };
+    }
     for (var name in eventName) {
         try {
-            DOC.createEvent(name);
+            DOC.createEvent(name)
             eventMap.animationend = eventName[name]
             break
         } catch (e) {
@@ -1891,7 +1891,7 @@
             return x !== 0 || 1 / x === 1 / y;
         }
         return x !== x && y !== y;
-    };
+    }
     //To obtain the corresponding index of the VM
 
     function getVMIndex(a, bbb, start) {
@@ -2249,7 +2249,7 @@
                     .replace(/&(?!\w+;)/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;');
+                    .replace(/"/g, '&quot;')
         },
         currency: function(number, symbol) {
             symbol = symbol || "￥"

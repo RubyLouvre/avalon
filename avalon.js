@@ -182,7 +182,7 @@
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
-            return aslice.call(nodes, start, end);
+            return aslice.call(nodes, start, end)
         } : function(nodes, start, end) {
             var ret = [],
                     n = nodes.length;
@@ -198,15 +198,15 @@
             throw new (e || Error)(str)
         },
         oneObject: oneObject,
-        /* avalon.range(10);
+        /* avalon.range(10)
          => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-         avalon.range(1, 11);
+         avalon.range(1, 11)
          => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-         avalon.range(0, 30, 5);
+         avalon.range(0, 30, 5)
          => [0, 5, 10, 15, 20, 25]
-         avalon.range(0, -10, -1);
+         avalon.range(0, -10, -1)
          => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
-         avalon.range(0);
+         avalon.range(0)
          => []*/
         range: function(start, end, step) {// 用于生成整数数组
             step || (step = 1)
@@ -438,8 +438,8 @@
     }
     if (!root.contains) {//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
         Node.prototype.contains = function(arg) {
-            return !!(this.compareDocumentPosition(arg) & 16);
-        };
+            return !!(this.compareDocumentPosition(arg) & 16)
+        }
     }
     /*********************************************************************
      *                      Configure                                 *
@@ -680,13 +680,13 @@
                 return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
             } else {
                 if (win) {
-                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop());
+                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
                 } else {
                     node[method] = val;
                 }
             }
-        };
-    });
+        }
+    })
 
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
@@ -988,7 +988,7 @@
                     neo
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
-                    neo = script.cloneNode(false); //FF不能省略参数
+                    neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
                         if (attr.specified) { //复制其属性
                             neo[attr.name] = [attr.value]
@@ -1167,7 +1167,7 @@
                 if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                     var setter = val.set
                     var getter = val.get
-                    accessor = function(neo) { //创建计算属性
+                    accessor = function(neo) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                         var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
@@ -1176,18 +1176,18 @@
                             var antiquity = value
                             if (typeof setter === "function") {
                                 var backup = vmodel.$events[name]
-                                vmodel.$events[name] = []//防止内部冒泡而触发多次$fire
+                                vmodel.$events[name] = []//清空回调，防止内部冒泡而触发多次$fire
                                 setter.call(vmodel, neo)
                                 vmodel.$events[name] = backup
                             }
-                            if (oldArgs !== neo) { //由于VBS对象不能用Object.prototype.toString来判定类型，我们就不做严密的检测
+                            if (oldArgs !== neo) { //只检测用户的传参是否与上次是否一致
                                 oldArgs = neo
                                 value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$fire && vmodel.$fire(name, value, antiquity)
                             }
                         } else {
-                            if (openComputedCollect) {
+                            if (openComputedCollect) {// 收集视图刷新函数
                                 collectSubscribers(accessor)
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
@@ -1199,7 +1199,7 @@
                     }
                     callGetters.push(accessor)
                 } else {
-                    accessor = function(neo) { //创建监控属性或数组
+                    accessor = function(neo) { //创建监控属性或数组，自变量，由用户触发其改变
                         var value = accessor.value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
@@ -1208,19 +1208,19 @@
                             if (value !== neo) {
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
-                                    if (value && value.$id) {
+                                    if (value && value.$id) {//如果已经转换过
                                         value = updateViewModel(value, neo, Array.isArray(neo))
-                                    } else if (Array.isArray(neo)) {
+                                    } else if (Array.isArray(neo)) {//如果是第一次转换数组
                                         value = Collection(neo)
                                         value._add(neo)
-                                    } else {
+                                    } else {//如果是第一次转换对象
                                         value = modelFactory(neo, neo)
                                     }
-                                } else {
+                                } else {//如果是其他数据类型
                                     value = neo
                                 }
                                 accessor.value = value
-                                model[name] = value && value.$id ? value.$model : value
+                                model[name] = value && value.$id ? value.$model : value//更新$model中的值
                                 notifySubscribers(accessor) //通知顶层改变
                                 vmodel.$fire && vmodel.$fire(name, value, old)
                             }
@@ -1231,7 +1231,7 @@
                     }
                     callSetters.push(name)
                 }
-                accessor[subscribers] = []
+                accessor[subscribers] = []//订阅者数组
                 accessores[name] = {
                     set: accessor,
                     get: accessor,
@@ -1249,18 +1249,18 @@
             }
         }
 
-        vmodel = defineProperties(vmodel, accessores, VBPublics)
+        vmodel = defineProperties(vmodel, accessores, VBPublics)//生成一个空的ViewModel
 
         VBPublics.forEach(function(name) {
-            if (!unwatchOne[name]) {
+            if (!unwatchOne[name]) {//先为函数等不被监控的属性赋值
                 vmodel[name] = scope[name]
             }
         })
-        callSetters.forEach(function(prop) {
-            vmodel[prop] = scope[prop] //为空对象赋值
+        callSetters.forEach(function(prop) {//再为监控属性赋值
+            vmodel[prop] = scope[prop] 
         })
 
-        callGetters.forEach(function(fn) {
+        callGetters.forEach(function(fn) {//最后强逼计算属性 计算自己的值
             Publish[expose] = fn
             fn()
             collectSubscribers(fn)
@@ -1506,7 +1506,7 @@
                     })
                 }
                 start = stop + closeTag.length
-            } while (1);
+            } while (1)
             value = str.slice(start)
             if (value) { //}} 右边的文本
                 tokens.push({
@@ -1979,7 +1979,7 @@
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
-                    elem.insertBefore(f, data.replaceNodes[0]);
+                    elem.insertBefore(f, data.replaceNodes[0])
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
@@ -2045,7 +2045,7 @@
                     }
                     var callback = array[0], args = array[1]
                 }
-                var hasExpr = rexpr.test(className);//比如ms-class="width{{w}}"的情况
+                var hasExpr = rexpr.test(className)//比如ms-class="width{{w}}"的情况
 
                 watchView("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
@@ -2229,7 +2229,7 @@
     var eventName = {
         AnimationEvent: 'animationend',
         WebKitAnimationEvent: 'webkitAnimationEnd'
-    };
+    }
     for (var name in eventName) {
         try {
             DOC.createEvent(name)
