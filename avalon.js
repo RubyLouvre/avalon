@@ -1143,12 +1143,12 @@
             return collection
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
-                vmodel = {},
+                vmodel = {},//要返回的对象
                 accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
                 VBPublics = Object.keys(unwatchOne) //用于IE6-8
-        model = model || {}
+        model = model || {}//这是vmodel上的$model属性
         watchMore = watchMore || {}//以$开头但要强制监听的属性
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
@@ -1279,6 +1279,8 @@
         return vmodel
     }
     var defineProperty = Object.defineProperty
+    //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
+    //标准浏览器使用__defineGetter__, __defineSetter__实现
     try {
         defineProperty({}, "_", {
             value: "x"
@@ -1308,6 +1310,7 @@
             }
         }
     }
+    //IE6-8使用VBScript类的set get语句实现
     if (!defineProperties && window.VBArray) {
         window.execScript([
             "Function parseVB(code)",
