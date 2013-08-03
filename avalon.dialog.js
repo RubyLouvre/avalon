@@ -143,9 +143,9 @@ define(["avalon", "avalon.button"], function(avalon) {
         }
 
         function resetCenter() {
-            if (full) {
+            if (full) {//如果是基于窗口垂直居中
                 if (supportFixed) {
-                    if (supportTransform) {
+                    if (supportTransform) {// 如果是IE9-10或其他支持css3 transform的浏览器
                         dialog.style.cssText = cssText
                     } else {
                         dialog.style.position = "fixed";
@@ -154,11 +154,11 @@ define(["avalon", "avalon.button"], function(avalon) {
                         dialog.style.left = l + "px";
                         dialog.style.top = t + "px";
                     }
-                } else {
+                } else {//  如果是IE6，不支持fiexed，使用CSS表达式
                     dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"');
                     dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"');
                 }
-            } else {
+            } else {//基于父节点的垂直居中
                 l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
                 t = (avalon(parentNode).height() - dialog.offsetHeight) / 2;
                 dialog.style.left = l + "px";
