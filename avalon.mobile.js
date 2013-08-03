@@ -773,9 +773,7 @@
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
-                        if (attr.specified) { //复制其属性
-                            neo[attr.name] = [attr.value];
-                        }
+                            neo[attr.name] = attr.value;//复制其属性
                     }
                     neo.text = el.text; //必须指定,因为无法在attributes中遍历出来
                     el.parentNode.replaceChild(neo, el) //替换节点

@@ -991,7 +991,7 @@
                     neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
                         if (attr.specified) { //复制其属性
-                            neo[attr.name] = [attr.value]
+                            neo[attr.name] = attr.value
                         }
                     }
                     neo.text = el.text //必须指定,因为无法在attributes中遍历出来
