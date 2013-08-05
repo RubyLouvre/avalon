@@ -773,7 +773,7 @@
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
-                            neo[attr.name] = attr.value;//复制其属性
+                        neo[attr.name] = attr.value;//复制其属性
                     }
                     neo.text = el.text; //必须指定,因为无法在attributes中遍历出来
                     el.parentNode.replaceChild(neo, el) //替换节点
@@ -1000,7 +1000,7 @@
             }
         })
         callSetters.forEach(function(prop) {//再为监控属性赋值
-            vmodel[prop] = scope[prop] 
+            vmodel[prop] = scope[prop]
         })
         callGetters.forEach(function(fn) {//最后强逼计算属性 计算自己的值
             Publish[expose] = fn

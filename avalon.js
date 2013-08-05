@@ -1143,7 +1143,7 @@
             return collection
         }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
-                vmodel = {},//要返回的对象
+                vmodel = {}, //要返回的对象
                 accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
@@ -1257,7 +1257,7 @@
             }
         })
         callSetters.forEach(function(prop) {//再为监控属性赋值
-            vmodel[prop] = scope[prop] 
+            vmodel[prop] = scope[prop]
         })
 
         callGetters.forEach(function(fn) {//最后强逼计算属性 计算自己的值
@@ -1376,6 +1376,7 @@
             return model
         }
     }
+
 
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Publish[expose]) {
@@ -2480,7 +2481,6 @@
     //====================== each binding  =================================
 
     bindingHandlers["each"] = function(data, vmodels) {
-
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
 
