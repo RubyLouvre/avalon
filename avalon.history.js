@@ -19,9 +19,12 @@ define(["avalon"], function(avalon) {
     // Has the history handling already been started?
     History.started = false;
     History.getIEVersion = function() {
-        var ret, v = 3, div = document.createElement('div'), a = div.all || [];
-        while (div.innerHTML = '<!--[if gt IE ' + (++v) + ']><br><![endif]-->', a[0])
-            ret = v > 4 ? v : !v;
+        var v = 3, div = document.createElement('div'), ret
+        while (div.innerHTML = '<!--[if gt IE ' + (++v) + ']>1<![endif]-->', div.innerHTML)
+            ;
+
+        ret = v > 4 ? v : false;
+
         History.getIEVersion = function() {//惰性函数，重写自身
             return ret
         }
@@ -63,12 +66,14 @@ define(["avalon"], function(avalon) {
 
             // Figure out the initial configuration. Do we need an iframe?
             // Is pushState desired ... is it available?
-            this.options = avalon.mix({}, {root: '/'}, this.options, options);
+            this.options = avalon.mix({}, {root: '/', html5Mode: true}, this.options, options);
+
             this.root = this.options.root;
 
             this.supportPushState = !!(this.history && this.history.pushState);
-            this.supportHashChange = (('onhashchange' in window) ||
-                    ('onhashchange' in document)) && (!window.VBArray || History.getIEVersion())
+            this.supportHashChange = !!(('onhashchange' in window) ||
+                    ('onhashchange' in document)) && (!window.VBArray || History.getIEVersion() > 7)
+
             this.html5Mode = this.options.html5Mode;
             if (!this.supportPushState) {
                 avalon.log("当然浏览器不支持HTML5 pushState，强制使用hash hack!")
@@ -84,21 +89,24 @@ define(["avalon"], function(avalon) {
 
             if (oldIE && !this.html5Mode) {
                 //IE6,7在hash改变时不会产生历史，需要用一个iframe来共享历史
-                var iframe = avalon.parseHTML('<iframe src="javascript:0" tabindex="-1" style="display:none" />')[0]
+                var iframe = avalon.parseHTML('<iframe src="javascript:0" tabindex="-1" style="display:none" />').firstChild
                 document.body.appendChild(iframe)
                 this.iframe = iframe.contentWindow;
                 this.navigate(fragment);
             }
-
+         
             // 支持popstate 就监听popstate
             // 支持hashchange 就监听hashchange
             // 否则的话只能每隔一段时间进行检测了
+
             if (this.html5Mode) {
                 this.checkUrlCallback = avalon.bind(window, 'popstate', this.checkUrl);
             } else if (this.supportHashChange) {
+
                 this.checkUrlCallback = avalon.bind(window, 'hashchange', this.checkUrl);
             } else {
-                this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
+          
+                this._checkUrlInterval = setInterval(this.checkUrl.bind(this), this.interval);
             }
 
             // Determine if we need to change the base url, for a pushState link
@@ -120,8 +128,10 @@ define(["avalon"], function(avalon) {
                 this.history.replaceState({}, document.title, this.root + this.fragment + loc.search);
             }
 
-            if (!this.options.silent)
-                return this.loadUrl();
+            if (!this.options.silent) {
+                //   return this.loadUrl();
+            }
+
         },
         // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
         // but possibly useful for unit testing Routers.
@@ -143,6 +153,7 @@ define(["avalon"], function(avalon) {
             if (current === this.fragment && this.iframe) {
                 current = this.getFragment(this.getHash(this.iframe));
             }
+
             if (current === this.fragment)
                 return false;
             if (this.iframe)
@@ -154,12 +165,12 @@ define(["avalon"], function(avalon) {
         // returns `false`.
         loadUrl: function(fragmentOverride) {
             var fragment = this.fragment = this.getFragment(fragmentOverride);
-            return _.any(this.handlers, function(handler) {
+            for (var i = 0, handler; handler = this.handlers[i++]; ) {
                 if (handler.route.test(fragment)) {
                     handler.callback(fragment);
                     return true;
                 }
-            });
+            }
         },
         navigate: function(fragment, options) {
             if (!History.started)
@@ -195,7 +206,7 @@ define(["avalon"], function(avalon) {
                     this._updateHash(this.iframe.location, fragment, options.replace);
                 }
 
-            } 
+            }
             if (options.trigger)
                 return this.loadUrl(fragment);
         },
@@ -215,6 +226,12 @@ define(["avalon"], function(avalon) {
 
 
     avalon.history = new History;
+    avalon.require("ready!", function() {
+      
+        avalon.history.start()
+    })
+
+
 
     return avalon
 })
