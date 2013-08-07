@@ -18,18 +18,12 @@ define(["avalon"], function(avalon) {
 
     // Has the history handling already been started?
     History.started = false;
-    History.getIEVersion = function() {
-        var v = 3, div = document.createElement('div'), ret
-        while (div.innerHTML = '<!--[if gt IE ' + (++v) + ']>1<![endif]-->', div.innerHTML)
-            ;
+    History.IEVersion = (function() {
+        var mode = document.documentMode
+        return mode ? mode : window.XMLHttpRequest ? 7 : 6
+    })();
+    var defaults = {root: '/', html5Mode: true}
 
-        ret = v > 4 ? v : false;
-
-        History.getIEVersion = function() {//惰性函数，重写自身
-            return ret
-        }
-        return ret
-    }
 
     // Set up all inheritable **Backbone.History** properties and methods.
     avalon.mix(History.prototype, {
@@ -63,16 +57,14 @@ define(["avalon"], function(avalon) {
             if (History.started)
                 throw new Error("avalon.history has already been started");
             History.started = true;
-
-            // Figure out the initial configuration. Do we need an iframe?
-            // Is pushState desired ... is it available?
-            this.options = avalon.mix({}, {root: '/', html5Mode: true}, this.options, options);
-
+            this.options = avalon.mix({}, defaults, this.options, options);
             this.root = this.options.root;
+            //IE6不支持maxHeight, IE7支持XMLHttpRequest, IE8支持window.Element，querySelector, 
+            //IE9支持window.Node, window.HTMLElement, IE10不支持条件注释
 
+            var oldIE = window.VBArray && History.IEVersion <= 7
             this.supportPushState = !!(this.history && this.history.pushState);
-            this.supportHashChange = !!(('onhashchange' in window) ||
-                    ('onhashchange' in document)) && (!window.VBArray || History.getIEVersion() > 7)
+            this.supportHashChange = !!('onhashchange' in window && (window.VBArray || oldIE))
 
             this.html5Mode = this.options.html5Mode;
             if (!this.supportPushState) {
@@ -82,33 +74,42 @@ define(["avalon"], function(avalon) {
 
             var fragment = this.getFragment();
 
-            var oldIE = window.VBArray && History.getIEVersion() <= 7
-
             // Normalize root to always include a leading and trailing slash.
             this.root = ('/' + this.root + '/').replace(rootStripper, '/');
-
+            avalon.log(this.root)
             if (oldIE && !this.html5Mode) {
                 //IE6,7在hash改变时不会产生历史，需要用一个iframe来共享历史
+                avalon.log("IE6,7， 需要注入一个iframe来产生历史")
                 var iframe = avalon.parseHTML('<iframe src="javascript:0" tabindex="-1" style="display:none" />').firstChild
                 document.body.appendChild(iframe)
                 this.iframe = iframe.contentWindow;
                 this.navigate(fragment);
             }
-         
+
             // 支持popstate 就监听popstate
             // 支持hashchange 就监听hashchange
             // 否则的话只能每隔一段时间进行检测了
-
-            if (this.html5Mode) {
-                this.checkUrlCallback = avalon.bind(window, 'popstate', this.checkUrl);
-            } else if (this.supportHashChange) {
-
-                this.checkUrlCallback = avalon.bind(window, 'hashchange', this.checkUrl);
-            } else {
-          
-                this._checkUrlInterval = setInterval(this.checkUrl.bind(this), this.interval);
+            var instance = this
+            function checkUrl(e) {
+                var current = instance.getFragment();
+                if (current === instance.fragment && instance.iframe) {
+                    current = instance.getFragment(instance.getHash(instance.iframe));
+                }
+                if (current === instance.fragment)
+                    return false;
+                if (instance.iframe)
+                    instance.navigate(current);
+                instance.loadUrl();
             }
 
+            if (this.html5Mode) {
+                this.checkUrl = avalon.bind(window, 'popstate', checkUrl);
+            } else if (this.supportHashChange) {
+                this.checkUrl = avalon.bind(window, 'hashchange', checkUrl);
+            } else {
+                this.checkUrlID = setInterval(checkUrl, this.interval);
+            }
+            return
             // Determine if we need to change the base url, for a pushState link
             // opened by a non-pushState browser.
             this.fragment = fragment;
@@ -136,9 +137,9 @@ define(["avalon"], function(avalon) {
         // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
         // but possibly useful for unit testing Routers.
         stop: function() {
-            avalon.unbind(window, "popstate", this.checkUrlCallback)
-            avalon.unbind(window, "hashchange", this.checkUrlCallback)
-            clearInterval(this._checkUrlInterval);
+            avalon.unbind(window, "popstate", this.checkUrl)
+            avalon.unbind(window, "hashchange", this.checkUrl)
+            clearInterval(this.checkUrlID);
             History.started = false;
         },
         // Add a route to be tested when the fragment changes. Routes added later
@@ -146,23 +147,7 @@ define(["avalon"], function(avalon) {
         route: function(route, callback) {
             this.handlers.unshift({route: route, callback: callback});
         },
-        // Checks the current URL to see if it has changed, and if it has,
-        // calls `loadUrl`, normalizing across the hidden iframe.
-        checkUrl: function(e) {
-            var current = this.getFragment();
-            if (current === this.fragment && this.iframe) {
-                current = this.getFragment(this.getHash(this.iframe));
-            }
-
-            if (current === this.fragment)
-                return false;
-            if (this.iframe)
-                this.navigate(current);
-            this.loadUrl();
-        },
-        // Attempt to load the current URL fragment. If a route succeeds with a
-        // match, returns `true`. If no defined routes matches the fragment,
-        // returns `false`.
+        //处理路由函数
         loadUrl: function(fragmentOverride) {
             var fragment = this.fragment = this.getFragment(fragmentOverride);
             for (var i = 0, handler; handler = this.handlers[i++]; ) {
@@ -223,11 +208,49 @@ define(["avalon"], function(avalon) {
         }
 
     });
+    //判定A标签的target属性是否指向自身
+    History.targetIsThisWindow = function targetIsThisWindow(targetWindow) {
+        if (!targetWindow || targetWindow === window.name || targetWindow === '_self') {
+            return true;
+        }
+        if (targetWindow === '_blank') {
+            return false;
+        }
+        if (targetWindow === 'top' && window === window.top) {
+            return true;
+        }
+        return false;
+    };
+    //https://github.com/quirkey/sammy/blob/master/lib/sammy.js
+    //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
+    //https://github.com/jashkenas/backbone/blob/master/backbone.js
+    avalon.bind(document, "click", function(event) {
+        var defaultPrevented = "defaultPrevented" in event ? event['defaultPrevented'] : event.returnValue === false
+        if (defaultPrevented || event.ctrlKey || event.metaKey || event.which == 2)
+            return;
+        var target = event.target
+        while (target.nodeName !== "A") {
+            target = target.parentNode
+            if (!target || target.nodeName === "Body") {
+                return
+            }
+        }
+
+        var full_path = target.href, hostname = target.hostname
+        alert(hostname == window.location.hostname && History.targetIsThisWindow(target.target))
+        if (hostname == window.location.hostname &&
+                History.targetIsThisWindow(target.target)) {
+            event.preventDefault();
+            alert(1)
+            //  proxy.setLocation(full_path);
+            return false;
+        }
 
 
+    })
     avalon.history = new History;
     avalon.require("ready!", function() {
-      
+
         avalon.history.start()
     })
 

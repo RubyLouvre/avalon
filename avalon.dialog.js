@@ -49,7 +49,7 @@ define(["avalon", "avalon.button"], function(avalon) {
     for (var i in transforms) {
         if (transforms[i] in overlay.style) {
             supportTransform = true;
-            cssText += i + ":translateX(-50%) translateY(-50%);"
+            cssText += i + ":translate(-50%, -50%);"
             break;
         }
     }
