@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.91   by 司徒正美 2013.7.26
+// avalon 0.92   by 司徒正美 2013.7.26
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -282,31 +282,13 @@
 
     var VMODELS = avalon.vmodels = avalon.models = {}
 
-    function isArraylike(obj) {
-        var length = obj.length,
-                type = getType(obj)
-
-        if (avalon.isWindow(obj)) {
-            return false
-        }
-
-        if (obj.nodeType === 1 && length) {
-            return true
-        }
-
-        return type === "array" || type !== "function" &&
-                (length === 0 ||
-                        typeof length === "number" && length > 0 && (length - 1) in obj)
-    }
-
 //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
     function isArrayLike(obj) {
-        if (obj) {
+        if (obj && typeof obj === "object") {
             var n = obj.length
-            if (+n === n && !(n % 1) && n >= 0) {
-                if ({}.propertyIsEnumerable.call(obj, 'length')) {
-                    return Array.isArray(obj) || typeof obj !== "function" && /^\s?function/.test(obj.item || obj.callee)
-                }
+            if ({}.propertyIsEnumerable.call(obj, 'length')) {//如果是原生对象
+                return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
+            } else if (+n === n && !(n % 1) && n >= 0) {//如果是自定义对象，则检测length属性是否为非负整数
                 return true
             }
         }
@@ -2074,7 +2056,6 @@
                 }
 
             } else if (method === "class") {
-                log("ms-class-xxx='expr'已经不提倡使用，请改用新风格：https://github.com/RubyLouvre/avalon/issues/34")
                 watchView(data.value, vmodels, data, function(val, elem) {
                     avalon(elem).toggleClass(oldStyle, !!val)
                 })

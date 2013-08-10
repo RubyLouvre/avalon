@@ -230,22 +230,17 @@
 
     var VMODELS = avalon.vmodels = avalon.models = {}
 
-    function isArraylike(obj) {
-        var length = obj.length,
-                type = getType(obj)
-
-        if (avalon.isWindow(obj)) {
-            return false
+//只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
+    function isArrayLike(obj) {
+        if (obj && typeof obj === "object") {
+            var n = obj.length
+            if (/Array|NodeList|Arguments/.test(serialize.call(obj)) || (+n === n && !(n % 1) && n >= 0)) {
+                return true
+            }
         }
-
-        if (obj.nodeType === 1 && length) {
-            return true
-        }
-
-        return type === "array" || type !== "function" &&
-                (length === 0 ||
-                        typeof length === "number" && length > 0 && (length - 1) in obj)
+        return false
     }
+
 
     function generateID() {
         //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript

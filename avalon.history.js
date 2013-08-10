@@ -26,22 +26,23 @@ define(["avalon"], function(avalon) {
 
 
     // Set up all inheritable **Backbone.History** properties and methods.
-    avalon.mix(History.prototype, {
-        // The default interval to poll for hash changes, if necessary, is
-        // twenty times a second.
+    History.prototype = {
+        constructor: History,
         interval: 50,
-        // Gets the true hash value. Cannot use location.hash directly due to bug
-        // in Firefox where location.hash will always be decoded.
+        // IE6 下有BUG，因此不能直接location.hash
         getHash: function(window) {
             var match = (window || this).location.href.match(/#(.*)$/);
             return match ? match[1] : '';
         },
         // Get the cross-browser normalized URL fragment, either from the URL,
         // the hash, or the override.
+        //取得要交给路由处理的那一部分
         getFragment: function(fragment) {
             if (fragment == null) {
                 if (this.html5Mode) {
                     fragment = this.location.pathname;
+                    //  /jquery/address/samples/state/about
+                    //  /jquery/address/samples/state
                     var root = this.root.replace(trailingSlash, '');
                     if (!fragment.indexOf(root))
                         fragment = fragment.slice(root.length);
@@ -51,8 +52,7 @@ define(["avalon"], function(avalon) {
             }
             return fragment.replace(routeStripper, '');
         },
-        // Start the hash change handling, returning `true` if the current URL matches
-        // an existing route, and `false` otherwise.
+
         start: function(options) {
             if (History.started)
                 throw new Error("avalon.history has already been started");
@@ -73,7 +73,7 @@ define(["avalon"], function(avalon) {
             }
 
             var fragment = this.getFragment();
-
+console.log(fragment+":!!!!!!!!1")
             // Normalize root to always include a leading and trailing slash.
             this.root = ('/' + this.root + '/').replace(rootStripper, '/');
             avalon.log(this.root)
@@ -122,7 +122,6 @@ define(["avalon"], function(avalon) {
                 this.location.replace(this.root + this.location.search + '#' + this.fragment);
                 // Return immediately as browser will do redirect to new url
                 return true;
-
 
             } else if (this.supportPushState && atRoot && loc.hash) {
                 this.fragment = this.getHash().replace(routeStripper, '');
@@ -207,7 +206,37 @@ define(["avalon"], function(avalon) {
             }
         }
 
-    });
+    }
+
+
+    function getFirstAnchor(list) {
+        var result = null;
+        forEach(list, function(element) {
+            if (!result && lowercase(element.nodeName) === 'a')
+                result = element;
+        });
+        return result;
+    }
+
+    function scrollToAnchorId(hash) {
+        var elem;
+        hash = hash.replace(/^#/, '')
+        // empty hash, scroll to the top of the page
+        if (!hash)
+            window.scrollTo(0, 0);
+
+        // element with given id
+        else if ((elem = document.getElementById(hash)))
+            elem.scrollIntoView();
+
+        // first anchor with given name :-D
+        else if ((elem = getFirstAnchor(document.getElementsByName(hash))))
+            elem.scrollIntoView();
+
+        // no element and hash == 'top', scroll to the top of the page
+        else if (hash === 'top')
+            window.scrollTo(0, 0);
+    }
     //判定A标签的target属性是否指向自身
     History.targetIsThisWindow = function targetIsThisWindow(targetWindow) {
         if (!targetWindow || targetWindow === window.name || targetWindow === '_self') {
@@ -237,7 +266,7 @@ define(["avalon"], function(avalon) {
         }
 
         var full_path = target.href, hostname = target.hostname
-        alert(hostname == window.location.hostname && History.targetIsThisWindow(target.target))
+
         if (hostname == window.location.hostname &&
                 History.targetIsThisWindow(target.target)) {
             event.preventDefault();
@@ -254,7 +283,26 @@ define(["avalon"], function(avalon) {
         avalon.history.start()
     })
 
-
-
+//    var _startPolling = function(every) {
+//        // set up interval
+//        var proxy = this;
+//        if (!Sammy.DefaultLocationProxy._interval) {
+//            if (!every) {
+//                every = 10;
+//            }
+//            var hashCheck = function() {
+//                var current_location = proxy.getLocation();
+//                if (typeof Sammy.DefaultLocationProxy._last_location == 'undefined' ||
+//                        current_location != Sammy.DefaultLocationProxy._last_location) {
+//                    window.setTimeout(function() {
+//                        $(window).trigger('hashchange', [true]);
+//                    }, 0);
+//                }
+//                Sammy.DefaultLocationProxy._last_location = current_location;
+//            };
+//            hashCheck();
+//            Sammy.DefaultLocationProxy._interval = window.setInterval(hashCheck, every);
+//        }
+//    }
     return avalon
 })
