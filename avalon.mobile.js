@@ -234,7 +234,7 @@
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
             var n = obj.length
-            if (/Array|NodeList|Arguments/.test(serialize.call(obj)) || (+n === n && !(n % 1) && n >= 0)) {
+            if (/Array|NodeList|Arguments|CSSRuleList/.test(serialize.call(obj)) || (+n === n && !(n % 1) && n >= 0)) {
                 return true
             }
         }
