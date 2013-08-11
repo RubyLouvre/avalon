@@ -233,9 +233,11 @@
 //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
-            var n = obj.length
-            if (/Array|NodeList|Arguments|CSSRuleList/.test(serialize.call(obj)) || (+n === n && !(n % 1) && n >= 0)) {
+            var n = obj.length, str = serialize.call(obj)
+            if (/Array|NodeList|Arguments|CSSRuleList/.test(str)){
                 return true
+            }else if(str === "[object Object]" && (+n === n && !(n % 1) && n >= 0)) {
+                return true//由于ecma262v5能修改对象属性的enumerable，因此不能用propertyIsEnumerable来判定了
             }
         }
         return false

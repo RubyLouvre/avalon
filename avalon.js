@@ -286,16 +286,19 @@
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
             var n = obj.length
-            if ({}.propertyIsEnumerable.call(obj, 'length')) {//如果是原生对象
-                return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
-            } else if (+n === n && !(n % 1) && n >= 0) {//如果是自定义对象，则检测length属性是否为非负整数
-                return true
+            if (+n === n && !(n % 1) && n >= 0) {//检测length属性是否为非负整数
+                try {
+                    if ({}.propertyIsEnumerable.call(obj, 'length') === false) {//如果是原生对象
+                        return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
+                    }
+                    return true;
+                } catch (e) {//IE的NodeList直接抛错
+                    return true
+                }
             }
         }
         return false
     }
-
-
 
     function generateID() {
         //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
