@@ -234,9 +234,9 @@
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
             var n = obj.length, str = serialize.call(obj)
-            if (/Array|NodeList|Arguments|CSSRuleList/.test(str)){
+            if (/Array|NodeList|Arguments|CSSRuleList/.test(str)) {
                 return true
-            }else if(str === "[object Object]" && (+n === n && !(n % 1) && n >= 0)) {
+            } else if (str === "[object Object]" && (+n === n && !(n % 1) && n >= 0)) {
                 return true//由于ecma262v5能修改对象属性的enumerable，因此不能用propertyIsEnumerable来判定了
             }
         }
@@ -1684,7 +1684,6 @@
                 }
 
             } else if (method === "class") {
-                log("ms-class-xxx='expr'已经不提倡使用，请改用新风格：https://github.com/RubyLouvre/avalon/issues/34")
                 watchView(data.value, vmodels, data, function(val, elem) {
                     avalon(elem).toggleClass(oldStyle, !!val)
                 })
@@ -1744,7 +1743,8 @@
                 element.value = neo
             }
         }
-        if (/^(password|textarea|text)$/.test(type)) {
+        //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
+        if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
             var event = element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
@@ -1822,10 +1822,12 @@
             }
         }
         god.bind("change", updateModel)
-        Publish[expose] = updateView
-        updateView.element = element
-        updateView()
-        delete Publish[expose]
+        avalon.nextTick(function() {
+            Publish[expose] = updateView
+            updateView.element = element
+            updateView()
+            delete Publish[expose]
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================

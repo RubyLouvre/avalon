@@ -10,6 +10,8 @@
                 avalon.define("simple", function(vm) {
                     vm.firstName = "司徒"
                     vm.lastName = "正美"
+                    vm.val = "bbb"
+                    vm.array = ["aaa", "bbb", "ccc"]
                     vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
                         set: function(val) {//里面必须用this指向scope，不能使用scope
                             var array = (val || "").split(" ");
@@ -79,7 +81,9 @@
             <p>Last name: <input ms-duplex="lastName"  /></p>
             <p>Hello,    <input ms-duplex="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
-
+            <select ms-each-el="array" ms-duplex="val">
+                <option>{{el}}</option>
+            </select>
         </fieldset>
 
         <fieldset ms-controller="array">

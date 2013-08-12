@@ -2118,7 +2118,8 @@
                 element.value = neo
             }
         }
-        if (/^(password|textarea|text)$/.test(type)) {
+        //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
+        if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
             var event = element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
@@ -2203,10 +2204,13 @@
             }
         }
         god.bind("change", updateModel)
-        Publish[expose] = updateView
-        updateView.element = element
-        updateView()
-        delete Publish[expose]
+        avalon.nextTick(function() {
+            Publish[expose] = updateView
+            updateView.element = element
+            updateView()
+            delete Publish[expose]
+        })
+
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
