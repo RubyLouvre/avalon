@@ -307,7 +307,7 @@
 
     function forEach(obj, fn) {
         if (obj) { //不能传个null, undefined进来
-            var isArray = isArraylike(obj),
+            var isArray = isArrayLike(obj),
                     i = 0
             if (isArray) {
                 for (var n = obj.length; i < n; i++) {

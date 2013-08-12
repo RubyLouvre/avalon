@@ -280,7 +280,7 @@ console.log(fragment+":!!!!!!!!1")
     avalon.history = new History;
     avalon.require("ready!", function() {
 
-        avalon.history.start()
+        avalon.history.start({html5Mode:false})
     })
 
 //    var _startPolling = function(every) {
