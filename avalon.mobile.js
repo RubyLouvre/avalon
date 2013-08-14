@@ -1166,7 +1166,7 @@
                     if (typeof bindingHandlers[type] === "function") {
                         bindings.push({
                             type: type,
-                            param: array.slice(2).join(""),
+                            param: array.slice(2).join("-"),
                             element: el,
                             remove: true,
                             node: attr,
