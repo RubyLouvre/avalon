@@ -2092,7 +2092,19 @@
         if (typeof modelBinding[tagName] === "function") {
             var array = parseExpr(data.value, vmodels, data, true)
             if (array) {
-                modelBinding[tagName](element, array[0], vmodels[0], data.param)
+                var val = data.value.split("."), first = val[0], second = val[1]
+                for (var el, i = vmodels.length - 1; el = vmodels[i--]; ) {
+                    if (el.hasOwnProperty(first)) {
+                        if (second && el[first]) {
+                            if (el[first].hasOwnProperty(second)) {
+                                break
+                            }
+                        } else {
+                            break
+                        }
+                    }
+                }
+                modelBinding[tagName](element, array[0], el, data.param)
             }
         }
     }
