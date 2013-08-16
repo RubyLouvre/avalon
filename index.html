@@ -333,6 +333,7 @@ window.onload =  function(){
         <pre class="brush:html;gutter:false;toolbar:false;">
          &lt;div  ms-include-src="'tmpl.html'"&gt;&lt;/div&gt;
         </pre>
+        <p>有关它的高级应用的例子可见这里<a href="https://github.com/RubyLouvre/avalon/issues/46">利用ms-include与监控数组实现一个树</a> </p>
         <h3 id="top8">数据填充(ms-text, ms-html)</h3>
         <p>这分两种：文本绑定与HTML绑定，每种都有两个实现方式</p>
         <pre class="brush:html;gutter:false;toolbar:false;">
@@ -375,6 +376,44 @@ window.onload =  function(){
             <li>ms-change</li>
             <li>ms-on-*</li>
         </ul>
+        
+                <pre class="brush:html;gutter:false;toolbar:false;">
+&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;有关事件回调传参&lt;/title&gt;
+        &lt;script src="avalon.js" type="text/javascript"&gt;&lt;/script&gt;
+        &lt;script&gt;
+
+            avalon.ready(function() {
+                var a = avalon.define("simple", function(vm) {
+                    vm.firstName = "司徒"
+                    vm.lastName = "正美"
+                    vm.array = ["aaa", "bbb", "ccc"]
+                    vm.argsClick = function(e, a, b) {
+                        alert(a+ "  "+b)
+                    }
+                    vm.loopClick = function(a) {
+                        alert(a)
+                    }
+                });
+                avalon.scan();
+            })
+
+        &lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;fieldset ms-controller="simple"&gt;
+            &lt;legend&gt;例子&lt;/legend&gt;
+            &lt;div ms-click="argsClick($event, 100, firstName)"&gt;点我&lt;/div&gt;
+            &lt;div ms-each-el="array" &gt;
+                &lt;p ms-click="loopClick(el)"&gt;{{el}}&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/fieldset&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+        </pre>
         <h3 id="top11">显示绑定(ms-visible)</h3>
         <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，对于低版本的浏览器，它用的是style.display="none"进行隐藏，对于支持HTML5的浏览器，它是使用hidden属性来控制。因此它是优于其他MVVM的实现。</p>
         <h3 id="top12">插入绑定(ms-if)</h3>
@@ -389,7 +428,7 @@ window.onload =  function(){
             <dt>radio</dt>
             <dd>默认是通过change事件进行监听，旧式IE是通过chick实现， 它要求VM对应的属性为一个布尔。 </dd>
             <dt>checkbox</dt>
-            <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串数组。 </dd>
+            <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串数组。有时，我们需要将checkbox 当成radio用，就需要用ms-duplex-radio, <a href="http://rubylouvre.github.io/mvvm/avalon.grid.html">点我看此例子</a> </dd>
             <dt>select</dt>
             <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串或字符串数组（视multiple的值）。 </dd>
         </dl>

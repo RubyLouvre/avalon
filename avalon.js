@@ -1177,6 +1177,7 @@
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
                             if (value !== neo) {
+                                oldArgs = void 0
                                 vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
                             return neo
