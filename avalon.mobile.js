@@ -1285,8 +1285,8 @@
     }
     //取得求值函数及其传参
 
-    function parseExpr(code, scopes, data, getset) {
-        if (getset) {
+    function parseExpr(code, scopes, data, four) {
+        if (four === "setget") {
             var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
             args = scopes
         } else {
@@ -1309,7 +1309,12 @@
             if (prefix) {
                 prefix = "var " + prefix
             }
-
+            if (data.type === "on") {
+                code = code.replace("(", ".call(this,")
+                if (four === "$event") {
+                    names.push(four)
+                }
+            }
             if (data.filters) {
                 code = "\nvar ret" + expose + " = " + code
                 var textBuffer = [],
@@ -1338,7 +1343,6 @@
             fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
         }
         try {
-            fn.apply(fn, args)
             return [fn, args]
         } catch (e) {
             data.remove = false
@@ -1419,7 +1423,7 @@
         return window.getComputedStyle ?
                 window.getComputedStyle(td, null).display == "table-cell" : true
     })(DOC.createElement("td"))
-
+    var rdash = /\(([^)]*)\)/
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var placehoder = DOC.createComment("@"),
@@ -1471,18 +1475,37 @@
             })
         },
         "on": function(data, vmodels) {
-            var callback, type = data.param,
-                    elem = data.element
-            watchView(data.value, vmodels, data, function(fn) {
-                callback = fn
-            })
-            if (!elem.$vmodels) {
-                elem.$vmodel = elem.$scope = vmodels[0]
-                elem.$vmodels = vmodels
+            data.type = "on"
+            var value = data.value, four = "$event", elem = data.element, type = data.param, callback
+            if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
+                var matched = (value.match(rdash) || ["", ""])[1].trim()
+                if (matched === "" || matched === "$event") {// aaa() aaa($event)当成aaa处理
+                    four = void 0
+                    value = value.replace(rdash, "")
+                }
+            } else {
+                four = void 0
             }
-            if (type && typeof callback === "function") {
-                avalon.bind(elem, type, callback)
+            var array = parseExpr(value, vmodels, data, four)
+            if (array) {
+                var fn = array[0],
+                        args = array[1]
+                if (!four) {
+                    callback = fn.apply(fn, args)
+                } else {
+                    callback = function(e) {
+                        fn.apply(this, args.concat(e))
+                    }
+                }
+                if (!elem.$vmodels) {
+                    elem.$vmodel = elem.$scope = vmodels[0]
+                    elem.$vmodels = vmodels
+                }
+                if (type && typeof callback === "function") {
+                    avalon.bind(elem, type, callback)
+                }
             }
+
         },
         "data": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
@@ -1716,7 +1739,7 @@
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         if (typeof modelBinding[tagName] === "function") {
-            var array = parseExpr(data.value, vmodels, data, true)
+            var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
                 var val = data.value.split("."), first = val[0], second = val[1]
                 for (var el, i = vmodels.length - 1; el = vmodels[i--]; ) {

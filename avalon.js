@@ -1252,12 +1252,19 @@
             collectSubscribers(fn)
             delete Publish[expose]
         })
-        vmodel.$model = vmodel.$json = model
-        vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
+        vmodel.$model = model
+        if (kernel.compact) {
+            vmodel.$json = model
+        }
+        vmodel.$events = {}
         vmodel.$id = generateID()
         vmodel.$accessor = accessores
         for (var i in Observable) {
-            vmodel[i] = Observable[i].bind(vmodel)
+            var fn = Observable[i]
+            if (!W3C) {//只有在IE678才加此补丁，因为VB对象的方法里的this并不指向自身，需要用bind处理一下
+                fn = fn.bind(vmodel)
+            }
+            vmodel[i] = fn
         }
         vmodel.hasOwnProperty = function(name) {
             return name in vmodel.$model
@@ -2353,7 +2360,10 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = array.$json = model
+        array.$model = model
+        if (kernel.compact) {
+            array.$json = model
+        }
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array.isCollection = true
         array._splice = array.splice

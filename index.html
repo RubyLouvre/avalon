@@ -787,6 +787,61 @@ window.onload =  function(){
     &lt;/body&gt;
 &lt;/html&gt;
         </pre>
+        <p>与jquery更好的集成，比如一些旧系统，直接在页面引入jquery库与其大量jquery插件，改成动态加载方式成本非常大。怎么样才能与jquery和平共存，亦能让AMD加载发挥作呢？先引入jquery库，
+            
+            然后将avalon.modules.jquery 加个预设值（exports: jquery用于shim机制， state: 2 表明它已经加载完毕）就行了。</p>
+                <fieldset>
+            <legend>例子</legend>
+            <pre class="brush:javascript;gutter:false;toolbar:false">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+
+    &lt;head&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+        &lt;script src="avalon.js" type="text/javascript"&gt;&lt;/script&gt;
+
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div ms-controller="main" ms-click="click"&gt;
+            &lt;p&gt;
+                &lt;a href="#" &gt;点击我&lt;/a&gt;
+            &lt;/p&gt;
+        &lt;/div&gt;
+        &lt;script type="text/javascript"&gt;
+
+            avalon.modules.jquery = {
+                exports: jQuery,
+                state: 2
+            }
+            $.ajaxSetup({
+                headers: {ajaxRequest: true},
+                beforeSend: function(o) {
+                    avalon.log(typeof o)
+                    avalon.log(typeof o.id)
+                },
+                complete: function(data) {
+                    avalon.log('ajax 成功执行啦，阿门！')
+                }
+            })
+            $('body').bind("click", function(e) {
+                alert("document");
+                avalon.log(typeof e.target.$vmodel)
+                $.post('./h.js', {}, function(res) {
+                    avalon.log(typeof res)
+                })
+            });
+
+            avalon.require('jquery', function() {
+                avalon.log('加载jq了啊……')
+            })
+
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+        </fieldset>
         <fieldset>
             <legend>例子</legend>
             <p>加载单个模块。</p>
