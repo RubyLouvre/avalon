@@ -2,12 +2,14 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <title>scope</title>
-        <script src="avalon.mobile.js" type="text/javascript"></script>
+        <script src="avalon.js" type="text/javascript"></script>
+
         <script>
-          
+
             avalon.ready(function() {
-                avalon.define("simple", function(vm) {
+                var model = avalon.define("simple", function(vm) {
                     vm.firstName = "司徒"
                     vm.lastName = "正美"
                     vm.val = "bbb"
@@ -22,7 +24,18 @@
                             return this.firstName + " " + this.lastName;
                         }
                     }
+                    vm.obj = ""
                 });
+                setTimeout(function() {
+                    model.array.set(1, "ddd")
+
+//                    var el = document.querySelector("#aaa")
+//                    console.log(el)
+//                    el.innerText = "{{obj.aaa}}"
+//                    console.log("xxxxxxxxxxxxxxxx")
+//                    avalon.scan(el, a)
+                }, 1000)
+
 
                 avalon.define("array", function(vm) {
                     vm.array = ["1", "2", "3", "4"]
@@ -63,9 +76,9 @@
                     vm.sex = "男"
                     vm.country = "中国"
                 });
-                   avalon.define("object", function(vm) {
-                    vm.array = [{text:"xxxx"},{text:"yyy"}]
-                    vm.change = function(){
+                avalon.define("object", function(vm) {
+                    vm.array = [{text: "xxxx"}, {text: "yyy"}]
+                    vm.change = function() {
                         console.log("ddddddddd")
                         this.$vmodel.el.text = "9999"
                     }
@@ -84,6 +97,7 @@
             <select ms-each-el="array" ms-duplex="val">
                 <option>{{el}}</option>
             </select>
+            <div id="aaa">{{obj.aaa}}</div>
         </fieldset>
 
         <fieldset ms-controller="array">

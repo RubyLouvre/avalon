@@ -2,8 +2,8 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>scope</title>
-        <script src="avalon.js" type="text/javascript"></script>
+        <title>有关事件回调传参</title>
+        <script src="avalon.mobile.js" type="text/javascript"></script>
         <script>
 
             avalon.ready(function() {
@@ -26,7 +26,7 @@
     <body>
         <fieldset ms-controller="simple">
             <legend>例子</legend>
-            <div ms-click="argsClick($event, 100, firstName)">ssssssssssssssssssssss</div>
+            <div ms-click="argsClick($event, 100, firstName)">点我</div>
             <div ms-each-el="array" >
                 <p ms-click="loopClick(el)">{{el}}</p>
             </div>
