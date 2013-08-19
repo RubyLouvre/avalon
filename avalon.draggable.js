@@ -295,7 +295,7 @@ define(["avalon"], function(avalon) {
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
                 clone.style.backgroundColor = "yellow"
-                console.log(element.clientWidth)
+              
                 avalon(clone).css( "opacity", .5).width(element.offsetWidth).height(element.offsetHeight)
 
                 data.clone = clone
@@ -393,7 +393,13 @@ define(["avalon"], function(avalon) {
 
     return avalon
 })
-/* handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
+/*
+ ms-draggable-xxx-fn , xxx为一个VM的名字($id), fn为一个函数， fn不能删略，xxx可省
+ 下面这些全部可用data-*进行配置
+ drag 为VM中一个方法名
+ stop 为VM中一个方法名
+ start  为VM中一个方法名
+ handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
  ghosting: false, //是否影子拖动，动态生成一个元素，拖动此元素，当拖动结束时，让原元素到达此元素的位置上,
  delay: 0, 延迟时间
  axis: "xy" "x", "y" 决定只能垂直拖动，还是水平拖动，还是任意拖动
