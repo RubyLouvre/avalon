@@ -199,36 +199,50 @@ define(["avalon"], function(avalon) {
     }
 
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var fn = data.value.trim(), dragCallback, model
+        var fnName = data.value.trim(), completeCallback, model
         for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(fn)) {
-                if (typeof vm[fn] === "function") {
-                    dragCallback = vm[fn]
-                    model = vm
+            if (vm.hasOwnProperty(fnName)) {
+                if (typeof vm[fnName] === "function") {
+                    completeCallback = vm[fnName]
+                    model = vm.$model
                     break;
                 }
             }
         }
-        var optsName = data.args.join("-"), opts
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(fn)) {
-                if (typeof vm[optsName] === "object") {
-                    if (!model) {
-                        model = vm
-                    }
-                    opts = vm[optsName]
-                    break;
-                }
-            }
+        if (typeof completeCallback !== "function") {
+            throw "此绑定的格式为： ms-draggable-vmName?=fn"
         }
 
-        opts = opts || {}
+        var vmName = data.param, opts
+        if (/\w/.test(vmName)) {
+            for (var i = 0, vm; vm = vmodels[i++]; ) {
+                if (vm.$id === vmName) {
+                    opts = model.$model
+                    break;
+                }
+            }
+        }
+        opts = opts || model
+
         var element = data.element
         var $element = avalon(element)
+
         var options = avalon.mix({}, defaults, opts, $element.data());
-        if (dragCallback) {
-            options.drag = dragCallback
+        if (completeCallback) {
+            options.stop = completeCallback
         }
+        //修正drag,stop为函数
+        "drag,stop".replace(avalon.rword, function(name) {
+            var method = options[name]
+            if (typeof method === "string") {
+                if (typeof opts[method] === "function") {
+                    options[name] = opts[method]
+                } else {
+                    options[name] = avalon.noop
+                }
+            }
+        })
+
 
         if (options.axis !== "" && !/^(x|y|xy)$/.test(options.axis)) {
             options.axis = "xy"
@@ -281,7 +295,9 @@ define(["avalon"], function(avalon) {
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
                 clone.style.backgroundColor = "yellow"
-                avalon(clone).css("opacity", .5)
+                console.log(element.clientWidth)
+                avalon(clone).css( "opacity", .5).width(element.offsetWidth).height(element.offsetHeight)
+
                 data.clone = clone
                 if (position !== "fixed") {
                     clone.style.position = "absolute"
@@ -377,5 +393,27 @@ define(["avalon"], function(avalon) {
 
     return avalon
 })
-// handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
- 
+/* handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
+ ghosting: false, //是否影子拖动，动态生成一个元素，拖动此元素，当拖动结束时，让原元素到达此元素的位置上,
+ delay: 0, 延迟时间
+ axis: "xy" "x", "y" 决定只能垂直拖动，还是水平拖动，还是任意拖动
+ containment： 拖动范围，#id值， "window", "document", "parent", "[0, 0, 400, 300]"
+ <body ms-controller="xxx">
+ <ul  ms-each-el="array">
+ <li ms-draggable="complete" >item {{$index}}</li>
+ </ul>
+ </body>
+ avalon.require("avalon.draggable", function() {
+ avalon.define("xxx", function(vm) {
+ vm.array = avalon.range(0, 10)
+ vm.complete = function() {
+ console.log("done")
+ }
+ vm.drag = function(e) {
+ console.log(e.pageX + " : " + e.pageY)
+ }
+ })
+ avalon.scan()
+ })
+ * 
+ */

@@ -1701,13 +1701,12 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
+                data.remove = false
                 log("转换[ " + originCode + " ]时失败")
             }
         }
         try {
             return [fn, args]
-        } catch (e) {
-            data.remove = false
         } finally {
             textBuffer = names = null //释放内存
         }
