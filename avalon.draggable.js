@@ -154,10 +154,12 @@ define(["avalon"], function(avalon) {
             //拖动前相对于offsetParent的坐标
             data.startLeft = parseFloat(target.css("left"))
             data.startTop = parseFloat(target.css("top"))
+
             //拖动后相对于offsetParent的坐标
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
             data.endLeft = parseFloat($element.css("left")) - data.startLeft
             data.endTop = parseFloat($element.css("top")) - data.startTop
+
             data.clickX = data.pageX - startOffset.left //鼠标点击的位置与目标元素左上角的距离
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
             setContainment(options, data)//修正containment
@@ -171,8 +173,8 @@ define(["avalon"], function(avalon) {
 
     }
     var xy2prop = {
-        "X":"Top",
-        "Y":"Left"
+        "X": "Left",
+        "Y": "Top"
     }
     //插件系统
     draggable.start = []
@@ -236,10 +238,11 @@ define(["avalon"], function(avalon) {
         data["page" + pos] = page//重设pageX, pageY
         var Prop = xy2prop[pos]
         var prop = Prop.toLowerCase()
+
         var number = data["start" + Prop] + page - data["startPage" + pos] + (end ? data["end" + Prop] : 0)
-        data[prop] = number 
+        data[prop] = number
         if (data["drag" + pos]) {//保存top, left
-            element.style[ prop ] = data[ prop] + "px"
+            element.style[ prop ] = number + "px"
         }
     }
 
