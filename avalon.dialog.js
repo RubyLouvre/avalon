@@ -1,3 +1,4 @@
+//test
 define(["avalon", "avalon.button"], function(avalon) {
     var defaults = {
         toggle: true,
