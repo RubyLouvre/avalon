@@ -12,7 +12,7 @@
                     vm.lastName = "正美"
                     vm.array = ["aaa", "bbb", "ccc"]
                     vm.argsClick = function(e, a, b) {
-                        alert(a+ "  "+b)
+                        alert(a + "  " + b)
                     }
                     vm.loopClick = function(a) {
                         alert(a)
@@ -24,6 +24,12 @@
         </script>
     </head>
     <body>
+        <table>
+            <tr>
+                <td></td><td></td><td></td><td></td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+        </table>
         <fieldset ms-controller="simple">
             <legend>例子</legend>
             <div ms-click="argsClick($event, 100, firstName)">点我</div>

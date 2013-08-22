@@ -1085,11 +1085,10 @@
             }
         } else if (c) {
             var newVmodel = VMODELS[c]
-            if (!newVmodel) {
-                return
+            if (newVmodel) {
+                vmodels = [newVmodel].concat(vmodels)
+                elem.removeAttribute(prefix + "controller")
             }
-            vmodels = [newVmodel].concat(vmodels)
-            elem.removeAttribute(prefix + "controller")
         }
         scanAttr(elem, vmodels) //扫描特性节点
         if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
@@ -1591,7 +1590,7 @@
         "bind": function(data, vmodels) {
             var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/), ret = false
             if (array && array[1] && array[2]) {
-                var fn = array[2]
+                var fn = array[2], elem = data.element
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
                     if (scope.hasOwnProperty(fn)) {
                         fn = scope[fn]
@@ -1599,9 +1598,9 @@
                     }
                 }
                 if (typeof fn === "function") {
-                    fn.call(data.element)
-                    scope.$watch(data.param, function(neo, old) {
-                        fn.call(data.element, neo, old)
+                    fn.call(elem)
+                    scope.$watch(array[1], function(neo, old) {
+                        fn.call(elem, neo, old)
                     })
                     ret = true
                 }
