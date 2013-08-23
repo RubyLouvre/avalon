@@ -24,17 +24,11 @@
                             return this.firstName + " " + this.lastName;
                         }
                     }
-                    vm.obj = ""
+                    vm.obj = {
+                        aaa: 111111
+                    }
                 });
-                setTimeout(function() {
-                    model.array.set(1, "ddd")
 
-//                    var el = document.querySelector("#aaa")
-//                    console.log(el)
-//                    el.innerText = "{{obj.aaa}}"
-//                    console.log("xxxxxxxxxxxxxxxx")
-//                    avalon.scan(el, a)
-                }, 1000)
 
 
                 avalon.define("array", function(vm) {
