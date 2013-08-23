@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <html >
     <head>
-        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>ms-if</title>
         <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define('nav_menu', function(vm) {
+                vm.items = [
+                    {url: '#123', text: 'menu 123', actived: true},
+                    {url: '#124', text: 'menu 124', actived: false}
+                ];
+                vm.bool = false
+                vm.click = function() {
+                    alert(this.innerHTML)
+                }
+                vm.toggle = function() {
+                    vm.bool = true;
+                    model.items[1].actived =  !model.items[1].actived
+                }
+            });
+
+
+        </script>
     </head>
 
-    <body style="margin-top: 60px;margin-bottom: 30px">
+    <body  ms-controller="nav_menu">
 
-<!--    <div ms-include="'top_menu_nav_template'"></div>
-    
-<script type="text/template" id="top_menu_nav_template">-->
-    <ul class="nav navbar-nav" ms-controller="nav_menu" ms-each-el="items">
-      <li><a ms-attr-href="el.url">{{el.text}}</a></li>
-      <li ms-class="active:el.actived" ms-if="el.children.length==0">
-          <a ms-attr-href="el.url">{{el.text}}</a>
-      </li>
-    </ul>
-<!--</script>-->
-        <script LANGUAGE="javascript">
-            var nav_menu = avalon.define('nav_menu', function(vm){
-                vm.items = [
-                    {url:'#123', text:'menu 123', actived:true, children:[]},
-                    {url:'#123', text:'menu 124', actived:false, children:[
-                        {url:'#123', text:'submenu 123', actived:false, children:[]},
-                        {url:'#123', text:'submenu 123', children:[]}
-                    ]},
-                    {url:'#123', text:'menu 125', children:[]}
-                ];
-                    
-            });
-            
-        </script>
+
+        <ul class="nav" ms-each-el="items">
+            <li><a ms-attr-href="el.url">{{el.text}}</a></li>
+            <li ms-class="active:el.actived" ms-if="el.actived">
+                <div>再渲染一次{{el.text}}</div>
+            </li>
+        </ul>
+        <div>if binding</div>
+        <p><button type='button' ms-click='toggle'>点我</button></p>
+        <div ms-if='bool' ms-click='click' > 这个东西会被移除</div>
+
 
     </body>
 </html>

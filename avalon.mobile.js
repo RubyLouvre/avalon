@@ -1069,32 +1069,31 @@
 
     function scanTag(elem, vmodels) {
         vmodels = vmodels || []
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttribute(prefix + "important")
         var c = elem.getAttribute(prefix + "controller")
-
-        //这三个绑定优先处理，其中a > b > c
         if (typeof a === "string") {
             return
         } else if (b) {
             if (!VMODELS[b]) {
                 return
-            } else {
-                vmodels = [VMODELS[b]]
-                elem.removeAttribute(prefix + "important")
             }
+            vmodels = [VMODELS[b]]//不包含父VM
+            elem.removeAttribute(prefix + "important")
         } else if (c) {
-            var newVmodel = VMODELS[c]
-            if (newVmodel) {
-                vmodels = [newVmodel].concat(vmodels)
-                elem.removeAttribute(prefix + "controller")
+            var newVmodel = VMODELS[c]//子VM依赖于父VM，父VM不存在，子VM也没有必要扫描了
+            if (!newVmodel) {
+                return
             }
+            vmodels = [newVmodel].concat(vmodels)
+            elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, vmodels)
-        if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-            scanNodes(elem, vmodels)
-        }
-        //扫描特性节点
+        scanAttr(elem, vmodels, function() {  //扫描特性节点
+            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
+                scanNodes(elem, vmodels)  //扫描子孙元素
+            }
+        })
 
     }
 
@@ -1157,8 +1156,8 @@
         return tokens
     }
 
-    function scanAttr(el, vmodels) {
-        var bindings = []
+    function scanAttr(el, vmodels, callback) {
+        var bindings = [], ifBinding
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
                 if (attr.name.indexOf(prefix) !== -1) {
@@ -1166,19 +1165,33 @@
                     var array = attr.name.split("-")
                     var type = array[1]
                     if (typeof bindingHandlers[type] === "function") {
-                        bindings.push({
+                        var binding = {
                             type: type,
                             param: array.slice(2).join("-"),
                             element: el,
                             remove: true,
                             node: attr,
                             value: attr.nodeValue
-                        })
+                        }
+                        if (attr.name === "ms-if") {
+                            ifBinding = binding
+                        } else {
+                            bindings.push(binding)
+                        }
                     }
                 }
             }
         }
-        executeBindings(bindings, vmodels)
+        if (ifBinding) {
+            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
+            bindingHandlers["if"](ifBinding, vmodels, function() {
+                executeBindings(bindings, vmodels)
+                callback()
+            })
+        } else {
+            executeBindings(bindings, vmodels)
+            callback()
+        }
     }
 
     function executeBindings(bindings, vmodels) {
@@ -1297,7 +1310,8 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = ""
+                    prefix = "",
+                    originCode = code
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, n = scopes.length; i < n; i++) {
@@ -1343,12 +1357,17 @@
             } else {
                 code = "\nreturn " + code + ";"//IE全家 Function("return ")出错，需要Function("return ;")
             }
-            fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            try {
+                fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            } catch (e) {
+                log("转换[ " + originCode + " ]时失败")
+            }
         }
         try {
             return [fn, args]
         } catch (e) {
             data.remove = false
+            log("执行[ " + originCode + " ]对应的求值函数时失败")
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -1428,7 +1447,7 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     var bindingHandlers = avalon.bindingHandlers = {
-        "if": function(data, vmodels) {
+        "if": function(data, vmodels, callback) {
             var placehoder = DOC.createComment("@"),
                     elem = data.element,
                     parent
@@ -1454,6 +1473,7 @@
                             parent.replaceChild(elem, placehoder)
                             elem.noRemove = 0
                         }
+                        avalon.nextTick(callback)
                     } else { //移除  如果它还在DOM树中
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
