@@ -1447,11 +1447,10 @@
             vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, vmodels, function() {
-            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels)
-            }
-        }) //扫描特性节点
+        scanAttr(elem, vmodels)
+        if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
+            scanNodes(elem, vmodels)
+        }
 
     }
 
@@ -1514,9 +1513,8 @@
         return tokens
     }
 
-    function scanAttr(el, vmodels, callback) {
-        callback = callback || avalon.noop
-        var bindings = [], ifBinding
+    function scanAttr(el, vmodels) {
+        var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
                 if (attr.name.indexOf(prefix) !== -1) {
@@ -1524,36 +1522,22 @@
                     var array = attr.name.split("-")
                     var type = array[1]
                     if (typeof bindingHandlers[type] === "function") {
-                        var binding = {
+                        bindings.push({
                             type: type,
                             param: array.slice(2).join("-"),
                             element: el,
                             remove: true,
                             node: attr,
                             value: attr.nodeValue
-                        }
-                        if (attr.name === "ms-if") {
-                            ifBinding = binding
-                        } else {
-                            bindings.push(binding)
-                        }
+                        })
                     }
                 }
             }
         }
-        if (ifBinding) {
-            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-            bindingHandlers["if"](ifBinding, vmodels, function() {
-                executeBindings(bindings, vmodels)
-                callback()
-            })
-        } else {
-            executeBindings(bindings, vmodels)
-            callback()
-        }
+        executeBindings(bindings, vmodels)
     }
 
-    function executeBindings(bindings, vmodels, data) {
+    function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
             var flag = bindingHandlers[data.type](data, vmodels)
             if (flag !== false && data.remove) { //移除数据绑定，防止被二次解析
@@ -1814,7 +1798,7 @@
     }
     var rdash = /\(([^)]*)\)/
     var bindingHandlers = avalon.bindingHandlers = {
-        "if": function(data, vmodels, callback) {
+        "if": function(data, vmodels) {
             var placehoder = DOC.createComment("@"),
                     elem = data.element,
                     parent
@@ -1839,10 +1823,8 @@
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
                             elem.noRemove = 0
-                            if (typeof callback === "function") {
-                                callback()
-                            }
                         }
+         
                     } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)

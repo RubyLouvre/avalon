@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html >
+    <head>
+        <title></title>
+        <script src="avalon.js"></script>
+    </head>
+
+    <body style="margin-top: 60px;margin-bottom: 30px">
+
+<!--    <div ms-include="'top_menu_nav_template'"></div>
+    
+<script type="text/template" id="top_menu_nav_template">-->
+    <ul class="nav navbar-nav" ms-controller="nav_menu" ms-each-el="items">
+      <li><a ms-attr-href="el.url">{{el.text}}</a></li>
+      <li ms-class="active:el.actived" ms-if="el.children.length==0">
+          <a ms-attr-href="el.url">{{el.text}}</a>
+      </li>
+    </ul>
+<!--</script>-->
+        <script LANGUAGE="javascript">
+            var nav_menu = avalon.define('nav_menu', function(vm){
+                vm.items = [
+                    {url:'#123', text:'menu 123', actived:true, children:[]},
+                    {url:'#123', text:'menu 124', actived:false, children:[
+                        {url:'#123', text:'submenu 123', actived:false, children:[]},
+                        {url:'#123', text:'submenu 123', children:[]}
+                    ]},
+                    {url:'#123', text:'menu 125', children:[]}
+                ];
+                    
+            });
+            
+        </script>
+
+    </body>
+</html>
