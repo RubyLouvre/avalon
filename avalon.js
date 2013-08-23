@@ -1447,10 +1447,12 @@
             vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, vmodels) //扫描特性节点
-        if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-            scanNodes(elem, vmodels)
-        }
+        scanAttr(elem, vmodels, function() {
+            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
+                scanNodes(elem, vmodels)
+            }
+        }) //扫描特性节点
+
     }
 
     function scanText(textNode, vmodels) {
@@ -1512,8 +1514,9 @@
         return tokens
     }
 
-    function scanAttr(el, vmodels) {
-        var bindings = []
+    function scanAttr(el, vmodels, callback) {
+        callback = callback || avalon.noop
+        var bindings = [], ifBinding
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
                 if (attr.name.indexOf(prefix) !== -1) {
@@ -1521,29 +1524,43 @@
                     var array = attr.name.split("-")
                     var type = array[1]
                     if (typeof bindingHandlers[type] === "function") {
-                        bindings.push({
+                        var binding = {
                             type: type,
                             param: array.slice(2).join("-"),
                             element: el,
                             remove: true,
                             node: attr,
                             value: attr.nodeValue
-                        })
+                        }
+                        if (attr.name === "ms-if") {
+                            ifBinding = binding
+                        } else {
+                            bindings.push(binding)
+                        }
                     }
                 }
             }
         }
-        executeBindings(bindings, vmodels)
+        if (ifBinding) {
+            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
+            bindingHandlers["if"](ifBinding, vmodels, function() {
+                executeBindings(bindings, vmodels)
+                callback()
+            })
+        } else {
+            executeBindings(bindings, vmodels)
+            callback()
+        }
     }
 
-    function executeBindings(bindings, vmodels) {
+    function executeBindings(bindings, vmodels, data) {
         bindings.forEach(function(data) {
             var flag = bindingHandlers[data.type](data, vmodels)
             if (flag !== false && data.remove) { //移除数据绑定，防止被二次解析
                 data.element.removeAttribute(data.node.name)
             }
-            delete data.remove
         })
+        bindings.length = 0
     }
 
     function extractTextBindings(textNode) {
@@ -1796,7 +1813,7 @@
     }
     var rdash = /\(([^)]*)\)/
     var bindingHandlers = avalon.bindingHandlers = {
-        "if": function(data, vmodels) {
+        "if": function(data, vmodels, callback) {
             var placehoder = DOC.createComment("@"),
                     elem = data.element,
                     parent
@@ -1817,12 +1834,15 @@
             function ifcall() {
                 parent = elem.parentNode
                 watchView(data.value, vmodels, data, function(val) {
-                    if (val) { //添加 如果它不在DOM树中
+                    if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
                             elem.noRemove = 0
+                            if (typeof callback === "function") {
+                                callback()
+                            }
                         }
-                    } else { //移除  如果它还在DOM树中
+                    } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
                             elem.noRemove = 1
@@ -1926,7 +1946,7 @@
             var text = data.value.trim(), simple = true, method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
-                if (rexpr.test(text) && RegExp.rightContext === "") {
+                if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
                     simple = true
                     text = RegExp.$1
                 }
@@ -3378,3 +3398,4 @@
 //7 19 v0.9 继续使用082的scanNodes 优化each绑定与Collection 添加animationend事件支持 添加ms-with绑定 fix IE9-10获取option元素的value的BUG， 
 //改良 AMD加载器与jQuery这些在内部使用了全局define方法的库的兼容问题， 抽象setNumber方法来处理数组方法的参数 
 //分割Configue, AMDLoad, DomReady等模块，让框架的可读性更强
+//http://ilightbox.net/#

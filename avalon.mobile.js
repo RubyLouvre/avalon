@@ -1090,10 +1090,12 @@
                 elem.removeAttribute(prefix + "controller")
             }
         }
-        scanAttr(elem, vmodels) //扫描特性节点
+        scanAttr(elem, vmodels)
         if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
             scanNodes(elem, vmodels)
         }
+        //扫描特性节点
+
     }
 
     function scanText(textNode, vmodels) {
@@ -1186,6 +1188,7 @@
                 data.element.removeAttribute(data.node.name)
             }
         })
+        bindings.length = 0
     }
 
     function extractTextBindings(textNode) {
@@ -1543,7 +1546,7 @@
             var text = data.value.trim(), simple = true, method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
-                if (rexpr.test(text) && RegExp.rightContext === "") {
+                if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
                     simple = true
                     text = RegExp.$1
                 }
