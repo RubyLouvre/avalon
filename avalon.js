@@ -1956,7 +1956,7 @@
                 if (method === "css") {
                     avalon(elem).css(data.param, val) //
                 } else if (method === "include" && val) {
-                    if (data.param  === "src") {
+                    if (data.param === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
                         ajax.onreadystatechange = function() {
                             if (ajax.readyState === 4) {
@@ -3329,9 +3329,11 @@
     var ready = W3C ? "DOMContentLoaded" : "readystatechange"
 
     function fireReady() {
-        modules["ready!"].state = 2
-        innerRequire.checkDeps()
-        fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
+        if (document.body) {//  在IE8 iframe中doScrollCheck可能不正确
+            modules["ready!"].state = 2
+            innerRequire.checkDeps()
+            fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
+        }
     }
 
     function doScrollCheck() {
@@ -3339,7 +3341,7 @@
             root.doScroll("left")
             fireReady()
         } catch (e) {
-            setTimeout(doScrollCheck)
+            setTimeout(doScrollCheck,50)
         }
     }
 
@@ -3366,6 +3368,7 @@
         loader: true
     })
     avalon.ready(function() {
+        console.log(document.body)
         avalon.scan(document.body)
     })
 })(document)
