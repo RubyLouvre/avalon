@@ -66,7 +66,7 @@ define(["avalon", "avalon.button"], function(avalon) {
             options.close = opts;
         }
         var model;
-        var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front dialog'+ id +
+        var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front dialog' + id +
                 ' " tabindex="-1" style="position: absolute;" ' + //style="position: absolute;" 
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
@@ -77,11 +77,11 @@ define(["avalon", "avalon.button"], function(avalon) {
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
                 '</div></div>').firstChild;
-      
+
         var parentNode = options.parent === "parent" ? element.parentNode : document.body;
 
         var full = false, addTransform = false
-        $element.addClass("ui-dialog-content ui-widget-content" );
+        $element.addClass("ui-dialog-content ui-widget-content");
         if (supportTransform) {
             var styleEl = "<style>.dialog" + id + "{" + cssText + "}</style>"
             styleEl = avalon.parseHTML(styleEl).firstChild
@@ -161,7 +161,7 @@ define(["avalon", "avalon.button"], function(avalon) {
                 if (full) {//如果是基于窗口垂直居中
                     if (supportFixed) {
                         if (supportTransform) {
-                            if(!addTransform){
+                            if (!addTransform) {
                                 document.head.appendChild(styleEl)
                                 addTransform = true
                             }

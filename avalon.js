@@ -3335,7 +3335,7 @@
             fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
         }
     }
-
+ 
     function doScrollCheck() {
         try { //IE下通过doScrollCheck检测DOM树是否建完
             root.doScroll("left")
@@ -3352,7 +3352,7 @@
             fireReady()
         })
     } else {
-        DOC.attachEvent("onreadychange", function() {
+        DOC.attachEvent("onreadystatechange", function() {
             if (DOC.readyState === "complete") {
                 fireReady()
             }
