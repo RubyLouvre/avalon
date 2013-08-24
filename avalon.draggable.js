@@ -89,8 +89,8 @@ define(["avalon"], function(avalon) {
                 $element: $element,
                 pageX: getPosition(e, "X"), //相对于页面的坐标, 会改动
                 pageY: getPosition(e, "Y"), //相对于页面的坐标，会改动
-                marginLeft: parseFloat($element.css("marginLeft")),
-                marginTop: parseFloat($element.css("marginTop"))
+                marginLeft: parseFloat($element.css("marginLeft")) ,
+                marginTop: parseFloat($element.css("marginTop")) 
             })
             data.startPageX = data.pageX//一次拖放只赋值一次
             data.startPageY = data.pageY//一次拖放只赋值一次
