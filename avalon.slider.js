@@ -1,4 +1,4 @@
-define(["avalon"], function(avalon) {
+define(["avalon.draggable"], function(avalon) {
     //判定是否触摸界面
     var defaults = {
         distance: 0,
@@ -14,8 +14,8 @@ define(["avalon"], function(avalon) {
 
     avalon.ui["slider"] = function(element, id, vmodels, opts) {
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults)
-        avalon.mix(options, $element.data())
+        var options = avalon.mix({}, defaults, $element.data())
+
         var isHorizontal = options.orientation === "horizontal"
         //将整个slider划分为N等分, 比如100, 227
         var valueMin = options.min
@@ -39,15 +39,14 @@ define(["avalon"], function(avalon) {
         }
 
 
-        var handleHTML = '<a class="ui-slider-handle ui-state-default ui-corner-all"' +
+        var handleHTML = '<b class="ui-slider-handle ui-state-default ui-corner-all"' +
                 ' ms-css-' + (isHorizontal ? 'left' : 'bottom') + '="{{percent}}%"' +
                 ' data-axis=' + (isHorizontal ? 'x' : 'y') +
+                ' ms-draggable="dragend"' +
+                ' data-start="dragstart"' +
+                ' data-drag="drag"' +
                 ' data-containment="parent"' +
-                ' ms-draggable="drag"' +
-                ' data-movable="false"' +
-                ' data-dragstart="dragstart"' +
-                ' data-dragend="dragend"' +
-                ' ms-hover="ui-state-hover" href="javascript:void(0)" ></a>'
+                ' ms-hover="ui-state-hover" ></b>'
         var rangeHTML = ' <div class="ui-slider-range ui-widget-header ui-corner-all"' +
                 ' ms-class-ui-slider-range-max="range === \'max\'" ' +
                 ' ms-class-ui-slider-range-min="range === \'min\'" ' +
@@ -61,7 +60,7 @@ define(["avalon"], function(avalon) {
                 '</div>'
         domParser.innerHTML = sliderHTML
         var slider = domParser.removeChild(domParser.firstChild)
-        var a = slider.getElementsByTagName("a"), handlers = []
+        var a = slider.getElementsByTagName("b"), handlers = []
         for (var i = 0, el; el = a[i++]; ) {
             handlers.push(el)
         }
@@ -84,7 +83,7 @@ define(["avalon"], function(avalon) {
             var valModStep = val % step
             var n = val / step
             val = valModStep * 2 >= step ? step * Math.ceil(n) : step * Math.floor(n)
-            //   console.log(parseFloat(val.toFixed(3))+" step "+n)
+
             return parseFloat(val.toFixed(3))
         }
         var model = avalon.define(id, function(vm) {
@@ -98,8 +97,6 @@ define(["avalon"], function(avalon) {
             vm.dragstart = function(event, data) {
                 Index = handlers.indexOf(data.element)
                 data.$element.addClass("ui-state-active")
-                data.range[2] += this.clientWidth
-                data.range[3] += this.clientHeight
                 pixelTotal = isHorizontal ? slider.offsetWidth : slider.offsetHeight
             }
             vm.dragend = function(event, data) {

@@ -69,7 +69,7 @@ define(["avalon"], function(avalon) {
         }
 
         //修正drag,stop为函数
-        "drag,stop,beforeStart,beforeStop".replace(avalon.rword, function(name) {
+        "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
             if (typeof method === "string") {
                 if (typeof opts[method] === "function") {
@@ -368,9 +368,10 @@ define(["avalon"], function(avalon) {
                 data.containment = [
                     $offset.left,
                     $offset.top,
-                    $offset.left + elem.offsetWidth - data.marginLeft,
-                    $offset.top + elem.offsetHeight - data.marginTop
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft - data.$element.width()),
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop - data.$element.height())
                 ]
+
             }
         }
     }
