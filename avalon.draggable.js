@@ -102,6 +102,8 @@ define(["avalon"], function(avalon) {
             }
             fixUserSelect()
             //在处理手柄拖动前做些事情
+
+            options.beforeStart.call(element, e, data)
             draggable.plugin.call("beforeStart", e, data)
             if (data.handle && model) {// 实现手柄拖动
                 var handle = model[data.handle]
@@ -164,7 +166,7 @@ define(["avalon"], function(avalon) {
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
             setContainment(options, data)//修正containment
             draggable.dragData = data//决定有东西在拖动
-            "beforeStart,start,drag,beforeStop,stop".replace(avalon.rword, function(name) {
+            "start,drag,beforeStop,stop".replace(avalon.rword, function(name) {
                 draggable[name].unshift(options[name])
             })
 
@@ -180,7 +182,6 @@ define(["avalon"], function(avalon) {
     draggable.start = []
     draggable.drag = []
     draggable.stop = []
-    draggable.beforeStart = []
     draggable.beforeStop = []
     draggable.plugin = {
         add: function(name, set) {

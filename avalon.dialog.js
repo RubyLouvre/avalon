@@ -37,22 +37,7 @@ define(["avalon", "avalon.button"], function(avalon) {
     var overlay = document.createElement("div");
     overlay.innerHTML = '<div class="ui-widget-overlay ui-front">&nbsp;</div>';
     overlay = overlay.firstChild;//全部dialog共用
-    //判定是否支持css3 transform
-    var transforms = {//IE9+ firefox3.5+ chrome4+ safari3.1+ opera10.5+
-        "transform": "transform",
-        "-moz-transform": "mozTransform",
-        "-webkit-transform": "webkitTransform",
-        "-ms-transform": "msTransform"
-    }
-    var cssText = "position:fixed; top:50%;left:50%;"
-    var supportTransform = false;
-    for (var i in transforms) {
-        if (transforms[i] in overlay.style) {
-            supportTransform = true;
-            cssText += i + ":translate(-50%, -50%);"
-            break;
-        }
-    }
+
 
     avalon.ui.dialog = function(element, id, vmodels, opts) {
         var $element = avalon(element);
@@ -69,7 +54,9 @@ define(["avalon", "avalon.button"], function(avalon) {
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
                 ' ms-css-height="height"' +
-                '><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" ms-draggable="drag" data-beforestart="beforestart" data-movable="false">' +
+                ' ms-draggable="drag"' +
+                ' data-before-start="beforeStart" ' +
+                '><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"  data-beforestart="beforestart" data-movable="false">' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
                 '</div></div>').firstChild;
@@ -85,9 +72,8 @@ define(["avalon", "avalon.button"], function(avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title");
-        
-        
-        
+
+
         element.removeAttribute("ms-ui");//防止死循环
         element.parentNode.removeChild(element);
         model = avalon.define(id, function(vm) {
@@ -95,11 +81,15 @@ define(["avalon", "avalon.button"], function(avalon) {
             vm.title = options.title;
             vm.width = options.width;
             vm.height = options.height;
+
             vm.cssCenter = true;
             vm.close = function() {
                 vm.toggle = false;
             };
             vm.draggend = avalon.noop
+            vm.beforeStart = function() {
+                vm.cssCenter = false;
+            }
             vm.$watch("toggle", function(v) {
                 if (v === false) {
                     avalon.Array.remove(overlayInstances, options);
@@ -144,28 +134,25 @@ define(["avalon", "avalon.button"], function(avalon) {
         }
 
         function resetCenter() {
-            if (full) {//如果是基于窗口垂直居中
-                if (supportFixed) {
-                    if (supportTransform) {// 如果是IE9-10或其他支持css3 transform的浏览器
-                        dialog.style.cssText = cssText
-                    } else {
+            if (model.cssCenter) {
+                if (full) {//如果是基于窗口垂直居中
+                    if (supportFixed) {
                         dialog.style.position = "fixed";
                         var l = (avalon(window).width() - dialog.offsetWidth) / 2;
                         var t = (avalon(window).height() - dialog.offsetHeight) / 2;
                         dialog.style.left = l + "px";
                         dialog.style.top = t + "px";
+                    } else {//  如果是IE6，不支持fiexed，使用CSS表达式
+                        dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"');
+                        dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"');
                     }
-                } else {//  如果是IE6，不支持fiexed，使用CSS表达式
-                    dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"');
-                    dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"');
+                } else {//基于父节点的垂直居中
+                    l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
+                    t = (avalon(parentNode).height() - dialog.offsetHeight) / 2;
+                    dialog.style.left = l + "px";
+                    dialog.style.top = t + "px";
                 }
-            } else {//基于父节点的垂直居中
-                l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
-                t = (avalon(parentNode).height() - dialog.offsetHeight) / 2;
-                dialog.style.left = l + "px";
-                dialog.style.top = t + "px";
             }
-
             keepFocus();
             if (options.modal) {
                 parentNode.insertBefore(overlay, dialog);
@@ -186,9 +173,7 @@ define(["avalon", "avalon.button"], function(avalon) {
             if (options.autoOpen) {
                 avalon.nextTick(resetCenter);
             }
-            if (full && supportTransform) {
-                return
-            }
+
             avalon(document.body).bind("scroll", function() {
                 options.autoOpen && resetCenter();
             });
