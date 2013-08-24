@@ -99,6 +99,7 @@ define(["avalon", "avalon.button"], function(avalon) {
             vm.close = function() {
                 vm.toggle = false;
             };
+            vm.draggend = avalon.noop
             vm.$watch("toggle", function(v) {
                 if (v === false) {
                     avalon.Array.remove(overlayInstances, options);
