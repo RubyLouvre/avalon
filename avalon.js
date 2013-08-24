@@ -3368,7 +3368,6 @@
         loader: true
     })
     avalon.ready(function() {
-        console.log(document.body)
         avalon.scan(document.body)
     })
 })(document)
