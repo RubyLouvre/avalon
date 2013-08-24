@@ -1956,7 +1956,7 @@
                 if (method === "css") {
                     avalon(elem).css(data.param, val) //
                 } else if (method === "include" && val) {
-                    if (data.args + "" === "src") {
+                    if (data.param  === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
                         ajax.onreadystatechange = function() {
                             if (ajax.readyState === 4) {
