@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-class</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <style>
+            .width500{
+                width:500px;
+            }
+            .height200{
+                height: 200px
+            }
+            .bgRed{
+                background:red;
+            }
+            .ui-corner-bottom{
+                width:500px;
+                height:20px;
+                background: blue;
+                border-bottom-right-radius:10px;
+                border-bottom-left-radius:10px;
+            }
+            .ui-corner-all{
+                width:500px;
+                height:20px;
+                background: pink;
+                border-radius:10px;
+            }
+            .aaa{
+                background: black;
+            }
+            .bbb{
+                color:white;
+            }
+            .ccc{
+                width:500px;
+                height:40px;
+            }
+        </style>
+        <script type="text/javascript">
+            avalon.define("xxx", function(vm) {
+                vm.toggle = true
+                vm.w = 500
+                vm.h = 200
+                vm.bottom = true
+            })
+        </script>
+    </head>
+    <body ms-controller="xxx">
+          <h3 style="text-align: center">ms-class</h3>
+        <div ms-class-ui-corner-bottom="bottom" 
+             ms-class-ui-corner-all="!bottom">切换两个类名</div>
+        <div ms-class="aaa bbb ccc">添加多个类名</div>
+        <div ms-class="bgRed width{{w}} height{{h}}: toggle">类名通过插值表达式生成</div>
+    </body>
+</html>
