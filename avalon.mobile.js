@@ -1,5 +1,5 @@
 //==================================================
-// avalon 093 ，mobile
+// avalon 0.93 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2924,6 +2924,4 @@
         avalon.scan(document.body)
     })
 })(document)
-//2012 6 15
-//fix 管道符与短路与相混淆的BUG， 重构on绑定
-//elementTransitions.js ， 各种封装好的页面转换特效。http://dan-silver.github.io/ElementTransitions.js/
+
