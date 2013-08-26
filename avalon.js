@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.93   by 司徒正美 2013.7.26
+// avalon 0.94   by 司徒正美 2013.7.26
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -1719,7 +1719,6 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
-                  console.log(fn+"!")
                 log("转换[ " + originCode + " ]时失败")
             }
         }
