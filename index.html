@@ -209,7 +209,7 @@
         <p>我们是通过avalon.define函数返回一个视图对象VM，并且avalon.define(vmName, function(vm){})中的vm并不等于VM，工厂函数中的vm是用于转换为VM的。生成的VM比用户指定的属性还多了许多属性。
         </p>
         <p>默认的，除了函数外，其他东西都转换为监控属性，计算属性与监控数组。如果不想让它转换，可以让此属性以 $开头，框架就不会转换它们。</p>
-　　　　<p>如果实在不放便改名，又不想被转换，比如是一个jQuery对象或一个DOM节点，如果转换，肯定拖死框架，我们可以放到vm.$skipArray = [propName1, propName2]中去，这样也忽略转换。视图里面，我们可以使用ms-controller, ms-important指定一个VM的作用域。此外，在ms-each, ms-with中，它们会创建一个临时的VM，用于放置$key, $val, $index, $last, $first,  $remove等变量或方法。</p>
+　　　　<p>如果实在不方便改名，又不想被转换，比如是一个jQuery对象或一个DOM节点，如果转换，肯定拖死框架，我们可以放到vm.$skipArray = [propName1, propName2]中去，这样也忽略转换。视图里面，我们可以使用ms-controller, ms-important指定一个VM的作用域。此外，在ms-each, ms-with中，它们会创建一个临时的VM，用于放置$key, $val, $index, $last, $first,  $remove等变量或方法。</p>
         <p>另外，avalon不允许在VM定义之后，再追加新属性与方法，比如下面的方式是错误的： </p>   
         <pre class="bursh:js;gutter:false;toolbar:false;">
                  var vm = avalon.define("test", function(vm) {
@@ -464,11 +464,11 @@
         <p>ms-attr-name="value"，这个允许我们在元素上绑定更多种类的属性，如className, tabIndex, name, colSpan什么的。</p>
         <h3 id="top19">万能绑定(ms-bind)</h3>
         <p>ms-bind是一种非常强大的同步机制，因为它允许你持续监听某一个VM属性的变化，并且它的参数是一个函数，this又是指向绑定属性的元素节点，因此比ms-css, ms-attr, ms-data, ms-click等有着因定DOM操作的绑定来得更灵活。</p>
-        <p>用法： ms-bind-prop="callback", 其中prop, callback都要求来自同一个VM。callback为一个函数，this指向元素节点。</p>
+        <p>用法： ms-bind="prop:callback", 其中prop, callback都要求来自同一个VM。callback为一个函数，this指向元素节点。</p>
         <div ms-skip>
             <pre class="brush:html;gutter:false;toolbar:false">
         &lt;div ms-controller="test"&gt;
-             &lt;div ms-bind-aaa="callback"&gt;&lt;/div&gt;
+             &lt;div ms-bind="aaa:callback"&gt;&lt;/div&gt;
              &lt;button ms-click="one"&gt;点我&lt;/button&gt;
         &lt;/div&gt;
  
