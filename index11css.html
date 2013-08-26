@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define("xxx", function(vm) {
+
+                vm.percent = 0
+            })
+            var a = true
+            var id = setInterval(function() {
+                if (a) {
+                    if (model.percent < 100) {
+                        model.percent++
+                    } else {
+                        a = false
+                    }
+                } else {
+                    if (model.percent > 0) {
+                        model.percent--
+                    } else {
+                        a = true
+                    }
+                }
+            }, 100)
+        </script>
+        <style>
+            .hander{
+                width:20px;
+                height:20px;
+                position: absolute;
+                color:#fff;
+                background: #000;
+            }
+            .slider{
+                width:100%;
+                height:20px;
+                position: relative;
+            }
+            body{
+                padding:40px;
+            }
+        </style>
+    </head>
+    <body ms-controller="xxx">
+        <div class="slider" style="background:red;">
+            <div class="hander" ms-css-left="{{percent}}%" >{{percent}}</div>
+            <div style="background: greenyellow;height:20px" ms-css-width="{{percent}}%"></div>
+        </div>
+        <div class="slider" style="background:#d2d2d2;">
+            <div style="background: #2FECDC;height:20px" ms-css-width="{{100-percent}}%"></div>
+        </div>
+    </body>
+</html>

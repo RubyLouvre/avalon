@@ -3,7 +3,7 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<!--        <script src="avalon.js"></script>-->
+        <!--        <script src="avalon.js"></script>-->
         <style>
             .header a{
                 color:#000;
@@ -36,10 +36,10 @@
             }
         </style>
         <script>
-window.onload =  function(){
-    var a = document.getElementsByTagName("style").item
-    console.log(a)
-}
+            window.onload = function() {
+                var a = document.getElementsByTagName("style").item
+                console.log(a)
+            }
         </script>
     </head>
     <body>
@@ -253,6 +253,16 @@ window.onload =  function(){
              vm.array = [1,2,3]
          })
         </pre>
+        <p>如果VM中的某函数是作为<b>事件回调</b>而存在，如ms-click=aaa， <span style="color:red">aaa的vm请替换为avalon.define返回的变量</span>，确保能正确运行。</p>
+        <pre class="brush:js;gutter:false;toolbar:false;">     
+        var model = avalon.define("xxx", function(vm){
+              vm.percent = 10
+              vm.aaa = function(){
+                  model.percent ++;
+              }
+         })
+        </pre>
+        <p style="color:purple">所有定义好的VM都会储放在avalon.vmodels中！</p>
         <h3 id="top4">数据模型</h3>
         <p>当我们要用AJAX与后端交互时，如果直接把VM传上去太大了，这时我们需要把它对应的纯数组的JS对象。在VM中有个叫$model的属性，这是一个对象，就是数据模型M了。当我们更改VM时，框架就会自动同步M</p>
 
@@ -376,8 +386,8 @@ window.onload =  function(){
             <li>ms-change</li>
             <li>ms-on-*</li>
         </ul>
-        
-                <pre class="brush:html;gutter:false;toolbar:false;">
+
+        <pre class="brush:html;gutter:false;toolbar:false;">
 &lt;!DOCTYPE HTML&gt;
 &lt;html&gt;
     &lt;head&gt;
@@ -788,9 +798,9 @@ window.onload =  function(){
 &lt;/html&gt;
         </pre>
         <p>与jquery更好的集成，比如一些旧系统，直接在页面引入jquery库与其大量jquery插件，改成动态加载方式成本非常大。怎么样才能与jquery和平共存，亦能让AMD加载发挥作呢？先引入jquery库，
-            
+
             然后将avalon.modules.jquery 加个预设值（exports: jquery用于shim机制， state: 2 表明它已经加载完毕）就行了。</p>
-                <fieldset>
+        <fieldset>
             <legend>例子</legend>
             <pre class="brush:javascript;gutter:false;toolbar:false">
 &lt;!DOCTYPE html&gt;

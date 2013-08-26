@@ -1668,7 +1668,10 @@
                     prefix = "",
                     originCode = code
             //args 是一个对象数组， names 是将要生成的求值函数的参数
+         
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
+        
+         
             for (var i = 0, n = scopes.length; i < n; i++) {
                 if (vars.length) {
                     var name = "vm" + expose + "_" + i
@@ -1678,6 +1681,7 @@
                 }
             }
             var prefix = assigns.join(", ")
+        
             if (prefix) {
                 prefix = "var " + prefix
             }
@@ -1715,6 +1719,7 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
+                  console.log(fn+"!")
                 log("转换[ " + originCode + " ]时失败")
             }
         }
@@ -1946,15 +1951,16 @@
         "href": function(data, vmodels) {
             var text = data.value.trim(), simple = true, method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
-                simple = false
+                simple = false  
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
                     simple = true
                     text = RegExp.$1
                 }
             }
             watchView(text, vmodels, data, function(val, elem) {
+                
                 if (method === "css") {
-                    avalon(elem).css(data.param, val) //
+                    avalon(elem).css(data.param, val) 
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
@@ -3341,7 +3347,7 @@
             root.doScroll("left")
             fireReady()
         } catch (e) {
-            setTimeout(doScrollCheck,50)
+            setTimeout(doScrollCheck)
         }
     }
 
