@@ -67,7 +67,7 @@ define(["avalon"], function(avalon) {
         if (completeCallback) {
             options.stop = completeCallback
         }
-        console.log(JSON.stringify(options))
+ 
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
@@ -154,9 +154,8 @@ define(["avalon"], function(avalon) {
             }
             var target = avalon(data.clone || data.element)
             //拖动前相对于offsetParent的坐标
-            data.startLeft = parseFloat(target.css("left"))
-            data.startTop = parseFloat(target.css("top"))
-
+            data.startLeft = parseFloat(target.css("left")) || 0
+            data.startTop = parseFloat(target.css("top")) || 0
             //拖动后相对于offsetParent的坐标
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
             data.endLeft = parseFloat($element.css("left")) - data.startLeft
@@ -243,7 +242,6 @@ define(["avalon"], function(avalon) {
         var number = data["start" + Prop] + page - data["startPage" + pos] + (end ? data["end" + Prop] : 0)
         data[prop] = number
         if (data["drag" + pos]) {//保存top, left
-            console.log("xxxxxxxxx")
             element.style[ prop ] = number + "px"
         }
     }

@@ -45,10 +45,10 @@ define(["avalon.draggable"], function(avalon) {
                 ' ms-draggable="dragend"' +
                 ' data-start="dragstart"' +
                 ' data-drag="drag"' +
-                ' data-drag-x="false"'
-         ' data-drag-y="false"'
+                ' data-drag-x="false"'+
+                ' data-drag-y="false"'+
                 ' data-containment="parent"' +
-                ' ms-hover="ui-state-hover" ></b>'
+                ' ms-hover="ui-state-hover"></b>'
         var rangeHTML = ' <div class="ui-slider-range ui-widget-header ui-corner-all"' +
                 ' ms-class-ui-slider-range-max="range === \'max\'" ' +
                 ' ms-class-ui-slider-range-min="range === \'min\'" ' +
@@ -61,7 +61,7 @@ define(["avalon.draggable"], function(avalon) {
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
       //  console.log( $element.data())
-    //    console.log(sliderHTML)
+    console.log(sliderHTML)
         domParser.innerHTML = sliderHTML
         var slider = domParser.removeChild(domParser.firstChild)
         var a = slider.getElementsByTagName("b"), handlers = []
@@ -111,6 +111,7 @@ define(["avalon.draggable"], function(avalon) {
                 var prop = isHorizontal ? "left" : "top"
                 
                 var pixelMouse = data[prop]
+                console.log(pixelMouse +"!!!!!!!")
                 //如果是垂直时,往上拖,值就越大
                 var percent = (pixelMouse / pixelTotal) //求出当前handler在slider的位置
                 if (!isHorizontal) {
@@ -142,7 +143,7 @@ define(["avalon.draggable"], function(avalon) {
                     model.percent = value2Percent(model.values[1] - model.values[0])
                 } else {
                     model.value = val
-                 console.log(model.value)
+                // console.log(model.value)
                     model.percent = value2Percent(val)
                 }
             }
