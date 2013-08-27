@@ -67,7 +67,7 @@ define(["avalon"], function(avalon) {
         if (completeCallback) {
             options.stop = completeCallback
         }
-
+        console.log(JSON.stringify(options))
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
@@ -89,17 +89,17 @@ define(["avalon"], function(avalon) {
                 $element: $element,
                 pageX: getPosition(e, "X"), //相对于页面的坐标, 会改动
                 pageY: getPosition(e, "Y"), //相对于页面的坐标，会改动
-                marginLeft: parseFloat($element.css("marginLeft")) ,
-                marginTop: parseFloat($element.css("marginTop")) 
+                marginLeft: parseFloat($element.css("marginLeft")),
+                marginTop: parseFloat($element.css("marginTop"))
             })
             data.startPageX = data.pageX//一次拖放只赋值一次
             data.startPageY = data.pageY//一次拖放只赋值一次
-            options.axis.replace(/./g, function(a) {
-                data["drag" + a.toUpperCase() ] = true
+            options.axis.toUpperCase().replace(/./g, function(x) {
+                if (data["drag" + x] === void 0) {
+                    data["drag" + x ] = true
+                }
             })
-            if (!data.dragX && !data.dragY) {
-                data.started = false
-            }
+
             fixUserSelect()
             //在处理手柄拖动前做些事情
 
@@ -243,6 +243,7 @@ define(["avalon"], function(avalon) {
         var number = data["start" + Prop] + page - data["startPage" + pos] + (end ? data["end" + Prop] : 0)
         data[prop] = number
         if (data["drag" + pos]) {//保存top, left
+            console.log("xxxxxxxxx")
             element.style[ prop ] = number + "px"
         }
     }
@@ -306,12 +307,12 @@ define(["avalon"], function(avalon) {
         restoreUserSelect()
         var element = data.element
         draggable.plugin.call("beforeStop", e, data)
-        if (data.dragX) {
-            setPosition(e, element, data, "X", true)
-        }
-        if (data.dragY) {
-            setPosition(e, element, data, "Y", true)
-        }
+
+        setPosition(e, element, data, "X", true)
+
+
+        setPosition(e, element, data, "Y", true)
+
         if (data.clone) {
             body.removeChild(data.clone)
         }

@@ -14,7 +14,7 @@
                 vm.selectModel = "bbb";
                 vm.checkboxModel = ["aaa", "bbb"];
                 vm.checkboxText = vm.checkboxModel.join(",")
-
+                vm.sex = "1"
 
             });
 
@@ -25,19 +25,27 @@
 
         </script>
         <style>
+            .parent{
+                height:50px;
+                width:100%;
+                overflow:hidden;
+            }
             .visible{
                 width:400px;
                 height: 50px;
                 background: red;   
+                float:left;
             }
             .if{
                 width:400px;
                 height: 50px;
-                background: blueviolet;   
+                background: blueviolet;  
+                float:left;
             }
             fieldset{
                 background:#d2d2d2;
             }
+
         </style>
     </head>
     <body >
@@ -45,6 +53,7 @@
             <h3 style="text-align: center">ms-duplex</h3>
             <input ms-duplex="textModel" ms-data-observe="radioModel"/>
             <input ms-duplex="passwordModel" type="password"/>
+
             <input type="radio" ms-duplex="radioModel"> <input type="checkbox" ms-duplex-radio="checkRadio">
             <select ms-duplex="selectModel">
                 <option value="aaa" selected>aaa</option>
@@ -54,13 +63,19 @@
             <input ms-duplex="checkboxModel" type="checkbox" value="aaa" />
             <input ms-duplex="checkboxModel" type="checkbox" value="bbb" />
             <input ms-duplex="checkboxModel" type="checkbox" value="ccc" />
-            <div ms-visible="radioModel" class="visible">
-                <div>ms-visible这个区域是受到radioModel控制</div>
-                <div>data-observe为{{radioModel}}</div>
-            </div>
-            <div ms-if="checkRadio" class="if">
-                <div> ms-if这个区域是受到checkRadio控制</div>
-               
+            <input ms-duplex-text="sex" type="radio" value="1"/>
+            <input ms-duplex-text="sex" type="radio" value="2"/>
+            <input ms-duplex-text="sex" type="radio" value="3"/>
+            {{sex}}
+            <p>text, password, textarea要求对应的VM属性为字符串，select、checkbox为字符串数组，radio为布尔，我们可以通过ms-duplex-radio让checkbox对应一个布尔，ms-duplex-text让radio对应一个字符串 </p>
+            <div class="parent">
+                <div ms-visible="radioModel" class="visible">
+                    <div>ms-visible这个区域是受到radioModel控制</div>
+                    <div>data-observe为{{radioModel}}</div>
+                </div>
+                <div ms-if="checkRadio" class="if">
+                    <div> ms-if这个区域是受到checkRadio控制</div>
+                </div>
             </div>
             <fieldset>
                 <legend>textModel</legend>

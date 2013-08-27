@@ -1825,13 +1825,19 @@
             }
         } else if (type === "radio") {
             updateView = function() {
-                element.checked = !!fn(scope)
+                element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
             }
             updateModel = function() {
                 if (god.data("observe") !== false) {
-                    var val = !element.beforeChecked
-                    fn(scope, val)
-                    element.beforeChecked = element.checked = val
+                    if (fixType === "text") {
+                        if (element.checked) {
+                            fn(scope, element.value)
+                        }
+                    } else {
+                        var val = !element.beforeChecked
+                        fn(scope, val)
+                        element.beforeChecked = element.checked = val
+                    }
                 }
             }
 

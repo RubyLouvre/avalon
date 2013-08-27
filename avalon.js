@@ -1668,10 +1668,10 @@
                     prefix = "",
                     originCode = code
             //args 是一个对象数组， names 是将要生成的求值函数的参数
-         
+
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-        
-         
+
+
             for (var i = 0, n = scopes.length; i < n; i++) {
                 if (vars.length) {
                     var name = "vm" + expose + "_" + i
@@ -1681,7 +1681,7 @@
                 }
             }
             var prefix = assigns.join(", ")
-        
+
             if (prefix) {
                 prefix = "var " + prefix
             }
@@ -1950,16 +1950,16 @@
         "href": function(data, vmodels) {
             var text = data.value.trim(), simple = true, method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
-                simple = false  
+                simple = false
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
                     simple = true
                     text = RegExp.$1
                 }
             }
             watchView(text, vmodels, data, function(val, elem) {
-                
+
                 if (method === "css") {
-                    avalon(elem).css(data.param, val) 
+                    avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
                         var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
@@ -2220,13 +2220,19 @@
             }
         } else if (type === "radio") {
             updateView = function() {
-                element.checked = !!fn(scope)
+                element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
             }
             updateModel = function() {
                 if (god.data("observe") !== false) {
-                    var val = !element.beforeChecked
-                    fn(scope, val)
-                    element.beforeChecked = element.checked = val
+                    if (fixType === "text") {
+                        if (element.checked) {
+                            fn(scope, element.value)
+                        }
+                    } else {
+                        var val = !element.beforeChecked
+                        fn(scope, val)
+                        element.beforeChecked = element.checked = val
+                    }
                 }
             }
 
@@ -3340,7 +3346,7 @@
             fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
         }
     }
- 
+
     function doScrollCheck() {
         try { //IE下通过doScrollCheck检测DOM树是否建完
             root.doScroll("left")
