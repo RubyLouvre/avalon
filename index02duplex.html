@@ -17,7 +17,15 @@
                 vm.sex = "1"
 
             });
+            var qinerg = avalon.define("qinerg", function(vm) {
 
+                vm.sex = "";
+                vm.lang = []
+                vm.langtext = ""
+            });
+            qinerg.lang.$watch("length", function() {
+                qinerg.langtext = qinerg.lang.join(",")
+            })
             model.checkboxModel.$watch("length", function() {
                 model.checkboxText = model.checkboxModel.join(",")
             })
@@ -97,6 +105,18 @@
                 <legend>checkboxModel</legend>
                 <p>{{checkboxText}}</p>
             </fieldset>
+
+
+        </div>
+        <div ms-controller='qinerg'>
+            <p><input type="radio" ms-duplex-text="sex" value="man">男
+                <input type="radio" ms-duplex-text="sex" value="woman">女</p>
+            <p>
+                <input type="checkbox" ms-duplex="lang" value="#C">#C
+                <input type="checkbox" ms-duplex="lang" value="java">java
+                <input type="checkbox" ms-duplex="lang" value="ruby">ruby
+            </p>
+            <P>{{sex}}                   {{langtext}}</P>
         </div>
     </body>
 </html>
