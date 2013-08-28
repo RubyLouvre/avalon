@@ -1764,7 +1764,7 @@
             }
         }
         try {
-            if (data.type !== "on") {
+            if (data.type !== "on" && four !== "setget") {
                 fn.apply(fn, args)
             }
             return [fn, args]
