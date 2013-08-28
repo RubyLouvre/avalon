@@ -915,7 +915,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model")
 
     function modelFactory(scope, model, watchMore) {
         if (Array.isArray(scope)) {
@@ -1042,9 +1042,6 @@
             delete Publish[expose]
         })
         vmodel.$model = model
-        if (kernel.compact) {
-            vmodel.$json = model
-        }
         vmodel.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         vmodel.$id = generateID()
         for (var i in Observable) {
@@ -2014,7 +2011,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = array.$json = model
+        array.$model = model
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array.isCollection = true;
         array._splice = array.splice

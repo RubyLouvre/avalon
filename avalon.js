@@ -1163,7 +1163,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$json,$model,$accessor")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor")
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
@@ -1297,9 +1297,6 @@
             delete Publish[expose]
         })
         vmodel.$model = model
-        if (kernel.compact) {
-            vmodel.$json = model
-        }
         vmodel.$events = {}
         vmodel.$id = generateID()
         vmodel.$accessor = accessores
@@ -2436,9 +2433,6 @@
         array.$id = generateID()
         array[subscribers] = []
         array.$model = model
-        if (kernel.compact) {
-            array.$json = model
-        }
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array.isCollection = true
         array._splice = array.splice
