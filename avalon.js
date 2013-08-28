@@ -805,12 +805,12 @@
             return (op / 100) + "" //确保返回的是字符串
         }
     }
+
     "top,left".replace(rword, function(name) {
         cssHooks[name + ":get"] = function(node) {
             var computed = cssHooks["@:get"](node, name)
-            return rnumnonpx.test(computed) ?
-                    avalon(node).position()[ name ] + "px" :
-                    computed
+            return /px$/.test(computed) ? computed :
+                    avalon(node).position()[ name ] + "px"
         }
     })
     "Width,Height".replace(rword, function(name) {

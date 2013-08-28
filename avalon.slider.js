@@ -108,10 +108,8 @@ define(["avalon.draggable"], function(avalon) {
                 data.$element.removeClass("ui-state-active")
             }
             vm.drag = function(event, data) {
-                var prop = isHorizontal ? "left" : "top"
-                
+                var prop = isHorizontal ? "left" : "top"       
                 var pixelMouse = data[prop]
-                console.log(pixelMouse +"!!!!!!!")
                 //如果是垂直时,往上拖,值就越大
                 var percent = (pixelMouse / pixelTotal) //求出当前handler在slider的位置
                 if (!isHorizontal) {

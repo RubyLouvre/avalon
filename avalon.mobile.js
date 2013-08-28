@@ -596,13 +596,12 @@
         var ret = cssHooks["@:get"](node, "opacity")
         return ret === "" ? "1" : ret;
     }
-    var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i
+
     "top,left".replace(rword, function(name) {
         cssHooks[name + ":get"] = function(node) {
             var computed = cssHooks["@:get"](node, name)
-            return rnumnonpx.test(computed) ?
-                    avalon(node).position()[ name ] + "px" :
-                    computed
+            return /px$/.test(computed) ? computed :
+                    avalon(node).position()[ name ] + "px"
         }
     })
     "Width,Height".replace(rword, function(name) {
