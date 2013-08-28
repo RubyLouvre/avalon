@@ -34,7 +34,7 @@
     }
 
     function log(a) {
-        window.console && console.log(a + "")
+        window.console && console.log(W3C ? a : a + "")
     }
 
 
@@ -247,6 +247,30 @@
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
         } : function(el, type, fn) {
             el.detachEvent("on" + type, fn || noop)
+        },
+        css: function(node, name, value) {
+            if (node instanceof avalon) {
+                var that = node
+                node = node[0]
+            }
+            var prop = /[_-]/.test(name) ? camelize(name) : name
+            name = cssName(prop) || prop
+            if (value === void 0 || typeof value === "boolean") { //获取样式
+                var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
+                var val = fn(node, name)
+                return value === true ? parseFloat(val) || 0 : val
+            } else { //设置样式
+                var type = typeof value
+                if (type === "number" && !isFinite(value + "")) {
+                    return
+                }
+                if (isFinite(value) && !cssNumber[prop]) {
+                    value += "px"
+                }
+                fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
+                fn(node, name, value)
+                return that
+            }
         }
     })
 
@@ -596,26 +620,37 @@
             return this
         },
         css: function(name, value) {
-            var node = this[0]
-            if (node && node.style) { //注意string经过call之后，变成String伪对象，不能简单用typeof来检测
-                var prop = /[_-]/.test(name) ? camelize(name) : name
-                name = cssName(prop) || prop
-                if (arguments.length === 1) { //获取样式
-                    var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
-                    return fn(node, name)
-                } else { //设置样式
-                    var type = typeof value
-                    if (type === "number" && !isFinite(value + "")) {
-                        return
-                    }
-                    if (isFinite(value) && !cssNumber[prop]) {
-                        value += "px"
-                    }
-                    fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
-                    fn(node, name, value)
-                    return this
-                }
+            return avalon.css(this, name, value)
+        },
+        position: function() {
+            var offsetParent, offset,
+                    elem = this[ 0 ],
+                    parentOffset = {top: 0, left: 0};
+            if (!elem) {
+                return;
             }
+            if (this.css("position") === "fixed") {
+                offset = elem.getBoundingClientRect();
+            } else {
+                offsetParent = this.offsetParent();//得到真正的offsetParent
+                offset = this.offset();// 得到正确的offsetParent
+                if (offsetParent[0].tagName !== "HTML") {
+                    parentOffset = offsetParent.offset();
+                }
+                parentOffset.top += avalon.css(offsetParent[ 0 ], "borderTopWidth", true);
+                parentOffset.left += avalon.css(offsetParent[ 0 ], "borderLeftWidth", true);
+            }
+            return {
+                top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
+                left: offset.left - parentOffset.left - avalon.css(elem, "marginLeft", true)
+            };
+        },
+        offsetParent: function() {
+            var offsetParent = this[0].offsetParent || root;
+            while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
+                offsetParent = offsetParent.offsetParent;
+            }
+            return avalon(offsetParent || root);
         },
         bind: function(type, fn, phase) {
             if (this[0]) { //此方法不会链
@@ -770,6 +805,14 @@
             return (op / 100) + "" //确保返回的是字符串
         }
     }
+    "top,left".replace(rword, function(name) {
+        cssHooks[name + ":get"] = function(node) {
+            var computed = cssHooks["@:get"](node, name)
+            return rnumnonpx.test(computed) ?
+                    avalon(node).position()[ name ] + "px" :
+                    computed
+        }
+    })
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
@@ -822,6 +865,7 @@
         pos.left = box.left + scrollLeft - clientLeft
         return pos
     }
+
     //=============================val相关=======================
 
     function getValType(el) {
