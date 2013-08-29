@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-duplex</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" type="text/javascript"></script>
+        <script>
+            var model = avalon.define("model", function(vm) {
+
+                vm.textModel = "text";
+                vm.passwordModel = "password"
+                vm.radioModel = true;
+                vm.checkRadio = true;
+                vm.selectModel = "bbb";
+                vm.checkboxModel = ["aaa", "bbb"];
+                vm.checkboxText = vm.checkboxModel.join(",")
+                vm.sex = "1"
+
+            });
+            var qinerg = avalon.define("qinerg", function(vm) {
+                vm.sex = "";
+                vm.lang = []
+                vm.langtext = ""
+            });
+            qinerg.lang.$watch("length", function() {
+                qinerg.langtext = qinerg.lang.join(",")
+            })
+            model.checkboxModel.$watch("length", function() {
+                model.checkboxText = model.checkboxModel.join(",")
+            })
+
+
+        </script>
+        <style>
+            .parent{
+                height:50px;
+                width:100%;
+                overflow:hidden;
+            }
+            .visible{
+                width:400px;
+                height: 50px;
+                background: red;   
+                float:left;
+            }
+            .if{
+                width:400px;
+                height: 50px;
+                background: blueviolet;  
+                float:left;
+            }
+            fieldset{
+                background:#d2d2d2;
+            }
+
+        </style>
+    </head>
+    <body >
+        <div ms-controller="model">
+            <h3 style="text-align: center">ms-duplex</h3>
+            <input ms-duplex="textModel" ms-data-observe="radioModel"/>
+            <input ms-duplex="passwordModel" type="password"/>
+
+            <input type="radio" ms-duplex="radioModel"> <input type="checkbox" ms-duplex-radio="checkRadio">
+            <select ms-duplex="selectModel">
+                <option value="aaa" selected>aaa</option>
+                <option value="bbb">bbb</option>
+                <option value="ccc">ccc</option>
+            </select>
+            <input ms-duplex="checkboxModel" type="checkbox" value="aaa" />
+            <input ms-duplex="checkboxModel" type="checkbox" value="bbb" />
+            <input ms-duplex="checkboxModel" type="checkbox" value="ccc" />
+            <input ms-duplex-text="sex" type="radio" value="1"/>
+            <input ms-duplex-text="sex" type="radio" value="2"/>
+            <input ms-duplex-text="sex" type="radio" value="3"/>
+            {{sex}}
+            <p>text, password, textarea要求对应的VM属性为字符串，select、checkbox为字符串数组，radio为布尔，我们可以通过ms-duplex-radio让checkbox对应一个布尔，ms-duplex-text让radio对应一个字符串 </p>
+            <div class="parent">
+                <div ms-visible="radioModel" class="visible">
+                    <div>ms-visible这个区域是受到radioModel控制</div>
+                    <div>data-observe为{{radioModel}}</div>
+                </div>
+                <div ms-if="checkRadio" class="if">
+                    <div> ms-if这个区域是受到checkRadio控制</div>
+                </div>
+            </div>
+            <fieldset>
+                <legend>textModel</legend>
+                <p>{{textModel}}</p>
+            </fieldset>
+            <fieldset>
+                <legend>passwordModel</legend>
+                <p>{{passwordModel}}</p>
+            </fieldset>
+            <fieldset>
+                <legend>radioModel</legend>
+                <p>{{radioModel}}</p>
+            </fieldset>
+            <fieldset>
+                <legend>selectModel</legend>
+                <p>{{selectModel}}</p>
+            </fieldset>
+            <fieldset>
+                <legend>checkboxModel</legend>
+                <p>{{checkboxText}}</p>
+            </fieldset>
+
+
+        </div>
+        <div ms-controller='qinerg' >
+            <p><input type="radio" ms-duplex-text="sex" value="man">男
+                <input type="radio" ms-duplex-text="sex" value="woman">女</p>
+            <p>
+                <input type="checkbox" ms-duplex="lang" value="#C">#C
+                <input type="checkbox" ms-duplex="lang" value="java">java
+                <input type="checkbox" ms-duplex="lang" value="ruby">ruby
+            </p>
+            <P>{{sex}}                   {{langtext}}</P>
+        </div>
+    </body>
+</html>

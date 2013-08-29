@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html >
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>ms-if</title>
+        <script src="avalon.js"></script>
+        <style>
+            .active{
+                background: blueviolet;
+            }
+        </style>
+        <script>
+            var model = avalon.define('xxx', function(vm) {
+                vm.items = [
+                    {url: '#123', text: 'menu 123', actived: true},
+                    {url: '#124', text: 'menu 124', actived: false}
+                ];
+                vm.bool = false
+                vm.click = function() {
+                    alert(this.innerHTML)
+                }
+                vm.toggle = function() {
+                    vm.bool = true;
+                    model.items[1].actived = !model.items[1].actived
+                }
+            });
+
+
+        </script>
+    </head>
+
+    <body  ms-controller="xxx">
+
+        <h3 style="text-align: center">ms-if</h3>
+        <ul class="nav" ms-each-el="items">
+            <li><a ms-attr-href="el.url">{{el.text}}</a></li>
+            <li ms-class="active:el.actived" ms-if="el.actived">
+                <div>再渲染一次{{el.text}}</div>
+            </li>
+        </ul>
+
+        <p><button type='button' ms-click='toggle'>点我</button></p>
+        <div ms-if='bool' ms-click='click' > 这个东西会被移除</div>
+
+
+    </body>
+</html>

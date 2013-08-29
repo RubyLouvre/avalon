@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+         <script src="../jquery.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css" />
+        <style>
+            body{
+                font-size:13px;
+            }
+            .drag{
+                width:100px;
+                height:100px;
+                background: green;
+                position: absolute;
+            }
+            .ui-slider-vertical{
+                float:left;
+                margin-right:3em;
+            }
+        </style>
+        <script>
+
+            require("avalon.slider", function() {
+                var model = avalon.define("theme", function(vm) {
+                    vm.theme = "start";
+                    vm.percent = 0
+                })
+                var id = setInterval(function() {
+                    if (model.percent < 100) {
+                        model.percent++
+                    } else {
+                        clearInterval(id)
+                    }
+                }, 100)
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+
+        <!--        <div style="width:70%">
+                    <input ms-ui="slider"data-id="aaa"  data-max="255" data-value="36">
+                </div>
+        
+                 <p ms-controller="aaa">{{value}}  {{percent}}</p>
+                        <div style="width:70%">
+                            <input ms-ui="slider" data-range="min">
+                        </div>
+                     <br/>
+                      <div style="width:70%">
+                            <p>Range with fixed maximum</p>
+                            <input ms-ui="slider" data-range="max"  data-max="10" data-value="2">
+                      <p>Range with fixed minimum</p>
+                            <input  ms-ui="slider" data-min="1" data-max="700" data-value="37" data-range="min"/>
+                            <p>Snap to increments</p>
+                            <input  ms-ui="slider" data-min="0" data-max="500" data-value="100" data-step="50" />
+                
+                        </div>
+   <div style="width:70%">
+                            <input ms-ui="slider" data-id="ccc" data-range="true" data-values="[ 25,50 ]" data-max="100">
+                            <p ms-controller="ccc">{{ percent0 }}  {{ percent1 }}</p>
+                            <p ms-controller="ccc">{{ value }}</p>
+                        </div>-->
+                     <div style="height:200px">
+                            <input  ms-ui="slider"  data-value="20" data-range="min" data-orientation="vertical"  data-id="bbb">
+<!--                            <input  ms-ui="slider"  data-value="40" data-range="min" data-orientation="vertical" >
+                            <input  ms-ui="slider"  data-value="60" data-range="min" data-orientation="vertical" >
+                            <input  ms-ui="slider"  data-value="80" data-range="min" data-orientation="vertical" >
+                            <input  ms-ui="slider"  data-value="80" data-range="true" data-orientation="vertical" >
+                            <input  ms-ui="slider"  data-value="60" data-range="max" data-orientation="vertical" >-->
+                        </div>  
+                        <p ms-controller="bbb">{{ value }}</p>
+                  <!--      <div style="width:70%">
+                            <input ms-ui="slider" data-id="ddd" data-range="true" data-values="[ 25,50 ]" data-max="100">
+                            <p ms-controller="ddd">{{ percent0 }}  {{ percent1 }}</p>
+                            <p ms-controller="ddd">{{ value }}</p>
+                        </div>
+              -->  <div ms-controller="theme">
+                        <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css" />
+                                <select ms-duplex="theme">
+                                    <option value='start'>start</option>
+                                    <option value='smoothness'>smoothness</option>
+                                    <option value='flick'>flick</option>
+                                    <option value='sunny'>sunny</option>
+                                    <option value='excite-bike'>excite bike</option>
+                                    <option value='black-tie'>black tie</option>
+                                    <option value='trontastic'>trontastic</option>
+                                    <option value='swanky-purse'>swanky purse</option>
+                                    <option value='le-frog'>le frog</option>
+                                    <option value='blitzer'>blitzer</option>
+                                    <option value='dot-luv'>dot luv</option>
+                                    <option value='mint-choc'>mint-choc</option>
+                                    <option value='hot-sneaks'>hot sneaks</option>
+                                    <option value='south-street'> south street</option>
+                                    <option value='humanity'>humanity</option>
+                                    <option value='vader'>vader</option>
+                                    <option value='eggplant'>eggplant</option>
+                                    <option value='cupertino'>cupertino</option>
+                                    <option value='overcast'>overcast</option>
+                                </select>你喜欢的皮肤-->
+<!--        <div style="width:100%;height:20px;background:red;">
+            <div style="background: greenyellow;height:20px" ms-css-width="{{percent}}%"></div>
+        </div>-->
+    </div>
+</body>
+</html>

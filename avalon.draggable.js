@@ -1,314 +1,411 @@
-(function(avalon) {
-    var root = avalon(document.documentElement),
-            //支持触模设备
-            supportTouch = "createTouch" in document || 'ontouchstart' in window || window.DocumentTouch && document instanceof DocumentTouch,
-            onstart = supportTouch ? "touchstart" : "mousedown",
-            ondrag = supportTouch ? "touchmove" : "mousemove",
-            onend = supportTouch ? "touchend" : "mouseup";
-    //在元素标签上添加ms-drag="dragcallback" 就能用了，dragcallback为你在VM在定义的函数，它会在拖动时执行它
-    //更在制定请在同一元素上设置data-*来制定，其中
-    //data-axis="x" //值可以为x, y, xy，"", 没有设置值默认为xy, x为水平移移动，y为垂直移动, xy任意移动，""不给移
-    //data-containment="parent" //值可以为window, document, parent，设置拖动的范围，没有设置就没有限制
-    //data-movable="true|false"， 没有设置值默认为true，是否让框架帮你移动，否则自己在dragcallback中移动
-    //data-dragstart="callback", 开始拖动时执行的回调 callback为VM的某个函数
-    //data-dragend="callback", 结束拖动时执行的回调
-    //所有回调都有两个参数，event与data，data包含你所有data=*属性，与top, left, range, el, $el等属性
-
-    scrollParent = function(node) {
-        var pos = node.css("position"), parent;
-        if ((window.VBArray && (/(static|relative)/).test(pos)) || (/absolute/).test(pos)) {
-            parent = node[0];
-            while (parent = parent.parentNode) {
-                var temp = avalon(parent);
-                var overflow = temp.css("overflow") + temp.css("overflow-y") + temp.css("overflow-x");
-                if (/(relative|absolute|fixed)/.test(temp.css("position")) && /(auto|scroll)/.test(overflow)) {
-                    break;
-                }
-            }
-        } else {
-            parent = node[0];
-            while (parent = parent.parentNode) {
-                var temp = avalon(parent);
-                var overflow = temp.css("overflow") + temp.css("overflow-y") + temp.css("overflow-x");
-                if (/(auto|scroll)/.test(overflow)) {
-                    break;
-                }
-            }
-        }
-        parent = parent !== node[0] ? parent : null;
-        return(/fixed/).test(pos) || !parent ? document : parent;
-    };
+define(["avalon"], function(avalon) {
     var defaults = {
-        scrollSensitivity: 20,
-        scrollSpeed: 20,
-        movable: true,
-        dragstart: avalon.noop,
+        ghosting: false, //是否影子拖动，动态生成一个元素，拖动此元素，当拖动结束时，让原元素到达此元素的位置上,
+        delay: 0,
+        axis: "xy",
+        started: true,
+        start: avalon.noop,
+        beforeStart: avalon.noop,
         drag: avalon.noop,
-        dragend: avalon.noop,
-        beforestart: avalon.noop,
-        scroll: true
-    };
-    function getXY(event, a) {
-        var prop = "page" + a;
-        return supportTouch ? event.targetTouches[0][prop] : event[prop];
+        beforeStop: avalon.noop,
+        stop: avalon.noop,
+        scrollPlugin: true,
+        scrollSensitivity: 20,
+        scrollSpeed: 20
     }
-    var draggable = avalon.bindingHandlers.draggable = function(meta, scopes) {
-        var element = meta.element;
-        var $element = avalon(element);
-        var data = avalon.mix({}, defaults);
-        avalon.mix(data, $element.data());
-        var axis = data.axis;
-        if (axis !== "" && !/^(x|y|xy)$/.test(axis)) {
-            data.axis = "xy";
-        }
+    var body
+    var ua = navigator.userAgent;
+    var isAndroid = /Android/i.test(ua);
+    var isBlackBerry = /BlackBerry/i.test(ua)
+    var isWindowPhone = /IEMobile/i.test(ua)
+    var isIOS = /iPhone|iPad|iPod/i.test(ua)
+    var isMobile = isAndroid || isBlackBerry || isWindowPhone || isIOS
+    if (!isMobile) {
+        var dragstart = "mousedown"
+        var drag = "mousemove"
+        var dragstop = "mouseup"
+    } else {
+        dragstart = "touchstart"
+        drag = "touchmove"
+        dragstop = "touchend"
+    }
 
-        function get(name) {
-            var ret;
-            for (var i = 0, scope; scope = scopes[i++]; ) {
-                if (scope.hasOwnProperty(name)) {
-                    ret = scope[name];
+    var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
+        var fnName = data.value.trim(), completeCallback, model
+        for (var i = 0, vm; vm = vmodels[i++]; ) {
+            if (vm.hasOwnProperty(fnName)) {//根据函数名找到对应的VM的$model
+                if (typeof vm[fnName] === "function") {
+                    completeCallback = vm[fnName]
+                    model = vm.$model
                     break;
                 }
             }
-            return ret;
         }
-        data.drag = get(meta.value) || avalon.noop;
-        "beforestart, dragstart, dragend".replace(avalon.rword, function(name) {
-            var fn = get(data[name] || "");
-            if (typeof fn === "function") {
-                data[name] = fn;
-            }
-        });
-        data.movable = data.movable !== false;
-        data.element = element;
-        data.$element = $element;
-        function toFloat(a) {
-            return parseFloat(a) || 0;
+        if (typeof completeCallback !== "function") {
+            throw "此绑定的格式为： ms-draggable-optsName?=fn"
         }
-
-        $element.bind(onstart, function(event) {
-            data.beforestart.call(data.element, event, data);
-            setDragRange(data);
-            textselect(true);
-            data.startX = getXY(event, "X");
-            data.startY = getXY(event, "Y");
-            var position = data.$element.position();
-            var offset = data.$element.offset();
-            if (data.containment === "window") {
-                position = data.element.getBoundingClientRect();
-                data.originalX = position.left;
-                data.originalY = position.top;
+        var optsName = data.param, opts
+        if (/\w/.test(optsName)) {//根据ID找到对应的VM的$model
+            if (model && typeof model[optsName] === "object") {
+                opts = model[optsName]
             } else {
-                data.originalX = data.originalX || position.left + data.startX - offset.left;
-                data.originalY = data.originalY || position.top + data.startY - offset.top;
-            }
-            if (data.scroll) {
-                data.scrollParent = scrollParent(data.$element);
-                data.overflowOffset = avalon(data.scrollParent).offset();
-            }
-             // element.setCapture();有副作用
-            if (window.captureEvents) {
-                window.captureEvents(Event.MOUSEMOVE | Event.MOUSEUP);
-            }
-            draggable.queue.push(data);
-            data.dragstart.call(data.element, event, data);
-        });
-    };
-    draggable.queue = [];
-    draggable.underway = [];
-    draggable.dropscene = [];
-
-    function drag(event) {
-        draggable.queue.forEach(function(data) {
-            event.preventDefault();
-            //当前元素移动了多少距离
-            data.deltaX = getXY(event, "X") - data.startX;
-            data.deltaY = getXY(event, "Y") - data.startY;
-            //现在的坐标
-            data.offsetX = data.deltaX + data.originalX;
-            data.offsetY = data.deltaY + data.originalY;
-            if (data.axis.indexOf("x") !== -1) { //如果没有锁定X轴left,top,right,bottom
-                var left = data.range ? Math.min(data.range[2], Math.max(data.range[0], data.offsetX)) : data.offsetX;
-                if (data.movable) {
-                    data.element.style.left = left + "px";
-                }
-                data.left = left;
-            }
-            if (data.axis.indexOf("y") !== -1) { //如果没有锁定Y轴
-                var top = data.range ? Math.min(data.range[3], Math.max(data.range[1], data.offsetY)) : data.offsetY;
-                if (data.movable) {
-                    data.element.style.top = top + "px";
-                }
-                data.top = top;
-            }
-            setDragScroll(event, data);
-            data.drag.call(data.element, event, data);
-            if (window.getSelection) {
-                window.getSelection().removeAllRanges();
-            } else {
-                document.selection.empty();
-            }
-        });
-    }
-
-    function dragEnd(event) {
-        draggable.queue.forEach(function(data) {
-            data.originalX = data.left;
-            data.originalY = data.top;
-            // data.element.releaseCapture();有副作用
-            if (window.releaseEvents) {
-                window.releaseEvents(Event.MOUSEMOVE | Event.MOUSEUP);
-            }
-            textselect(false);
-            data.dragend.call(data.element, event, data);
-        });
-        draggable.queue.length = 0;
-
-    }
-    draggable.underway.push(drag);
-    draggable.dropscene.push(dragEnd);
-    function toFloat(a) {
-        return parseFloat(a) || 0;
-    }
-    avalon.fn.position = function() { //取得元素相对于其offsetParent的坐标，实现拖动的关键
-        var node = this[0], parentOffset = {//默认的offsetParent相对于视窗的距离
-            top: 0,
-            left: 0
-        };
-        if (!node || node.nodeType !== 1) {
-            return offsetParent;
-        }
-        //fixed 元素是相对于window
-        if (this.css("position") === "fixed") {
-            var offset = node.getBoundingClientRect();
-        } else {
-            offset = this.offset(); //得到元素相对于视窗的距离（我们只有它的top与left）
-            var offsetParent = avalon(node.offsetParent);
-            //得到它的offsetParent相对于视窗的距离
-            parentOffset = /html|body/i.test(offsetParent[0].nodeName) ? parentOffset : offsetParent.offset();
-            parentOffset.top += toFloat(offsetParent.css("borderTopWidth"));
-            parentOffset.left += toFloat(offsetParent.css("borderLeftWidth"));
-        }
-        return {
-            top: offset.top - parentOffset.top - toFloat(this.css("marginTop")),
-            left: offset.left - parentOffset.left - toFloat(this.css("marginLeft"))
-        };
-    };
-    function setDragRange(data) {
-        var range = data.containment; //处理区域鬼拽,确认可活动的范围
-        var node = data.element;
-        var isDoc = range === "document";
-        if (range) {
-            if (Array.isArray(range) && range.length === 4) { //如果传入的是坐标 [x1,y1,x2,y2] left,top,right,bottom
-                data.range = range;
-            } else {
-                if (range === "parent") { //如果是parent参数
-                    range = node.parentNode;
-                }
-                if (isDoc || range === "window") { //如果是document|window参数
-                    data.range = [0, 0];
-                    data.range[2] = data.range[0] + avalon(isDoc ? document : window).width();
-                    data.range[3] = data.range[1] + avalon(isDoc ? document : window).height();
-                } else { //如果是元素节点(比如从parent参数转换地来),或者是CSS表达式,或者是mass对象
-                    data.range = [0, 0, range.clientWidth, range.clientHeight];
-                    if (range !== node.offsetParent) {
-                        var p = avalon(range).offset();//parentNode
-                        var o = avalon(node.offsetParent).offset();//offsetParent
-                        var fixX = p.left - o.left;
-                        var fixY = p.top - o.top;
-                        data.range[0] += fixX;
-                        data.range[2] += fixX;
-                        data.range[1] += fixY;
-                        data.range[3] += fixY;
-                    }
-                }
-            }
-            if (Array.isArray(data.range)) {
-                data.range[2] = data.range[2] - node.clientWidth;
-                data.range[3] = data.range[3] - node.clientHeight;
-            }
-
-        }
-    }
-    function textselect(bool) {
-        //放于鼠标按下或弹起处的回调中,用于开启或禁止文本选择
-        root.css("-user-select", bool ? "" : "none");
-        document.unselectable = bool ? "off" : "on";
-    }
-    ;
-    function setDragScroll(event, data, docLeft, docTop) {
-        if (data.scroll) {
-            if (data.scrollParent != document && data.scrollParent.tagName !== 'HTML') {
-                if (data.axis.indexOf("x") !== -1) {
-                    if ((data.overflowOffset.left + data.scrollParent.offsetWidth) - event.pageX < data.scrollSensitivity) {
-                        data.scrollParent.scrollLeft = data.scrollParent.scrollLeft + data.scrollSpeed;
-                    } else if (event.pageX - data.overflowOffset.left < data.scrollSensitivity) {
-                        data.scrollParent.scrollLeft = data.scrollParent.scrollLeft - data.scrollSpeed;
-                    }
-                }
-                if (data.axis.indexOf("y") !== -1) {
-                    if ((data.overflowOffset.top + data.scrollParent.offsetHeight) - event.pageY < data.scrollSensitivity) {
-                        data.scrollParent.scrollTop = data.scrollParent.scrollTop + data.scrollSpeed;
-                    } else if (event.pageY - data.overflowOffset.top < data.scrollSensitivity) {
-                        data.scrollParent.scrollTop = data.scrollParent.scrollTop - data.scrollSpeed;
-                    }
-                }
-
-            } else {
-                docLeft = docLeft || root.scrollLeft();
-                docTop = docTop || root.scrollTop();
-                if (data.axis.indexOf("x") !== -1) {
-                    if (event.pageX - docLeft < data.scrollSensitivity) {
-                        root.scrollLeft(docLeft - data.scrollSpeed);
-                    } else if (avalon(window).width() - event.pageX + docLeft < data.scrollSensitivity) {
-                        root.scrollLeft(docLeft + data.scrollSpeed);
-                    }
-                }
-                if (data.axis.indexOf("y") !== -1) {
-                    if (event.pageY - docTop < data.scrollSensitivity) {
-                        root.scrollTop(docTop - data.scrollSpeed);
-                    } else if (avalon(window).height() - event.pageY + docTop < data.scrollSensitivity) {
-                        root.scrollTop(docTop + data.scrollSpeed);
+                for (var i = 0, vm; vm = vmodels[i++]; ) {
+                    var object = vm.$model
+                    if (object && typeof object[optsName] === "object") {
+                        opts = object[optsName]
+                        break;
                     }
                 }
             }
         }
-    }
-    function getWindow(elem) {//只对window与document取值
-        return elem.window && elem.document ?
-                elem :
-                elem.nodeType === 9 ?
-                elem.defaultView || elem.parentWindow :
-                false;
-    }
-    "scrollLeft_pageXOffset,scrollTop_pageYOffset".replace(/(\w+)_(\w+)/g, function(_, method, prop) {
-        avalon.fn[method] = function(val) {
-            var node = this[0] || {}, win = getWindow(node), top = method === "scrollTop";
-            if (!arguments.length) {
-                return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
-            } else {
-                if (win) {
-                    win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop());
+
+        opts = opts || model
+
+        var element = data.element
+        var $element = avalon(element)
+        var options = avalon.mix({}, defaults, opts, $element.data());
+        if (completeCallback) {
+            options.stop = completeCallback
+        }
+ 
+        //修正drag,stop为函数
+        "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
+            var method = options[name]
+            if (typeof method === "string") {
+                if (typeof opts[method] === "function") {
+                    options[name] = opts[method]
                 } else {
-                    node[method] = val;
+                    options[name] = avalon.noop
                 }
             }
-        };
-    });
-
-    //使用事件代理提高性能
-    root.bind(ondrag, function(e) {
-
-        for (var i = 0, fn; fn = draggable.underway[i++]; ) {
-            var ret = fn(e);
+        })
+        if (options.axis !== "" && !/^(x|y|xy)$/.test(options.axis)) {
+            options.axis = "xy"
         }
-        return ret;
-    });
-    root.bind(onend, function(e) {
-        for (var i = 0, fn; fn = draggable.dropscene[i++]; ) {
-            var ret = fn(e);
-        }
-        return ret;
-    });
+        body = document.body //因为到这里时，肯定已经domReady
+        $element.bind(dragstart, function(e) {
+            var data = avalon.mix({}, options, {
+                element: element,
+                $element: $element,
+                pageX: getPosition(e, "X"), //相对于页面的坐标, 会改动
+                pageY: getPosition(e, "Y"), //相对于页面的坐标，会改动
+                marginLeft: parseFloat($element.css("marginLeft")),
+                marginTop: parseFloat($element.css("marginTop"))
+            })
+        
+            data.startPageX = data.pageX//一次拖放只赋值一次
+            data.startPageY = data.pageY//一次拖放只赋值一次
+            options.axis.toUpperCase().replace(/./g, function(x) {
+                if (data["drag" + x] === void 0) {
+                    data["drag" + x ] = true
+                }
+            })
 
-})(window.avalon);
+            fixUserSelect()
+            //在处理手柄拖动前做些事情
+
+            options.beforeStart.call(element, e, data)
+            draggable.plugin.call("beforeStart", e, data)
+            if (data.handle && model) {// 实现手柄拖动
+                var handle = model[data.handle]
+                if (typeof handle === "function") {
+                    var checked = handle.call(element, e, data)//要求返回一节点
+                    if (checked && checked.nodeType === 1) {
+                        if (!element.contains(checked)) {
+                            return false
+                        }
+                    } else {
+                        return false
+                    }
+                }
+            }
+
+            var position = $element.css("position")
+            //如果原元素没有被定位
+            if (!/^(?:r|a|f)/.test(position)) {
+                element.style.position = "relative";
+                element.style.top = "0px"
+                element.style.left = "0px"
+            }
+
+            if (options.delay && isFinite(options.delay)) {
+                data.started = false;
+                setTimeout(function() {
+                    data.started = true
+                }, options.delay)
+            }
+            var startOffset = $element.offset()
+            if (options.ghosting) {
+                var clone = element.cloneNode(true)
+                clone.style.backgroundColor = "yellow"
+
+                avalon(clone).css("opacity", .5).width(element.offsetWidth).height(element.offsetHeight)
+
+                data.clone = clone
+                if (position !== "fixed") {
+                    clone.style.position = "absolute"
+                    clone.style.top = startOffset.top - data.marginTop + "px"
+                    clone.style.left = startOffset.left - data.marginLeft + "px"
+                }
+                body.appendChild(clone)
+            }
+            var activeElement = document.activeElement
+            if (activeElement && activeElement !== element) {
+                activeElement.blur()
+            }
+            var target = avalon(data.clone || data.element)
+            //拖动前相对于offsetParent的坐标
+            data.startLeft = target.css("left", true) 
+            data.startTop = target.css("top", true) 
+            //拖动后相对于offsetParent的坐标
+            //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
+            data.endLeft = $element.css("left", true) - data.startLeft
+            data.endTop = $element.css("top", true)- data.startTop
+
+            data.clickX = data.pageX - startOffset.left //鼠标点击的位置与目标元素左上角的距离
+            data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
+            setContainment(options, data)//修正containment
+            draggable.dragData = data//决定有东西在拖动
+            "start,drag,beforeStop,stop".replace(avalon.rword, function(name) {
+                draggable[name].unshift(options[name])
+            })
+
+            draggable.plugin.call("start", e, data)
+        })
+
+    }
+    var xy2prop = {
+        "X": "Left",
+        "Y": "Top"
+    }
+    //插件系统
+    draggable.start = []
+    draggable.drag = []
+    draggable.stop = []
+    draggable.beforeStop = []
+    draggable.plugin = {
+        add: function(name, set) {
+            for (var i in set) {
+                var fn = set[i]
+                if (typeof fn === "function" && Array.isArray(draggable[i])) {
+                    fn.isPlugin = true
+                    fn.pluginName = name + "Plugin"
+                    draggable[i].push(fn)
+                }
+            }
+        },
+        call: function(name, e, data) {
+            var array = draggable[name]
+            if (Array.isArray(array)) {
+                array.forEach(function(fn) {
+                    //用户回调总会执行，插件要看情况
+                    if (typeof fn.pluginName === "undefined" ? true : data[fn.pluginName]) {
+                        fn.call(data.element, e, data)
+                    }
+                })
+            }
+            if (name === "stop") {
+                for (var i in draggable) {
+                    array = draggable[i]
+                    if (Array.isArray(array)) {
+                        array.forEach(function(fn) {
+                            if (!fn.isPlugin) {// 用户回调都是一次性的，插件的方法永远放在列队中
+                                avalon.Array.remove(array, fn)
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+
+    function getPosition(e, pos) {
+        var page = "page" + pos
+        return isMobile ? e.changedTouches[0][page] : e[page]
+    }
+
+    function setPosition(e, element, data, pos, end) {
+        var page = getPosition(e, pos)
+        if (data.containment) {
+            var min = pos === "X" ? data.containment[0] : data.containment[1]
+            var max = pos === "X" ? data.containment[2] : data.containment[3]
+            var check = page - (pos === "X" ? data.clickX : data.clickY)
+            if (check < min) {
+                page += Math.abs(min - check)
+            } else if (check > max) {
+                page -= Math.abs(max - check)
+            }
+        }
+        data["page" + pos] = page//重设pageX, pageY
+        var Prop = xy2prop[pos]
+        var prop = Prop.toLowerCase()
+
+        var number = data["start" + Prop] + page - data["startPage" + pos] + (end ? data["end" + Prop] : 0)
+
+        data[prop] = number
+        if (data["drag" + pos]) {//保存top, left
+            element.style[ prop ] = number + "px"
+        }
+    }
+
+    var styleEl = document.createElement("style")
+
+    var cssText = "*{ -webkit-touch-callout: none!important;-webkit-user-select: none!important;-khtml-user-select: none!important;" +
+            "-moz-user-select: none!important;-ms-user-select: none!important;user-select: none!important;}"
+    function fixUserSelect() {
+        body.appendChild(styleEl)
+        //如果不插入DOM树，styleEl.styleSheet为null
+        if (typeof styleEl.styleSheet === "object") {
+            styleEl.styleSheet.cssText = cssText
+        } else {
+            styleEl.appendChild(document.createTextNode(cssText))
+        }
+    }
+    function restoreUserSelect() {
+        if (!styleEl.styleSheet) {
+            styleEl.innerText = ""
+            styleEl.removeChild(styleEl.firstChild)
+        }
+        body.removeChild(styleEl)
+    }
+    if (window.VBArray && !("msUserSelect" in document.documentElement.style)) {
+        var _ieSelectBack;//fix IE6789
+        function returnFalse() {
+            return false;
+        }
+        function fixUserSelect() {
+            _ieSelectBack = body.onselectstart;
+            body.onselectstart = returnFalse;
+        }
+        function restoreUserSelect() {
+            body.onselectstart = _ieSelectBack;
+        }
+    }
+    //统一处理拖动的事件
+    avalon(document).bind(drag, function(e) {
+        var data = draggable.dragData
+        if (!data || !data.started)
+            return
+        //fix touchmove bug;  
+        //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
+        //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
+        e.preventDefault();
+        //使用document.selection.empty()来清除选择，会导致捕获失败 
+        var element = data.clone || data.element
+
+        setPosition(e, element, data, "X")
+        setPosition(e, element, data, "Y")
+
+        draggable.plugin.call("drag", e, data)
+    })
+
+    //统一处理拖动结束的事件
+    avalon(document).bind(dragstop, function(e) {
+        var data = draggable.dragData
+        if (!data || !data.started)
+            return
+        restoreUserSelect()
+        var element = data.element
+        draggable.plugin.call("beforeStop", e, data)
+
+        setPosition(e, element, data, "X", true)
+
+
+        setPosition(e, element, data, "Y", true)
+
+        if (data.clone) {
+            body.removeChild(data.clone)
+        }
+        draggable.plugin.call("stop", e, data)
+        delete draggable.dragData
+    })
+
+
+
+    function getWindow(node) {
+        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
+    }
+    function setContainment(o, data) {
+        if (!o.containment) {
+            data.containment = null;
+            return;
+        }
+
+        if (o.containment === "window") {
+            var $window = avalon(window)
+            data.containment = [
+                $window.scrollLeft(),
+                $window.scrollTop(),
+                $window.scrollLeft() + $window.width() - data.marginLeft,
+                $window.scrollTop() + $window.height() - data.marginTop
+            ];
+            return;
+        }
+
+        if (o.containment === "document") {
+            data.containment = [
+                0,
+                0,
+                avalon(document).width() - data.marginLeft,
+                avalon(document).height() - data.marginTop
+            ];
+            return;
+        }
+
+        if (Array.isArray(o.containment)) {
+            data.containment = o.containment;
+            return;
+        }
+
+        if (o.containment === "parent" || o.containment.charAt(0) === "#") {
+            var elem
+            if (o.containment === "parent") {
+                elem = data.element.parentNode;
+            } else {
+                elem = document.getElementById(o.containment.slice(1))
+            }
+            if (elem) {
+                var $offset = avalon(elem).offset()
+                data.containment = [
+                    $offset.left,
+                    $offset.top,
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft - data.$element.width()),
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop - data.$element.height())
+                ]
+
+            }
+        }
+    }
+
+    return avalon
+})
+/*
+ ms-draggable-xxx-fn , xxx为一个VM的对象属性, fn为一个函数， fn不能删略，xxx可省
+ 下面这些全部可用data-*进行配置
+ drag 为VM中一个方法名
+ stop 为VM中一个方法名
+ start  为VM中一个方法名
+ handle  要求为VM中的一个函数，它会重置data.handle为一个元素节点，如果事件源位于data.handle的里面或等于它则继续进行操作
+ ghosting: false, //是否影子拖动，动态生成一个元素，拖动此元素，当拖动结束时，让原元素到达此元素的位置上,
+ delay: 0, 延迟时间
+ axis: "xy" "x", "y" 决定只能垂直拖动，还是水平拖动，还是任意拖动
+ containment： 拖动范围，#id值， "window", "document", "parent", "[0, 0, 400, 300]"
+ <body ms-controller="xxx">
+ <ul  ms-each-el="array">
+ <li ms-draggable="complete" >item {{$index}}</li>
+ </ul>
+ </body>
+ avalon.require("avalon.draggable", function() {
+ avalon.define("xxx", function(vm) {
+ vm.array = avalon.range(0, 10)
+ vm.complete = function() {
+ console.log("done")
+ }
+ vm.drag = function(e) {
+ console.log(e.pageX + " : " + e.pageY)
+ }
+ })
+ avalon.scan()
+ })
+ * 
+ */

@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+         <script src="../avalon.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css" />
+
+        <script>
+            require("avalon.select", function() {
+                avalon.scan()
+            })
+        </script>
+        
+    </head>
+    <body>
+        <p>
+         <select title="Basic example" multiple="multiple" name="example-basic" size="5" ms-ui="select">
+                <option value="option1">Option 1</option>
+                <option value="option2">Option 2</option>
+                <option value="option3">Option 3</option>
+                <option value="option4">Option 4</option>
+                <option value="option5">Option 5</option>
+                <option value="option6" selected>Option 6</option>
+                <option value="option7" selected>Option 7</option>
+                <option value="option8">Option 8</option>
+                <option value="option9">Option 9</option>
+                <option value="option10">Option 10</option>
+                <option value="option11">Option 11</option>
+                <option value="option12">Option 12</option>
+            </select>
+       
+            <select name="example-optgroup" multiple="multiple" size="5" ms-ui="select">
+                <optgroup label="Group One">
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                </optgroup>
+                <optgroup label="Group Two">
+                    <option value="option4">Option 4</option>
+                    <option value="option5">Option 5</option>
+                    <option value="option6">Option 6</option>
+                    <option value="option7">Option 7</option>
+                </optgroup>
+            </select>
+        
+            <select name="demo" ms-ui="select">
+                <option value="option1">Option 1</option>
+                <option value="option2">Option 2</option>
+                <option value="option3">Option 3</option>
+                <option value="option4">Option 4</option>
+                <option value="option5">Option 5</option>
+                <option value="option6">Option 6</option>
+                <option value="option7">Option 7</option>
+            </select>
+       
+        <select multiple="multiple" size="5" ms-ui="select">
+            <option value="option1">Option 1</option>
+            <option value="option2">Option 2</option>
+            <option value="option3" disabled>Option 3</option>
+            <option value="option4">Option 4</option>
+            <option value="option5">Option 5</option>
+        </select>
+ </p>
+
+    </body>
+</html>

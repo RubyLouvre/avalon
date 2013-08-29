@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+
+        <script>
+            require("avalon.button", function() {
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+        <div>
+            <button ms-ui="button">A button element</button>
+            <input type="submit" value="A submit button" ms-ui="button" />
+            <a href="#" ms-ui="button">An anchor</a>
+            <input type="checkbox" id="check" data-label="toggle" ms-ui="button" />   
+        </div>
+        <div id="format" ms-ui="buttonset">
+            <input type="checkbox" id="check1" value="B" ms-ui="button" />
+            <input type="checkbox" id="check2" value="I" ms-ui="button" />
+            <input type="checkbox" id="check3" value="U" ms-ui="button" />
+        </div>
+        <div class="icons">
+            <button  
+                ms-ui="button" 
+                data-primary="ui-icon-locked" 
+                data-text="false">Button with icon only</button>
+            <button
+                ms-ui="button" 
+                data-primary="ui-icon-locked"
+                >Button with icon on the left</button>
+            <button
+                ms-ui="button" 
+                data-primary="ui-icon-gear"
+                data-secondary="ui-icon-triangle-1-s"
+                >Button with two icons</button>
+            <button
+                ms-ui="button" 
+                data-primary="ui-icon-gear"
+                data-secondary="ui-icon-triangle-1-s"
+                data-text="false"
+                >Button with two icons and no text</button>
+        </div>
+
+
+        <div  ms-ui="buttonset">
+            <input type="radio" id="check1" name="radio" value="Choice 1" ms-ui="button" />
+            <input type="radio" id="check2" name="radio" value="Choice 1" ms-ui="button" />
+            <input type="radio" id="check3" name="radio" value="Choice 1" ms-ui="button" />
+        </div>
+
+
+    </body>
+</html>

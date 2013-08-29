@@ -8,10 +8,11 @@ define(["avalon"], function(avalon) {
                 model, el, checkbox;
         var title = element.title,
                 html = element.innerHTML;
-        var fragment = document.createDocumentFragment();
         element.title = "";
+        var fragment = document.createDocumentFragment();
+     
         //处理配置
-        var options = avalon.mix({}, defaults, $element.data());
+        var options = avalon.mix({}, defaults, opts, $element.data());
 
         //处理radio, checkbox
         var isRadio = element.type === "radio";
@@ -30,7 +31,7 @@ define(["avalon"], function(avalon) {
             label.innerHTML = options.label || checkbox.value;
             checkbox.parentNode.insertBefore(label, checkbox.nextSibling);
             $element.addClass("ui-helper-hidden-accessible");
-            element = label;
+            element = label;//  偷天换日
             $element = avalon(element);
         }
         while (el = element.firstChild) {
@@ -38,14 +39,12 @@ define(["avalon"], function(avalon) {
         }
         $element.addClass("ui-button ui-widget ui-state-default");
 
-        element.title = title;
-
         //如果使用了buttonset
-        if (!options.cornerClass) {
-            $element.addClass("ui-corner-all");
-        }
+     
         if (typeof options.cornerClass === "string") {
             $element.addClass(options.cornerClass);
+        }else  if (options.cornerClass !== false) {
+            $element.addClass("ui-corner-all");
         }
 
         //创建按钮的内部，将它原来的内部放到一个span.ui-button-text
@@ -59,9 +58,11 @@ define(["avalon"], function(avalon) {
             fragment.appendChild(span);
         }
         //如果指定了icon， icon也占用一个span
-        var iconClass = options.text === false ? "ui-button-icon-only" : typeof options.secondary === "string" ? "ui-button-text-icons" : typeof options.primary === "string" ? "ui-button-text-icon-primary" : ""
+        var iconClass = options.text === false ? "ui-button-icon-only" :
+                typeof options.secondary === "string" ? "ui-button-text-icons" : 
+                typeof options.primary === "string" ? "ui-button-text-icon-primary" : ""
         if (options.text === false) {
-            element.title = title || html;
+            element.title = title || html ;
         }
         if (iconClass) {
             $element.addClass(iconClass);
@@ -79,18 +80,6 @@ define(["avalon"], function(avalon) {
             fragment.appendChild(span);
         }
 
-        $element.bind("mousedown", function(e) {
-            if (model.disabled) {
-                return false;
-            }
-            $element.addClass(activeClass);
-        });
-        $element.bind("mouseup", function(e) {
-            if (model.disabled) {
-                return false;
-            }
-            $element.removeClass(activeClass);
-        });
         if (isCheckbox) {
             $element.bind("click", function() {
                 model.checked = !model.checked
@@ -118,19 +107,20 @@ define(["avalon"], function(avalon) {
                 element.appendChild(fragment);
             }
             element.setAttribute("ms-hover", "ui-state-hover");
-            element.setAttribute("ms-class-ui-state-disabled", "disabled");
+            element.setAttribute("ms-class-0", "ui-state-disabled:disabled");
+            element.setAttribute("ms-active" , activeClass+ ":!disabled");
             if (isCheckbox) {
-                element.setAttribute("ms-class-ui-state-active", "checked");
+                element.setAttribute("ms-class-1", "ui-state-active:checked");
                 checkbox.setAttribute("ms-checked", "checked");
             }
             if (isRadio) {
-                element.setAttribute("ms-class-ui-state-active", "radioActived == " + radioIndex);
+                element.setAttribute("ms-class-2", "ui-state-active:radioActived == " + radioIndex);
                 element.setAttribute("ms-checked", "radioActived == " + radioIndex);
             }
             if (toggleButton) {
                 avalon.scan(checkbox, model);
             }
-            avalon.scan(element, model);
+            avalon.scan(element, [model].concat(vmodels));
         });
         return model
     };
@@ -147,6 +137,19 @@ define(["avalon"], function(avalon) {
     };
     return avalon
 })
+/**
+ data-primary="ui-icon-gear" 用于指定左边的ICON
+ data-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
 
+ data-corner-class="false" 不添加ui-corner-all圆角类名
+ data-corner-class="conrer" 添加你指定的这个conrer圆角类名
+ 不写data-corner-class 添加ui-corner-all圆角类名
+
+ button, a, span等标签，取其innerHTML作为UI内容，否则需要取其title
+
+ data-text = false 决定其内部是否只显示图标
+ * 
+ * 
+ */
         
 //X-tag和Web组件帮你提速应用开发 http://mozilla.com.cn/post/51451/

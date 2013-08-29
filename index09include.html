@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>ms-include</title>
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define("xxx", function(vm) {
+                vm.url = "Template1"
+                vm.name = "司徒正美"
+                vm.password = '12345678'
+                vm.array = [1, 2, 3, 4, 5, 6, 7]
+            })
+            avalon.define("yyy", function(vm) {
+            })
+        </script>
+    </head>
+    <body>
+        <h3 style='text-align: center'>ms-include</h3>
+        <ul>
+            <li>ms-include="id"</li>
+            <li>ms-include-src="url"</li>
+        </ul>
+        <div ms-controller="xxx">
+            <select ms-duplex="url">
+                <option>Template1</option>
+                <option>Template2</option>
+                <option>Template3</option>
+            </select>
+            <div ms-include-src="index09include{{url}}.html"></div>
+        </div>
+        <script id='inline' type='avalon'>
+            <div>这是内联的
+            </div>
+        </script>
+        <div ms-controller="yyy" ms-include="'inline'">
+
+        </div>
+    </body>
+</html>

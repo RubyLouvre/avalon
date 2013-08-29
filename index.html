@@ -3,7 +3,7 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <!--        <script src="avalon.js"></script>-->
         <style>
             .header a{
                 color:#000;
@@ -28,21 +28,22 @@
                 width:100px;
                 height:40px;
                 background: greenyellow;
-                
+
+            }
+            td a{
+                display:inline-block;
+                width:40px;
             }
         </style>
         <script>
-
+            window.onload = function() {
+                var a = document.getElementsByTagName("style").item
+                console.log(a)
+            }
         </script>
     </head>
-    <body >
+    <body>
 
-
-        <div class="aaa">
-            <div>11111</div>
-             <div>2222</div>
-              <div>3333</div>
-        </div>
 
         <ol class="header">
             <li><a href="#top0">关于AvalonJs</a></li>
@@ -208,7 +209,7 @@
         <p>我们是通过avalon.define函数返回一个视图对象VM，并且avalon.define(vmName, function(vm){})中的vm并不等于VM，工厂函数中的vm是用于转换为VM的。生成的VM比用户指定的属性还多了许多属性。
         </p>
         <p>默认的，除了函数外，其他东西都转换为监控属性，计算属性与监控数组。如果不想让它转换，可以让此属性以 $开头，框架就不会转换它们。</p>
-　　　　<p>如果实在不放便改名，又不想被转换，比如是一个jQuery对象或一个DOM节点，如果转换，肯定拖死框架，我们可以放到vm.$skipArray = [propName1, propName2]中去，这样也忽略转换。</p>
+　　　　<p>如果实在不方便改名，又不想被转换，比如是一个jQuery对象或一个DOM节点，如果转换，肯定拖死框架，我们可以放到vm.$skipArray = [propName1, propName2]中去，这样也忽略转换。视图里面，我们可以使用ms-controller, ms-important指定一个VM的作用域。此外，在ms-each, ms-with中，它们会创建一个临时的VM，用于放置$key, $val, $index, $last, $first,  $remove等变量或方法。</p>
         <p>另外，avalon不允许在VM定义之后，再追加新属性与方法，比如下面的方式是错误的： </p>   
         <pre class="bursh:js;gutter:false;toolbar:false;">
                  var vm = avalon.define("test", function(vm) {
@@ -252,6 +253,16 @@
              vm.array = [1,2,3]
          })
         </pre>
+        <p>如果VM中的某函数是作为<b>事件回调</b>而存在，如ms-click=aaa， <span style="color:red">aaa的vm请替换为avalon.define返回的变量</span>，确保能正确运行。</p>
+        <pre class="brush:js;gutter:false;toolbar:false;">     
+        var model = avalon.define("xxx", function(vm){
+              vm.percent = 10
+              vm.aaa = function(){
+                  model.percent ++;
+              }
+         })
+        </pre>
+        <p style="color:purple">所有定义好的VM都会储放在avalon.vmodels中！</p>
         <h3 id="top4">数据模型</h3>
         <p>当我们要用AJAX与后端交互时，如果直接把VM传上去太大了，这时我们需要把它对应的纯数组的JS对象。在VM中有个叫$model的属性，这是一个对象，就是数据模型M了。当我们更改VM时，框架就会自动同步M</p>
 
@@ -332,6 +343,7 @@
         <pre class="brush:html;gutter:false;toolbar:false;">
          &lt;div  ms-include-src="'tmpl.html'"&gt;&lt;/div&gt;
         </pre>
+        <p>有关它的高级应用的例子可见这里<a href="https://github.com/RubyLouvre/avalon/issues/46">利用ms-include与监控数组实现一个树</a> </p>
         <h3 id="top8">数据填充(ms-text, ms-html)</h3>
         <p>这分两种：文本绑定与HTML绑定，每种都有两个实现方式</p>
         <pre class="brush:html;gutter:false;toolbar:false;">
@@ -374,6 +386,44 @@
             <li>ms-change</li>
             <li>ms-on-*</li>
         </ul>
+
+        <pre class="brush:html;gutter:false;toolbar:false;">
+&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;有关事件回调传参&lt;/title&gt;
+        &lt;script src="avalon.js" type="text/javascript"&gt;&lt;/script&gt;
+        &lt;script&gt;
+
+            avalon.ready(function() {
+                var a = avalon.define("simple", function(vm) {
+                    vm.firstName = "司徒"
+                    vm.lastName = "正美"
+                    vm.array = ["aaa", "bbb", "ccc"]
+                    vm.argsClick = function(e, a, b) {
+                        alert(a+ "  "+b)
+                    }
+                    vm.loopClick = function(a) {
+                        alert(a)
+                    }
+                });
+                avalon.scan();
+            })
+
+        &lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;fieldset ms-controller="simple"&gt;
+            &lt;legend&gt;例子&lt;/legend&gt;
+            &lt;div ms-click="argsClick($event, 100, firstName)"&gt;点我&lt;/div&gt;
+            &lt;div ms-each-el="array" &gt;
+                &lt;p ms-click="loopClick(el)"&gt;{{el}}&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/fieldset&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+        </pre>
         <h3 id="top11">显示绑定(ms-visible)</h3>
         <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，对于低版本的浏览器，它用的是style.display="none"进行隐藏，对于支持HTML5的浏览器，它是使用hidden属性来控制。因此它是优于其他MVVM的实现。</p>
         <h3 id="top12">插入绑定(ms-if)</h3>
@@ -388,7 +438,7 @@
             <dt>radio</dt>
             <dd>默认是通过change事件进行监听，旧式IE是通过chick实现， 它要求VM对应的属性为一个布尔。 </dd>
             <dt>checkbox</dt>
-            <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串数组。 </dd>
+            <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串数组。有时，我们需要将checkbox 当成radio用，就需要用ms-duplex-radio, <a href="http://rubylouvre.github.io/mvvm/avalon.grid.html">点我看此例子</a> </dd>
             <dt>select</dt>
             <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串或字符串数组（视multiple的值）。 </dd>
         </dl>
@@ -414,11 +464,11 @@
         <p>ms-attr-name="value"，这个允许我们在元素上绑定更多种类的属性，如className, tabIndex, name, colSpan什么的。</p>
         <h3 id="top19">万能绑定(ms-bind)</h3>
         <p>ms-bind是一种非常强大的同步机制，因为它允许你持续监听某一个VM属性的变化，并且它的参数是一个函数，this又是指向绑定属性的元素节点，因此比ms-css, ms-attr, ms-data, ms-click等有着因定DOM操作的绑定来得更灵活。</p>
-        <p>用法： ms-bind-prop="callback", 其中prop, callback都要求来自同一个VM。callback为一个函数，this指向元素节点。</p>
+        <p>用法： ms-bind="prop:callback", 其中prop, callback都要求来自同一个VM。callback为一个函数，this指向元素节点。</p>
         <div ms-skip>
             <pre class="brush:html;gutter:false;toolbar:false">
         &lt;div ms-controller="test"&gt;
-             &lt;div ms-bind-aaa="callback"&gt;&lt;/div&gt;
+             &lt;div ms-bind="aaa:callback"&gt;&lt;/div&gt;
              &lt;button ms-click="one"&gt;点我&lt;/button&gt;
         &lt;/div&gt;
  
@@ -747,6 +797,61 @@
     &lt;/body&gt;
 &lt;/html&gt;
         </pre>
+        <p>与jquery更好的集成，比如一些旧系统，直接在页面引入jquery库与其大量jquery插件，改成动态加载方式成本非常大。怎么样才能与jquery和平共存，亦能让AMD加载发挥作呢？先引入jquery库，
+
+            然后将avalon.modules.jquery 加个预设值（exports: jquery用于shim机制， state: 2 表明它已经加载完毕）就行了。</p>
+        <fieldset>
+            <legend>例子</legend>
+            <pre class="brush:javascript;gutter:false;toolbar:false">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+
+    &lt;head&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+        &lt;script src="avalon.js" type="text/javascript"&gt;&lt;/script&gt;
+
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div ms-controller="main" ms-click="click"&gt;
+            &lt;p&gt;
+                &lt;a href="#" &gt;点击我&lt;/a&gt;
+            &lt;/p&gt;
+        &lt;/div&gt;
+        &lt;script type="text/javascript"&gt;
+
+            avalon.modules.jquery = {
+                exports: jQuery,
+                state: 2
+            }
+            $.ajaxSetup({
+                headers: {ajaxRequest: true},
+                beforeSend: function(o) {
+                    avalon.log(typeof o)
+                    avalon.log(typeof o.id)
+                },
+                complete: function(data) {
+                    avalon.log('ajax 成功执行啦，阿门！')
+                }
+            })
+            $('body').bind("click", function(e) {
+                alert("document");
+                avalon.log(typeof e.target.$vmodel)
+                $.post('./h.js', {}, function(res) {
+                    avalon.log(typeof res)
+                })
+            });
+
+            avalon.require('jquery', function() {
+                avalon.log('加载jq了啊……')
+            })
+
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+        </fieldset>
         <fieldset>
             <legend>例子</legend>
             <p>加载单个模块。</p>
@@ -873,7 +978,8 @@
              });
             </pre>
         </fieldset>
-
+        <h3>更多学习资料</h3>
+        <p><a href="http://www.cnblogs.com/rubylouvre/p/3213430.html">利用avalon 实现一个简单的成绩单</a>， 教你如何使用ms-each数组循环绑定与$watch回调</p>
     </body>
 
 

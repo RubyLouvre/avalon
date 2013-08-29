@@ -142,10 +142,10 @@
                         a.left = getLeft();
                     }
                 };
-
+                
                 a.checkIt = function() {
                     this.$scope.post.done = this.checked;
-                     a.left = getLeft();
+                    a.left = getLeft();
                 };
                 a.removeIt = function() {
                     this.$scope.$remove();
@@ -157,8 +157,8 @@
                     });
                     a.left = getLeft();
                 };
-                a.checkThem = function() {
-                    var done = this.checked;
+                a.checkall = false
+                a.$watch("checkall", function(done) {
                     var len = a.posts.length;
                     a.posts.forEach(function(post) {
                         post.done = done;
@@ -167,7 +167,8 @@
                         }
                     });
                     a.left = len;
-                };
+                })
+
                 a.editIt = function() {//让那条评论可编辑
                     a.posts.forEach(function(post) {
                         post.edit = false;
@@ -190,12 +191,12 @@
                 <input class="new-todo" placeholder="What needs to be done?" autofocus ms-keypress="newIt">
             </div>
             <div class="left" ms-visible="posts.size()" >
-                <input id="toggle-all" type="checkbox" ms-click="checkThem">
+                <input id="toggle-all" type="checkbox" ms-duplex-radio="checkall">
                 <label for="toggle-all">Mark all as complete</label>
                 <ul class="todo-list" ms-each-post="posts">
                     <li  ms-class-done="post.done" ms-hover="hover" >
                         <div ms-visible="!post.edit" ms-dblclick="editIt">
-                            <input type="checkbox" ms-checked="post.done" ms-click="checkIt" width="10px"  />
+                            <input type="checkbox"  ms-checked="post.done" ms-click="checkIt" width="10px"  />
                             <label>{{post.text}}</label>
                             <a href="###" ms-click="removeIt" class="destroy">●</a>
                         </div>

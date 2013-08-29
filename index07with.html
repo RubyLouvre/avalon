@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-with</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+
+        <script >
+            avalon.define("xxx", function(vm) {
+                vm.checked = true
+                vm.$watch("checked", function(a) {
+                    avalon.log(a)
+                })
+                vm.obj = {
+                    a: 1,
+                    b: 2,
+                    c: 3
+                }
+            })
+        </script>
+
+    </head>
+    <body ms-controller="xxx">
+        <h3 style="text-align: center">ms-with</h3>
+        <div ms-with="obj">
+            <p>{{$key}} -- {{$val}}</p>
+        </div>
+        <form>
+            <input ms-duplex-radio="checked" type="checkbox"/>
+        </form>
+
+    </body>
+</html>
