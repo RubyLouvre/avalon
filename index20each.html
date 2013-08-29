@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script src="avalon.js"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script>
+            avalon.ready(function() {
+
+                avalon.define("props", function(vm) {
+
+                    vm.array = [
+                        new Select(),
+                        new Select()
+                    ]
+
+                    function Select() {
+                        this.options = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"];
+                        this.selectedIndex = 5;
+                    }
+                });
+
+                avalon.scan();
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="props">
+            <div ms-each-select="array">
+                <input type="text" ms-duplex="select.selectedIndex" />
+                <select ms-each-option="select.options" >
+                    <option ms-value="$index" ms-selected="console.log($index),$index == select.selectedIndex" >{{option}}</option>
+                </select>
+            </div>
+        </div>
+    </body>
+</html>

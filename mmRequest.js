@@ -161,7 +161,7 @@ define(["avalon"], function() {
     }
 
 
-    avalon.extend({
+    avalon.mix({
         // Counter for holding the number of active queries
         active: 0,
         // Last-Modified header cache for next request
@@ -267,9 +267,6 @@ define(["avalon"], function() {
                     s = avalon.ajaxSetup({}, options),
                     // Callbacks context
                     callbackContext = s.context || s,
-                    // Deferreds
-                    deferred = jQuery.Deferred(),
-                    completeDeferred = jQuery.Callbacks("once memory"),
                     // Status-dependent callbacks
                     statusCode = s.statusCode || {},
                     // Headers (they are sent all at once)
@@ -279,9 +276,10 @@ define(["avalon"], function() {
                     state = 0,
                     // Default abort message
                     strAbort = "canceled",
-                    // Fake xhr
-                    jqXHR = {
-                readyState: 0,
+                    readyState = 0
+            // Fake xhr
+            jqXHR = {
+                readyState: readyState,
                 // Builds headers hashtable if needed
                 getResponseHeader: function(key) {
                     var match;
@@ -341,12 +339,19 @@ define(["avalon"], function() {
                     done(0, finalText);
                     return this;
                 }
+
             };
 
+            var deferred = Deferred(function(obj) {
+                avalon.mix(obj, jqXHR)
+                obj.readyState = readyState
+            })
+
+            //   deferred
             // Attach deferreds
-            deferred.promise(jqXHR).complete = completeDeferred.add;
-            jqXHR.success = jqXHR.done;
-            jqXHR.error = jqXHR.fail;
+            //   deferred.promise(jqXHR).complete = completeDeferred.add;
+            //    jqXHR.success = jqXHR.done;
+            //    jqXHR.error = jqXHR.fail;
 
             // Remove hash character (#7531: and string promotion)
             // Add protocol if not provided (prefilters might expect it)
@@ -373,7 +378,7 @@ define(["avalon"], function() {
 
             // Convert data if not already a string
             if (s.data && s.processData && typeof s.data !== "string") {
-                s.data = jQuery.param(s.data, s.traditional);
+                s.data = avalon.param(s.data, s.traditional);
             }
 
             // Apply prefilters
@@ -383,10 +388,6 @@ define(["avalon"], function() {
             if (state === 2) {
                 return jqXHR;
             }
-
-            // We can fire global events as of now if asked to
-            fireGlobals = s.global;
-
 
 
             // Uppercase the type
@@ -457,10 +458,13 @@ define(["avalon"], function() {
             strAbort = "abort";
 
             // Install callbacks on deferreds
-            for (i in {success: 1, error: 1, complete: 1}) {
-                jqXHR[ i ](s[ i ]);
+            var callbacks = []
+            var object = {success: 0, error: 1, complete: 2}
+            for (i in object) {
+                callbacks[ object[i] ] = s[i]
+                // jqXHR[ i ](s[ i ]);
             }
-
+            jqXHR.then.apply(jqXHR, callbacks)
             // Get transport
             transport = inspectPrefiltersOrTransports(transports, s, options, jqXHR);
 
