@@ -1146,8 +1146,7 @@
             array.forEach(function(fn) {
                 added = fn("add", b)
             })
-            console.log(removed)
-            console.log(added)
+            var events = a.$events//待到$watch回调都绑定好再移除
             for (var i in b) {
                 if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && b[i] !== a[i]) {
                     updated[i] = b[i]
@@ -1159,17 +1158,21 @@
                 for (var i = 0, name; name = removed[i++]; ) {
                     delete scope[name]
                     delete a.$accessor[name]
+                    delete events[name]
                 }
-             
+
                 for (i = 0, name; name = added[i++]; ) {
                     scope[name] = b[name]
                 }
-                console.log(scope)
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
-            a[subscribers] = array
+            a[subscribers] = array //替换订阅者列表
+            array.forEach(function(fn) {
+                fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
+            })
+            a.$events = events//替换原先绑定好的$watch回调
             for (var i in updated) {
-                a[i] = updated[i]
+                a[i] = updated[i]//更新为新值
             }
             return a
         }
@@ -2692,23 +2695,21 @@
         if (Array.isArray(list)) {
             updateListView("add", 0, list)
         } else {
-            list[subscribers].push(updateObjectView);//list不对
+            list[subscribers].push(updateView);//list不对
             var mapper = {}, markstone = {}
-            function updateObjectView(method, key, val) {
-                var group = updateObjectView.group, ret = [], object = key
+            function updateView(method, key, val) {
+                var group = updateView.group, ret = [], object = key, host = updateView.host
                 switch (method) {
                     case "append":
                         var tmodel = createWithModel(key, val)
                         mapper[key] = tmodel
-                        console.log(key)
-                        list.$watch(key, function(neo) {
-                            console.log(key)
+                        host.$watch(key, function(neo) {
                             mapper[key].$val = neo
                         })
                         var tview = data.vTemplate.cloneNode(true)
                         scanNodes(tview, [tmodel, val].concat(vmodels))
-                        if (typeof updateObjectView.group !== "number") {
-                            updateObjectView.group = tview.childNodes.length
+                        if (typeof updateView.group !== "number") {
+                            updateView.group = tview.childNodes.length
                         }
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
@@ -2717,7 +2718,7 @@
                         for (var i in object) {
                             if (object.hasOwnProperty(i)) {
                                 if (!markstone.hasOwnProperty(i)) {//这是新增的
-                                    updateObjectView("append", i, object[i])
+                                    updateView("append", i, object[i])
                                     ret.push(i)
                                 } else {
                                     node = markstone[i]//如果已经存在
@@ -2748,9 +2749,10 @@
                         return ret
                 }
             }
+            updateView.host = list
             for (var key in list) {
                 if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                    updateObjectView("append", key, list[key])
+                    updateView("append", key, list[key])
                 }
             }
         }
