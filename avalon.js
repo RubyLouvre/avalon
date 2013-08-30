@@ -1157,10 +1157,9 @@
                 //移除已经删掉的键值对
                 for (var i = 0, name; name = removed[i++]; ) {
                     delete scope[name]
-                    delete a.$accessor[name]
                     delete events[name]
+                    delete a.$accessor[name]
                 }
-
                 for (i = 0, name; name = added[i++]; ) {
                     scope[name] = b[name]
                 }
@@ -2612,7 +2611,6 @@
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element
         var array = parseExpr(data.value, vmodels, data)
-
         var list
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
@@ -2627,60 +2625,56 @@
         }
         data.vTemplate = view
         data.scopes = vmodels
-
+        function getNode(group, pos) {
+            return  parent.childNodes[group * pos] || null
+        }
+        var mapper = [], markstone = {}
         function updateListView(method, pos, el) {
-            var tmodels = updateListView.tmodels
+            var group = updateListView.group;
+            pos = ~~pos//pos有可能为undefined
             switch (method) {
                 case "add":
-                    pos = ~~pos
-                    var vTransation = documentFragment.cloneNode(false),
-                            arr = el
+                    var vTransation = documentFragment.cloneNode(false), arr = el
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
                         var tmodel = createEachModel(ii, arr[i], list, data.param)
                         var tview = data.vTemplate.cloneNode(true)
-                        tmodel.$view = tview
-                        tmodels.splice(ii, 0, tmodel)
+                        mapper.splice(ii, 0, tmodel)
                         var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
                         scanNodes(tview, base.concat(vmodels))
-                        if (typeof data.group !== "number") {
-                            data.group = ~~tview.childNodes.length //记录每个模板一共有多少子节点
+                        if (typeof group !== "number") {
+                            updateListView.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
                         vTransation.appendChild(tview)
                     }
                     //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                    var insertNode = parent.childNodes[data.group * pos] || null
+                    var insertNode = getNode(group, pos)
                     parent.insertBefore(vTransation, insertNode)
                     break
                 case "del":
-                    pos = ~~pos
-                    var t = tmodels.splice(pos, el) //移除对应的子VM
-                    var vRemove = t[0].$view
-                    removeView(vRemove, parent, data.group, pos, el)
+                    mapper.splice(pos, el) //移除对应的子VM
+                    removeView2(getNode(group, pos), group, el)
                     break
                 case "index":
-                    pos = ~~pos
-                    for (; el = tmodels[pos]; pos++) {
+                    for (; el = mapper[pos]; pos++) {
                         el.$index = pos
                     }
                     break
                 case "clear":
-                    tmodels.length = 0
+                    mapper.length = 0
                     avalon.clearChild(parent)
                     break
                 case "move":
-                    var t = tmodels.splice(pos, 1)
+                    var t = mapper.splice(pos, 1)
                     if (t) {
-                        tmodels.splice(el, 0, t[0])
-                        var vRemove = t[0].$view
-                        var group = data.group
-                        removeView(vRemove, parent, group, pos, 1)
-                        var node = parent.childNodes[group * el]
+                        mapper.splice(el, 0, t[0])
+                        var vRemove = removeView2(getNode(group, pos), group)
+                        var node = getNode(group, el)
                         parent.insertBefore(vRemove, node)
                     }
                     break
                 case "set":
-                    var model = tmodels[pos]
+                    var model = mapper[pos]
                     if (model) {
                         var n = model.$itemName
                         model[n] = el
@@ -2688,15 +2682,15 @@
                     break
             }
         }
-        updateListView.tmodels = [] //循环绑定的视图刷新函数维护一个临时生成的VM集合
+        updateListView.mapper = [] //循环绑定的视图刷新函数维护一个临时生成的VM集合
         if ((list || {}).isCollection) {
             list[subscribers].push(updateListView)
         }
         if (Array.isArray(list)) {
             updateListView("add", 0, list)
         } else {
-            list[subscribers].push(updateView);//list不对
-            var mapper = {}, markstone = {}
+            list[subscribers].push(updateView)
+            mapper = {}
             function updateView(method, key, val) {
                 var group = updateView.group, ret = [], object = key, host = updateView.host
                 switch (method) {
@@ -2708,12 +2702,12 @@
                         })
                         var tview = data.vTemplate.cloneNode(true)
                         scanNodes(tview, [tmodel, val].concat(vmodels))
-                        if (typeof updateView.group !== "number") {
+                        if (typeof group !== "number") {
                             updateView.group = tview.childNodes.length
                         }
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
-                        break;
+                        break
                     case "add":
                         for (var i in object) {
                             if (object.hasOwnProperty(i)) {
@@ -2758,23 +2752,11 @@
         }
     }
 
-    function removeView(vRemove, parent, group, pos, n) {
-        var nodes = parent.childNodes
-        var node = nodes[group * pos] //第一个要移除的子节点
+
+    function removeView2(node, group, n) {
+        n = n || 1
         var removeNodes = [node]
         for (var i = 1; i < group * n; i++) {
-            node = node.nextSibling
-            removeNodes.push(node)
-        }
-        for (var i = 0, node; node = removeNodes[i++]; ) {
-            vRemove.appendChild(node) //通常添加到文档碎片实现移除
-        }
-        return vRemove
-    }
-
-    function removeView2(node, group) {
-        var removeNodes = [node]
-        for (var i = 1; i < group; i++) {
             node = node.nextSibling
             removeNodes.push(node)
         }
@@ -2798,7 +2780,6 @@
         param = param || "$data"
         var source = {}
         source.$index = index
-        source.$view = {}
         source.$itemName = param
         source[param] = {
             get: function() {
