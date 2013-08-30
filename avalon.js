@@ -411,7 +411,7 @@
     }
     if (![].map) {
         avalon.mix(Array.prototype, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -632,8 +632,8 @@
             if (this.css("position") === "fixed") {
                 offset = elem.getBoundingClientRect();
             } else {
-                offsetParent = this.offsetParent();//得到真正的offsetParent
-                offset = this.offset();// 得到正确的offsetParent
+                offsetParent = this.offsetParent(); //得到真正的offsetParent
+                offset = this.offset(); // 得到正确的offsetParent
                 if (offsetParent[0].tagName !== "HTML") {
                     parentOffset = offsetParent.offset();
                 }
@@ -1124,6 +1124,7 @@
     }
 
     function updateViewModel(a, b, isArray) {
+        //a为原来的VM， b为新数组或新对象
         if (isArray) {
             var an = a.length,
                     bn = b.length
@@ -1138,24 +1139,35 @@
             }
             return a
         } else {
-            var added = {}, updated = {}, flagAdd = false;
+            var added, removed, updated = {}, array = a[subscribers]
+            array.forEach(function(fn) {
+                removed = fn("remove", b)
+            })
+            array.forEach(function(fn) {
+                added = fn("add", b)
+            })
+            console.log(removed)
+            console.log(added)
             for (var i in b) {
-                if (b.hasOwnProperty(i)) {
-                    if (a.hasOwnProperty(i)) {
-                        if (b[i] !== a[i]) {
-                            updated[i] = b[i]
-                        }
-                    } else {
-                        flagAdd = true;
-                        added[i] = b[i]
-                    }
+                if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && b[i] !== a[i]) {
+                    updated[i] = b[i]
                 }
             }
-            if (flagAdd) {
+            if (added.length || removed.length) {
                 var scope = a.$model
-                avalon.mix(scope, added)
+                //移除已经删掉的键值对
+                for (var i = 0, name; name = removed[i++]; ) {
+                    delete scope[name]
+                    delete a.$accessor[name]
+                }
+             
+                for (i = 0, name; name = added[i++]; ) {
+                    scope[name] = b[name]
+                }
+                console.log(scope)
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
+            a[subscribers] = array
             for (var i in updated) {
                 a[i] = updated[i]
             }
@@ -1163,7 +1175,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor")
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
@@ -1300,6 +1312,7 @@
         vmodel.$events = {}
         vmodel.$id = generateID()
         vmodel.$accessor = accessores
+        vmodel[subscribers] = []
         for (var i in Observable) {
             var fn = Observable[i]
             if (!W3C) {//只有在IE678才加此补丁，因为VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -2614,7 +2627,6 @@
 
         function updateListView(method, pos, el) {
             var tmodels = updateListView.tmodels
-
             switch (method) {
                 case "add":
                     pos = ~~pos
@@ -2680,23 +2692,67 @@
         if (Array.isArray(list)) {
             updateListView("add", 0, list)
         } else {
-            var vTransation = documentFragment.cloneNode(false), mapper = {}
-            function loop(key, val) {
-                var tmodel = createWithModel(key, val)
-                mapper[key] = tmodel
-                list.$watch(key, function(neo) {
-                    mapper[key].$val = neo
-                })
-                var tview = data.vTemplate.cloneNode(true)
-                scanNodes(tview, [tmodel, val].concat(vmodels))
-                vTransation.appendChild(tview)
+            list[subscribers].push(updateObjectView);//list不对
+            var mapper = {}, markstone = {}
+            function updateObjectView(method, key, val) {
+                var group = updateObjectView.group, ret = [], object = key
+                switch (method) {
+                    case "append":
+                        var tmodel = createWithModel(key, val)
+                        mapper[key] = tmodel
+                        console.log(key)
+                        list.$watch(key, function(neo) {
+                            console.log(key)
+                            mapper[key].$val = neo
+                        })
+                        var tview = data.vTemplate.cloneNode(true)
+                        scanNodes(tview, [tmodel, val].concat(vmodels))
+                        if (typeof updateObjectView.group !== "number") {
+                            updateObjectView.group = tview.childNodes.length
+                        }
+                        markstone[key] = tview.firstChild
+                        parent.appendChild(tview)
+                        break;
+                    case "add":
+                        for (var i in object) {
+                            if (object.hasOwnProperty(i)) {
+                                if (!markstone.hasOwnProperty(i)) {//这是新增的
+                                    updateObjectView("append", i, object[i])
+                                    ret.push(i)
+                                } else {
+                                    node = markstone[i]//如果已经存在
+                                    var view = removeView2(node, group)//先移出DOM树
+                                    parent.appendChild(view)//再插到最后
+                                }
+                            }
+                        }
+                        return ret
+                    case "remove":
+                        var removeNodes = []
+                        for (var i in markstone) {
+                            if (!object.hasOwnProperty(i)) {//如果此标石对应的键名不再存在于新对象中
+                                var node = markstone[i]
+                                delete markstone[i]
+                                delete mapper[i]//移除不再存在的键
+                                ret.push(i)
+                                removeNodes.push(node)
+                                for (i = 1; i < group; i++) {
+                                    node = node.nextSibling
+                                    removeNodes.push(node)
+                                }
+                            }
+                        }
+                        for (i = 0; node = removeNodes[i++]; ) {
+                            parent.removeChild(node)
+                        }
+                        return ret
+                }
             }
             for (var key in list) {
                 if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                    loop(key, list[key])
+                    updateObjectView("append", key, list[key])
                 }
             }
-            parent.appendChild(vTransation)
         }
     }
 
@@ -2714,7 +2770,18 @@
         return vRemove
     }
 
-
+    function removeView2(node, group) {
+        var removeNodes = [node]
+        for (var i = 1; i < group; i++) {
+            node = node.nextSibling
+            removeNodes.push(node)
+        }
+        var view = documentFragment.cloneNode(false)
+        for (var i = 0, node; node = removeNodes[i++]; ) {
+            view.appendChild(node) //通常添加到文档碎片实现移除
+        }
+        return view
+    }
     //为子视图创建一个ViewModel
     function createWithModel(key, val) {
         return modelFactory({
