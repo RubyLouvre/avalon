@@ -13,53 +13,55 @@
             }
         </style>
         <script >
-            var model = avalon.define("xxx", function(vm) {
-                vm.obj = {
-                    a: 1,
-                    b: true,
-                    c: 3,
-                    d: 4
+            /*     var model = avalon.define("xxx", function(vm) {
+             vm.obj = {
+             a: 1,
+             b: true,
+             c: 3,
+             d: 4
+             }
+             });
+             model.obj.$watch("b", function(a) {
+             avalon.log(a + "=====================")
+             })
+             setTimeout(function() {
+             model.obj = {
+             k: "xxx",
+             d: 3,
+             e: "yyy",
+             b: false,
+             f: "zz"
+             }
+             setTimeout(function() {
+             console.log(model.obj)
+             })
+             
+             }, 2000)
+             
+             
+             
+             
+             setTimeout(function() {
+             model.obj.k = "xxxxxxx"
+             model.obj.b = true
+             }, 4000)
+             */
+            var model = avalon.define("yyy", function(vm) {
+                vm.items = {
+                    aaa: 1,
+                    bbb: 2,
+                    ccc: 3
                 }
-            });
-            model.obj.$watch("b", function(a) {
-                avalon.log(a + "=====================")
             })
             setTimeout(function() {
-                model.obj = {
-                    k: "xxx",
-                    d: 3,
-                    e: "yyy",
-                    b: false,
-                    f: "zz"
+                model.items = {
+                    kkk:-1,
+                    fff: 0,
+                    ccc: 1,
+                    eee: 3,
+                    bbb: 4
                 }
-                setTimeout(function() {
-                    console.log(model.obj)
-                })
-
-            }, 2000)
-
-
-
-
-            setTimeout(function() {
-                model.obj.k = "xxxxxxx"
-                model.obj.b = true
-            }, 4000)
-
-            var yyy = avalon.define('yyy', function(vm) {
-                vm.items = {
-                    a: 444, // {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc"},
-                    b: {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc", a: "111111"},
-                    //     z: {}
-                }
-            });
-
-            setTimeout(function() {
-                console.log("777777777777777777777777777777777777777")
-                yyy.items = {'b': {aaaa: "999"}};
-                //    yyy.items.b = 'zzz';
-                //     yyy.items.z = {'a': 'zzz', c: 'd', e: 'f'};
-            }, 1000);
+            },2000)
         </script>
 
     </head>
@@ -74,10 +76,25 @@
 
         <div ms-controller="yyy"  ms-with="items">
             <p>{{$key}}-------------------{{$val}}</p>
-            <ul ms-with="$val" >
-                <li>{{$key}}              {{$val}}</li>
-            </ul>
         </div>
+        <pre style="display:none">
+   var yyy = avalon.define('yyy', function(vm) {
+                vm.items = {
+                  
+                    b: {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc"},
+                    z: {},
+                    9: {},
+                    f:{ee:'opret'}
+                }
+            });
 
+            setTimeout(function() {
+                console.log("777777777777777777777777777777777777777")
+                yyy.items = {b: {aaaa: "999", "cccc": "pppp", bbbb: "8888", dddd:"iiiii"},a:"ppp"};
+
+
+
+            }, 1000);
+        </pre>
     </body>
 </html>

@@ -1123,7 +1123,7 @@
         }
     }
 
-    function updateViewModel(a, b, isArray) {
+    function updateViewModel(a, b, isArray, name) {
         //a为原来的VM， b为新数组或新对象
         if (isArray) {
             var an = a.length,
@@ -1139,22 +1139,58 @@
             }
             return a
         } else {
-            var added = [], removed = [], updated = {}, array = a[subscribers]
-            array.forEach(function(fn) {
-                removed = fn("remove", b)
-            })
-            array.forEach(function(fn) {
-                added = fn("add", b)
-            })
-            var events = a.$events//待到$watch回调都绑定好再移除
-            for (var i in b) {
-                if (b.hasOwnProperty(i) && a.hasOwnProperty(i) && b[i] !== a[i]) {
-                    updated[i] = b[i]
+            var added = [], removed = [], updated = [], array = a[subscribers], astr = [], bstr = []
+            var amodel = a.$model
+            //得到要移除的键值对
+            for (var i in amodel) {
+                if (!b.hasOwnProperty(i)) {
+                    removed.push(i)
+                    delete amodel[i]
                 }
             }
+            // 得到要添加的键值对及其顺序
+            for (var i in b) {
+                if (b.hasOwnProperty(i) && i !== "hasOwnProperty") {
+                    if (!a.hasOwnProperty(i)) {
+                        added.push(i)
+                    }
+                    bstr.push(i)
+                }
+            }
+            //得到其更键的键值对及其顺序
+            for (var i in amodel) {
+                if (amodel.hasOwnProperty(i)) {
+                    astr.push(i)
+                    if (amodel[i] !== b[i]) {
+                        updated.push(i)
+                    }
+                }
+            }
+            //  log("开始移除 " + removed)
+            array.forEach(function(fn) {
+                fn("remove", removed)
+            })
+            // log("开始添加 " + added)
+            array.forEach(function(fn) {
+                fn("add", b)
+            })
+            // log("开始更新 " + updated)
+            if (updated.length) {
+                updated.forEach(function(i) {
+                    a[i] = b[i]
+                })
+            }
+
+            if (astr.join(";") !== bstr.join(";")) {
+                // log("开始排序")
+                array.forEach(function(fn) {
+                    fn("sort", bstr.slice(0))
+                })
+            }
+
+            var events = a.$events//待到$watch回调都绑定好再移除
             if (added.length || removed.length) {
                 var scope = a.$model
-
                 //移除已经删掉的键值对
                 for (var i = 0, name; name = removed[i++]; ) {
                     delete scope[name]
@@ -1164,11 +1200,6 @@
                 for (i = 0, name; name = added[i++]; ) {
                     scope[name] = b[name]
                 }
-
-                for (var i in updated) {
-                    scope[i] = updated[i]//更新为新值
-                    delete a.$accessor[i]
-                }
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
             a[subscribers] = array //替换订阅者列表
@@ -1176,9 +1207,8 @@
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
             a.$events = events//替换原先绑定好的$watch回调
-            for (var i in updated) {
-                a[i] = updated[i]//更新为新值
-            }
+
+
             return a
         }
     }
@@ -1259,7 +1289,7 @@
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
                                     if (value && value.$id) {//如果已经转换过
-                                        value = updateViewModel(value, neo, Array.isArray(neo))
+                                        value = updateViewModel(value, neo, Array.isArray(neo), name, accessor)
                                     } else if (Array.isArray(neo)) {//如果是第一次转换数组
                                         value = Collection(neo)
                                         value._add(neo)
@@ -2711,41 +2741,33 @@
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
                         break
+                    case "sort":
+                        for (var i = 0, name; name = object[i++]; ) {
+                            var node = markstone[name]
+                            var view = removeView2(node, group)//先移出DOM树
+                            parent.appendChild(view)//再插到最后
+                        }
+                        break
                     case "add":
                         for (var i in object) {
                             if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                                 if (!markstone.hasOwnProperty(i)) {//这是新增的
                                     updateOView("append", i, object[i])
                                     ret.push(i)
-                                } else {
-                                    node = markstone[i]//如果已经存在
-                                    var view = removeView2(node, group)//先移出DOM树
-                                    parent.appendChild(view)//再插到最后
-                                    if (typeof object[i] == "object" && typeof mapper[i] == "object" && mapper[i].$val) {
-                                        var fns = mapper[i].$val[subscribers]
-                                        setTimeout(function() {
-                                            fns[0]("remove", object[i])
-                                        })
-                                    }
                                 }
                             }
                         }
                         return ret
                     case "remove":
                         var removeNodes = []
-                        for (var i in markstone) {
-                            if (!object.hasOwnProperty(i)) {//如果此标石对应的键名不再存在于新对象中
-                                var node = markstone[i]
-                                delete markstone[i]
-                                delete mapper[i]//移除不再存在的键
-                                ret.push(i)
+                        for (var i = 0, name; name = object[i++]; ) {
+                            var node = markstone[name]
+                            delete markstone[name]
+                            delete mapper[name]//移除不再存在的键
+                            removeNodes.push(node)
+                            for (var j = 1; j < group; j++) {
+                                node = node.nextSibling
                                 removeNodes.push(node)
-                                for (i = 1; i < group; i++) {
-                                    node = node.nextSibling
-                                    removeNodes.push(node)
-                                }
-                            } else {
-                                host[i] = object[i]
                             }
                         }
                         for (i = 0; node = removeNodes[i++]; ) {
