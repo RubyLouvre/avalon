@@ -381,6 +381,7 @@
         addClass: function(cls) {
             var el = this[0]
             if (cls && typeof cls === "string" && el && el.nodeType === 1) {
+                //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
                 cls.replace(rword, function(c) {
                     el.classList.add(c)
                 })

@@ -4,23 +4,32 @@
         <title>ms-with</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
-
+        <style>
+            .red{
+                color:red;
+            }
+            .green{
+                color:greenyellow;
+            }
+        </style>
         <script >
             var model = avalon.define("xxx", function(vm) {
                 vm.obj = {
                     a: 1,
-                    b: 2,
+                    b: true,
                     c: 3,
                     d: 4
                 }
+            });
+            model.obj.$watch("b", function(a) {
+                avalon.log(a + "=====================")
             })
-
             setTimeout(function() {
                 model.obj = {
                     k: "xxx",
                     d: 3,
                     e: "yyy",
-                    b: 2,
+                    b: false,
                     f: "zz"
                 }
                 setTimeout(function() {
@@ -28,16 +37,46 @@
                 })
 
             }, 2000)
+
+
+
+
             setTimeout(function() {
                 model.obj.k = "xxxxxxx"
+                model.obj.b = true
             }, 4000)
+
+            var yyy = avalon.define('yyy', function(vm) {
+                vm.items = {
+                    a: 444, // {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc"},
+                    b: {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc", a: "111111"},
+                    //     z: {}
+                }
+            });
+
+            setTimeout(function() {
+                console.log("777777777777777777777777777777777777777")
+                yyy.items = {'b': {aaaa: "999"}};
+                //    yyy.items.b = 'zzz';
+                //     yyy.items.z = {'a': 'zzz', c: 'd', e: 'f'};
+            }, 1000);
         </script>
 
     </head>
-    <body ms-controller="xxx">
-        <h3 style="text-align: center">ms-with</h3>
-        <div ms-with="obj">
-            <p>{{$key}} -- {{$val}}</p>
+    <body >
+        <div ms-controller="xxx">
+            <h3 style="text-align: center">ms-with</h3>
+            <div ms-with="obj">
+                <p>{{$key}} -- {{$val}}</p>
+            </div>
+            <div ms-class-red="obj.b" ms-class-green="!obj.b">这个会变色</div>
+        </div>
+
+        <div ms-controller="yyy"  ms-with="items">
+            <p>{{$key}}-------------------{{$val}}</p>
+            <ul ms-with="$val" >
+                <li>{{$key}}              {{$val}}</li>
+            </ul>
         </div>
 
     </body>

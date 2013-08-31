@@ -1139,7 +1139,7 @@
             }
             return a
         } else {
-            var added, removed, updated = {}, array = a[subscribers]
+            var added = [], removed = [], updated = {}, array = a[subscribers]
             array.forEach(function(fn) {
                 removed = fn("remove", b)
             })
@@ -1154,6 +1154,7 @@
             }
             if (added.length || removed.length) {
                 var scope = a.$model
+
                 //移除已经删掉的键值对
                 for (var i = 0, name; name = removed[i++]; ) {
                     delete scope[name]
@@ -1162,6 +1163,11 @@
                 }
                 for (i = 0, name; name = added[i++]; ) {
                     scope[name] = b[name]
+                }
+
+                for (var i in updated) {
+                    scope[i] = updated[i]//更新为新值
+                    delete a.$accessor[i]
                 }
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
@@ -2625,77 +2631,74 @@
         }
         data.vTemplate = view
         data.scopes = vmodels
-        function getNode(group, pos) {
-            return  parent.childNodes[group * pos] || null
-        }
         var mapper = [], markstone = {}
-        function updateListView(method, pos, el) {
-            var group = updateListView.group;
-            pos = ~~pos//pos有可能为undefined
-            switch (method) {
-                case "add":
-                    var vTransation = documentFragment.cloneNode(false), arr = el
-                    for (var i = 0, n = arr.length; i < n; i++) {
-                        var ii = i + pos
-                        var tmodel = createEachModel(ii, arr[i], list, data.param)
-                        var tview = data.vTemplate.cloneNode(true)
-                        mapper.splice(ii, 0, tmodel)
-                        var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
-                        scanNodes(tview, base.concat(vmodels))
-                        if (typeof group !== "number") {
-                            updateListView.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
-                        }
-                        vTransation.appendChild(tview)
-                    }
-                    //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                    var insertNode = getNode(group, pos)
-                    parent.insertBefore(vTransation, insertNode)
-                    break
-                case "del":
-                    mapper.splice(pos, el) //移除对应的子VM
-                    removeView2(getNode(group, pos), group, el)
-                    break
-                case "index":
-                    for (; el = mapper[pos]; pos++) {
-                        el.$index = pos
-                    }
-                    break
-                case "clear":
-                    mapper.length = 0
-                    avalon.clearChild(parent)
-                    break
-                case "move":
-                    var t = mapper.splice(pos, 1)
-                    if (t) {
-                        mapper.splice(el, 0, t[0])
-                        var vRemove = removeView2(getNode(group, pos), group)
-                        var node = getNode(group, el)
-                        parent.insertBefore(vRemove, node)
-                    }
-                    break
-                case "set":
-                    var model = mapper[pos]
-                    if (model) {
-                        var n = model.$itemName
-                        model[n] = el
-                    }
-                    break
-            }
-        }
-        updateListView.mapper = [] //循环绑定的视图刷新函数维护一个临时生成的VM集合
-        if ((list || {}).isCollection) {
-            list[subscribers].push(updateListView)
-        }
         if (Array.isArray(list)) {
-            updateListView("add", 0, list)
+            list[subscribers].push(updateLView)
+            updateLView("add", 0, list)
+            function getNode(group, pos) {
+                return  parent.childNodes[group * pos] || null
+            }
+            function updateLView(method, pos, el) {
+                var group = updateLView.group;
+                pos = ~~pos//pos有可能为undefined
+                switch (method) {
+                    case "add":
+                        var vTransation = documentFragment.cloneNode(false), arr = el
+                        for (var i = 0, n = arr.length; i < n; i++) {
+                            var ii = i + pos
+                            var tmodel = createEachModel(ii, arr[i], list, data.param)
+                            var tview = data.vTemplate.cloneNode(true)
+                            mapper.splice(ii, 0, tmodel)
+                            var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
+                            scanNodes(tview, base.concat(vmodels))
+                            if (typeof group !== "number") {
+                                updateLView.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
+                            }
+                            vTransation.appendChild(tview)
+                        }
+                        //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
+                        var insertNode = getNode(group, pos)
+                        parent.insertBefore(vTransation, insertNode)
+                        break
+                    case "del":
+                        mapper.splice(pos, el) //移除对应的子VM
+                        removeView2(getNode(group, pos), group, el)
+                        break
+                    case "index":
+                        for (; el = mapper[pos]; pos++) {
+                            el.$index = pos
+                        }
+                        break
+                    case "clear":
+                        mapper.length = 0
+                        avalon.clearChild(parent)
+                        break
+                    case "move":
+                        var t = mapper.splice(pos, 1)
+                        if (t) {
+                            mapper.splice(el, 0, t[0])
+                            var vRemove = removeView2(getNode(group, pos), group)
+                            var node = getNode(group, el)
+                            parent.insertBefore(vRemove, node)
+                        }
+                        break
+                    case "set":
+                        var model = mapper[pos]
+                        if (model) {
+                            var n = model.$itemName
+                            model[n] = el
+                        }
+                        break
+                }
+            }
         } else {
-            list[subscribers].push(updateView)
+            list[subscribers].push(updateOView)
             mapper = {}
-            function updateView(method, key, val) {
-                var group = updateView.group, ret = [], object = key, host = updateView.host
+            function updateOView(method, key, val) {
+                var group = updateOView.group, ret = [], object = key, host = updateOView.host
                 switch (method) {
                     case "append":
-                        var tmodel = createWithModel(key, val)
+                        var tmodel = createWithModel(key, val && val.$model ? val.$model : val)
                         mapper[key] = tmodel
                         host.$watch(key, function(neo) {
                             mapper[key].$val = neo
@@ -2703,21 +2706,27 @@
                         var tview = data.vTemplate.cloneNode(true)
                         scanNodes(tview, [tmodel, val].concat(vmodels))
                         if (typeof group !== "number") {
-                            updateView.group = tview.childNodes.length
+                            updateOView.group = tview.childNodes.length
                         }
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
                         break
                     case "add":
                         for (var i in object) {
-                            if (object.hasOwnProperty(i)) {
+                            if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                                 if (!markstone.hasOwnProperty(i)) {//这是新增的
-                                    updateView("append", i, object[i])
+                                    updateOView("append", i, object[i])
                                     ret.push(i)
                                 } else {
                                     node = markstone[i]//如果已经存在
                                     var view = removeView2(node, group)//先移出DOM树
                                     parent.appendChild(view)//再插到最后
+                                    if (typeof object[i] == "object" && typeof mapper[i] == "object" && mapper[i].$val) {
+                                        var fns = mapper[i].$val[subscribers]
+                                        setTimeout(function() {
+                                            fns[0]("remove", object[i])
+                                        })
+                                    }
                                 }
                             }
                         }
@@ -2735,6 +2744,8 @@
                                     node = node.nextSibling
                                     removeNodes.push(node)
                                 }
+                            } else {
+                                host[i] = object[i]
                             }
                         }
                         for (i = 0; node = removeNodes[i++]; ) {
@@ -2743,10 +2754,10 @@
                         return ret
                 }
             }
-            updateView.host = list
-            for (var key in list) {
-                if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                    updateView("append", key, list[key])
+            updateOView.host = list
+            for (var key in list.$model) {
+                if (list.hasOwnProperty(key)) {
+                    updateOView("append", key, list[key])
                 }
             }
         }
