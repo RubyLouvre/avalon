@@ -1123,7 +1123,7 @@
         }
     }
 
-    function updateViewModel(a, b, valueType) {
+    function refreshModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             var an = a.length,
@@ -1143,7 +1143,7 @@
             var amodel = a.$model
             //得到要移除的键值对
             for (var i in amodel) {
-                if (!b.hasOwnProperty(i)) {
+                if (!b  || !b.hasOwnProperty(i)) {
                     removed.push(i)
                     delete amodel[i]
                 }
@@ -1180,7 +1180,7 @@
                     if (typeof b[i] !== "object") {
                         a[i] = b[i]
                     } else {
-                        updateViewModel(a[i], b[i], "object")
+                        refreshModel(a[i], b[i], "object")
                     }
                 })
             }
@@ -1211,7 +1211,6 @@
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
             a.$events = events//替换原先绑定好的$watch回调
-
 
             return a
         }
@@ -1293,7 +1292,7 @@
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
                                     if (value && value.$id) {//如果已经转换过
-                                        value = updateViewModel(value, neo, valueType)
+                                        value = refreshModel(value, neo, valueType)
                                     } else if (Array.isArray(neo)) {//如果是第一次转换数组
                                         value = Collection(neo)
                                         value._add(neo)
@@ -2636,7 +2635,7 @@
                     if (val.$model) {
                         val = val.$model
                     }
-                    updateViewModel(this[index], val, valueType)
+                    refreshModel(this[index], val, valueType)
                 } else if (this[index] !== val) {
                     this[index] = val
                     notifySubscribers(this, "set", index, val)
@@ -2666,26 +2665,26 @@
         data.scopes = vmodels
         var mapper = [], markstone = {}
         if (Array.isArray(list)) {
-            list[subscribers].push(eachViewProxy)
-            eachViewProxy("add", 0, list)
+            list[subscribers].push(eachIterator)
+            eachIterator("add", 0, list)
             function getNode(group, pos) {
                 return  parent.childNodes[group * pos] || null
             }
-            function eachViewProxy(method, pos, el) {
-                var group = eachViewProxy.group;
+            function eachIterator(method, pos, el) {
+                var group = eachIterator.group;
                 pos = ~~pos//pos有可能为undefined
                 switch (method) {
                     case "add":
                         var vTransation = documentFragment.cloneNode(false), arr = el
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
-                            var tmodel = createEachModel(ii, arr[i], list, data.param)
+                            var proxy = createEachProxy(ii, arr[i], list, data.param)
                             var tview = data.vTemplate.cloneNode(true)
-                            mapper.splice(ii, 0, tmodel)
-                            var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
+                            mapper.splice(ii, 0, proxy)
+                            var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                             scanNodes(tview, base.concat(vmodels))
                             if (typeof group !== "number") {
-                                eachViewProxy.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
+                                eachIterator.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
                             }
                             vTransation.appendChild(tview)
                         }
@@ -2727,29 +2726,24 @@
         } else {
 
             mapper = {}
-            function withViewProxy(method, key, val) {
-                var group = withViewProxy.group, ret = [], object = key, host = withViewProxy.host
+            function withIterator(method, key, val) {
+                var group = withIterator.group, ret = [], object = key, host = withIterator.host
                 switch (method) {
                     case "append":
-                        var tmodel = createWithModel(key, val && val.$model ? val.$model : val)
-                        mapper[key] = tmodel
+                        var proxy = createWithProxy(key, val && val.$model ? val.$model : val)
+                        mapper[key] = proxy
                         host.$watch(key, function(neo) {
-
                             mapper[key].$val = neo
                         })
                         if (typeof list[key] == "object") {
-                            tmodel[subscribers] = list[key][subscribers]
-                            tmodel[subscribers].test = "test"
-                         /*   setTimeout(function() {
-                                console.log("222222222222222")
-                                console.log(list[key][subscribers])
-                            }, 700)*/
+                            //将代理VM的订阅列表换成被代理VM的订阅列表
+                            proxy[subscribers] = list[key][subscribers]
                         }
 
                         var tview = data.vTemplate.cloneNode(true)
-                        scanNodes(tview, [tmodel, val].concat(vmodels))
+                        scanNodes(tview, [proxy, val].concat(vmodels))
                         if (typeof group !== "number") {
-                            withViewProxy.group = tview.childNodes.length
+                            withIterator.group = tview.childNodes.length
                         }
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
@@ -2765,7 +2759,7 @@
                         for (var i in object) {
                             if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                                 if (!markstone.hasOwnProperty(i)) {//这是新增的
-                                    withViewProxy("append", i, object[i])
+                                    withIterator("append", i, object[i])
                                     ret.push(i)
                                 }
                             }
@@ -2790,16 +2784,14 @@
                 }
             }
 
-            list[subscribers].push(withViewProxy)
-            if (data.value == "$val" && vmodels[0] && vmodels[0].$val === list) {
-              //  console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
-              //  console.log(data.value)
-             //   console.log(vmodels[0][subscribers].push(withViewProxy))
+            list[subscribers].push(withIterator)
+            if (data.value === "$val" && vmodels[0] && vmodels[0].$val === list) {
+                vmodels[0][subscribers].push(withIterator)//将视图刷新函数的储存位置往上提，以便能在refreshModel中调用
             }
-            withViewProxy.host = list
+            withIterator.host = list
             for (var key in list.$model) {
                 if (list.hasOwnProperty(key)) {
-                    withViewProxy("append", key, list[key])
+                    withIterator("append", key, list[key])
                 }
             }
         }
@@ -2820,7 +2812,7 @@
         return view
     }
     //为子视图创建一个ViewModel
-    function createWithModel(key, val) {
+    function createWithProxy(key, val) {
         return modelFactory({
             $key: key,
             $val: val
@@ -2829,7 +2821,7 @@
         })
     }
     var watchEachOne = oneObject("$index,$remove,$first,$last")
-    function createEachModel(index, item, list, param) {
+    function createEachProxy(index, item, list, param) {
         param = param || "$data"
         var source = {}
         source.$index = index
