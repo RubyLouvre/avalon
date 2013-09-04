@@ -1123,9 +1123,9 @@
         }
     }
 
-    function updateViewModel(a, b, isArray, name) {
+    function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
-        if (isArray) {
+        if (valueType === "array") {
             var an = a.length,
                     bn = b.length
             if (an > bn) {
@@ -1177,7 +1177,11 @@
             // log("开始更新 " + updated)
             if (updated.length) {
                 updated.forEach(function(i) {
-                    a[i] = b[i]
+                    if (typeof b[i] !== "object") {
+                        a[i] = b[i]
+                    } else {
+                        updateViewModel(a[i], b[i], "object")
+                    }
                 })
             }
 
@@ -1289,7 +1293,7 @@
                                 var old = value
                                 if (valueType === "array" || valueType === "object") {
                                     if (value && value.$id) {//如果已经转换过
-                                        value = updateViewModel(value, neo, Array.isArray(neo), name, accessor)
+                                        value = updateViewModel(value, neo, valueType)
                                     } else if (Array.isArray(neo)) {//如果是第一次转换数组
                                         value = Collection(neo)
                                         value._add(neo)
@@ -2627,11 +2631,12 @@
         }
         array.set = function(index, val) {
             if (index >= 0 && index < this.length) {
-                if (/array|object/.test(getType(val))) {
+                var valueType = getType(val)
+                if (valueType === "array" || valueType === "object") {
                     if (val.$model) {
                         val = val.$model
                     }
-                    updateViewModel(this[index], val, Array.isArray(val))
+                    updateViewModel(this[index], val, valueType)
                 } else if (this[index] !== val) {
                     this[index] = val
                     notifySubscribers(this, "set", index, val)
@@ -2645,13 +2650,11 @@
     //====================== each binding  =================================
 
     bindingHandlers["each"] = function(data, vmodels) {
-        var parent = data.element
+        var parent = data.element, list
         var array = parseExpr(data.value, vmodels, data)
-        var list
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
         }
-
         if (typeof list !== "object") {
             return list
         }
@@ -2663,13 +2666,13 @@
         data.scopes = vmodels
         var mapper = [], markstone = {}
         if (Array.isArray(list)) {
-            list[subscribers].push(updateLView)
-            updateLView("add", 0, list)
+            list[subscribers].push(eachViewProxy)
+            eachViewProxy("add", 0, list)
             function getNode(group, pos) {
                 return  parent.childNodes[group * pos] || null
             }
-            function updateLView(method, pos, el) {
-                var group = updateLView.group;
+            function eachViewProxy(method, pos, el) {
+                var group = eachViewProxy.group;
                 pos = ~~pos//pos有可能为undefined
                 switch (method) {
                     case "add":
@@ -2682,7 +2685,7 @@
                             var base = typeof arr[i] === "object" ? [tmodel, arr[i]] : [tmodel]
                             scanNodes(tview, base.concat(vmodels))
                             if (typeof group !== "number") {
-                                updateLView.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
+                                eachViewProxy.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
                             }
                             vTransation.appendChild(tview)
                         }
@@ -2692,7 +2695,7 @@
                         break
                     case "del":
                         mapper.splice(pos, el) //移除对应的子VM
-                        removeView2(getNode(group, pos), group, el)
+                        removeView(getNode(group, pos), group, el)
                         break
                     case "index":
                         for (; el = mapper[pos]; pos++) {
@@ -2707,7 +2710,7 @@
                         var t = mapper.splice(pos, 1)
                         if (t) {
                             mapper.splice(el, 0, t[0])
-                            var vRemove = removeView2(getNode(group, pos), group)
+                            var vRemove = removeView(getNode(group, pos), group)
                             var node = getNode(group, el)
                             parent.insertBefore(vRemove, node)
                         }
@@ -2722,21 +2725,31 @@
                 }
             }
         } else {
-            list[subscribers].push(updateOView)
+
             mapper = {}
-            function updateOView(method, key, val) {
-                var group = updateOView.group, ret = [], object = key, host = updateOView.host
+            function withViewProxy(method, key, val) {
+                var group = withViewProxy.group, ret = [], object = key, host = withViewProxy.host
                 switch (method) {
                     case "append":
                         var tmodel = createWithModel(key, val && val.$model ? val.$model : val)
                         mapper[key] = tmodel
                         host.$watch(key, function(neo) {
+
                             mapper[key].$val = neo
                         })
+                        if (typeof list[key] == "object") {
+                            tmodel[subscribers] = list[key][subscribers]
+                            tmodel[subscribers].test = "test"
+                         /*   setTimeout(function() {
+                                console.log("222222222222222")
+                                console.log(list[key][subscribers])
+                            }, 700)*/
+                        }
+
                         var tview = data.vTemplate.cloneNode(true)
                         scanNodes(tview, [tmodel, val].concat(vmodels))
                         if (typeof group !== "number") {
-                            updateOView.group = tview.childNodes.length
+                            withViewProxy.group = tview.childNodes.length
                         }
                         markstone[key] = tview.firstChild
                         parent.appendChild(tview)
@@ -2744,7 +2757,7 @@
                     case "sort":
                         for (var i = 0, name; name = object[i++]; ) {
                             var node = markstone[name]
-                            var view = removeView2(node, group)//先移出DOM树
+                            var view = removeView(node, group)//先移出DOM树
                             parent.appendChild(view)//再插到最后
                         }
                         break
@@ -2752,7 +2765,7 @@
                         for (var i in object) {
                             if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                                 if (!markstone.hasOwnProperty(i)) {//这是新增的
-                                    updateOView("append", i, object[i])
+                                    withViewProxy("append", i, object[i])
                                     ret.push(i)
                                 }
                             }
@@ -2776,17 +2789,24 @@
                         return ret
                 }
             }
-            updateOView.host = list
+
+            list[subscribers].push(withViewProxy)
+            if (data.value == "$val" && vmodels[0] && vmodels[0].$val === list) {
+              //  console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
+              //  console.log(data.value)
+             //   console.log(vmodels[0][subscribers].push(withViewProxy))
+            }
+            withViewProxy.host = list
             for (var key in list.$model) {
                 if (list.hasOwnProperty(key)) {
-                    updateOView("append", key, list[key])
+                    withViewProxy("append", key, list[key])
                 }
             }
         }
     }
 
 
-    function removeView2(node, group, n) {
+    function removeView(node, group, n) {
         n = n || 1
         var removeNodes = [node]
         for (var i = 1; i < group * n; i++) {
