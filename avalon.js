@@ -1101,7 +1101,7 @@
             } else {
                 var callbacks = this.$events[type] || []
                 var i = callbacks.length
-                while (--i > -1) {
+                while (~--i < 0) {
                     if (callbacks[i] === callback) {
                         return callbacks.splice(i, 1)
                     }
@@ -1143,7 +1143,7 @@
             var amodel = a.$model
             //得到要移除的键值对
             for (var i in amodel) {
-                if (!b  || !b.hasOwnProperty(i)) {
+                if (!b || !b.hasOwnProperty(i)) {
                     removed.push(i)
                     delete amodel[i]
                 }
@@ -1177,14 +1177,15 @@
             // log("开始更新 " + updated)
             if (updated.length) {
                 updated.forEach(function(i) {
-                    if (typeof b[i] !== "object") {
+                    var valueType = getType(b[i])
+                    if (valueType !== "object" && valueType !== "array") {
                         a[i] = b[i]
                     } else {
-                        refreshModel(a[i], b[i], "object")
+                        refreshModel(a[i], b[i], valueType)
                     }
                 })
             }
-
+            console.log(astr.join(";") + "   " + bstr.join(";"))
             if (astr.join(";") !== bstr.join(";")) {
                 // log("开始排序")
                 array.forEach(function(fn) {
@@ -1211,7 +1212,6 @@
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
             a.$events = events//替换原先绑定好的$watch回调
-
             return a
         }
     }
@@ -1250,12 +1250,11 @@
                     var setter = val.set
                     var getter = val.get
                     accessor = function(neo) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
-                        var value = accessor.value
+                        var value = accessor.value, preValue = value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
                             }
-                            var antiquity = value
                             if (typeof setter === "function") {
                                 var backup = vmodel.$events[name]
                                 vmodel.$events[name] = []//清空回调，防止内部冒泡而触发多次$fire
@@ -1266,7 +1265,7 @@
                                 oldArgs = neo
                                 value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$fire && vmodel.$fire(name, value, antiquity)
+                                vmodel.$fire && vmodel.$fire(name, value, preValue)
                             }
                         } else {
                             if (openComputedCollect) {// 收集视图刷新函数
@@ -1283,29 +1282,28 @@
                     callGetters.push(accessor)
                 } else {
                     accessor = function(neo) { //创建监控属性或数组，自变量，由用户触发其改变
-                        var value = accessor.value
+                        var value = accessor.value, preValue = value, complexValue
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
                             }
                             if (value !== neo) {
-                                var old = value
                                 if (valueType === "array" || valueType === "object") {
-                                    if (value && value.$id) {//如果已经转换过
+                                    if ("value" in accessor) {//如果已经转换过
                                         value = refreshModel(value, neo, valueType)
-                                    } else if (Array.isArray(neo)) {//如果是第一次转换数组
-                                        value = Collection(neo)
-                                        value._add(neo)
                                     } else {//如果是第一次转换对象
                                         value = modelFactory(neo, neo)
                                     }
+                                    complexValue = value.$model
                                 } else {//如果是其他数据类型
                                     value = neo
                                 }
                                 accessor.value = value
-                                model[name] = value && value.$id ? value.$model : value//更新$model中的值
+                                model[name] = complexValue ? complexValue : value//更新$model中的值
                                 notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$fire && vmodel.$fire(name, value, old)
+                                if (!complexValue) {
+                                    vmodel.$fire && vmodel.$fire(name, value, preValue)
+                                }
                             }
                         } else {
                             collectSubscribers(accessor) //收集视图函数
@@ -2459,7 +2457,7 @@
     function convert(val) {
         var type = getType(val)
         if (type === "array" || type === "object") {
-            val = val.$id ? val : modelFactory(val, val, type === "array")
+            val = val.$id ? val : modelFactory(val, val, type)
         }
         return val
     }
@@ -2735,7 +2733,7 @@
                         host.$watch(key, function(neo) {
                             mapper[key].$val = neo
                         })
-                        if (typeof list[key] == "object") {
+                        if (getType(list[key]) === "object") {
                             //将代理VM的订阅列表换成被代理VM的订阅列表
                             proxy[subscribers] = list[key][subscribers]
                         }
