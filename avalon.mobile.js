@@ -2094,7 +2094,7 @@
                 added[i] = convert(arr[i])
             }
             this._splice.apply(this, [pos, 0].concat(added))
-            notifySubscribers(this, "add", pos, added)
+            notifySubscribers(this, "add", added, pos)
             if (!this.stopFireLength) {
                 return dynamic.length = this.length
             }
@@ -2246,23 +2246,23 @@
         }
         data.template = view
         data.vmodels = vmodels
+        // 由于eachIterator、withIterator为内存开销非常大的复杂函数，因此我们只创建一个，
+        // 然后通过iterator这个简单的代理函数来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
-            function eachFly(method, pos, el) {
+            iterator = function(method, pos, el) {
                 eachIterator(method, pos, el, data)
             }
-            list[subscribers].push(eachFly)
-            eachFly("add", 0, list)
         } else {
             data.mapper = {}
             data.markstone = {}
-            function withFly(method, pos, el) {
-                withIterator(method, pos, el, data, withFly.host)
+            iterator = function(method, pos, el) {
+                withIterator(method, pos, el, data, iterator.host)
             }
-            withFly.host = list
-            list[subscribers].push(withFly)
-            withFly("add", list)
+            iterator.host = list
         }
+        list[subscribers].push(iterator)
+        iterator("add", list, 0)
     }
     function eachIterator(method, pos, el, data) {
         var group = data.group
@@ -2271,7 +2271,8 @@
         var locatedNode = getLocatedNode(parent, group, pos)
         switch (method) {
             case "add":
-                var transation = documentFragment.cloneNode(false), arr = el
+                // 为了保证了withIterator的add命令一致，需要对调一下第2，第3参数
+                var arr = pos, pos = el, transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], arr, data.param)
