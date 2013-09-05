@@ -62,16 +62,18 @@
             })
             setTimeout(function() {
                 console.log("==================")
-                model.items = {
+                    console.log(avalon.vmodels.yyy.items.ccc.$events)
+             //   console.log(model.items.ccc.$events)
+             model.items = {
                     kkk: -1,
                     fff: 0,
                     ccc: {
-                        a: 4,
-                        b: 3,
+                        a: "xxx",
+                        b: "yyy",
                         d: 6666666
                     },
                     eee: 3,
-                    bbb: 4
+                    bbb: "zzz"
                 }
             }, 2000)
         </script>

@@ -1174,6 +1174,7 @@
             array.forEach(function(fn) {
                 fn("add", b)
             })
+
             // log("开始更新 " + updated)
             if (updated.length) {
                 updated.forEach(function(i) {
@@ -1185,15 +1186,15 @@
                     }
                 })
             }
-            console.log(astr.join(";") + "   " + bstr.join(";"))
+            // console.log(astr.join(";") + "   " + bstr.join(";"))
             if (astr.join(";") !== bstr.join(";")) {
                 // log("开始排序")
                 array.forEach(function(fn) {
                     fn("sort", bstr.slice(0))
                 })
             }
-
             var events = a.$events//待到$watch回调都绑定好再移除
+            console.log(Object.keys(events))
             if (added.length || removed.length) {
                 var scope = a.$model
                 //移除已经删掉的键值对
@@ -1211,6 +1212,8 @@
             array.forEach(function(fn) {
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
+
+
             a.$events = events//替换原先绑定好的$watch回调
             return a
         }
@@ -1293,6 +1296,9 @@
                                         value = refreshModel(value, neo, valueType)
                                     } else {//如果是第一次转换对象
                                         value = modelFactory(neo, neo)
+                                        if (name == "ccc") {
+                                            console.log("ccc " + value.$id)
+                                        }
                                     }
                                     complexValue = value.$model
                                 } else {//如果是其他数据类型
@@ -2729,14 +2735,17 @@
                 switch (method) {
                     case "append":
                         var proxy = createWithProxy(key, val && val.$model ? val.$model : val)
+                        proxy.$id = proxy.$id.replace("avalon", "with")
                         mapper[key] = proxy
+                        if (val && val.$model) {
+                            proxy.$events = val.$events
+                            proxy[subscribers] = val[subscribers]
+                        }
+
+
                         host.$watch(key, function(neo) {
                             mapper[key].$val = neo
                         })
-                        if (getType(list[key]) === "object") {
-                            //将代理VM的订阅列表换成被代理VM的订阅列表
-                            proxy[subscribers] = list[key][subscribers]
-                        }
 
                         var tview = data.vTemplate.cloneNode(true)
                         scanNodes(tview, [proxy, val].concat(vmodels))
@@ -2784,6 +2793,13 @@
 
             list[subscribers].push(withIterator)
             if (data.value === "$val" && vmodels[0] && vmodels[0].$val === list) {
+                console.log("--------------")
+                setTimeout(function() {
+                    console.log("66666")
+                    console.log(avalon.vmodels.yyy.items.ccc.$events)
+                    console.log(list)
+                })
+
                 vmodels[0][subscribers].push(withIterator)//将视图刷新函数的储存位置往上提，以便能在refreshModel中调用
             }
             withIterator.host = list
