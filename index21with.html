@@ -16,40 +16,8 @@
             }
         </style>
         <script >
-            /*     var model = avalon.define("xxx", function(vm) {
-             vm.obj = {
-             a: 1,
-             b: true,
-             c: 3,
-             d: 4
-             }
-             });
-             model.obj.$watch("b", function(a) {
-             avalon.log(a + "=====================")
-             })
-             setTimeout(function() {
-             model.obj = {
-             k: "xxx",
-             d: 3,
-             e: "yyy",
-             b: false,
-             f: "zz"
-             }
-             setTimeout(function() {
-             console.log(model.obj)
-             })
-             
-             }, 2000)
-             
-             
-             
-             
-             setTimeout(function() {
-             model.obj.k = "xxxxxxx"
-             model.obj.b = true
-             }, 4000)
-             */
-            var model = avalon.define("yyy", function(vm) {
+
+            var model = avalon.define("test", function(vm) {
                 vm.items = {
                     aaa: 1,
                     bbb: 2,
@@ -62,15 +30,14 @@
             })
             setTimeout(function() {
                 console.log("==================")
-                    console.log(avalon.vmodels.yyy.items.ccc.$events)
-             //   console.log(model.items.ccc.$events)
-             model.items = {
+
+                model.items = {
                     kkk: -1,
                     fff: 0,
                     ccc: {
                         a: "xxx",
-                        b: "yyy",
-                        d: 6666666
+                        d: 6666666,
+                        b: "yyy"
                     },
                     eee: 3,
                     bbb: "zzz"
@@ -80,14 +47,8 @@
 
     </head>
     <body >
-        <div ms-controller="xxx">
-            <h3 style="text-align: center">ms-with</h3>
-            <div ms-with="obj">
-                <p>{{$key}} -- {{$val}}</p>
-            </div>
-            <div ms-class-red="obj.b" ms-class-green="!obj.b">这个会变色</div>
-        </div>
-        <div ms-controller="yyy">
+
+        <div ms-controller="test">
 
             <div  ms-with="items">
                 <p>{{$key}}-------------------{{$val}}</p>
@@ -98,24 +59,6 @@
 
         </div>
 
-        <pre style="display:none">
-   var yyy = avalon.define('yyy', function(vm) {
-                vm.items = {
-                  
-                    b: {aaaa: 'aaaa', bbbb: "bbbb", cccc: "ccccc"},
-                    z: {},
-                    9: {},
-                    f:{ee:'opret'}
-                }
-            });
 
-            setTimeout(function() {
-                console.log("777777777777777777777777777777777777777")
-                yyy.items = {b: {aaaa: "999", "cccc": "pppp", bbbb: "8888", dddd:"iiiii"},a:"ppp"};
-
-
-
-            }, 1000);
-        </pre>
     </body>
 </html>

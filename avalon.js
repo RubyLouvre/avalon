@@ -1166,17 +1166,18 @@
                     }
                 }
             }
-            //  log("开始移除 " + removed)
+            log("开始移除 " + removed)
             array.forEach(function(fn) {
                 fn("remove", removed)
             })
-            // log("开始添加 " + added)
+            log("开始添加 " + added)
             array.forEach(function(fn) {
                 fn("add", b)
             })
 
-            // log("开始更新 " + updated)
+
             if (updated.length) {
+                log("开始更新 " + updated)
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
                     if (valueType !== "object" && valueType !== "array") {
@@ -1186,15 +1187,13 @@
                     }
                 })
             }
-            // console.log(astr.join(";") + "   " + bstr.join(";"))
             if (astr.join(";") !== bstr.join(";")) {
-                // log("开始排序")
+                log("开始排序" + astr.join(";") + "      " + bstr.join(";"))
                 array.forEach(function(fn) {
                     fn("sort", bstr.slice(0))
                 })
             }
             var events = a.$events//待到$watch回调都绑定好再移除
-            console.log(Object.keys(events))
             if (added.length || removed.length) {
                 var scope = a.$model
                 //移除已经删掉的键值对
@@ -1212,8 +1211,6 @@
             array.forEach(function(fn) {
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
-
-
             a.$events = events//替换原先绑定好的$watch回调
             return a
         }
@@ -1295,9 +1292,11 @@
                                     if ("value" in accessor) {//如果已经转换过
                                         value = refreshModel(value, neo, valueType)
                                     } else {//如果是第一次转换对象
-                                        value = modelFactory(neo, neo)
-                                        if (name == "ccc") {
-                                            console.log("ccc " + value.$id)
+                                        if (neo.$model) {
+                                            value = neo
+                                        } else {
+                                            value = modelFactory(neo, neo)
+                                            value.$id = value.$id.replace("avalon", name)
                                         }
                                     }
                                     complexValue = value.$model
@@ -1329,15 +1328,12 @@
         for (var i in scope) {
             loop(i, scope[i])
         }
-
         if (oldAccessores) {
             for (var i in oldAccessores) {
                 accessores[i] = oldAccessores[i]
             }
         }
-
         vmodel = defineProperties(vmodel, accessores, VBPublics)//生成一个空的ViewModel
-
         VBPublics.forEach(function(name) {
             if (!unwatchOne[name]) {//先为函数等不被监控的属性赋值
                 vmodel[name] = scope[name]
@@ -1346,7 +1342,6 @@
         callSetters.forEach(function(prop) {//再为监控属性赋值
             vmodel[prop] = scope[prop]
         })
-
         callGetters.forEach(function(fn) {//最后强逼计算属性 计算自己的值
             Publish[expose] = fn
             fn()
@@ -2665,25 +2660,23 @@
         while (parent.firstChild) {
             view.appendChild(parent.firstChild)
         }
-        data.vTemplate = view
+        data.template = view
         data.scopes = vmodels
         var mapper = [], markstone = {}
         if (Array.isArray(list)) {
             list[subscribers].push(eachIterator)
             eachIterator("add", 0, list)
-            function getNode(group, pos) {
-                return  parent.childNodes[group * pos] || null
-            }
             function eachIterator(method, pos, el) {
                 var group = eachIterator.group;
                 pos = ~~pos//pos有可能为undefined
+                var locatedNode = getLocatedNode(parent, group, pos)
                 switch (method) {
                     case "add":
                         var vTransation = documentFragment.cloneNode(false), arr = el
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
                             var proxy = createEachProxy(ii, arr[i], list, data.param)
-                            var tview = data.vTemplate.cloneNode(true)
+                            var tview = data.template.cloneNode(true)
                             mapper.splice(ii, 0, proxy)
                             var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                             scanNodes(tview, base.concat(vmodels))
@@ -2693,12 +2686,12 @@
                             vTransation.appendChild(tview)
                         }
                         //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                        var insertNode = getNode(group, pos)
-                        parent.insertBefore(vTransation, insertNode)
+                        locatedNode = getLocatedNode(parent, group, pos)
+                        parent.insertBefore(vTransation, locatedNode)
                         break
                     case "del":
                         mapper.splice(pos, el) //移除对应的子VM
-                        removeView(getNode(group, pos), group, el)
+                        removeView(locatedNode, group, el)
                         break
                     case "index":
                         for (; el = mapper[pos]; pos++) {
@@ -2713,9 +2706,9 @@
                         var t = mapper.splice(pos, 1)
                         if (t) {
                             mapper.splice(el, 0, t[0])
-                            var vRemove = removeView(getNode(group, pos), group)
-                            var node = getNode(group, el)
-                            parent.insertBefore(vRemove, node)
+                            var moveNode = removeView(locatedNode, group)
+                            locatedNode = getLocatedNode(parent, group, el)
+                            parent.insertBefore(moveNode, locatedNode)
                         }
                         break
                     case "set":
@@ -2728,26 +2721,22 @@
                 }
             }
         } else {
-
             mapper = {}
             function withIterator(method, key, val) {
                 var group = withIterator.group, ret = [], object = key, host = withIterator.host
                 switch (method) {
                     case "append":
-                        var proxy = createWithProxy(key, val && val.$model ? val.$model : val)
+                        var proxy = createWithProxy(key, val)
                         proxy.$id = proxy.$id.replace("avalon", "with")
                         mapper[key] = proxy
                         if (val && val.$model) {
-                            proxy.$events = val.$events
-                            proxy[subscribers] = val[subscribers]
+                            proxy.$events = host.$events
+                            proxy[subscribers] = host[subscribers]
                         }
-
-
                         host.$watch(key, function(neo) {
                             mapper[key].$val = neo
                         })
-
-                        var tview = data.vTemplate.cloneNode(true)
+                        var tview = data.template.cloneNode(true)
                         scanNodes(tview, [proxy, val].concat(vmodels))
                         if (typeof group !== "number") {
                             withIterator.group = tview.childNodes.length
@@ -2776,12 +2765,10 @@
                         var removeNodes = []
                         for (var i = 0, name; name = object[i++]; ) {
                             var node = markstone[name]
-                            delete markstone[name]
-                            delete mapper[name]//移除不再存在的键
-                            removeNodes.push(node)
-                            for (var j = 1; j < group; j++) {
-                                node = node.nextSibling
+                            if (node) {
+                                markstone[name] = mapper[name] = 0//移除不再存在的键
                                 removeNodes.push(node)
+                                gatherRemovedNodes(removeNodes, node, group)
                             }
                         }
                         for (i = 0; node = removeNodes[i++]; ) {
@@ -2790,18 +2777,7 @@
                         return ret
                 }
             }
-
             list[subscribers].push(withIterator)
-            if (data.value === "$val" && vmodels[0] && vmodels[0].$val === list) {
-                console.log("--------------")
-                setTimeout(function() {
-                    console.log("66666")
-                    console.log(avalon.vmodels.yyy.items.ccc.$events)
-                    console.log(list)
-                })
-
-                vmodels[0][subscribers].push(withIterator)//将视图刷新函数的储存位置往上提，以便能在refreshModel中调用
-            }
             withIterator.host = list
             for (var key in list.$model) {
                 if (list.hasOwnProperty(key)) {
@@ -2810,15 +2786,24 @@
             }
         }
     }
-
-
+    //收集要移除的节点，第一个节点要求先放进去
+    function gatherRemovedNodes(array, node, length) {
+        for (var i = 1; i < length; i++) {
+            node = node.nextSibling
+            array.push(node)
+        }
+        return array
+    }
+    // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
+    // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
+    // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
+    // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
+    function getLocatedNode(parent, group, pos) {
+        return  parent.childNodes[group * pos] || null
+    }
     function removeView(node, group, n) {
         n = n || 1
-        var removeNodes = [node]
-        for (var i = 1; i < group * n; i++) {
-            node = node.nextSibling
-            removeNodes.push(node)
-        }
+        var removeNodes = gatherRemovedNodes([node], node, group * n)
         var view = documentFragment.cloneNode(false)
         for (var i = 0, node; node = removeNodes[i++]; ) {
             view.appendChild(node) //通常添加到文档碎片实现移除
@@ -2835,6 +2820,7 @@
         })
     }
     var watchEachOne = oneObject("$index,$remove,$first,$last")
+    // 创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
     function createEachProxy(index, item, list, param) {
         param = param || "$data"
         var source = {}
