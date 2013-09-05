@@ -1123,7 +1123,7 @@
         }
     }
 
-    function refreshModel(a, b, valueType) {
+    function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             var an = a.length,
@@ -1139,7 +1139,7 @@
             }
             return a
         } else {
-            var added = [], removed = [], updated = [], array = a[subscribers], astr = [], bstr = []
+            var added = [], removed = [], updated = [], astr = [], bstr = [], iterators = a[subscribers]
             var amodel = a.$model
             //得到要移除的键值对
             for (var i in amodel) {
@@ -1166,30 +1166,28 @@
                     }
                 }
             }
-            log("开始移除 " + removed)
-            array.forEach(function(fn) {
+            //  log("开始移除 " + removed)
+            iterators.forEach(function(fn) {
                 fn("remove", removed)
             })
-            log("开始添加 " + added)
-            array.forEach(function(fn) {
+            // log("开始添加 " + added)
+            iterators.forEach(function(fn) {
                 fn("add", b)
             })
-
-
             if (updated.length) {
-                log("开始更新 " + updated)
+                //  log("开始更新 " + updated)
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
                     if (valueType !== "object" && valueType !== "array") {
                         a[i] = b[i]
                     } else {
-                        refreshModel(a[i], b[i], valueType)
+                        updateViewModel(a[i], b[i], valueType)
                     }
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-                log("开始排序" + astr.join(";") + "      " + bstr.join(";"))
-                array.forEach(function(fn) {
+                //  log("开始排序" + astr.join(";") + "      " + bstr.join(";"))
+                iterators.forEach(function(fn) {
                     fn("sort", bstr.slice(0))
                 })
             }
@@ -1207,8 +1205,8 @@
                 }
                 a = modelFactory(scope, scope, {}, a.$accessor)
             }
-            a[subscribers] = array //替换订阅者列表
-            array.forEach(function(fn) {
+            a[subscribers] = iterators //替换订阅者列表
+            iterators.forEach(function(fn) {
                 fn.host = a  //替换订阅者列表中的视图刷新函数中的宿主（VM）
             })
             a.$events = events//替换原先绑定好的$watch回调
@@ -1290,14 +1288,9 @@
                             if (value !== neo) {
                                 if (valueType === "array" || valueType === "object") {
                                     if ("value" in accessor) {//如果已经转换过
-                                        value = refreshModel(value, neo, valueType)
-                                    } else {//如果是第一次转换对象
-                                        if (neo.$model) {
-                                            value = neo
-                                        } else {
-                                            value = modelFactory(neo, neo)
-                                            value.$id = value.$id.replace("avalon", name)
-                                        }
+                                        value = updateViewModel(value, neo, valueType)
+                                    } else {//如果本来就是VM就直接输出，否则要转换
+                                        value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
                                     complexValue = value.$model
                                 } else {//如果是其他数据类型
@@ -2634,7 +2627,7 @@
                     if (val.$model) {
                         val = val.$model
                     }
-                    refreshModel(this[index], val, valueType)
+                    updateViewModel(this[index], val, valueType)
                 } else if (this[index] !== val) {
                     this[index] = val
                     notifySubscribers(this, "set", index, val)
@@ -2722,11 +2715,11 @@
             }
         } else {
             mapper = {}
-            function withIterator(method, key, val) {
-                var group = withIterator.group, ret = [], object = key, host = withIterator.host
+            function withIterator(method, object, val) {
+                var group = withIterator.group, ret = [], host = withIterator.host
                 switch (method) {
                     case "append":
-                        var proxy = createWithProxy(key, val)
+                        var key = object, proxy = createWithProxy(key, val)
                         proxy.$id = proxy.$id.replace("avalon", "with")
                         mapper[key] = proxy
                         if (val && val.$model) {
