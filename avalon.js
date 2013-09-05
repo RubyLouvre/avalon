@@ -329,7 +329,7 @@
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     }
 
-    function forEach(obj, fn) {
+    avalon.each = function(obj, fn) {
         if (obj) { //不能传个null, undefined进来
             var isArray = isArrayLike(obj),
                     i = 0
@@ -346,11 +346,7 @@
             }
         }
     }
-    avalon.forEach = function(obj, fn) {
-        log("此方法已废弃,请使用avalon.each")
-        forEach(obj, fn)
-    }
-    avalon.each = forEach
+
     /*********************************************************************
      *                           ecma262 v5语法补丁                   *
      **********************************************************************/
@@ -1063,9 +1059,6 @@
         if (typeof name !== "string") {
             name = generateID()
             args.unshift(name)
-        }
-        if (Array.isArray(args[1])) { //向前兼容
-            args.splice(1, 1)
         }
         if (typeof args[1] !== "function") {
             avalon.error("factory必须是函数")
@@ -2480,7 +2473,6 @@
         array[subscribers] = []
         array.$model = model
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
-        array.isCollection = true
         array._splice = array.splice
         for (var i in Observable) {
             array[i] = Observable[i]
@@ -2528,7 +2520,7 @@
         array.shift = function() {
             model.shift()
             var el = this._del(0, 1)
-            notifySubscribers(this, "index")
+            notifySubscribers(this, "index", 0)
             return el[0] //返回被移除的元素
         }
         array.pop = function() {
@@ -2546,7 +2538,7 @@
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index")
+                    notifySubscribers(this, "index", 0)
                 }
             }
             if (arguments.length > 2) {
@@ -2573,7 +2565,7 @@
                     }
                 }
                 if (sorted) {
-                    notifySubscribers(this, "index")
+                    notifySubscribers(this, "index", 0)
                 }
                 return this
             }
@@ -2661,7 +2653,6 @@
             eachIterator("add", 0, list)
             function eachIterator(method, pos, el) {
                 var group = eachIterator.group;
-                pos = ~~pos//pos有可能为undefined
                 var locatedNode = getLocatedNode(parent, group, pos)
                 switch (method) {
                     case "add":
