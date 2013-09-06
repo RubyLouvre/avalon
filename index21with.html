@@ -37,7 +37,10 @@
                     ccc: {
                         a: "xxx",
                         d: 6666666,
-                        b: "yyy"
+                        b: "yyy",
+                        d: {
+                            kkk:444
+                        }
                     },
                     eee: 3,
                     bbb: "zzz"
@@ -53,7 +56,11 @@
             <div  ms-with="items">
                 <p>{{$key}}-------------------{{$val}}</p>
                 <ul ms-with="$val">
-                    <li>{{$key}}  {{$val}}</li>
+                    <li>{{$key}}:{{$val}}
+                        <div  ms-with="$val">
+                            <h3>{{$key}}</h3>
+                        </div>
+                    </li>
                 </ul>
             </div>
 

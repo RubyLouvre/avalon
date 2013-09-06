@@ -2638,17 +2638,17 @@
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
         }
-        if (typeof list !== "object") {
-            return list
-        }
         var view = documentFragment.cloneNode(false)
         while (parent.firstChild) {
             view.appendChild(parent.firstChild)
         }
         data.template = view
         data.vmodels = vmodels
+        if (typeof list !== "object") {
+            return list
+        }
         // 由于eachIterator、withIterator为内存开销非常大的复杂函数，因此我们只创建一个，
-        // 然后通过iterator这个简单的代理函数来内部调用它
+        // 然后通过iterator这个虚拟代理来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
             iterator = function(method, pos, el) {
