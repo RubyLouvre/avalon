@@ -243,7 +243,7 @@
         }
     }
 
-    var VMODELS = avalon.vmodels = avalon.models = {}
+    var VMODELS = avalon.vmodels =  {}
 
 //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
     function isArrayLike(obj) {
@@ -847,17 +847,22 @@
     }
     var Observable = {
         $watch: function(type, callback) {
-            var callbacks = this.$events[type]
-            if (callbacks) {
-                callbacks.push(callback)
-            } else {
-                this.$events[type] = [callback]
+            if (typeof callback === "function") {
+                var callbacks = this.$events[type]
+                if (callbacks) {
+                    callbacks.push(callback)
+                } else {
+                    this.$events[type] = [callback]
+                }
+            } else {//重新开始监听此VM的第一重简单属性的变动
+                this.$events = this.$watch.backup
             }
             return this
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
-            if (n === 0) {
+            if (n === 0) {//让此VM的所有$watch回调无效化
+                this.$watch.backup = this.$events
                 this.$events = {}
             } else if (n === 1) {
                 this.$events[type] = []

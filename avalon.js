@@ -304,7 +304,7 @@
         }
     }
 
-    var VMODELS = avalon.vmodels = avalon.models = {}
+    var VMODELS = avalon.vmodels = {}
 
 //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
     function isArrayLike(obj) {
@@ -1077,17 +1077,22 @@
     }
     var Observable = {
         $watch: function(type, callback) {
-            var callbacks = this.$events[type]
-            if (callbacks) {
-                callbacks.push(callback)
-            } else {
-                this.$events[type] = [callback]
+            if (typeof callback === "function") {
+                var callbacks = this.$events[type]
+                if (callbacks) {
+                    callbacks.push(callback)
+                } else {
+                    this.$events[type] = [callback]
+                }
+            } else {//重新开始监听此VM的第一重简单属性的变动
+                this.$events = this.$watch.backup
             }
             return this
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
-            if (n === 0) {
+            if (n === 0) {//让此VM的所有$watch回调无效化
+                this.$watch.backup = this.$events
                 this.$events = {}
             } else if (n === 1) {
                 this.$events[type] = []
@@ -1103,10 +1108,9 @@
             return this
         },
         $fire: function(type) {
-            var callbacks = this.$events[type] || [] //防止影响原数组
+            var callbacks = this.$events[type] || []
             var all = this.$events.$all || []
             var args = aslice.call(arguments, 1)
-
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1207,7 +1211,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$lock,$unlock,$model,$accessor," + subscribers)
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
@@ -1799,7 +1803,6 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
-                log("转换[ " + originCode + " ]时失败")
             }
         }
         try {
@@ -1809,7 +1812,7 @@
             return [fn, args]
         } catch (e) {
             data.remove = false
-            log("执行[ " + originCode + " ]对应的求值函数时失败")
+            // log("执行[ " + originCode + " ]对应的求值函数时失败")
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -2669,7 +2672,9 @@
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
-        var locatedNode = getLocatedNode(parent, group, pos)
+        if (typeof group === "number") {
+            var locatedNode = getLocatedNode(parent, group, pos)
+        }
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
@@ -2682,12 +2687,12 @@
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels))
                     if (typeof group !== "number") {
-                        data.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
+                        data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                     }
                     transation.appendChild(tview)
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                locatedNode = getLocatedNode(parent, group, pos)
+                locatedNode = getLocatedNode(parent, group, data.pos)
                 parent.insertBefore(transation, locatedNode)
                 break
             case "del":
@@ -2793,7 +2798,7 @@
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
     // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
     function getLocatedNode(parent, group, pos) {
-        return  parent.childNodes[group * pos] || null
+        return parent.childNodes[group * pos] || null
     }
     function removeView(node, group, n) {
         n = n || 1
