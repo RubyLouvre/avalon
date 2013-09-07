@@ -266,9 +266,8 @@
 
     avalon.each = function(obj, fn) {
         if (obj) { //不能传个null, undefined进来
-            var isArray = isArrayLike(obj),
-                    i = 0
-            if (isArray) {
+            var i = 0
+            if (isArrayLike(obj)) {
                 for (var n = obj.length; i < n; i++) {
                     fn(i, obj[i])
                 }
