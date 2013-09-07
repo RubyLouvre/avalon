@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.94 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon 0.95 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -933,16 +933,13 @@
                     }
                 }
             }
-            //  log("开始移除 " + removed)
             iterators.forEach(function(fn) {
                 fn("remove", removed)
             })
-            // log("开始添加 " + added)
             iterators.forEach(function(fn) {
                 fn("add", b)
             })
             if (updated.length) {
-                //  log("开始更新 " + updated)
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
                     if (valueType !== "object" && valueType !== "array") {
@@ -953,7 +950,6 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-                //  log("开始排序" + astr.join(";") + "      " + bstr.join(";"))
                 iterators.forEach(function(fn) {
                     fn("sort", bstr.slice(0))
                 })
