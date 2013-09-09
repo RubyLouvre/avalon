@@ -1679,7 +1679,7 @@
                         var xhr = new window.XMLHttpRequest
                         xhr.onload = function() {
                             var s = xhr.status
-                            if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                            if (s >= 200 && s < 300 || s === 304 ) {
                                 avalon.innerHTML(elem, xhr.responseText)
                                 avalon.scan(elem, vmodels)
                             }
