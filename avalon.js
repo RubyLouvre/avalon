@@ -1179,8 +1179,9 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
+
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0))
+                    fn("sort", bstr.slice(0), astr)
                 })
             }
             var events = a.$events//待到$watch回调都绑定好再移除
@@ -2722,11 +2723,12 @@
         }
     }
 
-    function withIterator(method, object, val, data, host) {
+    function withIterator(method, object, val, data, host, transation) {
         var group = data.group
         var parent = data.element
         var markstone = data.markstone
         var ret = []
+        transation = transation || documentFragment.cloneNode(false)
         switch (method) {
             case "append":
                 var key = object, proxy = createWithProxy(key, val)
@@ -2745,24 +2747,26 @@
                     data.group = tview.childNodes.length
                 }
                 markstone[key] = tview.firstChild
-                parent.appendChild(tview)
+                transation.appendChild(tview)
                 break
             case "sort":
                 for (var i = 0, name; name = object[i++]; ) {
                     var node = markstone[name]
                     var view = removeView(node, group)//先移出DOM树
-                    parent.appendChild(view)//再插到最后
+                    transation.appendChild(view)
                 }
+                parent.appendChild(transation)//再插到最后
                 break
             case "add":
                 for (var i in object) {
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                         if (!markstone.hasOwnProperty(i)) {//这是新增的
-                            withIterator("append", i, object[i], data, host)
+                            withIterator("append", i, object[i], data, host, transation)
                             ret.push(i)
                         }
                     }
                 }
+                parent.appendChild(transation)//再插到最后
                 return ret
             case "remove":
                 var removeNodes = []

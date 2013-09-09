@@ -243,7 +243,7 @@
         }
     }
 
-    var VMODELS = avalon.vmodels =  {}
+    var VMODELS = avalon.vmodels = {}
 
 //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
     function isArrayLike(obj) {
@@ -1676,18 +1676,17 @@
                     avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
-                        var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
-                        ajax.onreadystatechange = function() {
-                            if (ajax.readyState === 4) {
-                                var s = ajax.status
-                                if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                    avalon.innerHTML(elem, ajax.responseText)
-                                    avalon.scan(elem, vmodels)
-                                }
+                        var xhr = new window.XMLHttpRequest
+                        xhr.onload = function() {
+                            var s = xhr.status
+                            if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                                avalon.innerHTML(elem, xhr.responseText)
+                                avalon.scan(elem, vmodels)
                             }
                         }
-                        ajax.open("GET", val, true)
-                        ajax.send(null)
+                        xhr.open("GET", val, true)
+                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                        xhr.send(null)
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
