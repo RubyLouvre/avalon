@@ -1406,8 +1406,7 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = "",
-                    originCode = code
+                    prefix = ""
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, n = scopes.length; i < n; i++) {
@@ -1456,7 +1455,6 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
-                log("转换[ " + originCode + " ]时失败")
             }
         }
         try {
@@ -1466,7 +1464,6 @@
             return [fn, args]
         } catch (e) {
             data.remove = false
-            log("执行[ " + originCode + " ]对应的求值函数时失败")
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -1532,9 +1529,7 @@
         if (!cacheDisplay[nodeName]) {
             var node = DOC.createElement(nodeName)
             root.appendChild(node)
-
             val = window.getComputedStyle(node, null).display
-
             root.removeChild(node)
             cacheDisplay[nodeName] = val
         }
@@ -1679,7 +1674,7 @@
                         var xhr = new window.XMLHttpRequest
                         xhr.onload = function() {
                             var s = xhr.status
-                            if (s >= 200 && s < 300 || s === 304 ) {
+                            if (s >= 200 && s < 300 || s === 304) {
                                 avalon.innerHTML(elem, xhr.responseText)
                                 avalon.scan(elem, vmodels)
                             }
@@ -1881,7 +1876,7 @@
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     modelBinding.INPUT = function(element, fn, scope, fixType) {
-        if (element.name === void 0) {
+        if (!element.name) {//如果用户没有写name属性，浏览器默认给它一个空字符串
             element.name = generateID()
         }
         var type = element.type,
@@ -2187,7 +2182,7 @@
             this.splice(index, 1) //DOM操作非常重,因此只有非负整数才删除
         }
         array.clear = function() {
-            this.length = dynamic.length = 0 //清空数组
+            this.$model.length = this.length = dynamic.length = 0 //清空数组
             notifySubscribers(this, "clear")
             return this
         }
