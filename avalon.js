@@ -506,9 +506,8 @@
     }
 
     kernel.plugins = plugins
-    kernel.compact = true
-    kernel.alias = {}
     kernel.plugins['interpolate'](["{{", "}}"])
+    kernel.alias = {}
     avalon.config = kernel
 
     /*********************************************************************
@@ -2625,7 +2624,7 @@
     }
 
     //====================== each binding  =================================
-
+    var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element, list, iterator
         var array = parseExpr(data.value, vmodels, data)
@@ -2649,7 +2648,6 @@
                 eachIterator(method, pos, el, data)
             }
         } else {
-            data.mapper = {}
             data.markstone = {}
             iterator = function(method, pos, el) {
                 withIterator(method, pos, el, data, iterator.host)
@@ -2726,18 +2724,21 @@
         transation = transation || documentFragment.cloneNode(false)
         switch (method) {
             case "append":
-                var key = object, proxy = createWithProxy(key, val)
-                proxy.$id = proxy.$id.replace("avalon", "with")
-                data.mapper[key] = proxy
-                if (val && val.$model) {
-                    proxy.$events = host.$events
-                    proxy[subscribers] = host[subscribers]
+                var key = object
+                var mapper = withMapper[host.$id] || ( withMapper[host.$id] = {})
+                if (!mapper[key]) {
+                    var proxy = createWithProxy(key, val)
+                    mapper[key] = proxy
+                    if (val && val.$model) {
+                        proxy.$events = host.$events
+                        proxy[subscribers] = host[subscribers]
+                    }
+                    host.$watch(key, function(neo) {
+                        proxy.$val = neo
+                    })
                 }
-                host.$watch(key, function(neo) {
-                    data.mapper[key].$val = neo
-                })
                 var tview = data.template.cloneNode(true)
-                scanNodes(tview, [proxy, val].concat(data.vmodels))
+                scanNodes(tview, [mapper[key], val].concat(data.vmodels))
                 if (typeof group !== "number") {
                     data.group = tview.childNodes.length
                 }
@@ -2768,7 +2769,7 @@
                 for (var i = 0, name; name = object[i++]; ) {
                     var node = markstone[name]
                     if (node) {
-                        markstone[name] = data.mapper[name] = 0//移除不再存在的键
+                        markstone[name] = withMapper[host.$id][name] = 0//移除不再存在的键
                         removeNodes.push(node)
                         gatherRemovedNodes(removeNodes, node, group)
                     }

@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.95 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon 0.96a ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -341,9 +341,8 @@
     }
 
     kernel.plugins = plugins
-    kernel.compact = true
-    kernel.alias = {}
     kernel.plugins['interpolate'](["{{", "}}"])
+    kernel.alias = {}
     avalon.config = kernel
 
     /*********************************************************************
@@ -1395,8 +1394,7 @@
             return false
         })
     }
-    //取得求值函数及其传参
-
+    //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
     function parseExpr(code, scopes, data, four) {
         if (four === "setget") {
             var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
@@ -1468,7 +1466,7 @@
             textBuffer = names = null //释放内存
         }
     }
-
+    avalon.parseExpr = parseExpr
     function watchView(text, scopes, data, callback, tokens) {
         var array, updateView = avalon.noop
         if (!tokens) {
@@ -2225,6 +2223,7 @@
         return array;
     }
     //========================= each binding ====================
+    var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
         var parent = data.element, list
         var array = parseExpr(data.value, vmodels, data)
@@ -2248,7 +2247,6 @@
                 eachIterator(method, pos, el, data)
             }
         } else {
-            data.mapper = {}
             data.markstone = {}
             iterator = function(method, pos, el) {
                 withIterator(method, pos, el, data, iterator.host)
@@ -2322,18 +2320,21 @@
         var ret = []
         switch (method) {
             case "append":
-                var key = object, proxy = createWithProxy(key, val)
-                proxy.$id = proxy.$id.replace("avalon", "with")
-                data.mapper[key] = proxy
-                if (val && val.$model) {
-                    proxy.$events = host.$events
-                    proxy[subscribers] = host[subscribers]
+                var key = object
+                var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
+                if (!mapper[key]) {
+                    var proxy = createWithProxy(key, val)
+                    mapper[key] = proxy
+                    if (val && val.$model) {
+                        proxy.$events = host.$events
+                        proxy[subscribers] = host[subscribers]
+                    }
+                    host.$watch(key, function(neo) {
+                        proxy.$val = neo
+                    })
                 }
-                host.$watch(key, function(neo) {
-                    data.mapper[key].$val = neo
-                })
                 var tview = data.template.cloneNode(true)
-                scanNodes(tview, [proxy, val].concat(data.vmodels))
+                scanNodes(tview, [mapper[key], val].concat(data.vmodels))
                 if (typeof group !== "number") {
                     data.group = tview.childNodes.length
                 }
@@ -2362,7 +2363,7 @@
                 for (var i = 0, name; name = object[i++]; ) {
                     var node = markstone[name]
                     if (node) {
-                        markstone[name] = data.mapper[name] = 0//移除不再存在的键
+                        markstone[name] = withMapper[host.$id][name] = 0//移除不再存在的键
                         removeNodes.push(node)
                         gatherRemovedNodes(removeNodes, node, group)
                     }
@@ -3068,7 +3069,7 @@
         innerRequire("ready!", fn)
     }
     avalon.config({
-        loader: true
+        loader: false
     })
     avalon.ready(function() {
         avalon.scan(document.body)
