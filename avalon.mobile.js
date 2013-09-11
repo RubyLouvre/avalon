@@ -2244,19 +2244,19 @@
         if (Array.isArray(list)) {
             data.mapper = []
             iterator = function(method, pos, el) {
-                eachIterator(method, pos, el, data)
+                eachIterator(method, pos, el, data, iterator.host)
             }
         } else {
             data.markstone = {}
             iterator = function(method, pos, el) {
                 withIterator(method, pos, el, data, iterator.host)
             }
-            iterator.host = list
         }
+        iterator.host = list
         list[subscribers].push(iterator)
         iterator("add", list, 0)
     }
-    function eachIterator(method, pos, el, data) {
+    function eachIterator(method, pos, el, data, list) {
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
@@ -2267,7 +2267,7 @@
                 var arr = pos, pos = el, transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], arr, data.param)
+                    var proxy = createEachProxy(ii, arr[i], list, data.param)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -2286,8 +2286,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                for (; el = mapper[pos]; pos++) {
-                    el.$index = pos
+                while (el = mapper[pos]) {
+                    el.$index = pos++
                 }
                 break
             case "clear":
