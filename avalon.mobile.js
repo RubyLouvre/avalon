@@ -1615,7 +1615,7 @@
                     }
                 }
                 if (!elem.$vmodels) {
-                    elem.$vmodel = elem.$scope = vmodels[0]
+                    elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
                 }
                 if (type && typeof callback === "function") {
@@ -2297,9 +2297,9 @@
                 avalon.clearChild(parent)
                 break
             case "move":
-                var t = mapper.splice(pos, 1)
+                var t = mapper.splice(pos, 1)[0]
                 if (t) {
-                    mapper.splice(el, 0, t[0])
+                    mapper.splice(el, 0, t)
                     var moveNode = removeView(locatedNode, group)
                     locatedNode = getLocatedNode(parent, group, el)
                     parent.insertBefore(moveNode, locatedNode)

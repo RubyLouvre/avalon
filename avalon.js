@@ -1975,7 +1975,7 @@
                     }
                 }
                 if (!elem.$vmodels) {
-                    elem.$vmodel = elem.$scope = vmodels[0]
+                    elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
                 }
                 if (type && typeof callback === "function") {
@@ -1986,7 +1986,7 @@
         },
         "data": function(data, vmodels) {
             watchView(data.value, vmodels, data, function(val, elem) {
-                var key = "data-" + data.param // 
+                var key = "data-" + data.param
                 elem.setAttribute(key, val)
             })
         },
@@ -2683,7 +2683,7 @@
                     transation.appendChild(tview)
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                locatedNode = getLocatedNode(parent, group, data.pos)
+                locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
                 break
             case "del":
@@ -2700,9 +2700,9 @@
                 avalon.clearChild(parent)
                 break
             case "move":
-                var t = mapper.splice(pos, 1)
+                var t = mapper.splice(pos, 1)[0]
                 if (t) {
-                    mapper.splice(el, 0, t[0])
+                    mapper.splice(el, 0, t)
                     var moveNode = removeView(locatedNode, group)
                     locatedNode = getLocatedNode(parent, group, el)
                     parent.insertBefore(moveNode, locatedNode)
