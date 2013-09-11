@@ -1206,7 +1206,7 @@
         }
     }
 
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$lock,$unlock,$model,$accessor," + subscribers)
+    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
         if (Array.isArray(scope)) {
@@ -2030,23 +2030,23 @@
                 }
             }
             watchView(text, vmodels, data, function(val, elem) {
-
                 if (method === "css") {
                     avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
-                        var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
-                        ajax.onreadystatechange = function() {
-                            if (ajax.readyState === 4) {
-                                var s = ajax.status
+                        var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                    avalon.innerHTML(elem, ajax.responseText)
+                                    avalon.innerHTML(elem, xhr.responseText)
                                     avalon.scan(elem, vmodels)
                                 }
                             }
                         }
-                        ajax.open("GET", val, true)
-                        ajax.send(null)
+                        xhr.open("GET", val, true)
+                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                        xhr.send(null)
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
@@ -2060,7 +2060,7 @@
             }, simple ? null : scanExpr(data.value))
         },
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
-        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔，因此需要用ng-disabled
+        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
         "disabled": function(data, vmodels) {
             var name = data.type,
                     propName = name === "readonly" ? "readOnly" : name
