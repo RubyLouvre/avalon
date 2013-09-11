@@ -1693,7 +1693,7 @@
             }, simple ? null : scanExpr(data.value))
         },
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
-        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔，因此需要用ng-disabled
+        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
         "disabled": function(data, vmodels) {
             var name = data.type,
                     propName = name === "readonly" ? "readOnly" : name
