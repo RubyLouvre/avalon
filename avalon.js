@@ -1442,10 +1442,8 @@
                     "\tSet o = (New " + className + ")(a, b)",
                     "\tSet " + className + "Factory = o",
                     "End Function")
-            window.parseVB(buffer.join("\r\n"))
-
-            var model = window[className + "Factory"](description, VBMediator)
-            return model
+            window.parseVB(buffer.join("\r\n"))//先创建一个VB类工厂
+            return  window[className + "Factory"](description, VBMediator)//得到其产品
         }
     }
 
@@ -2689,7 +2687,7 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while(el = mapper[pos]){
+                while (el = mapper[pos]) {
                     el.$index = pos++
                 }
                 break
@@ -3028,7 +3026,11 @@
                     tzMin = toInt(match[9] + match[11])
                 }
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-                timeSetter.call(date, toInt(match[4] || 0) - tzHour, toInt(match[5] || 0) - tzMin, toInt(match[6] || 0), toInt(match[7] || 0))
+                var h = int(match[4] || 0) - tzHour;
+                var m = toInt(match[5] || 0) - tzMin
+                var s = toInt(match[6] || 0);
+                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000);
+                timeSetter.call(date, h, m, s, ms);
                 return date
             }
             return string
