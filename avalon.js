@@ -1536,7 +1536,7 @@
         }
     }
 
-    var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
 
     function scanExpr(str) {
         var tokens = [],
