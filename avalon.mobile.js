@@ -1229,7 +1229,7 @@
                     if (value.indexOf("|") > 0) { // 抽取过滤器 注意排除短路与
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
-                            return c.charAt(0)
+                            return ""
                         })
                     }
                     tokens.push({
@@ -2253,7 +2253,7 @@
             }
         }
         iterator.host = list
-        list[subscribers].push(iterator)
+        list[subscribers] && list[subscribers].push(iterator)
         iterator("add", list, 0)
     }
     function eachIterator(method, pos, el, data, list) {
