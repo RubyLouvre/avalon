@@ -974,7 +974,12 @@
             return a
         }
     }
-
+    var isEqual = function(x, y) {
+        if (x === y) {
+            return x instanceof Date ? x - 0 === y - 0 : !0
+        }
+        return x !== x && y !== y
+    }
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
@@ -1020,7 +1025,7 @@
                                 setter.call(vmodel, neo)
                                 vmodel.$events[name] = backup
                             }
-                            if (oldArgs !== neo) {  //只检测用户的传参是否与上次是否一致
+                            if (!isEqual(oldArgs, neo)) {  //只检测用户的传参是否与上次是否一致
                                 oldArgs = neo
                                 value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //通知顶层改变
@@ -1031,7 +1036,7 @@
                                 collectSubscribers(accessor)
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
-                            if (value !== neo) {
+                            if (!isEqual(value, neo)) {
                                 oldArgs = void 0
                                 vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
@@ -1046,7 +1051,7 @@
                             if (stopRepeatAssign) {
                                 return //阻止重复赋值
                             }
-                            if (value !== neo) {
+                            if (!isEqual(value, neo)) {
                                 if (valueType === "array" || valueType === "object") {
                                     if ("value" in accessor) {//如果已经转换过
                                         value = updateViewModel(value, neo, valueType)
@@ -2045,12 +2050,6 @@
         return val
     }
 
-    var isEqual = Object.is || function(x, y) { //只要用于处理NaN 与 NaN 比较, chrome19+, firefox22
-        if (x === y) {
-            return x !== 0 || 1 / x === 1 / y;
-        }
-        return x !== x && y !== y;
-    }
     //To obtain the corresponding index of the VM
 
     function getVMIndex(a, bbb, start) {
