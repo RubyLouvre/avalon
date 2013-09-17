@@ -1305,7 +1305,7 @@
                             if (!isEqual(value, neo)) {
                                 if (rchecktype.test(valueType)) {
                                     if ("value" in accessor) { //如果已经转换过
-                                        value = updateVkiewModel(value, neo, valueType)
+                                        value = updateViewModel(value, neo, valueType)
                                     } else { //如果本来就是VM就直接输出，否则要转换
                                         value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
