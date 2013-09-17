@@ -23,6 +23,7 @@
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
+    var rchecktype = /^(?:object|array)$/
     var rwindow = /^[object (Window|DOMWindow|global)]$/
 
     function noop() {
@@ -531,7 +532,10 @@
             return val
         }
     }
-    "scrollLeft_pageXOffset,scrollTop_pageYOffset".replace(/(\w+)_(\w+)/g, function(_, method, prop) {
+    avalon.each({
+        scrollLeft: "pageXOffset",
+        scrollTop: "pageYOffset"
+    }, function(method, prop) {
         avalon.fn[method] = function(val) {
             var node = this[0] || {}, win = getWindow(node), top = method === "scrollTop";
             if (!arguments.length) {
@@ -543,9 +547,9 @@
                     node[method] = val;
                 }
             }
-
         }
     })
+
 
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false;
@@ -1052,7 +1056,7 @@
                                 return //阻止重复赋值
                             }
                             if (!isEqual(value, neo)) {
-                                if (valueType === "array" || valueType === "object") {
+                                if (rchecktype.test(valueType)) {
                                     if ("value" in accessor) {//如果已经转换过
                                         value = updateViewModel(value, neo, valueType)
                                     } else {//如果本来就是VM就直接输出，否则要转换
@@ -2044,7 +2048,7 @@
 
     function convert(val) {
         var type = getType(val)
-        if (type === "array" || type === "object") {
+        if (rchecktype.test(type)) {
             val = val.$id ? val : modelFactory(val, val)
         }
         return val
@@ -2207,11 +2211,12 @@
         }
         array.set = function(index, val) {
             if (index >= 0 && index < this.length) {
-                if (/array|object/.test(getType(val))) {
+                var valueType = getType(val)
+                if (rchecktype.test(valueType)) {
                     if (val.$model) {
                         val = val.$model
                     }
-                    updateViewModel(this[index], val, Array.isArray(val))
+                    updateViewModel(this[index], val, valueType)
                 } else if (this[index] !== val) {
                     this[index] = val
                     notifySubscribers(this, "set", index, val)
@@ -2408,7 +2413,7 @@
     }
     var watchEachOne = oneObject("$index,$remove,$first,$last")
     function createEachProxy(index, item, list, param) {
-        param = param || "$data"
+        param = param || "el"
         var source = {}
         source.$index = index
         source.$view = {}
