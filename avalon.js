@@ -2696,7 +2696,7 @@
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
-        if (typeof group === "number") {
+        if (method == "del" || method == "move") {
             var locatedNode = getLocatedNode(parent, group, pos)
         }
         switch (method) {

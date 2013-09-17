@@ -2264,7 +2264,9 @@
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
-        var locatedNode = getLocatedNode(parent, group, pos)
+        if (method == "del" || method == "move") {
+            var locatedNode = getLocatedNode(parent, group, pos)
+        }
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add命令一致，需要对调一下第2，第3参数
