@@ -2054,17 +2054,18 @@
         return val
     }
 
-    //To obtain the corresponding index of the VM
-
-    function getVMIndex(a, bbb, start) {
-        for (var i = start, n = bbb.length; i < n; i++) {
-            var b = bbb[i];
-            var check = b && b.v ? b.v : b
-            if (isEqual(a, check)) {
+ //取得el在array的位置
+    function getVMIndex(el, array, start) {
+        for (var i = start, n = array.length; i < n; i++) {
+            var b = array[i]
+            var check = b && b.$model ? b.$model : b
+            if (isEqual(el, check)) {
                 return i
             }
         }
+        return -1
     }
+
 
     function Collection(model) {
         var array = []
