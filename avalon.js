@@ -3070,7 +3070,7 @@
                     tzMin = toInt(match[9] + match[11])
                 }
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-                var h = int(match[4] || 0) - tzHour;
+                var h = toInt(match[4] || 0) - tzHour;
                 var m = toInt(match[5] || 0) - tzMin
                 var s = toInt(match[6] || 0);
                 var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000);
