@@ -944,10 +944,10 @@
             if (updated.length) {
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
-                    if (valueType !== "object" && valueType !== "array") {
-                        a[i] = b[i]
-                    } else {
+                    if (rchecktype.test(valueType)) {
                         updateViewModel(a[i], b[i], valueType)
+                    } else {
+                        a[i] = b[i]
                     }
                 })
             }

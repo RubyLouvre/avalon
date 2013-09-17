@@ -2474,7 +2474,7 @@
 
     function convert(val) {
         var type = getType(val)
-        if (rchecktype.test(rchecktype)) {
+        if (rchecktype.test(type)) {
             val = val.$id ? val : modelFactory(val, val, type)
         }
         return val
