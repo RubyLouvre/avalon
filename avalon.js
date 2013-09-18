@@ -1833,10 +1833,10 @@
         }
     }
     avalon.parseExpr = parseExpr
-    function updateViewFactory(text, scopes, data, callback, tokens) {
-        var array, updateView = avalon.noop
+    function updateViewFactory(expr, scopes, data, callback, tokens) {
+        var array, updateView 
         if (!tokens) {
-            array = parseExpr(text, scopes, data)
+            array = parseExpr(expr, scopes, data)
             if (array) {
                 var fn = array[0],
                         args = array[1]
@@ -1866,7 +1866,7 @@
         }
 
         updateView.toString = function() {
-            return data.type + " binding to eval(" + text + ")"
+            return data.type + " binding to eval(" + expr + ")"
         } //方便调试
         //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
         //将它移出订阅者列表
