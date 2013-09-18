@@ -1476,7 +1476,7 @@
         }
     }
     avalon.parseExpr = parseExpr
-    function watchView(text, scopes, data, callback, tokens) {
+    function updateViewFactory(text, scopes, data, callback, tokens) {
         var array, updateView = avalon.noop
         if (!tokens) {
             array = parseExpr(text.trim(), scopes, data)
@@ -1520,6 +1520,7 @@
         openComputedCollect = false
         delete Publish[expose]
     }
+    avalon.updateViewFactory = updateViewFactory
     /*********************************************************************
      *                            Bind                                    *
      **********************************************************************/
@@ -1568,7 +1569,7 @@
 
             function ifcall() {
                 parent = elem.parentNode
-                watchView(data.value, vmodels, data, function(val) {
+                updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //添加 如果它不在DOM树中
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
@@ -1587,8 +1588,8 @@
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-        "attr": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
+        attr: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var attrName = data.param
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (toRemove) {
@@ -1598,7 +1599,7 @@
                 }
             })
         },
-        "on": function(data, vmodels) {
+        on: function(data, vmodels) {
             data.type = "on"
             var value = data.value, four = "$event", elem = data.element, type = data.param, callback
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
@@ -1631,8 +1632,8 @@
             }
 
         },
-        "data": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
+        data: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
                 elem.setAttribute(key, val)
             })
@@ -1640,9 +1641,9 @@
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
-        "text": function(data, vmodels) {
+        text: function(data, vmodels) {
             var node = data.node
-            watchView(data.value, vmodels, data, function(val, elem) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 if (node.nodeType === 2) {//如果是特性节点，说明在元素节点上使用了ms-text
                     elem.textContent = val
                 } else {
@@ -1651,20 +1652,20 @@
             })
         },
         //控制元素显示或隐藏
-        "visible": function(data, vmodels) {
+        visible: function(data, vmodels) {
             var elem = data.element
             if (!supportDisplay && !root.contains(elem)) {//fuck firfox 全家！
                 var display = parseDisplay(elem.tagName)
             }
             display = display || avalon(elem).css("display")
             display = display === "none" ? parseDisplay(elem.tagName) : display
-            watchView(data.value, vmodels, data, function(val) {
+            updateViewFactory(data.value, vmodels, data, function(val) {
                 elem.style.display = val ? display : "none"
             })
         },
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a href="{{url.hostname}}/{{url.pathname}}.html">
-        "href": function(data, vmodels) {
+        href: function(data, vmodels) {
             var text = data.value.trim(), simple = true, method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
@@ -1673,7 +1674,7 @@
                     text = RegExp.$1
                 }
             }
-            watchView(text, vmodels, data, function(val, elem) {
+            updateViewFactory(text, vmodels, data, function(val, elem) {
                 if (method === "css") {
                     avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
@@ -1703,15 +1704,15 @@
         },
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
         //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
-        "disabled": function(data, vmodels) {
+        disabled: function(data, vmodels) {
             var name = data.type,
                     propName = name === "readonly" ? "readOnly" : name
-            watchView(data.value, vmodels, data, function(val, elem) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem[propName] = !!val
             })
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
-        "bind": function(data, vmodels) {
+        bind: function(data, vmodels) {
             var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/), ret = false
             if (array && array[1] && array[2]) {
                 var fn = array[2], elem = data.element
@@ -1731,8 +1732,8 @@
             }
             return ret
         },
-        "html": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
+        html: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
@@ -1751,7 +1752,7 @@
         "with": function(data, vmodels) {
             bindingHandlers.each(data, vmodels, true)
         },
-        "ui": function(data, vmodels, opts) {
+        ui: function(data, vmodels, opts) {
             var uiName = data.value.trim() //取得UI控制的名称
             var elem = data.element //取得被绑定元素
             var id = (elem.getAttribute("data-id") || "").trim()
@@ -1782,10 +1783,9 @@
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     "class,hover,active".replace(rword, function(method) {
         bindingHandlers[method] = function(data, vmodels) {
-            var oldStyle = data.param
-            var elem = data.element
+            var oldStyle = data.param, elem = data.element, $elem = avalon(elem), toggle
             if (!oldStyle || isFinite(oldStyle)) {
-                var text = data.value, toggle
+                var text = data.value
                 var noExpr = text.replace(rexprg, function(a) {
                     return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
                 })
@@ -1804,11 +1804,11 @@
                 }
                 var hasExpr = rexpr.test(className)//比如ms-class="width{{w}}"的情况
 
-                watchView("", vmodels, data, function(cls) {
+                updateViewFactory("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
                     if (method === "class") {
-                        avalon(elem).toggleClass(className, toggle)
+                        $elem.toggleClass(className, toggle)
                     }
                 }, (hasExpr ? scanExpr(className) : null))
 
@@ -1820,7 +1820,6 @@
                         elem.tabIndex = elem.tabIndex || -1
                         event1 = "mousedown", event2 = "mouseup"
                     }
-                    var $elem = avalon(data.element)
                     $elem.bind(event1, function() {
                         toggle && $elem.addClass(className)
                     })
@@ -1830,8 +1829,8 @@
                 }
 
             } else if (method === "class") {
-                watchView(data.value, vmodels, data, function(val, elem) {
-                    avalon(elem).toggleClass(oldStyle, !!val)
+                updateViewFactory(data.value, vmodels, data, function(val) {
+                    $elem.toggleClass(oldStyle, !!val)
                 })
             }
         }
@@ -1842,7 +1841,7 @@
         bindingHandlers[name] = bindingHandlers.disabled
     })
     bindingHandlers.enabled = function(data, vmodels) {
-        watchView(data.value, vmodels, data, function(val, elem) {
+        updateViewFactory(data.value, vmodels, data, function(val, elem) {
             elem.disabled = !val
         })
     }
@@ -2230,7 +2229,7 @@
     //========================= each binding ====================
     var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
-        var parent = data.element, list
+        var parent = data.element, list, updateView
         var array = parseExpr(data.value, vmodels, data)
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
@@ -2248,18 +2247,18 @@
         // 然后通过iterator这个虚拟代理来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
-            iterator = function(method, pos, el) {
-                eachIterator(method, pos, el, data, iterator.host)
+            updateView = function(method, pos, el) {
+                eachIterator(method, pos, el, data, updateView.host)
             }
         } else {
             data.markstone = {}
-            iterator = function(method, pos, el) {
-                withIterator(method, pos, el, data, iterator.host)
+            updateView = function(method, pos, el) {
+                withIterator(method, pos, el, data, updateView.host)
             }
         }
-        iterator.host = list
-        list[subscribers] && list[subscribers].push(iterator)
-        iterator("add", list, 0)
+        updateView.host = list
+        list[subscribers] && list[subscribers].push(updateView)
+        updateView("add", list, 0)
     }
     function eachIterator(method, pos, el, data, list) {
         var group = data.group
