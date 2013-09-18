@@ -1865,10 +1865,10 @@
             var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
                 var val = data.value.split("."), first = val[0], second = val[1]
-                for (var el, i = vmodels.length - 1; el = vmodels[i--]; ) {
-                    if (el.hasOwnProperty(first)) {
-                        if (second && el[first]) {
-                            if (el[first].hasOwnProperty(second)) {
+                for (var vm, i = vmodels.length - 1; vm = vmodels[i--]; ) {
+                    if (vm.hasOwnProperty(first)) {
+                        if (second && vm[first]) {
+                            if (vm[first].hasOwnProperty(second)) {
                                 break
                             }
                         } else {
@@ -1876,24 +1876,24 @@
                         }
                     }
                 }
-                modelBinding[tagName](element, array[0], el, data.param)
+                if (!element.name) {//如果用户没有写name属性，浏览器默认给它一个空字符串
+                    element.name = generateID()
+                }
+                modelBinding[tagName](element, array[0], vm, data.param)
             }
         }
     }
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     modelBinding.INPUT = function(element, fn, scope, fixType) {
-        if (!element.name) {//如果用户没有写name属性，浏览器默认给它一个空字符串
-            element.name = generateID()
-        }
         var type = element.type,
-                god = avalon(element)
+                $elem = avalon(element)
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
         }
         //当value变化时改变model的值
         var updateModel = function() {
-            if (god.data("observe") !== false) {
+            if ($elem.data("observe") !== false) {
                 fn(scope, element.value)
             }
         }
@@ -1928,7 +1928,7 @@
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
             }
             updateModel = function() {
-                if (god.data("observe") !== false) {
+                if ($elem.data("observe") !== false) {
                     if (fixType === "text") {
                         if (element.checked) {
                             fn(scope, element.value)
@@ -1945,14 +1945,14 @@
                 element.beforeChecked = element.checked
             }
             if (element.onbeforeactivate === null) {
-                god.bind("beforeactivate", beforeChecked)
+                $elem.bind("beforeactivate", beforeChecked)
             } else {
-                god.bind("mouseover", beforeChecked)
+                $elem.bind("mouseover", beforeChecked)
             }
-            god.bind("click", updateModel)
+            $elem.bind("click", updateModel)
         } else if (type === "checkbox") {
             updateModel = function() {
-                if (god.data("observe") !== false) {
+                if ($elem.data("observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](fn(scope), element.value)
                 }
@@ -1965,7 +1965,7 @@
                     log("<input type='checkbox' ms-duplex='prop' /> 中prop应为一个数组")
                 }
             }
-            god.bind("click", updateModel) //IE6-8
+            $elem.bind("click", updateModel) //IE6-8
         }
         Publish[expose] = updateView
         updateView.element = element
@@ -1973,11 +1973,11 @@
         delete Publish[expose]
     }
     modelBinding.SELECT = function(element, fn, scope, oldValue) {
-        var god = avalon(element)
+        var $elem = avalon(element)
 
         function updateModel() {
-            if (god.data("observe") !== false) {
-                var neo = god.val()
+            if ($elem.data("observe") !== false) {
+                var neo = $elem.val()
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
                     oldValue = neo + ""
@@ -1988,11 +1988,11 @@
         function updateView() {
             var neo = fn(scope)
             if (neo + "" !== oldValue) {
-                god.val(neo)
+                $elem.val(neo)
                 oldValue = neo + ""
             }
         }
-        god.bind("change", updateModel)
+        $elem.bind("change", updateModel)
         avalon.nextTick(function() {
             Publish[expose] = updateView
             updateView.element = element
@@ -2054,7 +2054,7 @@
         return val
     }
 
- //取得el在array的位置
+    //取得el在array的位置
     function getVMIndex(el, array, start) {
         for (var i = start, n = array.length; i < n; i++) {
             var b = array[i]
@@ -2441,7 +2441,7 @@
             }
         }
         source.$remove = function() {
-            return list.remove(item)
+            return list.remove(this.$index)
         }
         return modelFactory(source, 0, watchEachOne)
     }
