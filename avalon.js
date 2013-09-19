@@ -1655,11 +1655,11 @@
 
     function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
-            var flag = bindingHandlers[data.type](data, vmodels)
-            if (flag !== false && data.remove) { //移除数据绑定，防止被二次解析
+            bindingHandlers[data.type](data, vmodels)
+            if (data.remove) { //移除数据绑定，防止被二次解析
                 data.element.removeAttributeNode(data.node)
             }
-            delete data.remove
+            data.remove = true
         })
         bindings.length = 0
     }
@@ -1827,7 +1827,7 @@
             }
             return [fn, args]
         } catch (e) {
-            data.remove = false
+            delete data.remove
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -2104,8 +2104,8 @@
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         bind: function(data, vmodels) {
-            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
-                    ret = false
+            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/)
+            delete data.remove
             if (array && array[1] && array[2]) {
                 var fn = array[2],
                         elem = data.element
@@ -2120,10 +2120,9 @@
                     scope.$watch(array[1], function(neo, old) {
                         fn.call(elem, neo, old)
                     })
-                    ret = true
+                    data.remove = true
                 }
             }
-            return ret
         },
         html: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
@@ -2167,7 +2166,7 @@
                 avalon.ui[uiName](elem, id, vmodels, opts || {})
                 elem[id + "vmodels"] = void 0
             } else {
-                return false
+                delete data.remove
             }
         }
     }
@@ -2254,8 +2253,8 @@
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
-        var element = data.element,
-                tagName = element.tagName
+        var elem = data.element,
+                tagName = elem.tagName
         if (data.type === "model") {
             log("ms-model已经被废弃，请使用ms-duplex")
         }
@@ -2276,10 +2275,10 @@
                         }
                     }
                 }
-                if (!element.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
-                    element.name = generateID()
+                if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
+                    elem.name = generateID()
                 }
-                modelBinding[tagName](element, array[0], vm, data.param)
+                modelBinding[tagName](elem, array[0], vm, data.param)
             }
         }
     }
@@ -2382,7 +2381,6 @@
     }
     modelBinding.SELECT = function(element, fn, scope, oldValue) {
         var $elem = avalon(element)
-
         function updateModel() {
             if ($elem.data("observe") !== false) {
                 var neo = $elem.val()

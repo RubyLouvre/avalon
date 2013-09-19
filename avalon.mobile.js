@@ -1317,11 +1317,11 @@
 
     function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
-            var flag = bindingHandlers[data.type](data, vmodels)
-            if (flag !== false && data.remove) { //移除数据绑定，防止被二次解析
+            bindingHandlers[data.type](data, vmodels)
+            if (data.remove) { //移除数据绑定，防止被二次解析
                 data.element.removeAttributeNode(data.node)
             }
-            delete data.remove
+            data.remove = true
         })
         bindings.length = 0
     }
@@ -1488,7 +1488,7 @@
             }
             return [fn, args]
         } catch (e) {
-            data.remove = false
+            delete data.remove
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -1740,7 +1740,7 @@
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         bind: function(data, vmodels) {
             var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
-                    ret = false
+                    ret = 0
             if (array && array[1] && array[2]) {
                 var fn = array[2],
                         elem = data.element
@@ -1755,10 +1755,10 @@
                     scope.$watch(array[1], function(neo, old) {
                         fn.call(elem, neo, old)
                     })
-                    ret = true
+                    ret = 1
                 }
             }
-            return ret
+            data.remove = ret
         },
         html: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
@@ -1802,7 +1802,7 @@
                 avalon.ui[uiName](elem, id, vmodels, opts || {})
                 elem[id + "vmodels"] = void 0
             } else {
-                return false;
+                delete data.remove
             }
         }
     }
@@ -1945,13 +1945,13 @@
             if (event === "change") {
                 $elem.bind(event, updateModel)
             } else {
-                $elem.bind("input", updateModel) 
+                $elem.bind("input", updateModel)
                 if (DOC.documentMode >= 9) { //IE9 10
-                   $elem.bind("keydown", function(e) {
+                    $elem.bind("keydown", function(e) {
                         var key = e.keyCode
                         if (key === 8 || key === 46) {
                             updateModel() //处理回退与删除
-                        } 
+                        }
                     })
                     $elem.bind("cut", updateModel) //处理粘贴
                 }
