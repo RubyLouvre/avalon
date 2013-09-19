@@ -5,7 +5,7 @@
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
 //==================================================
 (function(DOC) {
-    var Publish = {} //将函数曝光到此对象上，方便访问器收集依赖
+    var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
     var subscribers = "$" + expose
     var otherRequire = window.require
@@ -1353,10 +1353,10 @@
             vmodel[prop] = scope[prop]
         })
         callGetters.forEach(function(fn) { //最后强逼计算属性 计算自己的值
-            Publish[expose] = fn
+            Registry[expose] = fn
             fn()
             collectSubscribers(fn)
-            delete Publish[expose]
+            delete Registry[expose]
         })
         vmodel.$model = model
         vmodel.$events = {}
@@ -1475,18 +1475,18 @@
     function registerSubscriber(updateView, element) {
         avalon.nextTick(function() {
             updateView.element = element
-            Publish[expose] = updateView //暴光此函数,方便collectSubscribers收集
+            Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
             openComputedCollect = true
             updateView()
             openComputedCollect = false
-            delete Publish[expose]
+            delete Registry[expose]
         })
     }
 
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
-        if (Publish[expose]) {
+        if (Registry[expose]) {
             var list = accessor[subscribers]
-            list && avalon.Array.ensure(list, Publish[expose]) //只有数组不存在此元素才push进去
+            list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
         }
     }
 
