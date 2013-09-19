@@ -1943,18 +1943,17 @@
             var event = element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
-                element.addEventListener(event, updateModel, false)
+                $elem.bind(event, updateModel)
             } else {
-                element.addEventListener("input", updateModel, false)
-
+                $elem.bind("input", updateModel) 
                 if (DOC.documentMode >= 9) { //IE9 10
-                    element.attachEvent("onkeydown", function(e) {
+                   $elem.bind("keydown", function(e) {
                         var key = e.keyCode
                         if (key === 8 || key === 46) {
                             updateModel() //处理回退与删除
-                        }
+                        } 
                     })
-                    element.attachEvent("oncut", updateModel) //处理粘贴
+                    $elem.bind("cut", updateModel) //处理粘贴
                 }
             }
         } else if (type === "radio") {

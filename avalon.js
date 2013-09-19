@@ -2313,7 +2313,7 @@
                 avalon.bind(element, event, updateModel)
             } else {
                 if (window.addEventListener) { //先执行W3C
-                    element.addEventListener("input", updateModel, false)
+                    element.addEventListener("input", updateModel)
                 } else {
                     element.attachEvent("onpropertychange", function(e) {
                         if (e.propertyName === "value") {
@@ -2322,13 +2322,13 @@
                     })
                 }
                 if (DOC.documentMode >= 9) { //IE9 10
-                    element.attachEvent("onkeydown", function(e) {
+                    $elem.bind("keydown", function(e) {
                         var key = e.keyCode
                         if (key === 8 || key === 46) {
                             updateModel() //处理回退与删除
                         }
                     })
-                    element.attachEvent("oncut", updateModel) //处理粘贴
+                    $elem.bind("cut", updateModel) //处理粘贴
                 }
             }
         } else if (type === "radio") {
