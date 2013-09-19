@@ -1888,8 +1888,8 @@
     //========================= model binding ====================
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
-        var element = data.element,
-                tagName = element.tagName
+        var elem = data.element,
+                tagName = elem.tagName
         if (data.type === "model") {
             log("ms-model已经被废弃，请使用ms-duplex")
         }
@@ -1910,10 +1910,16 @@
                         }
                     }
                 }
-                if (!element.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
-                    element.name = generateID()
+                if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
+                    elem.name = generateID()
                 }
-                modelBinding[tagName](element, array[0], vm, data.param)
+                var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
+                avalon.nextTick(function() {
+                    Publish[expose] = updateView
+                    updateView.element = elem
+                    updateView()
+                    delete Publish[expose]
+                })
             }
         }
     }
@@ -2000,14 +2006,10 @@
             }
             $elem.bind("click", updateModel) //IE6-8
         }
-        Publish[expose] = updateView
-        updateView.element = element
-        updateView()
-        delete Publish[expose]
+        return updateView
     }
     modelBinding.SELECT = function(element, fn, scope, oldValue) {
         var $elem = avalon(element)
-
         function updateModel() {
             if ($elem.data("observe") !== false) {
                 var neo = $elem.val()
@@ -2026,12 +2028,7 @@
             }
         }
         $elem.bind("change", updateModel)
-        avalon.nextTick(function() {
-            Publish[expose] = updateView
-            updateView.element = element
-            updateView()
-            delete Publish[expose]
-        })
+        return updateView
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================

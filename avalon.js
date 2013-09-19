@@ -2278,7 +2278,13 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-                modelBinding[tagName](elem, array[0], vm, data.param)
+                var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
+                avalon.nextTick(function() {
+                    Publish[expose] = updateView
+                    updateView.element = elem
+                    updateView()
+                    delete Publish[expose]
+                })
             }
         }
     }
@@ -2374,10 +2380,7 @@
             }
             $elem.bind("click", updateModel) //IE6-8
         }
-        Publish[expose] = updateView
-        updateView.element = element
-        updateView()
-        delete Publish[expose]
+        return updateView
     }
     modelBinding.SELECT = function(element, fn, scope, oldValue) {
         var $elem = avalon(element)
@@ -2390,7 +2393,6 @@
                 }
             }
         }
-
         function updateView() {
             var neo = fn(scope)
             if (neo + "" !== oldValue) {
@@ -2399,13 +2401,7 @@
             }
         }
         $elem.bind("change", updateModel)
-        avalon.nextTick(function() {
-            Publish[expose] = updateView
-            updateView.element = element
-            updateView()
-            delete Publish[expose]
-        })
-
+        return updateView
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
