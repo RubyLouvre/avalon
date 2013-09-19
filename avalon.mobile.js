@@ -1318,7 +1318,7 @@
             bindings.forEach(function(data) {
                 var flag = bindingHandlers[data.type](data, vmodels)
                 if (flag !== false && data.remove) { //移除数据绑定，防止被二次解析
-                    data.element.removeAttribute(data.node.name)
+                    data.element.removeAttributeNode(data.node)
                 }
                 delete data.remove
             })
@@ -3119,7 +3119,7 @@
         innerRequire("ready!", fn)
     }
     avalon.config({
-        loader: false
+        loader: true
     })
     avalon.ready(function() {
         avalon.scan(document.body)
