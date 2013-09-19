@@ -1472,6 +1472,16 @@
         }
     }
 
+    function registerSubscriber(updateView, element) {
+        avalon.nextTick(function() {
+            updateView.element = element
+            Publish[expose] = updateView //暴光此函数,方便collectSubscribers收集
+            openComputedCollect = true
+            updateView()
+            openComputedCollect = false
+            delete Publish[expose]
+        })
+    }
 
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Publish[expose]) {
@@ -1871,15 +1881,10 @@
             } //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
-
-            updateView.element = data.element
-            Publish[expose] = updateView //暴光此函数,方便collectSubscribers收集
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Publish[expose]
+            registerSubscriber(updateView, data.element)
         }
     }
+
     avalon.updateViewFactory = updateViewFactory
     /*********************************************************************
      *                         Bind                                    *
@@ -2279,12 +2284,7 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                avalon.nextTick(function() {
-                    Publish[expose] = updateView
-                    updateView.element = elem
-                    updateView()
-                    delete Publish[expose]
-                })
+                registerSubscriber(updateView, elem)
             }
         }
     }
