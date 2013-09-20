@@ -2484,7 +2484,7 @@
             }
         }
         source.$remove = function() {
-            return list.remove(this.$index)
+            return list.removeAt(this.$index)
         }
         return modelFactory(source, 0, watchEachOne)
     }
