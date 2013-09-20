@@ -1164,9 +1164,9 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && el.parentNode === null) {
+                if (el && !el.noRemove && !root.contains(el)) {
                     avalon.Array.remove(list, fn)
-                    log(fn + "")
+                    log(fn + " removed")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
