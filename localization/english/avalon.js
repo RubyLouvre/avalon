@@ -1,6 +1,6 @@
 //==================================================
 
-// avalon 0.94   by Shitu Zhengmei 2013.7.26
+// avalon 0.94   by Situ Zhengmei 2013.7.26
 // FAQ:
 //    Which license? MIT. ( Comparison between five popular open-source licenses, BSD, Apache, GPL, LGPL, and MIT  http://www.awflasher.com/blog/archives/939 )
 //    Dependencies? None, works well together with jQuery, Mass, etc.
