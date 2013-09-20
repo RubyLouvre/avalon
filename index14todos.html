@@ -144,11 +144,11 @@
                 };
                 
                 a.checkIt = function() {
-                    this.$scope.post.done = this.checked;
+                    this.$vmodel.post.done = this.checked;
                     a.left = getLeft();
                 };
                 a.removeIt = function() {
-                    this.$scope.$remove();
+                    this.$vmodel.$remove();
                     a.left = getLeft();
                 };
                 a.removeThem = function() {
@@ -173,10 +173,10 @@
                     a.posts.forEach(function(post) {
                         post.edit = false;
                     });
-                    this.$scope.post.edit = true;
+                    this.$vmodel.post.edit = true;
                 };
                 a.updateIt = function() {
-                    var post = this.$scope.post;
+                    var post = this.$vmodel.post;
                     post.text = this.value;
                     post.edit = false;
                 };

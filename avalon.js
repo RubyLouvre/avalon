@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.96p   by 司徒正美 2013.9.17
+// avalon 0.96   by 司徒正美 2013.9.20
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -411,7 +411,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -916,7 +916,7 @@
             values = [].concat(values) //强制转换为数组
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el))
+                el.selected = !!~values.indexOf(getter(el)) 
             }
             if (!values.length) {
                 node.selectedIndex = -1
@@ -1498,9 +1498,8 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && (el.sourceIndex === 0 || el.parentNode === null)) {
+                if (el && (!el.noRemove) && (el.sourceIndex === 0 || !root.contains(el))) {
                     avalon.Array.remove(list, fn)
-                    log(fn + "")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -2386,7 +2385,7 @@
         var $elem = avalon(element)
         function updateModel() {
             if ($elem.data("observe") !== false) {
-                var neo = $elem.val()
+                var neo = $elem.val()//字符串或字符串数组
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
                     oldValue = neo + ""
@@ -2395,6 +2394,7 @@
         }
         function updateView() {
             var neo = fn(scope)
+            neo = Array.isArray(neo) ? neo.map(String) : neo +""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
@@ -2489,74 +2489,59 @@
         return -1
     }
 
-    function Collection(model) {
-        var array = []
-        array.$id = generateID()
-        array[subscribers] = []
-        array.$model = model
-        array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
-        array._splice = array.splice
-        for (var i in Observable) {
-            array[i] = Observable[i]
-        }
-        var dynamic = modelFactory({
-            length: model.length
-        })
-        dynamic.$watch("length", function(a, b) {
-            array.$fire("length", a, b)
-        })
-
-        array._add = function(arr, pos) {
-            pos = typeof pos === "number" ? pos : this.length;
+    var _splice = [].splice
+    var CollectionPrototype = {
+        _splice: _splice,
+        _add: function(arr, pos) {
+            var oldLength = this.length
+            pos = typeof pos === "number" ? pos : oldLength;
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
                 added[i] = convert(arr[i])
             }
-            this._splice.apply(this, [pos, 0].concat(added))
+            _splice.apply(this, [pos, 0].concat(added))
             notifySubscribers(this, "add", added, pos)
-            if (!this.stopFireLength) {
-                return dynamic.length = this.length
+            if (!this._stopFireLength) {
+                return this._.length = this.length
             }
-        }
-
-        array._del = function(pos, n) {
+        },
+        _del: function(pos, n) {
             var ret = this._splice(pos, n)
             if (ret.length) {
                 notifySubscribers(this, "del", pos, n)
-                if (!this.stopFireLength) {
-                    dynamic.length = this.length
+                if (!this._stopFireLength) {
+                    this._.length = this.length
                 }
             }
             return ret
-        }
-        array.push = function() {
-            model.push.apply(model, arguments)
+        },
+        push: function() {
+            [].push.apply(this.$model, arguments)
             return this._add(arguments) //返回长度
-        }
-        array.unshift = function() {
-            model.unshift.apply(model, arguments)
+        },
+        unshift: function() {
+            [].unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
             notifySubscribers(this, "index", arguments.length)
             return ret
-        }
-        array.shift = function() {
-            model.shift()
-            var el = this._del(0, 1)
+        },
+        shift: function() {
+            var el = this.$model.shift()
+            this._del(0, 1)
             notifySubscribers(this, "index", 0)
-            return el[0] //返回被移除的元素
-        }
-        array.pop = function() {
-            var el = model.pop()
+            return el//返回被移除的元素
+        },
+        pop: function() {
+            var el = this.$model.pop()
             this._del(this.length - 1, 1)
-            return el[0] //返回被移除的元素
-        }
-
-        array.splice = function(a, b) {
+            return el //返回被移除的元素
+        },
+        splice: function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
             a = resetNumber(a, this.length)
-            var removed = model.splice.apply(model, arguments),
+            var removed = _splice.apply(this.$model, arguments),
                     ret = []
-            this.stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
+            this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
@@ -2566,57 +2551,35 @@
             if (arguments.length > 2) {
                 this._add(aslice.call(arguments, 2), a)
             }
-            this.stopFireLength = false
-            dynamic.length = this.length
+            this._stopFireLength = false
+            this._.length = this.length
             return ret //返回被移除的元素
-        }
-        "sort,reverse".replace(rword, function(method) {
-            array[method] = function() {
-                model[method].apply(model, arguments)
-                var sorted = false
-                for (var i = 0, n = this.length; i < n; i++) {
-                    var a = model[i]
-                    var b = this[i]
-                    var b = b && b.$model ? b.$model : b
-                    if (!isEqual(a, b)) {
-                        sorted = true
-                        var index = getVMIndex(a, this, i)
-                        var remove = this._splice(index, 1)[0]
-                        array._splice(i, 0, remove)
-                        notifySubscribers(this, "move", index, i)
-                    }
-                }
-                if (sorted) {
-                    notifySubscribers(this, "index", 0)
-                }
-                return this
-            }
-        })
-        array.contains = function(el) { //判定是否包含
+        },
+        contains: function(el) { //判定是否包含
             return this.indexOf(el) !== -1
-        }
-        array.size = function() { //取得数组长度，这个函数可以同步视图，length不能
-            return dynamic.length
-        }
-        array.remove = function(el) { //移除第一个等于给定值的元素
+        },
+        size: function() { //取得数组长度，这个函数可以同步视图，length不能
+            return this._.length
+        },
+        remove: function(el) { //移除第一个等于给定值的元素
             var index = this.indexOf(el)
             if (index >= 0) {
                 return this.removeAt(index)
             }
-        }
-        array.removeAt = function(index) { //移除指定索引上的元素
+        },
+        removeAt: function(index) { //移除指定索引上的元素
             this.splice(index, 1)
-        }
-        array.clear = function() {
-            this.$model.length = this.length = dynamic.length = 0 //清空数组
+        },
+        clear: function() {
+            this.$model.length = this.length = this._.length = 0 //清空数组
             notifySubscribers(this, "clear")
             return this
-        }
-        array.removeAll = function(all) { //移除N个元素
+        },
+        removeAll: function(all) { //移除N个元素
             if (Array.isArray(all)) {
                 all.forEach(function(el) {
-                    array.remove(el)
-                })
+                    this.remove(el)
+                }, this)
             } else if (typeof all === "function") {
                 for (var i = this.length - 1; i >= 0; i--) {
                     var el = this[i]
@@ -2627,14 +2590,14 @@
             } else {
                 this.clear()
             }
-        }
-        array.ensure = function(el) {
+        },
+        ensure: function(el) {
             if (!this.contains(el)) { //只有不存在才push
                 this.push(el)
             }
             return this
-        }
-        array.set = function(index, val) {
+        },
+        set: function(index, val) {
             if (index >= 0 && index < this.length) {
                 var valueType = getType(val)
                 if (rchecktype.test(valueType)) {
@@ -2649,6 +2612,44 @@
             }
             return this
         }
+    }
+    "sort,reverse".replace(rword, function(method) {
+        CollectionPrototype[method] = function() {
+            [][method].apply(this.$model, arguments)
+            var sorted = false
+            for (var i = 0, n = this.length; i < n; i++) {
+                var a = this.$model[i], b = this[i]
+                b = b && b.$model ? b.$model : b
+                if (!isEqual(a, b)) {
+                    sorted = true
+                    var index = getVMIndex(a, this, i)
+                    var remove = this._splice(index, 1)[0]
+                    this._splice(i, 0, remove)
+                    notifySubscribers(this, "move", index, i)
+                }
+            }
+            if (sorted) {
+                notifySubscribers(this, "index", 0)
+            }
+            return this
+        }
+    })
+    function Collection(model) {
+        var array = []
+        array.$id = generateID()
+        array[subscribers] = []
+        array.$model = model
+        array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
+        array._ = modelFactory({
+            length: model.length
+        })
+        array._.$watch("length", function(a, b) {
+            array.$fire("length", a, b)
+        })
+        for (var i in Observable) {
+            array[i] = Observable[i]
+        }
+        avalon.mix(array, CollectionPrototype)
         return array
     }
 

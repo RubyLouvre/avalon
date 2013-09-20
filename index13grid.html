@@ -79,7 +79,7 @@
                 };
                 scope.jumpPage = function(e) {
                     e.preventDefault()
-                    scope.pageIndex = this.$scope.$index;
+                    scope.pageIndex = this.$vmodel.$index;
                     scope.getShowItems();
                 }
             });

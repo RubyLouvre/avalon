@@ -12,12 +12,12 @@
                     //配置
                     vm.changeYear = false
                     vm.changeMonth = false
-                    vm.minDate = new Date(2013, 3, 25)-0;
+                    vm.minDate = new Date(2013, 3, 25);
                     //vm.maxDate
                     vm.showOtherMonths = false;
                     vm.showButtonPanel = false;
                     //当前时间
-                    vm.selectedDate = new Date-0;
+                    vm.selectedDate = new Date - 0;
                     vm.currentDate = new Date;
                     vm.currentMonth = vm.currentDate.getMonth();
                     vm.currentYear = vm.currentDate.getFullYear();
@@ -53,7 +53,6 @@
                     }
                     function  getWeeks(cur) {
                         vm.currentDate = cur;
- 
                         var year = cur.getFullYear();
                         var month = cur.getMonth();//得到今天是几月（0 ~ 11）
                         var date = cur.getDate();  //得到今天是几号 （1 ~ 31）
@@ -96,15 +95,15 @@
                     vm.theme = "start";
                     vm.nextMonth = function(e) {
                         e.preventDefault()
-                        var d = vm.currentDate;
+                        var d = model.currentDate;
                         var m = d.getMonth();
                         d.setMonth(m + 1);
                         m = d.getMonth();
                         if (m === 0) {
                             var y = d.getFullYear();
-                            vm.currentYear = y;
+                            model.currentYear = y;
                         }
-                        vm.currentMonth = m;
+                        model.currentMonth = m;
                     };
                     //点击事件
                     vm.prevMonth = function(e) {
@@ -124,7 +123,6 @@
                         var d = vm.currentDate;
                         d.setMonth(val);
                         vm.currentWeeks = getWeeks(d);
-                      
                         vm.title = NaN;
                     });
 
@@ -137,11 +135,11 @@
                     //高亮当前选中的日期
                     vm.selectDay = function(d) {
                         if (this.tagName === "TD" && !/disabled/.test(this.className)) {
-                            d = d.split("-")
-                            model.selectedDate = new Date(d[0], d[1], d[2])-0;
+                            d = d.split('-')
+                            vm.selectedDate = new Date(d[0], d[1], d[2]);
                         }
                         return false
-                    };
+                    }
 
                     //高亮今天的日期
                     var today = new Date;
@@ -150,28 +148,28 @@
                         return day.slice(0, day.lastIndexOf("-")) === atoday.join("-");
                     };
                     vm.backToday = function() {
-                        model.currentMonth = atoday[1];
-                        model.currentYear = atoday[0];
+                        vm.currentMonth = atoday[1];
+                        vm.currentYear = atoday[0];
                     }
                 });
                 avalon.scan();
             });
 
+
         </script>
     </head>
     <body>
-
         <div ms-controller="datepicker">
 
-            <div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" style="display:block"> 
+            <div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" style="display:block">
                 <div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all">
-                    <a class="ui-datepicker-prev ui-corner-all" title="Prev" 
+                    <a class="ui-datepicker-prev ui-corner-all" title="Prev"
                        ms-click="prevMonth"
                        ms-hover="ui-state-hover"
                        ms-hover-1="ui-datepicker-prev-hover"
                        >
                         <span class="ui-icon ui-icon-circle-triangle-w">Prev</span></a>
-                    <a class="ui-datepicker-next ui-corner-all"  title="Next" 
+                    <a class="ui-datepicker-next ui-corner-all"  title="Next"
                        ms-click="nextMonth"
                        ms-hover="ui-state-hover"
                        ms-hover-1="ui-datepicker-next-hover"
@@ -179,10 +177,10 @@
                         <span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>
                     <div class="ui-datepicker-title">
                         <select  ms-each-month="$months" ms-if="changeMonth" ms-duplex="currentMonth" >
-                            <option ms-value="{{month}}" ms-selected="currentMonth == month">{{month+1}}月</option>
+                            <option ms-value="{{$index}}" >{{month+1}}月</option>
                         </select>
                         <select  ms-each-year="candidateYears" ms-if="changeYear" ms-duplex="currentYear" >
-                            <option ms-value="{{year}}" ms-selected="currentYear == year">{{year}}年</option>
+                            <option ms-value="{{year}}" >{{year}}年</option>
                         </select>
                         {{title}}
                     </div>
@@ -195,15 +193,15 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody ms-each-week="currentWeeks">
+                    <tbody ms-each-week="currentWeeks" >
                         <tr ms-each-day="week">
                             <td ms-class-0="ui-datepicker-other-month:Number(day.split('-')[1]) != currentMonth"
                                 ms-class-1="ui-datepicker-week-end:$first || $last"
-                                ms-class-2="ui-state-disabled:day.split('-')[3] == 1" 
+                                ms-class-2="ui-state-disabled:day.split('-')[3] == 1"
                                 ms-class-3="ui-datepicker-unselectable:day.split('-')[3] == 1"
                                 ms-click="selectDay(day)"
                                 >
-                                <a class="ui-state-default"  href="javascript:"
+                                <a class="ui-state-default"   href="javascript:"
                                    ms-if="showOtherMonths || Number(day.split('-')[1]) == currentMonth"
                                    ms-hover="ui-state-hover"
                                    ms-title="day.split('-')[2]"
@@ -247,9 +245,10 @@
                     <option value='eggplant'>eggplant</option>
                     <option value='cupertino'>cupertino</option>
                     <option value='overcast'>overcast</option>
-                </select>选择你喜欢的皮肤</div>
-            <p>你选择的日期为 {{selectedDate | date("yyyy-MM-dd")}}</p>
+                </select>你喜欢的皮肤</div>
+            <p>你选择的日期为 {{selectedDate | date('yyyy-MM-dd')}}</p>
 
         </div>
+
     </body>
 </html>
