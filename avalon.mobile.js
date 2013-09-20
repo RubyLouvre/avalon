@@ -2022,6 +2022,7 @@
 
         function updateView() {
             var neo = fn(scope)
+            neo = Array.isArray(neo) ? neo.map(String) : neo +""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""

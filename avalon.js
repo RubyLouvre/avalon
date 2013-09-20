@@ -916,7 +916,7 @@
             values = [].concat(values) //强制转换为数组
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el))
+                el.selected = !!~values.indexOf(getter(el)) 
             }
             if (!values.length) {
                 node.selectedIndex = -1
@@ -1500,7 +1500,6 @@
                 el = fn.element
                 if (el && (!el.noRemove) && (el.sourceIndex === 0 || !root.contains(el))) {
                     avalon.Array.remove(list, fn)
-                    log(fn + " removed")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -2386,7 +2385,7 @@
         var $elem = avalon(element)
         function updateModel() {
             if ($elem.data("observe") !== false) {
-                var neo = $elem.val()
+                var neo = $elem.val()//字符串或字符串数组
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
                     oldValue = neo + ""
@@ -2395,6 +2394,7 @@
         }
         function updateView() {
             var neo = fn(scope)
+            neo = Array.isArray(neo) ? neo.map(String) : neo +""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
