@@ -43,10 +43,15 @@
 
                     })
                 })
-                avalon.define("multi", function(vm) {
+                var m = avalon.define("multi", function(vm) {
                     vm.multi = ["aaa", "bbb", "ccc", "ddd", "eee", "fff", "ggg"];
                     vm.selected = ["aaa", "bbb", "eee"]
+                    vm.select = ""
+                    
                 });
+                m.selected.$watch("length", function(){
+                    m.select = m.selected.join(" ")
+                })
                 avalon.scan();
             })
         </script>
@@ -73,6 +78,7 @@
             <select ms-each-el="multi" ms-duplex="selected" multiple="multiple" >
                 <option ms-value="el" >{{el}}</option>
             </select>
+            <p>{{select}}</p>
         </div>
     </body>
 </html>
