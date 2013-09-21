@@ -2629,7 +2629,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model
+        array.$model = model.concat()
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array._ = modelFactory({
             length: model.length

@@ -2239,7 +2239,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model
+        array.$model = model.concat()
         array.$events = {}
         array._ = modelFactory({
             length: model.length
