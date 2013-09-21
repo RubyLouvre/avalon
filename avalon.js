@@ -1133,17 +1133,8 @@
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1195,9 +1186,8 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0), astr)
+                    fn("sort", bstr, astr)
                 })
             }
             var events = a.$events //待到$watch回调都绑定好再移除
@@ -2391,17 +2381,16 @@
             }
         }
         function updateView() {
-            avalon.nextTick(function() {//先等到select里的option元素被扫描后，才根据model设置selected属性
-                var neo = fn(scope)
-                neo = Array.isArray(neo) ? neo.map(String) : neo + ""
-                if (neo + "" !== oldValue) {
-                    $elem.val(neo)
-                    oldValue = neo + ""
-                }
-            })
+            var neo = fn(scope)
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
+            if (neo + "" !== oldValue) {
+                $elem.val(neo)
+                oldValue = neo + ""
+            }
         }
         $elem.bind("change", updateModel)
         setTimeout(function() {
+            //先等到select里的option元素被扫描后，才根据model设置selected属性
             registerSubscriber(updateView, element)
         })
     }

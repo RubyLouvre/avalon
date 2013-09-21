@@ -903,17 +903,8 @@
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1141,12 +1132,12 @@
         return vmodel
     }
     function registerSubscriber(updateView, element) {
-            updateView.element = element
-            Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
+        updateView.element = element
+        Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Registry[expose]) {
@@ -1916,8 +1907,8 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                
-               updateView && registerSubscriber(updateView, elem)
+
+                updateView && registerSubscriber(updateView, elem)
 
             }
         }
@@ -2021,14 +2012,14 @@
 
         function updateView() {
             var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo +""
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
             }
         }
         $elem.bind("change", updateModel)
-        setTimeout(function(){
+        setTimeout(function() {
             registerSubscriber(updateView, element)
         })
     }
@@ -2249,7 +2240,7 @@
         array.$id = generateID()
         array[subscribers] = []
         array.$model = model
-        array.$events = {} 
+        array.$events = {}
         array._ = modelFactory({
             length: model.length
         })
@@ -2259,7 +2250,11 @@
         for (var i in Observable) {
             array[i] = Observable[i]
         }
-        avalon.mix(array, CollectionPrototype)
+        if (array.__proto__) {
+            array.__proto__ = CollectionPrototype
+        } else {
+            avalon.mix(array, CollectionPrototype)
+        }
         return array
     }
     //========================= each binding ====================
