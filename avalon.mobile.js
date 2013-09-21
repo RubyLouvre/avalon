@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.96a ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon 0.96 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1141,14 +1141,12 @@
         return vmodel
     }
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
             updateView.element = element
             Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
             openComputedCollect = true
             updateView()
             openComputedCollect = false
             delete Registry[expose]
-        })
     }
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Registry[expose]) {
@@ -1918,7 +1916,8 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+                
+               updateView && registerSubscriber(updateView, elem)
 
             }
         }
@@ -2029,7 +2028,9 @@
             }
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function(){
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================

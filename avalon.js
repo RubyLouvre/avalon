@@ -914,9 +914,11 @@
         },
         "select:set": function(node, values) {
             values = [].concat(values) //强制转换为数组
+            console.log(values)
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el)) 
+                el.selected = !!~values.indexOf(getter(el))
+                console.log(el.selected + " " + el.value)
             }
             if (!values.length) {
                 node.selectedIndex = -1
@@ -1473,14 +1475,12 @@
     }
 
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
-            updateView.element = element
-            Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
-        })
+        updateView.element = element
+        Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
 
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
@@ -2283,7 +2283,7 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+                updateView && registerSubscriber(updateView, elem)
             }
         }
     }
@@ -2393,15 +2393,19 @@
             }
         }
         function updateView() {
-            var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo +""
-            if (neo + "" !== oldValue) {
-                $elem.val(neo)
-                oldValue = neo + ""
-            }
+            avalon.nextTick(function() {//先等到select里的option元素被扫描后，才根据model设置selected属性
+                var neo = fn(scope)
+                neo = Array.isArray(neo) ? neo.map(String) : neo + ""
+                if (neo + "" !== oldValue) {
+                    $elem.val(neo)
+                    oldValue = neo + ""
+                }
+            })
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function() {
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================

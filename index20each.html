@@ -10,15 +10,10 @@
 
                 avalon.define("props", function(vm) {
 
-                    vm.array = [
-                        new Select(),
-                        new Select()
-                    ]
+                    vm.options = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"];
 
-                    function Select() {
-                        this.options = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"];
-                        this.selectedIndex = 5;
-                    }
+                    vm.selected = "桃子"
+
                 });
 
                 avalon.scan();
@@ -27,12 +22,12 @@
     </head>
     <body>
         <div ms-controller="props">
-            <div ms-each-select="array">
-                <input type="text" ms-duplex="select.selectedIndex" />
-                <select ms-each-option="select.options" >
-                    <option ms-value="$index" ms-selected="console.log($index),$index == select.selectedIndex" >{{option}}</option>
-                </select>
-            </div>
+
+            <input  ms-duplex="selected" />
+            <select ms-each-option="options" ms-duplex="selected" >
+                <option ms-value="option" >{{option}}</option>
+            </select>
         </div>
+
     </body>
 </html>
