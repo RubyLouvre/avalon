@@ -914,11 +914,9 @@
         },
         "select:set": function(node, values) {
             values = [].concat(values) //强制转换为数组
-            console.log(values)
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
                 el.selected = !!~values.indexOf(getter(el))
-                console.log(el.selected + " " + el.value)
             }
             if (!values.length) {
                 node.selectedIndex = -1
