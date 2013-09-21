@@ -1,20 +1,20 @@
 //==================================================
 
-// avalon 0.94   by Shitu Zhengmei 2013.7.26
+// avalon 0.96p   by Situ Zhengmei 2013.9.17
 // FAQ:
 //    Which license? MIT. ( Comparison between five popular open-source licenses, BSD, Apache, GPL, LGPL, and MIT  http://www.awflasher.com/blog/archives/939 )
 //    Dependencies? None, works well together with jQuery, Mass, etc.
 //==================================================
 (function(DOC) {
-    var Publish = {} //expose functions to this object to help accessor to collect dependencies
+    var Registry = {} //expose functions to this object to help accessor to collect dependencies
     var expose = new Date - 0
     var subscribers = "$" + expose
     var otherRequire = window.require
     var otherDefine = window.define
-    //These two fields related closely to calculated properties.
+    //These two fields are closely related to calculated properties.
     var stopRepeatAssign = false
     var openComputedCollect = false
-    var rword = /[^, ]+/g//split string into small blocks, delimited by space or comma, working together with the replace function to implement forEach for a string.
+    var rword = /[^, ]+/g //split string into small blocks, delimited by space or comma, working together with the replace function to implement forEach for a string.
     var class2type = {}
     var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
@@ -30,6 +30,8 @@
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
     var rwindow = /^[object (Window|DOMWindow|global)]$/
+    var rnative = /\[native code\]/
+    var rchecktype = /^(?:object|array)$/
 
     function noop() {
     }
@@ -42,6 +44,7 @@
     /*********************************************************************
      *                 Namespace                                            *
      **********************************************************************/
+
     avalon = function(el) { // Create a jQuery style non-new instantiation structure
         return new avalon.init(el)
     }
@@ -81,7 +84,7 @@
     //Check whether the object is a plain javascript object (Object). That means, it is either a DOM object, a BOM object
     // , nor an instance of a user defined class.
     avalon.isPlainObject = function(obj) {
-        if (this.type(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
+        if (getType(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
             return false
         }
         try {
@@ -93,7 +96,7 @@
         }
         return true
     }
-    if (/\[native code\]/.test(Object.getPrototypeOf)) {
+    if (rnative.test(Object.getPrototypeOf)) {
         avalon.isPlainObject = function(obj) {
             return obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
@@ -226,7 +229,7 @@
             }
             return result
         },
-        bind: function(el, type, fn, phase) {// Event binding
+        bind: function(el, type, fn, phase) { // Event binding
             function callback(e) {
                 var ex = e.target ? e : fixEvent(e || window.event)
                 var ret = fn.call(el, e)
@@ -246,7 +249,7 @@
             }
             return callback
         },
-        unbind: W3C ? function(el, type, fn, phase) {
+        unbind: W3C ? function(el, type, fn, phase) { //unbind event
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
         } : function(el, type, fn) {
             el.detachEvent("on" + type, fn || noop)
@@ -279,23 +282,25 @@
 
     //Choose the fastest asynchronous callback approach for different browsers respectively
     var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-    if (BrowserMutationObserver) {//chrome18+, safari6+, firefox14+,ie11+,opera15
-        avalon.nextTick = function(callback) {//2-3ms
+    if (BrowserMutationObserver) { //chrome18+, safari6+, firefox14+,ie11+,opera15
+        avalon.nextTick = function(callback) { //2-3ms
             var input = DOC.createElement("input")
             var observer = new BrowserMutationObserver(function(mutations) {
                 mutations.forEach(function() {
                     callback()
                 })
             })
-            observer.observe(input, {attributes: true})
+            observer.observe(input, {
+                attributes: true
+            })
             input.setAttribute("value", Math.random())
         }
     } else if (window.VBArray) {
-        //Usually it takes only 1ms under IE, without any side effect and no request sent, while setImmediate takes around 140ms if it is run just once. (same as setTimeout)
+        //Usually it takes only 1ms in IE, without any side effect and no request sent, while setImmediate takes around 140ms if it is run just once. (same as setTimeout)
         avalon.nextTick = function(callback) {
             var node = DOC.createElement("script")
             node.onreadystatechange = function() {
-                callback()//Triggered during interactive phase
+                callback() //Triggered during interactive phase
                 node.onreadystatechange = null
                 root.removeChild(node)
                 node = null
@@ -308,19 +313,20 @@
         }
     }
 
-    var VMODELS = avalon.vmodels = avalon.models = {}
+    var VMODELS = avalon.vmodels = {}
+
 
     //Only nodes collection, pure array, arguments, and plain JS object having nonnegative integer length can pass
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
             var n = obj.length
-            if (+n === n && !(n % 1) && n >= 0) {//Check whether the length is a nonnegative integer
+            if (+n === n && !(n % 1) && n >= 0) { //Check whether the length is a nonnegative integer
                 try {
-                    if ({}.propertyIsEnumerable.call(obj, 'length') === false) {//If it is a primitive object
+                    if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //If it is a primitive object
                         return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
                     }
                     return true;
-                } catch (e) {//throw exception for NodeList in IE
+                } catch (e) { //throw exception for NodeList in IE
                     return true
                 }
             }
@@ -335,9 +341,8 @@
 
     avalon.each = function(obj, fn) {
         if (obj) { //You can't pass in a null or undefined object
-            var isArray = isArrayLike(obj),
-                    i = 0
-            if (isArray) {
+            var i = 0
+            if (isArrayLike(obj)) {
                 for (var n = obj.length; i < n; i++) {
                     fn(i, obj[i])
                 }
@@ -354,7 +359,7 @@
     /*********************************************************************
      *                           ecma262 v5 syntax patch                 *
      **********************************************************************/
-    if (!"Shitu Zhengmei".trim) {
+    if (!"Situ Zhengmei".trim) {
         String.prototype.trim = function() {
             return this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, '')
         }
@@ -409,7 +414,7 @@
         var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
         return Function("fn,scope", fun)
     }
-    if (![].map) {
+    if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
             //Positioning. Return the index of the first element equals to the given item argument in the array
             indexOf: function(item, index) {
@@ -445,7 +450,7 @@
             every: iterator('', 'if(!_)return false', 'return true')
         })
     }
-    if (!root.contains) {//safari5+ puts the contains() method on Element.prototype instead of Node.prototype.
+    if (!root.contains) { //safari5+ puts the contains() method on Element.prototype instead of Node.prototype.
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
         }
@@ -511,9 +516,9 @@
     }
 
     kernel.plugins = plugins
-    kernel.compact = true
-    kernel.alias = {}
+
     kernel.plugins['interpolate'](["{{", "}}"])
+    kernel.alias = {}
     avalon.config = kernel
 
     /*********************************************************************
@@ -624,8 +629,11 @@
         },
         position: function() {
             var offsetParent, offset,
-                    elem = this[ 0 ],
-                    parentOffset = {top: 0, left: 0};
+                    elem = this[0],
+                    parentOffset = {
+                top: 0,
+                left: 0
+            };
             if (!elem) {
                 return;
             }
@@ -637,8 +645,8 @@
                 if (offsetParent[0].tagName !== "HTML") {
                     parentOffset = offsetParent.offset();
                 }
-                parentOffset.top += avalon.css(offsetParent[ 0 ], "borderTopWidth", true);
-                parentOffset.left += avalon.css(offsetParent[ 0 ], "borderLeftWidth", true);
+                parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true);
+                parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true);
             }
             return {
                 top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
@@ -653,7 +661,7 @@
             return avalon(offsetParent || root);
         },
         bind: function(type, fn, phase) {
-            if (this[0]) { //此方法不会链 [TBC]
+            if (this[0]) {
                 return avalon.bind(this[0], type, fn, phase)
             }
         },
@@ -692,10 +700,14 @@
             return val
         }
     }
-    //Generate methods such as avalon.fn.scrollLeft, avalon.fn.scrollTop, e.t.c.
-    "scrollLeft_pageXOffset,scrollTop_pageYOffset".replace(/(\w+)_(\w+)/g, function(_, method, prop) {
+    //Generate avalon.fn.scrollLeft, avalon.fn.scrollTop methods
+    avalon.each({
+        scrollLeft: "pageXOffset",
+        scrollTop: "pageYOffset"
+    }, function(method, prop) {
         avalon.fn[method] = function(val) {
-            var node = this[0] || {}, win = getWindow(node), top = method === "scrollTop";
+            var node = this[0] || {}, win = getWindow(node),
+                    top = method === "scrollTop";
             if (!arguments.length) {
                 return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
             } else {
@@ -765,7 +777,7 @@
             thick: ie8 ? '5px' : '6px'
         }
         cssHooks["@:get"] = function(node, name) {
-            //retrieve the original value but it might includes units such as em, pc, mm,and pt.
+            //retrieve the original value but it might includes units such as em, pc, mm, pt, or %.
             var currentStyle = node.currentStyle
             var ret = currentStyle[name]
             if ((rnumnonpx.test(ret) && !rposition.test(ret))) {
@@ -775,9 +787,10 @@
                         rsLeft = node.runtimeStyle.left
                 //(2) The style.left = xxx in point (3) below will affect currentStyle.left.
                 // so we save currentStyle.left in runtimeStyle.left
-                // runtimeStyle.left has higher precedence than style.left
+                // runtimeStyle.left has the highest precedence so that it won't be affectted by style.left
                 node.runtimeStyle.left = currentStyle.left
-                //(3) Set the precise value into style.left, then acquire the result in "px" unit through
+
+                //(3) Set the precise value into style.left, then acquire the result in "px" through
                 // the private property style.pixelLeft in IE.
                 // The fontSize branch see http://bugs.jquery.com/ticket/760
                 style.left = name === 'fontSize' ? '1em' : (ret || 0)
@@ -811,7 +824,7 @@
         cssHooks[name + ":get"] = function(node) {
             var computed = cssHooks["@:get"](node, name)
             return /px$/.test(computed) ? computed :
-                    avalon(node).position()[ name ] + "px"
+                    avalon(node).position()[name] + "px"
         }
     })
     "Width,Height".replace(rword, function(name) {
@@ -852,7 +865,7 @@
         //We can obtain the element rect relative to the client through getBoundingClientRect.
         //http://msdn.microsoft.com/en-us/library/ms536433.aspx
         var box = node.getBoundingClientRect(),
-                //chrome1+, firefox3+, ie4+, opera(yes) safari4+    
+                //chrome1+, firefox3+, ie4+, opera(yes) safari4+
                 win = doc.defaultView || doc.parentWindow,
                 root = (navigator.vendor || doc.compatMode === "BackCompat") ? doc.body : doc.documentElement,
                 clientTop = root.clientTop >> 0,
@@ -1083,17 +1096,22 @@
     }
     var Observable = {
         $watch: function(type, callback) {
-            var callbacks = this.$events[type]
-            if (callbacks) {
-                callbacks.push(callback)
-            } else {
-                this.$events[type] = [callback]
+            if (typeof callback === "function") {
+                var callbacks = this.$events[type]
+                if (callbacks) {
+                    callbacks.push(callback)
+                } else {
+                    this.$events[type] = [callback]
+                }
+            } else { //Resume watching modification of the first layer of simple properties
+                this.$events = this.$watch.backup
             }
             return this
         },
         $unwatch: function(type, callback) {
             var n = arguments.length
-            if (n === 0) {
+            if (n === 0) { // Make all $watch callbacks on this VM stop listening
+                this.$watch.backup = this.$events
                 this.$events = {}
             } else if (n === 1) {
                 this.$events[type] = []
@@ -1109,7 +1127,7 @@
             return this
         },
         $fire: function(type) {
-            var callbacks = this.$events[type] || [] //prevent it from affecting the original array
+            var callbacks = this.$events[type] || []
             var all = this.$events.$all || []
             var args = aslice.call(arguments, 1)
 
@@ -1138,7 +1156,12 @@
             }
             return a
         } else {
-            var added = [], removed = [], updated = [], astr = [], bstr = [], iterators = a[subscribers]
+            var added = [],
+                    removed = [],
+                    updated = [],
+                    astr = [],
+                    bstr = [],
+                    iterators = a[subscribers]
             var amodel = a.$model
             //obtain the key-value pairs to be removed
             for (var i in amodel) {
@@ -1165,32 +1188,32 @@
                     }
                 }
             }
-            //  log("Start removing " + removed)
+
             iterators.forEach(function(fn) {
                 fn("remove", removed)
             })
-            // log("Start adding " + added)
+
             iterators.forEach(function(fn) {
                 fn("add", b)
             })
             if (updated.length) {
-                //  log("Start updating " + updated)
+
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
-                    if (valueType !== "object" && valueType !== "array") {
-                        a[i] = b[i]
-                    } else {
+                    if (rchecktype.test(valueType)) {
                         updateViewModel(a[i], b[i], valueType)
+                    } else {
+                        a[i] = b[i]
                     }
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-                //  log("Start sorting" + astr.join(";") + "      " + bstr.join(";"))
+
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0))
+                    fn("sort", bstr.slice(0), astr)
                 })
             }
-            var events = a.$events//wait for all $watch callbacks to be bound before removal
+            var events = a.$events //wait for all $watch callbacks to be bound before removal
             if (added.length || removed.length) {
                 var scope = a.$model
                 //Remove key-value pairs that have already been deleted
@@ -1208,11 +1231,16 @@
             iterators.forEach(function(fn) {
                 fn.host = a  //replace the host (VM) of the view refreshing function in the subscribers list
             })
-            a.$events = events//replace the original $watch callback
+            a.$events = events //replace the original $watch callback
             return a
         }
     }
-
+    var isEqual = function(x, y) {
+        if (x === y) {
+            return x instanceof Date ? x - 0 === y - 0 : !0
+        }
+        return x !== x && y !== y
+    }
     var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
 
     function modelFactory(scope, model, watchMore, oldAccessores) {
@@ -1227,8 +1255,8 @@
                 callSetters = [],
                 callGetters = [],
                 VBPublics = Object.keys(unwatchOne) //used in IE6-8
-        model = model || {}//the $model property on vmodel
-        watchMore = watchMore || {}//properties starts with $ but forced to be watched
+        model = model || {} //the $model property on vmodel
+        watchMore = watchMore || {} //properties starts with $ but forced to be watched
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
@@ -1247,29 +1275,30 @@
                     var setter = val.set
                     var getter = val.get
                     accessor = function(neo) { //create a calculated property. Its update is triggered by other watched properties
-                        var value = accessor.value, preValue = value
+                        var value = accessor.value,
+                                preValue = value
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //prevent redundant assignment
                             }
                             if (typeof setter === "function") {
                                 var backup = vmodel.$events[name]
-                                vmodel.$events[name] = []// clear callbacks. Prevent $fire being triggered multiple times by internal bubbling
+                                vmodel.$events[name] = [] // clear callbacks. Prevent $fire being triggered multiple times by internal bubbling
                                 setter.call(vmodel, neo)
                                 vmodel.$events[name] = backup
                             }
-                            if (oldArgs !== neo) { //Check if the passed-in argument are same as last time
+                            if (!isEqual(oldArgs, neo)) { //Check if the passed-in argument are same as last time
                                 oldArgs = neo
                                 value = accessor.value = model[name] = getter.call(vmodel)
                                 notifySubscribers(accessor) //notify top level to update
                                 vmodel.$fire && vmodel.$fire(name, value, preValue)
                             }
                         } else {
-                            if (openComputedCollect) {//collect functions refreshing the view
+                            if (openComputedCollect) { //collect view-refreshing functions
                                 collectSubscribers(accessor)
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
-                            if (value !== neo) {
+                            if (!isEqual(value, neo)) {
                                 oldArgs = void 0
                                 vmodel.$fire && vmodel.$fire(name, neo, value)
                             }
@@ -1279,37 +1308,39 @@
                     callGetters.push(accessor)
                 } else {
                     accessor = function(neo) { //create a calculated property. Its update is triggered by other watched properties
-                        var value = accessor.value, preValue = value, complexValue
+                        var value = accessor.value,
+                                preValue = value,
+                                complexValue
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return //prevent redundant assignment
                             }
-                            if (value !== neo) {
-                                if (valueType === "array" || valueType === "object") {
-                                    if ("value" in accessor) {//if has been replaced already
+                            if (!isEqual(value, neo)) {
+                                if (rchecktype.test(valueType)) {
+                                    if ("value" in accessor) { //if has been replaced already
                                         value = updateViewModel(value, neo, valueType)
-                                    } else {//pass through directly if it is a VM already, perform convertion otherwise
+                                    } else { //pass through directly if it is a VM already, perform convertion otherwise
                                         value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
                                     complexValue = value.$model
-                                } else {//for other data types
+                                } else { //for other data types
                                     value = neo
                                 }
                                 accessor.value = value
-                                model[name] = complexValue ? complexValue : value//update $model
+                                model[name] = complexValue ? complexValue : value //update $model
                                 notifySubscribers(accessor) //notify top level to update
                                 if (!complexValue) {
                                     vmodel.$fire && vmodel.$fire(name, value, preValue)
                                 }
                             }
                         } else {
-                            collectSubscribers(accessor) //Collect functions refreshing the view
+                            collectSubscribers(accessor) //Collect view-refreshing functions
                             return value
                         }
                     }
                     callSetters.push(name)
                 }
-                accessor[subscribers] = []//Array for subscribers
+                accessor[subscribers] = [] //Array for subscribers
                 accessores[name] = {
                     set: accessor,
                     get: accessor,
@@ -1325,20 +1356,20 @@
                 accessores[i] = oldAccessores[i]
             }
         }
-        vmodel = defineProperties(vmodel, accessores, VBPublics)//Create an empty ViewModel
+        vmodel = defineProperties(vmodel, accessores, VBPublics) //Create an empty ViewModel
         VBPublics.forEach(function(name) {
-            if (!unwatchOne[name]) {//Assign non-watchable properties (e.g. function) first
+            if (!unwatchOne[name]) { //Assign non-watchable properties (e.g. function) first
                 vmodel[name] = scope[name]
             }
         })
-        callSetters.forEach(function(prop) {//Then assign watched properties
+        callSetters.forEach(function(prop) { //Then assign watched properties
             vmodel[prop] = scope[prop]
         })
-        callGetters.forEach(function(fn) {//At last force properties to be calculated and update their own value
-            Publish[expose] = fn
+        callGetters.forEach(function(fn) { //In the end force properties to be calculated and update their own value
+            Registry[expose] = fn
             fn()
             collectSubscribers(fn)
-            delete Publish[expose]
+            delete Registry[expose]
         })
         vmodel.$model = model
         vmodel.$events = {}
@@ -1347,7 +1378,7 @@
         vmodel[subscribers] = []
         for (var i in Observable) {
             var fn = Observable[i]
-            if (!W3C) {//A patch only for IE678 only since in VB object methods 'this' does not refer to the caller object itself, we need to bind it first.
+            if (!W3C) { //A patch only for IE678 only since in VB object methods 'this' does not refer to the caller object itself, we need to bind it first.
                 fn = fn.bind(vmodel)
             }
             vmodel[i] = fn
@@ -1449,18 +1480,26 @@
                     "\tSet o = (New " + className + ")(a, b)",
                     "\tSet " + className + "Factory = o",
                     "End Function")
-            window.parseVB(buffer.join("\r\n"))
-
-            var model = window[className + "Factory"](description, VBMediator)
-            return model
+            window.parseVB(buffer.join("\r\n")) //Create a VB class factory first
+            return window[className + "Factory"](description, VBMediator) //get its product
         }
     }
 
+    function registerSubscriber(updateView, element) {
+        avalon.nextTick(function() {
+            updateView.element = element
+            Registry[expose] = updateView //Expose this function to make collectSubscribers easier
+            openComputedCollect = true
+            updateView()
+            openComputedCollect = false
+            delete Registry[expose]
+        })
+    }
 
     function collectSubscribers(accessor) { //Collect subscribers depends on this accessor
-        if (Publish[expose]) {
+        if (Registry[expose]) {
             var list = accessor[subscribers]
-            list && avalon.Array.ensure(list, Publish[expose]) //only push the element when it is not in the array already
+            list && avalon.Array.ensure(list, Registry[expose]) //only push the element when it is not in the array already
         }
     }
 
@@ -1476,7 +1515,7 @@
                     avalon.Array.remove(list, fn)
                     log(fn + "")
                 } else {
-                    fn.apply(0, args) //Forcing to recalculate itself
+                    fn.apply(0, args) //Force self-recalculation
                 }
             }
         }
@@ -1520,10 +1559,10 @@
             if (!VMODELS[b]) {
                 return
             }
-            vmodels = [VMODELS[b]]//Parent VM not included
+            vmodels = [VMODELS[b]] //Parent VM not included
             elem.removeAttribute(prefix + "important")
         } else if (c) {
-            var newVmodel = VMODELS[c]//Child VM depends on parent VM. It makes no sense to scan the child VM when the parent VM is absent
+            var newVmodel = VMODELS[c] //Child VM depends on parent VM. It makes no sense to scan the child VM when the parent VM is absent
             if (!newVmodel) {
                 return
             }
@@ -1545,7 +1584,7 @@
         }
     }
 
-    var rfilters = /[^|]\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1575,7 +1614,7 @@
                     if (value.indexOf("|") > 0) { // Extract filters, be aware to remove short circuits
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
-                            return c.charAt(0)
+                            return ""
                         })
                     }
                     tokens.push({
@@ -1599,11 +1638,12 @@
 
 
     function scanAttr(el, vmodels, callback) {
-        var bindings = [], ifBinding
+        var bindings = [],
+                ifBinding
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
                 if (attr.name.indexOf(prefix) !== -1) {
-                    //If named with the given prefix
+                    //If named with the specified prefix
                     var array = attr.name.split("-")
                     var type = array[1]
                     if (typeof bindingHandlers[type] === "function") {
@@ -1636,13 +1676,14 @@
             callback()
         }
     }
+
     function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
-            var flag = bindingHandlers[data.type](data, vmodels)
-            if (flag !== false && data.remove) { //Remove binding attributes to prevent the element being parsed again
-                data.element.removeAttribute(data.node.name)
+            bindingHandlers[data.type](data, vmodels)
+            if (data.remove) { //Remove binding attributes to prevent the element being parsed again
+                data.element.removeAttributeNode(data.node)
             }
-            delete data.remove
+            data.remove = true
         })
         bindings.length = 0
     }
@@ -1752,13 +1793,9 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = "",
-                    originCode = code
-            //args 是一个对象数组， names 是将要生成的求值函数的参数
+                    prefix = ""
             //args is a object array, names are arguments of the evaluation function to be generated
-
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-
 
             for (var i = 0, n = scopes.length; i < n; i++) {
                 if (vars.length) {
@@ -1802,12 +1839,12 @@
                 args.push(avalon.filters)
                 delete data.filters //release memory
             } else {
-                code = "\nreturn " + code + ";"//Function("return ") is not working on the whole IE family, we need Function("return;") here
+                code = "\nreturn " + code + ";" //Function("return ") is not working on the whole IE family, we need Function("return;") here
             }
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
-                log("Failed to convert [ " + originCode + " ]")
+
             }
         }
         try {
@@ -1816,17 +1853,17 @@
             }
             return [fn, args]
         } catch (e) {
-            data.remove = false
-            log("Failed to execute the evaluation function for [ " + originCode + " ]")
+            delete data.remove
         } finally {
             textBuffer = names = null //release memory
         }
     }
+    avalon.parseExpr = parseExpr
 
-    function watchView(text, scopes, data, callback, tokens) {
-        var array, updateView = avalon.noop
+    function updateViewFactory(expr, scopes, data, callback, tokens) {
+        var array, updateView
         if (!tokens) {
-            array = parseExpr(text, scopes, data)
+            array = parseExpr(expr, scopes, data)
             if (array) {
                 var fn = array[0],
                         args = array[1]
@@ -1854,25 +1891,22 @@
                 }
             })(array, callback)
         }
-
-        updateView.toString = function() {
-            return data.type + " binding to eval(" + text + ")"
-        } //To make debugging easier
-        //It is a very important spot here. We check whether the element inside view-refreshing function is actually in the DOM tree to decide
-        //whether we need to take it out from the subscriber list
-
-        updateView.element = data.element
-        Publish[expose] = updateView //expose this function to help collecting collectSubscribers
-        openComputedCollect = true
-        updateView()
-        openComputedCollect = false
-        delete Publish[expose]
+        if (updateView) {
+            updateView.toString = function() {
+                return data.type + " binding to eval(" + expr + ")"
+            } //To make debugging easier
+            //It is a very important spot here. We check whether the element inside view-refreshing function is actually in the DOM tree to decide
+            //whether we need to take it out from the subscriber list
+            registerSubscriber(updateView, data.element)
+        }
     }
+
+    avalon.updateViewFactory = updateViewFactory
     /*********************************************************************
      *                         Bind                                    *
      **********************************************************************/
     //Link the partial refresh area in the view and the ViewModel together with the binding function, generate updateView function
-    //it internally holds the compiled compileFn function, forming a two-way binding. It is the top level of a two-binding chain
+    //it internally holds the compiled compileFn function, forming a two-way binding. It is the top level of a two-way binding chain
 
     //stuff relates to visible binding
     var cacheDisplay = oneObject("a,abbr,b,span,strong,em,font,i,kbd", "inline")
@@ -1928,7 +1962,7 @@
 
             function ifcall() {
                 parent = elem.parentNode
-                watchView(data.value, vmodels, data, function(val) {
+                updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //Add. Insert it into the DOM tree if it is not in the tree.
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
@@ -1947,9 +1981,9 @@
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc" Set the "className" of the element to aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false Clear all classNames of the element
         // ms-attr-name="yyy"  vm.yyy="ooo" Set the "name" property of the element
-        "attr": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
-                var attrName = data.param  //
+        attr: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+                var attrName = data.param
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (toRemove)
                     elem.removeAttribute(attrName)
@@ -1965,12 +1999,16 @@
                 }
             })
         },
-        "on": function(data, vmodels) {
+        on: function(data, vmodels) {
             data.type = "on"
-            var value = data.value, four = "$event", elem = data.element, type = data.param, callback
+            var value = data.value,
+                    four = "$event",
+                    elem = data.element,
+                    type = data.param,
+                    callback
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
-                if (matched === "" || matched === "$event") {// aaa() aaa($event) is treated as aaa
+                if (matched === "" || matched === "$event") { // aaa() aaa($event) is treated as aaa
                     four = void 0
                     value = value.replace(rdash, "")
                 }
@@ -1989,7 +2027,7 @@
                     }
                 }
                 if (!elem.$vmodels) {
-                    elem.$vmodel = elem.$scope = vmodels[0]
+                    elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
                 }
                 if (type && typeof callback === "function") {
@@ -1998,20 +2036,19 @@
             }
 
         },
-        "data": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
-                var key = "data-" + data.param // 
+        data: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+                var key = "data-" + data.param
                 elem.setAttribute(key, val)
             })
         },
         //Extract inline expressions in innerText, replace them with the evaluated value
         //For example <div>{{firstName}} + java</div>, given that model.firstName is "ruby", will result in
         //<div>ruby + java</div>
-
-        "text": function(data, vmodels) {
+        text: function(data, vmodels) {
             var node = data.node
-            watchView(data.value, vmodels, data, function(val, elem) {
-                if (node.nodeType === 2) {//it is a node, that means ms-text is used on the element
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+                if (node.nodeType === 2) { //it is a node, that means ms-text is used on the element
                     if ("textContent" in elem) {
                         elem.textContent = val
                     } else {
@@ -2023,21 +2060,23 @@
             })
         },
         //show or hide the element
-        "visible": function(data, vmodels) {
+        visible: function(data, vmodels) {
             var elem = data.element
-            if (!supportDisplay && !root.contains(elem)) {//crap for firefox family!
+            if (!supportDisplay && !root.contains(elem)) {//damn the firefox family!
                 var display = parseDisplay(elem.tagName)
             }
             display = display || avalon(elem).css("display")
             display = display === "none" ? parseDisplay(elem.tagName) : display
-            watchView(data.value, vmodels, data, function(val) {
+            updateViewFactory(data.value, vmodels, data, function(val) {
                 elem.style.display = val ? display : "none"
             })
         },
         //This is a sample for binding string properties, it helps you to add inline expression in the title, alt, src, href, include, and css properties.
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
-        "href": function(data, vmodels) {
-            var text = data.value.trim(), simple = true, method = data.type
+        href: function(data, vmodels) {
+            var text = data.value.trim(),
+                    simple = true,
+                    method = data.type
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
@@ -2045,24 +2084,24 @@
                     text = RegExp.$1
                 }
             }
-            watchView(text, vmodels, data, function(val, elem) {
-
+            updateViewFactory(text, vmodels, data, function(val, elem) {
                 if (method === "css") {
                     avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
-                        var ajax = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
-                        ajax.onreadystatechange = function() {
-                            if (ajax.readyState === 4) {
-                                var s = ajax.status
+                        var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                    avalon.innerHTML(elem, ajax.responseText)
+                                    avalon.innerHTML(elem, xhr.responseText)
                                     avalon.scan(elem, vmodels)
                                 }
                             }
                         }
-                        ajax.open("GET", val, true)
-                        ajax.send(null)
+                        xhr.open("GET", val, true)
+                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                        xhr.send(null)
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
@@ -2077,18 +2116,20 @@
         },
         //This is a sample for binding boolean properties, boolean property requires its value to be a boolean inline expression as whole, surrounded by {{ }}
         //In IE we cannot obtain the original string value of a boolean property, it has been converted to a boolean, hence we have to introduce an extra ms-disabled property
-        "disabled": function(data, vmodels) {
+        disabled: function(data, vmodels) {
             var name = data.type,
                     propName = name === "readonly" ? "readOnly" : name
-            watchView(data.value, vmodels, data, function(val, elem) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem[propName] = !!val
             })
         },
         //ms-bind="name:callback", binds a property, invoke callback when the value of the property is changed. "this" in the callback refers to the bound element
-        "bind": function(data, vmodels) {
-            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/), ret = false
+        bind: function(data, vmodels) {
+            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/)
+            delete data.remove
             if (array && array[1] && array[2]) {
-                var fn = array[2], elem = data.element
+                var fn = array[2],
+                        elem = data.element
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
                     if (scope.hasOwnProperty(fn)) {
                         fn = scope[fn]
@@ -2100,13 +2141,13 @@
                     scope.$watch(array[1], function(neo, old) {
                         fn.call(elem, neo, old)
                     })
-                    ret = true
+                    data.remove = true
                 }
             }
-            return ret
+
         },
-        "html": function(data, vmodels) {
-            watchView(data.value, vmodels, data, function(val, elem) {
+        html: function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
@@ -2125,7 +2166,7 @@
         "with": function(data, vmodels) {
             bindingHandlers.each(data, vmodels, true)
         },
-        "ui": function(data, vmodels, opts) {
+        ui: function(data, vmodels, opts) {
             var uiName = data.value.trim() //get the name of the UI control
             var elem = data.element //get the bound element
             var id = (elem.getAttribute("data-id") || "").trim()
@@ -2147,7 +2188,7 @@
                 avalon.ui[uiName](elem, id, vmodels, opts || {})
                 elem[id + "vmodels"] = void 0
             } else {
-                return false
+                delete data.remove
             }
         }
     }
@@ -2157,17 +2198,20 @@
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     "class,hover,active".replace(rword, function(method) {
         bindingHandlers[method] = function(data, vmodels) {
-            var oldStyle = data.param //
-            var elem = data.element
+            var oldStyle = data.param,
+                    elem = data.element,
+                    $elem = avalon(elem),
+                    toggle
             if (!oldStyle || isFinite(oldStyle)) {
-                var text = data.value, toggle
+                var text = data.value
                 var noExpr = text.replace(rexprg, function(a) {
                     return Math.pow(10, a.length - 1) //Insert the N-1 power of 10 into the inline expression as a placeholder
                 })
-                var colonIndex = noExpr.indexOf(":")//get the position of the first colon
-                if (colonIndex === -1) {// Situations like ms-class="aaa bbb ccc"
-                    var className = text, rightExpr
-                } else {// Situations like ms-class-1="ui-state-active:checked"
+                var colonIndex = noExpr.indexOf(":") //get the position of the first colon
+                if (colonIndex === -1) { // Situations like ms-class="aaa bbb ccc"
+                    var className = text,
+                            rightExpr
+                } else { // Situations like ms-class-1="ui-state-active:checked"
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
                     var array = parseExpr(rightExpr, vmodels, {})
@@ -2175,15 +2219,16 @@
                         log("'" + (rightExpr || "").trim() + "' not found in the VM")
                         return false
                     }
-                    var callback = array[0], args = array[1]
+                    var callback = array[0],
+                            args = array[1]
                 }
-                var hasExpr = rexpr.test(className)//Situations like ms-class="width{{w}}"
+                var hasExpr = rexpr.test(className) //Situations like ms-class="width{{w}}"
 
-                watchView("", vmodels, data, function(cls) {
+                updateViewFactory("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
                     if (method === "class") {
-                        avalon(elem).toggleClass(className, toggle)
+                        $elem.toggleClass(className, toggle)
                     }
                 }, (hasExpr ? scanExpr(className) : null))
 
@@ -2195,7 +2240,7 @@
                         elem.tabIndex = elem.tabIndex || -1
                         event1 = "mousedown", event2 = "mouseup"
                     }
-                    var $elem = avalon(data.element)
+
                     $elem.bind(event1, function() {
                         toggle && $elem.addClass(className)
                     })
@@ -2205,8 +2250,8 @@
                 }
 
             } else if (method === "class") {
-                watchView(data.value, vmodels, data, function(val, elem) {
-                    avalon(elem).toggleClass(oldStyle, !!val)
+                updateViewFactory(data.value, vmodels, data, function(val) {
+                    $elem.toggleClass(oldStyle, !!val)
                 })
             }
         }
@@ -2219,7 +2264,7 @@
         bindingHandlers[name] = bindingHandlers.disabled
     })
     bindingHandlers.enabled = function(data, vmodels) {
-        watchView(data.value, vmodels, data, function(val, elem) {
+        updateViewFactory(data.value, vmodels, data, function(val, elem) {
             elem.disabled = !val
         })
     }
@@ -2232,19 +2277,21 @@
     //============================= model binding =======================
     //Bind fields in the model with the value of input or textarea
     var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
-        var element = data.element,
-                tagName = element.tagName
+        var elem = data.element,
+                tagName = elem.tagName
         if (data.type === "model") {
             log("ms-model has been deprecated. Use ms-duplex instead.")
         }
         if (typeof modelBinding[tagName] === "function") {
             var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
-                var val = data.value.split("."), first = val[0], second = val[1]
-                for (var el, i = vmodels.length - 1; el = vmodels[i--]; ) {
-                    if (el.hasOwnProperty(first)) {
-                        if (second && el[first]) {
-                            if (el[first].hasOwnProperty(second)) {
+                var val = data.value.split("."),
+                        first = val[0],
+                        second = val[1]
+                for (var vm, i = vmodels.length - 1; vm = vmodels[i--]; ) {
+                    if (vm.hasOwnProperty(first)) {
+                        if (second && vm[first]) {
+                            if (vm[first].hasOwnProperty(second)) {
                                 break
                             }
                         } else {
@@ -2252,32 +2299,31 @@
                         }
                     }
                 }
-                modelBinding[tagName](element, array[0], el, data.param)
+                if (!elem.name) { // If the user omitted the "name" attribute, the browser will assign an empty string to it
+                    elem.name = generateID()
+                }
+                var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
+                registerSubscriber(updateView, elem)
             }
         }
+
     }
-    //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
-    //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     //When the model binding is set up on an input tag, the target model field will be bound with the value of the element
     //in both ways. Changing the field will cause the value to be changed and vise versa. By default we bind the input event
     modelBinding.INPUT = function(element, fn, scope, fixType) {
-        if (element.name === void 0) {
-            element.name = generateID()
-        }
-
         var type = element.type,
-                god = avalon(element)
+                $elem = avalon(element)
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
         }
         //Change the model field when the value of the element is changed
         var updateModel = function() {
-            if (god.data("observe") !== false) {
+            if ($elem.data("observe") !== false) {
                 fn(scope, element.value)
             }
         }
         //Change the value of the element when the model field changed
-        var updateView = function() { //先执行updateView
+        var updateView = function() { //Execute updateView first
             var neo = fn(scope)
             if (neo !== element.value) {
                 element.value = neo
@@ -2292,7 +2338,7 @@
                 avalon.bind(element, event, updateModel)
             } else {
                 if (window.addEventListener) { //execute for W3C first
-                    element.addEventListener("input", updateModel, false)
+                    element.addEventListener("input", updateModel)
                 } else {
                     element.attachEvent("onpropertychange", function(e) {
                         if (e.propertyName === "value") {
@@ -2301,13 +2347,13 @@
                     })
                 }
                 if (DOC.documentMode >= 9) { //IE9 10
-                    element.attachEvent("onkeydown", function(e) {
+                    $elem.bind("keydown", function(e) {
                         var key = e.keyCode
                         if (key === 8 || key === 46) {
                             updateModel() //handle the backspace and delete key
                         }
                     })
-                    element.attachEvent("oncut", updateModel) //handle paste
+                    $elem.bind("cut", updateModel) //handle paste
                 }
             }
         } else if (type === "radio") {
@@ -2315,7 +2361,7 @@
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
             }
             updateModel = function() {
-                if (god.data("observe") !== false) {
+                if ($elem.data("observe") !== false) {
                     if (fixType === "text") {
                         if (element.checked) {
                             fn(scope, element.value)
@@ -2332,14 +2378,14 @@
                 element.beforeChecked = element.checked
             }
             if (element.onbeforeactivate === null) {
-                god.bind("beforeactivate", beforeChecked)
+                $elem.bind("beforeactivate", beforeChecked)
             } else {
-                god.bind("mouseover", beforeChecked)
+                $elem.bind("mouseover", beforeChecked)
             }
-            god.bind("click", updateModel)
+            $elem.bind("click", updateModel)
         } else if (type === "checkbox") {
             updateModel = function() {
-                if (god.data("observe") !== false) {
+                if ($elem.data("observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](fn(scope), element.value)
                 }
@@ -2352,19 +2398,15 @@
                     log("The prop in <input type='checkbox' ms-duplex='prop' /> should be an array")
                 }
             }
-            god.bind("click", updateModel) //IE6-8
+            $elem.bind("click", updateModel) //IE6-8
         }
-        Publish[expose] = updateView
-        updateView.element = element
-        updateView()
-        delete Publish[expose]
+        return updateView
     }
     modelBinding.SELECT = function(element, fn, scope, oldValue) {
-        var god = avalon(element)
-
+        var $elem = avalon(element)
         function updateModel() {
-            if (god.data("observe") !== false) {
-                var neo = god.val()
+            if ($elem.data("observe") !== false) {
+                var neo = $elem.val()
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
                     oldValue = neo + ""
@@ -2375,18 +2417,12 @@
         function updateView() {
             var neo = fn(scope)
             if (neo + "" !== oldValue) {
-                god.val(neo)
+                $elem.val(neo)
                 oldValue = neo + ""
             }
         }
-        god.bind("change", updateModel)
-        avalon.nextTick(function() {
-            Publish[expose] = updateView
-            updateView.element = element
-            updateView()
-            delete Publish[expose]
-        })
-
+        $elem.bind("change", updateModel)
+        return updateView
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2455,28 +2491,23 @@
 
     function convert(val) {
         var type = getType(val)
-        if (type === "array" || type === "object") {
+        if (rchecktype.test(type)) {
             val = val.$id ? val : modelFactory(val, val, type)
         }
         return val
     }
 
-    var isEqual = Object.is || function(x, y) { // Also handles comparison between two NaNs, chrome19+, firefox22
-        if (x === y) {
-            return x !== 0 || 1 / x === 1 / y
-        }
-        return x !== x && y !== y
-    }
-    //To obtain the corresponding index of the VM
+    //To obtain the index of el in the array
 
-    function getVMIndex(a, bbb, start) {
-        for (var i = start, n = bbb.length; i < n; i++) {
-            var b = bbb[i]
-            var check = b && b.v ? b.v : b
-            if (isEqual(a, check)) {
+    function getVMIndex(el, array, start) {
+        for (var i = start, n = array.length; i < n; i++) {
+            var b = array[i]
+            var check = b && b.$model ? b.$model : b
+            if (isEqual(el, check)) {
                 return i
             }
         }
+        return -1
     }
 
     function Collection(model) {
@@ -2594,11 +2625,11 @@
                 return this.removeAt(index)
             }
         }
-        array.removeAt = function(index) { //Remove the element of the given index
-            this.splice(index, 1) //DOM manipulation is expensive, we only handle non-negative index here
+        array.removeAt = function(index) { //Remove the element at the given index
+            this.splice(index, 1)
         }
         array.clear = function() {
-            this.length = dynamic.length = 0 //Clear the array
+            this.$model.length = this.length = dynamic.length = 0 //Clear the array
             notifySubscribers(this, "clear")
             return this
         }
@@ -2627,7 +2658,7 @@
         array.set = function(index, val) {
             if (index >= 0 && index < this.length) {
                 var valueType = getType(val)
-                if (valueType === "array" || valueType === "object") {
+                if (rchecktype.test(valueType)) {
                     if (val.$model) {
                         val = val.$model
                     }
@@ -2643,9 +2674,10 @@
     }
 
     //====================== each binding  =================================
-
+    var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
-        var parent = data.element, list, iterator
+        var parent = data.element,
+                list, updateView
         var array = parseExpr(data.value, vmodels, data)
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
@@ -2663,39 +2695,44 @@
         //and internally invoke it with a virtual proxy named "iterator"
         if (Array.isArray(list)) {
             data.mapper = []
-            iterator = function(method, pos, el) {
-                eachIterator(method, pos, el, data)
+            updateView = function(method, pos, el) {
+                eachIterator(method, pos, el, data, updateView.host)
             }
         } else {
-            data.mapper = {}
+
             data.markstone = {}
-            iterator = function(method, pos, el) {
-                withIterator(method, pos, el, data, iterator.host)
+            updateView = function(method, pos, el) {
+                withIterator(method, pos, el, data, updateView.host)
             }
-            iterator.host = list
+
         }
-        list[subscribers].push(iterator)
-        iterator("add", list, 0)
+        updateView.host = list
+        list[subscribers] && list[subscribers].push(updateView)
+        updateView("add", list, 0)
     }
-    function eachIterator(method, pos, el, data) {
+
+    function eachIterator(method, pos, el, data, list) {
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
-        var locatedNode = getLocatedNode(parent, group, pos)
+        if (method == "del" || method == "move") {
+            var locatedNode = getLocatedNode(parent, group, pos)
+        }
         switch (method) {
             case "add":
-                // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                 // To be consistent with the add method of withIterator, we swapped the second and third argument here
-                var arr = pos, pos = el, transation = documentFragment.cloneNode(false)
+                var arr = pos,
+                        pos = el,
+                        transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], arr, data.param)
+                    var proxy = createEachProxy(ii, arr[i], list, data.param)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels))
                     if (typeof group !== "number") {
-                        data.group = group = tview.childNodes.length // records the number of child nodes in each template
+                        data.group = tview.childNodes.length // records the number of child nodes in each template
                     }
                     transation.appendChild(tview)
                 }
@@ -2708,8 +2745,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                for (; el = mapper[pos]; pos++) {
-                    el.$index = pos
+                while (el = mapper[pos]) {
+                    el.$index = pos++
                 }
                 break
             case "clear":
@@ -2717,9 +2754,9 @@
                 avalon.clearChild(parent)
                 break
             case "move":
-                var t = mapper.splice(pos, 1)
+                var t = mapper.splice(pos, 1)[0]
                 if (t) {
-                    mapper.splice(el, 0, t[0])
+                    mapper.splice(el, 0, t)
                     var moveNode = removeView(locatedNode, group)
                     locatedNode = getLocatedNode(parent, group, el)
                     parent.insertBefore(moveNode, locatedNode)
@@ -2735,54 +2772,59 @@
         }
     }
 
-    function withIterator(method, object, val, data, host) {
+    function withIterator(method, object, val, data, host, transation) {
         var group = data.group
         var parent = data.element
         var markstone = data.markstone
         var ret = []
+        transation = transation || documentFragment.cloneNode(false)
         switch (method) {
             case "append":
-                var key = object, proxy = createWithProxy(key, val)
-                proxy.$id = proxy.$id.replace("avalon", "with")
-                data.mapper[key] = proxy
-                if (val && val.$model) {
-                    proxy.$events = host.$events
-                    proxy[subscribers] = host[subscribers]
+                var key = object
+                var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
+                if (!mapper[key]) {
+                    var proxy = createWithProxy(key, val)
+                    mapper[key] = proxy
+                    if (val && val.$model) {
+                        proxy.$events = host.$events
+                        proxy[subscribers] = host[subscribers]
+                    }
+                    host.$watch(key, function(neo) {
+                        proxy.$val = neo
+                    })
                 }
-                host.$watch(key, function(neo) {
-                    data.mapper[key].$val = neo
-                })
                 var tview = data.template.cloneNode(true)
-                scanNodes(tview, [proxy, val].concat(data.vmodels))
+                scanNodes(tview, [mapper[key], val].concat(data.vmodels))
                 if (typeof group !== "number") {
                     data.group = tview.childNodes.length
                 }
                 markstone[key] = tview.firstChild
-                parent.appendChild(tview)
+                transation.appendChild(tview)
                 break
             case "sort":
                 for (var i = 0, name; name = object[i++]; ) {
                     var node = markstone[name]
-                    var view = removeView(node, group)// move up from the DOM tree first
-                    parent.appendChild(view)// then append to the last position
+                    var view = removeView(node, group) // move out from the DOM tree first
+                    transation.appendChild(view)
                 }
-                break
+                parent.appendChild(transation) //Then append it to the end
             case "add":
                 for (var i in object) {
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                        if (!markstone.hasOwnProperty(i)) {
-                            withIterator("append", i, object[i], data, host)
+                        if (!markstone.hasOwnProperty(i)) { //this is the new one
+                            withIterator("append", i, object[i], data, host, transation)
                             ret.push(i)
                         }
                     }
                 }
+                parent.appendChild(transation) // then append to the end
                 return ret
             case "remove":
                 var removeNodes = []
                 for (var i = 0, name; name = object[i++]; ) {
                     var node = markstone[name]
                     if (node) {
-                        markstone[name] = data.mapper[name] = 0//Remove keys no longer existing
+                        markstone[name] = withMapper[host.$id][name] = 0 //Remove keys no longer existing
                         removeNodes.push(node)
                         gatherRemovedNodes(removeNodes, node, group)
                     }
@@ -2808,8 +2850,9 @@
     // It helps us to identify each part and move or delete elements of a part as whole
 
     function getLocatedNode(parent, group, pos) {
-        return  parent.childNodes[group * pos] || null
+        return parent.childNodes[group * pos] || null
     }
+
     function removeView(node, group, n) {
         n = n || 1
         var removeNodes = gatherRemovedNodes([node], node, group * n)
@@ -2831,7 +2874,7 @@
     var watchEachOne = oneObject("$index,$remove,$first,$last")
     // Create a proxy object, we can access the element index ($index), flag of being the first element ($first) or the last ($last)
     function createEachProxy(index, item, list, param) {
-        param = param || "$data"
+        param = param || "el"
         var source = {}
         source.$index = index
         source.$itemName = param
@@ -2855,7 +2898,7 @@
             }
         }
         source.$remove = function() {
-            return list.remove(item)
+            return list.removeAt(this.$index)
         }
         return modelFactory(source, 0, watchEachOne)
     }
@@ -2906,7 +2949,7 @@
                 var k = Math.pow(10, prec)
                 return '' + Math.round(n * k) / k
             }
-            // Fix for IE parseFloat(0.55).toFixed(0) = 0 
+            // Fix for IE parseFloat(0.55).toFixed(0) = 0
             s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.')
             if (s[0].length > 3) {
                 s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
@@ -2941,7 +2984,7 @@
      'a': am/pm marker
      'Z': 4 digit (+sign) representation of the timezone offset (-1200-+1200)
      format string can also be one of the following predefined localizable formats:
-     
+
      'medium': equivalent to 'MMM d, y h:mm:ss a' for en_US locale (e.g. Sep 3, 2010 12:05:08 pm)
      'short': equivalent to 'M/d/yy h:mm a' for en_US locale (e.g. 9/3/10 12:05 pm)
      'fullDate': equivalent to 'EEEE, MMMM d,y' for en_US locale (e.g. Friday, September 3, 2010)
@@ -3043,7 +3086,11 @@
                     tzMin = toInt(match[9] + match[11])
                 }
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-                timeSetter.call(date, toInt(match[4] || 0) - tzHour, toInt(match[5] || 0) - tzMin, toInt(match[6] || 0), toInt(match[7] || 0))
+                var h = toInt(match[4] || 0) - tzHour;
+                var m = toInt(match[5] || 0) - tzMin
+                var s = toInt(match[6] || 0);
+                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000);
+                timeSetter.call(date, h, m, s, ms);
                 return date
             }
             return string
@@ -3203,7 +3250,7 @@
         basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
 
         function getCurrentScript(base) {
-            // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
+            // See https://github.com/samyk/jiagra/blob/master/jiagra.js
             var stack
             try {
                 a.b.c() //Force to throw exception so that we can capture the e.stack
@@ -3242,7 +3289,7 @@
         function checkCycle(deps, nick) {
             //Check whether there are recursive dependencies
             for (var id in deps) {
-                if (deps[id] === "Shitu Zhengmei" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
+                if (deps[id] === "Situ Zhengmei" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
                     return true
                 }
             }
@@ -3311,7 +3358,7 @@
                 var tmp = url.charAt(0)
                 if (tmp !== "." && tmp !== "/") { //relative to the root path
                     ret = basepath + url
-                } else if (url.slice(0, 2) === "./") { //relative to sliding path
+                } else if (url.slice(0, 2) === "./") { //relative to sibling path
                     ret = parent + url.slice(1)
                 } else if (url.slice(0, 2) === "..") { //relative to parent path
                     var arr = parent.replace(/\/$/, "").split("/")
@@ -3387,11 +3434,11 @@
                     }
                     if (!deps[url]) {
                         args.push(url)
-                        deps[url] = "Shitu Zhengmei" //Remove redundancy
+                        deps[url] = "Situ Zhengmei" //Remove redundancy
                     }
                 }
             })
-            modules[id] = {//Create an object to keep track of loading status and other information of a module
+            modules[id] = { //Create an object to keep track of loading status and other information of a module
                 id: id,
                 factory: factory,
                 deps: deps,
@@ -3528,3 +3575,4 @@
         avalon.scan(document.body)
     })
 })(document)
+
