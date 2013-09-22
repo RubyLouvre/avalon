@@ -2250,11 +2250,8 @@
         for (var i in Observable) {
             array[i] = Observable[i]
         }
-        if (array.__proto__) {
-            array.__proto__ = CollectionPrototype
-        } else {
-            avalon.mix(array, CollectionPrototype)
-        }
+
+        avalon.mix(array, CollectionPrototype)
         return array
     }
     //========================= each binding ====================
