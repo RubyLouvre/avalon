@@ -1155,7 +1155,6 @@
                 el = fn.element
                 if (el && !el.noRemove && !root.contains(el)) {
                     avalon.Array.remove(list, fn)
-                    log(fn + " removed")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -2324,8 +2323,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while (el = mapper[pos]) {
-                    el.$index = pos++
+                for (; el = mapper[pos]; pos++) {
+                    el.$index = pos
                 }
                 break
             case "clear":
@@ -2477,9 +2476,10 @@
             }
         }
         source.$remove = function() {
-            return list.removeAt(this.$index)
+            return list.removeAt(ret.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var ret = modelFactory(source, 0, watchEachOne)
+        return ret
     }
 
     /*********************************************************************
