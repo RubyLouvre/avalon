@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.96a ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon 0.96 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -903,17 +903,8 @@
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1141,14 +1132,12 @@
         return vmodel
     }
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
-            updateView.element = element
-            Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
-        })
+        updateView.element = element
+        Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Registry[expose]) {
@@ -1166,7 +1155,6 @@
                 el = fn.element
                 if (el && !el.noRemove && !root.contains(el)) {
                     avalon.Array.remove(list, fn)
-                    log(fn + " removed")
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -1918,7 +1906,8 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+
+                updateView && registerSubscriber(updateView, elem)
 
             }
         }
@@ -2022,14 +2011,16 @@
 
         function updateView() {
             var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo +""
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
             }
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function() {
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================
@@ -2247,8 +2238,8 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model
-        array.$events = {} 
+        array.$model = model.concat()
+        array.$events = {}
         array._ = modelFactory({
             length: model.length
         })
@@ -2258,6 +2249,7 @@
         for (var i in Observable) {
             array[i] = Observable[i]
         }
+
         avalon.mix(array, CollectionPrototype)
         return array
     }
@@ -2331,8 +2323,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while (el = mapper[pos]) {
-                    el.$index = pos++
+                for (; el = mapper[pos]; pos++) {
+                    el.$index = pos
                 }
                 break
             case "clear":
@@ -2484,9 +2476,10 @@
             }
         }
         source.$remove = function() {
-            return list.removeAt(this.$index)
+            return list.removeAt(ret.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var ret = modelFactory(source, 0, watchEachOne)
+        return ret
     }
 
     /*********************************************************************

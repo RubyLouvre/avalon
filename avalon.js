@@ -916,7 +916,7 @@
             values = [].concat(values) //强制转换为数组
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el)) 
+                el.selected = !!~values.indexOf(getter(el))
             }
             if (!values.length) {
                 node.selectedIndex = -1
@@ -1133,17 +1133,8 @@
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1195,9 +1186,8 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0), astr)
+                    fn("sort", bstr, astr)
                 })
             }
             var events = a.$events //待到$watch回调都绑定好再移除
@@ -1473,14 +1463,12 @@
     }
 
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
-            updateView.element = element
-            Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
-        })
+        updateView.element = element
+        Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
 
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
@@ -2283,7 +2271,7 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+                updateView && registerSubscriber(updateView, elem)
             }
         }
     }
@@ -2394,14 +2382,17 @@
         }
         function updateView() {
             var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo +""
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
             }
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function() {
+            //先等到select里的option元素被扫描后，才根据model设置selected属性
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2638,7 +2629,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model
+        array.$model = model.concat()
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array._ = modelFactory({
             length: model.length
@@ -2723,8 +2714,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while (el = mapper[pos]) {
-                    el.$index = pos++
+                for (; el = mapper[pos]; pos++) {
+                    el.$index = pos
                 }
                 break
             case "clear":
@@ -2879,9 +2870,10 @@
             }
         }
         source.$remove = function() {
-            return list.removeAt(this.$index)
+            return list.removeAt(ret.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var ret = modelFactory(source, 0, watchEachOne)
+        return ret
     }
 
     /*********************************************************************
