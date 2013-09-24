@@ -1,6 +1,5 @@
 //==================================================
-
-// avalon 0.96p   by Situ Zhengmei 2013.9.17
+// avalon 0.96   by Sitou Masami 2013.9.20
 // FAQ:
 //    Which license? MIT. ( Comparison between five popular open-source licenses, BSD, Apache, GPL, LGPL, and MIT  http://www.awflasher.com/blog/archives/939 )
 //    Dependencies? None, works well together with jQuery, Mass, etc.
@@ -359,7 +358,7 @@
     /*********************************************************************
      *                           ecma262 v5 syntax patch                 *
      **********************************************************************/
-    if (!"Situ Zhengmei".trim) {
+    if (!"Sitou Masami".trim) {
         String.prototype.trim = function() {
             return this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, '')
         }
@@ -862,7 +861,7 @@
             return pos
         }
         //http://hkom.blog1.fc2.com/?mode=m&no=750 offset of body does not include margin
-        //We can obtain the element rect relative to the client through getBoundingClientRect.
+        //We can obtain the element rect related to the client through getBoundingClientRect.
         //http://msdn.microsoft.com/en-us/library/ms536433.aspx
         var box = node.getBoundingClientRect(),
                 //chrome1+, firefox3+, ie4+, opera(yes) safari4+
@@ -880,7 +879,7 @@
         return pos
     }
 
-    //=============================val relative=======================
+    //=============================val related=======================
 
     function getValType(el) {
         var ret = el.tagName.toLowerCase()
@@ -1130,7 +1129,6 @@
             var callbacks = this.$events[type] || []
             var all = this.$events.$all || []
             var args = aslice.call(arguments, 1)
-
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1143,17 +1141,8 @@
     function updateViewModel(a, b, valueType) {
         //a is the original VM, b is the new array or object
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1188,16 +1177,13 @@
                     }
                 }
             }
-
             iterators.forEach(function(fn) {
                 fn("remove", removed)
             })
-
             iterators.forEach(function(fn) {
                 fn("add", b)
             })
             if (updated.length) {
-
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
                     if (rchecktype.test(valueType)) {
@@ -1208,9 +1194,8 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0), astr)
+                    fn("sort", bstr, astr)
                 })
             }
             var events = a.$events //wait for all $watch callbacks to be bound before removal
@@ -1486,14 +1471,12 @@
     }
 
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
-            updateView.element = element
-            Registry[expose] = updateView //Expose this function to make collectSubscribers easier
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
-        })
+        updateView.element = element
+        Registry[expose] = updateView //Expose this function to make collectSubscribers easier
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
 
     function collectSubscribers(accessor) { //Collect subscribers depends on this accessor
@@ -1511,9 +1494,8 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 el = fn.element
-                if (el && (!el.noRemove) && (el.sourceIndex === 0 || el.parentNode === null)) {
+                if (el && (!el.noRemove) && (el.sourceIndex === 0 || !root.contains(el))) {
                     avalon.Array.remove(list, fn)
-                    log(fn + "")
                 } else {
                     fn.apply(0, args) //Force self-recalculation
                 }
@@ -1796,7 +1778,6 @@
                     prefix = ""
             //args is a object array, names are arguments of the evaluation function to be generated
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-
             for (var i = 0, n = scopes.length; i < n; i++) {
                 if (vars.length) {
                     var name = "vm" + expose + "_" + i
@@ -1844,7 +1825,6 @@
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
-
             }
         }
         try {
@@ -2240,7 +2220,6 @@
                         elem.tabIndex = elem.tabIndex || -1
                         event1 = "mousedown", event2 = "mouseup"
                     }
-
                     $elem.bind(event1, function() {
                         toggle && $elem.addClass(className)
                     })
@@ -2303,7 +2282,7 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+                updateView && registerSubscriber(updateView, elem)
             }
         }
 
@@ -2406,7 +2385,7 @@
         var $elem = avalon(element)
         function updateModel() {
             if ($elem.data("observe") !== false) {
-                var neo = $elem.val()
+                var neo = $elem.val() //String or String array
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
                     oldValue = neo + ""
@@ -2416,13 +2395,17 @@
 
         function updateView() {
             var neo = fn(scope)
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
             }
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function() {
+            //Wait for the 'option' elements in 'select' element get scanned before setting up the 'selected' property based on the model 
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2510,74 +2493,59 @@
         return -1
     }
 
-    function Collection(model) {
-        var array = []
-        array.$id = generateID()
-        array[subscribers] = []
-        array.$model = model
-        array.$events = {} //"this" in VB object method does not refer to the caller object itself, we need to bind it first.
-        array._splice = array.splice
-        for (var i in Observable) {
-            array[i] = Observable[i]
-        }
-        var dynamic = modelFactory({
-            length: model.length
-        })
-        dynamic.$watch("length", function(a, b) {
-            array.$fire("length", a, b)
-        })
-
-        array._add = function(arr, pos) {
-            pos = typeof pos === "number" ? pos : this.length;
+    var _splice = [].splice
+    var CollectionPrototype = {
+        _splice: _splice,
+        _add: function(arr, pos) {
+            var oldLength = this.length
+            pos = typeof pos === "number" ? pos : oldLength;
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
                 added[i] = convert(arr[i])
             }
-            this._splice.apply(this, [pos, 0].concat(added))
+            _splice.apply(this, [pos, 0].concat(added))
             notifySubscribers(this, "add", added, pos)
-            if (!this.stopFireLength) {
-                return dynamic.length = this.length
+            if (!this._stopFireLength) {
+                return this._.length = this.length
             }
-        }
-
-        array._del = function(pos, n) {
+        },
+        _del: function(pos, n) {
             var ret = this._splice(pos, n)
             if (ret.length) {
                 notifySubscribers(this, "del", pos, n)
-                if (!this.stopFireLength) {
-                    dynamic.length = this.length
+                if (!this._stopFireLength) {
+                    this._.length = this.length
                 }
             }
             return ret
-        }
-        array.push = function() {
-            model.push.apply(model, arguments)
+        },
+        push: function() {
+            [].push.apply(this.$model, arguments)
             return this._add(arguments) //return the length
-        }
-        array.unshift = function() {
-            model.unshift.apply(model, arguments)
+        },
+        unshift: function() {
+            [].unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //return the length
             notifySubscribers(this, "index", arguments.length)
             return ret
-        }
-        array.shift = function() {
-            model.shift()
-            var el = this._del(0, 1)
+        },
+        shift: function() {
+            var el = this.$model.shift()
+            this._del(0, 1)
             notifySubscribers(this, "index", 0)
-            return el[0] //return the removed element
-        }
-        array.pop = function() {
-            var el = model.pop()
+            return el//return the removed element
+        },
+        pop: function() {
+            var el = this.$model.pop()
             this._del(this.length - 1, 1)
-            return el[0] //return the removed element
-        }
-
-        array.splice = function(a, b) {
+            return el //return the removed element
+        },
+        splice: function(a, b) {
             //The first argument must present and greater than -1, it is the start point for adding or deleting element
             a = resetNumber(a, this.length)
-            var removed = model.splice.apply(model, arguments),
+            var removed = _splice.apply(this.$model, arguments),
                     ret = []
-            this.stopFireLength = true //ensure $watch("length",fn) will be triggered just once in this method
+            this._stopFireLength = true //ensure $watch("length",fn) will be triggered just once in this method
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //if no adding operation has been made, we have to reset the index manually
@@ -2587,57 +2555,35 @@
             if (arguments.length > 2) {
                 this._add(aslice.call(arguments, 2), a)
             }
-            this.stopFireLength = false
-            dynamic.length = this.length
+            this._stopFireLength = false
+            this._.length = this.length
             return ret //return the removed element
-        }
-        "sort,reverse".replace(rword, function(method) {
-            array[method] = function() {
-                model[method].apply(model, arguments)
-                var sorted = false
-                for (var i = 0, n = this.length; i < n; i++) {
-                    var a = model[i]
-                    var b = this[i]
-                    var b = b && b.$model ? b.$model : b
-                    if (!isEqual(a, b)) {
-                        sorted = true
-                        var index = getVMIndex(a, this, i)
-                        var remove = this._splice(index, 1)[0]
-                        array._splice(i, 0, remove)
-                        notifySubscribers(this, "move", index, i)
-                    }
-                }
-                if (sorted) {
-                    notifySubscribers(this, "index", 0)
-                }
-                return this
-            }
-        })
-        array.contains = function(el) {
+        },
+        contains: function(el) {
             return this.indexOf(el) !== -1
-        }
-        array.size = function() { //obtain the length of array, this function is synchronized with the view, while the "length" property is not.
-            return dynamic.length
-        }
-        array.remove = function(el) { //Remove the first matching element
+        },
+        size: function() { //obtain the length of array, this function is synchronized with the view, while the "length" property is not.
+            return this._.length
+        },
+        remove: function(el) { //Remove the first matching element
             var index = this.indexOf(el)
             if (index >= 0) {
                 return this.removeAt(index)
             }
-        }
-        array.removeAt = function(index) { //Remove the element at the given index
+        },
+        removeAt: function(index) { //Remove the element at the given index
             this.splice(index, 1)
-        }
-        array.clear = function() {
-            this.$model.length = this.length = dynamic.length = 0 //Clear the array
+        },
+        clear: function() {
+            this.$model.length = this.length = this._.length = 0 //Clear the array
             notifySubscribers(this, "clear")
             return this
-        }
-        array.removeAll = function(all) { //Remove multiple elements
+        },
+        removeAll: function(all) { //Remove multiple elements
             if (Array.isArray(all)) {
                 all.forEach(function(el) {
-                    array.remove(el)
-                })
+                    this.remove(el)
+                }, this)
             } else if (typeof all === "function") {
                 for (var i = this.length - 1; i >= 0; i--) {
                     var el = this[i]
@@ -2648,14 +2594,14 @@
             } else {
                 this.clear()
             }
-        }
-        array.ensure = function(el) {
+        },
+        ensure: function(el) {
             if (!this.contains(el)) { //Only perform "push" when el is not in the array
                 this.push(el)
             }
             return this
-        }
-        array.set = function(index, val) {
+        },
+        set: function(index, val) {
             if (index >= 0 && index < this.length) {
                 var valueType = getType(val)
                 if (rchecktype.test(valueType)) {
@@ -2670,6 +2616,44 @@
             }
             return this
         }
+    }
+    "sort,reverse".replace(rword, function(method) {
+        CollectionPrototype[method] = function() {
+            [][method].apply(this.$model, arguments)
+            var sorted = false
+            for (var i = 0, n = this.length; i < n; i++) {
+                var a = this.$model[i], b = this[i]
+                b = b && b.$model ? b.$model : b
+                if (!isEqual(a, b)) {
+                    sorted = true
+                    var index = getVMIndex(a, this, i)
+                    var remove = this._splice(index, 1)[0]
+                    this._splice(i, 0, remove)
+                    notifySubscribers(this, "move", index, i)
+                }
+            }
+            if (sorted) {
+                notifySubscribers(this, "index", 0)
+            }
+            return this
+        }
+    })
+    function Collection(model) {
+        var array = []
+        array.$id = generateID()
+        array[subscribers] = []
+        array.$model = model.concat()
+        array.$events = {} //"this" in VB object method does not refer to the caller object itself, we need to bind it first.
+        array._ = modelFactory({
+            length: model.length
+        })
+        array._.$watch("length", function(a, b) {
+            array.$fire("length", a, b)
+        })
+        for (var i in Observable) {
+            array[i] = Observable[i]
+        }
+        avalon.mix(array, CollectionPrototype)
         return array
     }
 
@@ -2745,8 +2729,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while (el = mapper[pos]) {
-                    el.$index = pos++
+                for (; el = mapper[pos]; pos++) {
+                    el.$index = pos
                 }
                 break
             case "clear":
@@ -2898,9 +2882,10 @@
             }
         }
         source.$remove = function() {
-            return list.removeAt(this.$index)
+            return list.removeAt(ret.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var ret = modelFactory(source, 0, watchEachOne)
+        return ret
     }
 
     /*********************************************************************
@@ -3289,7 +3274,7 @@
         function checkCycle(deps, nick) {
             //Check whether there are recursive dependencies
             for (var id in deps) {
-                if (deps[id] === "Situ Zhengmei" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
+                if (deps[id] === "Sitou Masami" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
                     return true
                 }
             }
@@ -3356,11 +3341,11 @@
             } else {
                 parent = parent.substr(0, parent.lastIndexOf('/'))
                 var tmp = url.charAt(0)
-                if (tmp !== "." && tmp !== "/") { //relative to the root path
+                if (tmp !== "." && tmp !== "/") { //related to the root path
                     ret = basepath + url
-                } else if (url.slice(0, 2) === "./") { //relative to sibling path
+                } else if (url.slice(0, 2) === "./") { //related to sibling path
                     ret = parent + url.slice(1)
-                } else if (url.slice(0, 2) === "..") { //relative to parent path
+                } else if (url.slice(0, 2) === "..") { //related to parent path
                     var arr = parent.replace(/\/$/, "").split("/")
                     tmp = url.replace(/\.\.\//g, function() {
                         arr.pop()
@@ -3368,7 +3353,7 @@
                     })
                     ret = arr.join("/") + "/" + tmp
                 } else if (tmp === "/") {
-                    ret = parent + url //relative to sliding path
+                    ret = parent + url //related to sliding path
                 } else {
                     avalon.error("Module identifier pattern violation: " + url)
                 }
@@ -3434,7 +3419,7 @@
                     }
                     if (!deps[url]) {
                         args.push(url)
-                        deps[url] = "Situ Zhengmei" //Remove redundancy
+                        deps[url] = "Sitou Masami" //Remove redundancy
                     }
                 }
             })
@@ -3575,4 +3560,3 @@
         avalon.scan(document.body)
     })
 })(document)
-
