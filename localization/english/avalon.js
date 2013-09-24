@@ -924,7 +924,7 @@
             values = [].concat(values) //Convert to array
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el)) 
+                el.selected = !!~values.indexOf(getter(el))
             }
             if (!values.length) {
                 node.selectedIndex = -1
@@ -1129,7 +1129,6 @@
             var callbacks = this.$events[type] || []
             var all = this.$events.$all || []
             var args = aslice.call(arguments, 1)
-
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
@@ -1142,17 +1141,8 @@
     function updateViewModel(a, b, valueType) {
         //a is the original VM, b is the new array or object
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            a.clear()
+            a.push.apply(a, b)
             return a
         } else {
             var added = [],
@@ -1187,16 +1177,13 @@
                     }
                 }
             }
-
             iterators.forEach(function(fn) {
                 fn("remove", removed)
             })
-
             iterators.forEach(function(fn) {
                 fn("add", b)
             })
             if (updated.length) {
-
                 updated.forEach(function(i) {
                     var valueType = getType(b[i])
                     if (rchecktype.test(valueType)) {
@@ -1207,9 +1194,8 @@
                 })
             }
             if (astr.join(";") !== bstr.join(";")) {
-
                 iterators.forEach(function(fn) {
-                    fn("sort", bstr.slice(0), astr)
+                    fn("sort", bstr, astr)
                 })
             }
             var events = a.$events //wait for all $watch callbacks to be bound before removal
@@ -1485,14 +1471,12 @@
     }
 
     function registerSubscriber(updateView, element) {
-        avalon.nextTick(function() {
-            updateView.element = element
-            Registry[expose] = updateView //Expose this function to make collectSubscribers easier
-            openComputedCollect = true
-            updateView()
-            openComputedCollect = false
-            delete Registry[expose]
-        })
+        updateView.element = element
+        Registry[expose] = updateView //Expose this function to make collectSubscribers easier
+        openComputedCollect = true
+        updateView()
+        openComputedCollect = false
+        delete Registry[expose]
     }
 
     function collectSubscribers(accessor) { //Collect subscribers depends on this accessor
@@ -2236,7 +2220,6 @@
                         elem.tabIndex = elem.tabIndex || -1
                         event1 = "mousedown", event2 = "mouseup"
                     }
-
                     $elem.bind(event1, function() {
                         toggle && $elem.addClass(className)
                     })
@@ -2299,7 +2282,7 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                registerSubscriber(updateView, elem)
+                updateView && registerSubscriber(updateView, elem)
             }
         }
 
@@ -2412,14 +2395,17 @@
 
         function updateView() {
             var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo +""
+            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
             if (neo + "" !== oldValue) {
                 $elem.val(neo)
                 oldValue = neo + ""
             }
         }
         $elem.bind("change", updateModel)
-        return updateView
+        setTimeout(function() {
+            //Wait for the 'option' elements in 'select' element get scanned before setting up the 'selected' property based on the model 
+            registerSubscriber(updateView, element)
+        })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2656,7 +2642,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model
+        array.$model = model.concat()
         array.$events = {} //"this" in VB object method does not refer to the caller object itself, we need to bind it first.
         array._ = modelFactory({
             length: model.length
@@ -2743,8 +2729,8 @@
                 removeView(locatedNode, group, el)
                 break
             case "index":
-                while (el = mapper[pos]) {
-                    el.$index = pos++
+                for (; el = mapper[pos]; pos++) {
+                    el.$index = pos
                 }
                 break
             case "clear":
@@ -2896,9 +2882,10 @@
             }
         }
         source.$remove = function() {
-            return list.removeAt(this.$index)
+            return list.removeAt(ret.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var ret = modelFactory(source, 0, watchEachOne)
+        return ret
     }
 
     /*********************************************************************
@@ -3573,4 +3560,3 @@
         avalon.scan(document.body)
     })
 })(document)
-
