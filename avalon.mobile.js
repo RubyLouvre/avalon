@@ -2256,15 +2256,15 @@
     //========================= each binding ====================
     var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
-        var parent = data.element,
+        var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
         }
         var view = documentFragment.cloneNode(false)
-        while (parent.firstChild) {
-            view.appendChild(parent.firstChild)
+        while (elem.firstChild) {
+            view.appendChild(elem.firstChild)
         }
         data.template = view
         data.vmodels = vmodels
@@ -2284,6 +2284,7 @@
                 withIterator(method, pos, el, data, updateView.host)
             }
         }
+        updateView.element = elem
         updateView.host = list
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
