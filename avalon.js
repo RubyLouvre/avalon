@@ -1133,8 +1133,9 @@
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
+            var bb = b.concat()
             a.clear()
-            a.push.apply(a, b)
+            a.push.apply(a, bb)
             return a
         } else {
             var added = [],
@@ -2697,7 +2698,7 @@
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
-                        proxy.$accessor.$last.get.element = parent
+                    proxy.$accessor.$last.get.element = parent
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
