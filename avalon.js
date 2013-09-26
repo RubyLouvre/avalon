@@ -1475,7 +1475,6 @@
         if (Registry[expose]) {
             var list = accessor[subscribers]
             list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
-            console.log(list.length)
         }
     }
 
