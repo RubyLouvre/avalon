@@ -31,7 +31,7 @@
 
     var rnative = /\[native code\]/
     var rchecktype = /^(?:object|array)$/
-
+    var rwindow = /^[object (Window|DOMWindow|global)]$/
     function noop() {
     }
 
@@ -62,14 +62,23 @@
                 typeof obj
     }
     avalon.type = getType
+
     avalon.isWindow = function(obj) {
-        var win = new Function("return this")()
-        return win === obj ||
-                ('Function' in obj &&
-                        (new obj['Function']("return this").call(obj) === obj)
-                        )
+        if (!obj)
+            return false
+        if (obj === window)
+            return true
+        // 利用IE678 window == document为true,document == window竟然为false的神奇特性
+        // 标准浏览器及IE9，IE19等使用 正则检测
+        return obj == obj.document && obj.document != obj
     }
 
+    function isWindow(obj) {
+        return rwindow.test(serialize.call(obj))
+    }
+    if (isWindow(window)) {
+        avalon.isWindow = isWindow
+    }
     //判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例。
     avalon.isPlainObject = function(obj) {
         if (getType(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
