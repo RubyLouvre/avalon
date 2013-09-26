@@ -64,13 +64,7 @@
     avalon.type = getType
 
     avalon.isWindow = function(obj) {
-        if (!obj)
-            return false
-        if (obj === window)
-            return true
-        // 利用IE678 window == document为true,document == window竟然为false的神奇特性
-        // 标准浏览器及IE9，IE19等使用 正则检测
-        return obj == obj.document && obj.document != obj
+        return new Function("return this").call(obj) === obj
     }
 
     function isWindow(obj) {
