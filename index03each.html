@@ -40,6 +40,7 @@
             avalon.define('page', function(scope) {
                 scope.selected = "name"
                 scope.options = ["name", "size", "date"]
+                scope.trend = 1
                 scope.data = [
                     {name: "aaa", size: 213, date: Date.now() + 20},
                     {name: "bbb", size: 4576, date: new Date - 4},
@@ -48,11 +49,21 @@
                     {name: "555", size: 389, date: Date.now() - 20}
                 ];
                 scope.$watch("selected", function(v) {
+                    var t = parseFloat(scope.trend)
                     scope.data.sort(function(a, b) {
-                        return a[v] > b[v]
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
+                    })
+                })
+                scope.$watch("trend", function(t) {
+                    var v = scope.selected, t = parseFloat(t)
+                    scope.data.sort(function(a, b) {
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
                     })
                 })
             });
+
         </script>
     </head>
     <body>
@@ -79,6 +90,10 @@
             <legend>例子</legend>
             <p><select ms-each-el="options" ms-duplex="selected">
                     <option>{{el}}</option>
+                </select>
+                <select ms-duplex="trend">
+                    <option value="1">up</option>
+                    <option value="-1">down</option>
                 </select>
             </p>
             <table width="500px" border="1">
