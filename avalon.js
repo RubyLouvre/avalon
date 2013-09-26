@@ -64,7 +64,11 @@
     avalon.type = getType
 
     avalon.isWindow = function(obj) {
-        return new Function("return this").call(obj) === obj
+        if (!obj)
+            return false
+        // 利用IE678 window == document为true,document == window竟然为false的神奇特性
+        // 标准浏览器及IE9，IE19等使用 正则检测
+        return obj == obj.document && obj.document != obj
     }
 
     function isWindow(obj) {
@@ -1471,6 +1475,7 @@
         if (Registry[expose]) {
             var list = accessor[subscribers]
             list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
+            console.log(list.length)
         }
     }
 
@@ -2693,8 +2698,8 @@
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
-                    proxy.$accessor.$last.get.element = parent
                     var tview = data.template.cloneNode(true)
+                    proxy.$accessor.$last.get.element = tview
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels))

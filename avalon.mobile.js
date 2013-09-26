@@ -2307,8 +2307,8 @@
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
-                    proxy.$accessor.$last.get.element = parent
                     var tview = data.template.cloneNode(true)
+                    proxy.$accessor.$last.get.element = tview
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels))
