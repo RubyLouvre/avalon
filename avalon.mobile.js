@@ -285,6 +285,7 @@
             }
         }
     }
+
     /*********************************************************************
      *                      Configure                                 *
      **********************************************************************/
@@ -375,25 +376,6 @@
         hasClass: function(cls) {
             var el = this[0] || {}
             return el.nodeType === 1 && el.classList.contains(cls)
-        },
-        addClass: function(cls) {
-            var el = this[0]
-            if (cls && typeof cls === "string" && el && el.nodeType === 1) {
-                //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
-                cls.replace(rword, function(c) {
-                    el.classList.add(c)
-                })
-            }
-            return this
-        },
-        removeClass: function(cls) {
-            var node = this[0]
-            if (cls && typeof cls > "o" && node && node.nodeType === 1 && node.className) {
-                cls.replace(rword, function(c) {
-                    node.classList.remove(c)
-                })
-            }
-            return this
         },
         toggleClass: function(value, stateVal) {
             var state = stateVal,
@@ -508,6 +490,20 @@
             return get ? val : this
         }
     })
+
+    "add,remove".replace(rword, function(method) {
+        avalon.fn[method + "Class"] = function(cls) {
+            var el = this[0]
+            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+                cls.replace(rword, function(c) {
+                    el.classList[method](c)
+                })
+            }
+            return this
+        }
+    })
+
     if (root.dataset) {
         avalon.data = function(name, val) {
             var dataset = this[0].dataset;
@@ -1145,6 +1141,7 @@
         if (Registry[expose]) {
             var list = accessor[subscribers]
             list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
+            console.log(list.length)
         }
     }
 
@@ -2313,10 +2310,10 @@
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
                     var tview = data.template.cloneNode(true)
-                    proxy.$accessor.$last.get.element = parent
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels), data.state)
+                    proxy.$accessor.$last.get.element = tview.firstChild
                     if (typeof group !== "number") {
                         data.group = group = tview.childNodes.length //记录每个模板一共有多少子节点
                     }

@@ -1486,12 +1486,21 @@
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                var el = fn.element, state = fn.state, remove = false
+                var el = fn.element, state = fn.state, remove = true
                 if (el && (!state || state.sourceIndex !== 0)) {
                     if (typeof el.sourceIndex == "number") {
                         remove = el.sourceIndex === 0
                     } else {
-                        remove = !root.contains(el)
+                        try {
+                            remove = !root.contains(el)
+                        } catch (e) {//旧式IE的contains不支持传入文本节点
+                            while (el == el.parentNode) {
+                                if (el === root) {
+                                    remove = false
+                                    break
+                                }
+                            }
+                        }
                     }
                 }
                 if (remove) {
@@ -2715,10 +2724,10 @@
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
                     var tview = data.template.cloneNode(true)
-                    proxy.$accessor.$last.get.element = parent
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels), data.state)
+                    proxy.$accessor.$last.get.element = tview.firstChild
                     if (typeof group !== "number") {
                         data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                     }
