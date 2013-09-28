@@ -1486,7 +1486,7 @@
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                var el = fn.element, state = fn.state, remove = true
+                var el = fn.element, state = fn.state, remove
                 if (el && (!state || state.sourceIndex !== 0)) {
                     if (typeof el.sourceIndex == "number") {
                         remove = el.sourceIndex === 0
@@ -1494,6 +1494,7 @@
                         try {
                             remove = !root.contains(el)
                         } catch (e) {//旧式IE的contains不支持传入文本节点
+                            remove = true
                             while (el == el.parentNode) {
                                 if (el === root) {
                                     remove = false
