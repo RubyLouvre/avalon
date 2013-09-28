@@ -3134,10 +3134,9 @@
                 clearTimeout(touchTimeout)
                 touchProxy.x1 = firstTouch.pageX
                 touchProxy.y1 = firstTouch.pageY
-                touchProxy.fire = function(name, obj) {
+                touchProxy.fire = function(name) {
                     var event = document.createEvent('Event');
                     event.initEvent(name, true, true);
-                    avalon.mix(event, obj || {})
                     this.el.dispatchEvent(event);
                 }
                 if (delta > 0 && delta <= 250) {//双击
