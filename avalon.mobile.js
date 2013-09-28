@@ -1141,7 +1141,6 @@
         if (Registry[expose]) {
             var list = accessor[subscribers]
             list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
-            console.log(list.length)
         }
     }
 
@@ -3098,8 +3097,101 @@
         innerRequire.config = kernel
         innerRequire.checkDeps = checkDeps
     }
+    /*********************************************************************
+     *                           Touch  Event                           *
+     **********************************************************************/
 
-
+    if ("ontouchstart" in window) {
+        var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout
+        function swipeDirection(x1, x2, y1, y2) {
+            return Math.abs(x1 - x2) >=
+                    Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
+        }
+        function longTap() {
+            if (touchProxy.last) {
+                touchProxy.fire('hold')
+                touchProxy = {}
+            }
+        }
+        function cancelHold() {
+            clearTimeout(holdTimeout)
+        }
+        function cancelAll() {
+            clearTimeout(touchTimeout)
+            clearTimeout(tapTimeout)
+            clearTimeout(swipeTimeout)
+            clearTimeout(holdTimeout)
+            touchProxy = {}
+        }
+        DOC.addEventListener("DOMContentLoaded", function() {
+            var now, delta, deltaX = 0, deltaY = 0, firstTouch
+            DOC.addEventListener('touchstart', function(e) {
+                firstTouch = e.touches[0]
+                now = Date.now()
+                delta = now - (touchProxy.last || now)
+                var el = firstTouch.target
+                touchProxy.el = 'tagName' in el ? el : el.parentNode
+                clearTimeout(touchTimeout)
+                touchProxy.x1 = firstTouch.pageX
+                touchProxy.y1 = firstTouch.pageY
+                touchProxy.fire = function(name, obj) {
+                    var event = document.createEvent('Event');
+                    event.initEvent(name, true, true);
+                    avalon.mix(event, obj || {})
+                    this.el.dispatchEvent(event);
+                }
+                if (delta > 0 && delta <= 250) {//双击
+                    touchProxy.isDoubleTap = true
+                }
+                touchProxy.last = now
+                holdTimeout = setTimeout(longTap, 750)
+            })
+            DOC.addEventListener('touchmove', function(e) {
+                firstTouch = e.touches[0]
+                cancelHold()
+                e.preventDefault()
+                touchProxy.x2 = firstTouch.pageX
+                touchProxy.y2 = firstTouch.pageY
+                deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
+                deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
+            })
+            DOC.addEventListener('touchend', function(e) {
+                cancelHold()
+                if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
+                        (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
+                    //如果是滑动，根据最初与最后的位置判定其滑动方向
+                    swipeTimeout = setTimeout(function() {
+                        touchProxy.fire('swipe')
+                        touchProxy.fire('swipe' + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
+                        touchProxy = {}
+                    }, 0)
+                } else if ('last' in touchProxy)
+                    if (deltaX < 30 && deltaY < 30) {//如果移动的距离太小
+                        tapTimeout = setTimeout(function() {
+                            touchProxy.fire("tap")
+                            if (touchProxy.isDoubleTap) {
+                                touchProxy.fire('doubletap')
+                                touchProxy = {}
+                            } else {
+                                touchTimeout = setTimeout(function() {
+                                    touchProxy.fire('singletap')
+                                    touchProxy.fire("click")
+                                    touchProxy = {}
+                                }, 250)
+                            }
+                        }, 0)
+                    } else {
+                        touchProxy = {}
+                    }
+                window.getSelection().removeAllRanges();
+                deltaX = deltaY = 0
+            })
+            DOC.addEventListener('touchcancel', cancelAll);
+            window.addEventListener('scroll', cancelAll)
+        })
+//http://quojs.tapquo.com/ http://code.baidu.com/
+//'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
+    }
     /*********************************************************************
      *                    DOMReady                                         *
      **********************************************************************/
