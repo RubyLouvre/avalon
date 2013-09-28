@@ -1480,21 +1480,26 @@
     }
 
 
-    function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
+    function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                el = fn.element
-                var state = fn.state
-                //    console.log(state)
-                if (el && (!state || state.sourceIndex !== 0) && (el.sourceIndex === 0 || !root.contains(el))) {
-                    console.log("已经被移除")
+                var el = fn.element, state = fn.state, remove = false
+                if (el && (!state || state.sourceIndex !== 0)) {
+                    if (typeof el.sourceIndex == "number") {
+                        remove = el.sourceIndex === 0
+                    } else {
+                        remove = !root.contains(el)
+                    }
+                }
+                if (remove) {
                     avalon.Array.remove(list, fn)
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
+
             }
         }
     }
@@ -1547,9 +1552,9 @@
             vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, vmodels, function(state) { //扫描特性节点
+        scanAttr(elem, vmodels, function(status) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels, state) //扫描子孙元素
+                scanNodes(elem, vmodels, status) //扫描子孙元素
             }
         }, state)
 
@@ -1656,14 +1661,7 @@
     }
     function executeBindings(bindings, vmodels, state) {
         bindings.forEach(function(data) {
-            if (state) {
-                data.state = state
-            }
-//            for (var i = 0, el; el = ifElements[i++]; ) {
-//                if (el.contains(data.element)) {
-//                    data.ifElement = el
-//                }
-//            }
+            data.state = state
             bindingHandlers[data.type](data, vmodels)
             if (data.remove) { //移除数据绑定，防止被二次解析
                 data.element.removeAttributeNode(data.node)
@@ -2717,7 +2715,7 @@
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], list, data.param)
                     var tview = data.template.cloneNode(true)
-                    proxy.$accessor.$last.get.element = tview
+                    proxy.$accessor.$last.get.element = parent
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels), data.state)
