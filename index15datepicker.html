@@ -139,7 +139,7 @@
                     e.preventDefault()
                     var el = e.target;
                     if (el.tagName === "A" && el.parentNode.tagName === "TD" && !/disabled/.test(el.className)) {
-                        var d = el.$scope.day.split('-')
+                        var d = el.$vmodel.day.split('-')
                         vm.selectedDate = new Date(d[0], d[1], d[2]);
                     }
                 };
@@ -147,7 +147,7 @@
                 var today = new Date;
                 var atoday = [today.getFullYear(), today.getMonth(), today.getDate()];
                 vm.isToday = function() {
-                    var day = this.$scope.day;
+                    var day = this.$vmodel.day;
                     return day.slice(0, day.lastIndexOf("-")) === atoday.join("-");
                 };
                 vm.backToday = function() {
