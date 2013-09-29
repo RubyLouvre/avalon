@@ -227,7 +227,7 @@
         bind: function(el, type, fn, phase) { // 绑定事件
             function callback(e) {
                 var ex = e.target ? e : fixEvent(e || window.event)
-                var ret = fn.call(el, e)
+                var ret = fn.call(el, ex)
                 if (ret === false) {
                     ex.preventDefault()
                     ex.stopPropagation()
