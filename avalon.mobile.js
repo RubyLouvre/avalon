@@ -3186,7 +3186,6 @@
                 deltaX = deltaY = 0
             })
             DOC.addEventListener('touchcancel', cancelAll);
-            window.addEventListener('scroll', cancelAll)
         })
 //http://quojs.tapquo.com/ http://code.baidu.com/
 //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
