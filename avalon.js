@@ -107,7 +107,7 @@
         if (typeof target === "boolean") {
             deep = target
             target = arguments[1] || {}
-            i = 2
+            i++
         }
 
         //确保接受方为一个复杂的数据类型
@@ -116,9 +116,9 @@
         }
 
         //如果只有一个参数，那么新成员添加于mix所在的对象上
-        if (length === i) {
+        if (i === length) {
             target = this
-            --i
+            i--
         }
 
         for (; i < length; i++) {
