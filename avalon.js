@@ -1544,8 +1544,8 @@
         vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
         var a = elem.getAttribute(prefix + "skip")
-        var b = elem.getAttribute(prefix + "important")
-        var c = elem.getAttribute(prefix + "controller")
+        var b = elem.getAttributeNode(prefix + "important")
+        var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
             return
         } else if (node = b || c) {
