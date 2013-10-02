@@ -1540,7 +1540,7 @@
     var stopScan = oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
 
 
-    function scanTag(elem, vmodels, state) {
+    function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
         var a = elem.getAttribute(prefix + "skip")
@@ -1548,19 +1548,14 @@
         var c = elem.getAttribute(prefix + "controller")
         if (typeof a === "string") {
             return
-        } else if (b) {
-            if (!VMODELS[b]) {
-                return
-            }
-            vmodels = [VMODELS[b]] //不包含父VM
-            elem.removeAttribute(prefix + "important")
-        } else if (c) {
-            var newVmodel = VMODELS[c] //子VM依赖于父VM，父VM不存在，子VM也没有必要扫描了
+        } else if (node = b || c) {
+            var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
                 return
             }
-            vmodels = [newVmodel].concat(vmodels)
-            elem.removeAttribute(prefix + "controller")
+            //ms-important不包含父VM，ms-controller相反
+            vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
+            elem.removeAttributeNode(node)
         }
         scanAttr(elem, vmodels, function(status) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
@@ -2180,13 +2175,7 @@
             }
         }
     }
-    if (typeof root.hidden === "boolean") {
-        bindingHandlers.visible = function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                elem.hidden = val ? false : true
-            })
-        }
-    }
+
     //============================================================================
     //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
