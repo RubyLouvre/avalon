@@ -28,10 +28,10 @@
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
-    var rwindow = /^[object (Window|DOMWindow|global)]$/
+
     var rnative = /\[native code\]/
     var rchecktype = /^(?:object|array)$/
-
+    var rwindow = /^[object (Window|DOMWindow|global)]$/
     function noop() {
     }
 
@@ -64,11 +64,10 @@
                 typeof obj
     }
     avalon.type = getType
+
     avalon.isWindow = function(obj) {
         if (!obj)
             return false
-        if (obj === window)
-            return true
         // Leverage the fact that in IE6-8 window == document results true while document == window amazingly results false
         // IE9, 10 and other modern browsers should be detected by regular expression.
         return obj == obj.document && obj.document != obj
@@ -111,7 +110,7 @@
         if (typeof target === "boolean") {
             deep = target
             target = arguments[1] || {}
-            i = 2
+            i++
         }
 
         //Ensure the target is a complex data structure.
@@ -120,9 +119,9 @@
         }
 
         //If there is only one argument, the new member(s) should be added to the object on which "mix" lays.
-        if (length === i) {
+        if (i === length) {
             target = this
-            --i
+            i--
         }
 
         for (; i < length; i++) {
@@ -231,7 +230,7 @@
         bind: function(el, type, fn, phase) { // Event binding
             function callback(e) {
                 var ex = e.target ? e : fixEvent(e || window.event)
-                var ret = fn.call(el, e)
+                var ret = fn.call(el, ex)
                 if (ret === false) {
                     ex.preventDefault()
                     ex.stopPropagation()
@@ -1141,8 +1140,9 @@
     function updateViewModel(a, b, valueType) {
         //a is the original VM, b is the new array or object
         if (valueType === "array") {
+            var bb = b.concat()
             a.clear()
-            a.push.apply(a, b)
+            a.push.apply(a, bb)
             return a
         } else {
             var added = [],
@@ -1470,9 +1470,10 @@
         }
     }
 
-    function registerSubscriber(updateView, element) {
-        updateView.element = element
-        Registry[expose] = updateView //Expose this function to make collectSubscribers easier
+    function registerSubscriber(updateView, data) {
+        updateView.element = data.element
+        updateView.state = data.state
+        Registry[expose] = updateView //Expose this function to make collect Subscribers easier
         openComputedCollect = true
         updateView()
         openComputedCollect = false
@@ -1487,41 +1488,59 @@
     }
 
 
-    function notifySubscribers(accessor, el) { //Notify the subscribers depending on the accessor to refresh themselves
+    function notifySubscribers(accessor) { //Notify the subscribers depending on the accessor to refresh themselves
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                el = fn.element
-                if (el && (!el.noRemove) && (el.sourceIndex === 0 || !root.contains(el))) {
+                var el = fn.element, state = fn.state, remove
+                if (el && (!state || state.sourceIndex !== 0)) {
+                    if (typeof el.sourceIndex == "number") {
+                        remove = el.sourceIndex === 0
+                    } else {
+                        try {
+                            remove = !root.contains(el)
+                        } catch (e) {//The 'contains' function in legacy IEs doesn't accept text nodes
+                            remove = true
+                            while (el == el.parentNode) {
+                                if (el === root) {
+                                    remove = false
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+                if (remove) {
                     avalon.Array.remove(list, fn)
                 } else {
                     fn.apply(0, args) //Force self-recalculation
                 }
+
             }
         }
     }
     /*********************************************************************
      *                           Scan                                     *
      **********************************************************************/
-    avalon.scan = function(elem, vmodel) {
+    avalon.scan = function(elem, vmodel, state) {
         elem = elem || root
         var vmodels = vmodel ? [].concat(vmodel) : []
-        scanTag(elem, vmodels)
+        scanTag(elem, vmodels, state)
     }
 
 
-    function scanNodes(parent, vmodels) {
+    function scanNodes(parent, vmodels, state) {
         var nodes = []
         for (var i = 0, node; node = parent.childNodes[i++]; ) {
             nodes.push(node)
         }
         for (var i = 0; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
-                scanTag(node, vmodels) //Scan element nodes
+                scanTag(node, vmodels, state) //Scan element nodes
             } else if (node.nodeType === 3) {
-                scanText(node, vmodels) //Scan text nodes
+                scanText(node, vmodels, state) //Scan text nodes
             }
         }
     }
@@ -1529,7 +1548,7 @@
     var stopScan = oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
 
 
-    function scanTag(elem, vmodels) {
+    function scanTag(elem, vmodels, state) {
         vmodels = vmodels || []
         //Scanning order:  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
         var a = elem.getAttribute(prefix + "skip")
@@ -1551,18 +1570,18 @@
             vmodels = [newVmodel].concat(vmodels)
             elem.removeAttribute(prefix + "controller")
         }
-        scanAttr(elem, vmodels, function() {  //Scan attributes
+        scanAttr(elem, vmodels, function(status) { //Scan attributes
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels)  //Scan enclosing elements
+                scanNodes(elem, vmodels, status) //Scan enclosed elements
             }
-        })
+        }, state)
 
     }
 
-    function scanText(textNode, vmodels) {
+    function scanText(textNode, vmodels, state) {
         var bindings = extractTextBindings(textNode)
         if (bindings.length) {
-            executeBindings(bindings, vmodels)
+            executeBindings(bindings, vmodels, state)
         }
     }
 
@@ -1618,10 +1637,8 @@
         return tokens
     }
 
-
-    function scanAttr(el, vmodels, callback) {
-        var bindings = [],
-                ifBinding
+    function scanAttr(el, vmodels, callback, state, ifBinding) {
+        var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
                 if (attr.name.indexOf(prefix) !== -1) {
@@ -1629,19 +1646,21 @@
                     var array = attr.name.split("-")
                     var type = array[1]
                     if (typeof bindingHandlers[type] === "function") {
-                        var binding = {
-                            type: type,
-                            param: array.slice(2).join("-"),
-                            element: el,
-                            remove: true,
-                            node: attr,
-                            value: attr.nodeValue
-                        }
-                        if (attr.name === "ms-if") {
-                            ifBinding = binding
-                        } else {
-                            bindings.push(binding)
-                        }
+                        (function(node) {
+                            var binding = {
+                                type: type,
+                                param: array.slice(2).join("-"),
+                                element: el,
+                                remove: true,
+                                node: node,
+                                value: node.nodeValue
+                            }
+                            if (node.name === "ms-if") {
+                                ifBinding = binding
+                            } else {
+                                bindings.push(binding)
+                            }
+                        })(attr)
                     }
                 }
             }
@@ -1649,18 +1668,19 @@
         if (ifBinding) {
             //The "if" binding has the highest precedence, if the expression bound to "if" evaluated as false,
             // we skip processing binding properties on the current element and stop scanning child nodes
+            ifBinding.state = {}
             bindingHandlers["if"](ifBinding, vmodels, function() {
-                executeBindings(bindings, vmodels)
-                callback()
+                executeBindings(bindings, vmodels, ifBinding.state)
+                callback(ifBinding.state)
             })
         } else {
-            executeBindings(bindings, vmodels)
-            callback()
+            executeBindings(bindings, vmodels, state)
+            callback(state)
         }
     }
-
-    function executeBindings(bindings, vmodels) {
+    function executeBindings(bindings, vmodels, state) {
         bindings.forEach(function(data) {
+            data.state = state
             bindingHandlers[data.type](data, vmodels)
             if (data.remove) { //Remove binding attributes to prevent the element being parsed again
                 data.element.removeAttributeNode(data.node)
@@ -1877,7 +1897,7 @@
             } //To make debugging easier
             //It is a very important spot here. We check whether the element inside view-refreshing function is actually in the DOM tree to decide
             //whether we need to take it out from the subscriber list
-            registerSubscriber(updateView, data.element)
+            registerSubscriber(updateView, data)
         }
     }
 
@@ -1925,19 +1945,17 @@
             callback = callback || avalon.noop
             var placehoder = DOC.createComment("@"),
                     elem = data.element,
+                    state = data.state,
                     parent
-            if (!data._if) {
-                data._if = 1
-                if (root.contains(elem)) {
-                    ifcall()
-                } else {
-                    var id = setInterval(function() {
-                        if (root.contains(elem)) {
-                            clearInterval(id)
-                            ifcall()
-                        }
-                    }, 20)
-                }
+            if (root.contains(elem)) {
+                ifcall()
+            } else {
+                var id = setInterval(function() {
+                    if (root.contains(elem)) {
+                        clearInterval(id)
+                        ifcall()
+                    }
+                }, 20)
             }
 
             function ifcall() {
@@ -1946,13 +1964,13 @@
                     if (val) { //Add. Insert it into the DOM tree if it is not in the tree.
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
-                            elem.noRemove = 0
+                            delete state.sourceIndex
                         }
                         avalon.nextTick(callback)
                     } else { //Remove. Remove it from the DOM tree if it is still in the tree
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
-                            elem.noRemove = 1
+                            state.sourceIndex = 0
                         }
                     }
                 })
@@ -2075,7 +2093,7 @@
                                 var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304 || s === 1223) {
                                     avalon.innerHTML(elem, xhr.responseText)
-                                    avalon.scan(elem, vmodels)
+                                    scanNodes(elem, vmodels, data.state)
                                 }
                             }
                         }
@@ -2086,7 +2104,7 @@
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
                             el && avalon.innerHTML(elem, el.innerHTML)
-                            avalon.scan(elem, vmodels)
+                            scanNodes(elem, vmodels, data.state)
                         })
                     }
                 } else {
@@ -2124,7 +2142,6 @@
                     data.remove = true
                 }
             }
-
         },
         html: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
@@ -2172,7 +2189,13 @@
             }
         }
     }
-
+    if (typeof root.hidden === "boolean") {
+        bindingHandlers.visible = function(data, vmodels) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+                elem.hidden = val ? false : true
+            })
+        }
+    }
     //============================================================================
     //Switch className based on the VM property value or expression result, e.g. ms-class="xxx yyy zzz:flag"
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
@@ -2281,15 +2304,16 @@
                 if (!elem.name) { // If the user omitted the "name" attribute, the browser will assign an empty string to it
                     elem.name = generateID()
                 }
-                var updateView = modelBinding[tagName](elem, array[0], vm, data.param)
-                updateView && registerSubscriber(updateView, elem)
+                var updateView = modelBinding[tagName](data, array[0], vm)
+                updateView && registerSubscriber(updateView, data)
             }
         }
-
     }
     //When the model binding is set up on an input tag, the target model field will be bound with the value of the element
     //in both ways. Changing the field will cause the value to be changed and vise versa. By default we bind the input event
-    modelBinding.INPUT = function(element, fn, scope, fixType) {
+    modelBinding.INPUT = function(data, fn, scope) {
+        var element = data.element
+        var fixType = data.param
         var type = element.type,
                 $elem = avalon(element)
         if (type === "checkbox" && fixType === "radio") {
@@ -2381,8 +2405,8 @@
         }
         return updateView
     }
-    modelBinding.SELECT = function(element, fn, scope, oldValue) {
-        var $elem = avalon(element)
+    modelBinding.SELECT = function(data, fn, scope, oldValue) {
+        var $elem = avalon(data.element)
         function updateModel() {
             if ($elem.data("observe") !== false) {
                 var neo = $elem.val() //String or String array
@@ -2392,7 +2416,6 @@
                 }
             }
         }
-
         function updateView() {
             var neo = fn(scope)
             neo = Array.isArray(neo) ? neo.map(String) : neo + ""
@@ -2404,7 +2427,7 @@
         $elem.bind("change", updateModel)
         setTimeout(function() {
             //Wait for the 'option' elements in 'select' element get scanned before setting up the 'selected' property based on the model 
-            registerSubscriber(updateView, element)
+            registerSubscriber(updateView, data)
         })
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
@@ -2660,15 +2683,15 @@
     //====================== each binding  =================================
     var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
-        var parent = data.element,
+        var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
         if (typeof array === "object") {
             list = array[0].apply(array[0], array[1])
         }
         var view = documentFragment.cloneNode(false)
-        while (parent.firstChild) {
-            view.appendChild(parent.firstChild)
+        while (elem.firstChild) {
+            view.appendChild(elem.firstChild)
         }
         data.template = view
         data.vmodels = vmodels
@@ -2690,6 +2713,8 @@
             }
 
         }
+        updateView.element = elem
+        updateView.state = data.state
         updateView.host = list
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
@@ -2714,7 +2739,8 @@
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    scanNodes(tview, base.concat(data.vmodels))
+                    scanNodes(tview, base.concat(data.vmodels), data.state)
+                    proxy.$accessor.$last.get.element = tview.firstChild
                     if (typeof group !== "number") {
                         data.group = tview.childNodes.length // records the number of child nodes in each template
                     }
@@ -2778,7 +2804,7 @@
                     })
                 }
                 var tview = data.template.cloneNode(true)
-                scanNodes(tview, [mapper[key], val].concat(data.vmodels))
+                scanNodes(tview, [mapper[key], val].concat(data.vmodels), data.state)
                 if (typeof group !== "number") {
                     data.group = tview.childNodes.length
                 }
