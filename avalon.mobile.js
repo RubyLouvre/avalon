@@ -1827,12 +1827,12 @@
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
                     if (method === "class") {
-                        if (oldClass) {
-                            $elem.removeClass(oldClass)
+                        if (toggle && oldClass) {
+                            $elem.removeClass(oldClass) 
                         }
                         $elem.toggleClass(className, toggle)
                         oldClass = className
-                    }
+                    } 
                 }, (hasExpr ? scanExpr(className) : null))
 
                 if (method === "hover" || method === "active") {
