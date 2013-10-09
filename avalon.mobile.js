@@ -1182,7 +1182,7 @@
         }
     }
 
- function scanTag(elem, vmodels, state, node) {
+    function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
         var a = elem.getAttribute(prefix + "skip")
@@ -1938,13 +1938,15 @@
             } else {
                 $elem.bind("input", updateModel)
                 if (DOC.documentMode >= 9) { //IE9 10
-                    $elem.bind("keydown", function(e) {
-                        var key = e.keyCode
-                        if (key === 8 || key === 46) {
-                            updateModel() //处理回退与删除
+                    var selectionchange = function(e) {
+                        if (e.type === "focus") {
+                            document.addEventListener("selectionchange", updateModel);
+                        } else {
+                            document.removeEventListener("selectionchange", updateModel);
                         }
-                    })
-                    $elem.bind("cut", updateModel) //处理粘贴
+                    };
+                    element.addEventListener("focus", selectionchange);
+                    element.addEventListener("blur", selectionchange);
                 }
             }
         } else if (type === "radio") {
