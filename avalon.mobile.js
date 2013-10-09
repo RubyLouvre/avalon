@@ -1557,11 +1557,11 @@
     var rdash = /\(([^)]*)\)/
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
+            callback = callback || avalon.noop
             var placehoder = DOC.createComment("@"),
                     elem = data.element,
                     state = data.state,
                     parent
-
             if (root.contains(elem)) {
                 ifcall()
             } else {
@@ -1572,19 +1572,20 @@
                     }
                 }, 20)
             }
+
             function ifcall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
-                    if (val) { //添加 如果它不在DOM树中
+                    if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
                             parent.replaceChild(elem, placehoder)
                             delete state.sourceIndex
                         }
                         avalon.nextTick(callback)
-                    } else { //移除  如果它还在DOM树中
+                    } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
-                            state.sourceIndex = 1
+                            state.sourceIndex = 0
                         }
                     }
                 })
