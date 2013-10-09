@@ -631,15 +631,15 @@
                 return;
             }
             if (this.css("position") === "fixed") {
-                offset = elem.getBoundingClientRect();
+                offset = elem.getBoundingClientRect()
             } else {
-                offsetParent = this.offsetParent(); //得到真正的offsetParent
-                offset = this.offset(); // 得到正确的offsetParent
+                offsetParent = this.offsetParent() //得到真正的offsetParent
+                offset = this.offset() // 得到正确的offsetParent
                 if (offsetParent[0].tagName !== "HTML") {
-                    parentOffset = offsetParent.offset();
+                    parentOffset = offsetParent.offset()
                 }
-                parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true);
-                parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true);
+                parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true)
+                parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true)
             }
             return {
                 top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
@@ -651,7 +651,7 @@
             while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
                 offsetParent = offsetParent.offsetParent;
             }
-            return avalon(offsetParent || root);
+            return avalon(offsetParent || root)
         },
         bind: function(type, fn, phase) {
             if (this[0]) { //此方法不会链
@@ -2135,7 +2135,7 @@
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
-                    elem.insertBefore(f, data.replaceNodes[0])
+                    elem.insertBefore(f, data.replaceNodes[0] || null)//fix IE6-8 insertBefore的第2个参数只能为节点或null
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
@@ -2332,13 +2332,13 @@
                 if (DOC.documentMode === 9) { //fuck IE9
                     var selectionchange = function(e) {
                         if (e.type === "focus") {
-                            document.addEventListener("selectionchange", updateModel);
+                            document.addEventListener("selectionchange", updateModel)
                         } else {
-                            document.removeEventListener("selectionchange", updateModel);
+                            document.removeEventListener("selectionchange", updateModel)
                         }
                     };
-                    element.addEventListener("focus", selectionchange);
-                    element.addEventListener("blur", selectionchange);
+                    element.addEventListener("focus", selectionchange)
+                    element.addEventListener("blur", selectionchange)
                 }
             }
         } else if (type === "radio") {
@@ -3082,9 +3082,9 @@
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
                 var h = toInt(match[4] || 0) - tzHour;
                 var m = toInt(match[5] || 0) - tzMin
-                var s = toInt(match[6] || 0);
-                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000);
-                timeSetter.call(date, h, m, s, ms);
+                var s = toInt(match[6] || 0)
+                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
+                timeSetter.call(date, h, m, s, ms)
                 return date
             }
             return string
