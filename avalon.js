@@ -2328,7 +2328,8 @@
                         }
                     })
                 }
-                if (DOC.documentMode >= 9) { //IE9 10
+
+                if (DOC.documentMode === 9) { //fuck IE9
                     var selectionchange = function(e) {
                         if (e.type === "focus") {
                             document.addEventListener("selectionchange", updateModel);

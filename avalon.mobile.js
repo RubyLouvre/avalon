@@ -1933,22 +1933,7 @@
         if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
             var event = element.attributes["data-event"] || {}
             event = event.value
-            if (event === "change") {
-                $elem.bind(event, updateModel)
-            } else {
-                $elem.bind("input", updateModel)
-                if (DOC.documentMode >= 9) { //IE9 10
-                    var selectionchange = function(e) {
-                        if (e.type === "focus") {
-                            document.addEventListener("selectionchange", updateModel);
-                        } else {
-                            document.removeEventListener("selectionchange", updateModel);
-                        }
-                    };
-                    element.addEventListener("focus", selectionchange);
-                    element.addEventListener("blur", selectionchange);
-                }
-            }
+            $elem.bind(event === "change" ? event : "input", updateModel)
         } else if (type === "radio") {
             updateView = function() {
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
