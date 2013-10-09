@@ -1,0 +1,40 @@
+@import "./mulicolumn.less";
+ul{ 
+    width: 2200px;
+    background:#a9ea00;
+    .column-width(320px);
+    @value:1px solid blue;
+   .column-rule(@value);
+   .column-gap(0px);
+  // padding:20px 0 0 20px;
+   margin:0px;
+   font-size:0;
+    -webkit-text-size-adjust:none;
+  height:600px;
+}
+li{
+    display:inline-block;
+    width:150px;
+    height:150px;
+    background: red;
+    list-style: none;
+    padding:0px;
+    margin: 0px 20px 20px 0;
+    font-size: 12px;
+    .column-gap(0);
+}
+li:nth-child(even){
+     background: yellowgreen;
+}
+li:nth-child(3n){
+     background: pink;
+     width:320px;
+     height:150px;
+     margin:0 0 20px 0;
+}
+li:nth-child(4n){
+    background:green;
+    width:320px;
+    height:320px;
+    margin:0 0 20px 0;
+}

@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" type="text/javascript"></script>
+        <link href="metro.css" media="all" rel="stylesheet" type="text/css" />
+
+        <script>
+            avalon.require("avalon.draggable", function() {
+                function isNext(A, B) {//判定A是否在B的前面
+                    var next = A.nextElementSibling
+                    while (next !== null) {
+                        if (next === B) {
+                            return true
+                        } else {
+                            next = next.nextElementSibling
+                        }
+                    }
+                }
+                function getSize(target) {
+                    return target.className.match(/app_(\w+)/)[1]
+                }
+                function isApp(target) {
+                    // console.log(target.tagName)
+                    return target.tagName.toLowerCase() === "app"
+                }
+                function resetLayout(parent) {
+                    var array = parent.children
+                    var height = 0, column = 0, changeRow = true
+                    for (var i = 0, el; el = array[i++]; ) {
+                        var size = getSize(el)
+                        console.log(size)
+                        if (size === "small") {
+                            height += 170
+                            el.left = true
+                            var next = array[i]
+                            if (next && getSize(next) === "small") {
+                                next.left = false
+                                console.log("small siblings")
+                                i++
+                            }
+                        } else if (size === "middle") {
+                            height += 170
+                            el.left = false
+                        } else if (size === "big") {
+                            height += 340
+                            el.left = false
+                            if (height >= 510) {
+                                column++
+                                console.log(height + "==============big")
+                                if (height > 510) {
+                                    console.log("另起一行")
+                                    height = 340
+                                } else {
+                                    console.log(" 归零")
+                                    height = 0
+                                }
+                            }
+
+                        }
+                        if (height >= 510) {
+                            console.log(height + "============累加")
+                            height = 0
+                            column++
+                        }
+                    }
+                    if (height > 0) {
+                        column++
+                    }
+                    console.log("当前列数为 " + column)
+                    parent.style.width = (column) * 340 + 20 + "px"
+                }
+                var parent = document.querySelector(".columns");
+
+                avalon.define("xxx", function(vm) {
+                    vm.array = ["middle", "small", "small", "small", "small", "small", "small", "big", "small", "small", "big", "big", "small", "small"]
+                    vm.handle = function(e) {
+                        var el = e.target
+                        if (/app_head/.test(el.className)) {
+                            return el
+                        }
+                    }
+                    vm.stop = avalon.noop
+                    vm.beforeStop = function(e, data) {
+                        data.dragX = false
+                        data.dragY = false
+                        var el = data.$element
+                        var width = el.width()
+                        var height = el.height()
+
+                        if (width > 150) {
+                            width /= 2
+                        }
+                        if (height > 150) {
+                            height /= 2
+                        }
+                        function getTarget(data, x, y) {
+                            var target = document.elementFromPoint(data.pageX + x, data.pageY + y)
+                            while (target && target.tagName != "APP") {
+                                target = target.parentNode;
+                            }
+
+                            return target
+                        }
+
+                        setTimeout(function() {
+
+                            var target = getTarget(data, 10, 10)
+                            var msg = "在其左上角找到，"
+                            var swap = false
+                            if (!target || !isApp(target)) {
+                                target = getTarget(data, -150, 0)
+                                if (target && target.left) {
+                                    target.parentNode.insertBefore(data.element, target.nextElementSibling)
+                                    swap = true
+                                    console.log("在左边找到，插入到" + target.className + "后面")
+                                } else {
+                                    target = null
+                                }
+
+                            }
+                            if (!target || !isApp(target)) {
+                                target = getTarget(data, 150, -150)
+                                if (target) {
+                                    target.parentNode.insertBefore(data.element, target.nextElementSibling)
+                                    swap = true
+                                    console.log("在右上边找到，插入到" + target.className + "后面")
+                                }
+                            }
+
+                            if (target && isApp(target)) {
+                                if (!swap) {
+                                    var p = ""
+                                    if (isNext(data.element, target)) {
+                                        p = "后面"
+                                        target.parentNode.insertBefore(data.element, target.nextElementSibling)
+                                    } else {
+                                        p = "前面"
+                                        target.parentNode.insertBefore(data.element, target)
+                                    }
+                                    console.log(msg + "插入到" + target.className + p)
+                                }
+                            }
+                            avalon(data.element).css("display", "inline-block").css("position", "static")
+                            resetLayout(parent)
+                        }, 300)
+                    }
+
+                })
+                avalon.scan()
+
+                setTimeout(function() {
+                    resetLayout(parent)
+                }, 200)
+            })
+
+        </script>
+    </head>
+    <body ms-controller="xxx">
+        <div class="columns"  ms-each-el="array">
+            <app  ms-draggable="stop" data-before-stop="beforeStop" data-ghosting="true" data-handle="handle" ms-class="app_{{el}}" ms-class-="app{{$index}}"><div class="app_head">APP {{$index}}</div></app>
+        </div>
+    </body>
+</html>

@@ -52,12 +52,12 @@ define(["avalon"], function(avalon) {
             vm.tabpanels = tabpanels
             vm.activate = function(e) {
                 e.preventDefault()
-                vm.active = this.$scope.$index
+                vm.active = this.$vmodel.$index
                 options.activate.call(this, e, vmodel)
             }
             vm.remove = function(e) {
                 e.preventDefault()
-                var index = this.$scope.$index
+                var index = this.$vmodel.$index
                 vm.tabs.removeAt(index)
                 vm.tabpanels.removeAt(index)
                 avalon.nextTick(function() {

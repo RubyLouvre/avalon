@@ -28,28 +28,28 @@
                 }
                 var model = avalon.define("linkage", function(vm) {
                     vm.first = ["中国", "日本", "欧美"]
-                    vm.second = map[vm.first[1]].concat()
-                    vm.third = map[vm.second[0]].concat()
+                    vm.second = map[vm.first[1]]
+                    vm.third = map[vm.second[0]]
                     vm.firstSelected = "日本"
                     vm.secondSelected = ""
                     vm.thirdSelected = ""
 
                     vm.$watch("firstSelected", function(a) {
                         vm.second = map[a]
-                        vm.$fire("secondSelected", vm.second[0])
+                        vm.secondSelected = map[a][0]
                     })
                     vm.$watch("secondSelected", function(a) {
                         vm.third = map[a]
-
+                        vm.thirdSelected = map[a][0]
                     })
                 })
                 var m = avalon.define("multi", function(vm) {
                     vm.multi = ["aaa", "bbb", "ccc", "ddd", "eee", "fff", "ggg"];
                     vm.selected = ["aaa", "bbb", "eee"]
                     vm.select = ""
-                    
+
                 });
-                m.selected.$watch("length", function(){
+                m.selected.$watch("length", function() {
                     m.select = m.selected.join(" ")
                 })
                 avalon.scan();

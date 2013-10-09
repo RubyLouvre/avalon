@@ -129,7 +129,7 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
             }
 
             vm.changeState = function(e) {
-                var obj = this.$scope.el
+                var obj = this.$vmodel.el
                 if (!obj.disabled) {//重要技巧,通过e.target == this排除冒泡上来的事件
                     var index = obj.index
                     var option = els[index]

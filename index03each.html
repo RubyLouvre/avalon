@@ -37,11 +37,37 @@
                 })
             });
 
+            avalon.define('page', function(scope) {
+                scope.selected = "name"
+                scope.options = ["name", "size", "date"]
+                scope.trend = 1
+                scope.data = [
+                    {name: "aaa", size: 213, date: Date.now() + 20},
+                    {name: "bbb", size: 4576, date: new Date - 4},
+                    {name: "ccc", size: 563, date: new Date - 7},
+                    {name: "eee", size: 3713, date: 9 + Date.now()},
+                    {name: "555", size: 389, date: Date.now() - 20}
+                ];
+                scope.$watch("selected", function(v) {
+                    var t = parseFloat(scope.trend)
+                    scope.data.sort(function(a, b) {
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
+                    })
+                })
+                scope.$watch("trend", function(t) {
+                    var v = scope.selected, t = parseFloat(t)
+                    scope.data.sort(function(a, b) {
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
+                    })
+                })
+            });
 
         </script>
     </head>
     <body>
-       <h3 style="text-align: center">ms-each</h3>
+        <h3 style="text-align: center">ms-each</h3>
 
         <fieldset ms-controller="array">
             <legend>例子</legend>
@@ -60,6 +86,23 @@
             <p><button type="button" ms-click="pop">对数组进行pop操作</button></p>
             <p>当前数组的长度为<span style="color:red">{{array.size()}}</span>，注意 我们无法修改数组length的固有行为，因此它无法同步视图，需要用size方法。</p>
         </fieldset>
-
+        <fieldset ms-controller="page">
+            <legend>例子</legend>
+            <p><select ms-each-el="options" ms-duplex="selected">
+                    <option>{{el}}</option>
+                </select>
+                <select ms-duplex="trend">
+                    <option value="1">up</option>
+                    <option value="-1">down</option>
+                </select>
+            </p>
+            <table width="500px" border="1">
+                <tbody ms-each-el="data">
+                    <tr>
+                        <td>{{el.name}}</td> <td>{{el.size}}</td> <td>{{el.date}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </fieldset>
     </body>
 </html>
