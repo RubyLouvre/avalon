@@ -183,7 +183,7 @@
         </p>
         <h3 id="top2">扫描</h3>
         <p>不过上面的代码并不完整，它能工作，是因为框架默认会在DOMReady时扫描DOM树，将视图中的绑定属性与{{}}插值表达式抽取出来，转换为求值函数与视图刷新函数。</p>
-        <p>我们可以通过下面方法自己扫描DOM树：</p>
+        <p>上面的JS代码相当于：</p>
         <pre class="brush:js;gutter:false;toolbar:false;">
             avalon.ready(function() {
                  avalon.define("box", function(vm) {
@@ -197,7 +197,7 @@
                  avalon.scan()
              })
         </pre>
-        <p>scan有两个可选参数，第一个是扫描的起点元素，默认是HTML标签，第2个是VM对象。</p>
+        <p>avalon.scan是一个非常重要的方法，它有两个可选参数，第一个是扫描的起点元素，默认是HTML标签，第2个是VM对象。</p>
         <pre class="brush:js;gutter:false;toolbar:false;">
  //源码
      avalon.scan = function(elem, vmodel) {

@@ -2184,7 +2184,7 @@
             var oldStyle = data.param,
                     elem = data.element,
                     $elem = avalon(elem),
-                    toggle
+                    toggle, oldClass
             if (!oldStyle || isFinite(oldStyle)) {
                 var text = data.value
                 var noExpr = text.replace(rexprg, function(a) {
@@ -2211,7 +2211,11 @@
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
                     if (method === "class") {
+                        if (oldClass) {
+                            $elem.removeClass(oldClass)
+                        }
                         $elem.toggleClass(className, toggle)
+                        oldClass = className
                     }
                 }, (hasExpr ? scanExpr(className) : null))
 
