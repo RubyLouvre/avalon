@@ -1645,7 +1645,11 @@
         data: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
-                elem.setAttribute(key, val)
+                if (val && typeof val === "object") {
+                    elem[key] = val
+                } else {
+                    elem.setAttribute(key, String(val))
+                }
             })
         },
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
@@ -1828,11 +1832,11 @@
                     className = hasExpr ? cls : className
                     if (method === "class") {
                         if (toggle && oldClass) {
-                            $elem.removeClass(oldClass) 
+                            $elem.removeClass(oldClass)
                         }
                         $elem.toggleClass(className, toggle)
                         oldClass = className
-                    } 
+                    }
                 }, (hasExpr ? scanExpr(className) : null))
 
                 if (method === "hover" || method === "active") {
