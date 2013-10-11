@@ -928,6 +928,7 @@
      **********************************************************************/
     avalon.Array = {
         sortBy: function(target, fn, scope, trend) {
+            log("此方法将被移除")
             //根据指定条件进行排序，通常用于对象数组。
             //默认是按递增来排
             trend === typeof trend === "boolean" ? trend : false
@@ -945,6 +946,7 @@
             return avalon.Array.pluck(array, 'el')
         },
         pluck: function(target, name) {
+            log("此方法将被移除")
             //取得对象数组的每个元素的指定属性，组成数组返回。
             return target.filter(function(item) {
                 return item[name] !== void 0
