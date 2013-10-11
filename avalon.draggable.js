@@ -67,7 +67,7 @@ define(["avalon"], function(avalon) {
         if (completeCallback) {
             options.stop = completeCallback
         }
- 
+
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
@@ -92,7 +92,7 @@ define(["avalon"], function(avalon) {
                 marginLeft: parseFloat($element.css("marginLeft")),
                 marginTop: parseFloat($element.css("marginTop"))
             })
-        
+
             data.startPageX = data.pageX//一次拖放只赋值一次
             data.startPageY = data.pageY//一次拖放只赋值一次
             options.axis.toUpperCase().replace(/./g, function(x) {
@@ -104,8 +104,11 @@ define(["avalon"], function(avalon) {
             fixUserSelect()
             //在处理手柄拖动前做些事情
 
-            options.beforeStart.call(element, e, data)
-            draggable.plugin.call("beforeStart", e, data)
+               //在处理手柄拖动前做些事情
+            if (typeof options.beforeStart === "function") {
+                options.beforeStart.call(data.element, e, data)
+            }
+ 
             if (data.handle && model) {// 实现手柄拖动
                 var handle = model[data.handle]
                 if (typeof handle === "function") {
@@ -155,12 +158,12 @@ define(["avalon"], function(avalon) {
             }
             var target = avalon(data.clone || data.element)
             //拖动前相对于offsetParent的坐标
-            data.startLeft = target.css("left", true) 
-            data.startTop = target.css("top", true) 
+            data.startLeft = target.css("left", true)
+            data.startTop = target.css("top", true)
             //拖动后相对于offsetParent的坐标
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
             data.endLeft = $element.css("left", true) - data.startLeft
-            data.endTop = $element.css("top", true)- data.startTop
+            data.endTop = $element.css("top", true) - data.startTop
 
             data.clickX = data.pageX - startOffset.left //鼠标点击的位置与目标元素左上角的距离
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
@@ -327,6 +330,9 @@ define(["avalon"], function(avalon) {
     }
     function setContainment(o, data) {
         if (!o.containment) {
+            if (Array.isArray(data.containment)) {
+                return
+            }
             data.containment = null;
             return;
         }
