@@ -2010,7 +2010,7 @@
                     callback = fn.apply(fn, args)
                 } else {
                     callback = function(e) {
-                        fn.apply(this, args.concat(e))
+                       return fn.apply(this, args.concat(e))
                     }
                 }
                 if (!elem.$vmodels) {
