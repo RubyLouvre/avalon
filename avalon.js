@@ -1939,10 +1939,13 @@
             if (root.contains(elem)) {
                 ifcall()
             } else {
+                var cur = elem.style.display
+                elem.style.display = "none"
                 var id = setInterval(function() {
                     if (root.contains(elem)) {
                         clearInterval(id)
                         ifcall()
+                        elem.style.display = cur
                     }
                 }, 20)
             }
@@ -2010,7 +2013,7 @@
                     callback = fn.apply(fn, args)
                 } else {
                     callback = function(e) {
-                       return fn.apply(this, args.concat(e))
+                        return fn.apply(this, args.concat(e))
                     }
                 }
                 if (!elem.$vmodels) {
