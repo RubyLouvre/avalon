@@ -1955,8 +1955,10 @@
                 updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
-                            parent.replaceChild(elem, placehoder)
-                            delete state.sourceIndex
+                            try {
+                                parent.replaceChild(elem, placehoder)
+                                delete state.sourceIndex
+                            } catch (e) { }
                         }
                         avalon.nextTick(callback)
                     } else { //移除  如果它还在DOM树中， 移出DOM树
