@@ -1311,7 +1311,7 @@
             data.state = state
             bindingHandlers[data.type](data, vmodels)
             if (data.remove) { //移除数据绑定，防止被二次解析
-                data.element.removeAttributeNode(data.node)
+                data.element.removeAttribute(data.node.name)
             }
             data.remove = true
         })

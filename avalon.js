@@ -1669,7 +1669,8 @@
             data.state = state
             bindingHandlers[data.type](data, vmodels)
             if (data.remove) { //移除数据绑定，防止被二次解析
-                data.element.removeAttributeNode(data.node)
+                //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
+                data.element.removeAttribute(data.node.name)
             }
             data.remove = true
         })
@@ -2173,7 +2174,11 @@
                     }
                 }
                 avalon.ui[uiName](elem, id, vmodels, opts || {})
-                elem[id + "vmodels"] = void 0
+                try {
+                    delete  elem[id + "vmodels"]
+                } catch (e) {
+                    elem[id + "vmodels"] = void 0
+                }
             } else {
                 delete data.remove
             }
