@@ -702,7 +702,7 @@
             var node = this[0] || {}, win = getWindow(node),
                     top = method === "scrollTop";
             if (!arguments.length) {
-                return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
+                return win ? (prop in win) ? win[prop] : root[method] : node[method];
             } else {
                 if (win) {
                     win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
