@@ -1929,7 +1929,7 @@
         "for": "htmlFor"
     }
     var rdash = /\(([^)]*)\)/
-    var styleEl = '<style id="fixMsIfFlicker">.fixMsIfFlicker{ display: none!important }</style>'
+    var styleEl = '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>'
     styleEl = avalon.parseHTML(styleEl).firstChild//IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null)//避免IE6 base标签BUG
     var bindingHandlers = avalon.bindingHandlers = {

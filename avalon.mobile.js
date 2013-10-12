@@ -1557,7 +1557,7 @@
                 window.getComputedStyle(td, null).display == "table-cell" : true
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
-    head.insertAdjacentHTML("afterBegin", '<style id="fixMsIfFlicker">.fixMsIfFlicker{ display: none!important }</style>')
+    head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
