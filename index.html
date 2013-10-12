@@ -612,6 +612,7 @@
             <pre class="brush:js;gutter:false;toolbar:false;">
  define(["avalon"],function( av ) {
     //UI  控件的模板
+    var defaults = {}
    // 必须 在avalon.ui上注册一个函数，它有四个参数，最后一个是可选的，其他分别为容器元素，VM的ID名， vmodels
      av.ui["testui"] = function(element, id, vmodels, opts) {
          var $element = avalon(element);
