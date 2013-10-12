@@ -927,31 +927,6 @@
      *                          Array Helper                          *
      **********************************************************************/
     avalon.Array = {
-        sortBy: function(target, fn, scope, trend) {
-            log("此方法将被移除")
-            //根据指定条件进行排序，通常用于对象数组。
-            //默认是按递增来排
-            trend === typeof trend === "boolean" ? trend : false
-            var array = target.map(function(item, index) {
-                return {
-                    el: item,
-                    re: fn.call(scope, item, index)
-                }
-            }).sort(function(left, right) {
-                var a = left.re,
-                        b = right.re
-                var ret = a < b ? -1 : a > b ? 1 : 0
-                return trend ? ret : ret * -1
-            })
-            return avalon.Array.pluck(array, 'el')
-        },
-        pluck: function(target, name) {
-            log("此方法将被移除")
-            //取得对象数组的每个元素的指定属性，组成数组返回。
-            return target.filter(function(item) {
-                return item[name] !== void 0
-            })
-        },
         ensure: function(target) {
             //只有当前数组不存在此元素时只添加它
             var args = aslice.call(arguments, 1)
