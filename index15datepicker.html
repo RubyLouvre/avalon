@@ -181,10 +181,10 @@
                        >
                         <span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>
                     <div class="ui-datepicker-title">
-                        <select  ms-each-month="$months" ms-if="changeMonth" ms-model="currentMonth" >
+                        <select  ms-each-month="$months" ms-if="changeMonth" ms-duplex="currentMonth" >
                             <option ms-value="{{month}}" ms-selected="currentMonth == month">{{month+1}}月</option>
                         </select>
-                        <select  ms-each-year="candidateYears" ms-if="changeYear" ms-model="currentYear" >
+                        <select  ms-each-year="candidateYears" ms-if="changeYear" ms-duplex="currentYear" >
                             <option ms-value="{{year}}" ms-selected="currentYear == year">{{year}}年</option>
                         </select>
                         {{title}}
