@@ -3,7 +3,7 @@
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
-    var expose = new Date - 0
+    var expose = Date.now()
     var subscribers = "$" + expose
     var otherRequire = window.require
     var otherDefine = window.define;
