@@ -1531,7 +1531,7 @@
     }
     var supportDisplay = (function(td) {
         return window.getComputedStyle ?
-                window.getComputedStyle(td, null).display == "table cell" : true
+                window.getComputedStyle(td, null).display == "table-cell" : true
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
