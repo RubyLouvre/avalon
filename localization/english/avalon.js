@@ -32,6 +32,7 @@
     var rnative = /\[native code\]/
     var rchecktype = /^(?:object|array)$/
     var rwindow = /^[object (Window|DOMWindow|global)]$/
+
     function noop() {
     }
 
@@ -313,8 +314,9 @@
 
     var VMODELS = avalon.vmodels = {}
 
-
     //Only nodes collection, pure array, arguments, and plain JS object having nonnegative integer length can pass
+
+
     function isArrayLike(obj) {
         if (obj && typeof obj === "object") {
             var n = obj.length
@@ -636,15 +638,15 @@
                 return;
             }
             if (this.css("position") === "fixed") {
-                offset = elem.getBoundingClientRect();
+                offset = elem.getBoundingClientRect()
             } else {
-                offsetParent = this.offsetParent(); //Obtain the real offsetParent
-                offset = this.offset(); // Obtain the right offsetParent
+                offsetParent = this.offsetParent() //Obtain the real offsetParent
+                offset = this.offset() // Obtain the right offsetParent
                 if (offsetParent[0].tagName !== "HTML") {
-                    parentOffset = offsetParent.offset();
+                    parentOffset = offsetParent.offset()
                 }
-                parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true);
-                parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true);
+                parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true)
+                parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true)
             }
             return {
                 top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
@@ -656,7 +658,7 @@
             while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
                 offsetParent = offsetParent.offsetParent;
             }
-            return avalon(offsetParent || root);
+            return avalon(offsetParent || root)
         },
         bind: function(type, fn, phase) {
             if (this[0]) {
@@ -707,7 +709,7 @@
             var node = this[0] || {}, win = getWindow(node),
                     top = method === "scrollTop";
             if (!arguments.length) {
-                return win ? (prop in win) ? win[prop] : document.documentElement[method] : node[method];
+                return win ? (prop in win) ? win[prop] : root[method] : node[method];
             } else {
                 if (win) {
                     win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
@@ -935,29 +937,11 @@
      *                          Array Helper                          *
      **********************************************************************/
     avalon.Array = {
-        sortBy: function(target, fn, scope, trend) {
-            //Sort by the specific criterion, usually used on arrays
-            //Default in ascendant order
-            trend === typeof trend === "boolean" ? trend : false
-            var array = target.map(function(item, index) {
-                return {
-                    el: item,
-                    re: fn.call(scope, item, index)
-                }
-            }).sort(function(left, right) {
-                var a = left.re,
-                        b = right.re
-                var ret = a < b ? -1 : a > b ? 1 : 0
-                return trend ? ret : ret * -1
-            })
-            return avalon.Array.pluck(array, 'el')
-        },
-        pluck: function(target, name) {
-            //Obtain the specific property on each element in an object array and return them as an array
-            return target.filter(function(item) {
-                return item[name] !== void 0
-            })
-        },
+
+
+
+
+
         ensure: function(target) {
             //Push element(s) into an array only when it is not already in the array
             var args = aslice.call(arguments, 1)
@@ -1494,14 +1478,16 @@
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                var el = fn.element, state = fn.state, remove
+                var el = fn.element,
+                        state = fn.state,
+                        remove
                 if (el && (!state || state.sourceIndex !== 0)) {
                     if (typeof el.sourceIndex == "number") {
                         remove = el.sourceIndex === 0
                     } else {
                         try {
                             remove = !root.contains(el)
-                        } catch (e) {//The 'contains' function in legacy IEs doesn't accept text nodes
+                        } catch (e) { //The 'contains' function in legacy IEs doesn't accept text nodes
                             remove = true
                             while (el == el.parentNode) {
                                 if (el === root) {
@@ -1556,19 +1542,14 @@
         var c = elem.getAttribute(prefix + "controller")
         if (typeof a === "string") {
             return
-        } else if (b) {
-            if (!VMODELS[b]) {
-                return
-            }
-            vmodels = [VMODELS[b]] //Parent VM not included
-            elem.removeAttribute(prefix + "important")
-        } else if (c) {
-            var newVmodel = VMODELS[c] //Child VM depends on parent VM. It makes no sense to scan the child VM when the parent VM is absent
+        } else if (node = b || c) {
+            var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
                 return
             }
-            vmodels = [newVmodel].concat(vmodels)
-            elem.removeAttribute(prefix + "controller")
+            //ms-important doesn't include parent VM, ms-controller does.
+            vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
+            elem.removeAttributeNode(node)
         }
         scanAttr(elem, vmodels, function(status) { //Scan attributes
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
@@ -1678,12 +1659,14 @@
             callback(state)
         }
     }
+
     function executeBindings(bindings, vmodels, state) {
         bindings.forEach(function(data) {
             data.state = state
             bindingHandlers[data.type](data, vmodels)
             if (data.remove) { //Remove binding attributes to prevent the element being parsed again
-                data.element.removeAttributeNode(data.node)
+                //chrome throws error while attempting to remove a non-existing attribute node with "removeAttributeNode". https://github.com/RubyLouvre/avalon/issues/99
+                data.element.removeAttribute(data.node.name)
             }
             data.remove = true
         })
@@ -1940,6 +1923,11 @@
         "for": "htmlFor"
     }
     var rdash = /\(([^)]*)\)/
+
+    var styleEl = '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>'
+    styleEl = avalon.parseHTML(styleEl).firstChild //innerHTML of the head tag in IE6-8 is readonly
+    head.insertBefore(styleEl, null) //avoid the "base" tag bug in IE6
+
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1950,10 +1938,12 @@
             if (root.contains(elem)) {
                 ifcall()
             } else {
+                avalon(elem).addClass("fixMsIfFlicker")
                 var id = setInterval(function() {
                     if (root.contains(elem)) {
                         clearInterval(id)
                         ifcall()
+                        avalon(elem).removeClass("fixMsIfFlicker")
                     }
                 }, 20)
             }
@@ -1963,8 +1953,11 @@
                 updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //Add. Insert it into the DOM tree if it is not in the tree.
                         if (!root.contains(elem)) {
-                            parent.replaceChild(elem, placehoder)
-                            delete state.sourceIndex
+                            try {
+                                parent.replaceChild(elem, placehoder)
+                                delete state.sourceIndex
+                            } catch (e) {
+                            }
                         }
                         avalon.nextTick(callback)
                     } else { //Remove. Remove it from the DOM tree if it is still in the tree
@@ -2021,7 +2014,7 @@
                     callback = fn.apply(fn, args)
                 } else {
                     callback = function(e) {
-                        fn.apply(this, args.concat(e))
+                        return fn.apply(this, args.concat(e))
                     }
                 }
                 if (!elem.$vmodels) {
@@ -2037,7 +2030,11 @@
         data: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
-                elem.setAttribute(key, val)
+                if (val && typeof val === "object") {
+                    elem[key] = val
+                } else {
+                    elem.setAttribute(key, String(val))
+                }
             })
         },
         //Extract inline expressions in innerText, replace them with the evaluated value
@@ -2065,7 +2062,7 @@
             }
             display = display || avalon(elem).css("display")
             display = display === "none" ? parseDisplay(elem.tagName) : display
-            updateViewFactory(data.value, vmodels, data, function(val) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem.style.display = val ? display : "none"
             })
         },
@@ -2149,7 +2146,7 @@
                 if (data.replaceNodes) {
                     var f = avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
-                    elem.insertBefore(f, data.replaceNodes[0])
+                    elem.insertBefore(f, data.replaceNodes[0] || null) //fix: The second parameter of insertBefore in IE6-8 has to be a node or null
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
@@ -2183,19 +2180,17 @@
                     }
                 }
                 avalon.ui[uiName](elem, id, vmodels, opts || {})
-                elem[id + "vmodels"] = void 0
+                try {
+                    delete elem[id + "vmodels"]
+                } catch (e) {
+                    elem[id + "vmodels"] = void 0
+                }
             } else {
                 delete data.remove
             }
         }
     }
-    if (typeof root.hidden === "boolean") {
-        bindingHandlers.visible = function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                elem.hidden = val ? false : true
-            })
-        }
-    }
+
     //============================================================================
     //Switch className based on the VM property value or expression result, e.g. ms-class="xxx yyy zzz:flag"
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
@@ -2204,7 +2199,7 @@
             var oldStyle = data.param,
                     elem = data.element,
                     $elem = avalon(elem),
-                    toggle
+                    toggle, oldClass
             if (!oldStyle || isFinite(oldStyle)) {
                 var text = data.value
                 var noExpr = text.replace(rexprg, function(a) {
@@ -2231,7 +2226,11 @@
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
                     if (method === "class") {
+                        if (toggle && oldClass) {
+                            $elem.removeClass(oldClass)
+                        }
                         $elem.toggleClass(className, toggle)
+                        oldClass = className
                     }
                 }, (hasExpr ? scanExpr(className) : null))
 
@@ -2239,7 +2238,7 @@
                     if (method === "hover") {//switch className on mouse Enter or Leave
                         var event1 = "mouseenter"
                         var event2 = "mouseleave"
-                    } else {//switch className on mouse Down or Up
+                    } else { //switch className on mouse Down or Up
                         elem.tabIndex = elem.tabIndex || -1
                         event1 = "mousedown", event2 = "mouseup"
                     }
@@ -2349,14 +2348,17 @@
                         }
                     })
                 }
-                if (DOC.documentMode >= 9) { //IE9 10
-                    $elem.bind("keydown", function(e) {
-                        var key = e.keyCode
-                        if (key === 8 || key === 46) {
-                            updateModel() //handle the backspace and delete key
+
+                if (DOC.documentMode === 9) { //fuck IE9
+                    var selectionchange = function(e) {
+                        if (e.type === "focus") {
+                            document.addEventListener("selectionchange", updateModel)
+                        } else {
+                            document.removeEventListener("selectionchange", updateModel)
                         }
-                    })
-                    $elem.bind("cut", updateModel) //handle paste
+                    };
+                    element.addEventListener("focus", selectionchange)
+                    element.addEventListener("blur", selectionchange)
                 }
             }
         } else if (type === "radio") {
@@ -2407,6 +2409,7 @@
     }
     modelBinding.SELECT = function(data, fn, scope, oldValue) {
         var $elem = avalon(data.element)
+
         function updateModel() {
             if ($elem.data("observe") !== false) {
                 var neo = $elem.val() //String or String array
@@ -2416,6 +2419,7 @@
                 }
             }
         }
+
         function updateView() {
             var neo = fn(scope)
             neo = Array.isArray(neo) ? neo.map(String) : neo + ""
@@ -2556,7 +2560,7 @@
             var el = this.$model.shift()
             this._del(0, 1)
             notifySubscribers(this, "index", 0)
-            return el//return the removed element
+            return el //return the removed element
         },
         pop: function() {
             var el = this.$model.pop()
@@ -2645,7 +2649,8 @@
             [][method].apply(this.$model, arguments)
             var sorted = false
             for (var i = 0, n = this.length; i < n; i++) {
-                var a = this.$model[i], b = this[i]
+                var a = this.$model[i],
+                        b = this[i]
                 b = b && b.$model ? b.$model : b
                 if (!isEqual(a, b)) {
                     sorted = true
@@ -2661,6 +2666,7 @@
             return this
         }
     })
+
     function Collection(model) {
         var array = []
         array.$id = generateID()
@@ -2818,6 +2824,7 @@
                     transation.appendChild(view)
                 }
                 parent.appendChild(transation) //Then append it to the end
+                break
             case "add":
                 for (var i in object) {
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
@@ -2846,6 +2853,7 @@
         }
     }
     //Collect the nodes to be removed, the first node must be pushed first
+
     function gatherRemovedNodes(array, node, length) {
         for (var i = 1; i < length; i++) {
             node = node.nextSibling
@@ -2873,6 +2881,7 @@
         return view
     }
     //Create a ViewModel for a child view
+
     function createWithProxy(key, val) {
         return modelFactory({
             $key: key,
@@ -2883,6 +2892,7 @@
     }
     var watchEachOne = oneObject("$index,$remove,$first,$last")
     // Create a proxy object, we can access the element index ($index), flag of being the first element ($first) or the last ($last)
+
     function createEachProxy(index, item, list, param) {
         param = param || "el"
         var source = {}
@@ -2995,7 +3005,7 @@
      'a': am/pm marker
      'Z': 4 digit (+sign) representation of the timezone offset (-1200-+1200)
      format string can also be one of the following predefined localizable formats:
-
+     
      'medium': equivalent to 'MMM d, y h:mm:ss a' for en_US locale (e.g. Sep 3, 2010 12:05:08 pm)
      'short': equivalent to 'M/d/yy h:mm a' for en_US locale (e.g. 9/3/10 12:05 pm)
      'fullDate': equivalent to 'EEEE, MMMM d,y' for en_US locale (e.g. Friday, September 3, 2010)
@@ -3099,9 +3109,9 @@
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
                 var h = toInt(match[4] || 0) - tzHour;
                 var m = toInt(match[5] || 0) - tzMin
-                var s = toInt(match[6] || 0);
-                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000);
-                timeSetter.call(date, h, m, s, ms);
+                var s = toInt(match[6] || 0)
+                var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
+                timeSetter.call(date, h, m, s, ms)
                 return date
             }
             return string
