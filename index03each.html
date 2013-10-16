@@ -36,7 +36,11 @@
                     }
                 })
             });
-
+            if(!Date.now){
+               Date.now = function(){
+                   return new Date - 0
+               }
+            }
             avalon.define('page', function(scope) {
                 scope.selected = "name"
                 scope.options = ["name", "size", "date"]
