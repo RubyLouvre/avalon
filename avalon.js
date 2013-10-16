@@ -1632,6 +1632,9 @@
                 }
             }
         }
+        bindings.sort(function(a, b){
+            return a.node.name > b.node.name
+        })
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             ifBinding.state = {}
