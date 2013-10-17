@@ -3108,12 +3108,22 @@
             clearTimeout(holdTimeout)
             touchProxy = {}
         }
+        var isWP = window.navigator.msPointerEnabled
+        function isPrimaryTouch(event) {
+            if (isWP) {
+                return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
+            }
+        }
         DOC.addEventListener("DOMContentLoaded", function() {
+
             var now, delta, deltaX = 0,
                     deltaY = 0,
                     firstTouch
-            DOC.addEventListener('touchstart', function(e) {
+            DOC.addEventListener(isWP ? "MSPointerDown" : "touchstart", function(e) {
                 firstTouch = e.touches[0]
+                if (isPrimaryTouch(e) === false) {
+                    return
+                }
                 now = Date.now()
                 delta = now - (touchProxy.last || now)
                 var el = firstTouch.target
@@ -3132,8 +3142,11 @@
                 touchProxy.last = now
                 holdTimeout = setTimeout(longTap, 750)
             })
-            DOC.addEventListener('touchmove', function(e) {
+            DOC.addEventListener(isWP ? "MSPointerMove" : "touchmove", function(e) {
                 firstTouch = e.touches[0]
+                if (isPrimaryTouch(e) === false) {
+                    return
+                }
                 cancelHold()
                 e.preventDefault()
                 touchProxy.x2 = firstTouch.pageX
@@ -3141,8 +3154,12 @@
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
                 deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
             })
-            DOC.addEventListener('touchend', function(e) {
+
+            DOC.addEventListener(isWP ? "MSPointerUp" : "touchend", function(e) {
                 cancelHold()
+                if (isPrimaryTouch(e) === false) {
+                    return
+                }
                 if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
                         (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
                     //如果是滑动，根据最初与最后的位置判定其滑动方向
@@ -3172,7 +3189,7 @@
                 window.getSelection().removeAllRanges()
                 deltaX = deltaY = 0
             })
-            DOC.addEventListener('touchcancel', cancelAll)
+            DOC.addEventListener(isWP ? "MSPointerCancel" : "touchcancel", cancelAll)
         })
         //http://quojs.tapquo.com/ http://code.baidu.com/
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
