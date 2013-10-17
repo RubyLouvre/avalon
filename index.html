@@ -809,7 +809,7 @@
             然后将avalon.modules.jquery 加个预设值（exports: jquery用于shim机制， state: 2 表明它已经加载完毕）就行了。</p>
         <fieldset>
             <legend>例子</legend>
-            <pre class="brush:javascript;gutter:false;toolbar:false">
+                    <pre class="brush:javascript;gutter:false;toolbar:false">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 
@@ -832,26 +832,77 @@
                 exports: jQuery,
                 state: 2
             }
-            $.ajaxSetup({
-                headers: {ajaxRequest: true},
-                beforeSend: function(o) {
-                    avalon.log(typeof o)
-                    avalon.log(typeof o.id)
-                },
-                complete: function(data) {
-                    avalon.log('ajax 成功执行啦，阿门！')
+            require('jquery,ready!', function($) {
+                avalon.log('加载jq了啊……')
+                $.ajaxSetup({
+                    headers: {ajaxRequest: true},
+                    beforeSend: function(o) {
+                        avalon.log(typeof o)
+                        avalon.log(typeof o.id)
+                    },
+                    complete: function(data) {
+                        avalon.log('ajax 成功执行啦，阿门！')
+                    }
+                })
+                $('body').bind("click", function(e) {
+                    alert("document");
+                    avalon.log(typeof e.target.$vmodel)
+                    $.post('./h.js', {}, function(res) {
+                        avalon.log(typeof res)
+                    })
+                });
+            })
+
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+            </pre>
+            <pre class="brush:javascript;gutter:false;toolbar:false">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+
+    &lt;head&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+        &lt;!--&gt;这里没有东西&lt;/--&gt;
+        &lt;script src="avalon.js" type="text/javascript"&gt;&lt;/script&gt;
+
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div ms-controller="main" ms-click="click"&gt;
+            &lt;p&gt;
+                &lt;a href="#" &gt;点击我&lt;/a&gt;
+            &lt;/p&gt;
+        &lt;/div&gt;
+        &lt;script type="text/javascript"&gt;
+
+            avalon.config({
+                alias: {
+                    jquery: {
+                        exports: "jQuery",
+                        src: "jquery.js"
+                    }
                 }
             })
-            $('body').bind("click", function(e) {
-                alert("document");
-                avalon.log(typeof e.target.$vmodel)
-                $.post('./h.js', {}, function(res) {
-                    avalon.log(typeof res)
-                })
-            });
-
-            avalon.require('jquery', function() {
+            require('jquery,ready!', function($) {
                 avalon.log('加载jq了啊……')
+                $.ajaxSetup({
+                    headers: {ajaxRequest: true},
+                    beforeSend: function(o) {
+                        avalon.log(typeof o)
+                        avalon.log(typeof o.id)
+                    },
+                    complete: function(data) {
+                        avalon.log('ajax 成功执行啦，阿门！')
+                    }
+                })
+                $('body').bind("click", function(e) {
+                    alert("document");
+                    avalon.log(typeof e.target.$vmodel)
+                    $.post('./h.js', {}, function(res) {
+                        avalon.log(typeof res)
+                    })
+                });
             })
 
         &lt;/script&gt;
