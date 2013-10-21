@@ -214,7 +214,7 @@
                         if (type === "number" && !isFinite(value + "")) {
                             return
                         }
-                        if (isFinite(value) && !cssNumber[prop]) {
+                        if (isFinite(value) && !avalon.cssNumber[prop]) {
                             value += "px"
                         }
                         fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
@@ -565,7 +565,7 @@
                 "float": 'cssFloat',
                 background: "backgroundColor"
             }
-            var cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+            avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
             avalon.cssName = function(name, host, camelCase) {
                 if (cssMap[name]) {
