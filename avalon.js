@@ -152,7 +152,7 @@
         }
         return target
     }
-    var eventMap = {}
+    var eventMap = avlaon.eventMap = {}
 
     function resetNumber(a, n, end) { //用于模拟slice, splice的效果
         if ((a === +a) && !(a % 1)) { //如果是整数
@@ -256,7 +256,7 @@
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
-            name = cssName(prop) || prop
+            name =  avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
                 var val = fn(node, name)
@@ -726,7 +726,7 @@
     }
     var cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
-    function cssName(name, host, camelCase) {
+    avalon.cssName = function(name, host, camelCase) {
         if (cssMap[name]) {
             return cssMap[name]
         }
@@ -1898,6 +1898,7 @@
         }
         return cacheDisplay[nodeName]
     }
+    avalon.parseDisplay = parseDisplay
     var supportDisplay = (function(td) {
         return window.getComputedStyle ?
                 window.getComputedStyle(td, null).display === "table-cell" : true
