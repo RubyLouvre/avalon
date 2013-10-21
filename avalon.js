@@ -152,7 +152,7 @@
         }
         return target
     }
-    var eventMap = avlaon.eventMap = {}
+    var eventMap = avalon.eventMap = {}
 
     function resetNumber(a, n, end) { //用于模拟slice, splice的效果
         if ((a === +a) && !(a % 1)) { //如果是整数
