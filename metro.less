@@ -1,40 +1,58 @@
 @import "./mulicolumn.less";
-ul{ 
+
+.columns {
     width: 2200px;
-    background:#a9ea00;
-    .column-width(320px);
-    @value:1px solid blue;
-   .column-rule(@value);
-   .column-gap(0px);
-  // padding:20px 0 0 20px;
-   margin:0px;
-   font-size:0;
-    -webkit-text-size-adjust:none;
-  height:600px;
+    background: #a9ea00;
+    .column-width(340px);
+    @value: 1px solid blue;
+  //  .column-rule(@value);
+    .column-gap(0px);
+    margin: 0px;
+    font-size: 0;
+    -webkit-text-size-adjust: none;
+    height: 600px;
 }
-li{
-    display:inline-block;
-    width:150px;
-    height:150px;
-    background: red;
+
+.noPaddingLeft {
+    padding-left: 0;
+}
+
+app {
+    display: inline-block;
+    width: 150px;
+    height: 150px;
+
     list-style: none;
-    padding:0px;
-    margin: 0px 20px 20px 0;
+    //   padding:0px;
+    padding: 20px 20px 0px 20px;
     font-size: 12px;
     .column-gap(0);
 }
-li:nth-child(even){
-     background: yellowgreen;
+
+.appme {
+    background: red;
+    width: 100%;
+    height: 100%;
 }
-li:nth-child(3n){
-     background: pink;
-     width:320px;
-     height:150px;
-     margin:0 0 20px 0;
+
+.appme:hover {
+    outline: 10px solid rgb(215, 166, 227);
 }
-li:nth-child(4n){
-    background:green;
-    width:320px;
-    height:320px;
-    margin:0 0 20px 0;
+
+.app_head {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    background: #fff;
+}
+
+.app_middle {
+    width: 320px;
+    height: 150px;
+}
+
+.app_big {
+    width: 320px;
+    height: 320px;
 }

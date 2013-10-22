@@ -140,7 +140,6 @@ define(["avalon"], function(avalon) {
             var startOffset = $element.offset()
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
-                clone.style.backgroundColor = "yellow"
 
                 avalon(clone).css("opacity", .5).width(element.offsetWidth).height(element.offsetHeight)
 
