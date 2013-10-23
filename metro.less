@@ -73,15 +73,15 @@ app {
         -moz-box-sizing: border-box;
         b {
             width: 150px;
-            height: 142px;
-            .fixb();
+            height: 150px;
+            .fixb();//use relative positioned pseudo element to fix the elements of dynamic insertion position alignment
             &:before{
                 content: "";
                 display: block;
                 width: 150px;
                 height: 10px;
-                position: absolute;
-                top: 12px;
+                position: relative;
+                opacity: .3;
                 background: yellow;
              }
         }

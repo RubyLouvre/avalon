@@ -62,7 +62,7 @@ app {
 }
 .placehoder.app_small b {
   width: 150px;
-  height: 142px;
+  height: 150px;
   background: yellow;
   text-align: center;
   opacity: .3;
@@ -73,8 +73,8 @@ app {
   display: block;
   width: 150px;
   height: 10px;
-  position: absolute;
-  top: 12px;
+  position: relative;
+  opacity: .3;
   background: yellow;
 }
 .placehoder.app_middle b {
