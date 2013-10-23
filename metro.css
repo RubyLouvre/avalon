@@ -62,11 +62,20 @@ app {
 }
 .placehoder.app_small b {
   width: 150px;
-  height: 145px;
+  height: 142px;
   background: yellow;
   text-align: center;
   opacity: .3;
   display: block;
+}
+.placehoder.app_small b:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 10px;
+  position: absolute;
+  top: 12px;
+  background: yellow;
 }
 .placehoder.app_middle b {
   width: 320px;

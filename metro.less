@@ -73,8 +73,17 @@ app {
         -moz-box-sizing: border-box;
         b {
             width: 150px;
-            height: 145px;
-            .fixb()
+            height: 142px;
+            .fixb();
+            &:before{
+                content: "";
+                display: block;
+                width: 150px;
+                height: 10px;
+                position: absolute;
+                top: 12px;
+                background: yellow;
+             }
         }
     }
     &.app_middle {
