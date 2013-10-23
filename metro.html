@@ -66,8 +66,8 @@
                                 //   avalon.log("small siblings")
                                 i++
                             } else {
-                                
-                                el.insertAdjacentHTML("afterEnd","<app class='placehoder noPaddingRight app_small '>placehoder</app>")
+
+                                el.insertAdjacentHTML("afterEnd", "<app class='placehoder  app_small '><b>placehoder</b></app>")
                             }
                         } else if (size === "middle") {
                             height += 170
@@ -77,13 +77,13 @@
                             el.left = false
                             if (height >= 510) {
                                 column++
-                                //    avalon.log(height + "==============big")
+                                avalon.log(height + "==============big")
                                 if (height > 510) {
-                                      el.insertAdjacentHTML("beforeBegin","<app class='placehoder app_middle '>placehoder</app>")
-                                    //  avalon.log("另起一行")
+                                    el.insertAdjacentHTML("beforeBegin", "<app class='placehoder app_middle '><b>placehoder</b></app>")
+                                    avalon.log("另起一行")
                                     height = 340
                                 } else {
-                                    //    avalon.log(" 归零")
+                                    avalon.log(" 归零")
                                     height = 0
                                 }
                             }
@@ -125,7 +125,7 @@
                     vm.current = ""
                     vm.handle = function(e) {
                         var el = e.target
-                        if (/app_head/.test(el.className)) {
+                        if (/apphead/.test(el.className)) {
                             return el
                         }
                     }
@@ -155,11 +155,10 @@
                             for (var i = 0, obj; obj = model.$map[i++]; ) {
                                 if (mouseX > obj.left && mouseX < obj.right && mouseY > obj.top && mouseY < obj.bottom) {
                                     var node = obj.node
-                                    var old = document.querySelector(".moveTo")
+                                    var old = document.querySelector(".hover")
                                     if (old != node) {
-                                        old && old.classList.remove("moveTo")
-                                        node.classList.add("moveTo")
-                                        model.current = node.className
+                                        old && old.classList.remove("hover")
+                                        node.classList.add("hover")
                                     }
                                 }
                             }
@@ -170,7 +169,7 @@
                         data.dragX = false
                         data.dragY = false
 
-                        vm.$map = []
+                        model.$map = []
                         var el = data.$element
                         var width = el.width()
                         var height = el.height()
@@ -181,92 +180,23 @@
                             height /= 2
                         }
                         var dir = swipeDirection(data.startPageX, data.pageX, data.startPageY, data.pageY)
-
                         setTimeout(function() {
-
-                            var el = document.querySelector(".moveTo")
-
+                            var el = document.querySelector(".hover")
                             if (el) {
-                                if (dir == "left" || dir == "up") {
+                                if (/placeholder/.test(el.className)) {
+                                    el.parentNode.replaceChild(data.element, el)
+                                } else if (dir == "left" || dir == "up") {
                                     el.parentNode.insertBefore(data.element, el || null)
-                                    //    p = "后面"
+
                                 } else {
-                                    //     p = "前面"
                                     el.parentNode.insertBefore(data.element, el.nextElementSibling || null)
                                 }
-                                el.classList.remove("moveTo")
-
-                                //    document.querySelectorAll(".moveTo")[0].classList.remove(".moveTo")
-                            } else {//如果找不到说明用户把它放于一个空白处
-                                //判定用户放置时的位置是靠当前列的左边还是右边
-                                //     var isLeft = (data.pageX - bodyPadding) % 360 < 150
-                                // var target = getTarget((data.pageX - bodyPadding) % 360 * 150, (data.pageY - bodyPadding) % 360 * 150)
-                                //  alert(target && target.className)
-
+                                el.classList.remove("hover")
                             }
                             Array.prototype.forEach.call(document.querySelectorAll("app.placehoder"), function(node) {
                                 node.parentNode.removeChild(node)
                             })
-                            //判定用户放置时的位置是靠当前列的左边还是右边
-                            /*    var isLeft= (data.pageX - bodyPadding) % 360 < 150
-                             
-                             var target = getTarget(data, 10, 10)
-                             var msg = "在其左上角找到，"
-                             var swap = false
-                             if (!target || !isApp(target)) {
-                             target = getTarget(data, -150, 0)
-                             if (target && target.left) {
-                             target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                             swap = true
-                             avalon.log("在左边找到，插入到" + target.className + "后面")
-                             } else {
-                             target = null
-                             }
-                             
-                             }
-                             if (isLeft) {
-                             if (!target || !isApp(target)) {
-                             target = getTarget(data, 150, -150)
-                             if (target) {
-                             target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                             swap = true
-                             avalon.log("在右上边找到，插入到" + target.className + "后面")
-                             }
-                             }
-                             }
-                             if (!isLeft) {
-                             if (!target || !isApp(target)) {
-                             target = getTarget(data, -150, -150)
-                             if (target) {
-                             target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                             swap = true
-                             avalon.log("在左上边找到，插入到" + target.className + "后面")
-                             }
-                             }
-                             }
-                             if (!target || !isApp(target)) {
-                             target = getTarget(data, 0, -150)
-                             if (target) {
-                             target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                             swap = true
-                             avalon.log("在正上边找到，插入到" + target.className + "后面")
-                             }
-                             }
-                             console.log(target)
-                             if (target && isApp(target)) {
-                             if (!swap) {
-                             var p = ""
-                             if (isNext(data.element, target)) {
-                             p = "后面"
-                             target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                             } else {
-                             p = "前面"
-                             target.parentNode.insertBefore(data.element, target)
-                             }
-                             console.log("=================")
-                             avalon.log(msg + "插入到" + target.className + p)
-                             }
-                             }*/
+
                             avalon(data.element).css("display", "inline-block").css("position", "static")
                             resetLayout(parent)
                         }, 300)
@@ -283,11 +213,10 @@
         </script>
     </head>
     <body ms-controller="xxx">
-        <p>{{current}}</p>
         <div class="columns"  ms-each-el="array">
             <app  ms-draggable="stop" data-start="start" data-drag="drag"  ms-attr-appindex="$index" data-before-stop="beforeStop" data-ghosting="true" data-handle="handle" ms-class="app_{{el}}" ms-class-="app{{$index}}">
-                <div class="appme" ms-css-background="getColor()">
-                    <div class="app_head">APP {{$index}}</div>
+                <div class="appbody" ms-css-background="getColor()">
+                    <div class="apphead">APP {{$index}}</div>
                 </div>
             </app>
         </div>

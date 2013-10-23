@@ -15,14 +15,32 @@
 .noPaddingRight {
   padding-right: 0;
 }
-.moveTo .appme:before {
+.hover.app_small .appbody:before {
   content: "";
   display: block;
   width: 150px;
-  height: 10px;
+  height: 5px;
   position: absolute;
-  top: 10px;
-  background: black;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_middle .appbody:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_big .appbody:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
 }
 app {
   display: inline-block;
@@ -36,18 +54,37 @@ app {
   -webkit-column-gap: 0;
   column-gap: 0;
 }
-app.placehoder {
-  background: red;
+.placehoder.app_small {
+  height: 150px;
+  width: 160px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
 }
-.appme {
+.placehoder.app_small b {
+  width: 150px;
+  height: 145px;
+  background: yellow;
+  text-align: center;
+  opacity: .3;
+  display: block;
+}
+.placehoder.app_middle b {
+  width: 320px;
+  height: 150px;
+  background: yellow;
+  text-align: center;
+  opacity: .3;
+  display: block;
+}
+.appbody {
   background: red;
   width: 100%;
   height: 100%;
 }
-.appme:hover {
+.appbody:hover {
   outline: 10px solid #d7a6e3;
 }
-.app_head {
+.apphead {
   width: 100%;
   height: 30px;
   line-height: 30px;

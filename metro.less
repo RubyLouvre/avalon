@@ -5,7 +5,7 @@
     background: #a9ea00;
     .column-width(340px);
     @value: 1px solid blue;
-  //  .column-rule(@value);
+    //  .column-rule(@value);
     .column-gap(0px);
     margin: 0px;
     font-size: 0;
@@ -16,49 +16,87 @@
 .noPaddingRight {
     padding-right: 0;
 }
-.moveTo {
-  .appme{
-      &:before{
-     content:"";  
-     display:block;
-     width:150px;
-     height:10px;
-     position:absolute;
-     top:10px;
-     background:black;
-   }
-  }
-  
+
+.hover(@width) {
+    .appbody {
+        &:before {
+            content: "";
+            display: block;
+            width: @width;
+            height: 5px;
+            position: absolute;
+            top: 15px;
+            background: #01B4D2;
+        }
+    }
+}
+
+.hover {
+    &.app_small {
+        @value: 150px;
+        .hover(@value);
+    }
+    &.app_middle {
+        @value: 320px;
+        .hover(@value);
+    }
+    &.app_big {
+        @value: 320px;
+        .hover(@value);
+    }
 }
 
 app {
     display: inline-block;
     width: 150px;
     height: 150px;
-    position:relative;
+    position: relative;
     list-style: none;
     //   padding:0px;
     padding: 20px 20px 0px 20px;
     font-size: 12px;
     .column-gap(0);
-    &.placehoder{
-     
-          background:red;
-       
+}
+
+.fixb() {
+    background: yellow;
+    text-align: center;
+    opacity: .3;
+    display: block;
+}
+
+.placehoder {
+    &.app_small {
+        height: 150px;
+        width: 160px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        b {
+            width: 150px;
+            height: 145px;
+            .fixb()
+        }
+    }
+    &.app_middle {
+        b {
+            width: 320px;
+            height: 150px;
+            .fixb();
+        }
     }
 }
 
-.appme {
+.appbody {
     background: red;
     width: 100%;
     height: 100%;
 }
 
-.appme:hover {
+.appbody:hover {
     outline: 10px solid rgb(215, 166, 227);
 }
 
-.app_head {
+.apphead {
     width: 100%;
     height: 30px;
     line-height: 30px;
