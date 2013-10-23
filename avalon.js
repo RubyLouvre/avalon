@@ -256,23 +256,24 @@
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
-            name =  avalon.cssName(prop) || prop
+            name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
                 var val = fn(node, name)
                 return value === true ? parseFloat(val) || 0 : val
-            } else { //设置样式
-                var type = typeof value
-                if (type === "number" && !isFinite(value + "")) {
-                    return
+            } else if (value === "") { //请除样式
+                node.style[name] = ""
+            } else {//设置样式
+                if (value == null || value !== value) {
+                    return;
                 }
                 if (isFinite(value) && !avalon.cssNumber[prop]) {
                     value += "px"
                 }
                 fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
                 fn(node, name, value)
-                return that
             }
+            return that
         }
     })
 
@@ -741,6 +742,8 @@
     }
     cssHooks["@:set"] = function(node, name, value) {
         try { //node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine 在旧式IE下会抛异常
+            // Support: 在Chrome, Safari下用空字符串去掉 !important;
+            node.style[name] = "";
             node.style[name] = value
         } catch (e) {
         }
@@ -819,6 +822,72 @@
                     avalon(node).position()[name] + "px"
         }
     })
+
+    function toNumber(styles, name) {
+        return parseFloat(styles[name]) || 0;
+    }
+
+    function showHidden(node, array) {
+        //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+        if (node && node.nodeType === 1 && node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+            if (cssHooks["@:get"](node, "display") === "none") {
+                var obj = {
+                    node: node
+                };
+                for (var name in cssShow) {
+                    obj[name] = node.style[name];
+                    node.style[name] = cssShow[name] || parseDisplay(node.nodeName) 
+                }
+                array.push(obj) 
+            }
+            showHidden(node.parentNode, array) 
+        }
+    }
+    var cssPair = {
+        Width: ['Left', 'Right'],
+        Height: ['Top', 'Bottom']
+    },
+    cssShow = {
+        position: "absolute",
+        visibility: "hidden",
+        display: ""
+    };
+    function setWH(node, name, val, extra) {
+        var which = cssPair[name],
+                styles = node.currentStyle || window.getComputedStyle(node, null) 
+        which.forEach(function(direction) {
+            if (extra < 1)
+                val -= toNumber(styles, 'padding' + direction) 
+            if (extra < 2)
+                val -= toNumber(styles, 'border' + direction + 'Width') 
+            if (extra === 3) {
+                val += parseFloat(cssHooks["@:get"](node, 'margin' + direction, styles)) || 0
+            }
+            if (extra === "padding-box") {
+                val += toNumber(styles, 'padding' + direction) 
+            }
+            if (extra === "border-box") {
+                val += toNumber(styles, 'padding' + direction) 
+                val += toNumber(styles, 'border' + direction + 'Width') 
+            }
+        }) 
+        return val
+    }
+
+    function getWH(node, name, extra) { //注意 name是首字母大写
+        var hidden = [];
+        showHidden(node, hidden) 
+        var val = setWH(node, name, node["offset" + name], extra) 
+        for (var i = 0, obj; obj = hidden[i++]; ) {
+            node = obj.node;
+            for (name in obj) {
+                if (typeof obj[name] === "string") {
+                    node.style[name] = obj[name]
+                }
+            }
+        }
+        return val;
+    }
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
@@ -837,10 +906,17 @@
                     //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
                     return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
-                return parseFloat(this.css(method)) || 0
+                return getWH(node, name, 0) 
             } else {
                 return this.css(method, value)
             }
+        }
+        cssHooks[method + ":get"] = function(node) {
+            return getWH(node, name, 0) + "px" //添加相应适配器
+        }
+        cssHooks[method + ":set"] = function(node, nick, value) {
+            var box = avalon.css(node, "box-sizing")  //nick防止与外面name冲突
+            node.style[nick] = box === "content-box" ? value : setWH(node, name, parseFloat(value), box) + "px"
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
@@ -1632,7 +1708,7 @@
                 }
             }
         }
-        bindings.sort(function(a, b){
+        bindings.sort(function(a, b) {
             return a.node.name > b.node.name
         })
         if (ifBinding) {
@@ -3566,7 +3642,7 @@
             doScrollCheck()
         }
     }
-  
+
     avalon.ready = function(fn) {
         innerRequire("ready!", fn)
     }
