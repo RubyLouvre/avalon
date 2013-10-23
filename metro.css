@@ -12,19 +12,32 @@
   -webkit-text-size-adjust: none;
   height: 600px;
 }
-.noPaddingLeft {
-  padding-left: 0;
+.noPaddingRight {
+  padding-right: 0;
+}
+.moveTo .appme:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 10px;
+  position: absolute;
+  top: 10px;
+  background: black;
 }
 app {
   display: inline-block;
   width: 150px;
   height: 150px;
+  position: relative;
   list-style: none;
   padding: 20px 20px 0px 20px;
   font-size: 12px;
   -moz-column-gap: 0;
   -webkit-column-gap: 0;
   column-gap: 0;
+}
+app.placehoder {
+  background: red;
 }
 .appme {
   background: red;
