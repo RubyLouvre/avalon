@@ -2436,14 +2436,11 @@
         WebKitAnimationEvent: 'webkitAnimationEnd'
     }
     for (var name in eventName) {
-        try {
-            DOC.createEvent(name)
+        if (/object|function/.test(typeof window[name])) {
             eventMap.animationend = eventName[name]
-            break
-        } catch (e) {
+            break;
         }
     }
-
     function fixEvent(event) {
         var target = event.target = event.srcElement
         event.which = event.charCode != null ? event.charCode : event.keyCode

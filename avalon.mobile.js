@@ -609,7 +609,7 @@
                     avalon(node).position()[name] + "px"
         }
     })
-   
+
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
@@ -2015,11 +2015,9 @@
         WebKitAnimationEvent: 'webkitAnimationEnd'
     }
     for (var name in eventName) {
-        try {
-            DOC.createEvent(name)
+        if (/object|function/.test(typeof window[name])) {
             eventMap.animationend = eventName[name]
-            break
-        } catch (e) {
+            break;
         }
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
