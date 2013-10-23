@@ -24,7 +24,25 @@
   top: 15px;
   background: #01B4D2;
 }
+.hover.app_small.placehoder:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 5px;
+  position: absolute;
+  top: 20px;
+  background: #01B4D2;
+}
 .hover.app_middle .appbody:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_middle.placehoder:before {
   content: "";
   display: block;
   width: 320px;
@@ -74,6 +92,7 @@ app {
   width: 150px;
   height: 10px;
   position: relative;
+  top: 0px;
   opacity: .3;
   background: yellow;
 }

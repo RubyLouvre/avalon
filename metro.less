@@ -17,33 +17,41 @@
     padding-right: 0;
 }
 
-.hover(@width) {
+.before(@width, @top) {
+    &:before {
+        content: "";
+        display: block;
+        width: @width;
+        height: 5px;
+        position: absolute;
+        top: @top;
+        background: #01B4D2;
+    }
+}
+
+.hover(@width, @top) {
     .appbody {
-        &:before {
-            content: "";
-            display: block;
-            width: @width;
-            height: 5px;
-            position: absolute;
-            top: 15px;
-            background: #01B4D2;
-        }
+        .before(@width, @top);
     }
 }
 
 .hover {
     &.app_small {
-        @value: 150px;
-        .hover(@value);
+        .hover(150px, 15px);
+        &.placehoder {
+            .before(150px, 20px);
+        }
     }
     &.app_middle {
-        @value: 320px;
-        .hover(@value);
+        .hover(320px, 15px);
+        &.placehoder {
+            .before(320px, 15px);
+        }
     }
     &.app_big {
-        @value: 320px;
-        .hover(@value);
+        .hover(320px, 15px);
     }
+
 }
 
 app {
@@ -74,16 +82,17 @@ app {
         b {
             width: 150px;
             height: 150px;
-            .fixb();//use relative positioned pseudo element to fix the elements of dynamic insertion position alignment
-            &:before{
+            .fixb(); //use relative positioned pseudo element to fix the elements of dynamic insertion position alignment
+            &:before {
                 content: "";
                 display: block;
                 width: 150px;
                 height: 10px;
                 position: relative;
+                top: 0px;
                 opacity: .3;
                 background: yellow;
-             }
+            }
         }
     }
     &.app_middle {
