@@ -55,8 +55,8 @@ app {
   column-gap: 0;
 }
 .placehoder.app_small {
-  height: 150px;
-  width: 160px;
+  height: 160px;
+  width: 180px;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
 }
