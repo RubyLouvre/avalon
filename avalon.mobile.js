@@ -1181,7 +1181,7 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttributeNode(node)
+            elem.removeAttribute(node.name)//IE6-10 removeAttributeNode不会刷新[ms-controller]样式规则
         }
         scanAttr(elem, vmodels, function(status) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
