@@ -118,7 +118,7 @@ app {
   line-height: 30px;
   text-align: center;
   background: #fff;
-  cursor:pointer;
+  cursor: move;
 }
 .app_middle {
   width: 320px;
