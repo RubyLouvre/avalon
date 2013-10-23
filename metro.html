@@ -135,19 +135,9 @@
 
                     }
                     vm.beforeStop = function(e, data) {
-                        data.dragX = false
-                        data.dragY = false
-
+                        data.dragX =  data.dragY = false//禁止在stop自动拖拽到最终位置
                         model.$map = []
-                        var el = data.$element
-                        var width = el.width()
-                        var height = el.height()
-                        if (width > 150) {
-                            width /= 2
-                        }
-                        if (height > 150) {
-                            height /= 2
-                        }
+
                         var dir = swipeDirection(data.startPageX, data.pageX, data.startPageY, data.pageY)
                         setTimeout(function() {
                             var el = document.querySelector(".hover")
@@ -165,8 +155,6 @@
                             Array.prototype.forEach.call(document.querySelectorAll("app.placehoder"), function(node) {
                                 node.parentNode.removeChild(node)
                             })
-
-                            avalon(data.element).css("display", "inline-block").css("position", "static")
                             resetLayout(parent)
                         }, 300)
                     }
