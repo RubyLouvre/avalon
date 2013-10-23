@@ -10,39 +10,10 @@
 
         <script>
 
-            //  var point = document.getElementById("redpoint")
-            // if (point) {
-            //      document.body.removeChild(point)
-            //   }
-            //   point = document.createElement("div")
-            //    point.id = "redpoint"
-            //   point.style.cssText = "position:absolute;z-index:1000;width:10px;height:10px;background:red;top:" + data.top + "px;left:" + data.left + "px;"
-            //   document.body.appendChild(point)
+
             avalon.require("avalon.draggable", function() {
-                function isNext(A, B) {//判定A是否在B的前面
-                    var next = A.nextElementSibling
-                    while (next !== null) {
-                        if (next === B) {
-                            return true
-                        } else {
-                            next = next.nextElementSibling
-                        }
-                    }
-                }
-                function getTarget(data, x, y) {
-                    var target = document.elementFromPoint(data.pageX + x, data.pageY + y)
-                    while (target && target.tagName != "APP") {
-                        target = target.parentNode;
-                    }
-                    return target
-                }
-                function getTarget2(x, y) {
-                    var target = document.elementFromPoint(x, y)
-                    while (target && target.tagName != "APP") {
-                        target = target.parentNode;
-                    }
-                    return target
-                }
+
+
                 function getSize(target) {
                     return target.className.match(/app_(\w+)/)[1]
                 }
@@ -102,7 +73,6 @@
                     parent.style.width = (column) * 360 + "px"
                 }
                 var parent = document.querySelector(".columns");
-                var bodyPadding = parseFloat(avalon(document.body).css("margin-left"))
                 var lastTime
 
                 function swipeDirection(x1, x2, y1, y2) {
@@ -110,8 +80,7 @@
                             Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
                 }
 
-
-                var model = avalon.define("xxx", function(vm) {
+                var model = avalon.define("metro", function(vm) {
                     vm.array = ["middle", "small", "small", "small", "small", "small", "small", "big", "small", "small", "big", "big", "middle", "small", "small"]
 
                     vm.getColor = function() {
@@ -212,7 +181,7 @@
 
         </script>
     </head>
-    <body ms-controller="xxx">
+    <body ms-controller="metro">
         <div class="columns"  ms-each-el="array">
             <app  ms-draggable="stop" data-start="start" data-drag="drag"  ms-attr-appindex="$index" data-before-stop="beforeStop" data-ghosting="true" data-handle="handle" ms-class="app_{{el}}" ms-class-="app{{$index}}">
                 <div class="appbody" ms-css-background="getColor()">
