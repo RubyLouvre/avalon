@@ -104,11 +104,11 @@ define(["avalon"], function(avalon) {
             fixUserSelect()
             //在处理手柄拖动前做些事情
 
-               //在处理手柄拖动前做些事情
+            //在处理手柄拖动前做些事情
             if (typeof options.beforeStart === "function") {
                 options.beforeStart.call(data.element, e, data)
             }
- 
+
             if (data.handle && model) {// 实现手柄拖动
                 var handle = model[data.handle]
                 if (typeof handle === "function") {
@@ -159,6 +159,7 @@ define(["avalon"], function(avalon) {
             //拖动前相对于offsetParent的坐标
             data.startLeft = target.css("left", true)
             data.startTop = target.css("top", true)
+            // target.css("pointer-events","none")
             //拖动后相对于offsetParent的坐标
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
             data.endLeft = $element.css("left", true) - data.startLeft
@@ -265,8 +266,11 @@ define(["avalon"], function(avalon) {
     }
     function restoreUserSelect() {
         if (!styleEl.styleSheet) {
-            styleEl.innerText = ""
-            styleEl.removeChild(styleEl.firstChild)
+            styleEl.innerHTML = ""
+            try {
+                styleEl.removeChild(styleEl.firstChild)
+            } catch (e) {
+            }
         }
         body.removeChild(styleEl)
     }
