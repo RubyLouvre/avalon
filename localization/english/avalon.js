@@ -1554,7 +1554,7 @@
             }
             //ms-important doesn't include parent VM, ms-controller does.
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttribute(node.name)//removeAttributeNode不会刷新[ms-controller]样式规则
+            elem.removeAttribute(node.name) //removeAttributeNode doesn't refresh style defined by [ms-controller] selector in IEs
         }
         scanAttr(elem, vmodels, function(status) { //Scan attributes
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
