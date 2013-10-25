@@ -73,12 +73,14 @@ define(["avalon"], function(avalon) {
             var method = options[name]
             if (typeof method === "string") {
                 if (typeof opts[method] === "function") {
+
                     options[name] = opts[method]
                 } else {
                     options[name] = avalon.noop
                 }
             }
         })
+
         if (options.axis !== "" && !/^(x|y|xy)$/.test(options.axis)) {
             options.axis = "xy"
         }
@@ -89,25 +91,25 @@ define(["avalon"], function(avalon) {
                 $element: $element,
                 pageX: getPosition(e, "X"), //相对于页面的坐标, 会改动
                 pageY: getPosition(e, "Y"), //相对于页面的坐标，会改动
-                marginLeft: parseFloat($element.css("marginLeft")),
-                marginTop: parseFloat($element.css("marginTop"))
+                marginLeft: parseFloat($element.css("marginLeft")) || 0,
+                marginTop: parseFloat($element.css("marginTop")) || 0
             })
 
             data.startPageX = data.pageX//一次拖放只赋值一次
             data.startPageY = data.pageY//一次拖放只赋值一次
-            options.axis.toUpperCase().replace(/./g, function(x) {
-                if (data["drag" + x] === void 0) {
-                    data["drag" + x ] = true
-                }
+            options.axis.replace(/./g, function(a) {
+                data["drag" + a.toUpperCase() ] = true
             })
-
+            if (!data.dragX && !data.dragY) {
+                data.started = false
+            }
             fixUserSelect()
-            //在处理手柄拖动前做些事情
 
             //在处理手柄拖动前做些事情
             if (typeof options.beforeStart === "function") {
                 options.beforeStart.call(data.element, e, data)
             }
+
 
             if (data.handle && model) {// 实现手柄拖动
                 var handle = model[data.handle]
@@ -140,8 +142,9 @@ define(["avalon"], function(avalon) {
             var startOffset = $element.offset()
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
+                // clone.style.backgroundColor = "yellow"
 
-                avalon(clone).css("opacity", .5).width(element.offsetWidth).height(element.offsetHeight)
+                avalon(clone).css("opacity", .7).width(element.offsetWidth).height(element.offsetHeight)
 
                 data.clone = clone
                 if (position !== "fixed") {
@@ -157,13 +160,13 @@ define(["avalon"], function(avalon) {
             }
             var target = avalon(data.clone || data.element)
             //拖动前相对于offsetParent的坐标
-            data.startLeft = target.css("left", true)
-            data.startTop = target.css("top", true)
-            // target.css("pointer-events","none")
+            data.startLeft = parseFloat(target.css("left"))
+            data.startTop = parseFloat(target.css("top"))
+
             //拖动后相对于offsetParent的坐标
             //如果是影子拖动，代理元素是绝对定位时，它与原元素的top, left是不一致的，因此当结束拖放时，不能直接将改变量赋给原元素
-            data.endLeft = $element.css("left", true) - data.startLeft
-            data.endTop = $element.css("top", true) - data.startTop
+            data.endLeft = parseFloat($element.css("left")) - data.startLeft
+            data.endTop = parseFloat($element.css("top")) - data.startTop
 
             data.clickX = data.pageX - startOffset.left //鼠标点击的位置与目标元素左上角的距离
             data.clickY = data.pageY - startOffset.top //鼠标点击的位置与目标元素左上角的距离
@@ -185,6 +188,7 @@ define(["avalon"], function(avalon) {
     draggable.start = []
     draggable.drag = []
     draggable.stop = []
+    // draggable.beforeStart = []
     draggable.beforeStop = []
     draggable.plugin = {
         add: function(name, set) {
@@ -244,7 +248,6 @@ define(["avalon"], function(avalon) {
         var prop = Prop.toLowerCase()
 
         var number = data["start" + Prop] + page - data["startPage" + pos] + (end ? data["end" + Prop] : 0)
-
         data[prop] = number
         if (data["drag" + pos]) {//保存top, left
             element.style[ prop ] = number + "px"
@@ -266,7 +269,7 @@ define(["avalon"], function(avalon) {
     }
     function restoreUserSelect() {
         if (!styleEl.styleSheet) {
-            styleEl.innerHTML = ""
+            styleEl.innerText = ""
             try {
                 styleEl.removeChild(styleEl.firstChild)
             } catch (e) {
@@ -313,12 +316,12 @@ define(["avalon"], function(avalon) {
         restoreUserSelect()
         var element = data.element
         draggable.plugin.call("beforeStop", e, data)
-
-        setPosition(e, element, data, "X", true)
-
-
-        setPosition(e, element, data, "Y", true)
-
+        if (data.dragX) {
+            setPosition(e, element, data, "X", true)
+        }
+        if (data.dragY) {
+            setPosition(e, element, data, "Y", true)
+        }
         if (data.clone) {
             body.removeChild(data.clone)
         }
@@ -342,6 +345,7 @@ define(["avalon"], function(avalon) {
 
         if (o.containment === "window") {
             var $window = avalon(window)
+            //左， 上， 右， 下
             data.containment = [
                 $window.scrollLeft(),
                 $window.scrollTop(),
@@ -375,6 +379,7 @@ define(["avalon"], function(avalon) {
             }
             if (elem) {
                 var $offset = avalon(elem).offset()
+
                 data.containment = [
                     $offset.left,
                     $offset.top,
