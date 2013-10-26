@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.96   by Sitou Masami 2013.9.20
+// avalon 0.971   by Sitou Masami 2013.10.21
 // FAQ:
 //    Which license? MIT. ( Comparison between five popular open-source licenses, BSD, Apache, GPL, LGPL, and MIT  http://www.awflasher.com/blog/archives/939 )
 //    Dependencies? None, works well together with jQuery, Mass, etc.
@@ -155,7 +155,7 @@
         }
         return target
     }
-    var eventMap = {}
+    var eventMap = avalon.eventMap = {}
 
     function resetNumber(a, n, end) {//simulate slice and splice
         if ((a === +a) && !(a % 1)) { //if it is an integer
@@ -259,23 +259,26 @@
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
-            name = cssName(prop) || prop
+            name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //Retrieve css style
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
                 var val = fn(node, name)
                 return value === true ? parseFloat(val) || 0 : val
-            } else { //Set css style
-                var type = typeof value
-                if (type === "number" && !isFinite(value + "")) {
-                    return
+            } else if (value === "") { // Remove css style
+                node.style[name] = ""
+            } else {// Set css style
+                if (value == null || value !== value) {
+                    return;
+
                 }
-                if (isFinite(value) && !cssNumber[prop]) {
+                if (isFinite(value) && !avalon.cssNumber[prop]) {
                     value += "px"
                 }
                 fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
                 fn(node, name, value)
-                return that
+
             }
+            return that
         }
     })
 
@@ -730,9 +733,9 @@
         "float": 'cssFloat' in root.style ? 'cssFloat' : 'styleFloat',
         background: "backgroundColor"
     }
-    var cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+    avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
-    function cssName(name, host, camelCase) {
+    avalon.cssName = function(name, host, camelCase) {
         if (cssMap[name]) {
             return cssMap[name]
         }
@@ -747,6 +750,8 @@
     }
     cssHooks["@:set"] = function(node, name, value) {
         try { //node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine will throw exception in legacy IEs
+            // Support: Replace "!important" by blank string in Chrome and Safari
+            node.style[name] = "";
             node.style[name] = value
         } catch (e) {
         }
@@ -827,6 +832,9 @@
                     avalon(node).position()[name] + "px"
         }
     })
+
+
+
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
@@ -850,6 +858,7 @@
                 return this.css(method, value)
             }
         }
+
     })
     avalon.fn.offset = function() { //Get the position offset to the top-left conner of the page
         var node = this[0],
@@ -937,10 +946,6 @@
      *                          Array Helper                          *
      **********************************************************************/
     avalon.Array = {
-
-
-
-
 
         ensure: function(target) {
             //Push element(s) into an array only when it is not already in the array
@@ -1549,7 +1554,7 @@
             }
             //ms-important doesn't include parent VM, ms-controller does.
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttributeNode(node)
+            elem.removeAttribute(node.name) //removeAttributeNode doesn't refresh style defined by [ms-controller] selector in IEs
         }
         scanAttr(elem, vmodels, function(status) { //Scan attributes
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
@@ -1646,6 +1651,9 @@
                 }
             }
         }
+        bindings.sort(function(a, b) {
+            return a.node.name > b.node.name
+        })
         if (ifBinding) {
             //The "if" binding has the highest precedence, if the expression bound to "if" evaluated as false,
             // we skip processing binding properties on the current element and stop scanning child nodes
@@ -1911,6 +1919,7 @@
         }
         return cacheDisplay[nodeName]
     }
+    avalon.parseDisplay = parseDisplay
     var supportDisplay = (function(td) {
         return window.getComputedStyle ?
                 window.getComputedStyle(td, null).display === "table-cell" : true
@@ -2442,11 +2451,11 @@
         WebKitAnimationEvent: 'webkitAnimationEnd'
     }
     for (var name in eventName) {
-        try {
-            DOC.createEvent(name)
+        if (/object|function/.test(typeof window[name])) {
+
             eventMap.animationend = eventName[name]
-            break
-        } catch (e) {
+            break;
+
         }
     }
 
@@ -3586,6 +3595,7 @@
             doScrollCheck()
         }
     }
+
     avalon.ready = function(fn) {
         innerRequire("ready!", fn)
     }
