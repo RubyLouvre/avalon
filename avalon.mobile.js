@@ -892,6 +892,7 @@
                     astr = [],
                     bstr = [],
                     iterators = a[subscribers]
+
             var amodel = a.$model
             //得到要移除的键值对
             for (var i in amodel) {
@@ -1045,9 +1046,11 @@
                                 if (rchecktype.test(valueType)) {
                                     if ("value" in accessor) { //如果已经转换过
                                         value = updateViewModel(value, neo, valueType)
+                                        vmodel.$fire && vmodel.$fire(name, value, preValue)
                                     } else { //如果本来就是VM就直接输出，否则要转换
                                         value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
+                                    accessor[subscribers] = value[subscribers]
                                     complexValue = value.$model
                                 } else { //如果是其他数据类型
                                     value = neo
@@ -2349,6 +2352,7 @@
                 var key = object
                 var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
                 if (!mapper[key]) {
+                    var val = typeof val === "object" ? modelFactory(val) : val
                     var proxy = createWithProxy(key, val)
                     mapper[key] = proxy
                     if (val && val.$model) {

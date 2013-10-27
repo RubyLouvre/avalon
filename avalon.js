@@ -1281,9 +1281,11 @@
                                 if (rchecktype.test(valueType)) {
                                     if ("value" in accessor) { //如果已经转换过
                                         value = updateViewModel(value, neo, valueType)
+                                        vmodel.$fire && vmodel.$fire(name, value, preValue)
                                     } else { //如果本来就是VM就直接输出，否则要转换
                                         value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
+                                    accessor[subscribers] = value[subscribers]
                                     complexValue = value.$model
                                 } else { //如果是其他数据类型
                                     value = neo
