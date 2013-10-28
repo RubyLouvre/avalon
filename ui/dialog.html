@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+
+        <script>
+            require("avalon.dialog, avalon.draggable", function() {
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+        <div id="dialog" title="Basic dialog" ms-ui="dialog" data-modal="true" data-parent="body" data-id="idialog" data-auto-open="false">
+            <p>弹出层组件,直接在元素上添加ms-ui="dialog"就能让此元素变成组件。它的title变成标题栏文字。data-modal="true"变成模态对话框。点x关闭。 </p>
+        </div>
+        <p><input ms-important="idialog" ms-duplex-radio="toggle" type="checkbox">显示或隐藏对话框</p>
+
+    </body>
+</html>

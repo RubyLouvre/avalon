@@ -1,16 +1,15 @@
 
 //     http://www.knallgrau.at/code/colorpicker/demo
-(function(avalon) {
+define(["avalon"], function(avalon) {
     var defaults = {
         imagesBase: "colorpicker/",
         toggle: false,
         top: 0,
         left: 0
     };
-    var UI = avalon.ui["colorpicker"] = function(element, id) {
+    var UI = avalon.ui["colorpicker"] = function(element, id, vmodels, opts) {
         var $element = avalon(element);
-        var options = avalon.mix({}, defaults);
-        avalon.mix(options, $element.data());
+        var options = avalon.mix({}, defaults, $element.data());
         var domParser = document.createElement("div"), model;
         domParser.innerHTML = '<div ms-visible="toggle" ms-important="' + id + '" class="colorpicker ui-widget ui-widget-content ui-corner-all"><div class="colorpicker-div ui-corner-all" >' + (
                 (typeof document.documentElement.style.maxHeight === 'undefined') ? // apply png fix for ie 5.5 and 6.0
@@ -261,4 +260,5 @@
         };
     }
 
-})(window.avalon)
+    return avalon
+})

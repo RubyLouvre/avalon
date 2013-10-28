@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+
+        <script>
+            require("avalon.draggable", function() {
+                avalon.define("xxx", function(vm) {
+                    vm.test = function() {
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+        <style>
+            #aaa{
+                margin:40px;
+                border:1px solid red;
+                padding:20px;
+                width:800px;
+                height:400px;
+                position: fixed;
+                top: 25px;
+                left: 30px;
+            }
+            .bbb{
+                margin:100px;
+                position: absolute;
+                top: 100px;
+                left:100px;
+                width:100px;
+                height:100px;
+                background:green;
+            }
+        </style>
+    </head>
+    <body>
+        <pre>window.onload = function(){<br />	test = document.getElementById(&quot;test&quot;);<br />	test.onmousedown = down;<br />	test.onmousemove = move;<br />	document.onmouseup = up;<br /><span class="important">	test.style.position = &quot;relative&quot;;<br />	test.style.top = &quot;0px&quot;;<br />	test.style.left = &quot;0px&quot;;</span><br />}</pre>
+        <p>注意重点标出的三行代码，我们给元素设置了relative的position属性，这是由于元素只有定义了position属性，它的top和left属性才会有效，才能进一步地制作拖拽的效果。因此给元素假定定位为relative实在是迫于无奈，只能牺牲一些灵活性(当然也可以指定为absolute，要根据实际情况)。</p>
+        <p>之后我们又设定元素的top和left属性都为0px，这是为了方便后面的代码获得这两个CSS属性，简化了代码。但是这同时给使用这段代码的文档提了一个要求——要拖拽的元素必须设置top和left属性为0。这显然是一个不太合理的要求。</p>
+        <h2>解决问题</h2>
+        <p>我们在上一个例子中已经看到如何跨浏览器地利用<a href="20_javascript_css.html">JavaScript获得元素的CSS属性</a>了。现在就来稍稍修改上一个例子中的函数来，让它服务于我们的拖拽代码：</p>
+        <pre>&lt;script type=&quot;text/javascript&quot;&gt;<br />……<br />function dragInit(node){<br />	if(node.className == &quot;drag&quot;){ <br />		……
+<span class="important">		//仍然要求元素是relative定位<br />		node.style.position = &quot;relative&quot;;</span><br />		node.dragging = false;<br />	}<br />	var children = node.childNodes;<br />	for(var i = 0;i &lt; children.length; i++){<br />		dragInit(children[i]);<br />	}<br />}<br />window.onload = function(){<br />	dragInit(document);<br />	document.onmouseup = docUp;<br />}<br />function down(event)<br />{	<br />	event = event || window.event; <br />	dragElement = this;<br />	mouseX = parseInt(event.clientX);<br />	mouseY = parseInt(event.clientY);<br /><span class="important">	objY = parseInt(getNodeStyle(dragElement,&quot;top&quot;));<br />	objX = parseInt(getNodeStyle(dragElement,&quot;left&quot;));
+	//IE不返回未设置的CSS属性<br />	if(!objY)objY=0;<br />	if(!objX)objX=0;</span><br />	this.style.zIndex = max++;<br />}<br />……<br /><span class="important">function getNodeStyle(node,styleName){<br />	var realStyle = null;<br />	if(node.currentStyle){<br />		realStyle = node.currentStyle[styleNmae];<br />	}else if(window.getComputedStyle){<br />		realStyle = window.getComputedStyle(node,null)[styleName];<br />	}<br />	return realStyle;<br />}</span></pre>
+        <p>可以看到，我们使用getNodeStyle函数来获得元素的CSS属性值，这样我们的代码就可以适用于事先设置了top和left定位值的元素了。我做了一个测试页面，给两个可拖拽的div分别设置了如下的CSS规则：</p>
+        <pre>&lt;style type=&quot;text/css&quot;&gt;<br />.drag{border:1px solid; width:400px; background:#CCCCCC;}<br /><span class="important">#test1{ top:20px;}<br />#test2{ left:40px;}</span><br />&lt;/style&gt;</pre>
+        <p>点击进入<a href="tuozhuai_ex4.html">测试页面</a>。这样，我们的拖拽代码又改进了一小步。</p>
+        <h2>JavaScript拖拽系列</h2>
+        <!-- #BeginLibraryItem "/Library/js拖拽.lbi" --><ol><li><a href="13_tuozhuai.html">JavaScript拖拽</a></li>
+            <li><a href="14_tuozhuai2.html">JavaScript拖拽2——多元素、分离JS</a></li>
+            <li><a href="15_tuozhuai3.html">JavaScript拖拽3——解决快速拖拽的问题</a></li>
+            <li><a href="21_tuozhuai4.html">JavaScript拖拽4——获得元素的位置</a></li>
+            <li><a href="22_tuozhuai5.html">JavaScript拖拽5——性能优化</a></li>
+            <li><a href="27_tuozhuai6.html">JavaScript拖拽6——修复错误</a></li>
+        </ol>
+        <!-- #EndLibraryItem -->
+        <p>&nbsp;</p>
+        <!-- #BeginLibraryItem "/Library/JavaScript实例.lbi" --><ol><li><a href="01_class.html">用javascript修改html元素的class</a></li>
+            <li><a href="02_location.html">JavaScript重定向</a></li>
+            <li><a href="03_guanlian.html">JavaScript对象当作关联数组</a></li>
+            <li><a href="04_popup.html">JavaScript弹出窗口以及窗口间的通信</a></li>
+            <li><a href="05_information.html">JavaScript显示信息实例</a></li>
+            <li><a href="06_piliang.html">用JavaScript批量访问HTML元素</a></li>
+            <li><a href="07_fenli.html">分离JavaScript与HTML</a></li>
+            <li><a href="08_jisuanqi.html">JavaScript计算器实例</a></li>
+            <li><a href="09_math_jisuqnqi.html">JavaScript的Math对象计算器</a></li>
+            <li><a href="10_position.html">JavaScript改变HTML元素的位置</a></li>
+            <li><a href="11_donghua.html">JavaScript动画</a></li>
+            <li><a href="12_donghuaFunction.html">JavaScript动画函数</a></li>
+            <li><a href="13_tuozhuai.html">JavaScript拖拽</a></li>
+            <li><a href="14_tuozhuai2.html">JavaScript拖拽2——多元素、分离JS</a></li>
+            <li><a href="15_tuozhuai3.html">JavaScript拖拽3——解决快速拖拽的问题</a></li>
+            <li><a href="16_event.html">addEventSimple函数，添加事件响应函数的方法</a></li>
+            <li><a href="17_mouse_events.html">addEventSimple观察鼠标事件</a></li>
+            <li><a href="18_event_detail.html">JavaScript click事件深入</a></li>
+            <li><a href="19_event_src.html">JavaScript事件来源元素</a></li>
+            <li><a href="20_javascript_css.html">JavaScript修改与访问CSS</a></li>
+            <li><a href="21_tuozhuai4.html">JavaScript拖拽4——获得元素的位置</a></li>
+            <li><a href="22_tuozhuai5.html">JavaScript拖拽5——性能优化</a></li>
+            <li><a href="23_gallery.html">DOM Scripting相册</a></li>
+            <li><a href="24_itinerary.html">DOM Scripting斑马表格</a></li>
+            <li><a href="25_slideshow.html">DOM Scripting动画切图</a></li>
+            <li><a href="26_fade_color.html">JavaScript颜色渐变</a></li>
+            <li><a href="27_tuozhuai6.html">JavaScript拖拽6——修复错误</a></li>
+        </ol>
+        <div id="aaa" ms-controller="xxx">45345435434
+            <div class="bbb"  ms-draggable="test"  data-containment="#aaa"></div>
+            <div class="bbb"  ms-draggable="test" data-axis="x"  data-containment="#aaa"></div>
+            <div class="bbb"  ms-draggable="test" data-axis="y" data-containment="#aaa"></div>
+            <div class="bbb"  ms-draggable="test" data-ghosting="true" data-containment="#aaa"></div>
+        </div>
+    </body>
+</html>

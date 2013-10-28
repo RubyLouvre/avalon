@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-css</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define("box", function(vm) {
+                vm.w = 100;
+                vm.h = 100;
+                vm.click = function() {
+                    vm.w = parseFloat(vm.w) + 10;
+                    vm.h = parseFloat(vm.h) + 10;
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <h3 style='text-align: center'>ms-css</h3>
+
+        <div ms-controller="box">
+            <div style=" background: #a9ea00;" ms-css-width="w" ms-css-height="h"  ms-click="click"></div>
+            <p>{{ w }} x {{ h }}</p>
+            <p>W: <input type="text" ms-duplex="w" data-event="change"/></p>
+            <p>H: <input type="text" ms-duplex="h" /></p>
+        </div>
+
+    </body>
+</html>

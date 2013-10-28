@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-with</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.aaa = function() {
+                    console.log(1)
+                }
+                vm.bbb = function() {
+                    console.log(2)
+                }
+                vm.ccc = function() {
+                    console.log(3)
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <p ms-click-1="bbb" ms-click="aaa"  ms-click-2="ccc">xxx</p>
+        </div>
+    </body>
+</html>

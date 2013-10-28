@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" type="text/javascript"></script>
+        <style>
+            #aaa{
+                width:200px;
+                height:200px;
+                background: red;
+                display:none;
+            }
+        </style>
+    </head>
+    <body>
+
+        <script type="text/javascript">
+            var model = avalon.define('TestCtrl', function(vm) {
+                vm.aaa = true
+                vm.bbb = 2222
+            })
+
+            window.onload = function() {
+                var removeEl = document.getElementById("removeEl")
+                setTimeout(function() {
+                    model.bbb = 333333
+                }, 1000)
+                setTimeout(function() {
+                    model.aaa = false
+                    console.log("以绑定方式移除DOM树")
+                }, 3000)
+//                setTimeout(function() {
+//                    removeEl.parentNode.removeChild(removeEl)
+//                    console.log("以非绑定方式移除DOM树")
+//                }, 3000)
+                setTimeout(function() {
+                    console.log("改变被移除元素的绑定值")
+                    model.bbb = 444444
+                }, 4000)
+                setTimeout(function() {
+                    model.aaa = true
+                }, 6000)
+            }
+
+
+
+        </script>
+        <div id="testDiv" ms-controller="TestCtrl" >
+            <div ms-if="aaa" id="remove">
+                <div ms-text="bbb" id="removeEl"></div>
+            </div>
+
+            <div ms-if="aaa" ms-include-src="'index25iftmpl.html'" id='eee'></div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+
+        <script>
+            require("avalon.autocomplete", function() {
+                avalon.define("xxx", function(vm) {
+                    vm.$opts = {
+                        source: [
+                            "ActionScript",
+                            "AppleScript",
+                            "Asp",
+                            "BASIC",
+                            "C",
+                            "C++",
+                            "D",
+                            "F#",
+                            "Clojure",
+                            "COBOL",
+                            "ColdFusion",
+                            "Delphi",
+                            "coffee",
+                            "C#",
+                            "less",
+                            "ssas",
+                            "Erlang",
+                            "ECMAScript",
+                            "Fortran",
+                            "Groovy",
+                            "Logo",
+                            "Haskell",
+                            "Java",
+                            "JavaScript",
+                            "javascript",
+                            "JS",
+                            "J++",
+                            "JScript",
+                            "Lisp",
+                            "Objective-C",
+                            "go",
+                            "VB",
+                            "VBScript",
+                            "Perl",
+                            "PHP",
+                            "Python",
+                            "Ruby",
+                            "Scala",
+                            "Smalltalk",
+                            "Scheme"]
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+        <input name="eee" ms-controller="xxx" ms-ui-$opts="autocomplete"/><span>请在此搜索主流的计算机语言</span>
+
+    </body>
+</html>

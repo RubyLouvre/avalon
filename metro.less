@@ -1,0 +1,137 @@
+@import "./mulicolumn.less";
+[ms-controller]{
+ //  visibility:hidden;
+display:none;
+}
+.columns {
+    width: 2200px;
+    background: #a9ea00;
+    .column-width(340px);
+    @value: 1px solid blue;
+    //  .column-rule(@value);
+    .column-gap(0px);
+    margin: 0px;
+    font-size: 0;
+    -webkit-text-size-adjust: none;
+    height: 600px;
+}
+
+.noPaddingRight {
+    padding-right: 0;
+}
+
+.before(@width, @top) {
+    &:before {
+        content: "";
+        display: block;
+        width: @width;
+        height: 5px;
+        position: absolute;
+        top: @top;
+        background: #01B4D2;
+    }
+}
+
+.hover(@width, @top) {
+    .appbody {
+        .before(@width, @top);
+    }
+}
+
+.hover {
+    &.app_small {
+        .hover(150px, 15px);
+        &.placehoder {
+            .before(150px, 20px);
+        }
+    }
+    &.app_middle {
+        .hover(320px, 15px);
+        &.placehoder {
+            .before(320px, 15px);
+        }
+    }
+    &.app_big {
+        .hover(320px, 15px);
+    }
+
+}
+
+app {
+    display: inline-block;
+    width: 150px;
+    height: 150px;
+    position: relative;
+    list-style: none;
+    //   padding:0px;
+    padding: 20px 20px 0px 20px;
+    font-size: 12px;
+    .column-gap(0);
+}
+
+.fixb() {
+    background: yellow;
+    text-align: center;
+    opacity: .3;
+    display: block;
+}
+
+.placehoder {
+    &.app_small {
+        height: 160px;
+        width: 180px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        b {
+            width: 150px;
+            height: 150px;
+            .fixb(); //use relative positioned pseudo element to fix the elements of dynamic insertion position alignment
+            &:before {
+                content: "";
+                display: block;
+                width: 150px;
+                height: 10px;
+                position: relative;
+                top: 0px;
+                opacity: .3;
+                background: yellow;
+            }
+        }
+    }
+    &.app_middle {
+        b {
+            width: 320px;
+            height: 150px;
+            .fixb();
+        }
+    }
+}
+
+.appbody {
+    background: red;
+    width: 100%;
+    height: 100%;
+}
+
+.appbody:hover {
+    outline: 10px solid rgb(215, 166, 227);
+}
+
+.apphead {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    background: #fff;
+    cursor:move;
+}
+
+.app_middle {
+    width: 320px;
+    height: 150px;
+}
+
+.app_big {
+    width: 320px;
+    height: 320px;
+}

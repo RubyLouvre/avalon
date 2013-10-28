@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script src="avalon.js"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script>
+            avalon.ready(function() {
+
+                avalon.define("props", function(vm) {
+                    vm.options = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"];
+                    vm.selected = "桃子"
+                });
+                var map = {
+                    "中国": ["江南四大才子", "初唐四杰", "战国四君子"],
+                    "日本": ["日本武将", "日本城堡", "幕府时代"],
+                    "欧美": ["三大骑士团", "三大魔幻小说", "七大奇迹"],
+                    "江南四大才子": ["祝枝山", "文征明", "唐伯虎", "周文宾"],
+                    "初唐四杰": ["王勃", "杨炯", "卢照邻", "骆宾王"],
+                    "战国四君子": ["楚国春申君黄歇", "齐国孟尝君田文", "赵国平原君赵胜", "魏国信陵君魏无忌"],
+                    "日本武将": ["织田信长", "德川家康", "丰臣秀吉"],
+                    "日本城堡": ["安土城", "熊本城", "大坂城", "姬路城"],
+                    "幕府时代": ["镰仓", "室町", "丰臣", "江户"],
+                    "三大骑士团": ["圣殿骑士团", "医院骑士团", "条顿骑士团"],
+                    "三大魔幻小说": ["冰与火之歌", "时光之轮", "荆刺与白骨之王国"],
+                    "七大奇迹": ["埃及胡夫金字塔", "奥林匹亚宙斯巨像", "阿尔忒弥斯月神殿", "摩索拉斯陵墓", "亚历山大港灯塔", "巴比伦空中花园", "罗德岛太阳神巨像"]
+                }
+                var model = avalon.define("linkage", function(vm) {
+                    vm.first = ["中国", "日本", "欧美"]
+                    vm.second = map[vm.first[1]]
+                    vm.third = map[vm.second[0]]
+                    vm.firstSelected = "日本"
+                    vm.secondSelected = ""
+                    vm.thirdSelected = ""
+
+                    vm.$watch("firstSelected", function(a) {
+                        vm.second = map[a]
+                        vm.secondSelected = map[a][0]
+                    })
+                    vm.$watch("secondSelected", function(a) {
+                        vm.third = map[a]
+                        vm.thirdSelected = map[a][0]
+                    })
+                })
+                var m = avalon.define("multi", function(vm) {
+                    vm.multi = ["aaa", "bbb", "ccc", "ddd", "eee", "fff", "ggg"];
+                    vm.selected = ["aaa", "bbb", "eee"]
+                    vm.select = ""
+
+                });
+                m.selected.$watch("length", function() {
+                    m.select = m.selected.join(" ")
+                })
+                avalon.scan();
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="props">
+            <input  ms-duplex="selected" />
+            <select ms-each-option="options" ms-duplex="selected" >
+                <option ms-value="option" >{{option}}</option>
+            </select>
+        </div>
+        <div ms-controller="linkage">
+            <select ms-each-el="first" ms-duplex="firstSelected" >
+                <option ms-value="el" >{{el}}</option>
+            </select>
+            <select ms-each-el="second" ms-duplex="secondSelected" >
+                <option ms-value="el" >{{el}}</option>
+            </select>
+            <select ms-each-el="third" ms-duplex="thirdSelected" >
+                <option ms-value="el" >{{el}}</option>
+            </select>
+        </div>
+        <div ms-controller="multi">
+            <select ms-each-el="multi" ms-duplex="selected" multiple="multiple" >
+                <option ms-value="el" >{{el}}</option>
+            </select>
+            <p>{{select}}</p>
+        </div>
+    </body>
+</html>

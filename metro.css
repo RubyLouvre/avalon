@@ -1,0 +1,133 @@
+[ms-controller] {
+  display: none;
+}
+.columns {
+  width: 2200px;
+  background: #a9ea00;
+  -moz-column-width: 340px;
+  -webkit-column-width: 340px;
+  column-width: 340px;
+  -moz-column-gap: 0px;
+  -webkit-column-gap: 0px;
+  column-gap: 0px;
+  margin: 0px;
+  font-size: 0;
+  -webkit-text-size-adjust: none;
+  height: 600px;
+}
+.noPaddingRight {
+  padding-right: 0;
+}
+.hover.app_small .appbody:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_small.placehoder:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 5px;
+  position: absolute;
+  top: 20px;
+  background: #01B4D2;
+}
+.hover.app_middle .appbody:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_middle.placehoder:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+.hover.app_big .appbody:before {
+  content: "";
+  display: block;
+  width: 320px;
+  height: 5px;
+  position: absolute;
+  top: 15px;
+  background: #01B4D2;
+}
+app {
+  display: inline-block;
+  width: 150px;
+  height: 150px;
+  position: relative;
+  list-style: none;
+  padding: 20px 20px 0px 20px;
+  font-size: 12px;
+  -moz-column-gap: 0;
+  -webkit-column-gap: 0;
+  column-gap: 0;
+}
+.placehoder.app_small {
+  height: 160px;
+  width: 180px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+.placehoder.app_small b {
+  width: 150px;
+  height: 150px;
+  background: yellow;
+  text-align: center;
+  opacity: .3;
+  display: block;
+}
+.placehoder.app_small b:before {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 10px;
+  position: relative;
+  top: 0px;
+  opacity: .3;
+  background: yellow;
+}
+.placehoder.app_middle b {
+  width: 320px;
+  height: 150px;
+  background: yellow;
+  text-align: center;
+  opacity: .3;
+  display: block;
+}
+.appbody {
+  background: red;
+  width: 100%;
+  height: 100%;
+}
+.appbody:hover {
+  outline: 10px solid #d7a6e3;
+}
+.apphead {
+  width: 100%;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background: #fff;
+  cursor: move;
+}
+.app_middle {
+  width: 320px;
+  height: 150px;
+}
+.app_big {
+  width: 320px;
+  height: 320px;
+}
