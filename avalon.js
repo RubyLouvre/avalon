@@ -1422,11 +1422,11 @@
                 owner[name] = true
                 buffer.push(
                         //由于不知对方会传入什么,因此set, let都用上
-                        "\tPublic Property Let [" + name + "](val)", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val)",
+                        "\tPublic Property Let [" + name + "](val"+expose+")", //setter
+                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val"+expose+")",
                         "\tEnd Property",
-                        "\tPublic Property Set [" + name + "](val)", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val)",
+                        "\tPublic Property Set [" + name + "](val"+expose+")", //setter
+                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val"+expose+")",
                         "\tEnd Property",
                         "\tPublic Property Get [" + name + "]", //getter
                         "\tOn Error Resume Next", //必须优先使用set语句,否则它会误将数组当字符串返回
