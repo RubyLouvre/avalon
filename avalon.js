@@ -2195,57 +2195,70 @@
         bindingHandlers[method] = function(data, vmodels) {
             var oldStyle = data.param,
                     elem = data.element,
-                    $elem = avalon(elem),
-                    toggle, oldClass
+                    $elem = avalon(elem)
             if (!oldStyle || isFinite(oldStyle)) {
-                var text = data.value
-                var noExpr = text.replace(rexprg, function(a) {
-                    return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
-                })
-                var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
-                if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
-                    var className = text,
-                            rightExpr
-                } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
-                    className = text.slice(0, colonIndex)
-                    rightExpr = text.slice(colonIndex + 1)
-                    var array = parseExpr(rightExpr, vmodels, {})
-                    if (!Array.isArray(array)) {
-                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
-                        return false
-                    }
-                    var callback = array[0],
-                            args = array[1]
-                }
-                var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
 
-                updateViewFactory("", vmodels, data, function(cls) {
-                    toggle = callback ? !!callback.apply(elem, args) : true
-                    className = hasExpr ? cls : className
-                    if (method === "class") {
-                        if (toggle && oldClass) {
-                            $elem.removeClass(oldClass)
+                var text = data.value,txt = "sp";
+                var arr =text.match(rexprg);
+                text = text.replace(rexprg,"<{{}}>");
+                text = text.match(rnospaces).join("{<>}");
+                text = text.replace(/<{{}}>/ig,function(){
+                    return arr.shift();
+                }).split("{<>}");
+
+                text.forEach(function(text){
+
+                    var toggle, oldClass;
+
+                    var noExpr = text.replace(rexprg, function(a) {
+                        return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+                    })
+                    var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
+                    if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
+                        var className = text,
+                                rightExpr
+                    } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
+                        className = text.slice(0, colonIndex)
+                        rightExpr = text.slice(colonIndex + 1)
+                        var array = parseExpr(rightExpr, vmodels, {})
+                        if (!Array.isArray(array)) {
+                            log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
+                            return false
                         }
-                        $elem.toggleClass(className, toggle)
-                        oldClass = className
+                        var callback = array[0],
+                                args = array[1]
                     }
-                }, (hasExpr ? scanExpr(className) : null))
+                    var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
 
-                if (method === "hover" || method === "active") {
-                    if (method === "hover") { //在移出移入时切换类名
-                        var event1 = "mouseenter"
-                        var event2 = "mouseleave"
-                    } else { //在聚焦失焦中切换类名
-                        elem.tabIndex = elem.tabIndex || -1
-                        event1 = "mousedown", event2 = "mouseup"
+                    updateViewFactory("", vmodels, data, function(cls) {
+                        toggle = callback ? !!callback.apply(elem, args) : true
+                        className = hasExpr ? cls : className
+                        if (method === "class") {
+                            if (toggle && oldClass) {
+                                $elem.removeClass(oldClass)
+                            }
+                            $elem.toggleClass(className, toggle)
+                            oldClass = className
+                        }
+                    }, (hasExpr ? scanExpr(className) : null))
+
+                    if (method === "hover" || method === "active") {
+                        if (method === "hover") { //在移出移入时切换类名
+                            var event1 = "mouseenter"
+                            var event2 = "mouseleave"
+                        } else { //在聚焦失焦中切换类名
+                            elem.tabIndex = elem.tabIndex || -1
+                            event1 = "mousedown", event2 = "mouseup"
+                        }
+                        $elem.bind(event1, function() {
+                            toggle && $elem.addClass(className)
+                        })
+                        $elem.bind(event2, function() {
+                            toggle && $elem.removeClass(className)
+                        })
                     }
-                    $elem.bind(event1, function() {
-                        toggle && $elem.addClass(className)
-                    })
-                    $elem.bind(event2, function() {
-                        toggle && $elem.removeClass(className)
-                    })
-                }
+
+                });
 
             } else if (method === "class") {
                 updateViewFactory(data.value, vmodels, data, function(val) {
