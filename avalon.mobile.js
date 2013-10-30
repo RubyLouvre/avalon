@@ -375,7 +375,7 @@
 
     avalon.fn.mix({
         hasClass: function(cls) {
-            var el = this[0] || {}
+            var el = this[0] || {}//IE10+, chrome8+, firefox3.6+, safari5.1+,opera11.5+支持classList,chrome24+,firefox26+支持classList2.0
             return el.nodeType === 1 && el.classList.contains(cls)
         },
         toggleClass: function(value, stateVal) {
