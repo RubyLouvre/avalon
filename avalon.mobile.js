@@ -1547,6 +1547,17 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
+    if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
+        var ifCallbacks = []
+        root.addEventListener("DOMNodeInserted", function(e) {
+            var safelist = ifCallbacks.concat()
+            for (var i = 0, fn; fn = safelist[i++]; ) {
+                if (fn(e) === false) {
+                    avalon.Array.remove(ifCallbacks, fn)
+                }
+            }
+        })
+    }
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1555,19 +1566,24 @@
                     state = data.state,
                     parent
             if (root.contains(elem)) {
-                ifcall()
+                ifCall()
             } else {
                 elem.classList.add("fixMsIfFlicker")
-                var id = setInterval(function() {
-                    if (root.contains(elem)) {
-                        clearInterval(id)
-                        ifcall()
-                        elem.classList.remove("fixMsIfFlicker")
-                    }
-                }, 20)
+                if (ifCallbacks) {
+                    ifCallbacks.push(ifCheck)
+                } else {
+                    var id = setInterval(ifCheck, 20)
+                }
             }
-
-            function ifcall() {
+            function ifCheck(e) {
+                if (e ? e.target == elem : root.contains(elem)) {
+                    clearInterval(id)
+                    ifCall()
+                    elem.classList.remove("fixMsIfFlicker")
+                    return false
+                }
+            }
+            function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树

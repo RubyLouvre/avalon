@@ -1946,29 +1946,24 @@
                     state = data.state,
                     parent
             if (root.contains(elem)) {
-                ifcall()
+                ifCall()
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
                 if (ifCallbacks) {
-                    ifCallbacks.push(function(e) {
-                        if (e.target == elem) {
-                            ifcall()
-                            avalon(elem).removeClass("fixMsIfFlicker")
-                            return false
-                        }
-                    })
+                    ifCallbacks.push(ifCheck)
                 } else {
-                    var id = setInterval(function() {
-                        if (root.contains(elem)) {
-                            clearInterval(id)
-                            ifcall()
-                            avalon(elem).removeClass("fixMsIfFlicker")
-                        }
-                    }, 20)
+                    var id = setInterval(ifCheck, 20)
                 }
             }
-
-            function ifcall() {
+            function ifCheck(e) {
+                if (e ? e.target == elem : root.contains(elem)) {
+                    clearInterval(id)
+                    ifCall()
+                    avalon(elem).removeClass("fixMsIfFlicker")
+                    return false
+                }
+            }
+            function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树
