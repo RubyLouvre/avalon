@@ -1422,11 +1422,11 @@
                 owner[name] = true
                 buffer.push(
                         //由于不知对方会传入什么,因此set, let都用上
-                        "\tPublic Property Let [" + name + "](val"+expose+")", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val"+expose+")",
+                        "\tPublic Property Let [" + name + "](val" + expose + ")", //setter
+                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
                         "\tEnd Property",
-                        "\tPublic Property Set [" + name + "](val"+expose+")", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val"+expose+")",
+                        "\tPublic Property Set [" + name + "](val" + expose + ")", //setter
+                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
                         "\tEnd Property",
                         "\tPublic Property Get [" + name + "]", //getter
                         "\tOn Error Resume Next", //必须优先使用set语句,否则它会误将数组当字符串返回
@@ -1477,12 +1477,12 @@
                         state = fn.state,
                         remove
                 if (el && (!state || state.sourceIndex !== 0)) {
-                    if (typeof el.sourceIndex == "number") {
+                    if (typeof el.sourceIndex == "number") {//IE6-IE11
                         remove = el.sourceIndex === 0
                     } else {
                         try {
                             remove = !root.contains(el)
-                        } catch (e) { //旧式IE的contains不支持传入文本节点
+                        } catch (e) { //如果不存在contains方法
                             remove = true
                             while (el == el.parentNode) {
                                 if (el === root) {
@@ -1498,10 +1498,10 @@
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
-
             }
         }
     }
+
     /*********************************************************************
      *                           Scan                                     *
      **********************************************************************/
@@ -1646,6 +1646,7 @@
         })
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
+            // 使用共享对象state，实现同一棵树中的绑定之间 的通信
             ifBinding.state = {}
             bindingHandlers["if"](ifBinding, vmodels, function() {
                 executeBindings(bindings, vmodels, ifBinding.state)
@@ -1925,6 +1926,18 @@
     styleEl = avalon.parseHTML(styleEl).firstChild //IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
 
+    if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
+        var ifCallbacks = []
+        root.addEventListener("DOMNodeInserted", function(e) {
+            var safelist = ifCallbacks.concat()
+            for (var i = 0, fn; fn = safelist[i++]; ) {
+                if (fn(e) === false) {
+                    avalon.Array.remove(ifCallbacks, fn)
+                }
+            }
+        })
+    }
+
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1936,13 +1949,23 @@
                 ifcall()
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
-                var id = setInterval(function() {
-                    if (root.contains(elem)) {
-                        clearInterval(id)
-                        ifcall()
-                        avalon(elem).removeClass("fixMsIfFlicker")
-                    }
-                }, 20)
+                if (ifCallbacks) {
+                    ifCallbacks.push(function(e) {
+                        if (e.target == elem) {
+                            ifcall()
+                            avalon(elem).removeClass("fixMsIfFlicker")
+                            return false
+                        }
+                    })
+                } else {
+                    var id = setInterval(function() {
+                        if (root.contains(elem)) {
+                            clearInterval(id)
+                            ifcall()
+                            avalon(elem).removeClass("fixMsIfFlicker")
+                        }
+                    }, 20)
+                }
             }
 
             function ifcall() {
