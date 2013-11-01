@@ -2261,8 +2261,6 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-                updateView.data = data
-                updateView.models = vmodels
                 var updateView = modelBinding[tagName](data, array[0], vm)
                 updateView && registerSubscriber(updateView, data)
             }
@@ -2649,30 +2647,33 @@
         var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
-        if (typeof array === "object") {
-            list = array[0].apply(array[0], array[1])
+        function getter() {
+            return array[0].apply(0, array[1])
         }
-        data.array = array
         var view = documentFragment.cloneNode(false)
         while (elem.firstChild) {
             view.appendChild(elem.firstChild)
         }
-
         data.template = view
         data.vmodels = vmodels
-        if (typeof list !== "object") {
-            return list
+        try {
+            list = getter()
+            if (typeof list !== "object") {
+                return
+            }
+        } catch (e) {
+            return
         }
         // 由于eachIterator、withIterator为内存开销非常大的复杂函数，因此我们只创建一个，
         // 然后通过updateView这个虚拟代理来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
             updateView = function(method, pos, el) {
-                eachIterator(method, pos, el, data, updateView.host)
+                eachIterator(method, pos, el, data, getter)
             }
         } else {
             updateView = function(method, pos, el) {
-                withIterator(method, pos, el, data, updateView.host)
+                withIterator(method, pos, el, data, getter)
             }
         }
         updateView.element = elem
@@ -2685,12 +2686,11 @@
             }
             elem.appendChild(view)
         }
-        updateView.host = list
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
     }
 
-    function eachIterator(method, pos, el, data, list) {
+    function eachIterator(method, pos, el, data, getter) {
         var group = data.group
         var parent = data.element
         var mapper = data.mapper
@@ -2705,7 +2705,7 @@
                         transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], list, data.param)
+                    var proxy = createEachProxy(ii, arr[i], getter(), data.param)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -2752,36 +2752,33 @@
         }
     }
 
-    function withIterator(method, object, val, data, host, transation) {
-        var group = data.group
+    function withIterator(method, object, group, data, getter) {
+        group = data.group
         var parent = data.element
-        var ret = []
-        transation = transation || documentFragment.cloneNode(false)
+        var transation = documentFragment.cloneNode(false)
         switch (method) {
-            case "append":
-                var key = object
-                var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
-                if (!mapper[key]) {
-                    val = typeof val === "object" ? modelFactory(val) : val
-                    var proxy = createWithProxy(key, val, data.array)
-                    mapper[key] = proxy
-                }
-                var tview = data.template.cloneNode(true)
-                scanNodes(tview, [mapper[key], val].concat(data.vmodels), data.state)
-                if (typeof group !== "number") {
-                    data.group = tview.childNodes.length
-                }
-                transation.appendChild(tview)
-                break
             case "add":
+                var $id = getter().$id
+                var mapper = withMapper[$id] || (withMapper[$id] = {})
                 for (var i in object) {
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                        withIterator("append", i, object[i], data, host, transation)
-                        ret.push(i)
+                        (function(key, val) {
+                            if (!mapper[key]) {
+                                val = typeof val === "object" ? modelFactory(val) : val
+                                var proxy = createWithProxy(key, val, getter)
+                                mapper[key] = proxy
+                            }
+                            var tview = data.template.cloneNode(true)
+                            scanNodes(tview, [mapper[key], val].concat(data.vmodels), data.state)
+                            if (typeof group !== "number") {
+                                data.group = tview.childNodes.length
+                            }
+                            transation.appendChild(tview)
+                        })(i, object[i])
                     }
                 }
                 parent.appendChild(transation) //再插到最后
-                return ret
+                break;
         }
     }
     //收集要移除的节点，第一个节点要求先放进去
@@ -2813,13 +2810,13 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, val, array) {
+    function createWithProxy(key, val, getter) {
         return modelFactory({
             $key: key,
             $val: {
                 get: function() {
                     try {
-                        return (array[0].apply(array[0], array[1]) || {})[key]
+                        return (getter() || {})[key]
                     } catch (e) {
                     }
                 }
