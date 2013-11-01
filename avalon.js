@@ -2808,6 +2808,7 @@
                 var key = object
                 var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
                 if (!mapper[key]) {
+                    val = typeof val === "object" ? modelFactory(val) : val
                     var proxy = createWithProxy(key, val)
                     mapper[key] = proxy
                     if (val && val.$model) {

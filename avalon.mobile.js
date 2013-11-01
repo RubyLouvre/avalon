@@ -886,6 +886,7 @@
             a.push.apply(a, bb)
             return a
         } else {
+
             var added = [],
                     removed = [],
                     updated = [],
@@ -2368,7 +2369,7 @@
                 var key = object
                 var mapper = withMapper[host.$id] || (withMapper[host.$id] = {})
                 if (!mapper[key]) {
-                    var val = typeof val === "object" ? modelFactory(val) : val
+                    val = typeof val === "object" ? modelFactory(val) : val
                     var proxy = createWithProxy(key, val)
                     mapper[key] = proxy
                     if (val && val.$model) {
