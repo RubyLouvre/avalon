@@ -1124,15 +1124,16 @@
         } else {
             var iterators = a[subscribers]
             iterators.forEach(function(fn) {
-              fn.rollback &&  fn.rollback()
+                fn.rollback && fn.rollback()
             })
             var ret = modelFactory(b)
             updateBack[ret.$id] = function() {
                 iterators.forEach(function(fn) {
-                    try{
-                    var data = fn.data
-                    bindingHandlers[data.type](data, fn.vmodels)
-                    }catch(e){}
+                    try {
+                        var data = fn.data
+                        bindingHandlers[data.type](data, fn.vmodels)
+                    } catch (e) {
+                    }
                 })
             }
             return ret
@@ -2670,7 +2671,6 @@
                 eachIterator(method, pos, el, data, updateView.host)
             }
         } else {
-            data.markstone = {}
             updateView = function(method, pos, el) {
                 withIterator(method, pos, el, data, updateView.host)
             }
@@ -2755,7 +2755,6 @@
     function withIterator(method, object, val, data, host, transation) {
         var group = data.group
         var parent = data.element
-        var markstone = data.markstone
         var ret = []
         transation = transation || documentFragment.cloneNode(false)
         switch (method) {
@@ -2766,54 +2765,22 @@
                     val = typeof val === "object" ? modelFactory(val) : val
                     var proxy = createWithProxy(key, val, data.array)
                     mapper[key] = proxy
-//                    if (val && val.$model) {
-//                        proxy.$events = host.$events
-//                        proxy[subscribers] = host[subscribers]
-//                    }
-//                    host.$watch(key, function(neo) {
-//                        proxy.$val = neo
-//                    })
                 }
                 var tview = data.template.cloneNode(true)
                 scanNodes(tview, [mapper[key], val].concat(data.vmodels), data.state)
                 if (typeof group !== "number") {
                     data.group = tview.childNodes.length
                 }
-                markstone[key] = tview.firstChild
                 transation.appendChild(tview)
-                break
-            case "sort":
-                for (var i = 0, name; name = object[i++]; ) {
-                    var node = markstone[name]
-                    var view = removeView(node, group) //先移出DOM树
-                    transation.appendChild(view)
-                }
-                parent.appendChild(transation) //再插到最后
                 break
             case "add":
                 for (var i in object) {
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                        if (!markstone.hasOwnProperty(i)) { //这是新增的
-                            withIterator("append", i, object[i], data, host, transation)
-                            ret.push(i)
-                        }
+                        withIterator("append", i, object[i], data, host, transation)
+                        ret.push(i)
                     }
                 }
                 parent.appendChild(transation) //再插到最后
-                return ret
-            case "remove":
-                var removeNodes = []
-                for (var i = 0, name; name = object[i++]; ) {
-                    var node = markstone[name]
-                    if (node) {
-                        markstone[name] = withMapper[host.$id][name] = 0 //移除不再存在的键
-                        removeNodes.push(node)
-                        gatherRemovedNodes(removeNodes, node, group)
-                    }
-                }
-                for (i = 0; node = removeNodes[i++]; ) {
-                    parent.removeChild(node)
-                }
                 return ret
         }
     }
