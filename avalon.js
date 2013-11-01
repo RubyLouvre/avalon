@@ -1113,7 +1113,7 @@
             }
         }
     }
-    var updateBack = {}
+    var updateLater = {}
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
@@ -1127,7 +1127,7 @@
                 fn.rollback && fn.rollback()
             })
             var ret = modelFactory(b)
-            updateBack[ret.$id] = function() {
+            updateLater[ret.$id] = function() {
                 iterators.forEach(function(fn) {
                     try {
                         var data = fn.data
@@ -1135,9 +1135,9 @@
                     } catch (e) {
                     }
                 })
+                delete  updateLater[ret.$id]
             }
             return ret
-
         }
     }
     var isEqual = function(x, y) {
@@ -1224,13 +1224,10 @@
                                 if (rchecktype.test(valueType)) {
                                     if ("value" in accessor) { //如果已经转换过
                                         value = updateViewModel(value, neo, valueType)
-                                        var fn = updateBack[value.$id]
                                         accessor.value = value
-                                        if (fn) {
-                                            fn()
-                                        }
+                                        var fn = updateLater[value.$id]
+                                        fn && fn()
                                         vmodel.$fire && vmodel.$fire(name, value, preValue)
-
                                     } else { //如果本来就是VM就直接输出，否则要转换
                                         value = neo.$model ? neo : modelFactory(neo, neo)
                                     }
@@ -2764,8 +2761,8 @@
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                         (function(key, val) {
                             if (!mapper[key]) {
-                                val = typeof val === "object" ? modelFactory(val) : val
-                                var proxy = createWithProxy(key, val, getter)
+                           //     val = typeof val === "object" ? modelFactory(val) : val
+                                var proxy = createWithProxy(key, getter)
                                 mapper[key] = proxy
                             }
                             var tview = data.template.cloneNode(true)
@@ -2810,7 +2807,7 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, val, getter) {
+    function createWithProxy(key, getter) {
         return modelFactory({
             $key: key,
             $val: {
