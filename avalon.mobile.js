@@ -891,14 +891,14 @@
                 fn.rollback && fn.rollback()
             })
             var ret = modelFactory(b)
-            updateLater[ret.$id] = function() {
-                iterators.forEach(function(fn) {
+            updateLater[ret.$id] = function(fn) {
+                while (fn = iterators.shift()) {
                     try {
                         var data = fn.data
                         bindingHandlers[data.type](data, fn.vmodels)
                     } catch (e) {
                     }
-                })
+                }
                 delete  updateLater[ret.$id]
             }
             return ret
@@ -941,8 +941,7 @@
                 }
                 var accessor, oldArgs
                 if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
-                    var setter = val.set
-                    var getter = val.get
+                    var setter = val.set, getter = val.get
                     accessor = function(neo) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                         var value = accessor.value,
                                 preValue = value
