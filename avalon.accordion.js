@@ -3,6 +3,13 @@ define(["avalon"], function(avalon) {
         active: 0,
         collapsible: false//当一个面板打开时，再点击它时会收起
     }
+    var useTransition = window.TransitionEvent || window.WebKitTransitionEvent
+
+    var style = document.getElementById("avalonStyle")
+    if (useTransition) {
+        style.innerHTML += ".ui-transition{-webkit-transition:all 0.5s ease;-ms-transition:all 0.5s ease;transition:all 0.5s ease;}"
+        style.innerHTML += ".ui-accordion-collapse {height:0px!important;padding:0px!important;}"
+    }
     avalon.ui.accordion = function(element, id, vmodels, opts) {
         var $element = avalon(element),
                 model, el
@@ -27,9 +34,14 @@ define(["avalon"], function(avalon) {
                 tabs.push(el)
             }
             if (el.tagName === "DIV") {
-                el.setAttribute("ms-visible", "active == " + tabpanels.length)
+                avalon(el).addClass("ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom")
+                if (useTransition) {
+                    avalon(el).addClass("ui-transition")
+                    el.setAttribute("ms-class-ui-accordion-collapse", "active != " + tabpanels.length)
+                } else {
+                    el.setAttribute("ms-visible", "active == " + tabpanels.length)
+                }
                 tabpanels.push(el)
-                avalon(el).addClass(" ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom")
             }
         }
         var model = avalon.define(id, function(vm) {
