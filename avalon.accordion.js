@@ -6,6 +6,7 @@ define(["avalon"], function(avalon) {
     var useTransition = window.TransitionEvent || window.WebKitTransitionEvent
 
     var style = document.getElementById("avalonStyle")
+    //http://stackoverflow.com/questions/5103283/does-internet-explorer-support-css-transitions
     if (useTransition) {
         style.innerHTML += ".ui-transition{-webkit-transition:all 0.5s ease;-ms-transition:all 0.5s ease;transition:all 0.5s ease;}"
         style.innerHTML += ".ui-accordion-collapse {height:0px!important;padding:0px!important;}"
