@@ -1154,6 +1154,9 @@
             collection._add(scope)
             return collection
         }
+        if (typeof scope.nodeType === "number") {
+            return scope
+        }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {}, //要返回的对象
                 accessores = {}, //内部用于转换的对象
@@ -1673,13 +1676,12 @@
     }
 
     //添加赋值语句
-
     function addAssign(vars, scope, name) {
         var ret = [],
                 prefix = " = " + name + "."
         for (var i = vars.length; name = vars[--i]; ) {
             name = vars[i]
-            if (scope.hasOwnProperty(name)) {
+            if (scope.hasOwnProperty && scope.hasOwnProperty(name)) {
                 ret.push(name + prefix + name)
                 vars.splice(i, 1)
             }
@@ -2097,9 +2099,9 @@
         },
         html: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                val = val == null ? "" : val + ""
+                val = val == null ? "" : val
                 if (data.replaceNodes) {
-                    var f = avalon.parseHTML(val)
+                    var f = val && val.nodeType === 1 ? val : avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
                     elem.insertBefore(f, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {

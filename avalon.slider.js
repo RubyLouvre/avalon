@@ -149,7 +149,7 @@ define(["avalon.draggable"], function(avalon) {
             el.sliderModel = model
             handlers.push(el)
         }
-        avalon.scan(slider, model)
+        avalon.scan(slider, [model].concat(vmodels))
 
         return model
     }

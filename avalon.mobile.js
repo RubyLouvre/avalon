@@ -918,6 +918,9 @@
             collection._add(scope)
             return collection
         }
+        if (typeof scope.nodeType === "number") {
+            return scope
+        }
         var skipArray = scope.$skipArray, //要忽略监控的属性名列表
                 vmodel = {},
                 accessores = {}, //内部用于转换的对象
@@ -1706,7 +1709,7 @@
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
                 if (data.replaceNodes) {
-                    var f = avalon.parseHTML(val)
+                    var f = val && val.nodeType === 1 ? val : avalon.parseHTML(val)
                     var replaceNodes = avalon.slice(f.childNodes)
                     elem.insertBefore(f, data.replaceNodes[0])
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
