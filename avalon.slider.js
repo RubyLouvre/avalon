@@ -10,8 +10,7 @@ define(["avalon.draggable"], function(avalon) {
         value: 0,
         values: null
     }
-    var domParser = document.createElement("div")
-    var Handlers = [], Index = 0
+    var Handlers = [], Index = 0, FocusElement
     avalon.ui["slider"] = function(element, id, vmodels, opts) {
         var $element = avalon(element)
         var options = avalon.mix({}, defaults, $element.data())
@@ -57,8 +56,8 @@ define(["avalon.draggable"], function(avalon) {
                 (oRange ? rangeHTML : "") + (twohandlebars ? handleHTML.replace("percent", "percent0") +
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
-        domParser.innerHTML = sliderHTML
-        var slider = domParser.removeChild(domParser.firstChild), handlers = []
+
+        var slider = avalon.parseHTML(sliderHTML).firstChild, handlers = []
         element.parentNode.insertBefore(slider, element.nextSibling)
         $element.addClass("ui-helper-hidden-accessible")
 
@@ -154,20 +153,19 @@ define(["avalon.draggable"], function(avalon) {
 
         return model
     }
-    var focusElement
     avalon(document).bind("click", function(e) {
         var el = e.target
         var Index = Handlers.indexOf(el)
         if (Index !== -1) {
-            focusElement = avalon(el).addClass("ui-state-focus")
-        } else if (focusElement) {
-            focusElement.removeClass("ui-state-focus")
-            focusElement = null
+            FocusElement = avalon(el).addClass("ui-state-focus")
+        } else if (FocusElement) {
+            FocusElement.removeClass("ui-state-focus")
+            FocusElement = null
         }
     })
     avalon(document).bind("keydown", function(e) {
-        if (focusElement) {
-            var model = focusElement[0].sliderModel
+        if (FocusElement) {
+            var model = FocusElement[0].sliderModel
             var percent = Handlers.length == 1 ? model.percent : model["percent" + Index]
             var val = model.$percent2Value(percent / 100), keyVal
             switch (e.which) {
