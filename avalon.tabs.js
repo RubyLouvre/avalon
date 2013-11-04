@@ -21,13 +21,13 @@ define(["avalon"], function(avalon) {
                 tabsParent = el
             }
             if (el.tagName === "DIV") {
-                 tabpanels.push(el)
+                 tabpanels.push(el.childNodes)
             }
             element.removeChild(el)
         }
 
         for (var i = 0; el = tabsParent.children[i++]; ) {
-            tabs.push(el)
+            tabs.push(el.childNodes)
         }
         //3 设置动态模板
         var tablist = '<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"' +

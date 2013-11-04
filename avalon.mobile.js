@@ -1709,9 +1709,20 @@
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
                 if (data.replaceNodes) {
-                    var f = val && val.nodeType === 1 ? val : avalon.parseHTML(val)
-                    var replaceNodes = avalon.slice(f.childNodes)
-                    elem.insertBefore(f, data.replaceNodes[0])
+                    var fragment, nodes
+                    if (val.nodeType === 11) {
+                        fragment = val
+                    } else if (val.nodeType === 1 || val.item) {
+                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
+                        fragment = documentFragment.cloneNode(true)
+                        for (var i = 0, n = nodes.length; i < n; i++) {
+                            fragment.appendChild(nodes[i])
+                        }
+                    } else {
+                        fragment = avalon.parseHTML(val)
+                    }
+                    var replaceNodes = avalon.slice(fragment.childNodes)
+                    elem.insertBefore(fragment, data.replaceNodes[0])
                     for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                         elem.removeChild(node)
                     }
