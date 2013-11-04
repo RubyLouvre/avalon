@@ -143,7 +143,6 @@ define(["avalon"], function(avalon) {
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
                 avalon(clone).css("opacity", .7).width(element.offsetWidth).height(element.offsetHeight)
-                
                 data.clone = clone
                 if (position !== "fixed") {
                     clone.style.position = "absolute"
@@ -151,10 +150,6 @@ define(["avalon"], function(avalon) {
                     clone.style.left = startOffset.left - data.marginLeft + "px"
                 }
                 body.appendChild(clone)
-            }
-            var activeElement = document.activeElement
-            if (activeElement && activeElement !== element) {
-                activeElement.blur()
             }
             var target = avalon(data.clone || data.element)
             //拖动前相对于offsetParent的坐标
@@ -289,7 +284,7 @@ define(["avalon"], function(avalon) {
     }
     //统一处理拖动的事件
     avalon(document).bind(drag, function(e) {
-        var data = draggable.dragData 
+        var data = draggable.dragData
         if (data.started === true) {
             //fix touchmove bug;  
             //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）

@@ -11,7 +11,7 @@ define(["avalon.draggable"], function(avalon) {
         values: null
     }
     var domParser = document.createElement("div")
-
+    var Handlers = [], Index = 0
     avalon.ui["slider"] = function(element, id, vmodels, opts) {
         var $element = avalon(element)
         var options = avalon.mix({}, defaults, $element.data())
@@ -58,14 +58,10 @@ define(["avalon.draggable"], function(avalon) {
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
         domParser.innerHTML = sliderHTML
-        var slider = domParser.removeChild(domParser.firstChild)
-        var a = slider.getElementsByTagName("b"), handlers = []
-        for (var i = 0, el; el = a[i++]; ) {
-            handlers.push(el)
-        }
+        var slider = domParser.removeChild(domParser.firstChild), handlers = []
         element.parentNode.insertBefore(slider, element.nextSibling)
         $element.addClass("ui-helper-hidden-accessible")
-        var Index = 0, pixelTotal
+
         function value2Percent(val) {
             if (val < valueMin) {
                 val = valueMin
@@ -73,20 +69,18 @@ define(["avalon.draggable"], function(avalon) {
             if (val > valueMax) {
                 val = valueMax
             }
-            return parseFloat((val / valueMax * 100).toFixed(2))
+            return parseFloat((val / valueMax * 100).toFixed(5))
         }
-        function percent2Value(percent) {//0~1
+        function percent2Value(percent, add) {//0~1
             var val = valueMax * percent
             var step = (options.step > 0) ? options.step : 1
-
             var valModStep = val % step
             var n = val / step
             val = valModStep * 2 >= step ? step * Math.ceil(n) : step * Math.floor(n)
-
             return parseFloat(val.toFixed(3))
         }
-   
         var model = avalon.define(id, function(vm) {
+            vm.step = (options.step > 0) ? options.step : 1
             vm.disabled = element.disabled
             vm.percent = twohandlebars ? value2Percent(values[1] - values[0]) : value2Percent(value)
             vm.percent0 = twohandlebars ? value2Percent(values[0]) : 0
@@ -94,32 +88,39 @@ define(["avalon.draggable"], function(avalon) {
             vm.value = twohandlebars ? values.join() : value
             vm.range = oRange
             vm.values = values
+            vm.$valueMin = valueMin
+            vm.$valueMax = valueMax
+            vm.$percent2Value = percent2Value
+            vm.$pixelTotal = isHorizontal ? slider.offsetWidth : slider.offsetHeight
             vm.dragstart = function(event, data) {
+                Handlers = handlers
                 data.started = !model.disabled
-                data.dragX =  data.dragY = false
+                data.dragX = data.dragY = false
                 Index = handlers.indexOf(data.element)
                 data.$element.addClass("ui-state-active")
-                pixelTotal = isHorizontal ? slider.offsetWidth : slider.offsetHeight
             }
             vm.dragend = function(event, data) {
                 data.$element.removeClass("ui-state-active")
             }
-            vm.drag = function(event, data) {
-                var prop = isHorizontal ? "left" : "top"
-                var pixelMouse = data[prop]
-                //如果是垂直时,往上拖,值就越大
-                var percent = (pixelMouse / pixelTotal) //求出当前handler在slider的位置
-                if (!isHorizontal) {
-                    percent = Math.abs(1 - percent)
+            vm.drag = function(event, data, keyVal) {
+                if (isFinite( keyVal ) ) {
+                    var val = keyVal
+                } else {
+                    var prop = isHorizontal ? "left" : "top"
+                    var pixelMouse = data[prop]
+                    //如果是垂直时,往上拖,值就越大
+                    var percent = (pixelMouse / model.$pixelTotal) //求出当前handler在slider的位置
+                    if (!isHorizontal) {
+                        percent = Math.abs(1 - percent)
+                    }
+                    if (percent > 0.99) {
+                        percent = 1
+                    }
+                    if (percent < 0.01) {
+                        percent = 0
+                    }
+                    val = percent2Value(percent)
                 }
-                if (percent > 0.99) {
-                    percent = 1
-                }
-                if (percent < 0.01) {
-                    percent = 0
-                }
-
-                var val = percent2Value(percent)
                 if (twohandlebars) { //水平时，小的0在左边，大的1在右边，垂直时，大的0在下边，小的1在上边
                     if (Index === 0) {
                         var check = model.values[1]
@@ -139,15 +140,59 @@ define(["avalon.draggable"], function(avalon) {
                 } else {
                     model.value = val
                     model.percent = value2Percent(val)
+
                 }
             }
 
         })
-
+        var a = slider.getElementsByTagName("b")
+        for (var i = 0, el; el = a[i++]; ) {
+            el.sliderModel = model
+            handlers.push(el)
+        }
         avalon.scan(slider, model)
+
         return model
     }
-
+    var focusElement
+    avalon(document).bind("click", function(e) {
+        var el = e.target
+        var Index = Handlers.indexOf(el)
+        if (Index !== -1) {
+            focusElement = avalon(el).addClass("ui-state-focus")
+        } else if (focusElement) {
+            focusElement.removeClass("ui-state-focus")
+            focusElement = null
+        }
+    })
+    avalon(document).bind("keydown", function(e) {
+        if (focusElement) {
+            var model = focusElement[0].sliderModel
+            var percent = Handlers.length == 1 ? model.percent : model["percent" + Index]
+            var val = model.$percent2Value(percent / 100), keyVal
+            switch (e.which) {
+                case 34 : // pageDown
+                case 39:  // right
+                case 40:  // down
+                    keyVal = Math.min(val + 1, model.$valueMax)
+                    break;
+                case 33: // pageUp
+                case 37: // left
+                case 38: // up
+                    keyVal = Math.max(val - 1, model.$valueMin)
+                    break
+                case 36: // home
+                    keyVal = model.$valueMin
+                    break
+                case 35: // end
+                    keyVal = model.$valueMax
+                    break
+            }
+            if (isFinite(keyVal)) {
+                model.drag(e, {}, keyVal)
+            }
+        }
+    })
     return avalon
 })
 //http://xinranliu.me/?p=520
