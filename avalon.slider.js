@@ -58,7 +58,7 @@ define(["avalon.draggable"], function(avalon) {
                 (oRange ? rangeHTML : "") + (twohandlebars ? handleHTML.replace("percent", "percent0") +
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
-      //  console.log( $element.data())
+        //  console.log( $element.data())
         domParser.innerHTML = sliderHTML
         var slider = domParser.removeChild(domParser.firstChild)
         var a = slider.getElementsByTagName("b"), handlers = []
@@ -87,6 +87,9 @@ define(["avalon.draggable"], function(avalon) {
 
             return parseFloat(val.toFixed(3))
         }
+        function value2percent(val) {
+
+        }
         var model = avalon.define(id, function(vm) {
             vm.disabled = element.disabled
             vm.percent = twohandlebars ? value2Percent(values[1] - values[0]) : value2Percent(value)
@@ -105,7 +108,7 @@ define(["avalon.draggable"], function(avalon) {
                 data.$element.removeClass("ui-state-active")
             }
             vm.drag = function(event, data) {
-                var prop = isHorizontal ? "left" : "top"       
+                var prop = isHorizontal ? "left" : "top"
                 var pixelMouse = data[prop]
                 //如果是垂直时,往上拖,值就越大
                 var percent = (pixelMouse / pixelTotal) //求出当前handler在slider的位置
@@ -118,7 +121,7 @@ define(["avalon.draggable"], function(avalon) {
                 if (percent < 0.01) {
                     percent = 0
                 }
-              
+
                 var val = percent2Value(percent)
                 if (twohandlebars) { //水平时，小的0在左边，大的1在右边，垂直时，大的0在下边，小的1在上边
                     if (Index === 0) {
@@ -133,12 +136,13 @@ define(["avalon.draggable"], function(avalon) {
                         }
                     }
                     model.values[Index] = val
-                    model["percent" + Index] = value2Percent(val)
+                    var centuplicate = value2Percent(val)
+                    model["percent" + Index] = centuplicate
+                    this.style[prop] =   pixelTotal *  centuplicate / 100 + "px"
                     model.value = model.values.join()
                     model.percent = value2Percent(model.values[1] - model.values[0])
                 } else {
                     model.value = val
-                // console.log(model.value)
                     model.percent = value2Percent(val)
                 }
             }

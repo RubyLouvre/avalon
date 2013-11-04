@@ -57,12 +57,12 @@
             <input  ms-ui="slider" data-min="1" data-max="700" data-value="37" data-range="min"/>
             <p>Snap to increments</p>
             <input  ms-ui="slider" data-min="0" data-max="500" data-value="100" data-step="50" />
-
+            <br/>
         </div>
         <div style="width:70%">
             <input ms-ui="slider" data-id="ccc" data-range="true" data-values="[ 25,50 ]" data-max="100">
-            <p ms-controller="ccc">{{ percent0 }}  {{ percent1 }}</p>
-            <p ms-controller="ccc">{{ value }}</p>
+            <p ms-controller="ccc">
+               这是分开写的： {{ percent0 }}  {{ percent1 }}<br/>这是并在一起的  {{ value }}</p>
         </div>
         <div style="height:200px">
             <input  ms-ui="slider"  data-value="20" data-range="min" data-orientation="vertical"  data-id="bbb">
@@ -101,9 +101,7 @@
                 <option value='cupertino'>cupertino</option>
                 <option value='overcast'>overcast</option>
             </select>你喜欢的皮肤-->
-            <!--        <div style="width:100%;height:20px;background:red;">
-                        <div style="background: greenyellow;height:20px" ms-css-width="{{percent}}%"></div>
-                    </div>-->
+
         </div>
     </body>
 </html>
