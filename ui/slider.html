@@ -40,43 +40,46 @@
         </script>
     </head>
     <body>
-
         <div style="width:70%">
-            <input ms-ui="slider"data-id="aaa" disabled data-max="255" data-value="36">
+            <input ms-ui="slider" data-id="aaa"  data-max="255" data-value="36">
+        </div>
+        <p>想禁止拖动，可以为原input元素设置disabled属性</p>
+        <div style="width:70%">
+            <input ms-ui="slider" disabled data-max="255" data-value="36">
         </div>
 
-        <p ms-controller="aaa">{{value}}  {{percent}}</p>
+        <p ms-controller="aaa">值为{{value}}，百分比为{{percent}}%</p>
         <div style="width:70%">
             <input ms-ui="slider" data-range="min">
         </div>
         <br/>
         <div style="width:70%">
-            <p>Range with fixed maximum</p>
+            <p>固定最大值</p>
             <input ms-ui="slider" data-range="max"  data-max="10" data-value="2">
-            <p>Range with fixed minimum</p>
+            <p>固定值小值</p>
             <input  ms-ui="slider" data-min="1" data-max="700" data-value="37" data-range="min"/>
-            <p>Snap to increments</p>
+            <p>只有拖动了一定距离才同步数据</p>
             <input  ms-ui="slider" data-min="0" data-max="500" data-value="100" data-step="50" />
             <br/>
         </div>
         <div style="width:70%">
-            <input ms-ui="slider" data-id="ccc" data-range="true" data-values="[ 25,50 ]" data-max="100">
-            <p ms-controller="ccc">
-               这是分开写的： {{ percent0 }}  {{ percent1 }}<br/>这是并在一起的  {{ value }}</p>
+            <input ms-ui="slider" data-id="bbb" data-range="true" data-values="[ 25,50 ]" data-max="100">
+            <p ms-controller="bbb">
+                这是分开写的： {{ percent0 }}  {{ percent1 }}<br/>这是并在一起的  {{ value }}</p>
         </div>
         <div style="height:200px">
-            <input  ms-ui="slider"  data-value="20" data-range="min" data-orientation="vertical"  data-id="bbb">
+            <input  ms-ui="slider" style='height:150px'  data-value="20" data-range="min" data-orientation="vertical"  data-id="ccc">
             <input  ms-ui="slider"  data-value="40" data-range="min" data-orientation="vertical" >
             <input  ms-ui="slider"  data-value="60" data-range="min" data-orientation="vertical" >
             <input  ms-ui="slider"  data-value="80" data-range="min" data-orientation="vertical" >
-            <input  ms-ui="slider"  data-value="80" data-range="true" data-orientation="vertical" >
+            <input  ms-ui="slider"  data-values="[20,80]" data-range="true" data-orientation="vertical" data-id="ddd">
             <input  ms-ui="slider"  data-value="60" data-range="max" data-orientation="vertical" >
         </div>  
-        <p ms-controller="bbb">{{ value }}</p>
+        <p ms-controller="ccc">{{ value }}</p>
+        <p ms-controller="ddd">{{ value }}</p>
         <div style="width:70%">
-            <input ms-ui="slider" data-id="ddd" data-range="true" data-values="[ 25,50 ]" data-max="100">
-            <p ms-controller="ddd">{{ percent0 }}  {{ percent1 }}</p>
-            <p ms-controller="ddd">{{ value }}</p>
+            <input ms-ui="slider" data-id="eee" data-range="true" data-values="[ 25,50 ]" data-max="100">
+            <p ms-controller="eee">{{ percent0 }}  {{ percent1 }}</p>
         </div>
         <div ms-controller="theme">
             <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css" />
@@ -100,7 +103,7 @@
                 <option value='eggplant'>eggplant</option>
                 <option value='cupertino'>cupertino</option>
                 <option value='overcast'>overcast</option>
-            </select>你喜欢的皮肤-->
+            </select>你喜欢的皮肤
 
         </div>
     </body>

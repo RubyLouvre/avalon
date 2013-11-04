@@ -38,7 +38,6 @@ define(["avalon.draggable"], function(avalon) {
             }
         }
 
-
         var handleHTML = '<b class="ui-slider-handle ui-state-default ui-corner-all"' +
                 ' ms-css-' + (isHorizontal ? 'left' : 'bottom') + '="{{percent}}%"' +
                 ' data-axis=' + (isHorizontal ? 'x' : 'y') +
@@ -58,7 +57,6 @@ define(["avalon.draggable"], function(avalon) {
                 (oRange ? rangeHTML : "") + (twohandlebars ? handleHTML.replace("percent", "percent0") +
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
-        //  console.log( $element.data())
         domParser.innerHTML = sliderHTML
         var slider = domParser.removeChild(domParser.firstChild)
         var a = slider.getElementsByTagName("b"), handlers = []
@@ -75,7 +73,7 @@ define(["avalon.draggable"], function(avalon) {
             if (val > valueMax) {
                 val = valueMax
             }
-            return parseFloat((val / valueMax * 100).toFixed(5))
+            return parseFloat((val / valueMax * 100).toFixed(2))
         }
         function percent2Value(percent) {//0~1
             var val = valueMax * percent
@@ -87,9 +85,7 @@ define(["avalon.draggable"], function(avalon) {
 
             return parseFloat(val.toFixed(3))
         }
-        function value2percent(val) {
-
-        }
+   
         var model = avalon.define(id, function(vm) {
             vm.disabled = element.disabled
             vm.percent = twohandlebars ? value2Percent(values[1] - values[0]) : value2Percent(value)
@@ -100,6 +96,7 @@ define(["avalon.draggable"], function(avalon) {
             vm.values = values
             vm.dragstart = function(event, data) {
                 data.started = !model.disabled
+                data.dragX =  data.dragY = false
                 Index = handlers.indexOf(data.element)
                 data.$element.addClass("ui-state-active")
                 pixelTotal = isHorizontal ? slider.offsetWidth : slider.offsetHeight
@@ -136,9 +133,7 @@ define(["avalon.draggable"], function(avalon) {
                         }
                     }
                     model.values[Index] = val
-                    var centuplicate = value2Percent(val)
-                    model["percent" + Index] = centuplicate
-                    this.style[prop] =   pixelTotal *  centuplicate / 100 + "px"
+                    model["percent" + Index] = value2Percent(val)
                     model.value = model.values.join()
                     model.percent = value2Percent(model.values[1] - model.values[0])
                 } else {
