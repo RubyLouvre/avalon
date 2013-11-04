@@ -71,7 +71,7 @@ define(["avalon.draggable"], function(avalon) {
             }
             return parseFloat((val / valueMax * 100).toFixed(5))
         }
-        function percent2Value(percent, add) {//0~1
+        function percent2Value(percent) {//0~1
             var val = valueMax * percent
             var step = (options.step > 0) ? options.step : 1
             var valModStep = val % step
