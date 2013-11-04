@@ -45,8 +45,6 @@ define(["avalon.draggable"], function(avalon) {
                 ' ms-draggable="dragend"' +
                 ' data-start="dragstart"' +
                 ' data-drag="drag"' +
-                ' data-drag-x="false"'+
-                ' data-drag-y="false"'+
                 ' data-containment="parent"' +
                 ' ms-hover="ui-state-hover"></b>'
         var rangeHTML = ' <div class="ui-slider-range ui-widget-header ui-corner-all"' +
@@ -61,7 +59,6 @@ define(["avalon.draggable"], function(avalon) {
                 handleHTML.replace("percent", "percent1") : handleHTML) +
                 '</div>'
       //  console.log( $element.data())
-    console.log(sliderHTML)
         domParser.innerHTML = sliderHTML
         var slider = domParser.removeChild(domParser.firstChild)
         var a = slider.getElementsByTagName("b"), handlers = []
@@ -97,9 +94,9 @@ define(["avalon.draggable"], function(avalon) {
             vm.percent1 = twohandlebars ? value2Percent(values[1]) : 0
             vm.value = twohandlebars ? values.join() : value
             vm.range = oRange
-           // console.log(vm.range)
             vm.values = values
             vm.dragstart = function(event, data) {
+                data.started = !model.disabled
                 Index = handlers.indexOf(data.element)
                 data.$element.addClass("ui-state-active")
                 pixelTotal = isHorizontal ? slider.offsetWidth : slider.offsetHeight

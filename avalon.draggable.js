@@ -73,7 +73,6 @@ define(["avalon"], function(avalon) {
             var method = options[name]
             if (typeof method === "string") {
                 if (typeof opts[method] === "function") {
-
                     options[name] = opts[method]
                 } else {
                     options[name] = avalon.noop
@@ -85,6 +84,7 @@ define(["avalon"], function(avalon) {
             options.axis = "xy"
         }
         body = document.body //因为到这里时，肯定已经domReady
+
         $element.bind(dragstart, function(e) {
             var data = avalon.mix({}, options, {
                 element: element,
@@ -142,10 +142,8 @@ define(["avalon"], function(avalon) {
             var startOffset = $element.offset()
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
-                // clone.style.backgroundColor = "yellow"
-
                 avalon(clone).css("opacity", .7).width(element.offsetWidth).height(element.offsetHeight)
-
+                
                 data.clone = clone
                 if (position !== "fixed") {
                     clone.style.position = "absolute"
@@ -173,9 +171,8 @@ define(["avalon"], function(avalon) {
             setContainment(options, data)//修正containment
             draggable.dragData = data//决定有东西在拖动
             "start,drag,beforeStop,stop".replace(avalon.rword, function(name) {
-                draggable[name].unshift(options[name])
+                draggable[name] = [options[name]]
             })
-
             draggable.plugin.call("start", e, data)
         })
 
@@ -185,10 +182,10 @@ define(["avalon"], function(avalon) {
         "Y": "Top"
     }
     //插件系统
+    draggable.dragData = {}
     draggable.start = []
     draggable.drag = []
     draggable.stop = []
-    // draggable.beforeStart = []
     draggable.beforeStop = []
     draggable.plugin = {
         add: function(name, set) {
@@ -292,41 +289,40 @@ define(["avalon"], function(avalon) {
     }
     //统一处理拖动的事件
     avalon(document).bind(drag, function(e) {
-        var data = draggable.dragData
-        if (!data || !data.started)
-            return
-        //fix touchmove bug;  
-        //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
-        //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
-        e.preventDefault();
-        //使用document.selection.empty()来清除选择，会导致捕获失败 
-        var element = data.clone || data.element
+        var data = draggable.dragData 
+        if (data.started === true) {
+            //fix touchmove bug;  
+            //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
+            //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
+            e.preventDefault();
+            //使用document.selection.empty()来清除选择，会导致捕获失败 
+            var element = data.clone || data.element
+            setPosition(e, element, data, "X")
+            setPosition(e, element, data, "Y")
+            draggable.plugin.call("drag", e, data)
+        }
 
-        setPosition(e, element, data, "X")
-        setPosition(e, element, data, "Y")
-
-        draggable.plugin.call("drag", e, data)
     })
 
     //统一处理拖动结束的事件
     avalon(document).bind(dragstop, function(e) {
         var data = draggable.dragData
-        if (!data || !data.started)
-            return
-        restoreUserSelect()
-        var element = data.element
-        draggable.plugin.call("beforeStop", e, data)
-        if (data.dragX) {
-            setPosition(e, element, data, "X", true)
+        if (data.started === true) {
+            restoreUserSelect()
+            var element = data.element
+            draggable.plugin.call("beforeStop", e, data)
+            if (data.dragX) {
+                setPosition(e, element, data, "X", true)
+            }
+            if (data.dragY) {
+                setPosition(e, element, data, "Y", true)
+            }
+            if (data.clone) {
+                body.removeChild(data.clone)
+            }
+            draggable.plugin.call("stop", e, data)
+            draggable.dragData = {}
         }
-        if (data.dragY) {
-            setPosition(e, element, data, "Y", true)
-        }
-        if (data.clone) {
-            body.removeChild(data.clone)
-        }
-        draggable.plugin.call("stop", e, data)
-        delete draggable.dragData
     })
 
 
