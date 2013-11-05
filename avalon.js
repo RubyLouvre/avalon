@@ -1681,7 +1681,7 @@
                 prefix = " = " + name + "."
         for (var i = vars.length; name = vars[--i]; ) {
             name = vars[i]
-            if (scope.hasOwnProperty && scope.hasOwnProperty(name)) {
+            if (scope.hasOwnProperty && scope.hasOwnProperty(name)) {//IE6下节点没有hasOwnProperty
                 ret.push(name + prefix + name)
                 vars.splice(i, 1)
             }
@@ -1772,7 +1772,6 @@
         }
         try {
             if (data.type !== "on" && four !== "setget") {
-                //  console.log(typeof fn)
                 fn.apply(fn, args)
             }
             return [fn, args]
@@ -1888,8 +1887,8 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (root.contains(elem)) {
-                avalon.nextTick(ifCall)
+            if (root.contains(elem) && W3C) {
+                setTimeout(ifCall) //IE6 还是抢先执行，导致渲染不正确
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
                 if (ifCallbacks) {
