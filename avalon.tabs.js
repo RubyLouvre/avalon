@@ -7,7 +7,7 @@ define(["avalon"], function(avalon) {
         removable: false, //按钮的左上角是否出现X，用于移除按钮与对应面板
         activate: avalon.noop// 切换面板后触发的回调
     }
-    var style = document.getElementById("avalonStyle")
+    var styleEl = document.getElementById("avalonStyle")
     avalon.ui.tabs = function(element, id, vmodels, opts) {
         var el, tabsParent, tabs = [], tabpanels = [], $element = avalon(element)
         //1,设置参数对象options = defaults + opts + $element.data()
@@ -21,7 +21,7 @@ define(["avalon"], function(avalon) {
                 tabsParent = el
             }
             if (el.tagName === "DIV") {
-                 tabpanels.push(el.childNodes)
+                tabpanels.push(el.childNodes)
             }
             element.removeChild(el)
         }
@@ -56,6 +56,7 @@ define(["avalon"], function(avalon) {
                 vm.active = this.$vmodel.$index
                 options.activate.call(this, e, vmodel)
             }
+
             vm.remove = function(e) {
                 e.preventDefault()
                 var index = this.$vmodel.$index
@@ -71,15 +72,15 @@ define(["avalon"], function(avalon) {
         avalon.nextTick(function() {
             //5 当这一波扫描过来,再将组建的DOM结构插入DOM树,并绑定ms-*属性,然后开始扫描
             //jquery ui的.ui-helper-clearfix 类不支持对IE6清除浮动，这时需要fix一下
-            if (!avalon.ui.fixUiHelperClearfix && typeof style.style.maxHeight == "undefined") {
-                style.styleSheet.cssText += ".ui-helper-clearfix {_zoom:1;}"
+            if (!avalon.ui.fixUiHelperClearfix && typeof styleEl.style.maxHeight == "undefined") {
+                styleEl.styleSheet.cssText += ".ui-helper-clearfix {_zoom:1;}"
                 avalon.ui.fixUiHelperClearfix = true
             }
             element.innerHTML = options.bottom ? panels + tablist : tablist + panels
             element.setAttribute("ms-class-1", "ui-tabs-collapsible:collapsible")
             element.setAttribute("ms-class-2", "tabs-bottom:bottom")
             avalon.scan(element, [vmodel].concat(vmodels))
-            
+
         })
         return vmodel
     }

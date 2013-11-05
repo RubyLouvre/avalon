@@ -5,11 +5,11 @@ define(["avalon"], function(avalon) {
     }
     var useTransition = window.TransitionEvent || window.WebKitTransitionEvent
 
-    var style = document.getElementById("avalonStyle")
+    var styleEl = document.getElementById("avalonStyle")
     //http://stackoverflow.com/questions/5103283/does-internet-explorer-support-css-transitions
     if (useTransition) {
-        style.innerHTML += ".ui-transition{-webkit-transition:all 0.5s ease;-ms-transition:all 0.5s ease;transition:all 0.5s ease;}"
-        style.innerHTML += ".ui-accordion-collapse {height:0px!important;padding:0px!important;}"
+        styleEl.innerHTML += ".ui-transition{-webkit-transition:all 0.5s ease;-ms-transition:all 0.5s ease;transition:all 0.5s ease;}"
+        styleEl.innerHTML += ".ui-accordion-collapse {height:0px!important;padding:0px!important;}"
     }
     avalon.ui.accordion = function(element, id, vmodels, opts) {
         var $element = avalon(element),

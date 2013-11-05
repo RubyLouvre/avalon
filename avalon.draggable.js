@@ -103,13 +103,10 @@ define(["avalon"], function(avalon) {
             if (!data.dragX && !data.dragY) {
                 data.started = false
             }
-            fixUserSelect()
-
             //在处理手柄拖动前做些事情
             if (typeof options.beforeStart === "function") {
                 options.beforeStart.call(data.element, e, data)
             }
-
 
             if (data.handle && model) {// 实现手柄拖动
                 var handle = model[data.handle]
@@ -124,7 +121,7 @@ define(["avalon"], function(avalon) {
                     }
                 }
             }
-
+            fixUserSelect()
             var position = $element.css("position")
             //如果原元素没有被定位
             if (!/^(?:r|a|f)/.test(position)) {
@@ -250,7 +247,8 @@ define(["avalon"], function(avalon) {
 
     var cssText = "*{ -webkit-touch-callout: none!important;-webkit-user-select: none!important;-khtml-user-select: none!important;" +
             "-moz-user-select: none!important;-ms-user-select: none!important;user-select: none!important;}"
-    function fixUserSelect() {
+    var fixUserSelect = function() {
+      //  avalon.log("fixUserSelect")
         body.appendChild(styleEl)
         //如果不插入DOM树，styleEl.styleSheet为null
         if (typeof styleEl.styleSheet === "object") {
@@ -259,7 +257,8 @@ define(["avalon"], function(avalon) {
             styleEl.appendChild(document.createTextNode(cssText))
         }
     }
-    function restoreUserSelect() {
+    var restoreUserSelect = function() {
+       // avalon.log("restoreUserSelect")
         if (!styleEl.styleSheet) {
             styleEl.innerText = ""
             try {
@@ -274,11 +273,11 @@ define(["avalon"], function(avalon) {
         function returnFalse() {
             return false;
         }
-        function fixUserSelect() {
+        fixUserSelect = function() {
             _ieSelectBack = body.onselectstart;
             body.onselectstart = returnFalse;
         }
-        function restoreUserSelect() {
+        restoreUserSelect = function() {
             body.onselectstart = _ieSelectBack;
         }
     }
