@@ -114,10 +114,10 @@ define(["avalon"], function(avalon) {
                     var checked = handle.call(element, e, data)//要求返回一节点
                     if (checked && checked.nodeType === 1) {
                         if (!element.contains(checked)) {
-                            return false
+                            return // 不能返回 false，这会阻止文本被选择
                         }
                     } else {
-                        return false
+                        return
                     }
                 }
             }
@@ -248,7 +248,6 @@ define(["avalon"], function(avalon) {
     var cssText = "*{ -webkit-touch-callout: none!important;-webkit-user-select: none!important;-khtml-user-select: none!important;" +
             "-moz-user-select: none!important;-ms-user-select: none!important;user-select: none!important;}"
     var fixUserSelect = function() {
-      //  avalon.log("fixUserSelect")
         body.appendChild(styleEl)
         //如果不插入DOM树，styleEl.styleSheet为null
         if (typeof styleEl.styleSheet === "object") {
@@ -258,13 +257,10 @@ define(["avalon"], function(avalon) {
         }
     }
     var restoreUserSelect = function() {
-       // avalon.log("restoreUserSelect")
-        if (!styleEl.styleSheet) {
-            styleEl.innerText = ""
-            try {
-                styleEl.removeChild(styleEl.firstChild)
-            } catch (e) {
-            }
+        try {
+            styleEl.innerHTML = ""
+        } catch (e) {
+            styleEl.styleSheet.cssText = ""
         }
         body.removeChild(styleEl)
     }
