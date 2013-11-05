@@ -1489,9 +1489,9 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name)//removeAttributeNode不会刷新[ms-controller]样式规则
         }
-        scanAttr(elem, vmodels, function(status) { //扫描特性节点
+        scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels, status) //扫描子孙元素
+                scanNodes(elem, cmodel, cstate) //扫描子孙元素
             }
         }, state)
 
@@ -1591,13 +1591,13 @@
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             // 使用共享对象state，实现同一棵树中的绑定之间 的通信
             ifBinding.state = {}
-            bindingHandlers["if"](ifBinding, vmodels, function() {
-                executeBindings(bindings, vmodels, ifBinding.state)
-                callback(ifBinding.state)
+            bindingHandlers["if"](ifBinding, vmodels, function(cmodel, cstate) {
+                executeBindings(bindings, cmodel, cstate)
+                callback(cmodel, cstate)
             })
         } else {
             executeBindings(bindings, vmodels, state)
-            callback(state)
+            callback(vmodels, state)
         }
     }
 
@@ -1772,6 +1772,7 @@
         }
         try {
             if (data.type !== "on" && four !== "setget") {
+                //  console.log(typeof fn)
                 fn.apply(fn, args)
             }
             return [fn, args]
@@ -1888,7 +1889,7 @@
                     state = data.state,
                     parent
             if (root.contains(elem)) {
-                ifCall()
+                avalon.nextTick(ifCall)
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
                 if (ifCallbacks) {
@@ -1920,7 +1921,7 @@
                             } catch (e) {
                             }
                         }
-                        avalon.nextTick(callback)
+                        callback(vmodels, state)
                     } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)

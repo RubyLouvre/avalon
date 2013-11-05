@@ -1128,9 +1128,9 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name)//IE6-10 removeAttributeNode不会刷新[ms-controller]样式规则
         }
-        scanAttr(elem, vmodels, function(status) { //扫描特性节点
+        scanAttr(elem, vmodels, function(cmodels, cstate) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels, status) //扫描子孙元素
+                scanNodes(elem, cmodels, cstate) //扫描子孙元素
             }
         }, state)
 
@@ -1229,13 +1229,13 @@
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             ifBinding.state = {}
-            bindingHandlers["if"](ifBinding, vmodels, function() {
-                executeBindings(bindings, vmodels, ifBinding.state)
-                callback(ifBinding.state)
+            bindingHandlers["if"](ifBinding, vmodels, function(cmodels, cstate) {
+                executeBindings(bindings, cmodels, cstate)
+                callback(cmodels, cstate)
             })
         } else {
             executeBindings(bindings, vmodels, state)
-            callback(state)
+            callback(vmodels, state)
         }
     }
 
@@ -1489,17 +1489,17 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
-    if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
-        var ifCallbacks = []
-        root.addEventListener("DOMNodeInserted", function(e) {
-            var safelist = ifCallbacks.concat()
-            for (var i = 0, fn; fn = safelist[i++]; ) {
-                if (fn(e) === false) {
-                    avalon.Array.remove(ifCallbacks, fn)
-                }
+    // if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
+    var ifCallbacks = []
+    root.addEventListener("DOMNodeInserted", function(e) {
+        var safelist = ifCallbacks.concat()
+        for (var i = 0, fn; fn = safelist[i++]; ) {
+            if (fn(e) === false) {
+                avalon.Array.remove(ifCallbacks, fn)
             }
-        })
-    }
+        }
+    })
+    //   }
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1508,22 +1508,17 @@
                     state = data.state,
                     parent
             if (root.contains(elem)) {
-                ifCall()
+                avalon.nextTick(ifCall)
             } else {
                 elem.classList.add("fixMsIfFlicker")
-                if (ifCallbacks) {
-                    avalon.nextTick(function() {
-                        if (ifCheck() !== false) {
-                            ifCallbacks.push(ifCheck)
-                        }
-                    })
-                } else {
-                    var id = setInterval(ifCheck, 20)
-                }
+                avalon.nextTick(function() {
+                    if (ifCheck() !== false) {
+                        ifCallbacks.push(ifCheck)
+                    }
+                })
             }
             function ifCheck(e) {
                 if (e ? e.target == elem : root.contains(elem)) {
-                    clearInterval(id)
                     ifCall()
                     elem.classList.remove("fixMsIfFlicker")
                     return false
@@ -1540,7 +1535,7 @@
                             } catch (e) {
                             }
                         }
-                        avalon.nextTick(callback)
+                        callback(vmodels, state)
                     } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
