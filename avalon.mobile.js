@@ -1512,7 +1512,11 @@
             } else {
                 elem.classList.add("fixMsIfFlicker")
                 if (ifCallbacks) {
-                    ifCallbacks.push(ifCheck)
+                    avalon.nextTick(function() {
+                        if (ifCheck() !== false) {
+                            ifCallbacks.push(ifCheck)
+                        }
+                    })
                 } else {
                     var id = setInterval(ifCheck, 20)
                 }

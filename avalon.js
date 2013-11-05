@@ -1892,7 +1892,11 @@
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
                 if (ifCallbacks) {
-                    ifCallbacks.push(ifCheck)
+                    avalon.nextTick(function() {
+                        if (ifCheck() !== false) {
+                            ifCallbacks.push(ifCheck)
+                        }
+                    })
                 } else {
                     var id = setInterval(ifCheck, 20)
                 }
@@ -2131,14 +2135,15 @@
         ui: function(data, vmodels, opts) {
             var uiName = data.value.trim() //取得UI控制的名称
             var elem = data.element //取得被绑定元素
-            var id = (elem.getAttribute("data-id") || "").trim()
+            var uiID = "data-" + uiName + "-id"
+            var id = (elem.getAttribute(uiID) || elem.getAttribute("data-id") || "").trim()
             if (!id) { //取得此控件的VM的ID
                 id = uiName + setTimeout("1") //没有就随机生成一个
-                elem.setAttribute("data-id", id)
+                elem.setAttribute(uiID, id)
             }
             elem[id + "vmodels"] = vmodels //将它临时保存起来
             if (typeof avalon.ui[uiName] === "function") {
-                var optsName = data.param //
+                var optsName = data.param
                 if (optsName) {
                     for (var i = 0, vm; vm = vmodels[i++]; ) {
                         if (vm.hasOwnProperty(optsName)) {
@@ -2147,7 +2152,7 @@
                         }
                     }
                 }
-                avalon.ui[uiName](elem, id, vmodels, opts || {})
+                avalon.ui[uiName](elem, id, vmodels, opts || {}, data)
                 try {
                     delete elem[id + "vmodels"]
                 } catch (e) {
