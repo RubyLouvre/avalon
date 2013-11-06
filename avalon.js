@@ -1889,20 +1889,16 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (root.contains(elem) && W3C) {
-                ifCall()//IE6 还是抢先执行，导致渲染不正确
+            avalon(elem).addClass("fixMsIfFlicker")
+            if (ifCallbacks) {
+                ifCallbacks.push(ifCheck)
+                avalon.nextTick(function() {
+                    var event = document.createEvent("MutationEvents");
+                    event.initEvent("DOMNodeInserted", true, true)
+                    elem.dispatchEvent(event);
+                })
             } else {
-                avalon(elem).addClass("fixMsIfFlicker")
-                if (ifCallbacks) {
-                    ifCallbacks.push(ifCheck)
-                    avalon.nextTick(function() {
-                        var event = document.createEvent("MutationEvents");
-                        event.initEvent("DOMNodeInserted", true, true)
-                        elem.dispatchEvent(event);
-                    })
-                } else {
-                    var id = setInterval(ifCheck, 20)
-                }
+                var id = setInterval(ifCheck, 20)
             }
             function ifCheck(e) {
                 if (e ? e.target == elem : root.contains(elem)) {

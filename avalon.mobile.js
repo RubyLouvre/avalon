@@ -1499,7 +1499,6 @@
             }
         }
     })
-    //   }
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1507,18 +1506,15 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (root.contains(elem)) {
-                avalon.nextTick(ifCall)
-            } else {
-                elem.classList.add("fixMsIfFlicker")
-                avalon.nextTick(function() {
-                    if (ifCheck() !== false) {
-                        ifCallbacks.push(ifCheck)
-                    }
-                })
-            }
+            elem.classList.add("fixMsIfFlicker")
+            ifCallbacks.push(ifCheck)
+            avalon.nextTick(function() {
+                var event = document.createEvent("MutationEvents");
+                event.initEvent("DOMNodeInserted", true, true)
+                elem.dispatchEvent(event);
+            })
             function ifCheck(e) {
-                if (e ? e.target == elem : root.contains(elem)) {
+                if ( e.target == elem ) {
                     ifCall()
                     elem.classList.remove("fixMsIfFlicker")
                     return false
