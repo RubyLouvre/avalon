@@ -1514,7 +1514,7 @@
                 elem.dispatchEvent(event);
             })
             function ifCheck(e) {
-                if ( e.target == elem ) {
+                if (e.target == elem) {
                     ifCall()
                     elem.classList.remove("fixMsIfFlicker")
                     return false
@@ -1531,7 +1531,10 @@
                             } catch (e) {
                             }
                         }
-                        callback(vmodels, state)
+                        if (elem.attributes["ms-if"]) {
+                            callback(vmodels, state)
+                            elem.removeAttribute("ms-if")
+                        }
                     } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
