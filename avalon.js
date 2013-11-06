@@ -998,7 +998,7 @@
                 wrapper = domParser,
                 firstChild
         if (!W3C) { //fix IE
-            html = html.replace(rcreate, "<br class=fix_noscope>$1") //在link style script等标签之前添加一个补丁
+            html = html.replace(rcreate, "<br class=fixNoscope>$1") //在link style script等标签之前添加一个补丁
         }
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
         var els = wrapper.getElementsByTagName("script")
@@ -1023,7 +1023,7 @@
         }
         if (!W3C) { //fix IE
             for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
-                if (el.className && el.className === "fix_noscope") {
+                if (el.className && el.className === "fixNoscope") {
                     el.parentNode.removeChild(el)
                 }
             }
