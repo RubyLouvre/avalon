@@ -227,11 +227,13 @@
         },
         bind: function(el, type, fn, phase) { // 绑定事件
             function callback(e) {
-                var ex = e.target ? e : fixEvent(e || window.event)
-                var ret = fn.call(el, ex)
+                if (!e.target) {
+                    fixEvent(e)
+                }
+                var ret = fn.call(el, e)
                 if (ret === false) {
-                    ex.preventDefault()
-                    ex.stopPropagation()
+                    e.preventDefault()
+                    e.stopPropagation()
                 }
                 return ret
             }
@@ -1888,14 +1890,15 @@
                     state = data.state,
                     parent
             if (root.contains(elem) && W3C) {
-                setTimeout(ifCall) //IE6 还是抢先执行，导致渲染不正确
+                ifCall()//IE6 还是抢先执行，导致渲染不正确
             } else {
                 avalon(elem).addClass("fixMsIfFlicker")
                 if (ifCallbacks) {
+                    ifCallbacks.push(ifCheck)
                     avalon.nextTick(function() {
-                        if (ifCheck() !== false) {
-                            ifCallbacks.push(ifCheck)
-                        }
+                        var event = document.createEvent("MutationEvents");
+                        event.initEvent("DOMNodeInserted", true, true)
+                        elem.dispatchEvent(event);
                     })
                 } else {
                     var id = setInterval(ifCheck, 20)
@@ -1920,7 +1923,10 @@
                             } catch (e) {
                             }
                         }
-                        callback(vmodels, state)
+                        if (elem.attributes["ms-if"]) {
+                            callback(vmodels, state)
+                            elem.removeAttribute("ms-if")
+                        }
                     } else { //移除  如果它还在DOM树中， 移出DOM树
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
@@ -2434,7 +2440,6 @@
         event.stopPropagation = function() { //阻止事件在DOM树中的传播
             event.cancelBubble = true
         }
-        return event
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
