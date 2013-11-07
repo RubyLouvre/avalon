@@ -1909,6 +1909,7 @@
         } else if (type === "radio") {
             updateView = function() {
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
+                element.beforeChecked = element.checked
             }
             updateModel = function() {
                 if ($elem.data("observe") !== false) {
@@ -1919,19 +1920,11 @@
                     } else {
                         var val = !element.beforeChecked
                         fn(scope, val)
-                        element.beforeChecked = element.checked = val
+                        element.checked = val
                     }
                 }
             }
 
-            function beforeChecked() {
-                element.beforeChecked = element.checked
-            }
-            if (element.onbeforeactivate === null) {
-                $elem.bind("beforeactivate", beforeChecked)
-            } else {
-                $elem.bind("mouseover", beforeChecked)
-            }
             $elem.bind("click", updateModel)
         } else if (type === "checkbox") {
             updateModel = function() {

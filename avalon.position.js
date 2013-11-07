@@ -271,8 +271,7 @@ define(["avalon"], function(avalon) {
     function setOffset(options) {
         var elem = this[0]
         var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = this.css("position"),
-                props = {};
+                position = this.css("position")
 
         // Set position first, in-case top/left are set even on static elem
         if (position === "static") {
