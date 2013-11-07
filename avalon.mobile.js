@@ -24,7 +24,7 @@
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
     var rchecktype = /^(?:object|array)$/
-    var rwindow = /^[object (Window|DOMWindow|global)]$/
+    var rwindow = /^\[object (Window|DOMWindow|global)\]$/
 
     function noop() {
     }

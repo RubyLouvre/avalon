@@ -31,7 +31,7 @@
 
     var rnative = /\[native code\]/
     var rchecktype = /^(?:object|array)$/
-    var rwindow = /^[object (Window|DOMWindow|global)]$/
+    var rwindow = /^\[object (Window|DOMWindow|global)\]$/
 
     function noop() {
     }
