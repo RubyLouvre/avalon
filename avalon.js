@@ -1132,8 +1132,12 @@
             updateLater[ret.$id] = function(fn) {
                 while (fn = iterators.shift()) {
                     try {
-                        var data = fn.data
-                        bindingHandlers[data.type](data, fn.vmodels)
+                        (function(f) {
+                            var data = f.data
+                            data && avalon.nextTick(function() {
+                                bindingHandlers[data.type](data, f.vmodels)
+                            })
+                        })(fn)
                     } catch (e) {
                     }
                 }
@@ -1819,7 +1823,10 @@
         if (updateView) {
             updateView.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
-            } //方便调试
+            }
+            updateView.data = data
+            updateView.vmodels = scopes
+            //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
             registerSubscriber(updateView, data)
