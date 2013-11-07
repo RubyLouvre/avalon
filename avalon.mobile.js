@@ -873,7 +873,7 @@
                 callback.apply(this, args)
             }
             for (var i = 0, callback; callback = all[i++]; ) {
-                callback.apply(this, args)
+                callback.apply(this, arguments)
             }
         }
     }
