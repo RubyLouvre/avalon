@@ -45,7 +45,6 @@ define(["avalon"], function(avalon) {
         // force my and at to have valid horizontal and vertical positions
         // if a value is missing or invalid, it will be converted to center
         myAt.forEach(function(el) {
-            //  console.log(el);
             var pos = (options[ el ] || "").split(" "),
                     horizontalOffset,
                     verticalOffset;
@@ -302,7 +301,7 @@ define(["avalon"], function(avalon) {
         if (options.left != null) {
             elem.style.left = (options.left - curOffset.left) + curLeft + "px"
         }
-      
+
         return this
     }
 
@@ -338,6 +337,7 @@ define(["avalon"], function(avalon) {
     function getWithinInfo(element) {//求得当前对象一切涉及尺寸的数值
         var withinElement = avalon(element || window),
                 isWindow = avalon.isWindow(withinElement[0]);
+
         return {
             element: withinElement,
             isWindow: isWindow,
