@@ -1501,7 +1501,6 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
-    // if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
     var ifCallbacks = []
     root.addEventListener("DOMNodeInserted", function(e) {
         var safelist = ifCallbacks.concat()
@@ -1719,16 +1718,8 @@
                         fn.apply(elem, arguments)
                     }
                     watchFn()
+                    ret = 1
                     scope.$watch(array[1], watchFn)
-//                    var updateView = function() {
-//                    }
-//                    ret = 1
-//                    updateView.vmodels = vmodels
-//                    updateView.data = data
-//                    updateView.rollback = function() {
-//                        scope.$unwatch(array[1], watchFn)
-//                    }
-//                    scope[subscribers].push(updateView)
                 }
             }
             data.remove = ret

@@ -2122,16 +2122,8 @@
                         fn.apply(elem, arguments)
                     }
                     watchFn()
+                    ret = 1
                     scope.$watch(array[1], watchFn)
-//                    var updateView = function() {
-//                    }
-//                    ret = 1
-//                    updateView.vmodels = vmodels
-//                    updateView.data = data
-//                    updateView.rollback = function() {
-//                        scope.$unwatch(array[1], watchFn)
-//                    }
-//                    scope[subscribers].push(updateView)
                 }
             }
             data.remove = ret
