@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.971   by 司徒正美 2013.10.21
+// avalon 0.973   by 司徒正美 2013.10.21
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -265,7 +265,7 @@
                 return value === true ? parseFloat(val) || 0 : val
             } else if (value === "") { //请除样式
                 node.style[name] = ""
-            } else {//设置样式
+            } else { //设置样式
                 if (value == null || value !== value) {
                     return;
                 }
@@ -1116,6 +1116,7 @@
         }
     }
     var updateLater = {}
+
     function updateViewModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
@@ -1141,7 +1142,7 @@
                     } catch (e) {
                     }
                 }
-                delete  updateLater[ret.$id]
+                delete updateLater[ret.$id]
             }
             return ret
         }
@@ -1186,7 +1187,8 @@
                 }
                 var accessor, oldArgs
                 if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
-                    var setter = val.set, getter = val.get
+                    var setter = val.set,
+                            getter = val.get
                     accessor = function(neo) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                         var value = accessor.value,
                                 preValue = value
@@ -1399,8 +1401,7 @@
     }
 
     function registerSubscriber(updateView, data) {
-        updateView.element = data.element
-        updateView.state = data.state
+        updateView.data = data
         Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
         openComputedCollect = true
         updateView()
@@ -1415,6 +1416,9 @@
         }
     }
 
+    var fakeData = {
+        state: {}
+    }
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
@@ -1422,11 +1426,12 @@
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                var el = fn.element,
-                        state = fn.state,
+                var data = fn.data || fakeData
+                var el = data.element,
+                        state = data.state,
                         remove
                 if (el && (!state || state.sourceIndex !== 0)) {
-                    if (typeof el.sourceIndex == "number") {//IE6-IE11
+                    if (typeof el.sourceIndex == "number") { //IE6-IE11
                         remove = el.sourceIndex === 0
                     } else {
                         try {
@@ -1493,7 +1498,7 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttribute(node.name)//removeAttributeNode不会刷新[ms-controller]样式规则
+            elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         }
         scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
@@ -1682,12 +1687,13 @@
     }
 
     //添加赋值语句
+
     function addAssign(vars, scope, name) {
         var ret = [],
                 prefix = " = " + name + "."
         for (var i = vars.length; name = vars[--i]; ) {
             name = vars[i]
-            if (scope.hasOwnProperty && scope.hasOwnProperty(name)) {//IE6下节点没有hasOwnProperty
+            if (scope.hasOwnProperty && scope.hasOwnProperty(name)) { //IE6下节点没有hasOwnProperty
                 ret.push(name + prefix + name)
                 vars.splice(i, 1)
             }
@@ -1907,6 +1913,7 @@
             } else {
                 var id = setInterval(ifCheck, 20)
             }
+
             function ifCheck(e) {
                 if (e ? e.target == elem : root.contains(elem)) {
                     clearInterval(id)
@@ -1915,6 +1922,7 @@
                     return false
                 }
             }
+
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
@@ -2421,6 +2429,7 @@
             break;
         }
     }
+
     function fixEvent(event) {
         var target = event.target = event.srcElement
         event.which = event.charCode != null ? event.charCode : event.keyCode
@@ -2662,6 +2671,7 @@
         var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
+
         function getter() {
             return array[0].apply(0, array[1])
         }
@@ -2691,8 +2701,6 @@
                 withIterator(method, pos, el, data, getter)
             }
         }
-        updateView.element = elem
-        updateView.state = data.state
         updateView.data = data
         updateView.vmodels = vmodels
         updateView.rollback = function() {
@@ -2725,7 +2733,16 @@
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                     scanNodes(tview, base.concat(data.vmodels), data.state)
-                    proxy.$accessor.$last.get.element = tview.firstChild
+                    /*
+                     IE6-7 文档碎片拥有 all  getElementsByTagName
+                     IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
+                     IE9-IE11 文档碎片拥有 querySelectorAll
+                     chrome firefox拥有children querySelectorAll firstElementChild*/
+                    var elem = tview.querySelectorAll && tview.querySelectorAll("*") || tview.all || []
+                    elem = elem[0] || tview.firstChild
+                    proxy.$accessor.$last.get.data = {
+                        element: elem
+                    }
                     if (typeof group !== "number") {
                         data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                     }
