@@ -1906,9 +1906,9 @@
             if (ifCallbacks) {
                 ifCallbacks.push(ifCheck)
                 avalon.nextTick(function() {
-                    var event = document.createEvent("MutationEvents");
+                    var event = document.createEvent("MutationEvents")
                     event.initEvent("DOMNodeInserted", true, true)
-                    elem.dispatchEvent(event);
+                    elem.dispatchEvent(event)
                 })
             } else {
                 var id = setInterval(ifCheck, 20)
@@ -2302,7 +2302,7 @@
     modelBinding.INPUT = function(data, fn, scope) {
         var element = data.element
         var fixType = data.param
-        var type = element.type,
+        var type = element.type, removeFn,
                 $elem = avalon(element)
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
@@ -2330,12 +2330,19 @@
             } else {
                 if (window.addEventListener) { //先执行W3C
                     element.addEventListener("input", updateModel)
+                    updateView.rollback = function() {
+                        element.removeEventListener("input", updateModel)
+                    }
                 } else {
-                    element.attachEvent("onpropertychange", function(e) {
+                    removeFn = function(e) {
                         if (e.propertyName === "value") {
                             updateModel()
                         }
-                    })
+                    }
+                    element.attachEvent("onpropertychange", removeFn)
+                    updateView.rollback = function() {
+                        element.detachEvent("onpropertychange", removeFn)
+                    }
                 }
 
                 if (DOC.documentMode === 9) { //fuck IE9
@@ -2348,6 +2355,12 @@
                     };
                     element.addEventListener("focus", selectionchange)
                     element.addEventListener("blur", selectionchange)
+                    var rollback = updateView.rollback
+                    updateView.rollback = function() {
+                        rollback()
+                        element.removeEventListener("focus", selectionchange)
+                        element.removeEventListener("blur", selectionchange)
+                    }
                 }
             }
         } else if (type === "radio") {
@@ -2368,8 +2381,10 @@
                     }
                 }
             }
-
-            $elem.bind("click", updateModel)
+            removeFn = $elem.bind("click", updateModel)
+            updateView.rollback = function() {
+                $elem.unbind("click", removeFn)
+            }
         } else if (type === "checkbox") {
             updateModel = function() {
                 if ($elem.data("observe") !== false) {
@@ -2379,13 +2394,12 @@
             }
             updateView = function() {
                 var array = [].concat(fn(scope)) //强制转换为数组
-                try {
-                    element.checked = array.indexOf(element.value) >= 0
-                } catch (e) {
-                    log("<input type='checkbox' ms-duplex='prop' /> 中prop应为一个数组")
-                }
+                element.checked = array.indexOf(element.value) >= 0
             }
-            $elem.bind("click", updateModel) //IE6-8
+            removeFn = $elem.bind("click", updateModel) //IE6-8
+            updateView.rollback = function() {
+                $elem.unbind("click", removeFn)
+            }
         }
         return updateView
     }
@@ -2704,10 +2718,7 @@
         updateView.data = data
         updateView.vmodels = vmodels
         updateView.rollback = function() {
-            while (elem.firstChild) {
-                elem.removeChild(elem.firstChild)
-            }
-            elem.appendChild(view)
+            avalon.clearChild(elem).appendChild(view)
         }
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
