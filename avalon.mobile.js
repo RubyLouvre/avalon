@@ -1464,7 +1464,6 @@
             updateView.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
             } //方便调试
-            updateView.data = data
             updateView.vmodels = scopes
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -1865,7 +1864,7 @@
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         if (typeof modelBinding[tagName] === "function") {
-            var array = parseExpr(data.value, vmodels, data, "setget")
+            var array = parseExpr(data.value, vmodels, data, "setget"), updateView
             if (array) {
                 var val = data.value.split("."),
                         first = val[0],
@@ -1885,10 +1884,13 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](data, array[0], vm)
-
-                updateView && registerSubscriber(updateView, data)
-
             }
+            if (!updateView) {
+                updateView = function() {
+                }
+            }
+            updateView.vmodels = vmodels
+            registerSubscriber(updateView, data)
         }
     }
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起

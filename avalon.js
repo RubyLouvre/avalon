@@ -2293,8 +2293,13 @@
                     elem.name = generateID()
                 }
                 var updateView = modelBinding[tagName](data, array[0], vm)
-                updateView && registerSubscriber(updateView, data)
             }
+            if (!updateView) {
+                updateView = function() {
+                }
+            }
+            updateView.vmodels = vmodels
+            registerSubscriber(updateView, data)
         }
     }
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
