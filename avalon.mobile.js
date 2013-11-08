@@ -1570,13 +1570,13 @@
                 }
             })
         },
-        on: function(data, vmodels) {
+        "on": function(data, vmodels) {
             data.type = "on"
             var value = data.value,
                     four = "$event",
                     elem = data.element,
                     type = data.param,
-                    callback
+                    ret = 0
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -1589,23 +1589,30 @@
             var array = parseExpr(value, vmodels, data, four)
             if (array) {
                 var fn = array[0],
-                        args = array[1]
+                        args = array[1],
+                        updateView = function() {
+                    return fn.apply(fn, args)
+                }
                 if (!four) {
-                    callback = fn.apply(fn, args)
+                    var callback = updateView()
                 } else {
                     callback = function(e) {
                         return fn.apply(this, args.concat(e))
                     }
                 }
-                if (!elem.$vmodels) {
+                if (type && typeof callback === "function") {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                }
-                if (type && typeof callback === "function") {
-                    avalon.bind(elem, type, callback)
+                    var removeFn = avalon.bind(elem, type, callback)
+                    ret = 1
+                    updateView.vmodels = vmodels
+                    updateView.rollback = function() {
+                        avalon.unbind(elem, type, removeFn)
+                    }
+                    registerSubscriber(updateView, data)
                 }
             }
-
+            data.remove = ret
         },
         data: function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
@@ -1693,7 +1700,7 @@
             })
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
-        bind: function(data, vmodels) {
+        "bind": function(data, vmodels) {
             var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
                     ret = 0
             if (array && array[1] && array[2]) {
@@ -1706,11 +1713,20 @@
                     }
                 }
                 if (typeof fn === "function") {
-                    fn.call(elem)
-                    scope.$watch(array[1], function(neo, old) {
-                        fn.call(elem, neo, old)
-                    })
-                    ret = 1
+                    var watchFn = function() {
+                        fn.apply(elem, arguments)
+                    }
+                    watchFn()
+                    scope.$watch(array[1], watchFn)
+//                    var updateView = function() {
+//                    }
+//                    ret = 1
+//                    updateView.vmodels = vmodels
+//                    updateView.data = data
+//                    updateView.rollback = function() {
+//                        scope.$unwatch(array[1], watchFn)
+//                    }
+//                    scope[subscribers].push(updateView)
                 }
             }
             data.remove = ret
@@ -1864,7 +1880,7 @@
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         if (typeof modelBinding[tagName] === "function") {
-            var array = parseExpr(data.value, vmodels, data, "setget"), updateView
+            var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
                 var val = data.value.split("."),
                         first = val[0],
