@@ -1895,7 +1895,7 @@
             }
         })
     }
-
+    var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -2070,19 +2070,24 @@
                     avalon(elem).css(data.param, val)
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
-                        var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
-                        xhr.onreadystatechange = function() {
-                            if (xhr.readyState === 4) {
-                                var s = xhr.status
-                                if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                    avalon.innerHTML(elem, xhr.responseText)
-                                    scanNodes(elem, vmodels, data.state)
+                        if (includeContents[val]) {
+                            avalon.innerHTML(elem, includeContents[val])
+                            scanNodes(elem, vmodels, data.state)
+                        } else {
+                            var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+                            xhr.onreadystatechange = function() {
+                                if (xhr.readyState === 4) {
+                                    var s = xhr.status
+                                    if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                                        avalon.innerHTML(elem,  (includeContents[val] = xhr.responseText))
+                                        scanNodes(elem, vmodels, data.state)
+                                    }
                                 }
                             }
+                            xhr.open("GET", val, true)
+                            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                            xhr.send(null)
                         }
-                        xhr.open("GET", val, true)
-                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
-                        xhr.send(null)
                     } else {
                         var el = DOC.getElementById(val)
                         avalon.nextTick(function() {
