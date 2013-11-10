@@ -1515,7 +1515,7 @@
         }
     }
 
-   var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1548,7 +1548,7 @@
                             leach.push(d + (e || ""))
                             return ""
                         })
-                        value = value.replace(/U2hvcnRDaXJjdWl0/g,"||")//还原短路与
+                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||")//还原短路与
                     }
                     tokens.push({
                         value: value,
@@ -2080,7 +2080,7 @@
                                 if (xhr.readyState === 4) {
                                     var s = xhr.status
                                     if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                        avalon.innerHTML(elem,  (includeContents[val] = xhr.responseText))
+                                        avalon.innerHTML(elem, (includeContents[val] = xhr.responseText))
                                         scanNodes(elem, vmodels, data.state)
                                     }
                                 }
@@ -2165,35 +2165,37 @@
         "with": function(data, vmodels) {
             bindingHandlers.each(data, vmodels, true)
         },
-        ui: function(data, vmodels, opts) {
-            var uiName = data.value.trim() //取得UI控制的名称
-            var elem = data.element //取得被绑定元素
-            var uiID = "data-" + uiName + "-id"
-            var id = (elem.getAttribute(uiID) || elem.getAttribute("data-id") || "").trim()
-            if (!id) { //取得此控件的VM的ID
-                id = uiName + setTimeout("1") //没有就随机生成一个
-                elem.setAttribute(uiID, id)
+        "widget": function(data, vmodels) {
+//            还在设计中
+//            var args = data.value.match(rword)
+//            var widget = args[0], ret = 0
+//            if (args.length === 1) {
+//                args.push(widget + setTimeout("1"))
+//            }
+//            data.node.value = args.join(",")
+//            if (typeof avalon.ui[widget] === "function") {
+//                var vmodel = vmodels[0], opts = args[0]
+//                data[ widget + "Option"] = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts] : {}
+//                data[ widget + "id"] = args[1]
+//                avalon.ui[widget](data.element, data, vmodels)
+//                ret = 1
+//            }
+//            data.remove = ret;
+        },
+        ui: function(data, vmodels) {
+            var args = data.value.match(rword)
+            var elem = data.element, widget = args[0], ret = 0
+            if (args.length == 1) {
+                var id = (elem.getAttribute("data-id") || "").trim() || widget + setTimeout("1")
+                args.push(id)
             }
-            elem[id + "vmodels"] = vmodels //将它临时保存起来
-            if (typeof avalon.ui[uiName] === "function") {
-                var optsName = data.param
-                if (optsName) {
-                    for (var i = 0, vm; vm = vmodels[i++]; ) {
-                        if (vm.hasOwnProperty(optsName)) {
-                            opts = vm.$model[optsName]
-                            break
-                        }
-                    }
-                }
-                avalon.ui[uiName](elem, id, vmodels, opts || {}, data)
-                try {
-                    delete elem[id + "vmodels"]
-                } catch (e) {
-                    elem[id + "vmodels"] = void 0
-                }
-            } else {
-                delete data.remove
+            data.node.value = args.join(",")
+            if (typeof avalon.ui[widget] === "function") {
+                var optsName = data.param, vmodel = vmodels[0], ret = 1
+                var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
+                avalon.ui[widget](elem, id, vmodels, opts)
             }
+            data.remove = ret
         }
     }
 

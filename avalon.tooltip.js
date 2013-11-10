@@ -33,6 +33,7 @@ define(["avalon.position"], function(avalon) {
         //data-tooltip-attr="title" // "title" 用于指定
         //data-tooltip-event="mouseover" 
         //data-tooltip-position="top left" 
+        
 
         var tooltip = '<div class="ui-tooltip ui-widget ui-corner-all ui-widget-content"><div class="ui-tooltip-arrow"></div><div class="ui-tooltip-arrow2"></div><div class="ui-tooltip-content">999999999998888</div></div>'
         tooltip = avalon.parseHTML(tooltip).firstChild
