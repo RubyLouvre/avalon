@@ -1976,7 +1976,8 @@
                     four = "$event",
                     elem = data.element,
                     type = data.param,
-                    ret = 0
+                    ret = 0,
+                    callback
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -1989,27 +1990,21 @@
             var array = parseExpr(value, vmodels, data, four)
             if (array) {
                 var fn = array[0],
-                        args = array[1],
-                        updateView = function() {
-                    return fn.apply(fn, args)
-                }
+                        args = array[1]
                 if (!four) {
-                    var callback = updateView()
+                    callback = fn.apply(fn, args)
                 } else {
                     callback = function(e) {
                         return fn.apply(this, args.concat(e))
                     }
                 }
-                if (type && typeof callback === "function") {
+                if (!elem.$vmodels) {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                    var removeFn = avalon.bind(elem, type, callback)
+                }
+                if (type && typeof callback === "function") {
+                    avalon.bind(elem, type, callback)
                     ret = 1
-                    updateView.vmodels = vmodels
-                    updateView.rollback = function() {
-                        avalon.unbind(elem, type, removeFn)
-                    }
-                    registerSubscriber(updateView, data)
                 }
             }
             data.remove = ret
