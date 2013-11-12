@@ -2188,7 +2188,7 @@
             if (typeof avalon.ui[widget] === "function") {
                 var optsName = data.param, vmodel = vmodels[0], ret = 1
                 var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
-                avalon.ui[widget](elem, id, vmodels, opts)
+                avalon.ui[widget](elem, args[1], vmodels, opts)
             }
             data.remove = ret
         }
