@@ -41,57 +41,99 @@ define(["avalon.position"], function(avalon) {
 //                
 //                || []"left bottom"
 //        console.log(obj)
+        var cmy, cat, borderWidth
         var positionAt = obj.positionAt
         var positionMy = obj.positionMy
-        if (positionAt && positionMy && positionAt.match(rposition) && positionMy.match(rposition)) {
+        var borderColor = ["transparent", "transparent", "transparent", "transparent"]
+        var bpx = "10px", mpx = "5px", spx = "0"
+        var color = "red"
 
-        } else {
 //http://qtip2.com/options
-            var p = obj.position || ""
-            switch (p) {
-                case "tc"://正上方
-                    cat = "center top"
-                    cmy = "center bottom"
-                    break;
-                case "tl": //上方靠左
-                    cat = "left top"
-                    cmy = "left bottom"
-                    break
-                case "tr": //上方靠右
-                    cat = "right top"
-                    cmy = "right bottom"
-                    break
-                case "lt"://左方靠上
-                    cat = "left top"
-                    cmy = "right top"
-                    break
-                case "lc"://正左方
-                    cat = "left center"
-                    cmy = "right center"
-                    break
-                case "lc"://左方靠下
-                    cat = "left bottom"
-                    cmy = "right bottom"
-                    break
-                case "rt"://右方靠上
-                    cat = "right top"
-                    cmy = "left top"
-                    break
-                case "rc"://正右方
-                    cat = "right center"
-                    cmy = "left center"
-                    break
-                case "rb"://右方靠下
-                    cat = "right bottom"
-                    cmy = "left bottom"
-                    break
-            }
-            p && p.length === 2 && p.match(/(lbcd)/)
-            var short = (obj.position || "").length === 2 && obj
+        var p = obj.position || ""
+        switch (p) {
+            case "tc"://正上方
+                cat = "center top"
+                cmy = "center bottom"
+                borderWidth = [bpx, mpx, spx, mpx]
+                borderColor[0] = color
+                break;
+            case "tl": //上方靠左
+                cat = "left top"
+                cmy = "left bottom"
+                borderWidth = [bpx, bpx, spx, spx]
+                borderColor[0] = color
+                break
+            case "tr": //上方靠右
+                cat = "right top"
+                cmy = "right bottom"
+                borderWidth = [spx, bpx, bpx, spx]
+                borderColor[1] = color
+                break
+            case "lt"://左方靠上
+                cat = "left top"
+                cmy = "right top"
+                borderWidth = [bpx, bpx, spx, spx]
+                borderColor[0] = color
+                break
+            case "lc"://正左方
+                cat = "left center"
+                cmy = "right center"
+                borderWidth = [mpx, spx, mpx, bpx]
+                borderColor[3] = color
+                break
+            case "lb"://左方靠下
+                cat = "left bottom"
+                cmy = "right bottom"
+                borderWidth = [bpx, spx, spx, bpx]
+                borderColor[3] = color
+                break
+            case "rt"://右方靠上
+                cat = "right top"
+                cmy = "left top"
+                borderWidth = [spx, bpx, bpx, spx]
+                borderColor[1] = color
+                break
+            case "rc"://正右方
+                cat = "right center"
+                cmy = "left center"
+                borderWidth = [mpx, bpx, mpx, spx]
+                borderColor[1] = color
+                break
+            case "rb"://右方靠下
+                cat = "right bottom"
+                cmy = "left bottom"
+                borderWidth = [spx, spx, bpx, bpx]
+                borderColor[2] = color
+                break
+            case "bl"://下方靠左
+                cat = "left bottom"
+                cmy = "left top"
+                borderWidth = [bpx, spx, spx, bpx]
+                borderColor[3] = color
+                break
+            case "bc"://正下方
+                cat = "center bottom"
+                cmy = "center top"
+                borderWidth = [spx, mpx, bpx, mpx]
+                borderColor[2] = color
+                break
+            case "br"://下方靠厍
+                cat = "right bottom"
+                cmy = "right top"
+                borderWidth = [spx, spx, bpx, bpx]
+                borderColor[2] = color
+                break
+            case "cc"://居中
+                cmy = cat = "center center"
+                break
         }
 
-        obj.positionA.match(/left|bottom|top|right|center/g)
 
+        if (p.charAt(0) === "b") {
+            cmy += "+10"
+        }
+
+        // alert(cmy)
 
 
 
@@ -100,43 +142,29 @@ define(["avalon.position"], function(avalon) {
         tooltip = avalon.parseHTML(tooltip).firstChild
 
         document.body.appendChild(tooltip)
-        var arrowPositon = obj.position.match(/left|bottom|top|right|center/g)
+        color = avalon(tooltip).css("border-top-color")
+        borderColor = borderColor.join(" ").replace("red", avalon(tooltip).css("border-top-color"))
 
         //my 决定箭头的坐标与有无
-        if (cmy !== "center center") {
 
-        }
-
-        var cat = "center top", cmy = "", aat, amy, borderColor, borderWidth
-        switch (cat) {
-            case "top":
-            case "left top":
-                //  cmy = "right top"
-                break;
-            case "center top":
-                cmy = "center bottom"
-                aat = cmy
-                amy = cat
-                borderColor = " #aaa transparent transparent  transparent";
-                borderWidth = "10px 5px 0 5px"
-                break;
-        }
         avalon(tooltip).position({
             at: cat,
             my: cmy,
             of: element,
             collision: "none"
         })
+        cmy = cmy.replace(/[-+\d]/g, "")
+
         //  var arrow =  tooltip.getElementsByTagName("b")[0]
         //如果用户传bottom 相当于为bottom center,那么at为top+ah
         var a = avalon(tooltip).css("border-bottom-width")
         //   alert(a)
         var arrow = avalon.parseHTML('<b class="ui-tooltip-arrow ui-tooltip-big-arrow"></b>').firstChild
         document.body.appendChild(arrow)
-        arrow.style.cssText += "z-index:10000;border-style:solid;border-color: " + borderColor + ";border-width: " + borderWidth
+        arrow.style.cssText += "z-index:10005;border-style:solid;border-color: " + borderColor + ";border-width: " + borderWidth.join(" ")
         avalon(arrow).position({
-            my: amy,
-            at: aat,
+            my: cat,
+            at: cmy,
             of: tooltip
         })
         var arrow2 = avalon.parseHTML('<b class="ui-tooltip-arrow ui-tooltip-big-arrow"></b>').firstChild
