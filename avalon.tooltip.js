@@ -8,8 +8,7 @@ define(["avalon.position"], function(avalon) {
 //所有绑定都依赖于某个绑定的某个属性，从而决定它的生命周期
 
     var styleEl = document.getElementById("avalonStyle")
-    var text = ".ui-tooltip-arrow{z-index:1; position:absolute; top: -12px; left:0px;; height:0px; width:0px; font-size:0px; line-height:0px;border-width: 12px 0 0 12px;border-color: transparent transparent transparent #aaa;border-style:dashed dashed dashed  solid;}" +
-            ".ui-tooltip-arrow2{z-index:2; position:absolute; top: -7px; left:2px;; height:0px; width:0px; font-size:0px; line-height:0px;border-width:8px 0 0 8px;border-color: transparent transparent transparent #fff;border-style:dashed dashed dashed solid;}"
+    var text = ".ui-tooltip-arrow{position:absolute; height:0px; width:0px; font-size:0px; line-height:0px; border-width: 1px solid red;}"
     try {
         styleEl.innerHTML += text
     } catch (e) {
@@ -33,9 +32,18 @@ define(["avalon.position"], function(avalon) {
         //data-tooltip-attr="title" // "title" 用于指定
         //data-tooltip-event="mouseover" 
         //data-tooltip-position="top left" 
-        
+        var obj = filterData(avalon(element).data(), "tooltip")
+//        var arrowPositon = obj.position.match(/left|bottom|top|right/g) 
+//        if(arrowPositon && arrowPositon.length){
+//            
+//        }
+//                
+//                || []"left bottom"
+//        console.log(obj)
 
-        var tooltip = '<div class="ui-tooltip ui-widget ui-corner-all ui-widget-content"><div class="ui-tooltip-arrow"></div><div class="ui-tooltip-arrow2"></div><div class="ui-tooltip-content">999999999998888</div></div>'
+
+        var tooltip = '<div class="ui-tooltip ui-widget ui-corner-all ui-widget-content">' +
+                '<div class="ui-tooltip-content">999999999998888</div></div>'
         tooltip = avalon.parseHTML(tooltip).firstChild
 
         document.body.appendChild(tooltip)
@@ -43,6 +51,24 @@ define(["avalon.position"], function(avalon) {
             my: "left top+15",
             at: "left bottom",
             of: element
+        })
+        //  var arrow =  tooltip.getElementsByTagName("b")[0]
+
+        var arrow = avalon.parseHTML('<b class="ui-tooltip-arrow ui-tooltip-big-arrow"></b>').firstChild
+        document.body.appendChild(arrow)
+        arrow.style.cssText += "z-index:10000;border-style:solid;border-color:  transparent transparent #aaa transparent;border-width: 0 5px 10px 5px"
+        avalon(arrow).position({
+            my: "bottom",
+            at: "top",
+            of: tooltip
+        })
+        var arrow2 = avalon.parseHTML('<b class="ui-tooltip-arrow ui-tooltip-big-arrow"></b>').firstChild
+        document.body.appendChild(arrow2)
+        arrow2.style.cssText += "z-index:10002;border-style:solid;border-color:  transparent transparent white transparent;border-width: 0 5px 10px 5px"
+        avalon(arrow2).position({
+            my: "bottom+5",
+            at: "top",
+            of: tooltip
         })
         // tooltip.style.dispaly = "block"
 
