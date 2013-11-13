@@ -1,21 +1,13 @@
-define(["avalon"], function(avalon) {
-    var defaults = {
-        active: 0, //默认打开第几个面板
-        event: "click", //打开面板的事件，移过(mouseover)还是点击(click)
-        collapsible: false,
-        bottom: false, //按钮位于上方还是上方
-        removable: false, //按钮的左上角是否出现X，用于移除按钮与对应面板
-        activate: avalon.noop// 切换面板后触发的回调
-    }
+define(["avalon"], function (avalon) {
+
     var styleEl = document.getElementById("avalonStyle")
-    avalon.ui.tabs = function(element, id, vmodels, opts) {
+    avalon.ui.tabs = function (element, data, vmodels) {
         var el, tabsParent, tabs = [], tabpanels = [], $element = avalon(element)
-        //1,设置参数对象options = defaults + opts + $element.data()
-        var options = avalon.mix({}, defaults, opts, $element.data())
+        var options = data.tabsOptions
 
         $element.addClass("ui-tabs ui-widget ui-widget-content ui-corner-all")
 
-        //2, 清空它内部所有节点，并收集其内容，构建成tabs与tabpanels两个数组
+        //1, 清空它内部所有节点，并收集其内容，构建成tabs与tabpanels两个数组
         while (el = element.firstChild) {
             if (!tablist && (el.tagName === "UL" || el.tagName === "OL")) {
                 tabsParent = el
@@ -26,51 +18,52 @@ define(["avalon"], function(avalon) {
             element.removeChild(el)
         }
 
-        for (var i = 0; el = tabsParent.children[i++]; ) {
+        for (var i = 0; el = tabsParent.children[i++];) {
             tabs.push(el.childNodes)
         }
-        //3 设置动态模板
+        //2 设置动态模板
         var tablist = '<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"' +
-                ' ms-class-ui-corner-bottom="bottom" ms-class-ui-corner-all="!bottom" ms-each-tab="tabs">' +
-                '<li class="ui-state-default" ' +
-                ' ms-class-0="ui-corner-top:!bottom"' +
-                ' ms-class-1="ui-corner-bottom:bottom"' +
-                ' ms-class-2="ui-tabs-active:active == $index"' +
-                ' ms-class-3="ui-state-active:active == $index"' +
-                ' ms-' + options.event + '="activate"' +
-                ' ms-hover="ui-state-hover"' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
-                ' >{{tab|html}}<span class="ui-icon ui-icon-close" style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"  ms-click="remove"></span></li></ul>';
+            ' ms-class-ui-corner-bottom="bottom" ms-class-ui-corner-all="!bottom" ms-each-tab="tabs">' +
+            '<li class="ui-state-default" ' +
+            ' ms-class-0="ui-corner-top:!bottom"' +
+            ' ms-class-1="ui-corner-bottom:bottom"' +
+            ' ms-class-2="ui-tabs-active:active == $index"' +
+            ' ms-class-3="ui-state-active:active == $index"' +
+            ' ms-' + options.event + '="activate"' +
+            ' ms-hover="ui-state-hover"' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
+            ' >{{tab|html}}<span ms-visible="removable" class="ui-icon ui-icon-close" style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"  ms-click="remove"></span></li></ul>';
 
         var panels = '<div ms-each-panel="tabpanels" ><div class="ui-tabs-panel ui-widget-content"' +
-                ' ms-class="ui-corner-bottom:!bottom"' +
-                ' ms-visible="active == $index" >{{panel|html}}</div></div>'
-        //4 构建组建的ViewModel
-        var vmodel = avalon.define(id, function(vm) {
+            ' ms-class="ui-corner-bottom:!bottom"' +
+            ' ms-visible="active == $index" >{{panel|html}}</div></div>'
+        //3 构建组建的ViewModel
+        var vmodel = avalon.define(data.tabsId, function (vm) {
             vm.active = options.active
             vm.collapsible = options.collapsible
             vm.removable = options.removable
             vm.tabs = tabs
             vm.tabpanels = tabpanels
-            vm.activate = function(e) {
+            vm.activate = function (e) {
                 e.preventDefault()
                 vm.active = this.$vmodel.$index
                 options.activate.call(this, e, vmodel)
             }
 
-            vm.remove = function(e) {
+            vm.remove = function (e) {
                 e.preventDefault()
                 var index = this.$vmodel.$index
                 vm.tabs.removeAt(index)
                 vm.tabpanels.removeAt(index)
-                avalon.nextTick(function() {
+                this.$vmodel.$index = 0
+                avalon.nextTick(function () {
                     vm.active = 0
                 })
             }
             vm.bottom = options.bottom
         })
 
-        avalon.nextTick(function() {
-            //5 当这一波扫描过来,再将组建的DOM结构插入DOM树,并绑定ms-*属性,然后开始扫描
+        avalon.nextTick(function () {
+            //4 当这一波扫描过来,再将组建的DOM结构插入DOM树,并绑定ms-*属性,然后开始扫描
             //jquery ui的.ui-helper-clearfix 类不支持对IE6清除浮动，这时需要fix一下
             if (!avalon.ui.fixUiHelperClearfix && typeof styleEl.style.maxHeight == "undefined") {
                 styleEl.styleSheet.cssText += ".ui-helper-clearfix {_zoom:1;}"
@@ -84,7 +77,14 @@ define(["avalon"], function(avalon) {
         })
         return vmodel
     }
-
+    avalon.ui.tabs.defaults = {
+        active: 0, //默认打开第几个面板
+        event: "click", //打开面板的事件，移过(mouseover)还是点击(click)
+        collapsible: false,
+        bottom: false, //按钮位于上方还是上方
+        removable: false, //按钮的左上角是否出现X，用于移除按钮与对应面板
+        activate: avalon.noop// 切换面板后触发的回调
+    }
     return avalon
 })
 /*
@@ -104,7 +104,7 @@ define(["avalon"], function(avalon) {
  xxx 第3个面板
  </div>
  </div>
- 
- 
- 
+
+
+
  */
