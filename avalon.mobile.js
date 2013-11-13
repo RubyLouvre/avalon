@@ -1747,7 +1747,7 @@
                 var vmOptions = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts] : {}
                 var element = data.element
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
-                data[ widget + "id"] = args[1]
+                data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 constructor(element, data, vmodels)
                 ret = 1
