@@ -1794,6 +1794,17 @@
             data.remove = ret
         }
     }
+    function filterData(obj, prefix) {
+        var result = {}
+        for (var i in obj) {
+            if (i.indexOf(prefix) === 0) {
+                result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                    return a.toLowerCase()
+                }) ] = obj[i]
+            }
+        }
+        return result
+    }
     //============================================================================
     //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
