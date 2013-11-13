@@ -1743,7 +1743,7 @@
             data.node.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
-                var vmodel = vmodels[0], opts = args[2]//options在最近的一个VM中的名字
+                var vmodel = vmodels[0], opts = args[2] || widget//options在最近的一个VM中的名字
                 var vmOptions = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts] : {}
                 var element = data.element
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
