@@ -1383,7 +1383,11 @@
                 prefix = "var " + prefix
             }
             if (data.type === "on") {
-                code = code.replace("(", ".call(this,")
+                if (code.indexOf(".bind(") == -1) {
+                    code = code.replace("(", ".call(this,")
+                } else {
+                    code = code.replace(".bind(", ".call(")
+                }
                 if (four === "$event") {
                     names.push(four)
                 }

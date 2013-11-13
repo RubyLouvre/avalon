@@ -1749,7 +1749,11 @@
                 prefix = "var " + prefix
             }
             if (data.type === "on") {
-                code = code.replace("(", ".call(this,")
+                if (code.indexOf(".bind(") == -1) {
+                    code = code.replace("(", ".call(this,")
+                } else {
+                    code = code.replace(".bind(", ".call(")
+                }
                 if (four === "$event") {
                     names.push(four)
                 }
@@ -1781,6 +1785,7 @@
             }
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+                console.log(fn)
             } catch (e) {
             }
         }
