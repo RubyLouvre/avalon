@@ -1383,7 +1383,7 @@
                 prefix = "var " + prefix
             }
             if (data.type === "on") {
-                if (code.indexOf(".bind(") == -1) {
+                if (code.indexOf(".bind(") === -1) {
                     code = code.replace("(", ".call(this,")
                 } else {
                     code = code.replace(".bind(", ".call(")
@@ -1562,20 +1562,6 @@
                 })
             }
         },
-        // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-        // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-        // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-        attr: function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                var attrName = data.param
-                var toRemove = (val === false) || (val === null) || (val === void 0)
-                if (toRemove) {
-                    elem.removeAttribute(attrName)
-                } else {
-                    elem.setAttribute(attrName, val)
-                }
-            })
-        },
         "on": function(data, vmodels) {
             data.type = "on"
             var value = data.value,
@@ -1615,7 +1601,7 @@
             }
             data.remove = ret
         },
-        data: function(data, vmodels) {
+        "data": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
@@ -1628,7 +1614,7 @@
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
-        text: function(data, vmodels) {
+        "text": function(data, vmodels) {
             var node = data.node
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 if (node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
@@ -1639,7 +1625,7 @@
             })
         },
         //控制元素显示或隐藏
-        visible: function(data, vmodels) {
+        "visible": function(data, vmodels) {
             var elem = data.element
             if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
                 var display = parseDisplay(elem.tagName)
@@ -1652,7 +1638,7 @@
         },
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a href="{{url.hostname}}/{{url.pathname}}.html">
-        href: function(data, vmodels) {
+        "href": function(data, vmodels) {
             var text = data.value.trim(),
                     simple = true,
                     method = data.type
@@ -1666,6 +1652,17 @@
             updateViewFactory(text, vmodels, data, function(val, elem) {
                 if (method === "css") {
                     avalon(elem).css(data.param, val)
+                } else if (method === "attr") {
+                    // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
+                    // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
+                    // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+                    var attrName = data.param
+                    var toRemove = (val === false) || (val === null) || (val === void 0)
+                    if (toRemove) {
+                        elem.removeAttribute(attrName)
+                    } else {
+                        elem.setAttribute(attrName, val)
+                    }
                 } else if (method === "include" && val) {
                     if (data.param === "src") {
                         if (includeContents[val]) {
@@ -1699,38 +1696,14 @@
         },
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
         //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
-        disabled: function(data, vmodels) {
+        "disabled": function(data, vmodels) {
             var name = data.type,
                     propName = name === "readonly" ? "readOnly" : name
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem[propName] = !!val
             })
         },
-        //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
-        "bind": function(data, vmodels) {
-            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
-                    ret = 0
-            if (array && array[1] && array[2]) {
-                var fn = array[2],
-                        elem = data.element
-                for (var i = 0, scope; scope = vmodels[i++]; ) {
-                    if (scope.hasOwnProperty(fn)) {
-                        fn = scope[fn]
-                        break
-                    }
-                }
-                if (typeof fn === "function") {
-                    var watchFn = function() {
-                        fn.apply(elem, arguments)
-                    }
-                    watchFn()
-                    ret = 1
-                    scope.$watch(array[1], watchFn)
-                }
-            }
-            data.remove = ret
-        },
-        html: function(data, vmodels) {
+        "html": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 val = val == null ? "" : val + ""
                 if (data.replaceNodes) {
@@ -1794,6 +1767,30 @@
                 var optsName = data.param, vmodel = vmodels[0], ret = 1
                 var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
                 avalon.ui[widget](elem, args[1], vmodels, opts)
+            }
+            data.remove = ret
+        },
+        //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
+        "bind": function(data, vmodels) {
+            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
+                    ret = 0
+            if (array && array[1] && array[2]) {
+                var fn = array[2],
+                        elem = data.element
+                for (var i = 0, scope; scope = vmodels[i++]; ) {
+                    if (scope.hasOwnProperty(fn)) {
+                        fn = scope[fn]
+                        break
+                    }
+                }
+                if (typeof fn === "function") {
+                    var watchFn = function() {
+                        fn.apply(elem, arguments)
+                    }
+                    watchFn()
+                    ret = 1
+                    scope.$watch(array[1], watchFn)
+                }
             }
             data.remove = ret
         }
@@ -1889,7 +1886,7 @@
     //=========================string preperty binding ====================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
-    "title,alt,src,value,css,include".replace(rword, function(name) {
+    "title,alt,src,value,css,include,attr".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.href
     })
     //========================= model binding ====================
