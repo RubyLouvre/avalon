@@ -2071,6 +2071,7 @@
                             scanNodes(elem, vmodels, data.state)
                         } else {
                             var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+
                             xhr.onreadystatechange = function() {
                                 if (xhr.readyState === 4) {
                                     var s = xhr.status
@@ -2081,6 +2082,10 @@
                                 }
                             }
                             xhr.open("GET", val, true)
+                            try {
+                                xhr.withCredentials = true
+                            } catch (e) {
+                            }
                             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
                             xhr.send(null)
                         }
