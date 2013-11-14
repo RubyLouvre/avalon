@@ -2157,7 +2157,15 @@
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
-                constructor(element, data, vmodels)
+                var widgetVmodle = constructor(element, data, vmodels)
+                avalon.nextTick(function(){
+                    constructor.buildTemplate(widgetVmodle, element, data, vmodels)
+                    avalon.scan(element, [widgetVmodle].concat(vmodels))
+                    var callback = data[ widget + "Options"].callback
+                    if(callback && typeof callback === "function"){
+                        callback(widgetVmodle) //如果widget的配置对象中提供了callback，就回调
+                    }
+                })
                 ret = 1
             }
             data.remove = ret;
