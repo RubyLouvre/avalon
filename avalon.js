@@ -1169,9 +1169,9 @@
                 accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
-                VBPublics = Object.keys(unwatchOne) //用于IE6-8
+                VBPublics = Object.keys(unwatchOne)  //抽取不用监控的属性名，它们也将应用于IE6-8
         model = model || {} //这是vmodel上的$model属性
-        watchMore = watchMore || {} //以$开头但要强制监听的属性
+        watchMore = watchMore || {}//放置强制要监听的属性名，即便它是$开头
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {

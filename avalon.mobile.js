@@ -930,9 +930,9 @@
                 accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
-                VBPublics = Object.keys(unwatchOne) //用于IE6-8
+                VBPublics = Object.keys(unwatchOne) //抽取不用监控的属性名
         model = model || {}
-        watchMore = watchMore || {}
+        watchMore = watchMore || {}//放置强制要监听的属性名，即便它是$开头
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
