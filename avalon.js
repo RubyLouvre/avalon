@@ -2180,27 +2180,24 @@
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var array = data.value.match(/([$\w]+)\s*\:\s*([$\w]+)/),
-                    ret = 0
-            if (array && array[1] && array[2]) {
-                var fn = array[2],
-                        elem = data.element
+            var value = data.value, match = value.match(/[\w\.]+/g)
+            if (match && match.length === 2) {
+                var fnName = match[1], callback = avalon.noop, preValue 
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
-                    if (scope.hasOwnProperty(fn)) {
-                        fn = scope[fn]
+                    if (scope.hasOwnProperty(fnName)) {
+                        callback = scope[fnName]
                         break
                     }
                 }
-                if (typeof fn === "function") {
-                    var watchFn = function() {
-                        fn.apply(elem, arguments)
+                updateViewFactory(match[0], vmodels, data, function(val, elem) {
+                    if (preValue !== val) {
+                        callback.call(elem, val, preValue)
+                        preValue = val
                     }
-                    watchFn()
-                    ret = 1
-                    scope.$watch(array[1], watchFn)
-                }
+                })
+            } else {
+                data.remove = 0
             }
-            data.remove = ret
         }
     }
     function filterData(obj, prefix) {
