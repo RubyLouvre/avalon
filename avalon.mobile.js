@@ -1683,7 +1683,7 @@
                             xhr.send(null)
                         }
                     } else {
-                        var el = DOC.getElementById(val)
+                        var el = DOC.getElementById( (val||"").trim())
                         avalon.nextTick(function() {
                             el && avalon.innerHTML(elem, el.innerHTML)
                             scanNodes(elem, vmodels, data.state)
