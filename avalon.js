@@ -2090,7 +2090,9 @@
                             xhr.send(null)
                         }
                     } else {
-                        var el = DOC.getElementById((val||"").trim())
+                        //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
+                        //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
+                        var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
                         avalon.nextTick(function() {
                             el && avalon.innerHTML(elem, el.innerHTML)
                             scanNodes(elem, vmodels, data.state)
