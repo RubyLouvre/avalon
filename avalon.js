@@ -1913,13 +1913,11 @@
             avalon(elem).addClass("fixMsIfFlicker")
             if (ifCallbacks) {
                 ifCallbacks.push(ifCheck)
-                if (root.contains(elem)) {
-                    avalon.nextTick(function() {
-                        var event = document.createEvent("MutationEvents")
-                        event.initEvent("DOMNodeInserted", true, true)
-                        elem.dispatchEvent(event)
-                    })
-                }
+                avalon.nextTick(function() {
+                    var event = document.createEvent("MutationEvents")
+                    event.initEvent("DOMNodeInserted", true, true)
+                    elem.dispatchEvent(event)
+                })
             } else {
                 var id = setInterval(ifCheck, 20)
             }
