@@ -1890,12 +1890,14 @@
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
 
     if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
-        var ifCallbacks = []
+        var ifCallbacks = [], rfixMsIfFlicker = /fixMsIfFlicker/
         root.addEventListener("DOMNodeInserted", function(e) {
-            var safelist = ifCallbacks.concat()
-            for (var i = 0, fn; fn = safelist[i++]; ) {
-                if (fn(e) === false) {
-                    avalon.Array.remove(ifCallbacks, fn)
+            if (rfixMsIfFlicker.test(e.target.className)) {
+                var safelist = ifCallbacks.concat()
+                for (var i = 0, fn; fn = safelist[i++]; ) {
+                    if (fn(e) === false) {
+                        avalon.Array.remove(ifCallbacks, fn)
+                    }
                 }
             }
         })
@@ -1911,11 +1913,13 @@
             avalon(elem).addClass("fixMsIfFlicker")
             if (ifCallbacks) {
                 ifCallbacks.push(ifCheck)
-                avalon.nextTick(function() {
-                    var event = document.createEvent("MutationEvents")
-                    event.initEvent("DOMNodeInserted", true, true)
-                    elem.dispatchEvent(event)
-                })
+                if (root.contains(elem)) {
+                    avalon.nextTick(function() {
+                        var event = document.createEvent("MutationEvents")
+                        event.initEvent("DOMNodeInserted", true, true)
+                        elem.dispatchEvent(event)
+                    })
+                }
             } else {
                 var id = setInterval(ifCheck, 20)
             }
@@ -2183,7 +2187,7 @@
         "bind": function(data, vmodels) {
             var value = data.value, match = value.match(/[\w\.]+/g)
             if (match && match.length === 2) {
-                var fnName = match[1], callback = avalon.noop, preValue 
+                var fnName = match[1], callback = avalon.noop, preValue
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
                     if (scope.hasOwnProperty(fnName)) {
                         callback = scope[fnName]

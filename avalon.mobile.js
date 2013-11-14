@@ -1505,9 +1505,9 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
-    var ifCallbacks = []
+    var ifCallbacks = [],rfixMsIfFlicker =  /fixMsIfFlicker/
     root.addEventListener("DOMNodeInserted", function(e) {
-        if (/fixMsIfFlicker/.test(e.target.className)) {
+        if (rfixMsIfFlicker.test(e.target.className)) {
             var safelist = ifCallbacks.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 if (fn(e) === false) {
