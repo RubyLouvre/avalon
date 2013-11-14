@@ -1507,10 +1507,12 @@
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
     var ifCallbacks = []
     root.addEventListener("DOMNodeInserted", function(e) {
-        var safelist = ifCallbacks.concat()
-        for (var i = 0, fn; fn = safelist[i++]; ) {
-            if (fn(e) === false) {
-                avalon.Array.remove(ifCallbacks, fn)
+        if (/fixMsIfFlicker/.test(e.target.className)) {
+            var safelist = ifCallbacks.concat()
+            for (var i = 0, fn; fn = safelist[i++]; ) {
+                if (fn(e) === false) {
+                    avalon.Array.remove(ifCallbacks, fn)
+                }
             }
         }
     })
@@ -1524,12 +1526,13 @@
                     parent
             elem.classList.add("fixMsIfFlicker")
             ifCallbacks.push(ifCheck)
-            avalon.nextTick(function() {
-                var event = document.createEvent("MutationEvents")
-                event.initEvent("DOMNodeInserted", true, true)
-                elem.dispatchEvent(event)
-            })
-
+            if (root.contains(elem)) {
+                avalon.nextTick(function() {
+                    var event = document.createEvent("MutationEvents")
+                    event.initEvent("DOMNodeInserted", true, true)
+                    elem.dispatchEvent(event)
+                })
+            }
             function ifCheck(e) {
                 if (e.target == elem) {
                     ifCall()
