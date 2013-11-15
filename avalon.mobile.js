@@ -2448,12 +2448,16 @@
     var watchEachOne = oneObject("$index,$remove,$first,$last")
 
     function createEachProxy(index, item, list, param) {
-        param = param || "el"
+        var array = (param || "el").split("-")
+        var name = array[0], index2 = array[1]
         var source = {}
         source.$index = index
+        if (index2) {
+            source[index2] = index
+        }
         source.$view = {}
-        source.$itemName = param
-        source[param] = {
+        source.$itemName = name
+        source[name] = {
             get: function() {
                 return item
             },
@@ -2476,6 +2480,11 @@
             return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
+        if (index2) {
+            ret.$watch("$index", function(i) {
+                ret[index2] = i
+            })
+        }
         return ret
     }
 

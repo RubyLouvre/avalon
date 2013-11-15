@@ -2907,11 +2907,16 @@
     // 创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
 
     function createEachProxy(index, item, list, param) {
-        param = param || "el"
+        var array = (param || "el").split("-")
+        var name = array[0], index2 = array[1]
         var source = {}
         source.$index = index
-        source.$itemName = param
-        source[param] = {
+        if (index2) {
+            source[index2] = index
+        }
+        source.$view = {}
+        source.$itemName = name
+        source[name] = {
             get: function() {
                 return item
             },
@@ -2934,6 +2939,11 @@
             return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
+        if (index2) {
+            ret.$watch("$index", function(i) {
+                ret[index2] = i
+            })
+        }
         return ret
     }
 
