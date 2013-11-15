@@ -1523,7 +1523,7 @@
                 }
             }
             else {
-                 ifCall() 
+                ifCall()
             }
 
             function ifCall() {
@@ -2247,8 +2247,10 @@
     function markMsIf(fragment, collection) {
         var all = fragment.querySelectorAll("[ms-if]")
         Array.prototype.forEach.call(all, function(el) {
-            el.classList.add("msInEach")
-            collection.push(el)
+            if (!el.classList.contains("msInEach")) {
+                el.classList.add("msInEach")
+                collection.push(el)
+            }
         })
     }
     var withMapper = {}
