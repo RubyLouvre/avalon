@@ -1091,6 +1091,7 @@
                         state = data.state
                 if (el && (!state || state.sourceIndex !== 0) && (!root.contains(el))) {
                     avalon.Array.remove(list, fn)
+                    log("remove " + fn.name)
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }
@@ -1697,7 +1698,7 @@
         },
         "html": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                val = val == null ? "" : val + ""
+                val = val == null ? "" : val
                 if (data.replaceNodes) {
                     var fragment, nodes
                     if (val.nodeType === 11) {
@@ -1705,8 +1706,8 @@
                     } else if (val.nodeType === 1 || val.item) {
                         nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
                         fragment = documentFragment.cloneNode(true)
-                        for (var i = 0, n = nodes.length; i < n; i++) {
-                            fragment.appendChild(nodes[i])
+                        while (nodes[0]) {
+                            fragment.appendChild(nodes[0])
                         }
                     } else {
                         fragment = avalon.parseHTML(val)

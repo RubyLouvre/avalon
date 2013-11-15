@@ -1447,12 +1447,10 @@
                             }
                         }
                     }
+                    remove && avalon.Array.remove(list, fn)
+                    log("remove " + fn.name)
                 }
-                if (remove) {
-                    avalon.Array.remove(list, fn)
-                } else {
-                    fn.apply(0, args) //强制重新计算自身
-                }
+                fn.apply(0, args) //强制重新计算自身
             }
         }
     }
@@ -1837,8 +1835,6 @@
             updateView.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
             }
-
-            updateView.data = data
             updateView.vmodels = scopes
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
@@ -2104,8 +2100,8 @@
                     } else if (val.nodeType === 1 || val.item) {
                         nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
                         fragment = documentFragment.cloneNode(true)
-                        for (var i = 0, n = nodes.length; i < n; i++) {
-                            fragment.appendChild(nodes[i])
+                        while (nodes[0]) {
+                            fragment.appendChild(nodes[0])
                         }
                     } else {
                         fragment = avalon.parseHTML(val)
