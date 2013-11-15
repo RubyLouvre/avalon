@@ -1261,6 +1261,7 @@
                     callSetters.push(name)
                 }
                 accessor[subscribers] = [] //订阅者数组
+
                 accessores[name] = {
                     set: accessor,
                     get: accessor,
@@ -1836,6 +1837,7 @@
             updateView.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
             }
+
             updateView.data = data
             updateView.vmodels = scopes
             //方便调试
@@ -1889,7 +1891,7 @@
     styleEl = avalon.parseHTML(styleEl).firstChild //IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
 
-    var includeContents = {}, rmsInEach = /(\s|^)msInEach(\s|$)/
+    var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1897,15 +1899,16 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (rmsInEach.test(elem.className)) {
+            if (!root.contains(elem)) {
                 avalon(elem).addClass("fixMsIfFlicker")
-                elem.ifCheck = function() {
+            }
+            var id = setInterval(ifCheck, 20)
+            function ifCheck() {
+                if (root.contains(elem)) {
                     ifCall()
-                    avalon(elem).removeClass("fixMsIfFlicker").removeClass("msInEach")
-                    elem.ifCheck = void 0
+                    avalon(elem).removeClass("fixMsIfFlicker")
+                    clearInterval(id)
                 }
-            } else {
-                ifCall()
             }
 
             function ifCall() {
@@ -2699,16 +2702,8 @@
 
     //====================== each binding  =================================
 
-    function markMsIf(fragment, collection) {
-        var all = fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
-        for (var i = 0, n = all.length; i < n; i++) {
-            var el = all[i]
-            if (el.attributes["ms-if"] && !rmsInEach.test(el.className)) {
-                el.className += " msInEach"
-                collection.push(el)
-            }
-        }
-        return all
+    function getAll(fragment) {
+        return  fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
     }
 
     var withMapper = {}
@@ -2720,6 +2715,7 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
+
         var view = documentFragment.cloneNode(false)
         while (elem.firstChild) {
             view.appendChild(elem.firstChild)
@@ -2769,7 +2765,6 @@
                 var arr = pos,
                         pos = el,
                         transation = documentFragment.cloneNode(false)
-                var collection = []
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], getter(), data.param)
@@ -2781,7 +2776,7 @@
                      IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
                      IE9-IE11 文档碎片拥有 querySelectorAll
                      chrome firefox拥有children querySelectorAll firstElementChild*/
-                    var all = markMsIf(tview, collection)
+                    var all = getAll(tview)
                     scanNodes(tview, base.concat(data.vmodels), data.state)
                     proxy.$accessor.$last.get.data = {
                         element: all[0] || tview.firstChild
@@ -2794,9 +2789,6 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
-                for (var i = 0, el; el = collection[i++]; ) {
-                    el.ifCheck && el.ifCheck()
-                }
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM

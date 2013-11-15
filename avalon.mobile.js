@@ -1515,22 +1515,22 @@
                     state = data.state,
                     parent
 
-            if (rmsInEach.test(elem.className)) {
+            if (!root.contains(elem)) {
                 elem.classList.add("fixMsIfFlicker")
-                elem.ifCheck = function() {
-                    ifCall()
-                    avalon(elem).removeClass("fixMsIfFlicker msInEach")
-                    delete elem.ifCheck
-                }
             }
-            else {
-                ifCall()
+            var id = setInterval(ifCheck, 20)
+            function ifCheck() {
+                if (root.contains(elem)) {
+                    ifCall()
+                    elem.classList.remove("fixMsIfFlicker")
+                    clearInterval(id)
+                }
             }
 
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
-                    
+
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
                             try {
@@ -2264,12 +2264,8 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
-        Array.prototype.forEach.call(elem.getElementsByClassName("msInEach"), function(el) {
-            el.classList.remove("msInEach")
-        })
+
         var view = documentFragment.cloneNode(false)
-
-
         while (elem.firstChild) {
             view.appendChild(elem.firstChild)
         }
@@ -2318,7 +2314,6 @@
                 var arr = pos,
                         pos = el,
                         transation = documentFragment.cloneNode(false)
-                var collection = []
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], getter(), data.param)
@@ -2330,7 +2325,6 @@
                      IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
                      IE9-IE11 文档碎片拥有 querySelectorAll
                      chrome firefox拥有children querySelectorAll firstElementChild*/
-                    markMsIf(tview, collection)
                     scanNodes(tview, base.concat(data.vmodels), data.state)
                     proxy.$accessor.$last.get.data = {
                         element: tview.firstElementChild || tview.firstChild
@@ -2343,9 +2337,6 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
-                for (var i = 0, el; el = collection[i++]; ) {
-                    el.ifCheck && el.ifCheck()
-                }
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
