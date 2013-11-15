@@ -1906,16 +1906,8 @@
                 }
             } else {
                 ifCall()
-                // var id = setInterval(ifCheck, 20)
             }
 
-//            function ifCheck() {
-//                if (root.contains(elem)) {
-//                    clearInterval(id)
-//                    ifCall()
-//                    avalon(elem).removeClass("fixMsIfFlicker")
-//                }
-//            }
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
@@ -2711,8 +2703,8 @@
         var all = fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
         for (var i = 0, n = all.length; i < n; i++) {
             var el = all[i]
-            if (el.attributes["ms-if"]) {
-                el.className += "msInEach"
+            if (el.attributes["ms-if"] && el.className.indexOf("msInEach") == -1) {
+                el.className += " msInEach"
                 collection.push(el)
             }
         }
