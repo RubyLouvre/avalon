@@ -1529,6 +1529,7 @@
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
+                    console.log(val)
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
                             try {
@@ -1542,6 +1543,7 @@
                             elem.removeAttribute("ms-if")
                         }
                     } else { //移除  如果它还在DOM树中， 移出DOM树
+
                         if (root.contains(elem)) {
                             parent.replaceChild(placehoder, elem)
                             state.sourceIndex = 0
@@ -2262,7 +2264,13 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
+        var msInEach = elem.getElementsByClassName("msInEach")
+        Array.prototype.forEach.call(msInEach, function(el) {
+            el.classList.remove("msInEach")
+        })
         var view = documentFragment.cloneNode(false)
+
+
         while (elem.firstChild) {
             view.appendChild(elem.firstChild)
         }
@@ -2336,6 +2344,7 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
+                console.log(collection)
                 for (var i = 0, el; el = collection[i++]; ) {
                     el.ifCheck && el.ifCheck()
                 }
