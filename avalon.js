@@ -1889,19 +1889,6 @@
     styleEl = avalon.parseHTML(styleEl).firstChild //IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
 
-    if (DOC.implementation && DOC.implementation.hasFeature("MutationEvents", "2.0")) {
-        var ifCallbacks = [], rfixMsIfFlicker = /fixMsIfFlicker/
-        root.addEventListener("DOMNodeInserted", function(e) {
-            if (rfixMsIfFlicker.test(e.target.className)) {
-                var safelist = ifCallbacks.concat()
-                for (var i = 0, fn; fn = safelist[i++]; ) {
-                    if (fn(e) === false) {
-                        avalon.Array.remove(ifCallbacks, fn)
-                    }
-                }
-            }
-        })
-    }
     var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
@@ -1910,27 +1897,24 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            avalon(elem).addClass("fixMsIfFlicker")
-            if (ifCallbacks) {
-                ifCallbacks.push(ifCheck)
-                avalon.nextTick(function() {
-                    var event = document.createEvent("MutationEvents")
-                    event.initEvent("DOMNodeInserted", true, true)
-                    elem.dispatchEvent(event)
-                })
+            if (elem.className.indexOf("msInEach") !== -1) {
+                avalon(elem).addClass("fixMsIfFlicker")
+                elem.ifCheck = function() {
+                    ifCall()
+                    avalon(elem).removeClass("fixMsIfFlicker").removeClass("msInEach")
+                    elem.ifCheck = void 0
+                }
             } else {
                 var id = setInterval(ifCheck, 20)
             }
 
-            function ifCheck(e) {
-                if (e ? e.target == elem : root.contains(elem)) {
+            function ifCheck() {
+                if (root.contains(elem)) {
                     clearInterval(id)
                     ifCall()
                     avalon(elem).removeClass("fixMsIfFlicker")
-                    return false
                 }
             }
-
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
@@ -2721,6 +2705,19 @@
     }
 
     //====================== each binding  =================================
+
+    function markMsIf(fragment, collection) {
+        var all = fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
+        for (var i = 0, n = all.length; i < n; i++) {
+            var el = all[i]
+            if (el.attributes["ms-if"]) {
+                el.className += "msInEach"
+                collection.push(el)
+            }
+        }
+        return all
+    }
+
     var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
         var elem = data.element,
@@ -2748,6 +2745,7 @@
         // 然后通过updateView这个虚拟代理来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
+            data.state = data.state || {}
             updateView = function(method, pos, el) {
                 eachIterator(method, pos, el, data, getter)
             }
@@ -2778,22 +2776,22 @@
                 var arr = pos,
                         pos = el,
                         transation = documentFragment.cloneNode(false)
+                var collection = []
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], getter(), data.param)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    scanNodes(tview, base.concat(data.vmodels), data.state)
                     /*
                      IE6-7 文档碎片拥有 all  getElementsByTagName
                      IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
                      IE9-IE11 文档碎片拥有 querySelectorAll
                      chrome firefox拥有children querySelectorAll firstElementChild*/
-                    var elem = tview.querySelectorAll && tview.querySelectorAll("*") || tview.all || []
-                    elem = elem[0] || tview.firstChild
+                    var all = markMsIf(tview, collection)
+                    scanNodes(tview, base.concat(data.vmodels), data.state)
                     proxy.$accessor.$last.get.data = {
-                        element: elem
+                        element: all[0] || tview.firstChild
                     }
                     if (typeof group !== "number") {
                         data.group = tview.childNodes.length //记录每个模板一共有多少子节点
@@ -2803,6 +2801,9 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
+                for (var i = 0, el; el = collection[i++]; ) {
+                    el.ifCheck && el.ifCheck()
+                }
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
