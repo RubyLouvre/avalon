@@ -1506,7 +1506,7 @@
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
 
-    var includeContents = {}
+    var includeContents = {}, rmsInEach = /(\s|^)msInEach(\s|$)/
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1514,7 +1514,7 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (elem.classList.contains("msInEach")) {
+            if (rmsInEach.test(elem.className)) {
                 elem.classList.add("fixMsIfFlicker")
                 elem.ifCheck = function() {
                     ifCall()
@@ -2247,7 +2247,7 @@
     function markMsIf(fragment, collection) {
         var all = fragment.querySelectorAll("[ms-if]")
         Array.prototype.forEach.call(all, function(el) {
-            if (!el.classList.contains("msInEach")) {
+            if (!rmsInEach.test(el.className)) {
                 el.classList.add("msInEach")
                 collection.push(el)
             }

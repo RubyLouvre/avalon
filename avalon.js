@@ -1889,7 +1889,7 @@
     styleEl = avalon.parseHTML(styleEl).firstChild //IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
 
-    var includeContents = {}
+    var includeContents = {}, rmsInEach = /(\s|^)msInEach(\s|$)/
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1897,7 +1897,7 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            if (elem.className.indexOf("msInEach") !== -1) {
+            if (rmsInEach.test(elem.className)) {
                 avalon(elem).addClass("fixMsIfFlicker")
                 elem.ifCheck = function() {
                     ifCall()
@@ -2703,7 +2703,7 @@
         var all = fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
         for (var i = 0, n = all.length; i < n; i++) {
             var el = all[i]
-            if (el.attributes["ms-if"] && el.className.indexOf("msInEach") == -1) {
+            if (el.attributes["ms-if"] && !rmsInEach.test(el.className)) {
                 el.className += " msInEach"
                 collection.push(el)
             }
