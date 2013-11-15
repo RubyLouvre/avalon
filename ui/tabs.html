@@ -1,31 +1,58 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <script src="../avalon.js"></script>
+    <script src="../avalon.mobile.js"></script>
 
     <script>
 
-        require("avalon.tabs", function() {
-            var model = avalon.define('themetabs', function(vm){
-                vm.$skipArray=['tabs']
+        require("avalon.tabs,avalon.button,avalon.select", function () {
+            avalon.define('themetabs', function (vm) {
+                vm.$skipArray = ['tabs']
                 vm.theme = 'start'
-                vm.tabChanged = function(e,tm){
-                    alert('tab index:' + tm.active)
+                vm.tabChanged = function (e, tm) {
+                    vm.tabIndex = tm.active
                 }
-                vm.tabs={
-                    activate:vm.tabChanged
+                vm.tabIndex = 0
+                vm.addTab = function () {
+                    avalon.vmodels.tabsTest.add({
+                        title: '这是新加的tab',
+                        content: '这是内容',
+                        includeSrc: 'tabsInclude1.html',//includeSrc优先，content会被忽略
+                        actived:true
+                    })
+                }
+                vm.$selectopts={
+                    onChange:function(){
+                        vm.theme = this.value;
+                    }
+                }
+                vm.tabs = {
+                    activate: vm.tabChanged,
+                    callback: function (wm) {
+                        vm.tabIndex = wm.active
+                    }
+
                 }
             })
+            //tabsInclude1.html要用的vm定义在这里，也可以定义在tabsInclude1.html中
+            var qinerg = avalon.define("qinerg", function (vm) {
+                vm.sex = "";
+                vm.lang = []
+                vm.langtext = ""
+            });
+            qinerg.lang.$watch("length", function () {
+                qinerg.langtext = qinerg.lang.join(",")
+            })
+
             avalon.scan()
         })
     </script>
 
 </head>
 <body>
-<div  ms-controller="themetabs"><select ms-duplex="theme">
+<div ms-controller="themetabs"><select ms-duplex="theme" ms-ui-$selectOpts="select" >
     <option value='start'>start</option>
     <option value='smoothness'>smoothness</option>
     <option value='flick'>flick</option>
@@ -46,27 +73,49 @@
     <option value='cupertino'>cupertino</option>
     <option value='overcast'>overcast</option>
 </select>你喜欢的皮肤
-    <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css" />
+    <button ms-ui="button" ms-click="addTab">增加新tab</button>
+    激活的tab index:{{tabIndex}}
+    <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css"/>
 
 
-    <div id="tabs" ms-widget="tabs,tabsTest,tabs" data-tabs-collapsible="true" data-tabs-removable="false" data-tabs-active="2" style="width:60%;">
-        <ul role="tablist" >
-            <li><a href="#">Nunc tincidunt</a></li>
-            <li><a href="#">Proin dolor</a></li>
-            <li><a href="#">Aenean lacinia</a></li>
+    <div id="tabs" ms-widget="tabs,tabsTest,tabs" data-tabs-collapsible="false" data-tabs-removable="true"
+         data-tabs-active="0" style="width:60%;">
+        <ul>
+            <li data-tabs-removable="false">Nunc tincidunt</li>
+            <li>Proin dolor</li>
+            <li>Aenean lacinia</li>
         </ul>
 
-        <div  style="clear:left;">
+        <div style="clear:left;">
             <p><strong>第一个面板的标题</strong></p>
-            <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
+
+            <p><b>Proin elit arcu</b>, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec
+                sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem.
+                Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend
+                adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut
+                et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc
+                tristique tempus lectus.</p>
         </div>
         <div>
             <p><strong>第二个面板的标题</strong></p>
-            <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
+
+            <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id
+                nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie
+                lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula
+                suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur
+                ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque
+                convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare
+                leo nisi vel felis. Mauris consectetur tortor et purus.</p>
         </div>
         <div>
             <p><strong>第三个面板的标题</strong></p>
-            <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+
+            <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla
+                facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti.
+                Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio.
+                Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat
+                porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas
+                commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
         </div>
     </div>
 </div>
