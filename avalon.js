@@ -1905,16 +1905,17 @@
                     elem.ifCheck = void 0
                 }
             } else {
-                var id = setInterval(ifCheck, 20)
+                ifCall()
+                // var id = setInterval(ifCheck, 20)
             }
 
-            function ifCheck() {
-                if (root.contains(elem)) {
-                    clearInterval(id)
-                    ifCall()
-                    avalon(elem).removeClass("fixMsIfFlicker")
-                }
-            }
+//            function ifCheck() {
+//                if (root.contains(elem)) {
+//                    clearInterval(id)
+//                    ifCall()
+//                    avalon(elem).removeClass("fixMsIfFlicker")
+//                }
+//            }
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {

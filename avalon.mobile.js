@@ -1505,18 +1505,7 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
-    var ifCallbacks = [], rfixMsIfFlicker = /fixMsIfFlicker/
-    root.addEventListener("DOMNodeInserted", function(e) {
-        //  var aa = e.target.nodeType === 1 && e.target.querySelector(".fixMsIfFlicker")
-        if (rfixMsIfFlicker.test(e.target.className)) {
-            var safelist = ifCallbacks.concat()
-            for (var i = 0, fn; fn = safelist[i++]; ) {
-                if (fn(e) === false) {
-                    avalon.Array.remove(ifCallbacks, fn)
-                }
-            }
-        }
-    })
+
     var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
@@ -1525,30 +1514,16 @@
                     elem = data.element,
                     state = data.state,
                     parent
-            elem.classList.add("fixMsIfFlicker")
-            ifCallbacks.push(ifCheck)
-            var dispatchEvent = root.contains(elem), p = elem
-            if (!dispatchEvent) {
-                while (p = p.parentNode) {
-                    if (p.nodeType === 11) {
-                        dispatchEvent = true
-                        break
-                    }
-                }
-            }
-            if (dispatchEvent) {
-                avalon.nextTick(function() {
-                    var event = document.createEvent("MutationEvents")
-                    event.initEvent("DOMNodeInserted", true, true)
-                    elem.dispatchEvent(event)
-                })
-            }
-            function ifCheck(e) {
-                if (e.target == elem) {
+            if (elem.classList.contains("msInEach")) {
+                elem.classList.add("fixMsIfFlicker")
+                elem.ifCheck = function() {
                     ifCall()
-                    elem.classList.remove("fixMsIfFlicker")
-                    return false
+                    avalon(elem).removeClass("fixMsIfFlicker msInEach")
+                    delete elem.ifCheck
                 }
+            }
+            else {
+                 ifCall() 
             }
 
             function ifCall() {
@@ -2269,6 +2244,13 @@
         return array
     }
     //========================= each binding ====================
+    function markMsIf(fragment, collection) {
+        var all = fragment.querySelectorAll("[ms-if]")
+        Array.prototype.forEach.call(all, function(el) {
+            el.classList.add("msInEach")
+            collection.push(el)
+        })
+    }
     var withMapper = {}
     bindingHandlers["each"] = function(data, vmodels) {
         var elem = data.element,
@@ -2327,18 +2309,20 @@
                 var arr = pos,
                         pos = el,
                         transation = documentFragment.cloneNode(false)
+                var collection = []
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], getter(), data.param)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    scanNodes(tview, base.concat(data.vmodels), data.state)
                     /*
                      IE6-7 文档碎片拥有 all  getElementsByTagName
                      IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
                      IE9-IE11 文档碎片拥有 querySelectorAll
                      chrome firefox拥有children querySelectorAll firstElementChild*/
+                    markMsIf(tview, collection)
+                    scanNodes(tview, base.concat(data.vmodels), data.state)
                     proxy.$accessor.$last.get.data = {
                         element: tview.firstElementChild || tview.firstChild
                     }
@@ -2350,6 +2334,9 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, group, pos)
                 parent.insertBefore(transation, locatedNode)
+                for (var i = 0, el; el = collection[i++]; ) {
+                    el.ifCheck && el.ifCheck()
+                }
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
