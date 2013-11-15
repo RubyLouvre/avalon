@@ -1091,6 +1091,7 @@
                         state = data.state
                 if (el && (!state || state.sourceIndex !== 0) && (!root.contains(el))) {
                     avalon.Array.remove(list, fn)
+                    log("remove "+fn.name)
                 } else {
                     fn.apply(0, args) //强制重新计算自身
                 }

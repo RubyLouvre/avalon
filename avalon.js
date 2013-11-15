@@ -1447,12 +1447,10 @@
                             }
                         }
                     }
+                    remove && avalon.Array.remove(list, fn)
+                    log("remove " + fn.name)
                 }
-                if (remove) {
-                    avalon.Array.remove(list, fn)
-                } else {
-                    fn.apply(0, args) //强制重新计算自身
-                }
+                fn.apply(0, args) //强制重新计算自身
             }
         }
     }
@@ -1837,8 +1835,6 @@
             updateView.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
             }
-
-            updateView.data = data
             updateView.vmodels = scopes
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
