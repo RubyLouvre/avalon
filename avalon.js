@@ -2100,8 +2100,8 @@
                     } else if (val.nodeType === 1 || val.item) {
                         nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
                         fragment = documentFragment.cloneNode(true)
-                        for (var i = 0, n = nodes.length; i < n; i++) {
-                            fragment.appendChild(nodes[i])
+                        while (nodes[0]) {
+                            fragment.appendChild(nodes[0])
                         }
                     } else {
                         fragment = avalon.parseHTML(val)
