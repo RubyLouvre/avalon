@@ -2824,7 +2824,7 @@
                         deleteRange.setEndBefore(data.endRepeat);
                         deleteRange.deleteContents();
                     } else {
-                        removeView(locatedNode, group, mapper.length)
+                        removeView(locatedNode, group, Infinity )
                     }
                 } else {
                     avalon.clearChild(parent)
