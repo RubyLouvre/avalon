@@ -26,7 +26,7 @@ define(["avalon"], function (avalon) {
             var tabOptions = avalon(el).data()
             tabs.push({
                 title: el.innerHTML,
-                removable: tabOptions.tabsRemovable == undefined ? options.removable : tabOptions.tabsRemovable
+                removable: tabOptions.removable == undefined ? options.removable : tabOptions.removable
             })
         }
 
