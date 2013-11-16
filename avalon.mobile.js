@@ -1507,11 +1507,11 @@
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
 
-    var includeContents = {}, rmsInEach = /(\s|^)msInEach(\s|$)/
+    var includeContents = {};
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
-            var placehoder = DOC.createComment("@"),
+            var placehoder = DOC.createComment("ms-if"),
                     elem = data.element,
                     state = data.state,
                     parent
@@ -2262,8 +2262,8 @@
         data.parent = elem
         var view = documentFragment.cloneNode(false)
         if (name === "repeat") {
-            var startRepeat = document.createComment("@startRepeat")
-            var endRepeat = document.createComment("@endRepeat")
+            var startRepeat = DOC.createComment("ms-repeat-start")
+            var endRepeat = DOC.createComment("ms-repeat-end")
             data.element = data.parent = elem.parentNode
             data.startRepeat = startRepeat
             data.endRepeat = endRepeat
@@ -2315,7 +2315,7 @@
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
     }
-    var deleteRange = document.createRange()
+    var deleteRange = DOC.createRange()
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
         var parent = data.element
