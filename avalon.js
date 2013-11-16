@@ -1891,7 +1891,7 @@
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
-            var placehoder = DOC.createComment("@"),
+            var placehoder = DOC.createComment("ms-if"),
                     elem = data.element,
                     state = data.state,
                     parent
@@ -2119,7 +2119,10 @@
         },
         //https://github.com/RubyLouvre/avalon/issues/27
         "with": function(data, vmodels) {
-            bindingHandlers.each(data, vmodels, true)
+            bindingHandlers.each(data, vmodels, "with")
+        },
+        "repeat": function(data, vmodels) {
+            bindingHandlers.each(data, vmodels, "repeat")
         },
         "widget": function(data, vmodels) {
             var args = data.value.match(rword)
@@ -2613,7 +2616,7 @@
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
-            notifySubscribers(this, "clear")
+            notifySubscribers(this, "clear", 0)
             return this
         },
         removeAll: function(all) { //移除N个元素
@@ -2703,7 +2706,7 @@
     }
 
     var withMapper = {}
-    bindingHandlers["each"] = function(data, vmodels) {
+    bindingHandlers["each"] = function(data, vmodels, name) {
         var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
@@ -2711,10 +2714,22 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
-
+        data.parent = elem
         var view = documentFragment.cloneNode(false)
-        while (elem.firstChild) {
-            view.appendChild(elem.firstChild)
+        if (name === "repeat") {
+            var startRepeat = DOC.createComment("ms-repeat-start")
+            var endRepeat = DOC.createComment("ms-repeat-end")
+            data.element = data.parent = elem.parentNode
+            data.startRepeat = startRepeat
+            data.endRepeat = endRepeat
+            elem.removeAttribute(data.node.name)
+            data.parent.replaceChild(endRepeat, elem)
+            data.parent.insertBefore(startRepeat, endRepeat)
+            view.appendChild(elem.cloneNode(true))
+        } else {
+            while (elem.firstChild) {
+                view.appendChild(elem.firstChild)
+            }
         }
         data.template = view
         data.vmodels = vmodels
@@ -2730,7 +2745,6 @@
         // 然后通过updateView这个虚拟代理来内部调用它
         if (Array.isArray(list)) {
             data.mapper = []
-            data.state = data.state || {}
             updateView = function(method, pos, el) {
                 eachIterator(method, pos, el, data, getter)
             }
@@ -2742,18 +2756,26 @@
         updateView.data = data
         updateView.vmodels = vmodels
         updateView.rollback = function() {
-            avalon.clearChild(elem).appendChild(view)
+            if (name == "repeat") {
+                updateView("clear", 0)
+                data.element = view.firstChild
+                data.parent.replaceChild(data.element, data.startRepeat)
+                data.parent.removeChild(data.endRepeat)
+            } else {
+                avalon.clearChild(elem).appendChild(view)
+            }
+
         }
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
     }
-
+    var deleteRange = DOC.createRange && DOC.createRange()
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
-        var parent = data.element
+        var parent = data.parent
         var mapper = data.mapper
-        if (method == "del" || method == "move") {
-            var locatedNode = getLocatedNode(parent, group, pos)
+        if (method == "del" || method == "move" || (!deleteRange && method == "clear")) {
+            var locatedNode = getLocatedNode(parent, data, pos)
         }
         switch (method) {
             case "add":
@@ -2783,7 +2805,7 @@
                     transation.appendChild(tview)
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                locatedNode = getLocatedNode(parent, group, pos)
+                locatedNode = getLocatedNode(parent, data, pos)
                 parent.insertBefore(transation, locatedNode)
                 break
             case "del":
@@ -2796,15 +2818,25 @@
                 }
                 break
             case "clear":
+                if (data.startRepeat) {
+                    if (deleteRange) {
+                        deleteRange.setStartAfter(data.startRepeat);
+                        deleteRange.setEndBefore(data.endRepeat);
+                        deleteRange.deleteContents();
+                    } else {
+                        removeView(locatedNode, group, mapper.length)
+                    }
+                } else {
+                    avalon.clearChild(parent)
+                }
                 mapper.length = 0
-                avalon.clearChild(parent)
                 break
             case "move":
                 var t = mapper.splice(pos, 1)[0]
                 if (t) {
                     mapper.splice(el, 0, t)
                     var moveNode = removeView(locatedNode, group)
-                    locatedNode = getLocatedNode(parent, group, el)
+                    locatedNode = getLocatedNode(parent, data, el)
                     parent.insertBefore(moveNode, locatedNode)
                 }
                 break
@@ -2820,7 +2852,7 @@
 
     function withIterator(method, object, group, data, getter) {
         group = data.group
-        var parent = data.element
+        var parent = data.parent
         var transation = documentFragment.cloneNode(false)
         switch (method) {
             case "add":
@@ -2861,8 +2893,19 @@
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
     // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
 
-    function getLocatedNode(parent, group, pos) {
-        return parent.childNodes[group * pos] || null
+    function getLocatedNode(parent, data, pos) {
+        if (data.startRepeat) {
+            var ret = data.startRepeat, end = data.endRepeat;
+            pos += 1
+            for (var i = 0; i < pos; i++) {
+                ret = ret.nextSibling
+                if (ret == end)
+                    return end
+            }
+            return ret
+        } else {
+            return parent.childNodes[data.group * pos] || null
+        }
     }
 
     function removeView(node, group, n) {
