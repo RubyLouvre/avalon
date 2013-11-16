@@ -1210,28 +1210,26 @@
     function scanAttr(el, vmodels, callback, state, ifBinding) {
         var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
-            if (attr.specified) {
-                if (attr.name.indexOf(prefix) !== -1) {
-                    //如果是以指定前缀命名的
-                    var array = attr.name.split("-")
-                    var type = array[1]
-                    if (typeof bindingHandlers[type] === "function") {
-                        (function(node) {
-                            var binding = {
-                                type: type,
-                                param: array.slice(2).join("-"),
-                                element: el,
-                                remove: true,
-                                node: node,
-                                value: node.nodeValue
-                            }
-                            if (node.name === "ms-if") {
-                                ifBinding = binding
-                            } else {
-                                bindings.push(binding)
-                            }
-                        })(attr)
-                    }
+            if (attr.name.indexOf(prefix) !== -1) {
+                //如果是以指定前缀命名的
+                var array = attr.name.split("-")
+                var type = array[1]
+                if (typeof bindingHandlers[type] === "function") {
+                    (function(node) {
+                        var binding = {
+                            type: type,
+                            param: array.slice(2).join("-"),
+                            element: el,
+                            remove: true,
+                            node: node,
+                            value: node.nodeValue
+                        }
+                        if (node.name === "ms-if") {
+                            ifBinding = binding
+                        } else {
+                            bindings.push(binding)
+                        }
+                    })(attr)
                 }
             }
         }
@@ -2251,7 +2249,7 @@
     }
     //========================= each binding ====================
     var withMapper = {}
-    bindingHandlers["each"] = function(data, vmodels,name) {
+    bindingHandlers["each"] = function(data, vmodels, name) {
         var elem = data.element,
                 list, updateView
         var array = parseExpr(data.value, vmodels, data)
