@@ -1937,8 +1937,7 @@
                     four = "$event",
                     elem = data.element,
                     type = data.param,
-                    ret = 0,
-                    callback
+                    ret = 0
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -1951,21 +1950,30 @@
             var array = parseExpr(value, vmodels, data, four)
             if (array) {
                 var fn = array[0],
-                        args = array[1]
+                        args = array[1],
+                        updateView = function() {
+                    if (!updateView.check) {
+                        updateView.check = 1
+                        return fn.apply(fn, args)
+                    }
+                }
                 if (!four) {
-                    callback = fn.apply(fn, args)
+                    var callback = fn.apply(fn, args)
                 } else {
                     callback = function(e) {
                         return fn.apply(this, args.concat(e))
                     }
                 }
-                if (!elem.$vmodels) {
+                if (type && typeof callback === "function") {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                }
-                if (type && typeof callback === "function") {
-                    avalon.bind(elem, type, callback)
+                    var removeFn = avalon.bind(elem, type, callback)
                     ret = 1
+                    updateView.vmodels = vmodels
+                    updateView.rollback = function() {
+                        avalon.unbind(elem, type, removeFn)
+                    }
+                    registerSubscriber(updateView, data)
                 }
             }
             data.remove = ret
@@ -2824,7 +2832,7 @@
                         deleteRange.setEndBefore(data.endRepeat);
                         deleteRange.deleteContents();
                     } else {
-                        removeView(locatedNode, group, Infinity )
+                        removeView(locatedNode, group, Infinity)
                     }
                 } else {
                     avalon.clearChild(parent)
