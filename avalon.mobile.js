@@ -7,9 +7,7 @@
     var subscribers = "$" + expose
     var otherRequire = window.require
     var otherDefine = window.define;
-    //这两个都与计算属性息息相关
     var stopRepeatAssign = false
-    var openComputedCollect = false
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var class2type = {}
     var oproto = Object.prototype;
@@ -970,7 +968,7 @@
                                 vmodel.$fire && vmodel.$fire(name, value, preValue)
                             }
                         } else {
-                            if (openComputedCollect) {
+                            if (avalon.openComputedCollect) {
                                 collectSubscribers(accessor)
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
@@ -1064,9 +1062,9 @@
     function registerSubscriber(updateView, data) {
         updateView.data = data
         Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-        openComputedCollect = true
+        avalon.openComputedCollect = true
         updateView()
-        openComputedCollect = false
+        avalon.openComputedCollect = false
         delete Registry[expose]
     }
 
@@ -1416,6 +1414,12 @@
             } else {
                 code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             }
+            if (data.type === "on") {
+                var lastIndex = code.lastIndexOf("\nreturn")
+                var header = code.slice(0, lastIndex)
+                var footer = code.slice(lastIndex)
+                code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+            }
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
@@ -1574,11 +1578,13 @@
                         updateView = function() {
                     if (!updateView.check) {
                         updateView.check = 1
-                        return fn.apply(fn, args)
+                        return  fn.apply(0, args)
                     }
                 }
                 if (!four) {
-                    var callback = fn.apply(fn, args)
+                    callback = function(e) {
+                        return fn.apply(0, args).call(this, e)
+                    }
                 } else {
                     callback = function(e) {
                         return fn.apply(this, args.concat(e))
@@ -1597,8 +1603,10 @@
                 }
             }
             data.remove = ret
-        },
-        "data": function(data, vmodels) {
+        }
+        ,
+        "data"
+                : function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
