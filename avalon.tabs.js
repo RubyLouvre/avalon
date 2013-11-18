@@ -2,7 +2,7 @@ define(["avalon"], function (avalon) {
 
     var styleEl = document.getElementById("avalonStyle")
     avalon.ui.tabs = function (element, data, vmodels) {
-        var el, tabsParent, tabs = [], tabpanels = [], tabpanelIncludes = []
+        var el, tabsParent, tabs = [], tabpanels = []
         var options = data.tabsOptions
         var styleEl = document.getElementById("avalonStyle")
         var $element = avalon(element)
@@ -26,7 +26,8 @@ define(["avalon"], function (avalon) {
             var tabOptions = avalon(el).data()
             tabs.push({
                 title: el.innerHTML,
-                removable: tabOptions.removable == undefined ? options.removable : tabOptions.removable
+                removable: tabOptions.removable == undefined ? options.removable : tabOptions.removable,
+                disabled: tabOptions.disabled == undefined ? false : tabOptions.disabled
             })
         }
 
@@ -38,52 +39,75 @@ define(["avalon"], function (avalon) {
             vm.removable = options.removable
             vm.tabs = tabs
             vm.tabpanels = tabpanels
-            vm.tabpanelIncludes = tabpanelIncludes
             vm.event = options.event
             vm.activate = function (e) {
                 e.preventDefault()
                 var index = this.$vmodel.$index
+                if (vm.tabs[index].disabled === true) {
+                    return
+                }
                 if (vm.event == 'click' && vm.active == index && vm.collapsible) {
                     vm.collapsed = !vm.collapsed
                     return
                 }
-
                 if (vm.collapsible) {
                     vm.collapsed = false
                 }
-                avalon.nextTick(function () {
-                    vm.active = index;
-                    options.activate.call(this, e, vmodel)
-
-                })
+                if (vm.event != index) {
+                    avalon.nextTick(function () {
+                        vm.active = index;
+                        options.activate.call(this, e, vmodel)
+                    })
+                }
             }
             vm.collapse = function (e) {
                 e.preventDefault()
+                var index = this.$vmodel.$index
+                if (vm.tabs[index].disabled === true) {
+                    return
+                }
                 if (vm.collapsible) {
                     vm.collapsed = !vm.collapsed
                 }
             }
+            vm.disable = function (index, disable) {
+                disable = typeof disable == "undefined" ? true : disable
+                if (!avalon.isArray(index)) {
+                    index = [index]
+                }
+                var total = vm.tabs.length
+                index.forEach(function (idx) {
+                    if (idx >= 0 && total > idx) {
+                        vm.tabs[idx].disabled = disable
+                    }
+                })
+            }
+            vm.enable = function (index) {
+                vm.disable(index, false)
+            }
             vm.add = function (config) {
                 var title = config.title || 'Tab Tile'
                 var content = config.content || '<div></div>'
+                var exsited = false
+                vm.tabpanels.forEach(function (panel) {
+                    if (panel.contentType == 'include' && panel.content == config.content) {
+                        exsited = true
+                    }
+                })
+                if (exsited === true) {
+                    return
+                }
+                vm.tabpanels.push({
+                    content: content,
+                    contentType: config.contentType
+
+                })
                 vm.tabs.push({
                     title: title,
-                    removable: vm.removable
+                    removable: vm.removable,
+                    disabled: false
                 })
-                if (config.includeSrc) {
-                    content = config.includeSrc
-                    vm.tabpanels.push({
-                        content: content,
-                        contentType: 'include'
-                    })
-                }
-                else {
-                    vm.tabpanels.push({
-                        content: content,
-                        contentType: 'content'
-                    })
 
-                }
                 if (config.actived) {
                     avalon.nextTick(function () {
                         vm.active = vm.tabs.length - 1
@@ -94,6 +118,9 @@ define(["avalon"], function (avalon) {
             vm.remove = function (e) {
                 e.preventDefault()
                 var index = this.$vmodel.$index
+                if (vm.tabs[index].disabled === true) {
+                    return
+                }
                 vm.tabs.removeAt(index)
                 vm.tabpanels.removeAt(index)
                 index = index > 1 ? index - 1 : 0
@@ -109,6 +136,7 @@ define(["avalon"], function (avalon) {
             $element.addClass("ui-tabs ui-widget ui-widget-content ui-corner-all")
 
             var collapse = options.event !== 'click' ? ' ms-click="collapse"' : ''
+
             // 设置动态模板
             var tablist = '<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"' +
                 ' ms-class-ui-corner-bottom="bottom" ms-class-ui-corner-all="!bottom" ms-each-tab="tabs">' +
@@ -116,11 +144,12 @@ define(["avalon"], function (avalon) {
                 ' ms-class-0="ui-corner-top:!bottom"' +
                 ' ms-class-1="ui-corner-bottom:bottom"' +
                 ' ms-class-2="ui-tabs-active:active == $index"' +
-                ' ms-class-3="ui-state-active:active == $index"' +
+                ' ms-class-3="ui-state-active:active == $index && !tab.disabled"' +
+                ' ms-class-4="ui-state-disabled:tab.disabled"' +
                 ' ms-' + options.event + '="activate"' + collapse +
-                ' ms-hover="ui-state-hover">' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
+                ' ms-hover="ui-state-hover:!tab.disabled">' + // float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;这样jquery ui没有封装进去
                 ' <a href="#">{{tab.title | html}}</a>' +
-                '<span ms-visible="tab.removable"' +
+                '<span ms-visible="tab.removable && !tab.disabled"' +
                 ' class="ui-icon ui-icon-close"' +
                 ' style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"' +
                 ' ms-click="remove"></span></li></ul>';
