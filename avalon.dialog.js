@@ -54,7 +54,7 @@ define(["avalon", "avalon.button"], function(avalon) {
                 ' ms-draggable="draggend" data-handle="handle" data-beforestart="beforestart">' +
                 '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
-                '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
+                '<button ms-widget="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
                 '</div></div>').firstChild;
 
         var parentNode = options.parent === "parent" ? element.parentNode : document.body;
