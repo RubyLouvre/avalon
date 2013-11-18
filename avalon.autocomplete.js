@@ -1,29 +1,30 @@
 define(["avalon"], function(avalon) {
-    var defaults = {
-        items: 8
-    }
 
-    avalon.ui.autocomplete = function(element, id, vmodels, opts) {
+    var widget = avalon.ui.autocomplete = function(element, data, vmodels, opts) {
 
         var $element = avalon(element),
                 refreshList,
                 tempValue = "",
                 model
         //处理配置
-        var options = avalon.mix({}, defaults, opts, $element.data())
+        var options = data.autocompleteOptions
         var source = options.source || []
         var sourceList = document.createElement("div")
         sourceList.innerHTML = '<ul  class="ui-autocomplete ui-front ui-menu ui-widget ui-widget-content ui-corner-all" ms-each-presentation="matcher" ms-visible="show" >' +
-                '<li  class="ui-menu-item" ><a  class="ui-corner-all" tabindex="-1" ms-mouseover="get" ms-hover="ui-state-focus" ms-class="ui-state-focus:matcher[selectedIndex] === presentation "  >{{presentation}}</a></li>' +
+                '<li  class="ui-menu-item" >' +
+                '<a class="ui-corner-all" tabindex="-1" ' +
+                'ms-mouseover="get(presentation)" ms-hover="ui-state-focus" ms-class="ui-state-focus:matcher[selectedIndex] === presentation "' +
+                '  >{{presentation}}</a></li>' +
                 '</ul>'
-        for (var i = 0, node; node = element.attributes[i++]; ) {
-            var name = node.name
-            if (name.indexOf("ms-ui") === 0) {
-                element.removeAttribute(name)//防止死循环
-                break
-            }
-        }
- 
+        element.removeAttributeNode(data.node)//防止死循环
+//        for (var i = 0, node; node = element.attributes[i++]; ) {
+//            var name = node.name
+//            if (name.indexOf("ms-ui") === 0) {
+//                element.removeAttribute(name)
+//                break
+//            }
+//        }
+
         sourceList = sourceList.firstChild
         $element.bind("blur", function() {
             setTimeout(function() {
@@ -71,14 +72,14 @@ define(["avalon"], function(avalon) {
 
         })
 
-        model = avalon.define(id, function(vm) {
+        model = avalon.define(data.autocompleteId, function(vm) {
             vm.show = false
             vm.selectedIndex = -1
             vm.value = element.value
             vm.matcher = []
             vm.overvalue = ""
-            vm.get = function() {
-                vm.overvalue = this.$vmodel.presentation
+            vm.get = function(value) {
+                vm.overvalue = value
             }
             vm.$watch("value", function(value) {
                 if (refreshList !== false) { //flagKeyup是控制datalist的刷新
@@ -107,7 +108,6 @@ define(["avalon"], function(avalon) {
             })
         })
         avalon.ready(function() {
-            //  console.log(model)
             element.setAttribute("ms-duplex", "value")
             document.body.appendChild(sourceList)
             adjustPosition()
@@ -129,6 +129,9 @@ define(["avalon"], function(avalon) {
         }
         $element.bind("focus", adjustPosition)
 
+    }
+    widget.defaults = {
+        items: 8
     }
     return avalon
 })

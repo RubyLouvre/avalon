@@ -9,7 +9,7 @@
         <script>
             require("avalon.autocomplete", function() {
                 avalon.define("xxx", function(vm) {
-                    vm.$opts = {
+                    vm.autocomplete = {
                         source: [
                             "ActionScript",
                             "AppleScript",
@@ -58,7 +58,7 @@
         </script>
     </head>
     <body>
-        <input name="eee" ms-controller="xxx" ms-ui-$opts="autocomplete"/><span>请在此搜索主流的计算机语言</span>
+        <input name="eee" ms-controller="xxx" ms-widget="autocomplete"/><span>请在此搜索主流的计算机语言</span>
 
     </body>
 </html>
