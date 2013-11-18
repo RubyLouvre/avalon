@@ -127,10 +127,10 @@ define(["avalon"], function(avalon) {
         $element.addClass("ui-buttonset")
         var children = element.children;
         for (var i = 0, el; el = children[i++]; ) {
-            el.setAttribute("data-corner-class", "true")
+            el.setAttribute("data-button-corner-class", "true")
         }
-        children[0].setAttribute("data-corner-class", "ui-corner-left")
-        children[children.length - 1].setAttribute("data-corner-class", "ui-corner-right")
+        children[0].setAttribute("data-button-corner-class", "ui-corner-left")
+        children[children.length - 1].setAttribute("data-button-corner-class", "ui-corner-right")
     }
     return avalon
 })

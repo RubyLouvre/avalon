@@ -8,19 +8,19 @@ define(["avalon", "avalon.button"], function(avalon) {
                 fake = false,
                 root = document.body || (function() {
             fake = true;
-            return document.documentElement.appendChild(document.createElement('body'));
-        }());
+            return document.documentElement.appendChild(document.createElement('body'))
+        }())
         var oldCssText = root.style.cssText;
         root.style.cssText = 'padding:0;margin:0';
         test.style.cssText = 'position:fixed;top:42px';
-        root.appendChild(test);
-        root.appendChild(control);
+        root.appendChild(test)
+        root.appendChild(control)
         supportFixed = test.offsetTop !== control.offsetTop;
-        root.removeChild(test);
-        root.removeChild(control);
+        root.removeChild(test)
+        root.removeChild(control)
         root.style.cssText = oldCssText;
         if (fake) {
-            document.documentElement.removeChild(root);
+            document.documentElement.removeChild(root)
         }
     };
     //遮罩层(全部dialog共用)
@@ -36,19 +36,16 @@ define(["avalon", "avalon.button"], function(avalon) {
     for (var i in transforms) {
         if (transforms[i] in overlay.style) {
             supportTransform = true;
-            cssText += i + ":translate(-50%, -50%);"
+            cssText += i + ":translate(-50%, -50%)"
             break;
         }
     }
     cssText = "\n.ui-dialog-vertical-center{" + cssText + "}\n.ui-dialog-titlebar {cursor:move;}"
-    avalon.ui.dialog = function(element, data, vmodels) {
-        var $element = avalon(element), model, full = false;
-        var options = data.dialogOptions
-      //  options.toggle = !!options.autoOpen;
+    var widget = avalon.ui.dialog = function(element, data, vmodels) {
+        var $element = avalon(element), options = data.dialogOptions, full = false, model
         if (!options.title) {
             options.title = element.title || "&nbsp;";
         }
-   console.log(options)
         var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front ' +
                 ' " tabindex="-1" style="position: absolute;" ' +
                 ' ms-visible="toggle"' +
@@ -61,7 +58,7 @@ define(["avalon", "avalon.button"], function(avalon) {
                 '</div></div>').firstChild;
 
         var parentNode = options.parent === "parent" ? element.parentNode : document.body;
-        $element.addClass("ui-dialog-content ui-widget-content");
+        $element.addClass("ui-dialog-content ui-widget-content")
         if (supportTransform) {
             var styleEl = document.getElementById("avalonStyle")
             try {
@@ -75,9 +72,9 @@ define(["avalon", "avalon.button"], function(avalon) {
             style.width = style.height = "auto";
             style.minHeight = element.clientHeight + "px";
         }
-        element.removeAttribute("title");
-        element.removeAttributeNode(data.node);//防止死循环 
-        element.parentNode.removeChild(element);
+        element.removeAttribute("title")
+        element.removeAttributeNode(data.node)//防止死循环 
+        element.parentNode.removeChild(element)
         model = avalon.define(data.dialogId, function(vm) {
             vm.toggle = options.toggle;
             vm.title = options.title;
@@ -103,7 +100,7 @@ define(["avalon", "avalon.button"], function(avalon) {
                 if (supportTransform) {
                     dialog.style.position = "absolute"
                     var target = avalon(dialog)
-                    var startOffset = target.offset();
+                    var startOffset = target.offset()
                     dialog.style.top = startOffset.top - data.marginTop + "px"
                     dialog.style.left = startOffset.left - data.marginLeft + "px"
                     if (avalon(dialog).hasClass("ui-dialog-vertical-center")) {
@@ -113,37 +110,37 @@ define(["avalon", "avalon.button"], function(avalon) {
             }
             vm.$watch("toggle", function(v) {
                 if (v === false) {
-                    avalon.Array.remove(overlayInstances, options);
+                    avalon.Array.remove(overlayInstances, options)
                     if (!overlayInstances.length) {
                         if (overlay.parentNode) {
-                            overlay.parentNode.removeChild(overlay);
+                            overlay.parentNode.removeChild(overlay)
                         }
                     }
                 } else {
-                    resetCenter();
+                    resetCenter()
                 }
-            });
-        });
+            })
+        })
         function keepFocus() {
             function checkFocus() {
                 var activeElement = document.activeElement,
-                        isActive = dialog === activeElement || dialog.contains(activeElement);
+                        isActive = dialog === activeElement || dialog.contains(activeElement)
                 if (!isActive) {
                     if (dialog.querySelectorAll) {
-                        var hasFocus = dialog.querySelectorAll("[autofocus]");
+                        var hasFocus = dialog.querySelectorAll("[autofocus]")
                         if (!hasFocus.length) {
-                            hasFocus = dialog.querySelectorAll("[tabindex]");
+                            hasFocus = dialog.querySelectorAll("[tabindex]")
                         }
                         if (!hasFocus.length) {
                             hasFocus = [dialog]
                         }
-                        hasFocus[0].focus();
+                        hasFocus[0].focus()
                     }
                 }
             }
 
-            checkFocus();
-            avalon.nextTick(checkFocus);
+            checkFocus()
+            avalon.nextTick(checkFocus)
         }
 
         function resetCenter() {
@@ -160,8 +157,8 @@ define(["avalon", "avalon.button"], function(avalon) {
                         dialog.style.left = l + "px";
                         dialog.style.top = t + "px";
                     } else {//  如果是IE6，不支持fiexed，使用CSS表达式
-                        dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"');
-                        dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"');
+                        dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"')
+                        dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"')
                     }
                 } else {//基于父节点的垂直居中
                     l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
@@ -170,42 +167,40 @@ define(["avalon", "avalon.button"], function(avalon) {
                     dialog.style.top = t + "px";
                 }
             }
-            keepFocus();
+            keepFocus()
             if (options.modal) {
-                parentNode.insertBefore(overlay, dialog);
+                parentNode.insertBefore(overlay, dialog)
                 overlay.style.display = "block";
                 avalon.Array.ensure(overlayInstances, options)
             }
         }
 
-        avalon.nextTick(function() {
-            parentNode.appendChild(dialog);
-            dialog.appendChild(element);
-            setTimeout(function() {//这里如果不延时，那么dialog.offsetParent大部分时候都是null
-                full = /body|html/i.test(dialog.offsetParent.tagName);
-                if (full) {
-                    dialog.firstChild.setAttribute("data-containment", "window");//这是给ms-draggable组件用的
-                }
-                avalon.scan(dialog, [model].concat(vmodels));
+        avalon.ready(function() {
+            parentNode.appendChild(dialog)
+            dialog.appendChild(element)
+            full = /body|html/i.test(dialog.offsetParent.tagName)
+            if (full) {
+                dialog.firstChild.setAttribute("data-containment", "window")//这是给ms-draggable组件用的
+            }
+            avalon.scan(dialog, [model].concat(vmodels))
+            if (model.toggle) {
+                avalon.nextTick(resetCenter)
+            }
+            if (full && supportTransform) {
+                return
+            }
+            avalon(document.body).bind("scroll", function() {
+                model.toggle && resetCenter()
+            })
+            avalon(window).bind("resize", function() {
+                model.toggle && resetCenter()
+            })
+        })
 
-                if (model.toggle) {
-                    avalon.nextTick(resetCenter);
-                }
-                if (full && supportTransform) {
-                    return
-                }
-                avalon(document.body).bind("scroll", function() {
-                    model.toggle && resetCenter();
-                });
-                avalon(window).bind("resize", function() {
-                    model.toggle && resetCenter();
-                });
-            }, 50)
-        });
         return model;
     }
 
-    avalon.ui.dialog.defaults = {
+    widget.defaults = {
         toggle: false,
         width: 300,
         minHeight: 150,

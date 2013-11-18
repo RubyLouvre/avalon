@@ -1,20 +1,9 @@
 define(["avalon.draggable"], function(avalon) {
-    //判定是否触摸界面
-    var defaults = {
-        distance: 0,
-        max: 100,
-        min: 0,
-        orientation: "horizontal",
-        range: false,
-        step: 1,
-        value: 0,
-        values: null
-    }
-    var Handlers = [], Index = 0, FocusElement
-    avalon.ui["slider"] = function(element, id, vmodels, opts) {
-        var $element = avalon(element)
-        var options = avalon.mix({}, defaults, $element.data())
 
+    var Handlers = [], Index = 0, FocusElement
+    var widget = avalon.ui["slider"] = function(element, data, vmodels) {
+        var $element = avalon(element)
+        var options = data.sliderOptions
         var isHorizontal = options.orientation === "horizontal"
         //将整个slider划分为N等分, 比如100, 227
         var valueMin = options.min
@@ -78,7 +67,7 @@ define(["avalon.draggable"], function(avalon) {
             val = valModStep * 2 >= step ? step * Math.ceil(n) : step * Math.floor(n)
             return parseFloat(val.toFixed(3))
         }
-        var model = avalon.define(id, function(vm) {
+        var model = avalon.define(data.sliderId, function(vm) {
             vm.step = (options.step > 0) ? options.step : 1
             vm.disabled = element.disabled
             vm.percent = twohandlebars ? value2Percent(values[1] - values[0]) : value2Percent(value)
@@ -102,7 +91,7 @@ define(["avalon.draggable"], function(avalon) {
                 data.$element.removeClass("ui-state-active")
             }
             vm.drag = function(event, data, keyVal) {
-                if (isFinite( keyVal ) ) {
+                if (isFinite(keyVal)) {
                     var val = keyVal
                 } else {
                     var prop = isHorizontal ? "left" : "top"
@@ -153,6 +142,16 @@ define(["avalon.draggable"], function(avalon) {
 
         return model
     }
+    widget.defaults = {
+        distance: 0,
+        max: 100,
+        min: 0,
+        orientation: "horizontal",
+        range: false,
+        step: 1,
+        value: 0,
+        values: null
+    }
     avalon(document).bind("click", function(e) {
         var el = e.target
         var Index = Handlers.indexOf(el)
@@ -193,6 +192,9 @@ define(["avalon.draggable"], function(avalon) {
     })
     return avalon
 })
+/*
+<input ms-widger="slider,aaa"  data-slider-max="255" data-slider-value="36">
+ */
 //http://xinranliu.me/?p=520
 //http://www.w3cplus.com/css3/using-flexbox.html
 //http://www.w3cplus.com/css3/css-generated-content-counters.html
