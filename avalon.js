@@ -178,7 +178,6 @@
         return result
     }
     avalon.mix({
-        openComputedCollect: false,
         rword: rword,
         subscribers: subscribers,
         ui: {},
