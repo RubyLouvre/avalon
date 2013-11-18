@@ -29,7 +29,7 @@
                     })
                     avalon.vmodels.idialog.toggle = false
                 }
-                vm.$selectopts = {
+                vm.$selectOpts = {
                     onChange: function () {
                         vm.theme = this.value;
                     }
@@ -37,12 +37,12 @@
                 vm.newTabType = 'content'
                 vm.newTabTitle = 'New tab'
                 vm.newTabContent = 'content'
-                vm.$tabtypeselectopts = {
-                    //$selectopts1: {
+                vm.$tabTypeSelectOpts = {
+                    //$selectOpts1: {
                         onChange: function () {
                             vm.newTabType = this.value
                         }
-                    //}
+                   // }
                 }
                 vm.tabs = {
                     activate: vm.tabChanged,
@@ -67,19 +67,19 @@
     </script>
 
 </head>
-<body>
+<body ms-controller="themetabs">
 
-<div ms-controller="themetabs">
-    <div id="dialog" title="添加新tab" ms-ui-abc="dialog" data-modal="true" data-parent="parent" data-id="idialog" data-auto-open="false">
+<div>
+    <div id="dialog" title="添加新tab" ms-widget="dialog,idialog" data-modal="true" data-parent="parent" data-id="idialog" data-auto-open="false">
         tab标题：<input ms-duplex="newTabTitle"/><br/>
-    tab类型：<select ms-duplex="newTabType" ms-ui-$tabTypeSelectOpts="select">
+    tab类型：<select ms-duplex="newTabType" ms-widget="select,select2,$tabTypeSelectOpts">
         <option value="content">HTML内容</option>
         <option value="include">Include Source</option>
         </select>
         tab内容：<input ms-duplex="newTabContent"/><br/>
-        <button ms-ui="button" ms-click="addTabOk">确定</button>
+        <button ms-widget="button" ms-click="addTabOk">确定</button>
 </div>
-<select ms-duplex="theme" ms-ui-$selectOpts="select">
+<select ms-duplex="theme" ms-widget="select,select1,$selectOpts">
 <option value='start'>start</option>
 <option value='smoothness'>smoothness</option>
 <option value='flick'>flick</option>
@@ -100,7 +100,7 @@
 <option value='cupertino'>cupertino</option>
 <option value='overcast'>overcast</option>
 </select>你喜欢的皮肤
-<button ms-ui="button" ms-click="addTab">增加新tab</button>
+<button ms-widget="button" ms-click="addTab">增加新tab</button>
 激活的tab index:{{tabIndex}}
 <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css"/>
 
