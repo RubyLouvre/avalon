@@ -76,7 +76,7 @@ define(["avalon", "avalon.button"], function(avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title");
-        element.removeAttributeNode(data.node);//防止死循环 !!!这里还有一个bug如果写了配置属性ms-ui-$opts，那么将进入死循环，并且"$opts"这个名称貌似没有什么地方传进来，不能方便地获取到
+        element.removeAttributeNode(data.node);//防止死循环 
         element.parentNode.removeChild(element);
         model = avalon.define(data.dialogId, function(vm) {
             vm.toggle = options.toggle;
