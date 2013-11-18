@@ -1,4 +1,25 @@
 define(["avalon.position"], function(avalon) {
+    var listeners = [], $event, locked
+    var requestAnimFrame = window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            function(callback) {
+                window.setTimeout(callback, 1000 / 60);
+            }
+    function update() {
+        var callbacks = listeners.concat();
+        for (var i = 0, fn; fn = callbacks[i++]; ) {
+            fn($event)
+        }
+        locked = false;
+    }
+    avalon(document).bind("mousemove", function(e) {
+        if (!locked) {
+            locked = true;
+            $event = e
+            requestAnimFrame(update);
+        }
+    })
     var widget = avalon.ui.tooltip = function(element, data, vmodels) {
         var $element = avalon(element), options = data.tooltipOptions, cat, cmy
         options.content = options.content || element.title || "no content"
@@ -8,6 +29,7 @@ define(["avalon.position"], function(avalon) {
         //data-tooltip-content="''" //字符串
         //data-tooltip-event="mouseover|click" 
         //data-tooltip-position="top left"   
+        //data-tooltip-track="true" 标鼠跟随   
         //data-tooltip-position-at="top left"   
         //data-tooltip-position-my="top left"   
         var positionAt = options.positionAt
@@ -98,7 +120,7 @@ define(["avalon.position"], function(avalon) {
             })
         })
         if (options.track) {
-            avalon(document).bind("mousemove", function(e) {
+            listeners.push(function(e) {
                 if (model.toggle) {
                     positionOptions.of = e;
                     $tooltip.position(positionOptions);
@@ -118,7 +140,6 @@ define(["avalon.position"], function(avalon) {
                 $element.bind("mouseleave", function() {
                     model.toggle = false
                 })
-
                 break;
         }
 
