@@ -1,25 +1,15 @@
-define(["avalon", "avalon.button"], function (avalon) {
-    var defaults = {
-        toggle: true,
-        width: 300,
-        minHeight: 150,
-        height: "auto",
-        minWidth: 150,
-        close: avalon.noop,
-        parent: "body",
-        modal: false,
-        autoOpen: true
-    };
+define(["avalon", "avalon.button"], function(avalon) {
+
     //判定是否支持css position fixed
     var supportFixed = true;
-    new function () {
+    new function() {
         var test = document.createElement('div'),
-            control = test.cloneNode(false),
-            fake = false,
-            root = document.body || (function () {
-                fake = true;
-                return document.documentElement.appendChild(document.createElement('body'));
-            }());
+                control = test.cloneNode(false),
+                fake = false,
+                root = document.body || (function() {
+            fake = true;
+            return document.documentElement.appendChild(document.createElement('body'));
+        }());
         var oldCssText = root.style.cssText;
         root.style.cssText = 'padding:0;margin:0';
         test.style.cssText = 'position:fixed;top:42px';
@@ -51,26 +41,24 @@ define(["avalon", "avalon.button"], function (avalon) {
         }
     }
     cssText = "\n.ui-dialog-vertical-center{" + cssText + "}\n.ui-dialog-titlebar {cursor:move;}"
-    avalon.ui.dialog = function (element, id, vmodels, opts) {
+    avalon.ui.dialog = function(element, data, vmodels) {
         var $element = avalon(element), model, full = false;
-        var options = avalon.mix({}, defaults, opts, $element.data());
-        options.toggle = !!options.autoOpen;
+        var options = data.dialogOptions
+      //  options.toggle = !!options.autoOpen;
         if (!options.title) {
             options.title = element.title || "&nbsp;";
         }
-        if (typeof opts === "function") {
-            options.close = opts;
-        }
+   console.log(options)
         var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front ' +
-            ' " tabindex="-1" style="position: absolute;" ' +
-            ' ms-visible="toggle"' +
-            ' ms-css-width="width"' +
-            ' ms-css-height="height" ' +
-            ' ms-draggable="draggend" data-handle="handle" data-beforestart="beforestart">' +
-            '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
-            '<span class="ui-dialog-title" >{{title|html}}</span>' +
-            '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
-            '</div></div>').firstChild;
+                ' " tabindex="-1" style="position: absolute;" ' +
+                ' ms-visible="toggle"' +
+                ' ms-css-width="width"' +
+                ' ms-css-height="height" ' +
+                ' ms-draggable="draggend" data-handle="handle" data-beforestart="beforestart">' +
+                '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
+                '<span class="ui-dialog-title" >{{title|html}}</span>' +
+                '<button ms-ui="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
+                '</div></div>').firstChild;
 
         var parentNode = options.parent === "parent" ? element.parentNode : document.body;
         $element.addClass("ui-dialog-content ui-widget-content");
@@ -88,19 +76,19 @@ define(["avalon", "avalon.button"], function (avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title");
-        element.removeAttribute("ms-ui");//防止死循环 !!!这里还有一个bug如果写了配置属性ms-ui-$opts，那么将进入死循环，并且"$opts"这个名称貌似没有什么地方传进来，不能方便地获取到
+        element.removeAttributeNode(data.node);//防止死循环 !!!这里还有一个bug如果写了配置属性ms-ui-$opts，那么将进入死循环，并且"$opts"这个名称貌似没有什么地方传进来，不能方便地获取到
         element.parentNode.removeChild(element);
-        model = avalon.define(id, function (vm) {
+        model = avalon.define(data.dialogId, function(vm) {
             vm.toggle = options.toggle;
             vm.title = options.title;
             vm.width = options.width;
             vm.height = options.height;
             vm.cssCenter = true;
-            vm.close = function () {
+            vm.close = function() {
                 vm.toggle = false;
             };
             vm.draggend = avalon.noop
-            vm.handle = function (e) {
+            vm.handle = function(e) {
                 var el = e.target
                 while (el.nodeName != "BODY") {
                     if (/ui-dialog-titlebar/.test(el.className)) {
@@ -109,9 +97,8 @@ define(["avalon", "avalon.button"], function (avalon) {
                         el = el.parentNode
                     }
                 }
-
             }
-            vm.beforeStart = function (e, data) {
+            vm.beforeStart = function(e, data) {
                 vm.cssCenter = false;
                 if (supportTransform) {
                     dialog.style.position = "absolute"
@@ -124,7 +111,7 @@ define(["avalon", "avalon.button"], function (avalon) {
                     }
                 }
             }
-            vm.$watch("toggle", function (v) {
+            vm.$watch("toggle", function(v) {
                 if (v === false) {
                     avalon.Array.remove(overlayInstances, options);
                     if (!overlayInstances.length) {
@@ -136,13 +123,11 @@ define(["avalon", "avalon.button"], function (avalon) {
                     resetCenter();
                 }
             });
-
-
         });
         function keepFocus() {
             function checkFocus() {
                 var activeElement = document.activeElement,
-                    isActive = dialog === activeElement || dialog.contains(activeElement);
+                        isActive = dialog === activeElement || dialog.contains(activeElement);
                 if (!isActive) {
                     if (dialog.querySelectorAll) {
                         var hasFocus = dialog.querySelectorAll("[autofocus]");
@@ -193,32 +178,43 @@ define(["avalon", "avalon.button"], function (avalon) {
             }
         }
 
-        avalon.nextTick(function () {
+        avalon.nextTick(function() {
             parentNode.appendChild(dialog);
             dialog.appendChild(element);
-            setTimeout(function () {//这里如果不延时，那么dialog.offsetParent大部分时候都是null
+            setTimeout(function() {//这里如果不延时，那么dialog.offsetParent大部分时候都是null
                 full = /body|html/i.test(dialog.offsetParent.tagName);
                 if (full) {
                     dialog.firstChild.setAttribute("data-containment", "window");//这是给ms-draggable组件用的
                 }
                 avalon.scan(dialog, [model].concat(vmodels));
 
-                if (options.autoOpen) {
+                if (model.toggle) {
                     avalon.nextTick(resetCenter);
                 }
                 if (full && supportTransform) {
                     return
                 }
-                avalon(document.body).bind("scroll", function () {
-                    options.autoOpen && resetCenter();
+                avalon(document.body).bind("scroll", function() {
+                    model.toggle && resetCenter();
                 });
-                avalon(window).bind("resize", function () {
-                    options.autoOpen && resetCenter();
+                avalon(window).bind("resize", function() {
+                    model.toggle && resetCenter();
                 });
             }, 50)
         });
         return model;
     }
+
+    avalon.ui.dialog.defaults = {
+        toggle: false,
+        width: 300,
+        minHeight: 150,
+        height: "auto",
+        minWidth: 150,
+        close: avalon.noop,
+        parent: "body",
+        modal: false
+    };
     var overlayInstances = avalon.ui.dialog.overlayInstances = [];
 
     return avalon
