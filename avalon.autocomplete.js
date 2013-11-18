@@ -17,13 +17,6 @@ define(["avalon"], function(avalon) {
                 '  >{{presentation}}</a></li>' +
                 '</ul>'
         element.removeAttributeNode(data.node)//防止死循环
-//        for (var i = 0, node; node = element.attributes[i++]; ) {
-//            var name = node.name
-//            if (name.indexOf("ms-ui") === 0) {
-//                element.removeAttribute(name)
-//                break
-//            }
-//        }
 
         sourceList = sourceList.firstChild
         $element.bind("blur", function() {
@@ -128,7 +121,7 @@ define(["avalon"], function(avalon) {
             }
         }
         $element.bind("focus", adjustPosition)
-
+        return model
     }
     widget.defaults = {
         items: 8
