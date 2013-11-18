@@ -1,26 +1,13 @@
 define(["avalon"], function(avalon) {
     //判定是否触摸界面
-    var defaults = {
-        perPages: 10, //每页显示多少条目
-        showPages: 10, //一共显示多页
-        currentIndex: 8,
-        total: 200,
-        pages: [],
-        nextText: "下一页&gt;",
-        prevText: "&lt;上一页",
-        firstPage: 0,
-        lastPage: 0,
-        maxPage: 0
-    }
-
     var domParser = document.createElement("div")
-    avalon.ui.pagination =  function(element, id, vmodels, opts) {
+    var widget = avalon.ui.pagination = function(element, data, vmodels) {
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults, opts, $element.data())
+        var options = data.paginationOptions
 
         $element.addClass("ui-widget-header ui-corner-all ui-buttonset ")
         element.style.cssText += "padding:6px 4px"
-     var   model = avalon.define(id, function(vm) {
+        var model = avalon.define(data.paginationId, function(vm) {
             avalon.mix(vm, options)
 
             function getShowPages() {
@@ -53,10 +40,10 @@ define(["avalon"], function(avalon) {
                 vm.lastPage = pages[pages.length - 1]
                 return  pages//[0,1,2,3,4,5,6]
             }
-            vm.jumpPage = function(event) {
+            vm.jumpPage = function(event, page) {
                 event.preventDefault()
-                if (this.$vmodel.page !== vm.currentIndex) {
-                    vm.currentIndex = this.$vmodel.page
+                if (page !== vm.currentIndex) {
+                    vm.currentIndex = page
                     vm.pages = getShowPages()
                 }
             }
@@ -85,8 +72,8 @@ define(["avalon"], function(avalon) {
         var cssText = "margin:4px 4px; padding: 2px 8px;text-decoration: none;text-align:center;";
         avalon.nextTick(function() {
             element.setAttribute("ms-each-page", "pages")
-            element.innerHTML = '<a ms-href="?page={{page}}" ms-class-1="ui-corner-left：page == 0" ms-class-2="ui-corner-right：page == maxPage" ms-hover="ui-state-hover" ms-click="jumpPage" class="ui-state-default" style="' 
-                    + cssText + '" ms-class-3="ui-state-activecurrentIndex == page"' +  ' >{{page+1}}</a>';
+            element.innerHTML = '<a ms-href="?page={{page}}" ms-class-1="ui-corner-left：page == 0" ms-class-2="ui-corner-right：page == maxPage" ms-hover="ui-state-hover" ms-click="jumpPage($event,page)" class="ui-state-default" style="'
+                    + cssText + '" ms-class-3="ui-state-activecurrentIndex == page"' + ' >{{page+1}}</a>';
             avalon.scan(element, model)
             domParser.innerHTML = '<span ms-visible="firstPage" style="' + 'padding: 2px 4px;text-decoration: none;text-align:center;' + '" >…</span>' +
                     '<a href="" ms-visible="firstPage" ms-hover="ui-state-hover" class="ui-state-default" style="' + cssText + '" ms-click="jumpFirstPage" >1</a>' +
@@ -111,6 +98,17 @@ define(["avalon"], function(avalon) {
         })
         return model
     }
-
+    widget.defaults = {
+        perPages: 10, //每页显示多少条目
+        showPages: 10, //一共显示多页
+        currentIndex: 8,
+        total: 200,
+        pages: [],
+        nextText: "下一页&gt;",
+        prevText: "&lt;上一页",
+        firstPage: 0,
+        lastPage: 0,
+        maxPage: 0
+    }
     return avalon
 })

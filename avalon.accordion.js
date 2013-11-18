@@ -56,7 +56,6 @@ define(["avalon"], function(avalon) {
                 }
             }
         })
-        console.log(model.collapsible)
         avalon.nextTick(function() {
             element.appendChild(fragment)
             avalon.scan(element, [model].concat(vmodels))
