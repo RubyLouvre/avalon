@@ -3,7 +3,7 @@
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <script src="../avalon.mobile.js"></script>
+    <script src="../avalon.js"></script>
 
     <script>
 
@@ -20,11 +20,11 @@
                         title: '这是新加的tab',
                         content: '这是内容',
                         includeSrc: 'tabsInclude1.html',//includeSrc优先，content会被忽略
-                        actived:true
+                        actived: true
                     })
                 }
-                vm.$selectopts={
-                    onChange:function(){
+                vm.$selectopts = {
+                    onChange: function () {
                         vm.theme = this.value;
                     }
                 }
@@ -72,17 +72,17 @@
     <option value='eggplant'>eggplant</option>
     <option value='cupertino'>cupertino</option>
     <option value='overcast'>overcast</option>
-</select>你喜欢的皮肤
+    </select>你喜欢的皮肤
     <button ms-ui="button" ms-click="addTab">增加新tab</button>
     激活的tab index:{{tabIndex}}
     <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css"/>
 
 
-    <div id="tabs" ms-widget="tabs,tabsTest,tabs" data-tabs-collapsible="false" data-tabs-removable="true"
-         data-tabs-active="0" style="width:60%;">
+    <div id="tabs" ms-widget="tabs,tabsTest,tabs" data-tabs-collapsible="true" data-tabs-removable="true"
+         data-tabs-active="0" data-tabs-event="mouseover" style="width:60%;">
         <ul>
-            <li data-removable="false" data-toolip-text="" data-disabled="false">Nunc tincidunt</li>
-            <li>Proin dolor</li>
+            <li data-removable="false" data-toolip-text="">Nunc tincidunt</li>
+            <li data-disabled="true">Proin dolor</li>
             <li>Aenean lacinia</li>
         </ul>
 
