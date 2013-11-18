@@ -10,9 +10,7 @@
     var subscribers = "$" + expose
     var otherRequire = window.require
     var otherDefine = window.define
-    //这两个都与计算属性息息相关
     var stopRepeatAssign = false
-    var openComputedCollect = false
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var class2type = {}
     var oproto = Object.prototype
@@ -47,6 +45,7 @@
     avalon = function(el) { //创建jQuery式的无new 实例化结构
         return new avalon.init(el)
     }
+
     avalon.init = function(el) {
         this[0] = this.element = el
     }
@@ -179,6 +178,7 @@
         return result
     }
     avalon.mix({
+        openComputedCollect: false,
         rword: rword,
         subscribers: subscribers,
         ui: {},
@@ -1209,7 +1209,7 @@
                                 vmodel.$fire && vmodel.$fire(name, value, preValue)
                             }
                         } else {
-                            if (openComputedCollect) { // 收集视图刷新函数
+                            if (avalon.openComputedCollect) { // 收集视图刷新函数
                                 collectSubscribers(accessor)
                             }
                             neo = accessor.value = model[name] = getter.call(vmodel)
@@ -1404,9 +1404,9 @@
     function registerSubscriber(updateView, data) {
         updateView.data = data
         Registry[expose] = updateView //暴光此函数,方便collectSubscribers收集
-        openComputedCollect = true
+        avalon.openComputedCollect = true
         updateView()
-        openComputedCollect = false
+        avalon.openComputedCollect = false
         delete Registry[expose]
     }
 
@@ -1782,6 +1782,12 @@
             } else {
                 code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             }
+            if (data.type === "on") {
+                var lastIndex = code.lastIndexOf("\nreturn")
+                var header = code.slice(0, lastIndex)
+                var footer = code.slice(lastIndex)
+                code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+            }
             try {
                 fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
             } catch (e) {
@@ -1937,8 +1943,7 @@
                     four = "$event",
                     elem = data.element,
                     type = data.param,
-                    ret = 0,
-                    callback
+                    ret = 0
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -1951,21 +1956,32 @@
             var array = parseExpr(value, vmodels, data, four)
             if (array) {
                 var fn = array[0],
-                        args = array[1]
+                        args = array[1],
+                        updateView = function() {
+                    if (!updateView.check) {
+                        updateView.check = 1
+                        return  fn.apply(0, args)
+                    }
+                }
                 if (!four) {
-                    callback = fn.apply(fn, args)
+                    callback = function(e) {
+                        return fn.apply(0, args).call(this, e)
+                    }
                 } else {
                     callback = function(e) {
                         return fn.apply(this, args.concat(e))
                     }
                 }
-                if (!elem.$vmodels) {
+                if (type && typeof callback === "function") {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                }
-                if (type && typeof callback === "function") {
-                    avalon.bind(elem, type, callback)
+                    var removeFn = avalon.bind(elem, type, callback)
                     ret = 1
+                    updateView.vmodels = vmodels
+                    updateView.rollback = function() {
+                        avalon.unbind(elem, type, removeFn)
+                    }
+                    registerSubscriber(updateView, data)
                 }
             }
             data.remove = ret
@@ -2824,7 +2840,7 @@
                         deleteRange.setEndBefore(data.endRepeat);
                         deleteRange.deleteContents();
                     } else {
-                        removeView(locatedNode, group, mapper.length)
+                        removeView(locatedNode, group, Infinity)
                     }
                 } else {
                     avalon.clearChild(parent)
