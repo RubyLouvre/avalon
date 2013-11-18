@@ -79,20 +79,32 @@ define(["avalon.position"], function(avalon) {
         var tooltip = '<div class="ui-tooltip ui-widget ui-corner-all ui-widget-content" ms-visible="toggle">' +
                 '<div class="ui-tooltip-content">{{content|html}}</div></div>'
         tooltip = avalon.parseHTML(tooltip).firstChild
+        var $tooltip = avalon(tooltip)
+        var positionOptions = {
+            at: cat,
+            my: cmy,
+            of: element,
+            collision: "none"
+        }
         var model = avalon.define(data.tooltipId, function(vm) {
             vm.content = options.content
             vm.toggle = false
             vm.$watch("toggle", function(bool) {
                 if (bool) {
-                    avalon(tooltip).position({
-                        at: cat,
-                        my: cmy,
-                        of: element,
-                        collision: "none"
-                    })
+                    if (!options.track) {
+                        $tooltip.position(positionOptions)
+                    }
                 }
             })
         })
+        if (options.track) {
+            avalon(document).bind("mousemove", function(e) {
+                if (model.toggle) {
+                    positionOptions.of = e;
+                    $tooltip.position(positionOptions);
+                }
+            })
+        }
         switch (options.event) {
             case "click":
                 $element.bind("click", function() {
@@ -100,12 +112,13 @@ define(["avalon.position"], function(avalon) {
                 })
                 break;
             case "mouseover":
-                $element.bind("mouseenter", function() {
+                $element.bind("mouseenter", function(e) {
                     model.toggle = true
                 })
                 $element.bind("mouseleave", function() {
                     model.toggle = false
                 })
+
                 break;
         }
 
