@@ -8,8 +8,7 @@
         <script>
             require("avalon.draggable", function() {
                 avalon.define("xxx", function(vm) {
-                    vm.test = function() {
-                    }
+                   
                 })
                 avalon.scan()
             })
@@ -48,6 +47,7 @@
         <p>可以看到，我们使用getNodeStyle函数来获得元素的CSS属性值，这样我们的代码就可以适用于事先设置了top和left定位值的元素了。我做了一个测试页面，给两个可拖拽的div分别设置了如下的CSS规则：</p>
         <pre>&lt;style type=&quot;text/css&quot;&gt;<br />.drag{border:1px solid; width:400px; background:#CCCCCC;}<br /><span class="important">#test1{ top:20px;}<br />#test2{ left:40px;}</span><br />&lt;/style&gt;</pre>
         <p>点击进入<a href="tuozhuai_ex4.html">测试页面</a>。这样，我们的拖拽代码又改进了一小步。</p>
+        
         <h2>JavaScript拖拽系列</h2>
         <!-- #BeginLibraryItem "/Library/js拖拽.lbi" --><ol><li><a href="13_tuozhuai.html">JavaScript拖拽</a></li>
             <li><a href="14_tuozhuai2.html">JavaScript拖拽2——多元素、分离JS</a></li>
@@ -87,10 +87,10 @@
             <li><a href="27_tuozhuai6.html">JavaScript拖拽6——修复错误</a></li>
         </ol>
         <div id="aaa" ms-controller="xxx">45345435434
-            <div class="bbb"  ms-draggable="test"  data-containment="#aaa"></div>
-            <div class="bbb"  ms-draggable="test" data-axis="x"  data-containment="#aaa"></div>
-            <div class="bbb"  ms-draggable="test" data-axis="y" data-containment="#aaa"></div>
-            <div class="bbb"  ms-draggable="test" data-ghosting="true" data-containment="#aaa"></div>
+            <div class="bbb"  ms-draggable data-containment="#aaa">区域</div>
+            <div class="bbb"  ms-draggable data-axis="x"  >只能左右</div>
+            <div class="bbb"  ms-draggable data-axis="y" >只能上下</div>
+            <div class="bbb"  ms-draggable data-ghosting="true" data-containment="window">窗口</div>
         </div>
     </body>
 </html>
