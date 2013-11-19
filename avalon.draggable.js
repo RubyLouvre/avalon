@@ -31,49 +31,27 @@ define(["avalon"], function(avalon) {
     }
 
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var fnName = data.value.trim(), completeCallback, model
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(fnName)) {//根据函数名找到对应的VM的$model
-                if (typeof vm[fnName] === "function") {
-                    completeCallback = vm[fnName]
-                    model = vm.$model
-                    break;
-                }
+        var ID = data.value.trim(), model
+        if (ID) {
+            model = avalon.vmodels[ID]//如果指定了此VM的ID
+            if (!model) {
+                data.remove = false
+                return
             }
         }
-        if (typeof completeCallback !== "function") {
-            throw "此绑定的格式为： ms-draggable-optsName?=fn"
+        if(!model){
+            model = vmodels.length ? vmodels[0].$model : {}
         }
-        var optsName = data.param, opts
-        if (/\w/.test(optsName)) {//根据ID找到对应的VM的$model
-            if (model && typeof model[optsName] === "object") {
-                opts = model[optsName]
-            } else {
-                for (var i = 0, vm; vm = vmodels[i++]; ) {
-                    var object = vm.$model
-                    if (object && typeof object[optsName] === "object") {
-                        opts = object[optsName]
-                        break;
-                    }
-                }
-            }
-        }
-
-        opts = opts || model
-
         var element = data.element
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults, opts, $element.data());
-        if (completeCallback) {
-            options.stop = completeCallback
-        }
+        var options = avalon.mix({}, defaults, model, $element.data());
 
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
             if (typeof method === "string") {
-                if (typeof opts[method] === "function") {
-                    options[name] = opts[method]
+                if (typeof model[method] === "function") {
+                    options[name] = model[method]
                 } else {
                     options[name] = avalon.noop
                 }
@@ -380,7 +358,7 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /*
- ms-draggable-xxx-fn , xxx为一个VM的对象属性, fn为一个函数， fn不能删略，xxx可省
+ ms-draggable="VMID?" , VMID为一个VM的ID,可选
  下面这些全部可用data-*进行配置
  drag 为VM中一个方法名
  stop 为VM中一个方法名
@@ -392,17 +370,17 @@ define(["avalon"], function(avalon) {
  containment： 拖动范围，#id值， "window", "document", "parent", "[0, 0, 400, 300]"
  <body ms-controller="xxx">
  <ul  ms-each-el="array">
- <li ms-draggable="complete" >item {{$index}}</li>
+ <li ms-draggable="xxx" >item {{$index}}</li>
  </ul>
  </body>
  avalon.require("avalon.draggable", function() {
  avalon.define("xxx", function(vm) {
  vm.array = avalon.range(0, 10)
- vm.complete = function() {
- console.log("done")
+ vm.drag = function(e, data) {
+    console.log(e.pageX + " : " + e.pageY)
  }
- vm.drag = function(e) {
- console.log(e.pageX + " : " + e.pageY)
+ vm.stop = function(e, data) {
+    console.log("done")
  }
  })
  avalon.scan()

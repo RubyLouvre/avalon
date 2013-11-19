@@ -51,10 +51,10 @@ define(["avalon.button"], function(avalon) {
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
                 ' ms-css-height="height" ' +
-                ' ms-draggable="draggend" data-handle="handle" data-beforestart="beforestart">' +
+                ' ms-draggable data-handle="handle" data-beforestart="beforestart">' +
                 '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
-                '<button ms-widget="button" type="button" data-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-text="false" ms-click="close">close</button></div>' +
+                '<button ms-widget="button" type="button" data-button-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-button-text="false" ms-click="close">close</button></div>' +
                 '</div></div>').firstChild;
 
         var parentNode = options.parent === "parent" ? element.parentNode : document.body;
@@ -84,7 +84,7 @@ define(["avalon.button"], function(avalon) {
             vm.close = function() {
                 vm.toggle = false;
             };
-            vm.draggend = avalon.noop
+        //    vm.draggend = avalon.noop
             vm.handle = function(e) {
                 var el = e.target
                 while (el.nodeName != "BODY") {
