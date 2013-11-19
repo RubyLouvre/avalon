@@ -1499,8 +1499,6 @@
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         }
         scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
-            console.log("----------------")
-            var hasWidget = elem.attributes["ms-widget"]
             if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML) && (!elem.stopScan)) {
                 scanNodes(elem, cmodel, cstate) //扫描子孙元素
             }
@@ -1510,7 +1508,6 @@
 
     function scanText(textNode, vmodels, state) {
         var bindings = extractTextBindings(textNode)
-        console.log(bindings.length)
         if (bindings.length) {
             executeBindings(bindings, vmodels, state)
         }
@@ -2151,6 +2148,7 @@
                 args[1] = widget + setTimeout("1")
             }
             data.node.value = args.join(",")
+            element.stopScan = true
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
                 var vmodel = vmodels[0], opts = args[2] || widget //options在最近的一个VM中的名字
@@ -2158,10 +2156,11 @@
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
+                element.stopScan = false
                 constructor(element, data, vmodels)
                 ret = 1
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
-            element.stopScan = !ret
+
             data.remove = ret;
         },
         "ui": function(data, vmodels) {
