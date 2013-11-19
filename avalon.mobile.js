@@ -1746,8 +1746,8 @@
         },
         "widget": function(data, vmodels) {
             var args = data.value.match(rword), element = data.element, widget = args[0], ret = 0
-            if (widget[1] == "$") {
-                widget[1] == void 0
+            if (args[1] == "$") {
+                args[1] == void 0
             }
             if (!args[1]) {
                 args[1] = widget + setTimeout("1")
