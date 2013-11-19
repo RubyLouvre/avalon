@@ -112,8 +112,14 @@ define(["avalon.position"], function(avalon) {
                 model.currentYear = now.getFullYear()
                 model.currentMonth = now.getMonth()
                 model.currentDate = now.getDate()
-                //   vm.selectedDate = now
             }
+            var group = []
+            for(var ii = 0; ii < vm.numberOfMonths; ii++){
+                group.push({
+                    number: ii
+                })
+            }
+            vm.group =  group
             vm.calculateWeek = function(date) {
                 var time,
                         checkDate = new Date(date.time);
@@ -150,29 +156,28 @@ define(["avalon.position"], function(avalon) {
                 var prev = cur.getDay();//0 ~ 6
                 cur.setDate(date);//还原
                 for (var i = 0; i < prev; i++) {//补上上一个月的日期
-                    cur = new Date(year, month, -1 * i)
+                   var curr = new Date(year, month, -1 * i)
                     dates.unshift({
                         year: year,
                         month: month - 1,
-                        date: cur.getDate(),
-                        time: cur - 0
+                        date: curr.getDate(),
+                        time: curr - 0
                     })
 
                 }
                 for (var i = 0; i < next; i++) {//补上下一个月的日期
-                    cur = new Date(year, month + 1, i + 1)
+                    var curr = new Date(year, month + 1, i + 1)
                     dates.unshift({
                         year: year,
                         month: month + 1,
-                        date: cur.getDate(),
-                        time: cur - 0
+                        date: curr.getDate(),
+                        time: curr - 0
                     })
                 }
                 var ret = [];
                 while (dates.length) {//每行七个分组
                     ret.push(dates.splice(0, 7));
                 }
-
 
                 return ret;//一个三维数组
             }
@@ -205,7 +210,7 @@ define(["avalon.position"], function(avalon) {
         weekHeader: "周",
         minDate: null,
         maxDate: null,
-        numberOfMonths: 1
+        numberOfMonths: 3
     }
     return avalon
 })

@@ -13,16 +13,19 @@
         </script>
     </head>
     <body>
-        <div ms-widget="datepicker" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" ms-class-ui-datepicker-multi="numberOfMonths>1" ms-class="ui-datepicker-multi-{{numberOfMonths}}" ms-visible="toggle" >
-            <div  class="ui-datepicker-group" ms-repeat="new Array(numberOfMonths)" 
+        <div ms-widget="datepicker" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" ms-class-ui-datepicker-multi="numberOfMonths>1"  ms-visible="toggle" style="display:inline-block" >
+            <div  class="ui-datepicker-group" ms-repeat-group="groups" 
                   ms-class-ui-datepicker-group-first="$first && numberOfMonths> 1"
                   ms-class-ui-datepicker-group-last="$last && numberOfMonths> 1"
                   ms-class-ui-datepicker-group-middle="!$first && !$last && numberOfMonths> 1"
                   >
-                <div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all">
-                    <a class="ui-datepicker-prev ui-corner-all"  ms-click="updateMonth(-1)" ms-attr-title="prevText">
+                <div class="ui-datepicker-header ui-widget-header ui-helper-clearfix " ms-class-ui-corner-all="numberOfMonths===1"
+                     ms-class-ui-corner-left="group.number===0 && numberOfMonths> 1 " 
+                     ms-class-ui-corner-right="group.number === numberOfMonths -1 && numberOfMonths> 1 "
+                     >
+                    <a class="ui-datepicker-prev ui-corner-all"  ms-click="updateMonth(-1)" ms-attr-title="prevText" ms-if="group.number===0">
                         <span class="ui-icon ui-icon-circle-triangle-w">prev</span></a>
-                    <a class="ui-datepicker-next ui-corner-all"  ms-click="updateMonth(1)"  ms-attr-title="nextText">
+                    <a class="ui-datepicker-next ui-corner-all"  ms-click="updateMonth(1)"  ms-attr-title="nextText" ms-if="group.number===numberOfMonths -1">
                         <span class="ui-icon ui-icon-circle-triangle-e">next</span></a>
                     <div class="ui-datepicker-title">
                         <select  ms-each-el="monthNamesShort" ms-duplex="currentMonth" ms-if="changeMonth">
