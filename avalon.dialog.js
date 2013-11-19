@@ -1,4 +1,4 @@
-define(["avalon", "avalon.button"], function(avalon) {
+define(["avalon.button"], function(avalon) {
 
     //判定是否支持css position fixed
     var supportFixed = true;

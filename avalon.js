@@ -1499,7 +1499,9 @@
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         }
         scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
-            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML)) {
+            console.log("----------------")
+            var hasWidget = elem.attributes["ms-widget"]
+            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML) && (!elem.stopScan)) {
                 scanNodes(elem, cmodel, cstate) //扫描子孙元素
             }
         }, state)
@@ -1508,6 +1510,7 @@
 
     function scanText(textNode, vmodels, state) {
         var bindings = extractTextBindings(textNode)
+        console.log(bindings.length)
         if (bindings.length) {
             executeBindings(bindings, vmodels, state)
         }
@@ -2140,23 +2143,25 @@
             bindingHandlers.each(data, vmodels, "repeat")
         },
         "widget": function(data, vmodels) {
-            var args = data.value.match(rword)
-            var widget = args[0], ret = 0
-            if (args.length === 1) {
-                args.push(widget + setTimeout("1"))
+            var args = data.value.match(rword), element = data.element, widget = args[0], ret = 0
+            if (widget[1] == "$") {
+                widget[1] == void 0
+            }
+            if (!args[1]) {
+                args[1] = widget + setTimeout("1")
             }
             data.node.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
                 var vmodel = vmodels[0], opts = args[2] || widget //options在最近的一个VM中的名字
                 var vmOptions = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts] : {}
-                var element = data.element
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 constructor(element, data, vmodels)
                 ret = 1
-            }
+            } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
+            element.stopScan = !ret
             data.remove = ret;
         },
         "ui": function(data, vmodels) {
