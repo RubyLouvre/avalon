@@ -4,14 +4,10 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
         <script src="../avalon.js"></script>
         <script src="../avalon.require.text.js"></script>
         <!--        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css">-->
         <link rel="stylesheet" href="jquery-ui-1.10.1.css">
-
-
-
 
         <script>
             require("avalon.datepicker", function() {
@@ -31,13 +27,19 @@
             </select>
             <link rel="stylesheet"  ms-href="{{skin}}.datepicker.css">
         </div>
-        <input ms-widget="datepicker" style="position: relative;">
+        <input ms-widget="datepicker,aaa" style="position: relative;">
 
         <ul>
             <li>http://www.michaelvanderheeren.be/archives/382</li>
             <li>http://taitems.github.io/Aristo-jQuery-UI-Theme/</li>
             <li>http://vanderlee.github.io/Afterdark/</li>
         </ul>
+        <div ms-controller="aaa">
+            <div><input type="radio" ms-model="changeMonth" />可选择月份</div>
+            <div><input type="radio" ms-model="changeYear" />可选择年份</div>
+            <div><input type="radio" ms-model="showButtonPanel" />显示按钮面板</div>
+            <div><input type="radio" ms-model="showOtherMonths" />显示其他月份的日期</div>
+        </div>
 
     </body>
 </html>
