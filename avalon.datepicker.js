@@ -113,13 +113,18 @@ define(["avalon.position"], function(avalon) {
                 model.currentMonth = now.getMonth()
                 model.currentDate = now.getDate()
             }
-            var group = []
-            for(var ii = 0; ii < vm.numberOfMonths; ii++){
-                group.push({
-                    number: ii
-                })
+            function getGroups(a) {
+                var groups = []
+                for (var ii = 0; ii < a; ii++) {
+                    groups.push({
+                        number: ii
+                    })
+                }
+                vm.groups = groups
             }
-            vm.group =  group
+
+            vm.$watch("numberOfMonths", getGroups)
+            getGroups(vm.numberOfMonths)
             vm.calculateWeek = function(date) {
                 var time,
                         checkDate = new Date(date.time);
@@ -131,17 +136,17 @@ define(["avalon.position"], function(avalon) {
                 checkDate.setDate(1);
                 return Math.floor(Math.round((time - checkDate) / 86400000) / 7) + 1;
             }
-            function  getWeeks(cur) {
-
-                var year = cur.getFullYear();
-                var month = cur.getMonth();//得到今天是几月（0 ~ 11）
-                var date = cur.getDate();  //得到今天是几号 （1 ~ 31）
+            function  getWeeks(ooo) {
+                var year = ooo.getFullYear();
+                var month = ooo.getMonth();//得到今天是几月（0 ~ 11）
+                var date = ooo.getDate();  //得到今天是几号 （1 ~ 31）
                 var cur = new Date(year, month, date)
                 cur.setMonth(month + 1);//改为下一个月，
                 //由于日期是1 ~ 31， 0则是退到上一个月的最后一天，于是得到这个月的总天数
                 cur.setDate(0);
                 var num = cur.getDate();
                 var next = 6 - cur.getDay();
+               
                 var dates = avalon.range(1, num + 1);
                 dates = dates.map(function(d) {
                     return {
@@ -156,18 +161,17 @@ define(["avalon.position"], function(avalon) {
                 var prev = cur.getDay();//0 ~ 6
                 cur.setDate(date);//还原
                 for (var i = 0; i < prev; i++) {//补上上一个月的日期
-                   var curr = new Date(year, month, -1 * i)
+                    var curr = new Date(year, month, -1 * i)
                     dates.unshift({
                         year: year,
                         month: month - 1,
                         date: curr.getDate(),
                         time: curr - 0
                     })
-
                 }
                 for (var i = 0; i < next; i++) {//补上下一个月的日期
                     var curr = new Date(year, month + 1, i + 1)
-                    dates.unshift({
+                    dates.push({
                         year: year,
                         month: month + 1,
                         date: curr.getDate(),
@@ -205,12 +209,12 @@ define(["avalon.position"], function(avalon) {
         prevText: "Prev", // Display text for previous month link
         nextText: "Next", // Display text for next month link
         currentText: "Today", // Display text for current month link
-        showWeek: true,
+        showWeek: false,
         firstDay: 1,
         weekHeader: "周",
         minDate: null,
         maxDate: null,
-        numberOfMonths: 3
+        numberOfMonths: 1
     }
     return avalon
 })

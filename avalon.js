@@ -1447,7 +1447,7 @@
                         }
                     }
                     remove && avalon.Array.remove(list, fn)
-                    log("remove " + fn.name)
+                  //  log("remove " + fn.name)
                 }
                 fn.apply(0, args) //强制重新计算自身
             }
