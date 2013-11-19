@@ -1,0 +1,56 @@
+<div  class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" ms-class-ui-datepicker-multi="numberOfMonths>1"  ms-visible="toggle" style="display:inline-block;position:absolute;" >
+    <div  class="ui-datepicker-group" ms-repeat-group="groups" 
+          ms-class-ui-datepicker-group-first="$first && numberOfMonths> 1"
+          ms-class-ui-datepicker-group-last="$last && numberOfMonths> 1"
+          ms-class-ui-datepicker-group-middle="!$first && !$last && numberOfMonths> 1"
+          >
+        <div class="ui-datepicker-header ui-widget-header ui-helper-clearfix " ms-class-ui-corner-all="numberOfMonths===1"
+             ms-class-ui-corner-left="group.number===0 && numberOfMonths> 1 " 
+             ms-class-ui-corner-right="group.number === numberOfMonths -1 && numberOfMonths> 1 "
+             >
+            <a class="ui-datepicker-prev ui-corner-all"  ms-click="updateMonth(-1)" ms-attr-title="prevText" ms-if="group.number===0">
+                <span class="ui-icon ui-icon-circle-triangle-w">prev</span></a>
+            <a class="ui-datepicker-next ui-corner-all"  ms-click="updateMonth(1)"  ms-attr-title="nextText" ms-if="group.number===numberOfMonths -1">
+                <span class="ui-icon ui-icon-circle-triangle-e">next</span></a>
+            <div class="ui-datepicker-title">
+                <select  ms-each-el="monthNamesShort" ms-duplex="currentMonth" ms-if="changeMonth">
+                    <option  ms-if="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth === $index">{{el}}</option>
+                </select>
+                <select  ms-each-el="years" ms-duplex="currentYear" ms-if="changeYear">
+                    <option ms-if="showYear(el)" ms-value="el" ms-selected="currentYear === el">{{el}}年</option>
+                </select>
+                {{title}}</div>
+        </div>
+        <table class="ui-datepicker-calendar">
+
+            <thead>
+                <tr>
+                    <th ms-if="showWeek" class="ui-datepicker-week-col">{{weekHeader}}</th>  <th ms-repeat="dayNamesMin" ms-class-ui-datepicker-week-end="$first || $last"><span ms-attr-title="el">{{el}}</span></th>
+                </tr> 
+            </thead>
+            <tbody  ms-each-week="weeks" >
+                <tr>
+                    <td ms-if="showWeek" class="ui-datepicker-week-col">{{firstDay + calculateWeek(week[0])}}</td>
+                    <td ms-repeat-date="week" ms-class-ui-datepicker-week-end="$first || $last"  ms-class-ui-datepicker-other-month="date.month !== currentMonth" >
+                        <a class="ui-state-default"  
+                           ms-if="showOtherMonths || date.month == currentMonth"
+                           ms-class-ui-state-highlight="isToday(date)"
+                           ms-class-ui-state-active="date.time == selectedTime"
+                           ms-click="selectTime($event, date)"
+                           ms-class="ui-datepicker-unselectable ui-state-disabled:!showDate(date)"
+                           ms-hover="ui-state-hover" href="#">{{date.date}}</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="ui-datepicker-buttonpane ui-widget-content" ms-if="showButtonPanel && numberOfMonths === 1">
+            <button type="button"  ms-hover="ui-state-hover" class="ui-datepicker-current ui-state-default ui-priority-secondary ui-corner-all" ms-click="today" >{{currentText}}</button>
+            <button type="button"  ms-hover="ui-state-hover" class="ui-datepicker-close ui-state-default ui-priority-primary ui-corner-all" ms-click="hide" >{{closeText}}</button>
+        </div>
+    </div>
+    <div class="ui-datepicker-row-break" ms-if="showButtonPanel && numberOfMonths > 1"></div>
+    <div class="ui-datepicker-buttonpane ui-widget-content" ms-if="showButtonPanel && numberOfMonths > 1">
+        <button type="button"  ms-hover="ui-state-hover" class="ui-datepicker-current ui-state-default ui-priority-secondary ui-corner-all" ms-click="today" >{{currentText}}</button>
+        <button type="button"  ms-hover="ui-state-hover" class="ui-datepicker-close ui-state-default ui-priority-primary ui-corner-all" ms-click="hide" >{{closeText}}</button>
+    </div>
+</div>

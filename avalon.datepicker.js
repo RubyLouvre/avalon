@@ -1,9 +1,9 @@
-define(["avalon.position"], function(avalon) {
+define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl) {
 
     var widget = avalon.ui.datepicker = function(element, data, vmodels) {
-        var $element = avalon(element), options = data.datepickerOptions, full = false, model
-        var now = new Date
-        element.stopScan = true
+        var $element = avalon(element), options = data.datepickerOptions, model
+        var now = new Date, datepickerEl
+        //   element.stopScan = true
 
         var model = avalon.define(data.datepickerId, function(vm) {
             avalon.mix(vm, options)
@@ -101,6 +101,7 @@ define(["avalon.position"], function(avalon) {
             vm.selectTime = function(e, date) {
                 e.preventDefault()
                 vm.selectedTime = date.time
+                vm.toggle = false
             }
             vm.isToday = function(date) {
                 return date.year == now.getFullYear() && date.month === now.getMonth() && date.date === now.getDate()
@@ -128,9 +129,7 @@ define(["avalon.position"], function(avalon) {
             vm.calculateWeek = function(date) {
                 var time,
                         checkDate = new Date(date.time);
-                // Find Thursday of this week starting on Monday
                 checkDate.setDate(checkDate.getDate() + 4 - (checkDate.getDay() || 7));
-
                 time = checkDate.getTime();
                 checkDate.setMonth(0); // Compare with Jan 1
                 checkDate.setDate(1);
@@ -146,7 +145,7 @@ define(["avalon.position"], function(avalon) {
                 cur.setDate(0);
                 var num = cur.getDate();
                 var next = 6 - cur.getDay();
-               
+
                 var dates = avalon.range(1, num + 1);
                 dates = dates.map(function(d) {
                     return {
@@ -186,12 +185,28 @@ define(["avalon.position"], function(avalon) {
                 return ret;//一个三维数组
             }
             vm.weeks = getWeeks(now)
-
+            vm.$watch("toggle", function(bool) {
+                if (bool && datepickerEl) {
+                    avalon(datepickerEl).position({
+                        of: element,
+                        at: "left bottom",
+                        my: "left top"
+                    })
+                } else {
+                    element.value = avalon.filters.date(vm.selectedTime, vm.dateFormat)
+                }
+            })
         })
 
-        avalon.nextTick(function() {
-            element.stopScan = false
-            avalon.scan(element, [model].concat(vmodels))
+        avalon.ready(function() {
+            $element.bind("focus", function() {
+                model.toggle = true
+            })
+
+            //element.stopScan = false
+            datepickerEl = avalon.parseHTML(tmpl).firstChild
+            document.body.appendChild(datepickerEl)
+            avalon.scan(datepickerEl, [model].concat(vmodels))
         })
         return model
 
@@ -201,7 +216,7 @@ define(["avalon.position"], function(avalon) {
         monthNamesShort: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
         changeMonth: true,
         changeYear: true,
-        toggle: true,
+        toggle: false,
         yearRange: "y-10:y+10", //你只能改动这里面的数字
         showOtherMonths: true,
         showButtonPanel: false,
@@ -214,7 +229,8 @@ define(["avalon.position"], function(avalon) {
         weekHeader: "周",
         minDate: null,
         maxDate: null,
-        numberOfMonths: 1
+        numberOfMonths: 1,
+        dateFormat: "MM/dd/yyyy"
     }
     return avalon
 })
