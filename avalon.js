@@ -1616,7 +1616,7 @@
         bindings.forEach(function(data) {
             data.state = state
             bindingHandlers[data.type](data, vmodels)
-            if (data.remove) { //移除数据绑定，防止被二次解析
+            if (data.remove ) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.node.name)
             }
@@ -2157,6 +2157,7 @@
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 element.stopScan = false
+                element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
                 ret = 1
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
@@ -2492,6 +2493,7 @@
             event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
             event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
         }
+        event.timeStamp = new Date - 0
         event.preventDefault = function() { //阻止默认行为
             event.returnValue = false
         }
