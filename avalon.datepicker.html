@@ -14,7 +14,7 @@
                 <span class="ui-icon ui-icon-circle-triangle-e">next</span></a>
             <div class="ui-datepicker-title">
                 <select  ms-each-el="monthNamesShort" ms-duplex="currentMonth" ms-if="changeMonth">
-                    <option  ms-if="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth === $index">{{el}}</option>
+                    <option  ms-if="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth + group.number === $index">{{el}}</option>
                 </select>
                 <select  ms-each-el="years" ms-duplex="currentYear" ms-if="changeYear">
                     <option ms-if="showYear(el)" ms-value="el" ms-selected="currentYear === el">{{el}}年</option>
@@ -28,7 +28,7 @@
                     <th ms-if="showWeek" class="ui-datepicker-week-col">{{weekHeader}}</th>  <th ms-repeat="dayNamesMin" ms-class-ui-datepicker-week-end="$first || $last"><span ms-attr-title="el">{{el}}</span></th>
                 </tr> 
             </thead>
-            <tbody  ms-each-week="weeks" >
+            <tbody  ms-each-week="WEEKMAP[group.number]" >
                 <tr>
                     <td ms-if="showWeek" class="ui-datepicker-week-col">{{firstDay + calculateWeek(week[0])}}</td>
                     <td ms-repeat-date="week" ms-class-ui-datepicker-week-end="$first || $last"  ms-class-ui-datepicker-other-month="date.month !== currentMonth" >

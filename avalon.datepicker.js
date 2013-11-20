@@ -38,13 +38,13 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
             vm.$watch("currentMonth", function(val) {
                 var d = new Date(vm.currentYear, vm.currentMonth, vm.currentDate)
                 d.setMonth(val);
-                vm.weeks = getWeeks(d);
+                getWeeksMulti(d, vm.numberOfMonths);
                 vm.title = NaN;
             });
             vm.$watch("currentYear", function(val) {
                 var d = new Date(vm.currentYear, vm.currentMonth, vm.currentDate)
                 d.setFullYear(val);
-                vm.weeks = getWeeks(d);
+                getWeeksMulti(d, vm.numberOfMonths);
                 vm.title = NaN;
             })
             vm.updateMonth = function(n) {
@@ -137,15 +137,14 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
             }
             function  getWeeks(ooo) {
                 var year = ooo.getFullYear();
-                var month = ooo.getMonth();//得到今天是几月（0 ~ 11）
-                var date = ooo.getDate();  //得到今天是几号 （1 ~ 31）
+                var month = ooo.getMonth(); //得到今天是几月（0 ~ 11）
+                var date = ooo.getDate(); //得到今天是几号 （1 ~ 31）
                 var cur = new Date(year, month, date)
-                cur.setMonth(month + 1);//改为下一个月，
+                cur.setMonth(month + 1); //改为下一个月，
                 //由于日期是1 ~ 31， 0则是退到上一个月的最后一天，于是得到这个月的总天数
                 cur.setDate(0);
                 var num = cur.getDate();
                 var next = 6 - cur.getDay();
-
                 var dates = avalon.range(1, num + 1);
                 dates = dates.map(function(d) {
                     return {
@@ -156,9 +155,9 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                     }
                 });
                 cur.setMonth(month);
-                cur.setDate(1);//得到当月的第一天
-                var prev = cur.getDay();//0 ~ 6
-                cur.setDate(date);//还原
+                cur.setDate(1); //得到当月的第一天
+                var prev = cur.getDay(); //0 ~ 6
+                cur.setDate(date); //还原
                 for (var i = 0; i < prev; i++) {//补上上一个月的日期
                     var curr = new Date(year, month, -1 * i)
                     dates.unshift({
@@ -182,9 +181,30 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                     ret.push(dates.splice(0, 7));
                 }
 
-                return ret;//一个三维数组
+                return ret; //一个三维数组
             }
-            vm.weeks = getWeeks(now)
+            function getWeeksMulti(ooo, n) {
+                var year = ooo.getFullYear();
+                var month = ooo.getMonth(); //得到今天是几月（0 ~ 11）
+                var date = ooo.getDate(); //得到今天是几号 （1 ~ 31）
+                for (var i = 0; i < n; i++) {
+                    month = month + 1
+                    if (month > 11) {
+                        month = 0
+                        year += 1
+                    }
+                    vm.WEEKMAP[i] = getWeeks(new Date(year, month, date))
+                }
+            }
+            vm.weeks = []
+            vm.weeks1 = []
+            vm.weeks2 = []
+            vm.skipArray = ["WEEKMAP"]
+            vm.WEEKMAP = {}
+            vm.WEEKMAP[0] = vm.weeks
+            vm.WEEKMAP[1] = vm.weeks1
+            vm.WEEKMAP[1] = vm.weeks2
+            getWeeksMulti(now, vm.numberOfMonths)
             vm.$watch("toggle", function(bool) {
                 if (bool && datepickerEl) {
                     avalon(datepickerEl).position({
@@ -229,7 +249,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
         weekHeader: "周",
         minDate: null,
         maxDate: null,
-        numberOfMonths: 1,
+        numberOfMonths: 2,
         dateFormat: "MM/dd/yyyy"
     }
     return avalon
