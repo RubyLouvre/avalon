@@ -1762,6 +1762,7 @@
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 element.stopScan = false//进入分支，就去除它，让扫描器进入它内部扫描, 但组件内部可以控制这个开关
+                element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
                 ret = 1
             }
