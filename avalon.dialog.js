@@ -46,12 +46,12 @@ define(["avalon.button"], function(avalon) {
         if (!options.title) {
             options.title = element.title || "&nbsp;";
         }
-        var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front ' +
-                ' " tabindex="-1" style="position: absolute;" ' +
+        var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front" ' +
+                ' tabindex="-1" style="position: absolute;" ' +
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
                 ' ms-css-height="height" ' +
-                ' ms-draggable data-handle="handle" data-beforestart="beforestart">' +
+                ' ms-draggable data-drag-handle="handle" data-drag-beforestart="beforestart">' +
                 '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-widget="button" type="button" data-button-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-button-text="false" ms-click="close">close</button></div>' +

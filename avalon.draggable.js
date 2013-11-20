@@ -39,12 +39,24 @@ define(["avalon"], function(avalon) {
                 return
             }
         }
-        if(!model){
+        if (!model) {
             model = vmodels.length ? vmodels[0].$model : {}
         }
         var element = data.element
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults, model, $element.data());
+
+        function filterData(obj, prefix) {
+            var result = {}
+            for (var i in obj) {
+                if (i.indexOf(prefix) === 0) {
+                    result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                        return a.toLowerCase()
+                    }) ] = obj[i]
+                }
+            }
+            return result
+        }
+        var options = avalon.mix({}, defaults, model,  filterData($element.data(),"drag"));
 
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
@@ -347,8 +359,8 @@ define(["avalon"], function(avalon) {
                 data.containment = [
                     $offset.left,
                     $offset.top,
-                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft ),//- data.$element.width()
-                    Math.floor($offset.top + elem.offsetHeight - data.marginTop )//- data.$element.height()
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft), //- data.$element.width()
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop)//- data.$element.height()
                 ]
 
             }
@@ -359,7 +371,7 @@ define(["avalon"], function(avalon) {
 })
 /*
  ms-draggable="VMID?" , VMID为一个VM的ID,可选
- 下面这些全部可用data-*进行配置
+ 下面这些全部可用data-drag-*进行配置
  drag 为VM中一个方法名
  stop 为VM中一个方法名
  start  为VM中一个方法名
@@ -377,10 +389,10 @@ define(["avalon"], function(avalon) {
  avalon.define("xxx", function(vm) {
  vm.array = avalon.range(0, 10)
  vm.drag = function(e, data) {
-    console.log(e.pageX + " : " + e.pageY)
+ console.log(e.pageX + " : " + e.pageY)
  }
  vm.stop = function(e, data) {
-    console.log("done")
+ console.log("done")
  }
  })
  avalon.scan()

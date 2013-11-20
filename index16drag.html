@@ -8,7 +8,9 @@
         <script>
             require("avalon.draggable", function() {
                 avalon.define("xxx", function(vm) {
-                   
+                   vm.step = function(e, data){
+                       avalon.log(data.pageX)
+                   }
                 })
                 avalon.scan()
             })
@@ -87,10 +89,10 @@
             <li><a href="27_tuozhuai6.html">JavaScript拖拽6——修复错误</a></li>
         </ol>
         <div id="aaa" ms-controller="xxx">45345435434
-            <div class="bbb"  ms-draggable data-containment="#aaa">区域</div>
-            <div class="bbb"  ms-draggable data-axis="x"  >只能左右</div>
-            <div class="bbb"  ms-draggable data-axis="y" >只能上下</div>
-            <div class="bbb"  ms-draggable data-ghosting="true" data-containment="window">窗口</div>
+            <div class="bbb"  ms-draggable data-drag-containment="#aaa">区域</div>
+            <div class="bbb"  ms-draggable data-drag-axis="x"  >只能左右</div>
+            <div class="bbb"  ms-draggable data-drag-axis="y" >只能上下</div>
+            <div class="bbb"  ms-draggable data-drag-drag="step"data-drag-ghosting="true" data-drag-containment="window">窗口</div>
         </div>
     </body>
 </html>

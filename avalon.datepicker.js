@@ -126,7 +126,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
 
             vm.$watch("numberOfMonths", getGroups)
             getGroups(vm.numberOfMonths)
-            vm.calculateWeek = function(date) {
+            vm.getWeekNumberOfYear = function(date) {
                 var time,
                         checkDate = new Date(date.time);
                 checkDate.setDate(checkDate.getDate() + 4 - (checkDate.getDay() || 7));

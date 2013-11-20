@@ -22,7 +22,6 @@
                 {{title}}</div>
         </div>
         <table class="ui-datepicker-calendar">
-
             <thead>
                 <tr>
                     <th ms-if="showWeek" class="ui-datepicker-week-col">{{weekHeader}}</th>  <th ms-repeat="dayNamesMin" ms-class-ui-datepicker-week-end="$first || $last"><span ms-attr-title="el">{{el}}</span></th>
@@ -30,7 +29,7 @@
             </thead>
             <tbody  ms-each-week="WEEKMAP[group.number]" >
                 <tr>
-                    <td ms-if="showWeek" class="ui-datepicker-week-col">{{firstDay + calculateWeek(week[0])}}</td>
+                    <td ms-if="showWeek" class="ui-datepicker-week-col">{{firstDay + getWeekNumberOfYear(week[0])}}</td>
                     <td ms-repeat-date="week" ms-class-ui-datepicker-week-end="$first || $last"  ms-class-ui-datepicker-other-month="date.month !== currentMonth" >
                         <a class="ui-state-default"  
                            ms-if="showOtherMonths || date.month == currentMonth"
