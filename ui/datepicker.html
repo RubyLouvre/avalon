@@ -7,7 +7,7 @@
         <script src="../avalon.js"></script>
         <script src="../avalon.require.text.js"></script>
         <!--        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css">-->
-        <link rel="stylesheet" href="jquery-ui-1.10.1.css">
+        <link rel="stylesheet" href="datepicker/jquery-ui-1.10.1.css">
 
         <script>
             require("avalon.datepicker", function() {
@@ -25,7 +25,7 @@
             <select ms-each-el="options" ms-duplex="skin">
                 <option >{{el}}</option>
             </select>
-            <link rel="stylesheet"  ms-href="{{skin}}.datepicker.css">
+            <link rel="stylesheet"  ms-href="datepicker/{{skin}}.datepicker.css">
         </div>
         <input ms-widget="datepicker,aaa" style="position: relative;">
 
@@ -35,10 +35,10 @@
             <li>http://vanderlee.github.io/Afterdark/</li>
         </ul>
         <div ms-controller="aaa">
-            <div><input type="radio" ms-model="changeMonth" />可选择月份</div>
-            <div><input type="radio" ms-model="changeYear" />可选择年份</div>
-            <div><input type="radio" ms-model="showButtonPanel" />显示按钮面板</div>
-            <div><input type="radio" ms-model="showOtherMonths" />显示其他月份的日期</div>
+            <div><input type="checkbox" ms-duplex-radio="changeMonth" />可选择月份</div>
+            <div><input type="checkbox" ms-duplex-radio="changeYear" />可选择年份</div>
+            <div><input type="checkbox" ms-duplex-radio="showButtonPanel" />显示按钮面板</div>
+            <div><input type="checkbox" ms-duplex-radio="showOtherMonths" />显示其他月份的日期</div>
         </div>
 
     </body>

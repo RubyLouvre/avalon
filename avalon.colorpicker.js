@@ -1,47 +1,23 @@
-
+//http://bgrins.github.io/spectrum/#why-devtools
 //     http://www.knallgrau.at/code/colorpicker/demo
-define(["avalon"], function(avalon) {
-    var defaults = {
-        imagesBase: "colorpicker/",
-        toggle: false,
-        top: 0,
-        left: 0
-    };
-    var UI = avalon.ui["colorpicker"] = function(element, id, vmodels, opts) {
-        var $element = avalon(element);
-        var options = avalon.mix({}, defaults, $element.data());
-        var domParser = document.createElement("div"), model;
-        domParser.innerHTML = '<div ms-visible="toggle" ms-important="' + id + '" class="colorpicker ui-widget ui-widget-content ui-corner-all"><div class="colorpicker-div ui-corner-all" >' + (
+define(["avalon.position, avalon.button, avalon.draggable, css!avalon.colorpicker.css"], function(avalon) {
+    var widget = avalon.ui["colorpicker"] = function(element, data, vmodels) {
+        var $element = avalon(element),options = data.colorpickerOptions, model;
+        var colorpicker = avalon.parseHTML('<div ms-visible="toggle" ms-important="' + data.colorpickerId + '" class="colorpicker ui-widget ui-widget-content ui-corner-all"><div class="colorpicker-div ui-corner-all" >' + (
                 (typeof document.documentElement.style.maxHeight === 'undefined') ? // apply png fix for ie 5.5 and 6.0
                 '<img class="colorpicker-bg" src="' + options.imagesBase + 'blank.gif" style="filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src=\'' + options.imagesBase + 'pickerbg.png\', sizingMethod=\'scale\')" alt="">' :
                 '<img class="colorpicker-bg" src="' + options.imagesBase + 'pickerbg.png" alt="">'
                 ) +
                 '<div class="colorpicker-bg-overlay" style="z-index: 1002;"></div>' +
-                '<div class="colorpicker-selector" ms-draggable="updateSelector" data-containment="parent" ms-css-left="selectorLeft" ms-css-top="selectorTop" ><img src="' + options.imagesBase + 'select.gif" width="11" height="11" alt="" /></div></div>' +
+                '<div class="colorpicker-selector" ms-draggable="'+data.colorpickerId+'" data-drag-stop="updateSelector" data-drag-containment="parent" ms-css-left="selectorLeft" ms-css-top="selectorTop" ><img src="' + options.imagesBase + 'select.gif" width="11" height="11" alt="" /></div></div>' +
                 '<div class="colorpicker-hue-container"><img src="' + options.imagesBase + 'hue.png" class="colorpicker-hue-bg-img"><div class="colorpicker-hue-slider">' +
-                '<div class="colorpicker-hue-thumb" ms-css-top="hueValue" ms-draggable="updateHue" data-containment="parent" data-axis="y"><img src="' + options.imagesBase + 'hline.png"></div></div></div>' +
+                '<div class="colorpicker-hue-thumb" ms-css-top="hueValue" ms-draggable data-drag-stop="updateHue"  data-drag-containment="parent" data-drag-axis="y"><img src="' + options.imagesBase + 'hline.png"></div></div></div>' +
                 '<div class="colorpicker-footer "><span class="colorpicker-value" ms-css-color="#{{hexValue}}">#{{hexValue}}</span>' +
-                '<button class="colorpicker-okbutton" ms-click="closePicker" ms-ui="button"  data-primary="ui-icon-close" data-text="false">OK</button></div></div>';
-        var colorpicker = domParser.firstChild;
+                '<button class="colorpicker-okbutton" ms-click="closePicker" ms-widget="button"  data-button-primary="ui-icon-close" data-button-text="false">OK</button></div></div>').firstChild
         var pickerArea = colorpicker.children[0];
-        avalon.ready(function() {
-            document.body.appendChild(colorpicker);
-            avalon.scan(element, model);
-            avalon.scan(colorpicker, model);
-            $element.bind("click", function() {
-                model.toggle = !model.toggle;
-                model.pickerHeight = pickerArea.offsetHeight;
-                model.pickerWidth = pickerArea.offsetWidth;
-                if (model.toggle) {
-                    var offset = $element.offset();
-                    var left = offset.left + element.offsetWidth + 10;
-                    colorpicker.style.left = left + "px";
-                    colorpicker.style.top = offset.top + "px";
-                }
-            });
-        });
-
-        model = avalon.define(id, function(vm) {
+        element.removeAttributeNode(data.node)
+        //console.log(pickerArea)
+        model = avalon.define(data.colorpickerId, function(vm) {
             vm.toggle = options.toggle;
 
             vm.selectorLeft = 0;
@@ -50,8 +26,8 @@ define(["avalon"], function(avalon) {
             vm.pickerHeight = 0;
             vm.pickerWidth = 0;
             vm.hueValue = 0;
-           // vm.hexColor = "000"
-            vm.hexValue = element.value;
+            // vm.hexColor = "000"// element.value;
+            vm.hexValue ="00000"
             vm.$hsv = {};
             vm.$rgb = {};
             vm.closePicker = function() {
@@ -61,21 +37,23 @@ define(["avalon"], function(avalon) {
                 options.left = data.left;
                 options.top = data.top;
                 this.style.top = data.top + 6 + "px";
-                this.style.left = data.left + 6  + "px";
-                vm.update(data.left, data.top);
+                this.style.left = data.left + 6 + "px";
+                vm.update(data.left, data.top)
             };
             vm.updateHue = function(event, data) {
                 var v = data.top;
+                console.log(data.top)
                 vm.hueValue = v;
                 var h = (vm.pickerHeight - v) / vm.pickerHeight;
                 if (h === 1)
                     h = 0;
-                var rgb = UI.Color.hsv2rgb(h, 1, 1);
-                if (!UI.Color.isValidRGB(rgb))
+                var rgb = widget.Color.hsv2rgb(h, 1, 1)
+                if (!widget.Color.isValidRGB(rgb))
                     return;
                 pickerArea.style.backgroundColor = "rgb(" + rgb + ")";
-                vm.update();
+                vm.update()
             };
+
             vm.update = function(x, y) {
                 if (!arguments.length) {
                     x = options.left;
@@ -90,32 +68,53 @@ define(["avalon"], function(avalon) {
                     saturation: x / vm.pickerWidth,
                     brightness: (vm.pickerHeight - y) / vm.pickerHeight
                 };
-                var rgb = UI.Color.hsv2rgb(vm.$hsv.hue, vm.$hsv.saturation, vm.$hsv.brightness);
-                element.value = UI.Color.rgb2hex(rgb[0], rgb[1], rgb[2]);
+                var rgb = widget.Color.hsv2rgb(vm.$hsv.hue, vm.$hsv.saturation, vm.$hsv.brightness)
+                element.value = widget.Color.rgb2hex(rgb[0], rgb[1], rgb[2])
                 vm.hexValue = element.value;
-              //  vm.hexColor = vm.$hsv.brightness > 0.65 ? "000000" : "FFFFFF";
+                //  vm.hexColor = vm.$hsv.brightness > 0.65 ? "000000" : "FFFFFF";
             };
             vm.updateFromFieldValue = function(e) {
                 var input = e ? e.target : element;
-                var rgb = UI.Color.hex2rgb(input.value);
-                if (!UI.Color.isValidRGB(rgb))
+                var rgb = widget.Color.hex2rgb(input.value)
+                if (!widget.Color.isValidRGB(rgb))
                     return;
-                var hsv = UI.Color.rgb2hsv(rgb[0], rgb[1], rgb[2]);
-                vm.selectorLeft = Math.round(hsv[1] * vm.pickerWidth);
-                vm.selectorTop = Math.round((1 - hsv[2]) * vm.pickerWidth);
-                vm.hueValue = vm.pickerHeight * (1 - hsv[0]);
-                vm.update();
+                var hsv = widget.Color.rgb2hsv(rgb[0], rgb[1], rgb[2])
+                vm.selectorLeft = Math.round(hsv[1] * vm.pickerWidth)
+                vm.selectorTop = Math.round((1 - hsv[2]) * vm.pickerWidth)
+                vm.hueValue = vm.pickerHeight * (1 - hsv[0])
+                vm.update()
             }
             vm.$watch("toggle", function() {
-                vm.updateFromFieldValue()
-            });
-        });
+                model.updateFromFieldValue()
+            })
+        })
 
-
+        avalon.ready(function() {
+            document.body.appendChild(colorpicker)
+            avalon.scan(element, model)
+            avalon.scan(colorpicker, model)
+            $element.bind("click", function() {
+                model.toggle = !model.toggle;
+                model.pickerHeight = pickerArea.offsetHeight;
+                model.pickerWidth = pickerArea.offsetWidth;
+                if (model.toggle) {
+                    var offset = $element.offset()
+                    var left = offset.left + element.offsetWidth + 10;
+                    colorpicker.style.left = left + "px";
+                    colorpicker.style.top = offset.top + "px";
+                }
+            })
+        })
+        return model
     };
 
-
-    UI.Color = new function() {
+    widget.defaults = {
+        imagesBase: "colorpicker/",
+        toggle: false,
+        top: 0,
+        left: 0
+    };
+    widget.Color = new function() {
 
         // Adapted from http://www.easyrgb.com/math.html
         // hsv values = 0 - 1
@@ -135,10 +134,10 @@ define(["avalon"], function(avalon) {
                 }
 
                 //Or ... var_i = floor( var_h )
-                var var_i = Math.floor(var_h);
-                var var_1 = v * (1 - s);
-                var var_2 = v * (1 - s * (var_h - var_i));
-                var var_3 = v * (1 - s * (1 - (var_h - var_i)));
+                var var_i = Math.floor(var_h)
+                var var_1 = v * (1 - s)
+                var var_2 = v * (1 - s * (var_h - var_i))
+                var var_3 = v * (1 - s * (1 - (var_h - var_i)))
 
                 if (var_i == 0) {
                     var_r = v;
@@ -176,12 +175,12 @@ define(["avalon"], function(avalon) {
 
         // added by Matthias Platzer AT knallgrau.at 
         this.rgb2hsv = function(r, g, b) {
-            var r = (r / 255);                   //RGB values = 0 � 255
-            var g = (g / 255);
-            var b = (b / 255);
+            var r = (r / 255)                   //RGB values = 0 � 255
+            var g = (g / 255)
+            var b = (b / 255)
 
-            var min = Math.min(r, g, b);    //Min. value of RGB
-            var max = Math.max(r, g, b);    //Max. value of RGB
+            var min = Math.min(r, g, b)    //Min. value of RGB
+            var max = Math.max(r, g, b)    //Max. value of RGB
             deltaMax = max - min;             //Delta RGB value
 
             var v = max;
@@ -218,33 +217,33 @@ define(["avalon"], function(avalon) {
         }
 
         this.rgb2hex = function(r, g, b) {
-            return this.toHex(r) + this.toHex(g) + this.toHex(b);
+            return this.toHex(r) + this.toHex(g) + this.toHex(b)
         };
 
         this.hexchars = "0123456789ABCDEF";
 
         this.toHex = function(n) {
             n = n || 0;
-            n = parseInt(n, 10);
+            n = parseInt(n, 10)
             if (isNaN(n))
                 n = 0;
-            n = Math.round(Math.min(Math.max(0, n), 255));
+            n = Math.round(Math.min(Math.max(0, n), 255))
 
-            return this.hexchars.charAt((n - n % 16) / 16) + this.hexchars.charAt(n % 16);
+            return this.hexchars.charAt((n - n % 16) / 16) + this.hexchars.charAt(n % 16)
         };
 
         this.toDec = function(hexchar) {
-            return this.hexchars.indexOf(hexchar.toUpperCase());
+            return this.hexchars.indexOf(hexchar.toUpperCase())
         };
 
         this.hex2rgb = function(str) {
             var rgb = [];
             rgb[0] = (this.toDec(str.substr(0, 1)) * 16) +
-                    this.toDec(str.substr(1, 1));
+                    this.toDec(str.substr(1, 1))
             rgb[1] = (this.toDec(str.substr(2, 1)) * 16) +
-                    this.toDec(str.substr(3, 1));
+                    this.toDec(str.substr(3, 1))
             rgb[2] = (this.toDec(str.substr(4, 1)) * 16) +
-                    this.toDec(str.substr(5, 1));
+                    this.toDec(str.substr(5, 1))
             return rgb;
         };
 

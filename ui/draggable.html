@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js" type="text/javascript"></script>
+        <script >
+            require("avalon.draggable", function(){
+                avalon.scan()
+            })
+        </script>
+        <style>
+            #parent{
+                position: relative;
+                width:800px;
+                height:500px;
+                background: blue;
+            }
+            #son{
+                 position: absolute;
+                width:30px;
+                height:30px;
+                background: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="parent">
+            
+            <div id="son" ms-draggable></div>
+        </div>
+
+     
+    </body>
+</html>
