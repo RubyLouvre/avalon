@@ -4,7 +4,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
         var $element = avalon(element), options = data.datepickerOptions, model
         var now = new Date, datepickerEl
         //   element.stopScan = true
-
+        var nowTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - 0
         var model = avalon.define(data.datepickerId, function(vm) {
             avalon.mix(vm, options)
             vm.currentYear = now.getFullYear()
@@ -104,7 +104,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                 vm.toggle = false
             }
             vm.isToday = function(date) {
-                return date.year == now.getFullYear() && date.month === now.getMonth() && date.date === now.getDate()
+                return date.time === nowTime
             }
             vm.hide = function() {
                 vm.toggle = false
@@ -188,7 +188,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                 var month = ooo.getMonth(); //得到今天是几月（0 ~ 11）
                 var date = ooo.getDate(); //得到今天是几号 （1 ~ 31）
                 for (var i = 0; i < n; i++) {
-                    month = month + 1
+                    month = month + i
                     if (month > 11) {
                         month = 0
                         year += 1
@@ -249,7 +249,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
         weekHeader: "周",
         minDate: null,
         maxDate: null,
-        numberOfMonths: 2,
+        numberOfMonths: 1,
         dateFormat: "MM/dd/yyyy"
     }
     return avalon

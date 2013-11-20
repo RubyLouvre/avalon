@@ -52,6 +52,10 @@
 .ll-skin-cangas .ui-datepicker table {
 	margin: 0;
 }
+.ll-skin-cangas .ui-datepicker table a.ui-state-highlight{
+    border: 1px solid aquamarine;
+    background: #e6ebf0;
+}
 
 .ll-skin-cangas .ui-datepicker th {
 	font-size: 9px;
