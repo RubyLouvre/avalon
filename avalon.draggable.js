@@ -29,7 +29,17 @@ define(["avalon"], function(avalon) {
         drag = "touchmove"
         dragstop = "touchend"
     }
-
+   function filterData(obj, prefix) {
+            var result = {}
+            for (var i in obj) {
+                if (i.indexOf(prefix) === 0) {
+                    result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                        return a.toLowerCase()
+                    }) ] = obj[i]
+                }
+            }
+            return result
+        }
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
         var ID = data.value.trim(), model
         if (ID) {
@@ -44,20 +54,7 @@ define(["avalon"], function(avalon) {
         }
         var element = data.element
         var $element = avalon(element)
-
-        function filterData(obj, prefix) {
-            var result = {}
-            for (var i in obj) {
-                if (i.indexOf(prefix) === 0) {
-                    result[  i.replace(prefix, "").replace(/\w/, function(a) {
-                        return a.toLowerCase()
-                    }) ] = obj[i]
-                }
-            }
-            return result
-        }
         var options = avalon.mix({}, defaults, model,  filterData($element.data(),"drag"));
-
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
