@@ -70,6 +70,8 @@ define(["avalon"], function(avalon) {
             vm.selectedIndex = -1
             vm.value = element.value
             vm.matcher = []
+            vm.source = source
+            vm.skipArray= ["source"]
             vm.overvalue = ""
             vm.get = function(value) {
                 vm.overvalue = value
@@ -79,7 +81,7 @@ define(["avalon"], function(avalon) {
                     model.show = true
                     tempValue = value
                     var lower = []
-                    var matcher = source.filter(function(el) {
+                    var matcher = vm.source.filter(function(el) {
                         if (el.indexOf(value) === 0) {
                             return el //最精确
                         }
