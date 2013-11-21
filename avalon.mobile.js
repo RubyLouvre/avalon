@@ -1120,7 +1120,7 @@
 
     function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat -->...
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1205,7 +1205,7 @@
         return tokens
     }
 
-    function scanAttr(el, vmodels, callback, state, ifBinding) {
+    function scanAttr(el, vmodels, callback, state, ifBinding, repeatBinding) {
         var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.name.indexOf(prefix) !== -1) {
@@ -1234,6 +1234,9 @@
         bindings.sort(function(a, b) {
             return a.node.name > b.node.name
         })
+        if (repeatBinding) {
+            bindings.unshift(repeatBinding)
+        }
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             ifBinding.state = {}

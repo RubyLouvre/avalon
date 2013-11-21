@@ -1447,7 +1447,7 @@
                         }
                     }
                     remove && avalon.Array.remove(list, fn)
-                  //  log("remove " + fn.name)
+                    //  log("remove " + fn.name)
                 }
                 fn.apply(0, args) //强制重新计算自身
             }
@@ -1483,7 +1483,7 @@
 
     function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ...
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1567,7 +1567,7 @@
         return tokens
     }
 
-    function scanAttr(el, vmodels, callback, state, ifBinding) {
+    function scanAttr(el, vmodels, callback, state, ifBinding, repeatBinding) {
         var bindings = []
         for (var i = 0, attr; attr = el.attributes[i++]; ) {
             if (attr.specified) {
@@ -1585,7 +1585,9 @@
                                 node: node,
                                 value: node.nodeValue
                             }
-                            if (node.name === "ms-if") {
+                            if (binding.type === "repeat") {
+                                repeatBinding = binding
+                            } else if (node.name === "ms-if") {
                                 ifBinding = binding
                             } else {
                                 bindings.push(binding)
@@ -1598,6 +1600,9 @@
         bindings.sort(function(a, b) {
             return a.node.name > b.node.name
         })
+        if(repeatBinding){
+            bindings.unshift(repeatBinding)
+        }
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             // 使用共享对象state，实现同一棵树中的绑定之间 的通信
@@ -1616,7 +1621,7 @@
         bindings.forEach(function(data) {
             data.state = state
             bindingHandlers[data.type](data, vmodels)
-            if (data.remove ) { //移除数据绑定，防止被二次解析
+            if (data.remove) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.node.name)
             }
