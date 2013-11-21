@@ -37,7 +37,7 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
         var model = avalon.define(data.colorrollerId, function(vm) {
             avalon.mix(vm, options)
             vm.wheel = wheel
-            vm.skipArray = ["hsl", "rgb", "wheel", "width", "circleDrag"]
+            vm.skipArray = ["hsl", "rgb", "wheel", "width", "circleDrag","defaultColor"]
             vm.hide = function() {
                 vm.toggle = false
             }
@@ -140,7 +140,7 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
                 return {x: x - model.width / 2, y: y - model.width / 2};
             }
         })
-        model.setColor('#541256')
+        model.setColor(options.defaultColor)
         avalon.ready(function() {
             document.body.appendChild(roller)
             avalon.scan(roller, [model].concat(vmodels))
@@ -166,6 +166,7 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
         width: 194,
         color: "",
         backgroundColor: "",
+        defaultColor: '#541256',
         rgb: [],
         hsl: [0, 0, 0],
         htop: NaN,
