@@ -1,9 +1,28 @@
 //来源自此组件 http://acko.net/blog/farbtastic-jquery-color-picker-plug-in/
 define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon) {
     var lockTime = new Date - 0, minTime = document.querySelector ? 12 : 30
+    var ua = navigator.userAgent;
+    var isAndroid = /Android/i.test(ua);
+    var isBlackBerry = /BlackBerry/i.test(ua)
+    var isWindowPhone = /IEMobile/i.test(ua)
+    var isIOS = /iPhone|iPad|iPod/i.test(ua)
+    var isMobile = isAndroid || isBlackBerry || isWindowPhone || isIOS
+    if (!isMobile) {
+        var dragstartN = "mousedown"
+        var dragN = "mousemove"
+        var dragstopN = "mouseup"
+    } else {
+        dragstartN = "touchstart"
+        dragN = "touchmove"
+        dragstopN = "touchend"
+    }
+    function getPosition(e, pos) {
+        var page = "page" + pos
+        return isMobile ? e.changedTouches[0][page] : e[page]
+    }
     var widget = avalon.ui["colorroller"] = function(element, data, vmodels) {
         var options = data.colorrollerOptions
-        var tmpl = '<div class="ui-colorroller" ms-blur="hide" tabindex=-1 ms-on-mousedown="mousedown" ms-visible="toggle"><div class="color" ms-css-background="backgroundColor"></div>' +
+        var tmpl = '<div class="ui-colorroller" ms-blur="hide" tabindex=-1 ms-on-' + dragstartN + '="mousedown" ms-visible="toggle"><div class="color" ms-css-background="backgroundColor"></div>' +
                 '<div class="wheel"></div><div class="overlay"></div>' +
                 '<div class="h-marker marker" ms-css-top="{{htop}}px" ms-css-left="{{hleft}}px"></div>' +
                 '<div class="sl-marker marker" ms-css-top="{{sltop}}px" ms-css-left="{{slleft}}px"></div></div>'
@@ -16,20 +35,9 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
             }
         }
         var model = avalon.define(data.colorrollerId, function(vm) {
-            vm.radius = 84;
-            vm.square = 100;
-            vm.width = 194;
-            vm.color = ""
-            vm.backgroundColor = ""
+            avalon.mix(vm, options)
             vm.wheel = wheel
-            vm.rgb = []
-            vm.hsl = [0, 0, 0]
-            vm.htop = NaN
-            vm.hleft = NaN
-            vm.sltop = NaN
-            vm.slleft = NaN
-            vm.circleDrag = false
-            vm.toggle = false
+            vm.skipArray = ["hsl", "rgb", "wheel", "width", "circleDrag"]
             vm.hide = function() {
                 vm.toggle = false
             }
@@ -59,7 +67,7 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
                     model.updateDisplay()
                 }
             }
-            vm.skipArray = ["hsl", "rgb", "wheel"]
+
             /**
              * Change color with HSL triplet [0..1, 0..1, 0..1]
              */
@@ -118,8 +126,8 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
                 return false;
             }
             vm.mouseup = function() {
-                avalon(document).unbind('mousemove', widget.mousemoveFn)
-                avalon(document).unbind('mouseup', widget.mouseupFn)
+                avalon(document).unbind(dragN, widget.mousemoveFn)
+                avalon(document).unbind(dragstopN, widget.mouseupFn)
                 widget.dragging = false;
             }
             vm.$watch("color", function(a) {
@@ -127,8 +135,8 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
             })
             vm.widgetCoords = function(event) {
                 var pos = widget.absolutePosition(model.wheel)
-                var x = event.pageX - pos.x;
-                var y = event.pageY - pos.y;
+                var x = getPosition(event, "X") - pos.x;
+                var y = getPosition(event, "Y") - pos.y;
                 return {x: x - model.width / 2, y: y - model.width / 2};
             }
         })
@@ -151,6 +159,21 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
                 })
             }
         })
+    }
+    widget.defaults = {
+        radius: 84,
+        square: 100,
+        width: 194,
+        color: "",
+        backgroundColor: "",
+        rgb: [],
+        hsl: [0, 0, 0],
+        htop: NaN,
+        hleft: NaN,
+        sltop: NaN,
+        slleft: NaN,
+        circleDrag: false,
+        toggle: false //是否显示
     }
 
     /* Get absolute position of element   */

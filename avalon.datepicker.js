@@ -1,5 +1,5 @@
 define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl) {
-
+//http://xdsoft.net/jqplugins/datetimepicker/
     var widget = avalon.ui.datepicker = function(element, data, vmodels) {
         var $element = avalon(element), options = data.datepickerOptions, model
         var now = new Date, datepickerEl
