@@ -20,9 +20,16 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
         var page = "page" + pos
         return isMobile ? e.changedTouches[0][page] : e[page]
     }
+    var hideMode
+    avalon(document).bind("click", function(){
+        if(hideMode){
+            hideMode.toggle = false
+            hideMode = null
+        }
+    })
     var widget = avalon.ui["colorroller"] = function(element, data, vmodels) {
         var options = data.colorrollerOptions
-        var tmpl = '<div class="ui-colorroller" ms-blur="hide" tabindex=-1 ms-on-' + dragstartN + '="mousedown" ms-visible="toggle"><div class="color" ms-css-background="backgroundColor"></div>' +
+        var tmpl = '<div class="ui-colorroller" ms-mouseleave=mouseleave  ms-on-' + dragstartN + '="mousedown" ms-visible="toggle"><div class="color" ms-css-background="backgroundColor"></div>' +
                 '<div class="wheel"></div><div class="overlay"></div>' +
                 '<div class="h-marker marker" ms-css-top="{{htop}}px" ms-css-left="{{hleft}}px"></div>' +
                 '<div class="sl-marker marker" ms-css-top="{{sltop}}px" ms-css-left="{{slleft}}px"></div></div>'
@@ -37,9 +44,9 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
         var model = avalon.define(data.colorrollerId, function(vm) {
             avalon.mix(vm, options)
             vm.wheel = wheel
-            vm.skipArray = ["hsl", "rgb", "wheel", "width", "circleDrag","defaultColor"]
-            vm.hide = function() {
-                vm.toggle = false
+            vm.skipArray = ["hsl", "rgb", "wheel", "width", "circleDrag", "defaultColor"]
+            vm.mouseleave = function() {
+                hideMode = vm
             }
             vm.show = function() {
                 vm.toggle = true
@@ -67,7 +74,7 @@ define(["avalon.position, avalon.draggable", "css!colorroller"], function(avalon
                     model.updateDisplay()
                 }
             }
-
+   
             /**
              * Change color with HSL triplet [0..1, 0..1, 0..1]
              */
