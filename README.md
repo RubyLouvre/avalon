@@ -5,12 +5,16 @@
 <ul>
     <li>avalon.js 兼容IE6，及标准浏览器</li>
     <li>avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>想使用路由器，可以用<a href="https://github.com/RubyLouvre/mmRouter">mmRouter</a>，
+想使用动画，可以用<a href="https://github.com/RubyLouvre/mmAnimate">mmAnimate</a>，
+想使用AJAX，可以用<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>
+</li>
 </ul>
 <h3>优势</h3>
 <ul>
     <li>使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！</li>
-    <li>兼容到IE6(其他mvvm框架， knockoutjs IE6, angularjs IE8, emberjs IE8, winJS IE9 )</li>
-    <li>没有任何依赖，不到3000行，压缩后不到30KB</li>
+    <li>兼容到IE6(其他mvvm框架， knockoutjs IE6, angularjs IE8, emberjs IE8, winJS IE9 )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中</li>
+    <li>没有任何依赖，不到4000行，压缩后不到50KB</li>
     <li>支持管道符风格的过滤函数，方便格式化输出</li>
     <li>局部刷新的颗粒度已细化到一个文本节点，特性节点</li>
     <li>要操作的节点，在第一次扫描就与视图刷新函数相绑定，并缓存起来，因此没有选择器出场的余地。</li>
