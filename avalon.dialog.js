@@ -73,7 +73,6 @@ define(["avalon.button"], function(avalon) {
             style.minHeight = element.clientHeight + "px";
         }
         element.removeAttribute("title")
-        element.removeAttributeNode(data.node)//防止死循环 
         element.parentNode.removeChild(element)
         model = avalon.define(data.dialogId, function(vm) {
             vm.toggle = options.toggle;
