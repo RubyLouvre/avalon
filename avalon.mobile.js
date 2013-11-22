@@ -1105,8 +1105,9 @@
         scanTag(elem, vmodels, state)
     }
 
-    var stopScan = oneObject("area,base,basefont,br,col,hr,img,input,link,meta,param,embed,wbr,script,style,textarea")
-
+    //http://www.w3.org/TR/html5/syntax.html#void-elements
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,script,style,textarea")
+    
     function scanNodes(parent, vmodels, state) {
         var nodes = aslice.call(parent.childNodes)
         for (var i = 0, node; node = nodes[i++]; ) {

@@ -76,7 +76,10 @@ define(["avalon.position"], function(avalon) {
             }
 
             vm.showMenu = function(scope) {
-
+                $(".back").addClass("current-parent-back").animate({
+                    left: parseFloat(this.offsetLeft),
+                    width: parseFloat(this.offsetWidth)
+                }, 600)
                 if (scope.submenu.length) {
                     avalon(element).addClass("active")
                     console.log("多次进入showMenu")
@@ -89,7 +92,12 @@ define(["avalon.position"], function(avalon) {
 
                     this.style.width = avalon(this).width() + "px"//必须，防御LI被撑开
                     this.style.height = avalon(this).height() + "px"
+                    this.style.left = avalon(this).height() + "px"
 
+
+
+                    // model.backLeft = this.style.left
+                    //  model.backWidth = this.style.width
                     var spanbox
                     for (var i = 0, node; node = this.childNodes[i++]; ) {
                         if (node.nodeType == 1 && /spanbox/.test(node.className)) {
