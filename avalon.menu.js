@@ -64,7 +64,8 @@ define(["avalon.position"], function(avalon) {
         model = avalon.define(data.menuId, function(vm) {
             avalon.mix(vm, options)
             vm.hideMenu = function(scope) {
-               return
+
+                avalon(element).removeClass("active")
                 setTimeout(function() {
                     scope.visibility = "hidden";
                     scope.display = "none"
@@ -75,7 +76,9 @@ define(["avalon.position"], function(avalon) {
             }
 
             vm.showMenu = function(scope) {
+
                 if (scope.submenu.length) {
+                    avalon(element).addClass("active")
                     console.log("多次进入showMenu")
                     if (scope.visibility === "visible")
                         return
@@ -102,17 +105,13 @@ define(["avalon.position"], function(avalon) {
                         spanbox._left = parseFloat(avalon(spanbox).css("left"))
                     }
                     var div = spanbox.firstElementChild || spanbox.children[0]
-                    scope.height = spanbox._height
-                    scope.width = spanbox._width
-                    /*
                     scope.overflow = "hidden"
-                    var duration = 500
+                    scope.height = spanbox._height //+ marginTop
+                    scope.width = spanbox._width
+                    var duration = 400
                     var startTime = new Date - 0
                     var change = -1 * spanbox["_" + prop]
-                    var h = parseFloat(span.css("paddingBottom"))
-
                     div.style.top = change + 'px'
-
                     function animate() {
                         var ellapseTime = new Date - startTime;
                         if (ellapseTime >= duration) {
@@ -124,7 +123,7 @@ define(["avalon.position"], function(avalon) {
                         requestAnimationFrame(animate)
                     }
                     requestAnimationFrame(animate)
-*/
+
                 }
             }
             vm.mainmenu = fix(options.data || [])
