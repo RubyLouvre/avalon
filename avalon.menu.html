@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script src="http://apycom.com/ssc-data/themes/default/scripts/jquery.js" language="javascript"></script>
+        <!--      <script src="http://apycom.com/ssc-data/themes/default/scripts/jquery.color.js" language="javascript"></script>
+           <script src="http://apycom.com/ssc-data/themes/default/scripts/jquery.easing.js" language="javascript"></script>
+        <script src="http://apycom.com/ssc-data/themes/default/scripts/jquery.lavalamp.js" language="javascript"></script>
+           <script src="http://apycom.com/ssc-data/themes/default/scripts/menu.js" language="javascript"></script>-->
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            #menu {
+                position:relative;
+                height:91px;
+                background:url(http://apycom.com/ssc-data/items/16/ff6347/images/menu.png) repeat-x 0 center;}
+            #menu .menu {left:50px;position:absolute;}
+            #menu * {list-style:none;border:0;padding:0;margin:0;}
+            #menu a {display:block;padding-left:33px;}
+            #menu a span {display:block;padding:30px 33px 37px 2px;white-space:nowrap;}
+            #menu li { float:left;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/pix.gif);}
+            #menu li li {float:none;}
+            #menu div {display:none;position:absolute;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/pix.gif);margin-top:-35px;width:200px;}
+            #menu div ul {position:relative;}
+            #menu div div {margin:-50px 0 0 -9px;left:100%;}
+            #menu li:hover>div {display:block;}
+            *:first-child+html #menu div div {display:block;top:-9999px;}
+            *:first-child+html #menu li:hover>div {top:auto;}
+            #menu div.columns {width:200px;}
+            #menu div.columns ul {float:left;width:200px;position:static;}
+            #menu div.columns a {white-space:normal;}
+            #menu div.two {width:400px;}
+            #menu div.two ul.one div {margin-left:-209px;}
+            #menu div.two ul.one div div,#menu div.two ul.two div {margin-left:-9px;}
+            #menu div.three {width:600px;}
+            #menu div.three ul.one div {margin-left:-409px;}
+            #menu div.three ul.two div {margin-left:-209px;}
+            #menu div.three ul.one div div,#menu div.three ul.two div div,#menu div.three ul.three div {margin-left:-9px;}#menu div.four {width:800px;}#menu div.four ul.one div {margin-left:-609px;}#menu div.four ul.two div {margin-left:-409px;}
+            #menu div.four ul.three div {margin-left:-209px;}
+            #menu div.four ul.one div div,#menu div.four ul.two div div,#menu div.four ul.three div div,#menu div.four ul.four div {margin-left:-9px;}#menu div.five {width:1000px;}#menu div.five ul.one div {margin-left:-809px;}#menu div.five ul.two div {margin-left:-609px;}#menu div.five ul.three div {margin-left:-409px;}#menu div.five ul.four div {margin-left:-209px;}#menu div.five ul.one div div,#menu div.five ul.two div div,#menu div.five ul.three div div,#menu div.five ul.four div div,#menu div.five ul.five div {margin-left:-9px;}#menu a, #menu a span {font-family:'Trebuchet MS', Tahoma, Arial;font-size:16px;line-height:24px;color:#fff;text-decoration:none;font-weight:normal;}#menu a {text-shadow:rgb(64,49,25) -1px -1px 0;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/item.png) no-repeat left -546px;}#menu a span {background:url(http://apycom.com/ssc-data/items/16/ff6347/images/item.png) no-repeat right 0;}#menu li.current>a {background-position:left -637px;}#menu li.current>a span {background-position:right -182px;}#menu a.parent span {background-position:right -91px;padding-right:60px;}#menu li.current>a.parent span {background-position:right -273px;}#menu>ul>li:hover>a, #menu a:hover {background-position:left -637px;}#menu>ul>li:hover>a span, #menu a:hover span {background-position:right -182px;}#menu>ul>li:hover>a.parent span, #menu a.parent:hover span {background-position:right -455px;}#menu div a {margin-left:4px;padding:4px 0 0 0;width:190px;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/subitem.png) no-repeat 0 top;text-shadow:#111 -1px -1px 0;}#menu div a span {font-size:14px;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/subitem.png) no-repeat -384px bottom;padding:3px 14px 10px 11px;white-space:normal;color:rgb(231,107,60);}#menu div a:hover,#menu div ul>li:hover>a.parent, #menu div ul li a.parent:hover {background-position:-192px top;}#menu div a:hover span {color:#fff;background-position:-768px bottom;}#menu div a.parent span {background-position:-576px bottom;}#menu div ul>li:hover>a.parent span, #menu div ul li a.parent:hover span {color:#fff;background-position:-960px bottom;}#menu div {background:url(http://apycom.com/ssc-data/items/16/ff6347/images/columns.png) no-repeat -200px -14px;padding-top:14px;}#menu div ul {width:200px;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/columns.png) no-repeat 0 bottom;padding-top:11px;padding-bottom:17px;}#menu div div {background-position:-200px top;}#menu div div ul {padding-top:0;}#menu div.columns {padding-top:0;margin-top:-21px;}#menu div div.columns {margin-top:-36px;}#menu div.columns>ul {padding-top:25px;margin-top:-14px;}#menu div.two {background-position:-1000px bottom;}#menu div.three {background-position:-1400px bottom;}#menu div.four {background-position:-2000px bottom;}#menu div.five {background-position:-2800px bottom;}#menu div.columns ul.two,#menu div.columns ul.three, #menu div.columns ul.four,#menu div.columns ul.five {background-position:-550px -14px;}#menu div.columns ul.one {background-position:-400px -14px;}#menu div.two ul.two,#menu div.three ul.three,#menu div.four ul.four,#menu div.five ul.five {background-position:-800px -14px;}#menu div.columns>ul>li>a {margin-left:0;width:200px;}#menu div.columns>ul.one>li>a {margin-left:4px;width:194px;}#menu div.two>ul.two>li>a,#menu div.three>ul.three>li>a,#menu div.four>ul.four>li>a,#menu div.five>ul.five>li>a {width:194px;}#menu.active a {z-index:780;position:relative;}#menu.active li {z-index:778;}#menu.active div div {z-index:781;}#menu.active div a {position:static;}#menu.active li.back {background:url(http://apycom.com/ssc-data/items/16/ff6347/images/item.png) no-repeat left -637px;height:91px;position:absolute;padding:0;margin:0;}#menu.active li.back .left {display:block;padding:0;width:auto;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/item.png) no-repeat right -182px;height:91px;margin:0 5px 0 28px;position:relative;left:5px;}#menu.active li.current-back, #menu.active li.current-parent-back {background-position:left -637px;}#menu.active li.current-back .left {background-position:right -182px;}#menu.active li.current-parent-back .left {background-position:right -182px;}#menu.active .spanbox {position:absolute;display:none;background:url(http://apycom.com/ssc-data/items/16/ff6347/images/pix.gif);margin-top:-21px;width:200px;}#menu.active div {margin-top:-14px;display:block;position:relative;}#menu.active div .spanbox {margin:0 0 0 -6px;left:100%;}#menu.active .spanbox .spanbox {margin-top:-50px;}#menu.active .spanbox .spanbox div {margin:0;}*:first-child+html #menu.active div div {top:auto;}*:first-child+html .menu-images-preloading {visibility:hidden;}#menu.active div.two ul.one .spanbox {margin-left:-206px;}#menu.active div.two ul.one .spanbox .spanbox,#menu.active div.two ul.two .spanbox {margin-left:-6px;}#menu.active div.three ul.one .spanbox {margin-left:-406px;}#menu.active div.three ul.two .spanbox {margin-left:-206px;}#menu.active div.three ul.one .spanbox .spanbox,#menu.active div.three ul.two .spanbox .spanbox,#menu.active div.three ul.three .spanbox {margin-left:-6px;}#menu.active div.four ul.one .spanbox {margin-left:-606px;}#menu.active div.four ul.two .spanbox {margin-left:-406px;}#menu.active div.four ul.three .spanbox {margin-left:-206px;}#menu.active div.four ul.one .spanbox .spanbox,#menu.active div.four ul.two .spanbox .spanbox,#menu.active div.four ul.three .spanbox .spanbox,#menu.active div.four ul.four .spanbox {margin-left:-6px;}#menu.active div.five ul.one .spanbox {margin-left:-806px;}#menu.active div.five ul.two .spanbox {margin-left:-606px;}#menu.active div.five ul.three .spanbox {margin-left:-406px;}#menu.active div.five ul.four .spanbox {margin-left:-206px;}#menu.active div.five ul.one .spanbox .spanbox,#menu.active div.five ul.two .spanbox .spanbox,#menu.active div.five ul.three .spanbox .spanbox,#menu.active div.five ul.four .spanbox .spanbox,#menu.active div.five ul.five .spanbox {margin-left:-6px;}#menu.active div.columns ul .spanbox div {margin-left:0;}#menu.active div.two,#menu.active div.three,#menu.active div.four,#menu.active div.five {padding-bottom:14px;}.menu-images-preloading,.menu-images-preloading div {top:0;left:0;width:4px;height:2px;opacity:0.1;overflow:hidden;position:absolute;}.menu-images-preloading {width:2px;}.menu-images-preloading .columns-png {background:url(http://apycom.com/ssc-data/items/16/ff6347/images/columns.png) no-repeat;}.menu-images-preloading .subitem-png {background:url(http://apycom.com/ssc-data/items/16/ff6347/images/subitem.png) no-repeat;}#menu-box {margin:10px 0 10px 0;border:1px solid #1a1a1a;height:400px;width:690px;background:#222 url(http://apycom.com/ssc-data/items/16/ff6347/images/back.jpg);}#menu-box #menu {top:20px;left:0;}
+        </style>
+        <script src="avalon.js"></script>
+        <script >
+            require("avalon.menu", function() {
+                avalon.define("xxx", function(vm) {
+                    vm.menu = {
+                        data: [{content: "Home", submenu: ["Sub Item 1", "Sub Item 2", "Sub Item 3"]}, "Product Info", "Help", "Contacts"]
+                    }
+                    vm.click2 = function() {
+                        console.log("click2")
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body ms-controller="xxx">
+        <div id="menu" ms-widget="menu"></div>
+      
+    </body>
+</html>
