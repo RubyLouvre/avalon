@@ -1761,7 +1761,7 @@
             element.stopScan = true//默认不进入去扫描，因为可能组件没加载完毕
             if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
                 var vmodel = vmodels[0], opts = args[2] || widget//options在最近的一个VM中的名字
-                var vmOptions = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts] : {}
+                var vmOptions = vmodel && opts && typeof vmodel[opts] == "object" ? vmodel[opts].$model : {}
                 var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)

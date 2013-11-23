@@ -4,7 +4,7 @@
  */
 
 
-define(["avalon.position"], function(avalon) {
+define(["avalon"], function(avalon) {
 //http://xdsoft.net/jqplugins/datetimepicker/
     var requestAnimFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
@@ -12,6 +12,7 @@ define(["avalon.position"], function(avalon) {
             function(callback) {
                 window.setTimeout(callback, 1000 / 60)
             }
+    //   console.log
     var widget = avalon.ui.menu = function(element, data, vmodels) {
         var $element = avalon(element), options = data.menuOptions, model
 
@@ -45,7 +46,7 @@ define(["avalon.position"], function(avalon) {
             }
             return array
         }
-        var submenuHTML = '<ul ><li ms-repeat="submenu"   ms-mouseenter="showMenu(el, $index, \'slideRight\')"   ms-mouseleave="hideMenu(el)">' +
+        var submenuHTML = '<ul ><li ms-repeat="submenu"   ms-mouseenter="showMenu(el, \'slideRight\', false)"   ms-mouseleave="hideMenu(el)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
                 '<span class="spanbox" ms-if="el.submenu.length"   ms-css-width="width" ms-css-height="height" ms-css-overflow="overflow" ms-css-display="display" ms-css-visibility="visibility" >' +
                 '<div ms-include="submenuHTML" ms-css-overflow="overflow" ms-css-height="height"  ms-css-height="width" ms-css-display="display" ></div></span></li></ul>'
@@ -55,7 +56,7 @@ define(["avalon.position"], function(avalon) {
         script.id = "submenuHTML"
         element.parentNode.appendChild(script)
         //  avalon.includeContents
-        var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMenu(elem, $index,\'slideDown\')"   ms-mouseleave="hideMenu(elem)" ms-class-last="$last" ms-class-active="activeIndex == $index" ms-class-current="currentIndex == $index">' +
+        var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMenu(elem,\'slideDown\', true)"   ms-mouseleave="hideMenu(elem)" ms-class-last="$last" ms-class-active="activeIndex == $index" ms-class-current="currentIndex == $index">' +
                 '<a ms-href="elem.href"  ms-class-parent="elem.submenu.length"><span>{{ elem.content }}</span></a>' +
                 '<span  class="spanbox" ms-if="elem.submenu.length"  ms-css-width="width" ms-css-height="height" ms-css-overflow="overflow" ms-css-display="display" ms-css-visibility="visibility" >' +
                 '<div ms-include="submenuHTML"  ms-css-height="height" style="z-index:-1" ms-css-display="display" ></div>' +
@@ -64,7 +65,7 @@ define(["avalon.position"], function(avalon) {
         model = avalon.define(data.menuId, function(vm) {
             avalon.mix(vm, options)
             vm.hideMenu = function(scope) {
-
+              
                 avalon(element).removeClass("active")
                 setTimeout(function() {
                     scope.visibility = "hidden";
@@ -75,26 +76,31 @@ define(["avalon.position"], function(avalon) {
 
             }
 
-            vm.showMenu = function(scope) {
-                $(".back").addClass("current-parent-back").animate({
-                    left: parseFloat(this.offsetLeft),
-                    width: parseFloat(this.offsetWidth)
-                }, 600)
+            vm.showMenu = function(scope, effect, isMain) {
+                avalon(element).addClass("active")
+                if (isMain) {
+                    var back = $(".back")
+                    if (scope.submenu.length) {
+                        back.addClass("current-parent-back").removeClass("current-back")
+                    } else {
+                        back.addClass("current-back").removeClass("current-parent-back")
+                    }
+                    back.animate({
+                        left: parseFloat(this.offsetLeft),
+                        width: parseFloat(this.offsetWidth)
+                    }, 600)
+                }
+                console.log(isMain)
                 if (scope.submenu.length) {
-                    avalon(element).addClass("active")
                     console.log("多次进入showMenu")
                     if (scope.visibility === "visible")
                         return
                     scope.visibility = "visible";
                     scope.display = "block"
-                    var effect = arguments[2]
-                    var prop = effect === "slideRight" ? "width" : "height"
 
                     this.style.width = avalon(this).width() + "px"//必须，防御LI被撑开
                     this.style.height = avalon(this).height() + "px"
                     this.style.left = avalon(this).height() + "px"
-
-
 
                     // model.backLeft = this.style.left
                     //  model.backWidth = this.style.width
@@ -107,6 +113,9 @@ define(["avalon.position"], function(avalon) {
                     }
                     if (!spanbox._width) {
                         var ul = this.getElementsByTagName("ul")[0]
+                        if(!ul)
+                            return
+                        console.log(ul+"!")
                         spanbox._width = avalon(ul).width()
                         spanbox._height = avalon(ul).height()
                         spanbox._top = parseFloat(avalon(spanbox).css("top"))
@@ -118,16 +127,19 @@ define(["avalon.position"], function(avalon) {
                     scope.width = spanbox._width
                     var duration = 400
                     var startTime = new Date - 0
-                    var change = -1 * spanbox["_" + prop]
-                    div.style.top = change + 'px'
+                    var WH = effect === "slideRight" ? "width" : "height"
+                    var LT = effect === "slideRight" ? "left" : "top"
+                    console.log(LT)
+                    var change = -1 * spanbox["_" + WH]
+                    div.style[LT] = change + 'px'
                     function animate() {
                         var ellapseTime = new Date - startTime;
                         if (ellapseTime >= duration) {
-                            div.style.top = "0px"
+                            div.style[LT] = "0px"
                             scope.overflow = "visible";
                             return;
                         }
-                        div.style.top = change * (1 - (ellapseTime / duration)) + "px"
+                        div.style[LT] = change * (1 - (ellapseTime / duration)) + "px"
                         requestAnimationFrame(animate)
                     }
                     requestAnimationFrame(animate)
