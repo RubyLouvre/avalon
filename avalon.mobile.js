@@ -1992,7 +1992,7 @@
         }
         //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
         if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
-            var event = element.attributes["data-event"] || {}
+            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             var eventType = event === "change" ? event : "input"
             element.addEventListener(eventType, updateModel)
@@ -2005,7 +2005,7 @@
                 element.beforeChecked = element.checked
             }
             updateModel = function() {
-                if ($elem.data("observe") !== false) {
+                if ($elem.data("duplex-observe") !== false) {
                     if (fixType === "text") {
                         if (element.checked) {
                             fn(scope, element.value)
@@ -2023,7 +2023,7 @@
             }
         } else if (type === "checkbox") {
             updateModel = function() {
-                if ($elem.data("observe") !== false) {
+                if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](fn(scope), element.value)
                 }
@@ -2043,7 +2043,7 @@
         var $elem = avalon(data.element)
 
         function updateModel() {
-            if ($elem.data("observe") !== false) {
+            if ($elem.data("duplex-observe") !== false) {
                 var neo = $elem.val()
                 if (neo + "" !== oldValue) {
                     fn(scope, neo)
