@@ -1755,7 +1755,7 @@
                 }
                 if (data.param == "template") {
                     avalon.nextTick(function() {
-                        avalon.scan(elem)
+                        scanNodes(elem, vmodels, data.state)
                     })
                 }
             })

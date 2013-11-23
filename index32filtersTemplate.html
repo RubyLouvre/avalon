@@ -1,25 +1,24 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>filter:template</title>
-    <script src="avalon.js"></script>
-    <script>
-        avalon.define("xxx", function(vm) {
-            vm.includeTemplate = '<div ms-include-src="\'index09includeTemplate1.html\'"></div>'
-            vm.includeHtml = '<b>这是Html</b>'
-        })
-    </script>
-</head>
-<body>
-<h3 style='text-align: center'>filter:template</h3>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>filter:template</title>
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define("xxx", function(vm) {
+                vm.includeTemplate = '<div ms-include-src="\'index09includeTemplate1.html\'"></div>'
+                vm.includeHtml = '<b>这是Html</b>'
+            })
+        </script>
+    </head>
+    <body>
+        <h3 style='text-align: center'>filter:template</h3>
 
-<div ms-controller="xxx">
-{{includeTemplate | template}}
-</div>
-
-</div>
+        <div ms-controller="xxx">
+            {{includeTemplate | template}}
+        </div>
+    </div>
 </body>
 </html>
