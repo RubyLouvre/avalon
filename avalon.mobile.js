@@ -1106,7 +1106,7 @@
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
-    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,script,style,textarea")
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea")
 
     function scanNodes(parent, vmodels, state) {
         var nodes = aslice.call(parent.childNodes)
@@ -1613,10 +1613,8 @@
                 }
             }
             data.remove = ret
-        }
-        ,
-        "data"
-                : function(data, vmodels) {
+        },
+        "data": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
@@ -1679,17 +1677,28 @@
                         elem.setAttribute(attrName, val)
                     }
                 } else if (method === "include" && val) {
+                    var callback = elem.getAttribute("data-include-loaded")
+                    if (callback) {
+                        for (var i = 0, vm; vm = vmodels[i++]; ) {
+                            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
+                                callback = vm[callback]
+                            }
+                        }
+                    }
+                    function scanTemplate(text) {
+                        avalon.innerHTML(elem, text)
+                        scanNodes(elem, vmodels, data.state)
+                        callback && callback.call(elem)
+                    }
                     if (data.param === "src") {
                         if (includeContents[val]) {
-                            avalon.innerHTML(elem, includeContents[val])
-                            scanNodes(elem, vmodels, data.state)
+                            scanTemplate(includeContents[val])
                         } else {
                             var xhr = new window.XMLHttpRequest
                             xhr.onload = function() {
                                 var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304) {
                                     avalon.innerHTML(elem, (includeContents[val] = xhr.responseText))
-                                    scanNodes(elem, vmodels, data.state)
                                 }
                             }
                             xhr.open("GET", val, true)
@@ -1702,8 +1711,7 @@
                         //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
                         var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
                         avalon.nextTick(function() {
-                            el && avalon.innerHTML(elem, el.innerHTML)
-                            scanNodes(elem, vmodels, data.state)
+                            scanTemplate(el.innerText || el.innerHTML)
                         })
                     }
                 } else {
@@ -1745,8 +1753,8 @@
                 } else {
                     avalon.innerHTML(elem, val)
                 }
-                if(data.param == "template"){
-                    avalon.nextTick(function(){
+                if (data.param == "template") {
+                    avalon.nextTick(function() {
                         avalon.scan(elem)
                     })
                 }

@@ -1478,7 +1478,7 @@
         }
     }
     //http://www.w3.org/TR/html5/syntax.html#void-elements
-    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,script,style,textarea")
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea")
 
     function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
@@ -1901,7 +1901,12 @@
     var styleEl = '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>'
     styleEl = avalon.parseHTML(styleEl).firstChild //IE6-8 head标签的innerHTML是只读的
     head.insertBefore(styleEl, null) //避免IE6 base标签BUG
+    var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
+    var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
 
+    var getXHR = function() {
+        return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+    }
     var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
@@ -2069,26 +2074,34 @@
                         elem.setAttribute(attrName, val)
                     }
                 } else if (method === "include" && val) {
+                    var callback = elem.getAttribute("data-include-loaded")
+                    if (callback) {
+                        for (var i = 0, vm; vm = vmodels[i++]; ) {
+                            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
+                                callback = vm[callback]
+                            }
+                        }
+                    }
+                    function scanTemplate(text) {
+                        avalon.innerHTML(elem, text)
+                        scanNodes(elem, vmodels, data.state)
+                        callback && callback.call(elem)
+                    }
                     if (data.param === "src") {
                         if (includeContents[val]) {
-                            avalon.innerHTML(elem, includeContents[val])
-                            scanNodes(elem, vmodels, data.state)
+                            scanTemplate(includeContents[val])
                         } else {
-                            var xhr = new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+                            var xhr = getXHR()
                             xhr.onreadystatechange = function() {
                                 if (xhr.readyState === 4) {
                                     var s = xhr.status
                                     if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                        avalon.innerHTML(elem, (includeContents[val] = xhr.responseText))
-                                        scanNodes(elem, vmodels, data.state)
+                                        scanTemplate(includeContents[val] = xhr.responseText)
                                     }
                                 }
                             }
                             xhr.open("GET", val, true)
-                            try {
-                                xhr.withCredentials = true
-                            } catch (e) {
-                            }
+                            xhr.withCredentials = true
                             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
                             xhr.send(null)
                         }
@@ -2096,10 +2109,25 @@
                         //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
                         //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
                         var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
-                        avalon.nextTick(function() {
-                            el && avalon.innerHTML(elem, el.innerHTML)
-                            scanNodes(elem, vmodels, data.state)
-                        })
+                        if (el) {
+                            if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) {//IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+                                var xhr = new getXHR()//IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                                xhr.open("GET", window.location, false)//谢谢Nodejs 乱炖群 深圳-纯属虚构
+                                xhr.send(null)
+                                //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+                                var noscripts = DOC.getElementsByTagName("noscript")
+                                var array = (xhr.responseText || "").match(rnoscripts) || []
+                                var n = array.length
+                                for (var i = 0; i < n; i++) {
+                                    if (noscripts[i]) {//IE6-8中noscript标签的innerHTML,innerText是只读的
+                                        noscripts[i].fixIE78 = (array[i].match(rnoscriptText) || ["", ""])[1]
+                                    }
+                                }
+                            }
+                            avalon.nextTick(function() {
+                                scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
+                            })
+                        }
                     }
                 } else {
                     elem[method] = val
@@ -2141,8 +2169,8 @@
                 } else {
                     avalon.innerHTML(elem, val)
                 }
-                if(data.param == "template"){
-                    avalon.nextTick(function(){
+                if (data.param == "template") {
+                    avalon.nextTick(function() {
                         avalon.scan(elem)
                     })
                 }
