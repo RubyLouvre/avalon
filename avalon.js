@@ -2147,7 +2147,7 @@
                     if (val.nodeType === 11) {
                         fragment = val
                     } else if (val.nodeType === 1 || val.item) {
-                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
+                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
                         fragment = documentFragment.cloneNode(true)
                         while (nodes[0]) {
                             fragment.appendChild(nodes[0])

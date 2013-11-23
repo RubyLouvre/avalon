@@ -1537,7 +1537,6 @@
             function ifCall() {
                 parent = elem.parentNode
                 updateViewFactory(data.value, vmodels, data, function(val) {
-
                     if (val) { //添加 如果它不在DOM树中, 插入DOM树
                         if (!root.contains(elem)) {
                             try {
@@ -1730,7 +1729,7 @@
                     if (val.nodeType === 11) {
                         fragment = val
                     } else if (val.nodeType === 1 || val.item) {
-                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : 0
+                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
                         fragment = documentFragment.cloneNode(true)
                         while (nodes[0]) {
                             fragment.appendChild(nodes[0])
@@ -1779,7 +1778,7 @@
                         vmOptions = vmOptions.$model
                     }
                 }
-                var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
+                var elemData = filterData(avalon(element).data(), widget)//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[ widget + "Id"] = args[1]
                 data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 element.stopScan = false//进入分支，就去除它，让扫描器进入它内部扫描, 但组件内部可以控制这个开关
