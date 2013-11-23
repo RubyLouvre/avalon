@@ -2411,9 +2411,9 @@
                 break
             case "clear":
                 if (data.startRepeat) {
-                    deleteRange.setStartAfter(data.startRepeat);
-                    deleteRange.setEndBefore(data.endRepeat);
-                    deleteRange.deleteContents();
+                    deleteRange.setStartAfter(data.startRepeat)
+                    deleteRange.setEndBefore(data.endRepeat)
+                    deleteRange.deleteContents()
                 } else {
                     avalon.clearChild(parent)
                 }

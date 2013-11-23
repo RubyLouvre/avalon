@@ -2111,7 +2111,7 @@
                         var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
                         if (el) {
                             if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) {//IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
-                                var xhr = new getXHR()//IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                                var xhr = getXHR()//IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
                                 xhr.open("GET", window.location, false)//谢谢Nodejs 乱炖群 深圳-纯属虚构
                                 xhr.send(null)
                                 //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
@@ -2119,8 +2119,10 @@
                                 var array = (xhr.responseText || "").match(rnoscripts) || []
                                 var n = array.length
                                 for (var i = 0; i < n; i++) {
-                                    if (noscripts[i]) {//IE6-8中noscript标签的innerHTML,innerText是只读的
-                                        noscripts[i].fixIE78 = (array[i].match(rnoscriptText) || ["", ""])[1]
+                                    var tag = noscripts[i]
+                                    if (tag) {//IE6-8中noscript标签的innerHTML,innerText是只读的
+                                        tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
+                                        tag.fixIE78 = (array[i].match(rnoscriptText) || ["", ""])[1]
                                     }
                                 }
                             }
@@ -2891,9 +2893,9 @@
             case "clear":
                 if (data.startRepeat) {
                     if (deleteRange) {
-                        deleteRange.setStartAfter(data.startRepeat);
-                        deleteRange.setEndBefore(data.endRepeat);
-                        deleteRange.deleteContents();
+                        deleteRange.setStartAfter(data.startRepeat)
+                        deleteRange.setEndBefore(data.endRepeat)
+                        deleteRange.deleteContents()
                     } else {
                         removeView(locatedNode, group, Infinity)
                     }
