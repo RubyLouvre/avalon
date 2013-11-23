@@ -1286,12 +1286,6 @@
                         binding.type = "html"
                         binding.replaceNodes = [node]
                     }
-                    if (filters && filters.indexOf("template") !== -1) {
-                        avalon.Array.remove(filters, "template")
-                        binding.type = "html"
-                        binding.param = "template"
-                        binding.replaceNodes = [node]
-                    }
                     bindings.push(binding) //收集带有插值表达式的文本
                 }
                 documentFragment.appendChild(node)
@@ -1753,11 +1747,9 @@
                 } else {
                     avalon.innerHTML(elem, val)
                 }
-                if (data.param == "template") {
-                    avalon.nextTick(function() {
-                        scanNodes(elem, vmodels, data.state)
-                    })
-                }
+                avalon.nextTick(function() {
+                    scanNodes(elem, vmodels, data.state)
+                })
             })
         },
         //https://github.com/RubyLouvre/avalon/issues/27
