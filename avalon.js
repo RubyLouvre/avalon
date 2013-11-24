@@ -1901,6 +1901,15 @@
     var getXHR = function() {
         return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
     }
+    var getBindingCallback = function(callback, vmodels) {
+        if (callback) {
+            for (var i = 0, vm; vm = vmodels[i++]; ) {
+                if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
+                    return vm[callback]
+                }
+            }
+        }
+    }
     var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
@@ -2068,14 +2077,7 @@
                         elem.setAttribute(attrName, val)
                     }
                 } else if (method === "include" && val) {
-                    var callback = elem.getAttribute("data-include-loaded")
-                    if (callback) {
-                        for (var i = 0, vm; vm = vmodels[i++]; ) {
-                            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
-                                callback = vm[callback]
-                            }
-                        }
-                    }
+                    var callback = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
                     function scanTemplate(text) {
                         avalon.innerHTML(elem, text)
                         scanNodes(elem, vmodels, data.state)
@@ -2781,6 +2783,7 @@
         }
         data.parent = elem
         var view = documentFragment.cloneNode(false)
+        data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
         if (name === "repeat") {
             var startRepeat = DOC.createComment("ms-repeat-start")
             var endRepeat = DOC.createComment("ms-repeat-end")
@@ -2913,6 +2916,10 @@
                 }
                 break
         }
+        var callback = getBindingCallback(data.callbackName, data.vmodels)
+        if (callback) {
+            callback.call(data.parent, method)
+        }
     }
 
     function withIterator(method, object, group, data, getter) {
@@ -2942,6 +2949,10 @@
                 }
                 parent.appendChild(transation) //再插到最后
                 break;
+        }
+        var callback = getBindingCallback(data.callbackName, data.vmodels)
+        if (callback) {
+            callback.call(data.parent, method)
         }
     }
     //收集要移除的节点，第一个节点要求先放进去
