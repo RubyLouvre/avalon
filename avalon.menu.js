@@ -44,6 +44,8 @@ define(["avalon"], function(avalon) {
                 el.skipArray = ["lastObj"]
                 el.visibility = "hidden"
                 el.overflow = "visible"
+                el.backgroundPosition = "backgroundPosition"
+                el.color = "rgb(231,107,60)"
 
                 el.display = "block"
                 el.lastObj = {}
@@ -84,12 +86,12 @@ define(["avalon"], function(avalon) {
         }
         var submenuHTML = '<ul ><li ms-repeat="submenu">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
-                '<span class="spanbox" ms-css-visibility=visibility >' +
+                '<span class="spanbox" ms-css-color="color" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
                 '<div ms-if="el.submenu.length" ms-include="submenuHTML"  ></div></span></li></ul>'
         script.innerHTML = submenuHTML
         element.parentNode.appendChild(script)
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMain(elem)" ms-mouseleave="hideMain(elem)" ms-class-last="$last" ms-class-current="currentIndex == $index">' +
-                '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"><span>{{ elem.content }}</span></a>' +
+                '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"   ><span>{{ elem.content }}</span></a>' +
                 '<span  class="spanbox" ms-if="elem.submenu.length" >' +
                 '<div ms-include="submenuHTML"   ></div>' +
                 '</span></li>' +
@@ -109,6 +111,14 @@ define(["avalon"], function(avalon) {
                     model.backClass = scope.submenu.length ? "current-parent-back" : "current-back"
                 }, 300)
 
+                var $back = $(".back").each(function() {
+                    $.dequeue(this, "fx");
+                }).animate({
+                    width: this.offsetWidth,
+                    left: this.offsetLeft
+                }, 500, "linear");
+
+
                 if (box) {
                     retarder(div, 400, function(i) {
                         box.style.display = "block"
@@ -122,6 +132,7 @@ define(["avalon"], function(avalon) {
                         box.style.width = box.wid + "px"
                         box.style.overflow = "hidden"
                         div.style.top = -(box.hei) + "px"
+                        scope.color = "rgb(255,255,255)"
                         $(div).stop(true, true).animate({top: 0}, {duration: 300, complete: function() {
                                 div.style.top = "0px"
                                 box.style.height = box.hei - 50 + "px"
@@ -136,6 +147,14 @@ define(["avalon"], function(avalon) {
                 if (backTimer)
                     clearTimeout(backTimer)
                 model.backClass = ""
+
+                $(".back").each(function() {
+                    $.dequeue(this, "fx");
+                }).animate({
+                    width: this.offsetWidth,
+                    left: this.offsetLeft
+                }, 500, "linear");
+
                 if (box && box.hei) {
                     var animate = {from: {top: 0}, to: {top: -(box.hei)}};
                     if (!IE678) {
@@ -149,6 +168,7 @@ define(["avalon"], function(avalon) {
                         box.style.height = box.hei - 50 + "px"
                         box.style.width = box.wid - 50 + "px"
                         box.style.overflow = "hidden"
+                        scope.color = "rgb(231,107,60)"
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
@@ -160,6 +180,18 @@ define(["avalon"], function(avalon) {
                 }
             }
 
+            vm.showSubMenu = function(scope) {
+                if (scope.submenu.length) {
+                    scope.color = 'rgb(255,255,255)'
+                    scope.backgroundPosition = '-960px bottom'
+                }
+            }
+            vm.hideSubMenu = function(scope) {
+                if (scope.submenu.length) {
+                    scope.color = 'rgb(231,107,60)'
+                    scope.backgroundPosition = '-576px bottom'
+                }
+            }
 
             /*  vm.showMenu = function(scope, effect, isMain) {
              avalon(element).addClass("active")
@@ -239,17 +271,19 @@ define(["avalon"], function(avalon) {
                 if (/mainlink/.test(el.className)) {
                     el.style.background = "none"
                     var spans = el.getElementsByTagName("span")
-//                    if (spans.length) {
-//                        var span = spans[0]
-//                        if (/parent/.test(el.className)) {
-//                            span.style.backgroundPosition = "right -91px"
-//                        } else {
-//                            span.style.backgroundPosition = "right 0"
-//                        }
-//                    }
+                    if (spans.length) {
+                        var span = spans[0]
+                        if (/parent/.test(el.className)) {
+                            span.style.backgroundPosition = "right -91px"
+                        } else {
+                            span.style.backgroundPosition = "right 0"
+                        }
+                    }
                 }
             }
             avalon.scan(element, [model].concat(vmodels))
+            // var el = 
+            //  $back.css({"left": el.offsetLeft + "px", "width": el.offsetWidth + "px"});
         })
         return model
     }

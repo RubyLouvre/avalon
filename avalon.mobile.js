@@ -930,7 +930,7 @@
                 callGetters = [],
                 VBPublics = Object.keys(unwatchOne) //抽取不用监控的属性名
         model = model || {}
-        watchMore = watchMore || {}//放置强制要监听的属性名，即便它是$开头
+        watchMore = watchMore || {} //放置强制要监听的属性名，即便它是$开头
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
@@ -1180,12 +1180,12 @@
                 if (value) { //处理{{ }}插值表达式
                     var leach = []
                     if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0")//btoa("ShortCircuit")
+                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
                             return ""
                         })
-                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||")//还原短路与
+                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||") //还原短路与
                     }
                     tokens.push({
                         value: value,
@@ -1534,6 +1534,7 @@
                 elem.classList.add("fixMsIfFlicker")
             }
             var id = setInterval(ifCheck, 20)
+
             function ifCheck() {
                 if (root.contains(elem)) {
                     ifCall()
@@ -1589,7 +1590,7 @@
                         updateView = function() {
                     if (!updateView.check) {
                         updateView.check = 1
-                        return  fn.apply(0, args)
+                        return fn.apply(0, args)
                     }
                 }
                 if (!four) {
@@ -1679,6 +1680,7 @@
                     }
                 } else if (method === "include" && val) {
                     var callback = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+
                     function scanTemplate(text) {
                         avalon.innerHTML(elem, text)
                         scanNodes(elem, vmodels, data.state)
@@ -1760,7 +1762,10 @@
             bindingHandlers.each(data, vmodels, "repeat")
         },
         "widget": function(data, vmodels) {
-            var args = data.value.match(rword), element = data.element, widget = args[0], ret = 0
+            var args = data.value.match(rword),
+                    element = data.element,
+                    widget = args[0],
+                    ret = 0
             if (args[1] === "$") {
                 args[1] = void 0
             }
@@ -1769,9 +1774,10 @@
             }
             data.node.value = args.join(",")
             var constructor = avalon.ui[widget]
-            element.stopScan = true//默认不进入去扫描，因为可能组件没加载完毕
-            if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
-                var vmodel = vmodels[0], opts = args[2] || widget//options在最近的一个VM中的名字
+            element.stopScan = true //默认不进入去扫描，因为可能组件没加载完毕
+            if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
+                var vmodel = vmodels[0],
+                        opts = args[2] || widget //options在最近的一个VM中的名字
                 var vmOptions = {}
                 if (vmodel && opts && typeof vmodel[opts] === "object") {
                     vmOptions = vmodel[opts]
@@ -1779,10 +1785,10 @@
                         vmOptions = vmOptions.$model
                     }
                 }
-                var elemData = filterData(avalon(element).data(), widget)//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
-                data[ widget + "Id"] = args[1]
-                data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
-                element.stopScan = false//进入分支，就去除它，让扫描器进入它内部扫描, 但组件内部可以控制这个开关
+                var elemData = filterData(avalon(element).data(), widget) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
+                data[widget + "Id"] = args[1]
+                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
+                element.stopScan = false //进入分支，就去除它，让扫描器进入它内部扫描, 但组件内部可以控制这个开关
                 element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
                 ret = 1
@@ -1792,14 +1798,18 @@
         "ui": function(data, vmodels) {
             log("ms-ui已废弃，请使用更方便的ms-widget")
             var args = data.value.match(rword)
-            var elem = data.element, widget = args[0], ret = 0
+            var elem = data.element,
+                    widget = args[0],
+                    ret = 0
             if (args.length == 1) {
                 var id = (elem.getAttribute("data-id") || "").trim() || widget + setTimeout("1")
                 args.push(id)
             }
             data.node.value = args.join(",")
             if (typeof avalon.ui[widget] === "function") {
-                var optsName = data.param, vmodel = vmodels[0], ret = 1
+                var optsName = data.param,
+                        vmodel = vmodels[0],
+                        ret = 1
                 var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
                 avalon.ui[widget](elem, args[1], vmodels, opts)
             }
@@ -1807,9 +1817,12 @@
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var value = data.value, match = value.match(/[\w\.]+/g)
+            var value = data.value,
+                    match = value.match(/[\w\.]+/g)
             if (match && match.length === 2) {
-                var fnName = match[1], callback = avalon.noop, preValue
+                var fnName = match[1],
+                        callback = avalon.noop,
+                        preValue
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
                     if (scope.hasOwnProperty(fnName)) {
                         callback = scope[fnName]
@@ -1827,13 +1840,14 @@
             }
         }
     }
+
     function filterData(obj, prefix) {
         var result = {}
         for (var i in obj) {
             if (i.indexOf(prefix) === 0) {
-                result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                result[i.replace(prefix, "").replace(/\w/, function(a) {
                     return a.toLowerCase()
-                }) ] = obj[i]
+                })] = obj[i]
             }
         }
         return result
@@ -2298,9 +2312,20 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
-        data.parent = elem
         var view = documentFragment.cloneNode(false)
+        data.parent = elem
         data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
+        var check0 = "$first",
+                check1 = "$first"
+        if (name == "with") {
+            check0 = "$key", check1 = "$val"
+        }
+        for (var i = 0, p; p = vmodels[i++]; ) {
+            if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                data.$outer = p
+                break
+            }
+        }
         if (name === "repeat") {
             var startRepeat = DOC.createComment("ms-repeat-start")
             var endRepeat = DOC.createComment("ms-repeat-end")
@@ -2355,6 +2380,7 @@
         updateView("add", list, 0)
     }
     var deleteRange = DOC.createRange()
+
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
         var parent = data.element
@@ -2370,7 +2396,7 @@
                         transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], getter(), data.param)
+                    var proxy = createEachProxy(ii, arr[i], getter(), data)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -2446,7 +2472,6 @@
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                         (function(key, val) {
                             if (!mapper[key]) {
-                                //     val = typeof val === "object" ? modelFactory(val) : val
                                 var proxy = createWithProxy(key, getter)
                                 mapper[key] = proxy
                             }
@@ -2480,9 +2505,11 @@
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
     // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
+
     function getLocatedNode(parent, data, pos) {
         if (data.startRepeat) {
-            var ret = data.startRepeat, end = data.endRepeat;
+            var ret = data.startRepeat,
+                    end = data.endRepeat;
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
@@ -2506,9 +2533,10 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, getter) {
+    function createWithProxy(key, getter, $outer) {
         return modelFactory({
             $key: key,
+            $outer: $outer || {},
             $val: {
                 get: function() {
                     try {
@@ -2521,17 +2549,13 @@
             $val: 1
         })
     }
-    var watchEachOne = oneObject("$index,$remove,$first,$last")
+    var watchEachOne = oneObject("$index,$first,$last")
 
-    function createEachProxy(index, item, list, param) {
-        var array = (param || "el").split("-")
-        var name = array[0], index2 = array[1]
+    function createEachProxy(index, item, list, data) {
+        var name = data.param || "el"
         var source = {}
+        source.$outer = data.$outer || {}
         source.$index = index
-        if (index2) {
-            source[index2] = index
-        }
-        source.$view = {}
         source.$itemName = name
         source[name] = {
             get: function() {
@@ -2556,11 +2580,6 @@
             return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
-        if (index2) {
-            ret.$watch("$index", function(i) {
-                ret[index2] = i
-            })
-        }
         return ret
     }
 

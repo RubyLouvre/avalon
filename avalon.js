@@ -1168,9 +1168,9 @@
                 accessores = {}, //内部用于转换的对象
                 callSetters = [],
                 callGetters = [],
-                VBPublics = Object.keys(unwatchOne)  //抽取不用监控的属性名，它们也将应用于IE6-8
+                VBPublics = Object.keys(unwatchOne) //抽取不用监控的属性名，它们也将应用于IE6-8
         model = model || {} //这是vmodel上的$model属性
-        watchMore = watchMore || {}//放置强制要监听的属性名，即便它是$开头
+        watchMore = watchMore || {} //放置强制要监听的属性名，即便它是$开头
         skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
 
         function loop(name, val) {
@@ -1540,12 +1540,12 @@
                 if (value) { //处理{{ }}插值表达式
                     var leach = []
                     if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0")//btoa("ShortCircuit")
+                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
                             return ""
                         })
-                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||")//还原短路与
+                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||") //还原短路与
                     }
                     tokens.push({
                         value: value,
@@ -1922,6 +1922,7 @@
                 avalon(elem).addClass("fixMsIfFlicker")
             }
             var id = setInterval(ifCheck, 20)
+
             function ifCheck() {
                 if (root.contains(elem)) {
                     ifCall()
@@ -1977,7 +1978,7 @@
                         updateView = function() {
                     if (!updateView.check) {
                         updateView.check = 1
-                        return  fn.apply(0, args)
+                        return fn.apply(0, args)
                     }
                 }
                 if (!four) {
@@ -2078,6 +2079,7 @@
                     }
                 } else if (method === "include" && val) {
                     var callback = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+
                     function scanTemplate(text) {
                         avalon.innerHTML(elem, text)
                         scanNodes(elem, vmodels, data.state)
@@ -2106,9 +2108,9 @@
                         //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
                         var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
                         if (el) {
-                            if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) {//IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
-                                var xhr = getXHR()//IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
-                                xhr.open("GET", window.location, false)//谢谢Nodejs 乱炖群 深圳-纯属虚构
+                            if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+                                var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                                xhr.open("GET", window.location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
                                 xhr.send(null)
                                 //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
                                 var noscripts = DOC.getElementsByTagName("noscript")
@@ -2116,7 +2118,7 @@
                                 var n = array.length
                                 for (var i = 0; i < n; i++) {
                                     var tag = noscripts[i]
-                                    if (tag) {//IE6-8中noscript标签的innerHTML,innerText是只读的
+                                    if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
                                         tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
                                         tag.fixIE78 = (array[i].match(rnoscriptText) || ["", ""])[1]
                                     }
@@ -2180,7 +2182,10 @@
             bindingHandlers.each(data, vmodels, "repeat")
         },
         "widget": function(data, vmodels) {
-            var args = data.value.match(rword), element = data.element, widget = args[0], ret = 0
+            var args = data.value.match(rword),
+                    element = data.element,
+                    widget = args[0],
+                    ret = 0
             if (args[1] === "$") {
                 args[1] = void 0
             }
@@ -2190,8 +2195,9 @@
             data.node.value = args.join(",")
             element.stopScan = true
             var constructor = avalon.ui[widget]
-            if (typeof constructor === "function") {//ms-widget="tabs,tabsAAA,optname"
-                var vmodel = vmodels[0], opts = args[2] || widget //options在最近的一个VM中的名字
+            if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
+                var vmodel = vmodels[0],
+                        opts = args[2] || widget //options在最近的一个VM中的名字
                 var vmOptions = {}
                 if (vmodel && opts && typeof vmodel[opts] === "object") {
                     vmOptions = vmodel[opts]
@@ -2199,9 +2205,9 @@
                         vmOptions = vmOptions.$model
                     }
                 }
-                var elemData = filterData(avalon(element).data(), args[0])//抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
-                data[ widget + "Id"] = args[1]
-                data[ widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
+                var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
+                data[widget + "Id"] = args[1]
+                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 element.stopScan = false
                 element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
@@ -2213,14 +2219,18 @@
         "ui": function(data, vmodels) {
             log("ms-ui已废弃，请使用更方便的ms-widget")
             var args = data.value.match(rword)
-            var elem = data.element, widget = args[0], ret = 0
+            var elem = data.element,
+                    widget = args[0],
+                    ret = 0
             if (args.length == 1) {
                 var id = (elem.getAttribute("data-id") || "").trim() || widget + setTimeout("1")
                 args.push(id)
             }
             data.node.value = args.join(",")
             if (typeof avalon.ui[widget] === "function") {
-                var optsName = data.param, vmodel = vmodels[0], ret = 1
+                var optsName = data.param,
+                        vmodel = vmodels[0],
+                        ret = 1
                 var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
                 avalon.ui[widget](elem, args[1], vmodels, opts)
             }
@@ -2228,9 +2238,12 @@
         },
         //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
         "bind": function(data, vmodels) {
-            var value = data.value, match = value.match(/[\w\.]+/g)
+            var value = data.value,
+                    match = value.match(/[\w\.]+/g)
             if (match && match.length === 2) {
-                var fnName = match[1], callback = avalon.noop, preValue
+                var fnName = match[1],
+                        callback = avalon.noop,
+                        preValue
                 for (var i = 0, scope; scope = vmodels[i++]; ) {
                     if (scope.hasOwnProperty(fnName)) {
                         callback = scope[fnName]
@@ -2248,13 +2261,14 @@
             }
         }
     }
+
     function filterData(obj, prefix) {
         var result = {}
         for (var i in obj) {
             if (i.indexOf(prefix) === 0) {
-                result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                result[i.replace(prefix, "").replace(/\w/, function(a) {
                     return a.toLowerCase()
-                }) ] = obj[i]
+                })] = obj[i]
             }
         }
         return result
@@ -2769,7 +2783,7 @@
     //====================== each binding  =================================
 
     function getAll(fragment) {
-        return  fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
+        return fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
     }
 
     var withMapper = {}
@@ -2781,9 +2795,20 @@
         function getter() {
             return array[0].apply(0, array[1])
         }
-        data.parent = elem
         var view = documentFragment.cloneNode(false)
+        data.parent = elem
         data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
+        var check0 = "$first",
+                check1 = "$first"
+        if (name == "with") {
+            check0 = "$key", check1 = "$val"
+        }
+        for (var i = 0, p; p = vmodels[i++]; ) {
+            if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                data.$outer = p
+                break
+            }
+        }
         if (name === "repeat") {
             var startRepeat = DOC.createComment("ms-repeat-start")
             var endRepeat = DOC.createComment("ms-repeat-end")
@@ -2838,6 +2863,7 @@
         updateView("add", list, 0)
     }
     var deleteRange = DOC.createRange && DOC.createRange()
+
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
         var parent = data.parent
@@ -2848,12 +2874,12 @@
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
-                var arr = pos,
-                        pos = el,
-                        transation = documentFragment.cloneNode(false)
+                var arr = pos
+                var pos = el
+                var transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], getter(), data.param)
+                    var proxy = createEachProxy(ii, arr[i], getter(), data)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -2934,8 +2960,7 @@
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                         (function(key, val) {
                             if (!mapper[key]) {
-                                //     val = typeof val === "object" ? modelFactory(val) : val
-                                var proxy = createWithProxy(key, getter)
+                                var proxy = createWithProxy(key, getter, data.$outer)
                                 mapper[key] = proxy
                             }
                             var tview = data.template.cloneNode(true)
@@ -2971,7 +2996,8 @@
 
     function getLocatedNode(parent, data, pos) {
         if (data.startRepeat) {
-            var ret = data.startRepeat, end = data.endRepeat;
+            var ret = data.startRepeat,
+                    end = data.endRepeat;
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
@@ -2995,9 +3021,10 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, getter) {
+    function createWithProxy(key, getter, $outer) {
         return modelFactory({
             $key: key,
+            $outer: $outer || {},
             $val: {
                 get: function() {
                     try {
@@ -3010,18 +3037,14 @@
             $val: 1
         })
     }
-    var watchEachOne = oneObject("$index,$remove,$first,$last")
+    var watchEachOne = oneObject("$index,$first,$last")
     // 创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
 
-    function createEachProxy(index, item, list, param) {
-        var array = (param || "el").split("-")
-        var name = array[0], index2 = array[1]
+    function createEachProxy(index, item, list, data) {
+        var name = data.param || "el"
         var source = {}
+        source.$outer = data.$outer || {}
         source.$index = index
-        if (index2) {
-            source[index2] = index
-        }
-        source.$view = {}
         source.$itemName = name
         source[name] = {
             get: function() {
@@ -3046,11 +3069,6 @@
             return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
-        if (index2) {
-            ret.$watch("$index", function(i) {
-                ret[index2] = i
-            })
-        }
         return ret
     }
 
