@@ -12,6 +12,17 @@ define(["avalon"], function(avalon) {
             function(callback) {
                 window.setTimeout(callback, 1000 / 60)
             }
+    var _timer_ = "menu-" + avalon.subscribers
+
+    var retarder = function(node, delay, method) {
+        if (node[_timer_]) {
+            clearTimeout(node[_timer_])
+        }
+        node[_timer_] = setTimeout(function() {
+            method(node);
+        }, delay);
+    }
+
     //   console.log
     var widget = avalon.ui.menu = function(element, data, vmodels) {
         var $element = avalon(element), options = data.menuOptions, model
@@ -46,7 +57,7 @@ define(["avalon"], function(avalon) {
             }
             return array
         }
-        var submenuHTML = '<ul ><li ms-repeat="submenu"   ms-mouseenter="showMenu(el, \'slideRight\', false)"   ms-mouseleave="hideMenu(el)">' +
+        var submenuHTML = '<ul ><li ms-repeat="submenu"  ms-mouseenter="showMenu(el, \'slideRight\', false)"   ms-mouseleave="hideMenu(el)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
                 '<span class="spanbox" ms-if="el.submenu.length"   ms-css-width="width" ms-css-height="height" ms-css-overflow="overflow" ms-css-display="display" ms-css-visibility="visibility" >' +
                 '<div ms-include="submenuHTML" ms-css-overflow="overflow" ms-css-height="height"  ms-css-height="width" ms-css-display="display" ></div></span></li></ul>'
@@ -57,7 +68,7 @@ define(["avalon"], function(avalon) {
         element.parentNode.appendChild(script)
         //  avalon.includeContents
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMenu(elem,\'slideDown\', true)"   ms-mouseleave="hideMenu(elem)" ms-class-last="$last" ms-class-active="activeIndex == $index" ms-class-current="currentIndex == $index">' +
-                '<a ms-href="elem.href"  ms-class-parent="elem.submenu.length"><span>{{ elem.content }}</span></a>' +
+                '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"><span>{{ elem.content }}</span></a>' +
                 '<span  class="spanbox" ms-if="elem.submenu.length"  ms-css-width="width" ms-css-height="height" ms-css-overflow="overflow" ms-css-display="display" ms-css-visibility="visibility" >' +
                 '<div ms-include="submenuHTML"  ms-css-height="height" style="z-index:-1" ms-css-display="display" ></div>' +
                 '</span></li>' +
@@ -65,7 +76,7 @@ define(["avalon"], function(avalon) {
         model = avalon.define(data.menuId, function(vm) {
             avalon.mix(vm, options)
             vm.hideMenu = function(scope) {
-              
+
                 avalon(element).removeClass("active")
                 setTimeout(function() {
                     scope.visibility = "hidden";
@@ -113,9 +124,9 @@ define(["avalon"], function(avalon) {
                     }
                     if (!spanbox._width) {
                         var ul = this.getElementsByTagName("ul")[0]
-                        if(!ul)
+                        if (!ul)
                             return
-                        console.log(ul+"!")
+                        console.log(ul + "!")
                         spanbox._width = avalon(ul).width()
                         spanbox._height = avalon(ul).height()
                         spanbox._top = parseFloat(avalon(spanbox).css("top"))
@@ -151,6 +162,22 @@ define(["avalon"], function(avalon) {
         avalon.nextTick(function() {
 
             element.innerHTML = mainMenuHTML
+            var mainlinks = element.getElementsByTagName("a")
+            for (var i = 0, el; el = mainlinks[i++]; ) {
+                if (/mainlink/.test(el.className)) {
+                    el.style.background = "none"
+                    var spans = el.getElementsByTagName("span")
+                    if (spans.length) {
+                        var span = spans[0]
+                        if (/parent/.test(el.className)) {
+                            span.style.backgroundPosition = "right -91px"
+                        } else {
+                            span.style.backgroundPosition = "right 0"
+                        }
+                    }
+                }
+            }
+
             avalon.scan(element, [model].concat(vmodels))
 
         })

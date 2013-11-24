@@ -6,7 +6,7 @@ define(["avalon.position"], function(avalon) {
             function(callback) {
                 window.setTimeout(callback, 1000 / 60);
             }
-    function update() {
+    function retarder() {
         var callbacks = listeners.concat();
         for (var i = 0, fn; fn = callbacks[i++]; ) {
             fn($event)
@@ -17,7 +17,7 @@ define(["avalon.position"], function(avalon) {
         if (!locked) {
             locked = true;
             $event = e
-            requestAnimFrame(update);
+            requestAnimFrame(retarder);
         }
     })
     var widget = avalon.ui.tooltip = function(element, data, vmodels) {
