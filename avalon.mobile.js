@@ -1253,12 +1253,14 @@
 
     function executeBindings(bindings, vmodels, state) {
         bindings.forEach(function(data) {
-            data.state = state
-            bindingHandlers[data.type](data, vmodels)
-            if (data.remove) { //移除数据绑定，防止被二次解析
-                data.element.removeAttribute(data.node.name)
+            if (data.type === "widget" || vmodels.length) {//https://github.com/RubyLouvre/avalon/issues/171
+                data.state = state
+                bindingHandlers[data.type](data, vmodels)
+                if (data.remove) { //移除数据绑定，防止被二次解析
+                    data.element.removeAttribute(data.node.name)
+                }
+                data.remove = true
             }
-            data.remove = true
         })
         bindings.length = 0
     }
@@ -1694,7 +1696,7 @@
                             xhr.onload = function() {
                                 var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304) {
-                                   scanTemplate(elem, (includeContents[val] = xhr.responseText))
+                                    scanTemplate(elem, (includeContents[val] = xhr.responseText))
                                 }
                             }
                             xhr.open("GET", val, true)
@@ -1943,7 +1945,7 @@
         if (data.type === "model") {
             log("ms-model已经被废弃，请使用ms-duplex")
         }
-        if (typeof modelBinding[tagName] === "function") {
+        if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
             var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
                 var val = data.value.split("."),
