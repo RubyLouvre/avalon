@@ -18,7 +18,8 @@
                 avalon.define("xxx", function(vm) {
                     vm.menu = {
                         data: [{content: "Home", submenu: [{content: "Sub Item 1",submenu:["aaa","bbb"]}, "Sub Item 2", "Sub Item 3"]},
-                            {content: "Product Info", submenu: ["Sub Item 1.1", "Sub Item 1.2"]}, "Help", "Contacts"]
+                            {content: "Product Info", submenu: ["Sub Item 1.1", "Sub Item 1.2"]}, 
+                            {content:"Help",submenu:["xxx","yyy","zzz"]}, "Contacts"]
                     }
                     vm.click2 = function() {
                         console.log("click2")

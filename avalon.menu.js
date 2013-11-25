@@ -84,15 +84,15 @@ define(["avalon"], function(avalon) {
             }
             return [box, div]
         }
-        var submenuHTML = '<ul ><li ms-repeat="submenu">' +
+        var submenuHTML = '<ul ><li ms-repeat="submenu" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
-                '<span class="spanbox" ms-css-color="color" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
+                '<span class="spanbox" ms-css-color="color" ms-css-overflow="overflow" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
                 '<div ms-if="el.submenu.length" ms-include="submenuHTML"  ></div></span></li></ul>'
         script.innerHTML = submenuHTML
         element.parentNode.appendChild(script)
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMain(elem)" ms-mouseleave="hideMain(elem)" ms-class-last="$last" ms-class-current="currentIndex == $index">' +
                 '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"   ><span>{{ elem.content }}</span></a>' +
-                '<span  class="spanbox" ms-if="elem.submenu.length" >' +
+                '<span  class="spanbox" ms-if="elem.submenu.length"  ms-css-overflow="overflow">' +
                 '<div ms-include="submenuHTML"   ></div>' +
                 '</span></li>' +
                 '<li ms-css-left="backLeft" ms-class="{{backClass}}" ms-css-width="backWidth"  style="overflow: hidden;" class="back"><div class="left"></div></li></ul>'// " ms-css-overflow="overflow"
@@ -130,7 +130,8 @@ define(["avalon"], function(avalon) {
                         }
                         box.style.height = box.hei + "px"
                         box.style.width = box.wid + "px"
-                        box.style.overflow = "hidden"
+                        scope.overflow = "hidden"
+                        //  box.style.overflow = "hidden"
                         div.style.top = -(box.hei) + "px"
                         scope.color = "rgb(255,255,255)"
                         $(div).stop(true, true).animate({top: 0}, {duration: 300, complete: function() {
@@ -167,7 +168,7 @@ define(["avalon"], function(avalon) {
                     retarder(div, 150, function(i) {
                         box.style.height = box.hei - 50 + "px"
                         box.style.width = box.wid - 50 + "px"
-                        box.style.overflow = "hidden"
+                        scope.overflow = "hidden"
                         scope.color = "rgb(231,107,60)"
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
@@ -180,10 +181,29 @@ define(["avalon"], function(avalon) {
                 }
             }
 
-            vm.showSubMenu = function(scope) {
+            vm.showSubMenu = function(scope, $parent) {
                 if (scope.submenu.length) {
                     scope.color = 'rgb(255,255,255)'
                     scope.backgroundPosition = '-960px bottom'
+                }
+                var array = getSpanBox(this)
+                var box = array[0]
+                var div = array[1]
+                if (box) {
+                    retarder(div, 180, function() {
+                        $parent.overflow = "visible"
+                        $(box).css({display: 'block', visibility: 'visible'});
+                        if (!box.hei) {
+                            box.hei = box.clientHeight
+                            box.wid = box.clientWidth + 50;
+                            div.css.height = box.clientHeight + "px"
+                        }
+                        $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
+                        $(div).css({left: -(box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
+                                div.css('left', -3);
+                                box.css('width', box.wid - 50)
+                            }})
+                    })
                 }
             }
             vm.hideSubMenu = function(scope) {
@@ -191,81 +211,40 @@ define(["avalon"], function(avalon) {
                     scope.color = 'rgb(231,107,60)'
                     scope.backgroundPosition = '-576px bottom'
                 }
+                var array = getSpanBox(this)
+                var box = array[0]
+                var div = array[1]
+                if (box.length) {
+                    if (!box.hei) {
+
+                        box.hei = box.clientHeight 
+                        box.wid = box.clientWidth + 50
+               
+                    }
+                    var animate = {from: {left: 0}, to: {left: -(box.wid)}};
+                    if (!IE678) {
+                        animate.from.opacity = 1;
+                        animate.to.opacity = 0
+                    }
+                    retarder(div, 150, function(i) {
+                        $(box).css({height: box.hei, width: box.wid - 50, overflow: 'hidden'});
+                        $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
+                                if (!IE678) {
+                                    div.style.opacity = 1
+                                }
+                                box.style.display = "none"
+                            }})
+                    })
+                }
+
             }
 
-            /*  vm.showMenu = function(scope, effect, isMain) {
-             avalon(element).addClass("active")
-             if (isMain) {
-             var back = $(".back")
-             if (scope.submenu.length) {
-             back.addClass("current-parent-back").removeClass("current-back")
-             } else {
-             back.addClass("current-back").removeClass("current-parent-back")
-             }
-             back.animate({
-             left: parseFloat(this.offsetLeft),
-             width: parseFloat(this.offsetWidth)
-             }, 600)
-             }
-             //   console.log(isMain)
-             if (scope.submenu.length) {
-             console.log("多次进入showMenu")
-             if (scope.visibility === "visible")
-             return
-             scope.visibility = "visible";
-             scope.display = "block"
-             
-             this.style.width = avalon(this).width() + "px"//必须，防御LI被撑开
-             this.style.height = avalon(this).height() + "px"
-             this.style.left = avalon(this).height() + "px"
-             
-             var spanbox
-             for (var i = 0, node; node = this.childNodes[i++]; ) {
-             if (node.nodeType == 1 && /spanbox/.test(node.className)) {
-             spanbox = node
-             break;
-             }
-             }
-             if (!spanbox._width) {
-             var ul = this.getElementsByTagName("ul")[0]
-             if (!ul)
-             return
-             console.log(ul + "!")
-             spanbox._width = avalon(ul).width()
-             spanbox._height = avalon(ul).height()
-             spanbox._top = parseFloat(avalon(spanbox).css("top"))
-             spanbox._left = parseFloat(avalon(spanbox).css("left"))
-             }
-             var div = spanbox.firstElementChild || spanbox.children[0]
-             scope.overflow = "hidden"
-             scope.height = spanbox._height //+ marginTop
-             scope.width = spanbox._width
-             var duration = 400
-             var startTime = new Date - 0
-             var WH = effect === "slideRight" ? "width" : "height"
-             var LT = effect === "slideRight" ? "left" : "top"
-             console.log(LT)
-             var change = -1 * spanbox["_" + WH]
-             div.style[LT] = change + 'px'
-             function animate() {
-             var ellapseTime = new Date - startTime;
-             if (ellapseTime >= duration) {
-             div.style[LT] = "0px"
-             scope.overflow = "visible";
-             return;
-             }
-             div.style[LT] = change * (1 - (ellapseTime / duration)) + "px"
-             requestAnimationFrame(animate)
-             }
-             requestAnimationFrame(animate)
-             
-             }
-             }*/
             vm.backClass = ""
             vm.mainmenu = fix(options.data || [])
         })
         avalon.nextTick(function() {
             element.innerHTML = mainMenuHTML
+            avalon.scan(element, [model].concat(vmodels))
             var mainlinks = element.getElementsByTagName("a")
             for (var i = 0, el; el = mainlinks[i++]; ) {
                 if (/mainlink/.test(el.className)) {
@@ -281,9 +260,7 @@ define(["avalon"], function(avalon) {
                     }
                 }
             }
-            avalon.scan(element, [model].concat(vmodels))
-            // var el = 
-            //  $back.css({"left": el.offsetLeft + "px", "width": el.offsetWidth + "px"});
+
         })
         return model
     }
@@ -297,3 +274,21 @@ define(["avalon"], function(avalon) {
     }
     return avalon
 })
+
+/*
+ var duration = 400
+ var startTime = new Date - 0
+ var change = -1 * spanbox["_" + WH]
+ div.style[LT] = change + 'px'
+ function animate() {
+ var ellapseTime = new Date - startTime;
+ if (ellapseTime >= duration) {
+ div.style[LT] = "0px"
+ scope.overflow = "visible";
+ return;
+ }
+ div.style[LT] = change * (1 - (ellapseTime / duration)) + "px"
+ requestAnimationFrame(animate)
+ }
+ requestAnimationFrame(animate)
+ */

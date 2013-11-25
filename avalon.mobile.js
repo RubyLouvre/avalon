@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 0.98 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 0.981 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1694,7 +1694,7 @@
                             xhr.onload = function() {
                                 var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304) {
-                                    avalon.innerHTML(elem, (includeContents[val] = xhr.responseText))
+                                   scanTemplate(elem, (includeContents[val] = xhr.responseText))
                                 }
                             }
                             xhr.open("GET", val, true)
