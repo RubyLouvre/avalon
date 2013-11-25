@@ -41,8 +41,9 @@ define(["avalon"], function(avalon) {
             return result
         }
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var ID = data.value.trim(), model
-        if (ID) {
+        var args = data.value.match(avalon.rword)
+        var ID = args ? args[0].trim() : null, model
+        if (ID && ID != "$") {
             model = avalon.vmodels[ID]//如果指定了此VM的ID
             if (!model) {
                 data.remove = false
@@ -52,9 +53,17 @@ define(["avalon"], function(avalon) {
         if (!model) {
             model = vmodels.length ? vmodels[0].$model : {}
         }
+        var opts = args && args.length == 2 ? args[1] : null //options在model中的名字
+        var vmOptions = {}
+        if (model && opts && typeof model[opts] === "object") {
+            vmOptions = model[opts]
+            if (vmOptions.$model) {
+                vmOptions = vmOptions.$model
+            }
+        }
         var element = data.element
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults, model,  filterData($element.data(),"drag"));
+        var options = avalon.mix({}, defaults, model, vmOptions, filterData($element.data(),"drag"));
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
