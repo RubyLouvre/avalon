@@ -16,7 +16,6 @@ define(["avalon"], function(avalon) {
                 'ms-mouseover="get(presentation)" ms-hover="ui-state-focus" ms-class="ui-state-focus:matcher[selectedIndex] === presentation "' +
                 '  >{{presentation}}</a></li>' +
                 '</ul>'
-        element.removeAttributeNode(data.node)//防止死循环
 
         sourceList = sourceList.firstChild
         $element.bind("blur", function() {
