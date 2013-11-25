@@ -24,10 +24,12 @@
     <li>操作数据即操作DOM，对ViewModel的操作都会同步到View与Model去。</li>
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
-<p><a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">相关PPT下载</a></p>
-<p><a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">入门教程</a></p>
-<p><a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">avalon最佳实践</a></p>
-<p><a href="http://rubylouvre.github.io/mvvm/">官网地址</a></p>
+<p>相关学习教程，<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>——><a href="http://rubylouvre.github.io/mvvm/">官网</a>
+<a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>—-><a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
+</p>
+
+<p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
+
 
 
 ```html
