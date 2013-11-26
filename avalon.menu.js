@@ -53,9 +53,9 @@ define(["avalon", "mmAnimate"], function(avalon) {
                 if (typeof el.href !== "string") {
                     el.href = "#"
                 }
-             
+
                 el.skipArray = ["lastObj", "columns"]
-             
+
                 el.backgroundPosition = "backgroundPosition"
                 el.color = "rgb(231,107,60)"
 
@@ -151,22 +151,23 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         box.style.display = "block"
                         box.style.visibility = "visible"
                         if (!box.hei) {
-                            box.hei = box.clientHeight + 50
+                            box.hei = $(box).height() + 50
                             box.wid = div.clientWidth
                             div.style.height = box.clientHeight + "px"
                         }
 
-                        box.style.overflow = "hidden"
+
                         box.style.height = 0 + "px"
                         box.style.width = box.wid + "px"
                         div.style.top = -(box.hei) + "px"
+                        box.style.overflow = "hidden"
                         avalon(box).stop(true, true).fx({
                             height: box.hei
                         }, 300)
-                        avalon(div).stop(true, true).fx({top: 0}, {duration: 300, complete: function() {
+                        avalon(div).stop(true, true).fx({top: 0}, {duration: 300, easing: 'easeOutCubic', complete: function() {
                                 div.style.top = "0px"
-                                box.style.overflow = "hidden"
                                 box.style.height = box.hei - 50 + "px"
+                                box.style.overflow = "hidden"
                             }})
                     })
                 }
@@ -187,7 +188,6 @@ define(["avalon", "mmAnimate"], function(avalon) {
                     left: current.offsetLeft
                 }, 500, "easeIn")
 
-
                 if (box) {
                     if (!box.hei) {
                         box.hei = box.clientHeight + 50;
@@ -199,14 +199,14 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         animate.to.opacity = 0
                     }
                     $('span.spanbox span.spanbox', this).css('visibility', 'hidden');
-                    retarder(div, 150, function(i) {
+                    retarder(div, 150, function() {
                         box.style.height = box.hei - 50 + "px"
                         box.style.width = box.wid + "px"
                         box.style.overflow = "hidden"
-                        $(box).stop(true, true).animate({
+                        avalon(box).stop(true, true).fx({
                             height: 0
                         }, 200)
-                        $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
+                        avalon(div).css("opacity", 1).stop(true, true).fx(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
                                 }
@@ -220,7 +220,6 @@ define(["avalon", "mmAnimate"], function(avalon) {
             vm.processTemplate = function(text, a, b) {
                 if (b.columns > 1) {
                     avalon(this).addClass("columns " + DIVClass[b.columns])
-
                     var ret = ""
                     for (var i = 0; i < b.columns; i++) {
                         var index = i === 0 ? "" : i
@@ -233,7 +232,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
             }
 
 
-            vm.showSubMenu = function(scope, $parent) {
+            vm.showSubMenu = function(scope) {
                 if (scope.submenu.length) {
                     scope.color = 'rgb(255,255,255)'
                     scope.backgroundPosition = '-960px bottom'
@@ -250,20 +249,19 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         box.style.display = "block"
                         box.style.visibility = "visible"
                         if (!box.hei) {
-                            box.hei = box.clientHeight
-                            box.wid = box.clientWidth + 50;
+                            box.hei = $(box).height()
+                            box.wid = $(box).width() + 50;
                             div.style.height = box.hei + "px"
                         }
                         box.style.overflow = "hidden"
                         box.style.height = box.hei + "px"
                         box.style.width = box.wid + "px"
-                        //   $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
-                        $(div).css({left: -1 * (box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
-
-                                $(div).css('left', -3);
-                                $(box).css('width', box.wid - 50)
-                                scope.overflow = "hidden"
-                            }})
+                        avalon(div).css("left", -(box.wid)).stop(true, true).fx({left: 0}, {duration: 200, complete: function() {
+                                div.style.left = "-3px"
+                                box.style.width = box.wid - 50 + "px"
+                                box.style.overflow = "hidden"
+                            }
+                        })
                     })
                 }
             }
@@ -289,8 +287,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         box.style.overflow = "hidden"
                         box.style.height = box.hei + "px"
                         box.style.width = box.wid - 50 + "px"
-                        //  $(box).css({height: box.hei, width: box.wid - 50, overflow: 'hidden'});
-                        $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
+                        avalon(div).css("left", 0).stop(true, true).fx(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
                                 }
