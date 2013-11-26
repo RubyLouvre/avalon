@@ -109,7 +109,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
             }
             return [box, div]
         }
-        var submenuHTML = '<ul CLASS ><li ms-repeat="SUBMENU" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
+        var submenuHTML = '<ul CLASS ><li ms-repeat="SUBMENU" ms-mouseenter="showSubMenu(el)" ms-mouseleave="hideSubMenu(el)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
                 '<span class="spanbox" ms-if="el.submenu.length" ms-css-color="color"  ms-css="backgroundPosition: backgroundPosition" >' +
                 '<div ms-include="submenuHTML" data-include-loaded="processTemplate" ></div></span></li></ul>'
@@ -128,7 +128,22 @@ define(["avalon", "mmAnimate"], function(avalon) {
         var backTimer
         model = avalon.define(data.menuId, function(vm) {
             avalon.mix(vm, options)
-
+            vm.processTemplate = function(text, a, b) {
+                if (b.columns > 1) {
+                    var style = this.parentNode.style
+                    style.width = 200 * b.columns + "px"
+                    style.paddingTop = "14px"
+                    avalon(this).addClass("columns " + DIVClass[b.columns])
+                    var ret = ""
+                    for (var i = 0; i < b.columns; i++) {
+                        var index = i === 0 ? "" : i
+                        ret += text.replace("CLASS", "class=" + LIClass[i]).replace("SUBMENU", "submenu" + index)
+                    }
+                    return ret
+                } else {
+                    return   text.replace("CLASS", "").replace("SUBMENU", "submenu")
+                }
+            }
             vm.showMain = function(scope) {
                 var array = getSpanBox(this)
                 var box = array[0]
@@ -164,7 +179,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         avalon(box).stop(true, true).fx({
                             height: box.hei
                         }, 300)
-                        avalon(div).stop(true, true).fx({top: 0}, {duration: 300, easing: 'easeOutCubic', complete: function() {
+                        avalon(div).stop(false, true).fx({top: 0}, {duration: 300, easing: 'easeOutCubic', complete: function() {
                                 div.style.top = "0px"
                                 box.style.height = box.hei - 50 + "px"
                                 box.style.overflow = "hidden"
@@ -206,7 +221,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
                         avalon(box).stop(true, true).fx({
                             height: 0
                         }, 200)
-                        avalon(div).css("opacity", 1).stop(true, true).fx(animate.to, {duration: 200, complete: function() {
+                        avalon(div).css("opacity", 1).stop(false, true).fx(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
                                 }
@@ -217,19 +232,7 @@ define(["avalon", "mmAnimate"], function(avalon) {
                 }
             }
 
-            vm.processTemplate = function(text, a, b) {
-                if (b.columns > 1) {
-                    avalon(this).addClass("columns " + DIVClass[b.columns])
-                    var ret = ""
-                    for (var i = 0; i < b.columns; i++) {
-                        var index = i === 0 ? "" : i
-                        ret += text.replace("CLASS", "class=" + LIClass[i]).replace("SUBMENU", "submenu" + index)
-                    }
-                    return ret
-                } else {
-                    return   text.replace("CLASS", "").replace("SUBMENU", "submenu")
-                }
-            }
+
 
 
             vm.showSubMenu = function(scope) {
