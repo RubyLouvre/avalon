@@ -2367,7 +2367,6 @@
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         delete data.remove
-        console.log(vmodels)
         if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
             var array = parseExpr(data.value, vmodels, data, "setget")
             if (array) {
