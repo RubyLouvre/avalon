@@ -86,8 +86,8 @@ define(["avalon"], function(avalon) {
         }
         var submenuHTML = '<ul ><li ms-repeat="submenu" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
-                '<span class="spanbox" ms-css-color="color" ms-css-overflow="overflow" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
-                '<div ms-if="el.submenu.length" ms-include="submenuHTML"  ></div></span></li></ul>'
+                '<span class="spanbox" ms-if="el.submenu.length"  ms-css-color="color" ms-css-overflow="overflow" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
+                '<div ms-include="submenuHTML"  ></div></span></li></ul>'
         script.innerHTML = submenuHTML
         element.parentNode.appendChild(script)
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMain(elem)" ms-mouseleave="hideMain(elem)" ms-class-last="$last" ms-class-current="currentIndex == $index">' +
@@ -170,6 +170,7 @@ define(["avalon"], function(avalon) {
                         box.style.width = box.wid - 50 + "px"
                         scope.overflow = "hidden"
                         scope.color = "rgb(231,107,60)"
+                       
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
@@ -189,19 +190,25 @@ define(["avalon"], function(avalon) {
                 var array = getSpanBox(this)
                 var box = array[0]
                 var div = array[1]
+                 console.log([div,box])
                 if (box) {
                     retarder(div, 180, function() {
                         $parent.overflow = "visible"
                         $(box).css({display: 'block', visibility: 'visible'});
                         if (!box.hei) {
+                            try{
                             box.hei = box.clientHeight
                             box.wid = box.clientWidth + 50;
-                            div.css.height = box.clientHeight + "px"
+                            div.style.height = box.clientHeight + "px"
+                            }catch(e){
+                                console.log(e)
+                             
+                            }
                         }
                         $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
-                        $(div).css({left: -(box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
-                                div.css('left', -3);
-                                box.css('width', box.wid - 50)
+                        $(div).css({left: -1 * (box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
+                                $(div).css('left', -3);
+                                $(box).css('width', box.wid - 50)
                             }})
                     })
                 }
@@ -214,7 +221,7 @@ define(["avalon"], function(avalon) {
                 var array = getSpanBox(this)
                 var box = array[0]
                 var div = array[1]
-                if (box.length) {
+                if (box) {
                     if (!box.hei) {
 
                         box.hei = box.clientHeight 
