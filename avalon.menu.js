@@ -4,7 +4,7 @@
  */
 
 
-define(["avalon"], function(avalon) {
+define(["avalon", "mmAnimate"], function(avalon) {
 //http://xdsoft.net/jqplugins/datetimepicker/
     var requestAnimFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
@@ -53,15 +53,12 @@ define(["avalon"], function(avalon) {
                 if (typeof el.href !== "string") {
                     el.href = "#"
                 }
-                el.width = 0
-                el.height = 0
+             
                 el.skipArray = ["lastObj", "columns"]
-                el.visibility = "hidden"
-                el.overflow = "visible"
+             
                 el.backgroundPosition = "backgroundPosition"
                 el.color = "rgb(231,107,60)"
 
-                el.display = "block"
                 el.lastObj = {}
                 el.columns = ""
                 if (typeof el.content !== "string") {
@@ -114,18 +111,20 @@ define(["avalon"], function(avalon) {
         }
         var submenuHTML = '<ul CLASS ><li ms-repeat="SUBMENU" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
-                '<span class="spanbox" ms-if="el.submenu.length"  ms-css-color="color" ms-css-overflow="overflow" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
+                '<span class="spanbox" ms-if="el.submenu.length" ms-css-color="color"  ms-css="backgroundPosition: backgroundPosition" >' +
                 '<div ms-include="submenuHTML" data-include-loaded="processTemplate" ></div></span></li></ul>'
-
 
         script.innerHTML = submenuHTML
         element.parentNode.appendChild(script)
+        var children
+
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMain(elem)" ms-mouseleave="hideMain(elem)" ms-class-last="$last" ms-class-current="currentIndex == $index">' +
                 '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"   ><span>{{ elem.content }}</span></a>' +
-                '<span  class="spanbox" ms-if="elem.submenu.length"  ms-css-overflow="overflow">' +
+                '<span  class="spanbox" ms-if="elem.submenu.length"  >' +
                 '<div ms-include="submenuHTML" data-include-loaded="processTemplate"></div>' +
                 '</span></li>' +
-                '<li ms-css-left="backLeft" ms-class="{{backClass}}" ms-css-width="backWidth"  style="overflow: hidden;" class="back"><div class="left"></div></li></ul>'// " ms-css-overflow="overflow"
+                '<li ms-css-left="backLeft"  ms-class="{{backClass}}" ms-css-width="backWidth"  style="overflow: hidden;" class="back"><div class="left"></div></li></ul>'// " ms-css-overflow="overflow"
+
         var backTimer
         model = avalon.define(data.menuId, function(vm) {
             avalon.mix(vm, options)
@@ -140,13 +139,12 @@ define(["avalon"], function(avalon) {
                 backTimer = setTimeout(function() {
                     model.backClass = scope.submenu.length ? "current-parent-back" : "current-back"
                 }, 300)
-
-                var $back = $(".back").each(function() {
-                    $.dequeue(this, "fx");
-                }).animate({
+                //处理主菜单的阴影移动
+                var back = children[children.length - 1]
+                avalon(back).stop(true, true).fx({
                     width: this.offsetWidth,
                     left: this.offsetLeft
-                }, 500, "linear");
+                }, 500, "linear")
 
                 if (box) {
                     retarder(div, 400, function(i) {
@@ -157,17 +155,17 @@ define(["avalon"], function(avalon) {
                             box.wid = div.clientWidth
                             div.style.height = box.clientHeight + "px"
                         }
-                        scope.overflow = "hidden"
-                        scope.color = "rgb(255,255,255)"
+
+                        box.style.overflow = "hidden"
                         box.style.height = 0 + "px"
                         box.style.width = box.wid + "px"
                         div.style.top = -(box.hei) + "px"
-                        $(box).stop(true, true).animate({
+                        avalon(box).stop(true, true).fx({
                             height: box.hei
                         }, 300)
-                        $(div).stop(true, true).animate({top: 0}, {duration: 300, complete: function() {
+                        avalon(div).stop(true, true).fx({top: 0}, {duration: 300, complete: function() {
                                 div.style.top = "0px"
-                                  scope.overflow = "hidden"
+                                box.style.overflow = "hidden"
                                 box.style.height = box.hei - 50 + "px"
                             }})
                     })
@@ -181,16 +179,17 @@ define(["avalon"], function(avalon) {
                 if (backTimer)
                     clearTimeout(backTimer)
                 model.backClass = ""
-                $(".back").each(function() {
-                    $.dequeue(this, "fx");
-                }).animate({
-                    width: this.offsetWidth,
-                    left: this.offsetLeft
-                }, 500, "linear");
+                //处理主菜单的阴影移动
+                var back = children[children.length - 1]
+                var current = children[vm.currentIndex]
+                avalon(back).stop(true, true).fx({
+                    width: current.offsetWidth,
+                    left: current.offsetLeft
+                }, 500, "easeIn")
+
 
                 if (box) {
                     if (!box.hei) {
-
                         box.hei = box.clientHeight + 50;
                         box.wid = box.clientWidth
                     }
@@ -200,14 +199,10 @@ define(["avalon"], function(avalon) {
                         animate.to.opacity = 0
                     }
                     $('span.spanbox span.spanbox', this).css('visibility', 'hidden');
-//                    for (var i = 0, obj; obj = scope.submenu[i++]; ) {
-//                        obj.visibility = "hidden"
-//                    }
                     retarder(div, 150, function(i) {
                         box.style.height = box.hei - 50 + "px"
                         box.style.width = box.wid + "px"
-                        scope.overflow = "hidden"
-                        scope.color = "rgb(231,107,60)"
+                        box.style.overflow = "hidden"
                         $(box).stop(true, true).animate({
                             height: 0
                         }, 200)
@@ -248,23 +243,26 @@ define(["avalon"], function(avalon) {
                 var div = array[1]
                 if (box) {
                     retarder(div, 180, function() {
-                        $(box).parent().parent().parent().parent().css('overflow', 'visible');
-                        //   $parent.overflow = "visible"
-                        $(box).css({display: 'block', visibility: 'visible'});
+                        try {
+                            box.parentNode.parentNode.parentNode.parentNode.style.overflow = "visible"
+                        } catch (e) {
+                        }
+                        box.style.display = "block"
+                        box.style.visibility = "visible"
                         if (!box.hei) {
-                            console.log("hei " + $(box).height() + "  " + box.clientHeight + "\nwid " + $(box).width() + "  " + box.clientWidth)
-
-                            box.hei = $(box).height()
-                            box.wid = $(box).width() + 50;
+                            box.hei = box.clientHeight
+                            box.wid = box.clientWidth + 50;
                             div.style.height = box.hei + "px"
                         }
-
-                        $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
+                        box.style.overflow = "hidden"
+                        box.style.height = box.hei + "px"
+                        box.style.width = box.wid + "px"
+                        //   $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
                         $(div).css({left: -1 * (box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
 
                                 $(div).css('left', -3);
                                 $(box).css('width', box.wid - 50)
-                                  scope.overflow = "hidden"
+                                scope.overflow = "hidden"
                             }})
                     })
                 }
@@ -287,8 +285,11 @@ define(["avalon"], function(avalon) {
                         animate.from.opacity = 1;
                         animate.to.opacity = 0
                     }
-                    retarder(div, 150, function(i) {
-                        $(box).css({height: box.hei, width: box.wid - 50, overflow: 'hidden'});
+                    retarder(div, 150, function() {
+                        box.style.overflow = "hidden"
+                        box.style.height = box.hei + "px"
+                        box.style.width = box.wid - 50 + "px"
+                        //  $(box).css({height: box.hei, width: box.wid - 50, overflow: 'hidden'});
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
@@ -307,7 +308,11 @@ define(["avalon"], function(avalon) {
         })
         avalon.nextTick(function() {
             element.innerHTML = mainMenuHTML
+
             avalon.scan(element, [model].concat(vmodels))
+            children = element.firstChild.children
+
+
             var mainlinks = element.getElementsByTagName("a")
             for (var i = 0, el; el = mainlinks[i++]; ) {
                 if (/mainlink/.test(el.className)) {
