@@ -2250,13 +2250,21 @@
         set: function(index, val) {
             if (index >= 0 && index < this.length) {
                 var valueType = getType(val)
-                if (rchecktype.test(valueType)) {
-                    if (val.$model) {
-                        val = val.$model
+                if (val && val.$model) {
+                    val = val.$model
+                }
+                var target = this[index]
+                if (valueType === "object") {
+                    for (var i in val) {
+                        if (target.hasOwnProperty(i)) {
+                            target[i] = val[i]
+                        }
                     }
-                    updateViewModel(this[index], val, valueType)
-                } else if (this[index] !== val) {
-                    this[index] = val
+                } else if (valueType === "array") {
+                    target.clear().push.apply(target, val)
+                }
+                if (target !== val) {
+                    target = val
                     notifySubscribers(this, "set", index, val)
                 }
             }

@@ -159,11 +159,15 @@ define(["avalon"], function(avalon) {
                         }
                         scope.overflow = "hidden"
                         scope.color = "rgb(255,255,255)"
-                        box.style.height = box.hei + "px"
+                        box.style.height = 0 + "px"
                         box.style.width = box.wid + "px"
                         div.style.top = -(box.hei) + "px"
+                        $(box).stop(true, true).animate({
+                            height: box.hei
+                        }, 300)
                         $(div).stop(true, true).animate({top: 0}, {duration: 300, complete: function() {
                                 div.style.top = "0px"
+                                  scope.overflow = "hidden"
                                 box.style.height = box.hei - 50 + "px"
                             }})
                     })
@@ -186,8 +190,9 @@ define(["avalon"], function(avalon) {
 
                 if (box) {
                     if (!box.hei) {
-                        box.hei = $(box).height() + 50;
-                        box.wid = $(box).width()
+
+                        box.hei = box.clientHeight + 50;
+                        box.wid = box.clientWidth
                     }
                     var animate = {from: {top: 0}, to: {top: -(box.hei)}};
                     if (!IE678) {
@@ -203,6 +208,9 @@ define(["avalon"], function(avalon) {
                         box.style.width = box.wid + "px"
                         scope.overflow = "hidden"
                         scope.color = "rgb(231,107,60)"
+                        $(box).stop(true, true).animate({
+                            height: 0
+                        }, 200)
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
@@ -244,23 +252,24 @@ define(["avalon"], function(avalon) {
                         //   $parent.overflow = "visible"
                         $(box).css({display: 'block', visibility: 'visible'});
                         if (!box.hei) {
+                            console.log("hei " + $(box).height() + "  " + box.clientHeight + "\nwid " + $(box).width() + "  " + box.clientWidth)
 
-                            box.hei = box.clientHeight
-                            box.wid = box.clientWidth + 50;
-                            div.style.height = $(box).height() + "px"
+                            box.hei = $(box).height()
+                            box.wid = $(box).width() + 50;
+                            div.style.height = box.hei + "px"
                         }
 
-                        $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});//, overflow: 'hidden'
+                        $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
                         $(div).css({left: -1 * (box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
 
                                 $(div).css('left', -3);
                                 $(box).css('width', box.wid - 50)
+                                  scope.overflow = "hidden"
                             }})
                     })
                 }
             }
             vm.hideSubMenu = function(scope) {
-
                 if (scope.submenu.length) {
                     scope.color = 'rgb(231,107,60)'
                     scope.backgroundPosition = '-576px bottom'
@@ -270,7 +279,6 @@ define(["avalon"], function(avalon) {
                 var div = array[1]
                 if (box) {
                     if (!box.hei) {
-
                         box.hei = box.clientHeight
                         box.wid = box.clientWidth + 50
                     }

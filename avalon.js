@@ -1125,6 +1125,10 @@
             return a
         } else {
             var iterators = a[subscribers]
+
+            if (!iterators.length)
+                return
+
             iterators.forEach(function(fn) {
                 fn.rollback && fn.rollback()
             })
@@ -2081,7 +2085,7 @@
                     }
                 } else if (method === "include" && val) {
                     var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
-                    var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels) 
+                    var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
                     function scanTemplate(text) {
                         if (loaded) {
                             text = loaded.apply(elem, [text].concat(vmodels))
@@ -2730,13 +2734,21 @@
         set: function(index, val) {
             if (index >= 0 && index < this.length) {
                 var valueType = getType(val)
-                if (rchecktype.test(valueType)) {
-                    if (val.$model) {
-                        val = val.$model
+                if (val && val.$model) {
+                    val = val.$model
+                }
+                var target = this[index]
+                if (valueType === "object") {
+                    for (var i in val) {
+                        if (target.hasOwnProperty(i)) {
+                            target[i] = val[i]
+                        }
                     }
-                    updateViewModel(this[index], val, valueType)
-                } else if (this[index] !== val) {
-                    this[index] = val
+                } else if (valueType === "array") {
+                    target.clear().push.apply(target, val)
+                }
+                if (target !== val) {
+                    target = val
                     notifySubscribers(this, "set", index, val)
                 }
             }
