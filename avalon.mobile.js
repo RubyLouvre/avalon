@@ -1679,12 +1679,15 @@
                         elem.setAttribute(attrName, val)
                     }
                 } else if (method === "include" && val) {
-                    var callback = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
-
+                    var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
+                    var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
                     function scanTemplate(text) {
+                        if (loaded) {
+                            text = loaded.apply(elem, [text].concat(vmodels))
+                        }
                         avalon.innerHTML(elem, text)
                         scanNodes(elem, vmodels, data.state)
-                        callback && callback.call(elem)
+                        rendered && rendered.call(elem)
                     }
                     if (data.param === "src") {
                         if (includeContents[val]) {

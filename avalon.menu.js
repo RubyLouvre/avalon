@@ -23,7 +23,21 @@ define(["avalon"], function(avalon) {
         }, delay);
     }
     var IE678 = !-[1, ]
-
+    var DIVClass = {
+        0: "",
+        1: "",
+        2: "two",
+        3: "three",
+        4: "four",
+        5: "five"
+    }
+    var LIClass = {
+        0: "one",
+        1: "two",
+        2: "three",
+        3: "four",
+        4: "five"
+    }
     //   console.log
     var widget = avalon.ui.menu = function(element, data, vmodels) {
         var $element = avalon(element), options = data.menuOptions, model
@@ -41,7 +55,7 @@ define(["avalon"], function(avalon) {
                 }
                 el.width = 0
                 el.height = 0
-                el.skipArray = ["lastObj"]
+                el.skipArray = ["lastObj", "columns"]
                 el.visibility = "hidden"
                 el.overflow = "visible"
                 el.backgroundPosition = "backgroundPosition"
@@ -49,13 +63,27 @@ define(["avalon"], function(avalon) {
 
                 el.display = "block"
                 el.lastObj = {}
+                el.columns = ""
                 if (typeof el.content !== "string") {
                     el.content = "&nbsp;"
                 }
                 if (avalon.type(el.submenu) !== "array") {
                     el.submenu = []
                 } else {
-                    fix(el.submenu)
+                   if (avalon.type(el.submenu[0]) === "array") {
+                        var columns = el.submenu, column, j = 0
+                        while (column = columns.shift()) {
+                            if (avalon.type(column) == "array" && column.length) {
+                                el[ "submenu" + (j ? j : "")] = column
+                                fix(column)
+                                j++
+                            }
+                        }
+                        el.columns =  j
+                    } else {
+                        fix(el.submenu)
+                  }
+
                 }
 
             }
@@ -84,16 +112,18 @@ define(["avalon"], function(avalon) {
             }
             return [box, div]
         }
-        var submenuHTML = '<ul ><li ms-repeat="submenu" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
+       var submenuHTML = '<ul CLASS ><li ms-repeat="SUBMENU" ms-mouseenter="showSubMenu(el, elem)" ms-mouseleave="hideSubMenu(el,elem)">' +
                 '<a ms-href="el.href"  ms-class-parent="el.submenu.length" ><span>{{ el.content }}</span></a>' +
                 '<span class="spanbox" ms-if="el.submenu.length"  ms-css-color="color" ms-css-overflow="overflow" ms-css="backgroundPosition: backgroundPosition" ms-css-visibility=visibility >' +
-                '<div ms-include="submenuHTML"  ></div></span></li></ul>'
+                '<div ms-include="submenuHTML" data-include-loaded="processTemplate" ></div></span></li></ul>'
+        
+
         script.innerHTML = submenuHTML
         element.parentNode.appendChild(script)
         var mainMenuHTML = '<ul class="menu"><li ms-repeat-elem="mainmenu" ms-mouseenter="showMain(elem)" ms-mouseleave="hideMain(elem)" ms-class-last="$last" ms-class-current="currentIndex == $index">' +
                 '<a ms-href="elem.href" class="mainlink" ms-class-parent="elem.submenu.length"   ><span>{{ elem.content }}</span></a>' +
                 '<span  class="spanbox" ms-if="elem.submenu.length"  ms-css-overflow="overflow">' +
-                '<div ms-include="submenuHTML"   ></div>' +
+                '<div ms-include="submenuHTML" data-include-loaded="processTemplate"></div>' +
                 '</span></li>' +
                 '<li ms-css-left="backLeft" ms-class="{{backClass}}" ms-css-width="backWidth"  style="overflow: hidden;" class="back"><div class="left"></div></li></ul>'// " ms-css-overflow="overflow"
         var backTimer
@@ -141,6 +171,20 @@ define(["avalon"], function(avalon) {
                     })
                 }
             }
+            vm.processTemplate = function(text, a, b) {
+                if (b.columns > 1) {
+                    avalon(this).addClass("columns " + DIVClass[b.columns])
+                    
+                    var ret = ""
+                    for (var i = 0; i < b.columns; i++) {
+                        var index = i === 0 ? "" : i
+                        ret += text.replace("CLASS", "class=" + LIClass[i]).replace("SUBMENU", "submenu" + index)
+                    }
+                    return ret
+                } else {
+                    return   text.replace("CLASS", "").replace("SUBMENU", "submenu")
+                }
+            }
             vm.hideMain = function(scope) {
                 var array = getSpanBox(this)
                 var box = array[0]
@@ -170,7 +214,7 @@ define(["avalon"], function(avalon) {
                         box.style.width = box.wid - 50 + "px"
                         scope.overflow = "hidden"
                         scope.color = "rgb(231,107,60)"
-                       
+
                         $(div).css(animate.from).stop(true, true).animate(animate.to, {duration: 200, complete: function() {
                                 if (!IE678) {
                                     div.style.opacity = 1
@@ -190,20 +234,14 @@ define(["avalon"], function(avalon) {
                 var array = getSpanBox(this)
                 var box = array[0]
                 var div = array[1]
-                 console.log([div,box])
                 if (box) {
                     retarder(div, 180, function() {
                         $parent.overflow = "visible"
                         $(box).css({display: 'block', visibility: 'visible'});
                         if (!box.hei) {
-                            try{
-                            box.hei = box.clientHeight
-                            box.wid = box.clientWidth + 50;
-                            div.style.height = box.clientHeight + "px"
-                            }catch(e){
-                                console.log(e)
-                             
-                            }
+                                box.hei = box.clientHeight
+                                box.wid = box.clientWidth + 50;
+                                div.style.height = box.clientHeight + "px"
                         }
                         $(box).css({height: box.hei, width: box.wid, overflow: 'hidden'});
                         $(div).css({left: -1 * (box.wid)}).stop(true, true).animate({left: 0}, {duration: 200, complete: function() {
@@ -224,9 +262,9 @@ define(["avalon"], function(avalon) {
                 if (box) {
                     if (!box.hei) {
 
-                        box.hei = box.clientHeight 
+                        box.hei = box.clientHeight
                         box.wid = box.clientWidth + 50
-               
+
                     }
                     var animate = {from: {left: 0}, to: {left: -(box.wid)}};
                     if (!IE678) {
@@ -247,7 +285,9 @@ define(["avalon"], function(avalon) {
             }
 
             vm.backClass = ""
+            vm.skipArray = ["mainmenu"]
             vm.mainmenu = fix(options.data || [])
+          //  console.log(vm.mainmenu )
         })
         avalon.nextTick(function() {
             element.innerHTML = mainMenuHTML
