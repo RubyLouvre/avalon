@@ -41,8 +41,8 @@ define(["avalon"], function(avalon) {
         return result
     }
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var args = data.value.match(avalon.rword)|| [""]
-        var ID =  args[0].trim() , opts = args[1],  model, vmOptions
+        var args = data.value.match(avalon.rword) || [""]
+        var ID = args[0].trim(), opts = args[1], model, vmOptions
         if (ID && ID != "$") {
             model = avalon.vmodels[ID]//如果指定了此VM的ID
             if (!model) {
@@ -273,20 +273,24 @@ define(["avalon"], function(avalon) {
         }
     }
     //统一处理拖动的事件
+    var lockTime = new Date - 0, minTime = document.querySelector ? 12 : 30
     avalon(document).bind(drag, function(e) {
-        var data = draggable.dragData
-        if (data.started === true) {
-            //fix touchmove bug;  
-            //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
-            //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
-            e.preventDefault();
-            //使用document.selection.empty()来清除选择，会导致捕获失败 
-            var element = data.clone || data.element
-            setPosition(e, element, data, "X")
-            setPosition(e, element, data, "Y")
-            draggable.plugin.call("drag", e, data)
+        var time = e.timeStamp - lockTime
+        if (time > minTime) {//减少调用次数，防止卡死IE6-8
+            lockTime = e.timeStamp
+            var data = draggable.dragData
+            if (data.started === true) {
+                //fix touchmove bug;  
+                //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
+                //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
+                e.preventDefault();
+                //使用document.selection.empty()来清除选择，会导致捕获失败 
+                var element = data.clone || data.element
+                setPosition(e, element, data, "X")
+                setPosition(e, element, data, "Y")
+                draggable.plugin.call("drag", e, data)
+            }
         }
-
     })
 
     //统一处理拖动结束的事件

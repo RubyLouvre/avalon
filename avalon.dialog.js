@@ -51,7 +51,7 @@ define(["avalon.button"], function(avalon) {
                 ' ms-visible="toggle"' +
                 ' ms-css-width="width"' +
                 ' ms-css-height="height" ' +
-                ' ms-draggable data-drag-handle="handle" data-drag-beforestart="beforestart">' +
+                ' ms-draggable data-drag-handle="handle" data-drag-before-start="beforeStart">' +
                 '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-widget="button" type="button" data-button-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-button-text="false" ms-click="close">close</button></div>' +
@@ -82,7 +82,7 @@ define(["avalon.button"], function(avalon) {
             vm.cssCenter = true;
             vm.close = function() {
                 vm.toggle = false;
-            };
+            }
             vm.handle = function(e) {
                 var el = e.target
                 while (el.nodeName != "BODY") {
