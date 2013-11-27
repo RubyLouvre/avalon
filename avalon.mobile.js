@@ -3236,7 +3236,7 @@
             touchProxy = {}
         }
         var isWP = window.navigator.msPointerEnabled
-
+        
         function isPrimaryTouch(event) {
             if (isWP) {
                 return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
@@ -3276,7 +3276,7 @@
                     return
                 }
                 cancelHold()
-                e.preventDefault()
+               // e.preventDefault()
                 touchProxy.x2 = firstTouch.pageX
                 touchProxy.y2 = firstTouch.pageY
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
@@ -3306,7 +3306,7 @@
                             } else {
                                 touchTimeout = setTimeout(function() {
                                     touchProxy.fire('singletap')
-                                    touchProxy.fire("click")
+                                  //  touchProxy.fire("click")
                                     touchProxy = {}
                                 }, 250)
                             }
