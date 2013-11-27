@@ -41,7 +41,7 @@ define(["avalon"], function(avalon) {
         return result
     }
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var args = data.value.match(avalon.rword)
+        var args = data.value.match(avalon.rword)|| []
         var ID = args ? args[0].trim() : null, model, vmOptions
         var opts = args[1]
         if (ID && ID != "$") {
@@ -70,7 +70,6 @@ define(["avalon"], function(avalon) {
             var method = options[name]
             if (typeof method === "string") {
                 if (typeof fnObj[method] === "function") {
-
                     options[name] = fnObj[method]
                 } else {
                     options[name] = avalon.noop
