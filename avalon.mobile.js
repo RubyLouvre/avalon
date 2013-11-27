@@ -1697,7 +1697,7 @@
                             xhr.onload = function() {
                                 var s = xhr.status
                                 if (s >= 200 && s < 300 || s === 304) {
-                                    scanTemplate(elem, (includeContents[val] = xhr.responseText))
+                                    scanTemplate(includeContents[val] = xhr.responseText)
                                 }
                             }
                             xhr.open("GET", val, true)
