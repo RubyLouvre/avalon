@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+
+        <script>
+            require("avalon.draggable", function() {
+
+                function overlap(dropper, dragger) {
+                    // 求出两个方块的重叠面积
+                    var size = Math.max(0, Math.min(dropper.bottom, dragger.bottom) - Math.max(dropper.top, dragger.top)) * Math.max(0, Math.min(dropper.right, dragger.right) - Math.max(dropper.left, dragger.left));
+                    return size / (dropper.width * dropper.height) > 0.5
+                }
+
+                avalon.define("apps", function(vm) {
+                    vm.getColor = function() {
+                        var letters = 'A523456789ABCDEF'.split('');
+                        var color = '#';
+                        for (var i = 0; i < 6; i++) {
+                            color += letters[Math.round(Math.random() * 15)];
+                        }
+                        return color;
+                    }
+                    vm.onLayout = function() {
+                        var maxRow = 3//每一列最多 多少行，用于配置
+                        var row = 0 //当前APP所在的栏数
+                        var col = 0 //当前APP所在的栏数
+                        var left = 1
+                        for (var i = 0, el; el = vm.apps[i++]; ) {
+                            if (el.type == "small") {
+                                if (left) {
+                                    el.top = 130 * row
+                                    el.left = col * 260 + left
+                                    left = 0
+                                    el.sleft = 1
+                                } else {
+                                    el.top = 130 * row
+                                    el.left = col * 260 + 130
+                                    row++
+                                    left = 1
+                                    el.sleft = 0
+                                }
+                                el.width = 120
+                                el.height = 120
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            } else if (el.type == "middle") {
+                                el.sleft = 1
+                                if (!left) {
+                                    row++
+                                }
+                                el.width = 250
+                                el.height = 120
+                                el.top = 130 * row
+                                el.left = col * 260 + left
+                                row++
+                                left = 1
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            } else if (el.type == "big") {
+                                el.sleft = 1
+                                if (!left) {
+                                    row++
+                                }
+                                el.width = 250
+                                el.height = 250
+                                if (row + 1 > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                                el.top = 130 * row
+                                el.left = col * 260 + left
+                                row += 2
+                                left = 1
+                                if (row >= maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            }
+                            el.skipArray = ["width", "height", "top", "left", "sleft", "right", "bottom", "animate"]
+                            el.right = el.left + el.width
+                            el.bottom = el.top + el.height
+                            el.animate = false
+                        }
+                    }
+                    function fix(array) {
+                        for (var i = 0, el; el = array[i++]; ) {
+                            el.top = 0
+                            el.left = 0
+                            el.sleft = 1
+                            el.width = 0
+                            el.height = 0
+                        }
+                        return array
+                    }
+                    vm.apps = fix([
+                        {
+                            text: "yyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "1",
+                            type: "small"
+                        },
+                        {
+                            text: "1",
+                            type: "small"
+                        },
+                        {
+                            text: "顶 big",
+                            type: "small"
+                        },
+                        {
+                            text: "666",
+                            type: "big"
+                        },
+                        {
+                            text: "666",
+                            type: "big"
+                        },
+                        {
+                            text: "2",
+                            type: "small"
+                        },
+                        {
+                            text: "yyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "3",
+                            type: "small"
+                        },
+                        {
+                            text: "4",
+                            type: "small"
+                        },
+                        {
+                            text: "yyyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "yyyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "yyyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "yyyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "5",
+                            type: "small"
+                        },
+                        {
+                            text: "6",
+                            type: "small"
+                        },
+                        {
+                            text: "7",
+                            type: "small"
+                        },
+                        {
+                            text: "8",
+                            type: "small"
+                        },
+                        {
+                            text: "9",
+                            type: "small"
+                        },
+                        {
+                            text: "10",
+                            type: "small"
+                        }
+                        /* {text: "由件",
+                         type: "middle"},
+                         {text: "人脉",
+                         type: "middle"},
+                         {text: "桌面",
+                         type: "middle"},
+                         {text: "日历",
+                         type: "middle"},
+                         {text: "照片",
+                         type: "middle"},
+                         {text: "天气",
+                         type: "middle"},
+                         {text: "SkyDrive",
+                         type: "small"},
+                         {text: "新民网",
+                         type: "middle"},
+                         {text: "应用商店",
+                         type: "middle"}*/
+                    ])
+                    vm.dragClass = ""
+                    vm.start = function() {
+                        avalon(this).addClass("current")
+                        vm.dragClass = "dragging"
+                    }
+                    vm.stop = function() {
+                        vm.dragClass = ""
+                        avalon(this).removeClass("current")
+                    }
+                    vm.drag = function(e, data) {
+                        var a = this["data-vm"]
+                        var dragger = {
+                            top: data.top,
+                            left: data.left,
+                            right: data.left + a.width,
+                            bottom: data.top + a.height
+                        }
+                        for (var i = 0, dropper; dropper = vm.apps[i++]; ) {
+                            if (dropper !== a && (!dropper.animate) && overlap(dropper, dragger)) {
+                                console.log(dropper)
+                            }
+                        }
+                    }
+                })
+                avalon.scan()
+            })
+
+        </script>
+        <style>
+            .apps{
+                position: relative;
+                border:10px solid #01B4D2;
+                height: 510px;
+            }
+            .apps.dragging app:not(.current){
+                -webkit-transform:scale(.92);
+                -moz-transform:scale(.92);
+                transform:scale(.92);
+            }
+            app{
+                display: inline-block;
+                position: absolute;
+                -webkit-transition:-webkit-transform .3s ease-in-out;
+                -moz-transition:-moz-transform .3s ease-in-out;
+                transition:transform .3s ease-in-out;
+                z-index:1;
+            }
+            app.current{
+                z-index:100;
+            }
+            app.small{
+                width:120px;
+                height:120px;
+            }
+            app.big{
+                width:250px;
+                height:250px;
+            }
+            app.middle{
+                width:250px;
+                height:120px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="apps" ms-controller="apps" id="metro" ms-class="{{dragClass}}"ms-each="apps" data-each-rendered="onLayout">
+            <app ms-draggable="apps" data-drag-start="start" data-drag-drag="drag" data-drag-stop="stop" ms-class="{{el.type}}" ms-data-vm="el" ms-css-background="getColor()" ms-css-top="top" ms-css-left="left">
+                {{el.text }}</app>
+        </div> 
+    </body>
+</html>
