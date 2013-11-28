@@ -9,10 +9,19 @@
         <script>
             require("avalon.draggable", function() {
 
-                function overlap(dropper, dragger) {
+                function overlap(dropper, dragger, intersects) {
                     // 求出两个方块的重叠面积是否超过50%
                     var size = Math.max(0, Math.min(dropper.bottom, dragger.bottom) - Math.max(dropper.top, dragger.top)) * Math.max(0, Math.min(dropper.right, dragger.right) - Math.max(dropper.left, dragger.left));
-                    return size / (dropper.width * dropper.height) > 0.6
+                    if (size) {
+                        intersects.push({
+                            dropper: dropper,
+                            size: size
+                        })
+                        return true
+                    }
+
+
+                    //return size / (dropper.width * dropper.height) > 0.6
                 }
                 function swipeDirection(x1, x2, y1, y2) {//判定鼠标的移动方向
                     return Math.abs(x1 - x2) >=
@@ -223,17 +232,23 @@
                         vm.dragClass = ""
                         avalon(this).removeClass("current")
                     }
+
                     vm.stop = function(e, data) {
                         var target = this["data-vm"]
-                        console.log("stop")
+                        old = false
+                        console.log("stop" + swap && swap.dir)
+                        //     return
                         if (swap) {
                             var dir = swap.dir
                             $(target.element).animate((dir === "left" || dir == "right" ?
                                     {left: swap.left} : {top: swap.top}), 300, function() {
                                 this.style.top = swap.top + "px"
                                 this.style.left = swap.left + "px"
+                                //    console.log([swap.top,swap.left])
                                 target.top = swap.top
                                 target.left = swap.left
+                                console.log("complete!!!!!!!!!!!!!")
+                                console.log([swap.top, swap.left])
                                 delete target._top
                                 delete target._left
                                 swap = false
@@ -246,58 +261,92 @@
                             delete target._left
                         }
                     }
-                    var l, t, swap
+                    var l, t, swap, old
                     vm.drag = function(e, data) {
                         var target = this["data-vm"]
-                           console.log(target.element.innerHTML+" "+target.target)
+//                           console.log(target.element.innerHTML+" "+target.target)
                         var dragger = {
                             top: data.top,
                             left: data.left,
                             right: data.left + target.width,
                             bottom: data.top + target.height
                         }
-                        console.log(JSON.stringify(dragger))
+                        //console.log(JSON.stringify(dragger))
+                        //因为我们拖动的块块最多可能与3个方块相交，其中两个是有效，我们再从它们最大的相交面积决定移动方向
+                        var intersects = []
                         for (var i = 0, el; el = vm.apps[i]; i++) {
-                            if (el !== target && (!el.animate) && overlap(el, dragger)) {
-                                (function(dropper, index) {
-                                 
-                                    dropper.animate = true
-                                    var dir = swipeDirection(data._startPageX, data.pageX, data._startPageY, data.pageY)
-                                    data._startPageX = data.pageX
-                                    data._startPageY = data.pageY
-                                    console.log(dir)
-                                    if (!swap || (swap.left !== dropper.left && swap.top !== dropper.top)) {
-                                        swap = {
-                                            left: dropper.left,
-                                            top: dropper.top,
-                                            dir: dir
-                                        }
-                                        var left = typeof target._left === "number" ? target._left : target.left
-                                        var top = typeof target._top === "number" ? target._top : target.top
-
-                                        $(dropper.element).animate(dir === "left" || dir == "right" ? {left: left - dropper.left} : {top: top - dropper.top}, 300, function() {
-                                            //  setTimeout(function(){
-                                            dropper.animate = false
-                                            //  },1000)
-                                            var d = dropper
-                                            var iii = model.apps.indexOf(target)
-                                            model.apps[index] = target
-                                            model.apps[iii] = dropper
-
-
-                                            dropper.element.style.top = target.top + "px"
-                                            dropper.element.style.left = target.left + "px"
-                                            target._top = dropper.top
-                                            target._left = dropper.left
-                                            dropper.top = target.top
-                                            dropper.left = target.left
-                                        })
-                                    }
-
-                                })(el, i)
-                                break;
+                            if (el !== target && (!el.animate) && overlap(el, dragger, intersects)) {
+                                if (intersects.length == 2) {
+                                    break
+                                }
                             }
                         }
+                        if (intersects.length) {
+
+                            var obj = intersects[0].dropper
+                            if (intersects.length === 2) {
+                                obj = intersects[0].size > intersects[1].size ? obj : intersects[1].dropper
+                            }
+                            //求出是左移右移上移下移
+                            var dir = ""
+                            if (obj.top === target.top) {//水平
+                                dir = obj.left > target.left ? "right" : "left"
+                            } else {
+                                dir = obj.top > target.top ? "down" : "up"
+                            }
+                            //求出是否移入目标的长或宽的0.45
+                            var ok = false
+                            switch (dir) {
+                                case "right":
+                                    ok = Math.abs(obj.left - dragger.right) / obj.width > 0.45
+                                    break;
+                                case "left":
+                                    //   console.log([obj.left, dragger.right])
+                                    ok = Math.abs(dragger.left - obj.right) / obj.width > 0.45
+                                    break;
+                                case "down":
+                                     ok = Math.abs(dragger.bottom - obj.top) / obj.height > 0.45
+                                    break
+                                case "up":
+                                
+                                    
+                                       ok = Math.abs(dragger.top - obj.bottom) / obj.height > 0.45
+                                    break;
+                            }
+                            if (ok && !obj.animate && obj !== old) {
+                                console.log("开始动画")
+                                old = obj
+                                obj.animate = true
+                                var left = typeof target._left === "number" ? target._left : target.left
+                                var top = typeof target._top === "number" ? target._top : target.top
+                                $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 300, function() {
+                                    //  setTimeout(function(){
+                                    obj.animate = false
+                                    //     console.log([top, left])
+                                    var index1 = model.apps.indexOf(target)
+                                    var index2 = model.apps.indexOf(obj)
+                                    model.apps[index1] = obj
+                                    model.apps[index2] = target
+
+                                    swap = {
+                                        top: obj.top,
+                                        left: obj.left,
+                                        dir: dir
+                                    }
+                                    obj.element.style.top = top + "px"
+                                    obj.element.style.left = left + "px"
+                                    target._top = obj.top
+                                    target._left = obj.left
+                                    obj.top = top
+                                    obj.left = left
+                                    console.log("===================")
+                                    console.log([top, left])
+                                })
+                            }
+
+                        }
+
+
                     }
                 })
                 avalon.scan()
