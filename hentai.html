@@ -5,14 +5,18 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
-
+        <script src="jquery.js"></script>
         <script>
             require("avalon.draggable", function() {
 
                 function overlap(dropper, dragger) {
-                    // 求出两个方块的重叠面积
+                    // 求出两个方块的重叠面积是否超过50%
                     var size = Math.max(0, Math.min(dropper.bottom, dragger.bottom) - Math.max(dropper.top, dragger.top)) * Math.max(0, Math.min(dropper.right, dragger.right) - Math.max(dropper.left, dragger.left));
                     return size / (dropper.width * dropper.height) > 0.5
+                }
+                function swipeDirection(x1, x2, y1, y2) {//判定鼠标的移动方向
+                    return Math.abs(x1 - x2) >=
+                            Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
                 }
 
                 avalon.define("apps", function(vm) {
@@ -25,11 +29,13 @@
                         return color;
                     }
                     vm.onLayout = function() {
+                        var children = this.children
+                        // console.log(children)
                         var maxRow = 3//每一列最多 多少行，用于配置
                         var row = 0 //当前APP所在的栏数
                         var col = 0 //当前APP所在的栏数
                         var left = 1
-                        for (var i = 0, el; el = vm.apps[i++]; ) {
+                        for (var i = 0, el; el = vm.apps[i]; i++) {
                             if (el.type == "small") {
                                 if (left) {
                                     el.top = 130 * row
@@ -84,7 +90,7 @@
                                     col++
                                 }
                             }
-                            el.skipArray = ["width", "height", "top", "left", "sleft", "right", "bottom", "animate"]
+                            el.element = children[i]
                             el.right = el.left + el.width
                             el.bottom = el.top + el.height
                             el.animate = false
@@ -97,16 +103,17 @@
                             el.sleft = 1
                             el.width = 0
                             el.height = 0
+                            el.top = 0
+                            el.right = 0
+                            el.element = {}
+                            el.$skipArray = ["width", "height", "sleft", "right", "bottom", "animate", "element"]
+
                         }
                         return array
                     }
                     vm.apps = fix([
                         {
-                            text: "yyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "1",
+                            text: "0",
                             type: "small"
                         },
                         {
@@ -118,16 +125,20 @@
                             type: "small"
                         },
                         {
-                            text: "666",
-                            type: "big"
-                        },
-                        {
-                            text: "666",
-                            type: "big"
-                        },
-                        {
                             text: "2",
                             type: "small"
+                        },
+                        {
+                            text: "yyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "666",
+                            type: "big"
+                        },
+                        {
+                            text: "666",
+                            type: "big"
                         },
                         {
                             text: "yyy",
@@ -205,21 +216,71 @@
                         avalon(this).addClass("current")
                         vm.dragClass = "dragging"
                     }
-                    vm.stop = function() {
+                    vm.beforeStop = function(e, data) {
+                        data.dragX = data.dragY = false
                         vm.dragClass = ""
                         avalon(this).removeClass("current")
                     }
+                    vm.stop = function(e, data) {
+                        //    console.log("stop")
+                        var target = this["data-vm"]
+                        if (swap) {
+                            console.log(data.top)
+                            console.log(JSON.stringify(swap))
+
+                            $(target.element).animate((swap.dir === "horizontal" ?
+                                    {
+                                        left: data.left - swap.left} :
+                                    {top: data.top - swap.top}), 300, function() {
+                                // console.log(swap)
+                                this.style.top = swap.top + "px"
+                                this.style.left = swap.left + "px"
+                                target.top = swap.top
+                                target.left = swap.left
+                                console.log(target)
+                                swap = false
+                            })
+                        } else {
+                            this.style.top = target.top + "px"
+                            this.style.left = target.left + "px"
+                            //  a.stop = a.stop
+                        }
+                    }
+                    var l, t, swap
                     vm.drag = function(e, data) {
-                        var a = this["data-vm"]
+                        var target = this["data-vm"]
                         var dragger = {
                             top: data.top,
                             left: data.left,
-                            right: data.left + a.width,
-                            bottom: data.top + a.height
+                            right: data.left + target.width,
+                            bottom: data.top + target.height
                         }
-                        for (var i = 0, dropper; dropper = vm.apps[i++]; ) {
-                            if (dropper !== a && (!dropper.animate) && overlap(dropper, dragger)) {
-                                console.log(dropper)
+                        for (var i = 0, el; el = vm.apps[i]; i++) {
+                            if (el !== target && (!el.animate) && overlap(el, dragger)) {
+                                (function(dropper) {
+                                    dropper.animate = true
+                                    var dir = swipeDirection(data.startPageX, data.pageX, data.startPageY, data.pageY)
+                                    var direction = dir === "left" || "right" ? "horizontal" : "vertical"
+                                    //   console.log(dir + " " + (target.left - dropper.left))
+                                    swap = {
+                                        left: dropper.left,
+                                        top: dropper.top,
+                                        dir: direction
+                                    }
+                                    console.log(JSON.stringify(swap))
+
+                                    $(dropper.element).animate(direction === "horizontal" ? {left: target.left - dropper.left} : {top: target.top - dropper.top}, 300, function() {
+                                        dropper.animate = false
+                                        dropper.element.style.top = target.top + "px"
+                                        dropper.element.style.left = target.left + "px"
+                                        dropper.top = target.top
+                                        dropper.left = target.left
+                                        console.log(dropper)
+                                        //   a.top = t
+                                        //   a.left = l
+                                    })
+                                })(el)
+
                             }
                         }
                     }
@@ -266,7 +327,7 @@
     </head>
     <body>
         <div class="apps" ms-controller="apps" id="metro" ms-class="{{dragClass}}"ms-each="apps" data-each-rendered="onLayout">
-            <app ms-draggable="apps" data-drag-start="start" data-drag-drag="drag" data-drag-stop="stop" ms-class="{{el.type}}" ms-data-vm="el" ms-css-background="getColor()" ms-css-top="top" ms-css-left="left">
+            <app ms-draggable="apps" data-drag-start="start" data-drag-drag="drag" data-drag-stop="stop" data-drag-before-stop="beforeStop" ms-class="{{el.type}}" ms-data-vm="el" ms-css-background="getColor()" ms-css-top="top" ms-css-left="left">
                 {{el.text }}</app>
         </div> 
     </body>

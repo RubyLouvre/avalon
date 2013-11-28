@@ -275,9 +275,9 @@ define(["avalon"], function(avalon) {
     //统一处理拖动的事件
     var lockTime = new Date - 0, minTime = document.querySelector ? 12 : 30
     avalon(document).bind(drag, function(e) {
-        var time = e.timeStamp - lockTime
+        var time = new Date - lockTime
         if (time > minTime) {//减少调用次数，防止卡死IE6-8
-            lockTime = e.timeStamp
+            lockTime = time
             var data = draggable.dragData
             if (data.started === true) {
                 //fix touchmove bug;  
