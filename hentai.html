@@ -12,14 +12,14 @@
                 function overlap(dropper, dragger) {
                     // 求出两个方块的重叠面积是否超过50%
                     var size = Math.max(0, Math.min(dropper.bottom, dragger.bottom) - Math.max(dropper.top, dragger.top)) * Math.max(0, Math.min(dropper.right, dragger.right) - Math.max(dropper.left, dragger.left));
-                    return size / (dropper.width * dropper.height) > 0.5
+                    return size / (dropper.width * dropper.height) > 0.6
                 }
                 function swipeDirection(x1, x2, y1, y2) {//判定鼠标的移动方向
                     return Math.abs(x1 - x2) >=
                             Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
                 }
 
-                avalon.define("apps", function(vm) {
+                var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
                         var letters = 'A523456789ABCDEF'.split('');
                         var color = '#';
@@ -212,75 +212,90 @@
                          type: "middle"}*/
                     ])
                     vm.dragClass = ""
-                    vm.start = function() {
+                    vm.start = function(e, data) {
                         avalon(this).addClass("current")
+                        data._startPageX = data.pageX
+                        data._startPageY = data.pageY
                         vm.dragClass = "dragging"
                     }
                     vm.beforeStop = function(e, data) {
-                        data.dragX = data.dragY = false
+                        //    data.dragX = data.dragY = false
                         vm.dragClass = ""
                         avalon(this).removeClass("current")
                     }
                     vm.stop = function(e, data) {
-                        //    console.log("stop")
                         var target = this["data-vm"]
+                        console.log("stop")
                         if (swap) {
-                            console.log(data.top)
-                            console.log(JSON.stringify(swap))
-
-                            $(target.element).animate((swap.dir === "horizontal" ?
-                                    {
-                                        left: data.left - swap.left} :
-                                    {top: data.top - swap.top}), 300, function() {
-                                // console.log(swap)
+                            var dir = swap.dir
+                            $(target.element).animate((dir === "left" || dir == "right" ?
+                                    {left: swap.left} : {top: swap.top}), 300, function() {
                                 this.style.top = swap.top + "px"
                                 this.style.left = swap.left + "px"
                                 target.top = swap.top
                                 target.left = swap.left
-                                console.log(target)
+                                delete target._top
+                                delete target._left
                                 swap = false
                             })
                         } else {
+
                             this.style.top = target.top + "px"
                             this.style.left = target.left + "px"
-                            //  a.stop = a.stop
+                            delete target._top
+                            delete target._left
                         }
                     }
                     var l, t, swap
                     vm.drag = function(e, data) {
                         var target = this["data-vm"]
+                           console.log(target.element.innerHTML+" "+target.target)
                         var dragger = {
                             top: data.top,
                             left: data.left,
                             right: data.left + target.width,
                             bottom: data.top + target.height
                         }
+                        console.log(JSON.stringify(dragger))
                         for (var i = 0, el; el = vm.apps[i]; i++) {
                             if (el !== target && (!el.animate) && overlap(el, dragger)) {
-                                (function(dropper) {
+                                (function(dropper, index) {
+                                 
                                     dropper.animate = true
-                                    var dir = swipeDirection(data.startPageX, data.pageX, data.startPageY, data.pageY)
-                                    var direction = dir === "left" || "right" ? "horizontal" : "vertical"
-                                    //   console.log(dir + " " + (target.left - dropper.left))
-                                    swap = {
-                                        left: dropper.left,
-                                        top: dropper.top,
-                                        dir: direction
+                                    var dir = swipeDirection(data._startPageX, data.pageX, data._startPageY, data.pageY)
+                                    data._startPageX = data.pageX
+                                    data._startPageY = data.pageY
+                                    console.log(dir)
+                                    if (!swap || (swap.left !== dropper.left && swap.top !== dropper.top)) {
+                                        swap = {
+                                            left: dropper.left,
+                                            top: dropper.top,
+                                            dir: dir
+                                        }
+                                        var left = typeof target._left === "number" ? target._left : target.left
+                                        var top = typeof target._top === "number" ? target._top : target.top
+
+                                        $(dropper.element).animate(dir === "left" || dir == "right" ? {left: left - dropper.left} : {top: top - dropper.top}, 300, function() {
+                                            //  setTimeout(function(){
+                                            dropper.animate = false
+                                            //  },1000)
+                                            var d = dropper
+                                            var iii = model.apps.indexOf(target)
+                                            model.apps[index] = target
+                                            model.apps[iii] = dropper
+
+
+                                            dropper.element.style.top = target.top + "px"
+                                            dropper.element.style.left = target.left + "px"
+                                            target._top = dropper.top
+                                            target._left = dropper.left
+                                            dropper.top = target.top
+                                            dropper.left = target.left
+                                        })
                                     }
-                                    console.log(JSON.stringify(swap))
 
-                                    $(dropper.element).animate(direction === "horizontal" ? {left: target.left - dropper.left} : {top: target.top - dropper.top}, 300, function() {
-                                        dropper.animate = false
-                                        dropper.element.style.top = target.top + "px"
-                                        dropper.element.style.left = target.left + "px"
-                                        dropper.top = target.top
-                                        dropper.left = target.left
-                                        console.log(dropper)
-                                        //   a.top = t
-                                        //   a.left = l
-                                    })
-                                })(el)
-
+                                })(el, i)
+                                break;
                             }
                         }
                     }
