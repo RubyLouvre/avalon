@@ -11,21 +11,18 @@
 
                 function overlap(dropper, dragger, intersects) {
                     // 求出两个方块的重叠面积是否超过50%
-                    var size = Math.max(0, Math.min(dropper.bottom, dragger.bottom) - Math.max(dropper.top, dragger.top)) * Math.max(0, Math.min(dropper.right, dragger.right) - Math.max(dropper.left, dragger.left));
-                    if (size) {
+                    var size = Math.max(0, Math.min(dropper.bottom - dropper.height * 0.1 / 2, dragger.bottom)
+                            - Math.max(dropper.top + dropper.height * 0.1 / 2, dragger.top)) * Math.max(0, Math.min(dropper.right - dropper.width * 0.1 / 2, dragger.right)
+                            - Math.max(dropper.left - dropper.width * 0.1 / 2, dragger.left));
+                    //     console.log("SIZE  " + size + "  "+dropper.width * dropper.height)
+                    if (size && (size / (dropper.width * dropper.height) > 0.9)) {
+                        //  console.log(size / (dropper.width * dropper.height))
                         intersects.push({
                             dropper: dropper,
                             size: size
                         })
                         return true
                     }
-
-
-                    //return size / (dropper.width * dropper.height) > 0.6
-                }
-                function swipeDirection(x1, x2, y1, y2) {//判定鼠标的移动方向
-                    return Math.abs(x1 - x2) >=
-                            Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
                 }
 
                 var model = avalon.define("apps", function(vm) {
@@ -60,6 +57,7 @@
                                 }
                                 el.width = 120
                                 el.height = 120
+                                el.size = 120 * 120 * 0.9
                                 if (row > maxRow) {
                                     row = 0
                                     col++
@@ -71,6 +69,7 @@
                                 }
                                 el.width = 250
                                 el.height = 120
+                                el.size = 250 * 120 * 0.9
                                 el.top = 130 * row
                                 el.left = col * 260 + left
                                 row++
@@ -86,6 +85,7 @@
                                 }
                                 el.width = 250
                                 el.height = 250
+                                el.size = 250 * 250 * 0.9
                                 if (row + 1 > maxRow) {
                                     row = 0
                                     col++
@@ -99,6 +99,7 @@
                                     col++
                                 }
                             }
+                            el.index = i
                             el.element = children[i]
                             el.right = el.left + el.width
                             el.bottom = el.top + el.height
@@ -115,6 +116,7 @@
                             el.top = 0
                             el.right = 0
                             el.element = {}
+                            el.size = 0
                             el.$skipArray = ["width", "height", "sleft", "right", "bottom", "animate", "element"]
 
                         }
@@ -201,24 +203,6 @@
                             text: "10",
                             type: "small"
                         }
-                        /* {text: "由件",
-                         type: "middle"},
-                         {text: "人脉",
-                         type: "middle"},
-                         {text: "桌面",
-                         type: "middle"},
-                         {text: "日历",
-                         type: "middle"},
-                         {text: "照片",
-                         type: "middle"},
-                         {text: "天气",
-                         type: "middle"},
-                         {text: "SkyDrive",
-                         type: "small"},
-                         {text: "新民网",
-                         type: "middle"},
-                         {text: "应用商店",
-                         type: "middle"}*/
                     ])
                     vm.dragClass = ""
                     vm.start = function(e, data) {
@@ -226,64 +210,80 @@
                         data._startPageX = data.pageX
                         data._startPageY = data.pageY
                         vm.dragClass = "dragging"
+
+                        // console.log(this["data-vm"].animate)
                     }
                     vm.beforeStop = function(e, data) {
                         //    data.dragX = data.dragY = false
                         vm.dragClass = ""
                         avalon(this).removeClass("current")
                     }
-
                     vm.stop = function(e, data) {
                         var target = this["data-vm"]
-                        old = false
-                        console.log("stop" + swap && swap.dir)
-                        //     return
+                        for (var i = 0, el; el = model.apps[i]; i++) {
+                            el.animate = false
+                        }
                         if (swap) {
                             var dir = swap.dir
-                            $(target.element).animate((dir === "left" || dir == "right" ?
+                            $(this).animate((dir === "left" || dir == "right" ?
                                     {left: swap.left} : {top: swap.top}), 300, function() {
                                 this.style.top = swap.top + "px"
                                 this.style.left = swap.left + "px"
                                 //    console.log([swap.top,swap.left])
                                 target.top = swap.top
                                 target.left = swap.left
-                                console.log("complete!!!!!!!!!!!!!")
-                                console.log([swap.top, swap.left])
                                 delete target._top
                                 delete target._left
                                 swap = false
                             })
                         } else {
-
                             this.style.top = target.top + "px"
                             this.style.left = target.left + "px"
                             delete target._top
                             delete target._left
+                            swap = false
                         }
                     }
-                    var l, t, swap, old
+                    var swap, animate
                     vm.drag = function(e, data) {
                         var target = this["data-vm"]
-//                           console.log(target.element.innerHTML+" "+target.target)
+                        target.animate = true
+                        if (animate)
+                            return
                         var dragger = {
                             top: data.top,
                             left: data.left,
                             right: data.left + target.width,
-                            bottom: data.top + target.height
+                            bottom: data.top + target.height,
+                            width: target.width,
+                            height: target.height
                         }
-                        //console.log(JSON.stringify(dragger))
+
                         //因为我们拖动的块块最多可能与3个方块相交，其中两个是有效，我们再从它们最大的相交面积决定移动方向
                         var intersects = []
-                        for (var i = 0, el; el = vm.apps[i]; i++) {
-                            if (el !== target && (!el.animate) && overlap(el, dragger, intersects)) {
-                                if (intersects.length == 2) {
-                                    break
+                        for (var i = 0, el; el = model.apps[i]; i++) {
+
+                            if (el !== target) {
+                                if (el.animate) {
+                                    // console.log("22222222222")
+                                    if (overlap(el, dragger, intersects) !== true) {
+                                        //    setTimeout(function(){
+                                        el.animate = false
+                                        //    },20)
+                                        console.log("解套了")
+                                    }
+                                } else {
+                                    if (overlap(el, dragger, intersects) === true) {
+                                        if (intersects.length == 2) {
+                                            break
+                                        }
+                                    }
                                 }
                             }
                         }
                         if (intersects.length) {
-
                             var obj = intersects[0].dropper
+                            console.log(obj)
                             if (intersects.length === 2) {
                                 obj = intersects[0].size > intersects[1].size ? obj : intersects[1].dropper
                             }
@@ -296,37 +296,48 @@
                             }
                             //求出是否移入目标的长或宽的0.45
                             var ok = false
+                            var oldWidth = obj.width * 0.9
+                            var oldWidthLess = obj.width * 0.1 / 2
+                            var oldHeightLess = obj.height * 0.1 / 2
+                            var targetWidthMore = obj.width * 0.05 / 2
+                            var targetHeightMore = obj.height * 0.05 / 2
+                            var ratio = 0.45
+                            //    console.log(ratio)
                             switch (dir) {
                                 case "right":
-                                    ok = Math.abs(obj.left - dragger.right) / obj.width > 0.45
+                                    ok = Math.abs(dragger.right + targetWidthMore - (obj.left + oldWidthLess)) / oldWidth > ratio
                                     break;
                                 case "left":
-                                    //   console.log([obj.left, dragger.right])
-                                    ok = Math.abs(dragger.left - obj.right) / obj.width > 0.45
+                                    ok = Math.abs(dragger.left - targetWidthMore - (obj.right - oldWidthLess)) / oldWidth > ratio
                                     break;
                                 case "down":
-                                     ok = Math.abs(dragger.bottom - obj.top) / obj.height > 0.45
+                                    ok = Math.abs(dragger.bottom + targetHeightMore - (obj.top + oldHeightLess)) / oldWidth > ratio
                                     break
                                 case "up":
-                                
-                                    
-                                       ok = Math.abs(dragger.top - obj.bottom) / obj.height > 0.45
+                                    ok = Math.abs(dragger.top - targetHeightMore - (obj.bottom - oldHeightLess)) / oldWidth > ratio
                                     break;
                             }
-                            if (ok && !obj.animate && obj !== old) {
-                                console.log("开始动画")
-                                old = obj
-                                obj.animate = true
+
+                            if (ok) {
+
+                                if (obj.animate) {
+                                    return
+                                }
+                                //     console.log("==========================")
+                                obj.animate = animate = true
                                 var left = typeof target._left === "number" ? target._left : target.left
                                 var top = typeof target._top === "number" ? target._top : target.top
-                                $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 300, function() {
-                                    //  setTimeout(function(){
-                                    obj.animate = false
-                                    //     console.log([top, left])
-                                    var index1 = model.apps.indexOf(target)
-                                    var index2 = model.apps.indexOf(obj)
-                                    model.apps[index1] = obj
-                                    model.apps[index2] = target
+                                //  console.log("让它移动到 " + left)
+                                console.log("开始动画")
+                                $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 50, function() {
+                                    console.log("结束动画")
+                                    //  old = obj
+                                    obj.animate = animate = false
+                                    var _index = target.index
+                                    target.index = obj.index
+                                    obj.index = _index
+
+
 
                                     swap = {
                                         top: obj.top,
@@ -339,8 +350,6 @@
                                     target._left = obj.left
                                     obj.top = top
                                     obj.left = left
-                                    console.log("===================")
-                                    console.log([top, left])
                                 })
                             }
 
@@ -360,9 +369,12 @@
                 height: 510px;
             }
             .apps.dragging app:not(.current){
-                -webkit-transform:scale(.92);
-                -moz-transform:scale(.92);
-                transform:scale(.92);
+                -webkit-transform:scale(.9);
+                -moz-transform:scale(.9);
+                transform:scale(.9);
+                /*                -webkit-transform-origin:0% 0%;
+                                -moz-transform-origin:0% 0%;
+                                transform-origin:0% 0%;*/
             }
             app{
                 display: inline-block;
@@ -374,6 +386,8 @@
             }
             app.current{
                 z-index:100;
+                opacity: 0.5;
+                transform:scale(1.1);
             }
             app.small{
                 width:120px;
@@ -391,7 +405,13 @@
     </head>
     <body>
         <div class="apps" ms-controller="apps" id="metro" ms-class="{{dragClass}}"ms-each="apps" data-each-rendered="onLayout">
-            <app ms-draggable="apps" data-drag-start="start" data-drag-drag="drag" data-drag-stop="stop" data-drag-before-stop="beforeStop" ms-class="{{el.type}}" ms-data-vm="el" ms-css-background="getColor()" ms-css-top="top" ms-css-left="left">
+            <app ms-draggable="apps" data-drag-start="start" 
+                 data-drag-drag="drag" data-drag-stop="stop" 
+                 data-drag-before-stop="beforeStop" 
+                 ms-class="{{el.type}}" 
+                 ms-data-vm="el" 
+                 ms-css-background="getColor()" 
+                 ms-css-top="top" ms-css-left="left">
                 {{el.text }}</app>
         </div> 
     </body>

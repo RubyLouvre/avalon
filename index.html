@@ -427,7 +427,7 @@
         </pre>
          <p>另外，这里有一些结合ms-data实现事件代理的技巧，<a href="https://github.com/RubyLouvre/avalon/issues/94">建议事件绑定接口支持事件代理，最简单就是table上可以绑定td的点击事件</a></p>
         <h3 id="top11">显示绑定(ms-visible)</h3>
-        <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，对于低版本的浏览器，它用的是style.display="none"进行隐藏，对于支持HTML5的浏览器，它是使用hidden属性来控制。因此它是优于其他MVVM的实现。</p>
+        <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，它是style.display="none"进行隐藏。</p>
         <br/>
         <h3 id="top12">插入绑定(ms-if)</h3>
         <p>这个功能是抄自knockout的，ms-if="bool",同样隐藏，但它是将元素移出DOM。这个功能直接影响到CSS :empty伪类的渲染结果，因此比较有用。</p>

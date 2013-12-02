@@ -195,6 +195,11 @@
         unbind: function(el, type, fn, phase) {
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
         },
+        fire: function(el, name) {
+            var event = DOC.createEvent('Event')
+            event.initEvent(name, true, true)
+            el.dispatchEvent(event)
+        },
         css: function(node, name, value) {
             if (node instanceof avalon) {
                 var that = node
@@ -3236,7 +3241,7 @@
             touchProxy = {}
         }
         var isWP = window.navigator.msPointerEnabled
-        
+
         function isPrimaryTouch(event) {
             if (isWP) {
                 return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
@@ -3260,9 +3265,7 @@
                 touchProxy.x1 = firstTouch.pageX
                 touchProxy.y1 = firstTouch.pageY
                 touchProxy.fire = function(name) {
-                    var event = document.createEvent('Event')
-                    event.initEvent(name, true, true)
-                    this.el.dispatchEvent(event)
+                    avalon.fire(this.el, name)
                 }
                 if (delta > 0 && delta <= 250) { //双击
                     touchProxy.isDoubleTap = true
@@ -3276,7 +3279,7 @@
                     return
                 }
                 cancelHold()
-               // e.preventDefault()
+                // e.preventDefault()
                 touchProxy.x2 = firstTouch.pageX
                 touchProxy.y2 = firstTouch.pageY
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
@@ -3306,7 +3309,7 @@
                             } else {
                                 touchTimeout = setTimeout(function() {
                                     touchProxy.fire('singletap')
-                                  //  touchProxy.fire("click")
+                                    //  touchProxy.fire("click")
                                     touchProxy = {}
                                 }, 250)
                             }
