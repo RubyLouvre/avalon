@@ -9,20 +9,21 @@
         <script>
             require("avalon.draggable", function() {
 
-                function overlap(dropper, dragger, intersects) {
-                    // 求出两个方块的重叠面积是否超过50%
-                    var size = Math.max(0, Math.min(dropper.bottom - dropper.height * 0.1 / 2, dragger.bottom)
-                            - Math.max(dropper.top + dropper.height * 0.1 / 2, dragger.top)) * Math.max(0, Math.min(dropper.right - dropper.width * 0.1 / 2, dragger.right)
-                            - Math.max(dropper.left - dropper.width * 0.1 / 2, dragger.left));
-                    //     console.log("SIZE  " + size + "  "+dropper.width * dropper.height)
-                    if (size && (size / (dropper.width * dropper.height) > 0.9)) {
-                        //  console.log(size / (dropper.width * dropper.height))
-                        intersects.push({
-                            dropper: dropper,
-                            size: size
-                        })
-                        return true
+                function enter(dropper, event) {
+                    if (isNaN(dropper.left)) {
+                        console.log("isNaN")
                     }
+                    // 如果光标能进入矩形的内部
+                    var left = dropper.left + dropper.height * 0.1 / 2
+                    var top = dropper.top + dropper.height * 0.1 / 2
+                    var right = dropper.left + dropper.width - dropper.height * 0.1 / 2
+                    var bottom = dropper.top + dropper.height - dropper.height * 0.1 / 2
+                    //console.log([left, top, right, bottom])
+                    if (event.pageX > left && event.pageX < right && event.pageY > top && event.pageY < bottom) {
+                        console.log([event.pageX, event.pageY, left, right, top, bottom])
+                        return dropper
+                    }
+
                 }
 
                 var model = avalon.define("apps", function(vm) {
@@ -35,29 +36,31 @@
                         return color;
                     }
                     vm.onLayout = function() {
+                        var coffset = $(this).offset()
+
                         var children = this.children
                         // console.log(children)
                         var maxRow = 3//每一列最多 多少行，用于配置
                         var row = 0 //当前APP所在的栏数
                         var col = 0 //当前APP所在的栏数
                         var left = 1
-                        for (var i = 0, el; el = vm.apps[i]; i++) {
+                        for (var i = 0, el; el = model.apps[i]; i++) {
                             if (el.type == "small") {
                                 if (left) {
-                                    el.top = 130 * row
-                                    el.left = col * 260 + left
+                                    el.top = 130 * row + coffset.top
+                                    el.left = col * 260 + left + coffset.left
                                     left = 0
                                     el.sleft = 1
                                 } else {
-                                    el.top = 130 * row
-                                    el.left = col * 260 + 130
+                                    el.top = 130 * row + coffset.top
+                                    el.left = col * 260 + 130 + coffset.left
                                     row++
                                     left = 1
                                     el.sleft = 0
                                 }
                                 el.width = 120
                                 el.height = 120
-                                el.size = 120 * 120 * 0.9
+
                                 if (row > maxRow) {
                                     row = 0
                                     col++
@@ -69,9 +72,8 @@
                                 }
                                 el.width = 250
                                 el.height = 120
-                                el.size = 250 * 120 * 0.9
-                                el.top = 130 * row
-                                el.left = col * 260 + left
+                                el.top = 130 * row + coffset.top
+                                el.left = col * 260 + left + coffset.left
                                 row++
                                 left = 1
                                 if (row > maxRow) {
@@ -85,13 +87,12 @@
                                 }
                                 el.width = 250
                                 el.height = 250
-                                el.size = 250 * 250 * 0.9
                                 if (row + 1 > maxRow) {
                                     row = 0
                                     col++
                                 }
-                                el.top = 130 * row
-                                el.left = col * 260 + left
+                                el.top = 130 * row + coffset.left
+                                el.left = col * 260 + left + coffset.left
                                 row += 2
                                 left = 1
                                 if (row >= maxRow) {
@@ -101,23 +102,19 @@
                             }
                             el.index = i
                             el.element = children[i]
-                            el.right = el.left + el.width
-                            el.bottom = el.top + el.height
                             el.animate = false
                         }
+                        //   console.log(model.apps)
                     }
                     function fix(array) {
                         for (var i = 0, el; el = array[i++]; ) {
                             el.top = 0
                             el.left = 0
-                            el.sleft = 1
                             el.width = 0
                             el.height = 0
-                            el.top = 0
-                            el.right = 0
+                            el.sleft = 1
                             el.element = {}
-                            el.size = 0
-                            el.$skipArray = ["width", "height", "sleft", "right", "bottom", "animate", "element"]
+                            el.$skipArray = ["width", "height", "sleft",  "animate", "element"]
 
                         }
                         return array
@@ -213,16 +210,15 @@
 
                         // console.log(this["data-vm"].animate)
                     }
-                    vm.beforeStop = function(e, data) {
+                    vm.beforeStop = function(event) {
                         //    data.dragX = data.dragY = false
                         vm.dragClass = ""
                         avalon(this).removeClass("current")
                     }
-                    vm.stop = function(e, data) {
+                    vm.stop = function(event) {
                         var target = this["data-vm"]
-                        for (var i = 0, el; el = model.apps[i]; i++) {
-                            el.animate = false
-                        }
+                        target.animate = false
+     
                         if (swap) {
                             var dir = swap.dir
                             $(this).animate((dir === "left" || dir == "right" ?
@@ -245,48 +241,19 @@
                         }
                     }
                     var swap, animate
-                    vm.drag = function(e, data) {
+                    vm.drag = function(event) {
                         var target = this["data-vm"]
                         target.animate = true
                         if (animate)
                             return
-                        var dragger = {
-                            top: data.top,
-                            left: data.left,
-                            right: data.left + target.width,
-                            bottom: data.top + target.height,
-                            width: target.width,
-                            height: target.height
-                        }
-
-                        //因为我们拖动的块块最多可能与3个方块相交，其中两个是有效，我们再从它们最大的相交面积决定移动方向
-                        var intersects = []
+                        var obj = false
                         for (var i = 0, el; el = model.apps[i]; i++) {
-
-                            if (el !== target) {
-                                if (el.animate) {
-                                    // console.log("22222222222")
-                                    if (overlap(el, dragger, intersects) !== true) {
-                                        //    setTimeout(function(){
-                                        el.animate = false
-                                        //    },20)
-                                        console.log("解套了")
-                                    }
-                                } else {
-                                    if (overlap(el, dragger, intersects) === true) {
-                                        if (intersects.length == 2) {
-                                            break
-                                        }
-                                    }
-                                }
+                            if (!el.animate && enter(el, event)) {
+                                obj = el
+                                break
                             }
                         }
-                        if (intersects.length) {
-                            var obj = intersects[0].dropper
-                            console.log(obj)
-                            if (intersects.length === 2) {
-                                obj = intersects[0].size > intersects[1].size ? obj : intersects[1].dropper
-                            }
+                        if (obj) {
                             //求出是左移右移上移下移
                             var dir = ""
                             if (obj.top === target.top) {//水平
@@ -294,67 +261,38 @@
                             } else {
                                 dir = obj.top > target.top ? "down" : "up"
                             }
-                            //求出是否移入目标的长或宽的0.45
-                            var ok = false
-                            var oldWidth = obj.width * 0.9
-                            var oldWidthLess = obj.width * 0.1 / 2
-                            var oldHeightLess = obj.height * 0.1 / 2
-                            var targetWidthMore = obj.width * 0.05 / 2
-                            var targetHeightMore = obj.height * 0.05 / 2
-                            var ratio = 0.45
-                            //    console.log(ratio)
-                            switch (dir) {
-                                case "right":
-                                    ok = Math.abs(dragger.right + targetWidthMore - (obj.left + oldWidthLess)) / oldWidth > ratio
-                                    break;
-                                case "left":
-                                    ok = Math.abs(dragger.left - targetWidthMore - (obj.right - oldWidthLess)) / oldWidth > ratio
-                                    break;
-                                case "down":
-                                    ok = Math.abs(dragger.bottom + targetHeightMore - (obj.top + oldHeightLess)) / oldWidth > ratio
-                                    break
-                                case "up":
-                                    ok = Math.abs(dragger.top - targetHeightMore - (obj.bottom - oldHeightLess)) / oldWidth > ratio
-                                    break;
+                            if (obj.animate) {
+                                return
                             }
+                            obj.animate = animate = true
+                            var left = typeof target._left === "number" ? target._left : target.left
+                            var top = typeof target._top === "number" ? target._top : target.top
+                            console.log("开始动画")
+                            $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 50, function() {
+                                console.log("结束动画")
+                                console.log(obj)
+                                animate = false
+                             //   setTimeout(function() {
+                                    obj.animate = false
+                              //  }, 300)
+                                var _index = target.index
+                                target.index = obj.index
+                                obj.index = _index
 
-                            if (ok) {
-
-                                if (obj.animate) {
-                                    return
+                                swap = {
+                                    top: obj.top,
+                                    left: obj.left,
+                                    dir: dir
                                 }
-                                //     console.log("==========================")
-                                obj.animate = animate = true
-                                var left = typeof target._left === "number" ? target._left : target.left
-                                var top = typeof target._top === "number" ? target._top : target.top
-                                //  console.log("让它移动到 " + left)
-                                console.log("开始动画")
-                                $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 50, function() {
-                                    console.log("结束动画")
-                                    //  old = obj
-                                    obj.animate = animate = false
-                                    var _index = target.index
-                                    target.index = obj.index
-                                    obj.index = _index
+                                obj.element.style.top = top + "px"
+                                obj.element.style.left = left + "px"
+                                target._top = obj.top
+                                target._left = obj.left
+                                obj.top = top
+                                obj.left = left
 
-
-
-                                    swap = {
-                                        top: obj.top,
-                                        left: obj.left,
-                                        dir: dir
-                                    }
-                                    obj.element.style.top = top + "px"
-                                    obj.element.style.left = left + "px"
-                                    target._top = obj.top
-                                    target._left = obj.left
-                                    obj.top = top
-                                    obj.left = left
-                                })
-                            }
-
+                            })
                         }
-
 
                     }
                 })
