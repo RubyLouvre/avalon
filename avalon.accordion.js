@@ -1,18 +1,20 @@
 define(["avalon"], function(avalon) {
-    var defaults = {
-        active: 0,
-        collapsible: false//当一个面板打开时，再点击它时会收起
+
+    var useTransition = window.TransitionEvent || window.WebKitTransitionEvent
+
+    var styleEl = document.getElementById("avalonStyle")
+    //http://stackoverflow.com/questions/5103283/does-internet-explorer-support-css-transitions
+    if (useTransition) {
+        styleEl.innerHTML += ".ui-transition{-webkit-transition:all 0.5s ease;-ms-transition:all 0.5s ease;transition:all 0.5s ease;}"
+        styleEl.innerHTML += ".ui-accordion-collapse {height:0px!important;padding:0px!important;}"
     }
-    avalon.ui.accordion = function(element, id, vmodels, opts) {
-        var $element = avalon(element),
+    var widget = avalon.ui.accordion = function(element, data, vmodels) {
+        var $element = avalon(element), options = data.accordionOptions, tabs = [],
+                tabpanels = [],
                 model, el
         var fragment = document.createDocumentFragment()
-        //处理配置
-        var options = avalon.mix({}, defaults, opts, $element.data())
-        $element.addClass(" ui-accordion ui-widget ui-helper-reset")
-        var el, tabs = [],
-                tabpanels = []
 
+        $element.addClass(" ui-accordion ui-widget ui-helper-reset")
         while (el = element.firstChild) {
             fragment.appendChild(el)
             if (el.tagName === "H3") {
@@ -27,12 +29,17 @@ define(["avalon"], function(avalon) {
                 tabs.push(el)
             }
             if (el.tagName === "DIV") {
-                el.setAttribute("ms-visible", "active == " + tabpanels.length)
+                avalon(el).addClass("ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom")
+                if (useTransition) {
+                    avalon(el).addClass("ui-transition")
+                    el.setAttribute("ms-class-ui-accordion-collapse", "active != " + tabpanels.length)
+                } else {
+                    el.setAttribute("ms-visible", "active == " + tabpanels.length)
+                }
                 tabpanels.push(el)
-                avalon(el).addClass(" ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom")
             }
         }
-        var model = avalon.define(id, function(vm) {
+        var model = avalon.define(data.accordionId, function(vm) {
             vm.active = options.active;
             vm.collapsible = options.collapsible
             vm.activate = function(e) {
@@ -54,10 +61,14 @@ define(["avalon"], function(avalon) {
             avalon.scan(element, [model].concat(vmodels))
         })
     }
+    widget.defaults = {
+        active: 0,
+        collapsible: false//当一个面板打开时，再点击它时会收起
+    }
     return avalon
 })
 /*
- <div  ms-ui="accordion" >
+ <div  ms-widget="accordion" >
  <h3>标题1</h3>
  <div>
  面板1

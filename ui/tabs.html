@@ -1,40 +1,158 @@
-
 <!DOCTYPE html>
-<html>
-    <head>
-        <title></title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="../avalon.js"></script>
-        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="../avalon.js"></script>
 
-        <script>
-            require("avalon.tabs", function() {
-                avalon.scan()
+    <script>
+
+        require("avalon.tabs,avalon.button,avalon.select,avalon.dialog, avalon.draggable", function () {
+            avalon.define('themetabs', function (vm) {
+                vm.$skipArray = ['tabs']
+                vm.theme = 'smoothness'
+                vm.tabChanged = function (e, tm) {
+                    vm.tabIndex = tm.active
+                }
+                vm.tabIndex = 0
+                vm.addTab = function () {
+                    avalon.vmodels.idialog.toggle = true
+
+                }
+
+                vm.$selectOpts = {
+                    onChange: function () {
+                        vm.theme = this.value;
+                    }
+                }
+
+                vm.tabs = {
+                    activate: vm.tabChanged,
+                    callback: function (wm) {
+                        vm.tabIndex = wm.active
+                    }
+
+                }
             })
-        </script>
+            avalon.define('tabsDialog', function (vm) {
+                vm.newTabType = 'content'
+                vm.newTabTitle = 'New tab'
+                vm.newTabContent = 'content'
+                vm.$tabTypeSelectOpts = {
+                    //$selectOpts1: {
+                    onChange: function () {
+                        vm.newTabType = this.value
+                        if(this.value == 'include'){
+                            vm.newTabContent='tabsInclude1.html'
+                        }
+                    }
+                    // }
+                }
+                vm.addTabOk = function () {
+                    avalon.vmodels.tabsTest.add({
+                        title: vm.newTabTitle,
+                        content: vm.newTabContent,
+                        contentType: vm.newTabType,
+                        actived: true,
+                        disabled: false
+                    })
+                    avalon.vmodels.idialog.toggle = false
+                }
+            })
+            //tabsInclude1.html要用的vm定义在这里，也可以定义在tabsInclude1.html中
+            var qinerg = avalon.define("qinerg", function (vm) {
+                vm.sex = "";
+                vm.lang = []
+                vm.langtext = ""
+            });
+            qinerg.lang.$watch("length", function () {
+                qinerg.langtext = qinerg.lang.join(",")
+            })
 
-    </head>
-    <body>
-        <div id="tabs" ms-ui="tabs" data-removable="true" style="width:60%;">
-            <ul role="tablist" >
-                <li><a href="#">Nunc tincidunt</a></li>
-                <li><a href="#">Proin dolor</a></li>
-                <li><a href="#">Aenean lacinia</a></li>
-            </ul>
+            avalon.scan()
+        })
+    </script>
 
-            <div  style="clear:left;">
-                <p><strong>第一个面板的标题</strong></p>
-                <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
-            </div>
-            <div>
-                <p><strong>第二个面板的标题</strong></p>
-                <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
-            </div>
-            <div>
-                <p><strong>第三个面板的标题</strong></p>
-                <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
-            </div>
+</head>
+<body ms-controller="themetabs">
+<div>
+    <div title="添加新tab" ms-widget="dialog,idialog" data-dialog-modal="true" data-dialog-parent="body">
+        <div ms-controller="tabsDialog">
+            tab标题：<input ms-duplex="newTabTitle"/><br/>
+            tab类型：<select ms-widget="select,select2,$tabTypeSelectOpts">
+            <option value="content">HTML内容</option>
+            <option value="include">Include Source</option>
+        </select>
+            tab内容：<input ms-duplex="newTabContent"/><br/>
+            <button ms-widget="button" ms-click="addTabOk">确定</button>
         </div>
+    </div>
+    <select ms-duplex="theme" ms-widget="select,select1,$selectOpts">
+        <option value='start'>start</option>
+        <option value='smoothness'>smoothness</option>
+        <option value='flick'>flick</option>
+        <option value='sunny'>sunny</option>
+        <option value='excite-bike'>excite bike</option>
+        <option value='black-tie'>black tie</option>
+        <option value='trontastic'>trontastic</option>
+        <option value='swanky-purse'>swanky purse</option>
+        <option value='le-frog'>le frog</option>
+        <option value='blitzer'>blitzer</option>
+        <option value='dot-luv'>dot luv</option>
+        <option value='mint-choc'>mint-choc</option>
+        <option value='hot-sneaks'>hot sneaks</option>
+        <option value='south-street'> south street</option>
+        <option value='humanity'>humanity</option>
+        <option value='vader'>vader</option>
+        <option value='eggplant'>eggplant</option>
+        <option value='cupertino'>cupertino</option>
+        <option value='overcast'>overcast</option>
+    </select>你喜欢的皮肤
+    <button ms-widget="button" ms-click="addTab">增加新tab</button>
+    激活的tab index:{{tabIndex}}
+    <link rel="stylesheet" ms-href="http://code.jquery.com/ui/1.10.3/themes/{{theme}}/jquery-ui.css"/>
 
-    </body>
+
+    <div id="tabs" ms-widget="tabs,tabsTest,tabs" data-tabs-collapsible="true" data-tabs-removable="true"
+         data-tabs-active="0" data-tabs-event="mouseover" style="width:60%;">
+        <ul>
+            <li data-removable="false" data-toolip-text="">Nunc tincidunt</li>
+            <li data-disabled="true">Proin dolor</li>
+            <li>Aenean lacinia</li>
+        </ul>
+
+        <div style="clear:left;">
+            <p><strong>第一个面板的标题</strong></p>
+
+            <p><b>Proin elit arcu</b>, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec
+                sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem.
+                Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend
+                adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut
+                et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc
+                tristique tempus lectus.</p>
+        </div>
+        <div>
+            <p><strong>第二个面板的标题</strong></p>
+
+            <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id
+                nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie
+                lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula
+                suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur
+                ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque
+                convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare
+                leo nisi vel felis. Mauris consectetur tortor et purus.</p>
+        </div>
+        <div>
+            <p><strong>第三个面板的标题</strong></p>
+
+            <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla
+                facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti.
+                Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio.
+                Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat
+                porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas
+                commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+        </div>
+    </div>
+</div>
+</body>
 </html>

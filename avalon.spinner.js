@@ -1,27 +1,18 @@
-define(["avalon","avalon.button"], function(avalon) {
-    var defaults = {
-        value: 0,
-        min: 1 << 31,
-        max: Infinity,
-        step: 1
-    }
-    avalon.ui.spinner = function(element, id, vmodels, opts) {
-        var $element = avalon(element),
+define(["avalon", "avalon.button"], function(avalon) {
+
+    var widget = avalon.ui.spinner = function(element, data, vmodels) {
+        var $element = avalon(element),options = data.spinnerOptions,
                 model, el
         var fragment = document.createDocumentFragment()
-        //处理配置
-        var options = avalon.mix({}, defaults, opts, $element.data())
         //这才是真正的UI
         var span = document.createElement("span")
         span.className = "ui-spinner ui-widget ui-widget-content ui-corner-all"
-
-        
-        span.innerHTML = '<a class="ui-spinner-button ui-spinner-up ui-corner-tr" ms-ui="button" data-corner-class="false"  data-primary="ui-icon ui-icon-triangle-1-n">&#9650;</a>'+
-                         '<a class="ui-spinner-button ui-spinner-down ui-corner-br" ms-ui="button"  data-corner-class="false" data-primary="ui-icon ui-icon-triangle-1-s" >&#9660;</a>'
+        span.innerHTML = '<a class="ui-spinner-button ui-spinner-up ui-corner-tr" ms-widget="button" data-button-corner-class="false"  data-button-primary="ui-icon ui-icon-triangle-1-n">&#9650;</a>' +
+                '<a class="ui-spinner-button ui-spinner-down ui-corner-br" ms-widget="button"  data-button-corner-class="false" data-button-primary="ui-icon ui-icon-triangle-1-s" >&#9660;</a>'
         $element.addClass("ui-spinner-input")
 
         element.autocomplete = "off"
-        model = avalon.define(id, function(vm) {
+        model = avalon.define(data.spinnerId, function(vm) {
             vm.min = options.min
             avalon.mix(vm, options)
             vm.addNumber = function(e) {
@@ -40,7 +31,6 @@ define(["avalon","avalon.button"], function(avalon) {
             }
         })
         avalon.nextTick(function() {
-
             element.parentNode.insertBefore(span, element.nextSibling)
             fragment.appendChild(element)
             var buttons = []
@@ -50,7 +40,7 @@ define(["avalon","avalon.button"], function(avalon) {
                 }
                 fragment.appendChild(el)
             }
-            element.setAttribute("ms-value", "value")
+            element.setAttribute("ms-attr-value", "value")
             element = span//偷天换日
 
             buttons[0].setAttribute("ms-click", "addNumber")
@@ -60,8 +50,14 @@ define(["avalon","avalon.button"], function(avalon) {
         })
         return model
     }
+    widget.defaults = {
+        value: 0,
+        min: 1 << 31,
+        max: Infinity,
+        step: 1
+    }
     return avalon
 })
 /*
-  <input ms-ui="spinner" name="value" />
+ <input ms-ui="spinner" name="value" />
  */

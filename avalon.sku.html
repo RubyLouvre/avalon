@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            #sku .cell{
+                display:inline-block;
+                padding:2px 5px;
+                border:2px solid #ccc;
+                color:#000;
+                cursor:pointer;
+                height: 18px;
+                line-height: 18px;
+            }
+            #sku .cell.checked{
+                border-color:red!important;
+                color:red!important;
+            }
+            #sku .cell.disabled{
+                border:2px dashed #d6d6d6;
+                color:#cdcdcd;
+                cursor:not-allowed;
+            }
+            #sku div{
+                margin-top:10px;
+            }
+        </style>
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define("sku", function(vm) {
+                vm.versions = [
+                    {value: 'cn', "text": "中国大陆", disabled: false,  command: "colors:lightgreen;"},
+                    {value: "hk", text: "港澳台", checked: false,  command: "colors:lightyellow,black,blue,gray,yellow,white"},
+                    {value: "eu", text: "欧洲", checked: false,  command: "colors:lightyellow,blue,gray,yellow,red,lightgreen"}
+                ]
+                vm.versionsChecked = ""
+                vm.select = function(el, name) {
+                    if (el.disabled)
+                        return
+                    var command = el.command
+                    model[name + "Checked"] = el.value
+                    command.split(";").forEach(function(str) {
+                        var arr = str.split(":")
+                        var check = arr[1]
+                        var array = model[arr[0]] || []
+                        array.forEach(function(elem) {
+                            elem.disabled = !!(check && check.indexOf(elem.value) !== -1)
+                        })
+                    })
+
+
+                }
+                vm.colorsChecked = ""
+                vm.colors = [
+                    {value: 'lightyellow', "text": "浅黄色", disabled: false, command: "versions:hk,eu"},
+                    {value: "black", text: "黑色", disabled: false, command: "versions:hk"},
+                    {value: "blue", text: "蓝色", disabled: false, command: "versions:hk,eu"},
+                    {value: "gray", text: "浅灰色", disabled: false, command: "versions:hk,eu"},
+                    {value: "yellow", text: "黄色", disabled: false, command: "versions:hk,eu"},
+                    {value: "white", text: "白色", disabled: false, command: "versions:hk"},
+                    {value: "lightgreen", text: "浅绿色", disabled: false, command: "versions:cn,eu;combo:set2,set3"},
+                    {value: "red", text: "红色", disabled: false, command: "versions:eu"}
+
+                ]
+                vm.comboChecked = ""
+                vm.combo = [
+                    {value: 'standard', "text": "官方标配", disabled: false,command: ""},
+                    {value: "set2", text: "套餐二", disabled: false,command: "colors:lightgreen"},
+                    {value: "set3", text: "套餐三", disabled: false,command: ""}
+                ]
+                vm.memoryChecked = "32g"
+                vm.memory = [{value: "32g", text: "32G", disabled: false,command: ""}]
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="sku" id="sku">
+            <div>
+                版本：
+                <span ms-each-el="versions">
+                    <span class="cell" ms-click="select(el, 'versions')"  ms-class-disabled='el.disabled' ms-class-checked='versionsChecked == el.value'>{{el.text}}</span>
+                </span>
+            </div>
+            <div>
+                机身颜色：
+                <span ms-each-el="colors">
+                    <span class="cell" ms-click="select(el, 'colors')" ms-class-disabled='el.disabled' ms-class-checked='colorsChecked == el.value'>{{el.text}}</span>
+                </span>
+            </div>
+            <div>
+                手机套餐：
+                <span ms-each-el="combo">
+                    <span class="cell"  ms-click="select(el, 'combo')" ms-class-disabled='el.disabled'  ms-class-checked='comboChecked == el.value'>{{el.text}}</span>
+                </span>
+            </div>
+            <div>
+                机身内存：
+                <span ms-each-el="memory">
+                    <span class="cell" ms-click="select(el, 'memory')" ms-class-disabled='el.disabled' ms-class-checked='memoryChecked == el.value'>{{el.text}}</span>
+                </span>
+            </div>
+        </div>
+    </body>
+</html>

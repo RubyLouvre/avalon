@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <script src="../avalon.require.text.js"></script>
+        <!--        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css">-->
+        <link rel="stylesheet" href="datepicker/jquery-ui-1.10.1.css">
+
+        <script>
+            require("avalon.datepicker", function() {
+                avalon.define("theme", function(vm) {
+                    //http://designify.me/web-design/7-jquery-datepicker-skins/
+                    vm.skin = "cangas"
+                    vm.options = ["cangas", "latoja", "lugo", "melon", "nigran", "santiago", "siena", "vigo"]
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body ms-controller="theme" ms-class="ll-skin-{{skin}}" >
+        <div >
+            <select ms-each-el="options" ms-duplex="skin">
+                <option >{{el}}</option>
+            </select>
+            <link rel="stylesheet"  ms-href="datepicker/{{skin}}.datepicker.css">
+        </div>
+        <input ms-widget="datepicker,aaa" style="position: relative;">
+
+        <ul>
+            <li>http://www.michaelvanderheeren.be/archives/382</li>
+            <li>http://taitems.github.io/Aristo-jQuery-UI-Theme/</li>
+            <li>http://vanderlee.github.io/Afterdark/</li>
+        </ul>
+        <div ms-controller="aaa">
+            <div><input type="checkbox" ms-duplex-radio="changeMonth" />可选择月份</div>
+            <div><input type="checkbox" ms-duplex-radio="changeYear" />可选择年份</div>
+            <div><input type="checkbox" ms-duplex-radio="showButtonPanel" />显示按钮面板</div>
+            <div><input type="checkbox" ms-duplex-radio="showOtherMonths" />显示其他月份的日期</div>
+        </div>
+
+    </body>
+</html>

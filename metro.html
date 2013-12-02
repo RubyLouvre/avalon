@@ -5,41 +5,40 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" type="text/javascript"></script>
+      
         <link href="metro.css" media="all" rel="stylesheet" type="text/css" />
 
         <script>
+
+
             avalon.require("avalon.draggable", function() {
-                function isNext(A, B) {//判定A是否在B的前面
-                    var next = A.nextElementSibling
-                    while (next !== null) {
-                        if (next === B) {
-                            return true
-                        } else {
-                            next = next.nextElementSibling
-                        }
-                    }
-                }
+
+
                 function getSize(target) {
                     return target.className.match(/app_(\w+)/)[1]
                 }
                 function isApp(target) {
-                    // console.log(target.tagName)
                     return target.tagName.toLowerCase() === "app"
                 }
                 function resetLayout(parent) {
-                    var array = parent.children
+                    var array = avalon.slice(parent.children)
                     var height = 0, column = 0, changeRow = true
                     for (var i = 0, el; el = array[i++]; ) {
                         var size = getSize(el)
-                        console.log(size)
+                        //    avalon.log(size)
                         if (size === "small") {
                             height += 170
                             el.left = true
+                            el.classList.add("noPaddingRight")
                             var next = array[i]
                             if (next && getSize(next) === "small") {
                                 next.left = false
-                                console.log("small siblings")
+                                next.classList.remove("noPaddingRight")
+                                //   avalon.log("small siblings")
                                 i++
+                            } else {
+
+                                el.insertAdjacentHTML("afterEnd", "<app class='placehoder  app_small '><b>placehoder</b></app>")
                             }
                         } else if (size === "middle") {
                             height += 170
@@ -49,19 +48,20 @@
                             el.left = false
                             if (height >= 510) {
                                 column++
-                                console.log(height + "==============big")
+                                avalon.log(height + "==============big")
                                 if (height > 510) {
-                                    console.log("另起一行")
+                                    el.insertAdjacentHTML("beforeBegin", "<app class='placehoder app_middle '><b>placehoder</b></app>")
+                                    avalon.log("另起一行")
                                     height = 340
                                 } else {
-                                    console.log(" 归零")
+                                    avalon.log(" 归零")
                                     height = 0
                                 }
                             }
 
                         }
                         if (height >= 510) {
-                            console.log(height + "============累加")
+                            //  avalon.log(height + "============累加")
                             height = 0
                             column++
                         }
@@ -69,81 +69,92 @@
                     if (height > 0) {
                         column++
                     }
-                    console.log("当前列数为 " + column)
-                    parent.style.width = (column) * 340 + 20 + "px"
+                    //  avalon.log("当前列数为 " + column)
+                    parent.style.width = (column) * 360 + "px"
                 }
                 var parent = document.querySelector(".columns");
+                var lastTime
 
-                avalon.define("xxx", function(vm) {
-                    vm.array = ["middle", "small", "small", "small", "small", "small", "small", "big", "small", "small", "big", "big", "small", "small"]
+                function swipeDirection(x1, x2, y1, y2) {
+                    return Math.abs(x1 - x2) >=
+                            Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
+                }
+
+                var model = avalon.define("metro", function(vm) {
+                    vm.array = ["middle", "small", "small", "small", "small", "small", "small", "big", "small", "small", "big", "big", "middle", "small", "small"]
+
+                    vm.getColor = function() {
+                        var letters = 'A523456789ABCDEF'.split('');
+                        var color = '#';
+                        for (var i = 0; i < 6; i++) {
+                            color += letters[Math.round(Math.random() * 15)];
+                        }
+                        return color;
+                    }
+                    vm.current = ""
                     vm.handle = function(e) {
                         var el = e.target
-                        if (/app_head/.test(el.className)) {
+                        if (/apphead/.test(el.className)) {
                             return el
                         }
                     }
+                    vm.$map = []
+
                     vm.stop = avalon.noop
-                    vm.beforeStop = function(e, data) {
-                        data.dragX = false
-                        data.dragY = false
-                        var el = data.$element
-                        var width = el.width()
-                        var height = el.height()
-
-                        if (width > 150) {
-                            width /= 2
-                        }
-                        if (height > 150) {
-                            height /= 2
-                        }
-                        function getTarget(data, x, y) {
-                            var target = document.elementFromPoint(data.pageX + x, data.pageY + y)
-                            while (target && target.tagName != "APP") {
-                                target = target.parentNode;
+                    vm.start = function(e, data) {
+                        model.$map = []
+                        Array.prototype.forEach.call(document.querySelectorAll(".columns app"), function(node) {
+                            if (node !== data.element) {
+                                var $elem = avalon(node)
+                                var offset = $elem.offset()
+                                model.$map.push({
+                                    top: offset.top,
+                                    left: offset.left,
+                                    right: offset.left + $elem.width(),
+                                    bottom: offset.top + $elem.height(),
+                                    node: node
+                                })
                             }
-
-                            return target
-                        }
-
-                        setTimeout(function() {
-
-                            var target = getTarget(data, 10, 10)
-                            var msg = "在其左上角找到，"
-                            var swap = false
-                            if (!target || !isApp(target)) {
-                                target = getTarget(data, -150, 0)
-                                if (target && target.left) {
-                                    target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                                    swap = true
-                                    console.log("在左边找到，插入到" + target.className + "后面")
-                                } else {
-                                    target = null
-                                }
-
-                            }
-                            if (!target || !isApp(target)) {
-                                target = getTarget(data, 150, -150)
-                                if (target) {
-                                    target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                                    swap = true
-                                    console.log("在右上边找到，插入到" + target.className + "后面")
-                                }
-                            }
-
-                            if (target && isApp(target)) {
-                                if (!swap) {
-                                    var p = ""
-                                    if (isNext(data.element, target)) {
-                                        p = "后面"
-                                        target.parentNode.insertBefore(data.element, target.nextElementSibling)
-                                    } else {
-                                        p = "前面"
-                                        target.parentNode.insertBefore(data.element, target)
+                        })
+                    }
+                    vm.drag = function(e) {
+                        var mouseX = e.pageX, mouseY = e.pageY
+                        if (!lastTime || Date.now() - lastTime > 30) {
+                            lastTime = Date.now()
+                            for (var i = 0, obj; obj = model.$map[i++]; ) {
+                                if (mouseX > obj.left && mouseX < obj.right && mouseY > obj.top && mouseY < obj.bottom) {
+                                    var node = obj.node
+                                    var old = document.querySelector(".hover")
+                                    if (old != node) {
+                                        old && old.classList.remove("hover")
+                                        node.classList.add("hover")
                                     }
-                                    console.log(msg + "插入到" + target.className + p)
                                 }
                             }
-                            avalon(data.element).css("display", "inline-block").css("position", "static")
+                        }
+
+                    }
+                    vm.beforeStop = function(e, data) {
+                        data.dragX =  data.dragY = false//禁止在stop自动拖拽到最终位置
+                        model.$map = []
+
+                        var dir = swipeDirection(data.startPageX, data.pageX, data.startPageY, data.pageY)
+                        setTimeout(function() {
+                            var el = document.querySelector(".hover")
+                            if (el) {
+                                if (/placeholder/.test(el.className)) {
+                                    el.parentNode.replaceChild(data.element, el)
+                                } else if (dir == "left" || dir == "up") {
+                                    el.parentNode.insertBefore(data.element, el || null)
+
+                                } else {
+                                    el.parentNode.insertBefore(data.element, el.nextElementSibling || null)
+                                }
+                                el.classList.remove("hover")
+                            }
+                            Array.prototype.forEach.call(document.querySelectorAll("app.placehoder"), function(node) {
+                                node.parentNode.removeChild(node)
+                            })
                             resetLayout(parent)
                         }, 300)
                     }
@@ -158,9 +169,14 @@
 
         </script>
     </head>
-    <body ms-controller="xxx">
+    <body ms-controller="metro">
         <div class="columns"  ms-each-el="array">
-            <app  ms-draggable="stop" data-before-stop="beforeStop" data-ghosting="true" data-handle="handle" ms-class="app_{{el}}" ms-class-="app{{$index}}"><div class="app_head">APP {{$index}}</div></app>
+            <app  ms-draggable="stop" data-start="start" data-drag="drag"  ms-attr-appindex="$index" data-before-stop="beforeStop" data-ghosting="true" data-handle="handle" ms-class="app_{{el}}" ms-class-="app{{$index}}">
+                <div class="appbody" ms-css-background="getColor()">
+                    <div class="apphead">APP {{$index}}</div>
+                </div>
+            </app>
         </div>
+        <div style="position: fixed;bottom: 20px">磁贴标题可拖动&nbsp;<a href="">返回</a></div>
     </body>
 </html>
