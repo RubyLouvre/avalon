@@ -8,7 +8,7 @@
         <script src="jquery.js"></script>
         <script>
             require("avalon.draggable", function() {
-                var check = false, swap = false, animate = false
+                var check = false, lastSwap = false, animate = false
 
 
                 function enter(dropper, event) {
@@ -221,7 +221,7 @@
                         model.dragClass = "dragging"
 
                         if (check) {
-                            console.log(model.apps)
+                            //  console.log(model.apps)
                         }
                     }
                     vm.beforeStop = function(event) {
@@ -233,31 +233,28 @@
                     vm.stop = function(event) {
                         var drag = this["data-vm"]
                         drag.animate = false
-                        if (swap) {
-                            var dir = swap.dir
+                        return
+                        if (lastSwap) {
+                            var dir = lastSwap.dir
                             $(this).animate((dir === "left" || dir == "right" ?
-                                    {left: swap.left} : {top: swap.top}), 300, function() {
+                                    {left: lastSwap.left} : {top: lastSwap.top}), 300, function() {
 
-                                this.style.top = swap.top + "px"
-                                this.style.left = swap.left + "px"
-                                drag.top = swap.top
-                                drag.left = swap.left
-                                delete drag._top
-                                delete drag._left
-                                swap = false
+                                this.style.top = lastSwap.top + "px"
+                                this.style.left = lastSwap.left + "px"
+                                drag.top = lastSwap.top
+                                drag.left = lastSwap.left
+                                lastSwap = false
                             })
                         } else {
                             this.style.top = drag.top + "px"
                             this.style.left = drag.left + "px"
-                            delete drag._top
-                            delete drag._left
-                            swap = false
+                            lastSwap = false
                         }
                     }
                     vm.drag = function(event) {
                         var drag = this["data-vm"]
                         drag.animate = true
-           
+
                         if (animate)
                             return
                         var drop = false
@@ -282,91 +279,130 @@
                             drop.animate = animate = true
                             var dropIndex = model.apps.indexOf(drop)
                             var dragIndex = model.apps.indexOf(drag)
-                            var next = model.apps[dropIndex + 1]
-                            var interval = Math.abs(dropIndex - dragIndex)
-
-                            //  avalon.Array._splice(model.apps, drag)
+                            var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
+                            var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
+                            var swapArray = []
+                            for (var i = startIndex; i <= endIndex; i++) {
+                                var app = model.apps[i]
+                                swapArray.push({
+                                    top: app.top,
+                                    left: app.left,
+                                    sleft: app.sleft,
+                                    index: app.index,
+                                    app: app
+                                })
+                            }
+                            console.log("==================================")
+                            lastSwap = {
+                                top: drop.top,
+                                left: drop.left,
+                                dir: dir
+                            }
                             model.apps._splice(dragIndex, 1)
                             model.apps._splice(dropIndex, 0, drag)
-                            console.log([dropIndex, dragIndex])
-//                            if (aa === 1 && drop.type == "small" && drag.type === "small") {
-//                                console.log("开始动画")
-//                                $(drop.element).animate(dir === "left" || dir == "right" ?
-//                                        {left: (drag._left || drag.left)} :
-//                                        {top: (drag._top | drag.top)},
-//                                50, function() {
-//                                    swapDropAndDrag(drag, drop, dir)
-//                                })
-//                            } else {
-                            if (drop.type === "small") {
-                                //如果两个都是小的，从下往上
-                                if (drop.sleft === 1) {
-                                    drop.animate = next.animate = true
-                                    //它正上面的元素往右边移动
-                                    swap = {
-                                        top: drop.top,
-                                        left: drop.left,
-                                        dir: dir
+                            var swapLength = swapArray.length
+                            for (var i = 0, swapLength = swapArray.length; i < swapLength; i++) {
+                                (function(dragger, dropper, index) {
+                                    var previous = swapArray[index - 1] ? swapArray[index - 1] : swapArray[swapLength - 1]
+                                    var next = swapArray[index + 1] ? swapArray[index + 1] : swapArray[0]
+                                    dropper.app.animate = true;
+                                    if (dropper.app !== dragger) {
+                                        if (dropper.top == previous.top) {
+                                            //向左向右
+                                            console.log("up")
+                                            $(dropper.app.element).animate({left: previous.left}, 1000, function() {
+                                                dropper.app.animate = false
+                                            })
+                                        } else {
+                                            //如果不在同一行，将当前元素复制一份
+                                            var moveEl = dropper.app.element
+                                            var wrapper = $("<div/>").css({
+                                                top: dir == "down" ? previous.top : next.top,
+                                                left: dir == "down" ? previous.left : next.top,
+                                                width: dropper.app.width,
+                                                height: dropper.app.height,
+                                                overflow: "hidden",
+                                                position: "absolute",
+                                           //     border: "1px solid red",
+                                                "z-index": 2
+                                            }).insertBefore(moveEl).append(moveEl)
+
+                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper)
+
+                                            var cloneDropper = cloneWrapper.find("app").css({
+                                                top: 0,
+                                                left: 0
+                                            })
+                                            if (dir == "down") {
+                                                //留在原来的位置，宽度收缩到0
+                                                cloneWrapper.css({
+                                                    top: dropper.top,
+                                                    left: dropper.left
+                                                }).animate({width: 0}, 1000, function() {
+                                                    cloneWrapper.remove()
+                                                })
+                                                //在上一行设置一个wrapper，以进行slideLeft效果，结束它替换
+                                                $(moveEl).css({left: dropper.app.width, top: 0})
+                                                        .animate({left: 0}, 1000, function() {
+                                                    $(moveEl).replaceAll(wrapper).css({
+                                                        top: previous.top,
+                                                        left: previous.left
+                                                    })
+                                                });
+
+                                            } else {
+                                              console.log("1111111111111111111")
+                                                cloneWrapper.css({
+                                                    top: dropper.top,
+                                                    left: dropper.left
+                                                })
+                                                cloneDropper.animate({left: dropper.app.width}, 1000, function() {
+                                                    cloneWrapper.remove()
+                                                })
+                                                
+                                                wrapper.width(0).animate({width: dropper.app.width}, 1000, function() {
+                                                    $(moveEl).replaceAll(wrapper).css({
+                                                        top: next.top,
+                                                        left: next.left
+                                                    })
+                                                });
+
+                                            }
+
+
+                                            //  console.log(flagUp)
+
+//                                            var beginLeft = (previous.top > dropper.top ? -1 : 1) * dropper.app.width
+//                                            var endLeft = (previous.top > dropper.top ? 1 : 0) * dropper.app.width
+//                                            $(moveEl).css({left: beginLeft, top: 0})
+//                                                    .animate({left: endLeft}, 1000, function() {
+//                                                $(moveEl).insertBefore(wrapper).css({
+//                                                    top: previous.top,
+//                                                    left: previous.left
+//                                                })
+//                                                wrapper.remove()
+//                                            });
+//                                            //留在原来的位置，一点点消失
+//                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
+//                                                top: dropper.top,
+//                                                left: dropper.left
+//                                            })
+//                                            console.log([dropper.left, dropper.top])
+//                                            var cloneDropper = cloneWrapper.find("app").css({
+//                                                top: 0,
+//                                                left: 0
+//                                            })
+//                                            cloneWrapper.animate({width: 0}, 1000, function() {
+//                                                cloneWrapper.remove()
+//                                            })
+
+                                        }
                                     }
-                                    var dragTop = drag._top || drag.top
-                                    var dragLeft = drag._left || drag.left
+                                })(drag, swapArray[i], i);
 
-                                    drop.element.style.zIndex = 10
-                                    next.element.style.zIndex = 10
-
-                                    console.log(model.apps.map(function(el) {
-                                        return el.index
-                                    }))
-                               //    console.log(model.apps)
-                        
-                                    $(drop.element).css("z-index", 100).animate({left: swap.left + 130}, 310, function() {
-                                        drop.left = drop.left + 130
-                                        animate = drop.animate = false
-                                        drop.element.style.zIndex = 0
-                                        drag._top = swap.top
-                                        drag._left = swap.left
-
-                                    })
-
-                                    //原来上方右边的元素复制一份，为了进行slideRight效果，需要动态插入一个overflow为hidden父节点
-                                    var clone = $(next.element).clone()
-                                    //      console.log([next.top, next.left])
-                                    var wrapper = $("<div/>").css({
-                                        top: next.top,
-                                        left: next.left,
-                                        width: next.width,
-                                        height: next.height,
-                                        overflow: "hidden",
-                                        position: "absolute",
-                                        border: "1px solid red",
-                                        "z-index": 2
-                                    }).insertBefore(next.element).append(clone)
-
-                                    //动画完毕移除
-                                    clone.animate({left: drop.left + drop.width}, 295, function() {
-                                        wrapper.remove()
-                                    })
-
-                                    var wrapper2 = wrapper.clone().css({
-                                        top: drag.top,
-                                        left: drag.left,
-                                        width: next.width,
-                                        height: next.height
-                                    }).insertBefore(next.element).append(next.element)
-
-                                    $(next.element).css({
-                                        top: 0,
-                                        left: -120   //移动容器的左边，让它看不见，然后再slideLeft出来
-                                    }).animate({left: 120}, 300, function() {
-                                        $(next.element).insertBefore(wrapper2)
-                                        wrapper2.remove()
-
-                                        next.top = dragTop
-                                        next.left = dragLeft
-                                        next.animate = false
-                                    })
-                                }
                             }
+
+
                         }
                     }
 
