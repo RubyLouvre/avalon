@@ -1226,7 +1226,9 @@
                             node: node,
                             value: node.nodeValue
                         }
-                        if (node.name === "ms-if") {
+                        if (binding.type === "repeat") {
+                            repeatBinding = binding
+                        } else if (node.name === "ms-if") {
                             ifBinding = binding
                         } else {
                             bindings.push(binding)

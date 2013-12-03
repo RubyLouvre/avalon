@@ -309,11 +309,12 @@
                                     if (dropper.app !== dragger) {
                                         if (dropper.top == previous.top) {
                                             //向左向右
-                                            console.log("up")
+                                            console.log("水平处理")
                                             $(dropper.app.element).animate({left: previous.left}, 1000, function() {
                                                 dropper.app.animate = false
                                             })
                                         } else {
+                                            console.log("垂直处理")
                                             //如果不在同一行，将当前元素复制一份
                                             var moveEl = dropper.app.element
                                             var wrapper = $("<div/>").css({
@@ -323,7 +324,7 @@
                                                 height: dropper.app.height,
                                                 overflow: "hidden",
                                                 position: "absolute",
-                                           //     border: "1px solid red",
+                                                //     border: "1px solid red",
                                                 "z-index": 2
                                             }).insertBefore(moveEl).append(moveEl)
 
@@ -351,7 +352,7 @@
                                                 });
 
                                             } else {
-                                              console.log("1111111111111111111")
+                                            
                                                 cloneWrapper.css({
                                                     top: dropper.top,
                                                     left: dropper.left
@@ -359,7 +360,7 @@
                                                 cloneDropper.animate({left: dropper.app.width}, 1000, function() {
                                                     cloneWrapper.remove()
                                                 })
-                                                
+
                                                 wrapper.width(0).animate({width: dropper.app.width}, 1000, function() {
                                                     $(moveEl).replaceAll(wrapper).css({
                                                         top: next.top,
