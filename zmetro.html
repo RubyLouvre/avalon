@@ -8,24 +8,34 @@
         <script src="jquery.js"></script>
         <script>
             require("avalon.draggable", function() {
+                var check = false, swap = false, animate = false
+
 
                 function enter(dropper, event) {
-                    if (isNaN(dropper.left)) {
-                        console.log("isNaN")
-                    }
+
                     // 如果光标能进入矩形的内部
                     var left = dropper.left + dropper.height * 0.1 / 2
                     var top = dropper.top + dropper.height * 0.1 / 2
                     var right = dropper.left + dropper.width - dropper.height * 0.1 / 2
                     var bottom = dropper.top + dropper.height - dropper.height * 0.1 / 2
-                    //console.log([left, top, right, bottom])
+                    if (check) {
+                        //   console.log([event.pageX, event.pageY, left, right, top, bottom])
+                    }
                     if (event.pageX > left && event.pageX < right && event.pageY > top && event.pageY < bottom) {
-                        console.log([event.pageX, event.pageY, left, right, top, bottom])
                         return dropper
                     }
 
                 }
 
+                function swapDropAndDrag(drag, drop, dir) {
+
+                    drop.top = drag._top || drag.top
+                    drop.left = drag._left || drag.left
+
+                    drag._top = swap.top
+                    drag._left = swap.left
+                    animate = drop.animate = false
+                }
                 var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
                         var letters = 'A523456789ABCDEF'.split('');
@@ -37,9 +47,7 @@
                     }
                     vm.onLayout = function() {
                         var coffset = $(this).offset()
-
                         var children = this.children
-                        // console.log(children)
                         var maxRow = 3//每一列最多 多少行，用于配置
                         var row = 0 //当前APP所在的栏数
                         var col = 0 //当前APP所在的栏数
@@ -104,7 +112,6 @@
                             el.element = children[i]
                             el.animate = false
                         }
-                        //   console.log(model.apps)
                     }
                     function fix(array) {
                         for (var i = 0, el; el = array[i++]; ) {
@@ -113,12 +120,16 @@
                             el.width = 0
                             el.height = 0
                             el.sleft = 1
+                            el.next = {}
+                            el.prev = {}
+
                             el.element = {}
-                            el.$skipArray = ["width", "height", "sleft",  "animate", "element"]
+                            el.$skipArray = ["width", "height", "sleft", "animate", "element", "next", "prev"]
 
                         }
                         return array
                     }
+
                     vm.apps = fix([
                         {
                             text: "0",
@@ -139,162 +150,234 @@
                         {
                             text: "yyy",
                             type: "middle"
-                        },
-                        {
-                            text: "666",
-                            type: "big"
-                        },
-                        {
-                            text: "666",
-                            type: "big"
-                        },
-                        {
-                            text: "yyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "3",
-                            type: "small"
-                        },
-                        {
-                            text: "4",
-                            type: "small"
-                        },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "5",
-                            type: "small"
-                        },
-                        {
-                            text: "6",
-                            type: "small"
-                        },
-                        {
-                            text: "7",
-                            type: "small"
-                        },
-                        {
-                            text: "8",
-                            type: "small"
-                        },
-                        {
-                            text: "9",
-                            type: "small"
-                        },
-                        {
-                            text: "10",
-                            type: "small"
                         }
+                        /*    {
+                         text: "666",
+                         type: "big"
+                         },
+                         {
+                         text: "666",
+                         type: "big"
+                         },
+                         {
+                         text: "yyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "3",
+                         type: "small"
+                         },
+                         {
+                         text: "4",
+                         type: "small"
+                         },
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "5",
+                         type: "small"
+                         },
+                         {
+                         text: "6",
+                         type: "small"
+                         },
+                         {
+                         text: "7",
+                         type: "small"
+                         },
+                         {
+                         text: "8",
+                         type: "small"
+                         },
+                         {
+                         text: "9",
+                         type: "small"
+                         },
+                         {
+                         text: "10",
+                         type: "small"
+                         }*/
                     ])
                     vm.dragClass = ""
                     vm.start = function(e, data) {
                         avalon(this).addClass("current")
+                        this.style.zIndex = 100
                         data._startPageX = data.pageX
                         data._startPageY = data.pageY
-                        vm.dragClass = "dragging"
+                        model.dragClass = "dragging"
 
-                        // console.log(this["data-vm"].animate)
+                        if (check) {
+                            console.log(model.apps)
+                        }
                     }
                     vm.beforeStop = function(event) {
-                        //    data.dragX = data.dragY = false
                         vm.dragClass = ""
+                        this.style.zIndex = 0
+                        check = true
                         avalon(this).removeClass("current")
                     }
                     vm.stop = function(event) {
-                        var target = this["data-vm"]
-                        target.animate = false
-     
+                        var drag = this["data-vm"]
+                        drag.animate = false
                         if (swap) {
                             var dir = swap.dir
                             $(this).animate((dir === "left" || dir == "right" ?
                                     {left: swap.left} : {top: swap.top}), 300, function() {
+
                                 this.style.top = swap.top + "px"
                                 this.style.left = swap.left + "px"
-                                //    console.log([swap.top,swap.left])
-                                target.top = swap.top
-                                target.left = swap.left
-                                delete target._top
-                                delete target._left
+                                drag.top = swap.top
+                                drag.left = swap.left
+                                delete drag._top
+                                delete drag._left
                                 swap = false
                             })
                         } else {
-                            this.style.top = target.top + "px"
-                            this.style.left = target.left + "px"
-                            delete target._top
-                            delete target._left
+                            this.style.top = drag.top + "px"
+                            this.style.left = drag.left + "px"
+                            delete drag._top
+                            delete drag._left
                             swap = false
                         }
                     }
-                    var swap, animate
                     vm.drag = function(event) {
-                        var target = this["data-vm"]
-                        target.animate = true
+                        var drag = this["data-vm"]
+                        drag.animate = true
+                        if (check) {
+                            return
+                        }
                         if (animate)
                             return
-                        var obj = false
+                        var drop = false
                         for (var i = 0, el; el = model.apps[i]; i++) {
                             if (!el.animate && enter(el, event)) {
-                                obj = el
+                                drop = el
                                 break
                             }
                         }
-                        if (obj) {
+                        if (drop) {
                             //求出是左移右移上移下移
                             var dir = ""
-                            if (obj.top === target.top) {//水平
-                                dir = obj.left > target.left ? "right" : "left"
+                            //   console.log([drop.left, drop.top, drag.left, drag.top])
+                            if (drop.top === drag.top) {//水平
+                                dir = drop.left > drag.left ? "right" : "left"
                             } else {
-                                dir = obj.top > target.top ? "down" : "up"
+                                dir = drop.top > drag.top ? "down" : "up"
                             }
-                            if (obj.animate) {
+                            console.log(dir)
+                            if (drop.animate) {
                                 return
                             }
-                            obj.animate = animate = true
-                            var left = typeof target._left === "number" ? target._left : target.left
-                            var top = typeof target._top === "number" ? target._top : target.top
-                            console.log("开始动画")
-                            $(obj.element).animate(dir === "left" || dir == "right" ? {left: left} : {top: top}, 50, function() {
-                                console.log("结束动画")
-                                console.log(obj)
-                                animate = false
-                             //   setTimeout(function() {
-                                    obj.animate = false
-                              //  }, 300)
-                                var _index = target.index
-                                target.index = obj.index
-                                obj.index = _index
+                            drop.animate = animate = true
+                            var dropIndex = model.apps.indexOf(drop)
+                            var dragIndex = model.apps.indexOf(drag)
+                            var interval = Math.abs(dropIndex - dragIndex)
+                            console.log([dropIndex, dragIndex])
+//                            if (aa === 1 && drop.type == "small" && drag.type === "small") {
+//                                console.log("开始动画")
+//                                $(drop.element).animate(dir === "left" || dir == "right" ?
+//                                        {left: (drag._left || drag.left)} :
+//                                        {top: (drag._top | drag.top)},
+//                                50, function() {
+//                                    swapDropAndDrag(drag, drop, dir)
+//                                })
+//                            } else {
+                            if (drop.type === "small") {
+                                //如果两个都是小的，从下往上
+                                if (drop.sleft === 1) {
+                                    var next = model.apps[dropIndex + 1]
+                                    drop.animate = next.animate = true
 
-                                swap = {
-                                    top: obj.top,
-                                    left: obj.left,
-                                    dir: dir
+
+                                    //它正上面的元素往右边移动
+                                    //   console.log([drop.top, drop.left, top, left])
+                                    swap = {
+                                        top: drop.top,
+                                        left: drop.left,
+                                        dir: dir
+                                    }
+                                    //   console.log(JSON.stringify(swap))
+                                    var dragTop = drag._top || drag.top
+                                    var dragLeft = drag._left || drag.left
+
+                                    drop.element.style.zIndex = 10
+                                    next.element.style.zIndex = 10
+
+                                    model.apps[dropIndex] = drag
+                                    model.apps[dragIndex] = drop
+                                    drag.index = dropIndex
+                                    drop.index = dragIndex
+
+                                    console.log(model.apps.map(function(el) {
+                                        return el.index
+                                    }))
+console.log(model.apps)
+return
+                                    $(drop.element).css("z-index", 100).animate({left: swap.left + 130}, 310, function() {
+                                        drop.left = drop.left + 130
+                                        animate = drop.animate = false
+                                        drop.element.style.zIndex = 0
+                                        drag._top = swap.top
+                                        drag._left = swap.left
+
+                                    })
+
+                                    //原来上方右边的元素复制一份，为了进行slideRight效果，需要动态插入一个overflow为hidden父节点
+                                    var clone = $(next.element).clone()
+                                    //      console.log([next.top, next.left])
+                                    var wrapper = $("<div/>").css({
+                                        top: next.top,
+                                        left: next.left,
+                                        width: next.width,
+                                        height: next.height,
+                                        overflow: "hidden",
+                                        position: "absolute",
+                                        border: "1px solid red",
+                                        "z-index": 2
+                                    }).insertBefore(next.element).append(clone)
+
+                                    //动画完毕移除
+                                    clone.animate({left: drop.left + drop.width}, 295, function() {
+                                        wrapper.remove()
+                                    })
+
+                                    var wrapper2 = wrapper.clone().css({
+                                        top: drag.top,
+                                        left: drag.left,
+                                        width: next.width,
+                                        height: next.height
+                                    }).insertBefore(next.element).append(next.element)
+
+                                    $(next.element).css({
+                                        top: 0,
+                                        left: -120   //移动容器的左边，让它看不见，然后再slideLeft出来
+                                    }).animate({left: 120}, 300, function() {
+                                        $(next.element).insertBefore(wrapper2)
+                                        wrapper2.remove()
+
+                                        next.top = dragTop
+                                        next.left = dragLeft
+                                        next.animate = false
+                                    })
                                 }
-                                obj.element.style.top = top + "px"
-                                obj.element.style.left = left + "px"
-                                target._top = obj.top
-                                target._left = obj.left
-                                obj.top = top
-                                obj.left = left
-
-                            })
+                            }
                         }
-
                     }
+
                 })
                 avalon.scan()
             })

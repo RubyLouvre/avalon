@@ -1601,6 +1601,12 @@
             }
         }
         bindings.sort(function(a, b) {
+            if (a.type === "duplex") {//确保duplex排在ms-value的后面
+                return Infinity
+            }
+            if (b.type == "duplex") {
+                return -Infinity
+            }
             return a.node.name > b.node.name
         })
         if (repeatBinding) {
