@@ -140,11 +140,11 @@
                             type: "small"
                         },
                         {
-                            text: "顶 big",
+                            text: "2",
                             type: "small"
                         },
                         {
-                            text: "2",
+                            text: "3",
                             type: "small"
                         },
                         {
@@ -257,9 +257,7 @@
                     vm.drag = function(event) {
                         var drag = this["data-vm"]
                         drag.animate = true
-                        if (check) {
-                            return
-                        }
+           
                         if (animate)
                             return
                         var drop = false
@@ -272,7 +270,6 @@
                         if (drop) {
                             //求出是左移右移上移下移
                             var dir = ""
-                            //   console.log([drop.left, drop.top, drag.left, drag.top])
                             if (drop.top === drag.top) {//水平
                                 dir = drop.left > drag.left ? "right" : "left"
                             } else {
@@ -285,7 +282,12 @@
                             drop.animate = animate = true
                             var dropIndex = model.apps.indexOf(drop)
                             var dragIndex = model.apps.indexOf(drag)
+                            var next = model.apps[dropIndex + 1]
                             var interval = Math.abs(dropIndex - dragIndex)
+
+                            //  avalon.Array._splice(model.apps, drag)
+                            model.apps._splice(dragIndex, 1)
+                            model.apps._splice(dropIndex, 0, drag)
                             console.log([dropIndex, dragIndex])
 //                            if (aa === 1 && drop.type == "small" && drag.type === "small") {
 //                                console.log("开始动画")
@@ -299,34 +301,24 @@
                             if (drop.type === "small") {
                                 //如果两个都是小的，从下往上
                                 if (drop.sleft === 1) {
-                                    var next = model.apps[dropIndex + 1]
                                     drop.animate = next.animate = true
-
-
                                     //它正上面的元素往右边移动
-                                    //   console.log([drop.top, drop.left, top, left])
                                     swap = {
                                         top: drop.top,
                                         left: drop.left,
                                         dir: dir
                                     }
-                                    //   console.log(JSON.stringify(swap))
                                     var dragTop = drag._top || drag.top
                                     var dragLeft = drag._left || drag.left
 
                                     drop.element.style.zIndex = 10
                                     next.element.style.zIndex = 10
 
-                                    model.apps[dropIndex] = drag
-                                    model.apps[dragIndex] = drop
-                                    drag.index = dropIndex
-                                    drop.index = dragIndex
-
                                     console.log(model.apps.map(function(el) {
                                         return el.index
                                     }))
-console.log(model.apps)
-return
+                               //    console.log(model.apps)
+                        
                                     $(drop.element).css("z-index", 100).animate({left: swap.left + 130}, 310, function() {
                                         drop.left = drop.left + 130
                                         animate = drop.animate = false
@@ -393,9 +385,6 @@ return
                 -webkit-transform:scale(.9);
                 -moz-transform:scale(.9);
                 transform:scale(.9);
-                /*                -webkit-transform-origin:0% 0%;
-                                -moz-transform-origin:0% 0%;
-                                transform-origin:0% 0%;*/
             }
             app{
                 display: inline-block;
