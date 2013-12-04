@@ -126,6 +126,7 @@
                             el.element = {}
                             el.$skipArray = ["width", "height", "sleft", "animate", "element", "next", "prev"]
 
+
                         }
                         return array
                     }
@@ -218,11 +219,8 @@
                         this.style.zIndex = 100
                         data._startPageX = data.pageX
                         data._startPageY = data.pageY
+                        console.log("开始拖动  " + this.innerHTML.trim())
                         model.dragClass = "dragging"
-
-                        if (check) {
-                            //  console.log(model.apps)
-                        }
                     }
                     vm.beforeStop = function(event) {
                         vm.dragClass = ""
@@ -233,17 +231,23 @@
                     vm.stop = function(event) {
                         var drag = this["data-vm"]
                         drag.animate = false
-                        return
+
                         if (lastSwap) {
                             var dir = lastSwap.dir
                             $(this).animate((dir === "left" || dir == "right" ?
-                                    {left: lastSwap.left} : {top: lastSwap.top}), 300, function() {
+                                    {left: lastSwap.newLeft} : {top: lastSwap.newTop}), 650, function() {
+                              
+                                this.style.left = lastSwap.newLeft + "px"
+                                this.style.top = lastSwap.newTop + "px"
+                                drag.left = lastSwap.newLeft
+                                drag.top = lastSwap.newTop
 
-                                this.style.top = lastSwap.top + "px"
-                                this.style.left = lastSwap.left + "px"
-                                drag.top = lastSwap.top
-                                drag.left = lastSwap.left
-                                lastSwap = false
+                                animate = lastSwap = false
+                                var str = model.apps.map(function(el) {
+                                    return el.left + " " + el.top + " " + el.element.innerHTML.trim() + "  " + el.animate
+                                })
+                                console.log(str)
+
                             })
                         } else {
                             this.style.top = drag.top + "px"
@@ -272,7 +276,6 @@
                             } else {
                                 dir = drop.top > drag.top ? "down" : "up"
                             }
-                            console.log(dir)
                             if (drop.animate) {
                                 return
                             }
@@ -282,6 +285,7 @@
                             var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
                             var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
                             var swapArray = []
+                            //收集要交换位置的元素
                             for (var i = startIndex; i <= endIndex; i++) {
                                 var app = model.apps[i]
                                 swapArray.push({
@@ -292,117 +296,116 @@
                                     app: app
                                 })
                             }
-                            console.log("==================================")
-                            lastSwap = {
-                                top: drop.top,
-                                left: drop.left,
-                                dir: dir
+                            var swapLength = swapArray.length
+                            if (swapArray[0].app == drag) {
+                                for (var i = 0; i < swapLength; i++) {
+                                    var curr = swapArray[i]
+                                    var prev = swapArray[i - 1]
+                                    if (prev) { //其他元素都是它的前一个元素的位置
+                                        curr.newLeft = prev.left
+                                        curr.newTop = prev.top
+                                    } else {//如果第一个元素是拖动元素，那么它的新位置应该是要交换元素中的最后一个的位置
+                                        curr.newLeft = swapArray[swapLength - 1].left
+                                        curr.newTop = swapArray[swapLength - 1].top
+                                    }
+                                }
+                                lastSwap = swapArray.shift()
+                            } else if (swapArray[swapLength - 1].app === drag) {
+                                for (var i = 0; i < swapLength; i++) {
+                                    var curr = swapArray[i]
+                                    var next = swapArray[i + 1]
+                                    if (next) { //其他元素都是它的后一个元素的位置 
+                                        curr.newLeft = next.left
+                                        curr.newTop = next.top
+                                    } else {//如果最后一个元素是拖动元素，那么它的新位置应该是要交换元素中的第一个的位置
+                                        curr.newLeft = swapArray[0].left
+                                        curr.newTop = swapArray[0].top
+                                    }
+                                }
+                                lastSwap = swapArray.pop()
+                            } else {
+                                throw new Error("出错了")
                             }
+                            lastSwap.dir = dir
+                            var str = swapArray.map(function(el) {
+                                return "第" + el.app.element.innerHTML.trim() + "元素的left由 " + [el.left, el.top] + " --> " + [el.newLeft, el.newTop]
+                            })
+                            console.log("可以拖动时" + str)
+                          
                             model.apps._splice(dragIndex, 1)
                             model.apps._splice(dropIndex, 0, drag)
-                            var swapLength = swapArray.length
-                            for (var i = 0, swapLength = swapArray.length; i < swapLength; i++) {
-                                (function(dragger, dropper, index) {
-                                    var previous = swapArray[index - 1] ? swapArray[index - 1] : swapArray[swapLength - 1]
-                                    var next = swapArray[index + 1] ? swapArray[index + 1] : swapArray[0]
-                                    dropper.app.animate = true;
-                                    if (dropper.app !== dragger) {
-                                        if (dropper.top == previous.top) {
-                                            //向左向右
-                                            console.log("水平处理")
-                                            $(dropper.app.element).animate({left: previous.left}, 1000, function() {
-                                                dropper.app.animate = false
+                            swapLength = swapArray.length
+                            for (var i = 0; i < swapLength; i++) {
+                                (function(movable, app, elem) {
+                                    app.animate = true;
+                                    if (movable.top == movable.newTop) {
+                                        //如果是水平移动 
+                                        $(elem).animate({left: movable.newLeft}, 500, function() {
+                                            app.animate = false
+                                            elem.style.left = movable.newLeft + "px"
+                                            elem.style.top = movable.newTop + "px"
+                                            app.left = movable.newLeft
+                                            app.top = movable.newTop
+                                        })
+
+                                    } else {
+                                        //如果是跨行移动 
+                                        //这个容器将插入到新位置
+                                        var wrapper = $("<div/>").css({
+                                            top: movable.newTop,
+                                            left: movable.newLeft,
+                                            width: app.width,
+                                            height: app.height,
+                                            overflow: "hidden",
+                                            position: "absolute",
+                                            //     border: "1px solid red",
+                                            "z-index": 2
+                                        }).insertBefore(elem).append(elem)
+                                        wrapper.find("app").css({
+                                            top: 0,
+                                            left: 0
+                                        })
+                                        //这个容器将插入到旧位置
+                                        var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
+                                            top: movable.top,
+                                            left: movable.left
+                                        })
+                                        if (dir == "down") {
+                                            //旧位置的，container width慢慢变小
+                                            cloneWrapper.animate({width: 0}, 500, function() {
+                                                cloneWrapper.remove()
                                             })
+                                            //新位置的，app left慢慢变小
+                                            $(elem).css({left: app.width}).animate({left: 0}, 500, function() {
+                                                app.animate = false
+                                                $(elem).replaceAll(wrapper).css({
+                                                    top: movable.newTop,
+                                                    left: movable.newLeft
+                                                })
+                                                app.top = movable.newTop
+                                                app.left = movable.newLeft
+                                            });
                                         } else {
-                                            console.log("垂直处理")
-                                            //如果不在同一行，将当前元素复制一份
-                                            var moveEl = dropper.app.element
-                                            var wrapper = $("<div/>").css({
-                                                top: dir == "down" ? previous.top : next.top,
-                                                left: dir == "down" ? previous.left : next.top,
-                                                width: dropper.app.width,
-                                                height: dropper.app.height,
-                                                overflow: "hidden",
-                                                position: "absolute",
-                                                //     border: "1px solid red",
-                                                "z-index": 2
-                                            }).insertBefore(moveEl).append(moveEl)
-
-                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper)
-
-                                            var cloneDropper = cloneWrapper.find("app").css({
-                                                top: 0,
-                                                left: 0
+                                            //旧位置的，app left慢慢变大
+                                            cloneWrapper.find("app").animate({left: app.width}, 500, function() {
+                                                cloneWrapper.remove()
                                             })
-                                            if (dir == "down") {
-                                                //留在原来的位置，宽度收缩到0
-                                                cloneWrapper.css({
-                                                    top: dropper.top,
-                                                    left: dropper.left
-                                                }).animate({width: 0}, 1000, function() {
-                                                    cloneWrapper.remove()
+                                            //新位置的，container width慢慢变大
+                                            wrapper.width(0).animate({width: app.width}, 500, function() {
+                                                app.animate = false
+                                                $(elem).replaceAll(wrapper).css({
+                                                    top: movable.newTop,
+                                                    left: movable.newLeft
                                                 })
-                                                //在上一行设置一个wrapper，以进行slideLeft效果，结束它替换
-                                                $(moveEl).css({left: dropper.app.width, top: 0})
-                                                        .animate({left: 0}, 1000, function() {
-                                                    $(moveEl).replaceAll(wrapper).css({
-                                                        top: previous.top,
-                                                        left: previous.left
-                                                    })
-                                                });
-
-                                            } else {
-                                            
-                                                cloneWrapper.css({
-                                                    top: dropper.top,
-                                                    left: dropper.left
-                                                })
-                                                cloneDropper.animate({left: dropper.app.width}, 1000, function() {
-                                                    cloneWrapper.remove()
-                                                })
-
-                                                wrapper.width(0).animate({width: dropper.app.width}, 1000, function() {
-                                                    $(moveEl).replaceAll(wrapper).css({
-                                                        top: next.top,
-                                                        left: next.left
-                                                    })
-                                                });
-
-                                            }
-
-
-                                            //  console.log(flagUp)
-
-//                                            var beginLeft = (previous.top > dropper.top ? -1 : 1) * dropper.app.width
-//                                            var endLeft = (previous.top > dropper.top ? 1 : 0) * dropper.app.width
-//                                            $(moveEl).css({left: beginLeft, top: 0})
-//                                                    .animate({left: endLeft}, 1000, function() {
-//                                                $(moveEl).insertBefore(wrapper).css({
-//                                                    top: previous.top,
-//                                                    left: previous.left
-//                                                })
-//                                                wrapper.remove()
-//                                            });
-//                                            //留在原来的位置，一点点消失
-//                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
-//                                                top: dropper.top,
-//                                                left: dropper.left
-//                                            })
-//                                            console.log([dropper.left, dropper.top])
-//                                            var cloneDropper = cloneWrapper.find("app").css({
-//                                                top: 0,
-//                                                left: 0
-//                                            })
-//                                            cloneWrapper.animate({width: 0}, 1000, function() {
-//                                                cloneWrapper.remove()
-//                                            })
-
+                                                app.top = movable.newTop
+                                                app.left = movable.newLeft
+                                            });
                                         }
+
                                     }
-                                })(drag, swapArray[i], i);
+                                })(swapArray[i], swapArray[i].app, swapArray[i].app.element);
 
                             }
-
 
                         }
                     }
