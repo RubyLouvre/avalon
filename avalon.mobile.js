@@ -2107,9 +2107,18 @@
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
-        bindingHandlers[name] = function(data) {
-            data.param = name
-            bindingHandlers.on.apply(0, arguments)
+        // 有 touch 时用 tap 代替 click
+        if (name === "click" && "ontouchstart" in window) {
+            bindingHandlers.click = function(data) {
+                data.param = "tap";
+                bindingHandlers.on.apply(0, arguments)
+            }
+        }
+        else {
+            bindingHandlers[name] = function(data) {
+                data.param = name;
+                bindingHandlers.on.apply(0, arguments)
+            }
         }
     })
     if (!("onmouseenter" in root)) { //chrome 30  终于支持mouseenter
