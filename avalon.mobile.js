@@ -1915,9 +1915,10 @@
                     if (method === "hover") { //在移出移入时切换类名
                         var event1 = "mouseenter"
                         var event2 = "mouseleave"
+                        var event3
                     } else { //在聚焦失焦中切换类名
                         elem.tabIndex = elem.tabIndex || -1
-                        event1 = "mousedown", event2 = "mouseup"
+                        event1 = "mousedown", event2 = "mouseup", event3 = "mouseleave"
                     }
                     $elem.bind(event1, function() {
                         toggle && $elem.addClass(className)
@@ -1925,6 +1926,11 @@
                     $elem.bind(event2, function() {
                         toggle && $elem.removeClass(className)
                     })
+                    if(event3){
+                        $elem.bind(event3, function() {
+                            toggle && $elem.removeClass(className)
+                        })
+                    }
                 }
 
             } else if (method === "class") {
