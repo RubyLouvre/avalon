@@ -2105,12 +2105,19 @@
             break;
         }
     }
+    // 用于替换 click 的 touch 事件
+    var click2Touch = "ontouchstart" in window ? {
+        "click": "tap",
+        "dblclick": "doubletap"
+    } : {}
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
-        bindingHandlers[name] = function(data) {
-            data.param = name
-            bindingHandlers.on.apply(0, arguments)
-        }
+        bindingHandlers[name] = (function (dataParam) {
+            return function(data) {
+                data.param = dataParam;
+                bindingHandlers.on.apply(0, arguments)
+            }
+        })(click2Touch[name] || name)
     })
     if (!("onmouseenter" in root)) { //chrome 30  终于支持mouseenter
         var oldBind = avalon.bind
