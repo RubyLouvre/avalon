@@ -1,7 +1,7 @@
 define(["avalon", "css!avalon.select.css"], function(avalon) {
     //判定是否触摸界面
     var widget = avalon.ui["select"] = function(element, data, vmodels) {
-        var $element = avalon(element),options = data.selectOptions
+        var $element = avalon(element), options = data.selectOptions
         var buttonHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all"  >' +
                 '<span class="ui-icon ui-icon-triangle-2-n-s"></span><span>{{caption}}</span></button>'
         var button = avalon.parseHTML(buttonHTML).firstChild
@@ -35,6 +35,7 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
         }
 
         avalon.each(element.childNodes, getOptions)
+
         var menuHTML = '<div class="ui-multiselect-menu ui-widget ui-widget-content ui-corner-all"'
                 + ' ms-visible="toggle" tabindex="-1">'
                 + '<div class="ui-widget-header ui-corner-all ui-multiselect-header ui-helper-clearfix">'
@@ -81,6 +82,11 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
                     return  element[element.selectedIndex].text
                 }
             }
+            vm.resetOptions = function() {
+                list = [], els = [], index = 0
+                avalon.each(element.childNodes, getOptions)
+                model.list = list
+            }
             vm.caption = getCaption()
             vm.toggleMenu = function() {
                 vm.toggle = !vm.toggle
@@ -114,8 +120,10 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
             }
 
             vm.changeState = function(e, obj) {
+                //  console.log(obj)
                 if (!obj.disabled) {//重要技巧,通过e.target == this排除冒泡上来的事件
                     var index = obj.index
+                    console.log(index)
                     var option = els[index]
                     if (vm.multiple) {
                         var a = obj.selected
