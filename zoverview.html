@@ -1,0 +1,624 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script src="jquery.js"></script>
+        <script>
+            require("avalon.draggable", function() {
+                var check = false, animate = false
+
+
+                function enter(dropper, event) {
+
+                    // 如果光标能进入矩形的内部
+                    var left = dropper.left + dropper.height * 0.1 / 2
+                    var top = dropper.top + dropper.height * 0.1 / 2
+                    var right = dropper.left + dropper.width - dropper.height * 0.1 / 2
+                    var bottom = dropper.top + dropper.height - dropper.height * 0.1 / 2
+                    if (check) {
+                        //   console.log([event.pageX, event.pageY, left, right, top, bottom])
+                    }
+                    if (event.pageX > left && event.pageX < right && event.pageY > top && event.pageY < bottom) {
+                        return dropper
+                    }
+                }
+
+                function resetOldValue(object) {
+                    object.left = object.newLeft
+                    object.top = object.newTop
+                    object.row = object.newRow
+                    object.col = object.newCol
+                    object.sleft = object.newSleft
+                    object.newLeft = ""
+                    object.newTop = ""
+                    object.newRow = ""
+                    object.newCol = ""
+                    object.newSleft = ""
+                }
+                function resetNewValue(object) {
+                    object.newLeft = object.left
+                    object.newTop = object.top
+                    object.newRow = object.row
+                    object.newCol = object.col
+                    object.newSleft = object.sleft
+                }
+                function swapElements(array, dragIndex, dropIndex) {
+                    var arr = array._splice(dragIndex, 1)
+                    array._splice(dropIndex, 0, arr[0])
+                }
+                function swapProperties(array, first, model) {
+                    var maxRow = model.maxRow //每一列最多有几行（配置项）
+                    var parentLeft = model.parentLeft
+                    var parentTop = model.parentTop
+                    var row = typeof first.newRow === "number" ? first.newRow : first.row //当前APP所在的栏数
+                    var col = typeof first.newCol === "number" ? first.newCol : first.col //当前APP所在的栏数
+                    var sleft = typeof first.newSleft === "number" ? first.newSleft : first.sleft
+                    for (var i = 0, el; el = array[i]; i++) {
+                        if (el.type === "small") {
+                            if (sleft) {
+                                sleft = 0
+                                el.newTop = 130 * row + parentTop
+                                el.newLeft = col * 260 + parentLeft
+                                el.newRow = row
+                                el.newCol = col
+                                el.newSleft = 1
+                            } else {
+                                sleft = 1
+                                el.newTop = 130 * row + parentTop
+                                el.newLeft = col * 260 + 130 + parentLeft//130为一个small的宽
+                                el.newRow = row
+                                el.newCol = col
+                                el.newSleft = 0
+                                row++
+                            }
+                            if (row > maxRow) {
+                                row = 0
+                                col++
+                            }
+                        } else if (el.type === "middle") {
+                            el.newSleft = 1
+                            if (!sleft) {
+                                row++
+                            }
+                            el.newTop = 130 * row + parentTop
+                            el.newLeft = col * 260 + parentLeft
+                            el.newRow = row
+                            el.newCol = col
+                            row++
+                            sleft = 1
+                            if (row > maxRow) {
+                                row = 0
+                                col++
+                            }
+                        } else if (el.type === "big") {
+                            el.newSleft = 1
+                            if (!sleft) {
+                                row++
+                            }
+                            if (row + 1 > maxRow) {
+                                row = 0
+                                col++
+                            }
+                            el.newTop = 130 * row + parentTop
+                            el.newLeft = col * 260 + parentLeft
+                            el.newRow = row
+                            el.newCol = col
+                            row += 2
+                            sleft = 1
+                            if (row >= maxRow) {
+                                row = 0
+                                col++
+                            }
+                        }
+                    }
+                }
+
+                /* 
+                 插入到后面  
+                 var array = ["a","b","c", "d"]
+                 var dragIndex = 0, dropIndex = 3, insertAfter
+                 var arr = array.splice(dragIndex, 1)
+                 array.splice(dropIndex, 0, arr[0])
+                 console.log(array) //["b", "c", "d", "a"]
+                 */
+                var extrusion = false
+                var model = avalon.define("apps", function(vm) {
+                    vm.getColor = function() {
+                        var letters = 'A523456789ABCDEF'.split('');
+                        var color = '#';
+                        for (var i = 0; i < 6; i++) {
+                            color += letters[Math.round(Math.random() * 15)];
+                        }
+                        return color;
+                    }
+                    vm.maxRow = 3
+                    vm.parentTop = 0
+                    vm.parentLeft = 0
+                    vm.onLayout = function() {
+                        var coffset = $(this).offset()
+                        var children = this.children
+                        var maxRow = model.maxRow //每一列最多 多少行，用于配置
+                        var parentLeft = model.parentLeft = coffset.left
+                        var parentTop = model.parentTop = coffset.top
+                        var row = 0 //当前APP所在的栏数
+                        var col = 0 //当前APP所在的栏数
+                        var sleft = 1
+                        for (var i = 0, el; el = model.apps[i]; i++) {
+                            if (el.type == "small") {
+                                if (sleft) {
+                                    sleft = 0
+                                    el.top = 130 * row + parentTop
+                                    el.left = col * 260 + parentLeft
+                                    el.row = row
+                                    el.col = col
+                                    el.sleft = 1
+                                } else {
+                                    sleft = 1
+                                    el.top = 130 * row + parentTop
+                                    el.left = col * 260 + 130 + parentLeft//130为一个small的宽
+                                    el.row = row
+                                    el.col = col
+                                    el.sleft = 0
+                                    row++
+                                }
+                                el.width = 120
+                                el.height = 120
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            } else if (el.type == "middle") {
+                                el.sleft = 1
+                                if (!sleft) {
+                                    row++
+                                }
+                                el.top = 130 * row + parentTop
+                                el.left = col * 260 + parentLeft
+                                el.row = row
+                                el.col = col
+                                el.width = 250
+                                el.height = 120
+                                row++
+                                sleft = 1
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            } else if (el.type == "big") {
+                                el.sleft = 1
+                                if (!sleft) {
+                                    row++
+                                }
+                                el.width = 250
+                                el.height = 250
+                                if (row + 1 > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                                el.top = 130 * row + parentTop
+                                el.left = col * 260 + parentLeft
+                                el.row = row
+                                el.col = col
+                                row += 2
+                                sleft = 1
+                                if (row >= maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            }
+                            el.element = children[i]
+                            el.animate = false
+                        }
+                    }
+                    function fix(array) {
+                        for (var i = 0, el; el = array[i++]; ) {
+                            el.top = 0
+                            el.left = 0
+                            el.row = 0
+                            el.col = 0
+                            el.sleft = 1
+                            el.width = 0
+                            el.height = 0
+                            el.newTop = ""
+                            el.newLeft = ""
+                            el.newRow = ""
+                            el.newCol = ""
+                            el.newSleft = ""
+                            el.element = {}
+                            el.$skipArray = ["width", "height", "sleft", "animate", "element", "row", "col", "newTop", "newLeft", "newCol", "newRow", "newSleft"]
+                        }
+                        return array
+                    }
+
+                    vm.apps = fix([
+                        {
+                            text: "0",
+                            type: "small"
+                        },
+                        {
+                            text: "1",
+                            type: "small"
+                        },
+//                        {
+//                            text: "yyyyy",
+//                            type: "middle"
+//                        },
+                        {
+                            text: "2",
+                            type: "small"
+                        },
+                        {
+                            text: "3",
+                            type: "small"
+                        },
+                        {
+                            text: "4",
+                            type: "small"
+                        },
+                        {
+                            text: "5",
+                            type: "small"
+                        },
+                        {
+                            text: "6",
+                            type: "small"
+                        },
+                        {
+                            text: "7",
+                            type: "small"
+                        },
+                        {
+                            text: "8",
+                            type: "small"
+                        }
+                        /*  {
+                         text: "9",
+                         type: "small"
+                         },
+                         {
+                         text: "10",
+                         type: "small"
+                         },
+                         {
+                         text: "11",
+                         type: "small"
+                         }
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "yyyy",
+                         type: "middle"
+                         },
+                         {
+                         text: "5",
+                         type: "small"
+                         },
+                         {
+                         text: "6",
+                         type: "small"
+                         },
+                         {
+                         text: "7",
+                         type: "small"
+                         },
+                         {
+                         text: "8",
+                         type: "small"
+                         },
+                         {
+                         text: "9",
+                         type: "small"
+                         },
+                         {
+                         text: "10",
+                         type: "small"
+                         }*/
+                    ])
+                    vm.dragClass = ""
+                    vm.start = function(e, data) {
+                        avalon(this).addClass("current")
+                        this.style.zIndex = 100
+                        data._startPageX = data.pageX
+                        data._startPageY = data.pageY
+
+                        model.dragClass = "dragging"
+                    }
+                    vm.beforeStop = function(event) {
+                        vm.dragClass = ""
+                        this.style.zIndex = 0
+                        check = true
+                        avalon(this).removeClass("current")
+                    }
+                    vm.stop = function() {
+                        var drag = this["data-vm"]
+                        drag.animate = false
+                        if (animate === true) {
+                            animate = false
+                            var elem = this
+                            var id = setInterval(function() {
+                                clearInterval(id)
+                                model.stop.call(elem)
+                            }, 100)
+                            return
+                        }
+                        if (drag.top === drag.newTop && drag.left === drag.newLeft) {
+                            this.style.top = drag.top + "px"
+                            this.style.left = drag.left + "px"
+                        } else {
+                            console.log("进行dragger的动画")
+                            $(this).animate({left: drag.newLeft, top: drag.newTop}, 300, function() {
+                                this.style.left = drag.newLeft + "px"
+                                this.style.top = drag.newTop + "px"
+                                resetOldValue(drag)
+                                animate = false
+                                var str = model.apps.map(function(el) {
+                                    return  el.element.innerHTML.trim() + " th  " + el.left + "  " + el.top + "  " + el.sleft + "s;"
+                                })
+                                console.log(str)
+                            })
+                        }
+                    }
+                    /**
+                     * 
+                     如果drag, drop都为small 分两种情况
+                     
+                     如果都是同一列，最多影响它们同一列的四个
+                     
+                     如果不在同一列，插入drop的前面，影响drop及其后的所有元素
+                     
+                     如果drag为small, drop为middle， 
+                     如果在同一列
+                     如果drag.sleft = 1, 右边往左移，  标记为插入前面 后面整体往上移
+                     如果drag.sleft = 0, 不动 直接return  标记为插入前面 后面整体往上移
+                     如果drag.sleft = 1,右边没有东西， middle往上移，drag插入到middle的位置，后面整体往上提
+                     
+                     如果在同一列
+                     右移， middle不动，drag到middle间的所有元素重排
+                     左移， 插入到middle的前面，middle及它后面的都往后移
+                     
+                     如果drag为middle，
+                     如果在同一列
+                     上一行或下一行 往上往下移动
+                     如果不在同一列
+                     往右，插入后面 middle到右边的目标行整体向上移
+                     往左，插入前面 middle到右边的目标行整体向下移
+                     
+                     
+                     确认drag, drop
+                     确认它们的类型
+                     移动方式
+                     交换数组位置
+                     交换最终位置
+                     加锁
+                     动画
+                     
+                     
+                     * 
+                     */
+                    vm.drag = function(event) {
+                        var drag = this["data-vm"]
+                        drag.animate = true
+                        if (animate)
+                            return
+                        var drop = false
+                        for (var i = 0, el; el = model.apps[i]; i++) {
+                            if (!el.animate && enter(el, event)) {
+                                drop = el
+                                break
+                            }
+                        }
+                        if (drop) {
+                            //求出是左移右移上移下移
+                            if (drop.animate) {
+                                return
+                            }
+                            var dragIndex = model.apps.indexOf(drag)
+                            var dropIndex = model.apps.indexOf(drop)
+                            var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
+                            var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
+                            var first = model.apps.slice(startIndex)[0]
+                            var insertAfter = false, swapArray = []
+                            if (drag.type === "small" && drop.type === "small") {
+                                if (drag.col !== drop.col) {
+                                  //  console.log([dragIndex, dropIndex])
+                                    insertAfter = dragIndex < dropIndex
+                                    swapElements(model.apps, dragIndex, dropIndex)
+                                    swapArray = model.apps.slice(startIndex)
+                                } else {
+                                    insertAfter = drag.row * 10 + Number(!drag.sleft) < drop.row * 10 + Number(!drop.sleft)
+                                    swapElements(model.apps, dragIndex, dropIndex)
+                                    swapArray = model.apps.slice(startIndex, endIndex + 1)
+                                }
+                                swapProperties(swapArray, first, model)
+                                var str = model.apps.map(function(el) {
+                                    return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
+                                            el.top + "  --> t " + el.newTop
+                                })
+                               // console.log(str)
+                                animate = true
+                                //   return
+
+                            } else if (drag.type === "small" && drop.type === "middle") {
+                                if (drag.col === drag.col) {//如果是在同一列
+                                    if (drag.row < drop.row) {//如果small在上面
+                                        if (drag.sleft === 1) {
+                                            insertAfter = true
+                                            if (dropIndex - dragIndex === 1) {
+                                                //非常复杂的处理
+
+                                            } else {
+
+                                            }
+
+                                        }
+
+                                    }
+                                } else {
+
+                                }
+                            } else if (drag.type === "middle") {
+                                if (drag.col === drag.col) {//如果是在同一列
+
+                                } else {
+
+                                }
+                            }
+
+                            var str = swapArray.map(function(el) {
+                                return " 第" + el.element.innerHTML.trim() + "元素由 " + [el.left, el.top, el.sleft] + " 变 " + [el.newLeft, el.newTop, el.newSleft]
+                            })
+                            //   console.log("可以拖动时" + str)
+
+                            var swapLength = swapArray.length
+                            var animateIndex = 0
+                            function lastCallback(obj) {
+                                resetOldValue(obj)
+                                obj.animate = false
+                                animateIndex++
+                                if (animateIndex == swapLength) {
+                                    console.log("=======lastCallback========")
+                                    animate = false
+                                }
+                            }
+                            animate = true
+                            for (var i = 0; i < swapLength; i++) {
+                                if (swapArray[i] !== drag) {
+                                    (function(movable, elem) {
+                                        movable.animate = true;
+                                        if (typeof movable.newTop === "string") {
+                                            lastCallback({})
+                                            return
+                                        }
+                                        if (movable.left === movable.newLeft && movable.top === movable.newTop) {
+                                            lastCallback(movable)
+                                            return
+                                        }
+
+
+                                        if (movable.top == movable.newTop) {
+                                            //如果是水平移动 
+                                            $(elem).animate({left: movable.newLeft}, 500, function() {
+                                                elem.style.left = movable.newLeft + "px"
+                                                elem.style.top = movable.newTop + "px"
+                                                lastCallback(movable)
+                                            })
+                                        } else {
+                                            //如果是跨行移动 
+                                            //这个容器将插入到新位置
+                                            var wrapper = $("<div/>").css({
+                                                top: movable.newTop,
+                                                left: movable.newLeft,
+                                                width: movable.width,
+                                                height: movable.height,
+                                                overflow: "hidden",
+                                                position: "absolute",
+                                                "z-index": 2
+                                            }).insertBefore(elem).append(elem)
+                                            wrapper.find("app").css({
+                                                top: 0,
+                                                left: 0
+                                            })
+                                            //这个容器将插入到旧位置
+                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
+                                                top: movable.top,
+                                                left: movable.left
+                                            })
+                                            if (insertAfter === true) {
+                                                //旧位置的，container width慢慢变小
+                                                cloneWrapper.animate({width: 0}, 490, function() {
+                                                    cloneWrapper.remove()
+                                                })
+                                                //新位置的，app left慢慢变小
+                                                $(elem).css({left: movable.width}).animate({left: 0}, 500, function() {
+                                                    $(elem).replaceAll(wrapper).css({
+                                                        top: movable.newTop,
+                                                        left: movable.newLeft
+                                                    })
+                                                    lastCallback(movable)
+                                                });
+                                            } else {
+                                                //旧位置的，app left慢慢变大
+                                                cloneWrapper.find("app").animate({left: movable.width}, 490, function() {
+                                                    cloneWrapper.remove()
+                                                })
+                                                //新位置的，container width慢慢变大
+                                                wrapper.width(0).animate({width: movable.width}, 500, function() {
+                                                    $(elem).replaceAll(wrapper).css({
+                                                        top: movable.newTop,
+                                                        left: movable.newLeft
+                                                    })
+                                                    lastCallback(movable)
+                                                });
+                                            }
+
+                                        }
+                                    })(swapArray[i], swapArray[i].element);
+                                } else {
+                                    lastCallback({})
+                                }
+                            }
+
+                        }
+                    }
+
+                })
+                avalon.scan()
+            })
+
+        </script>
+        <style>
+            .apps{
+                position: relative;
+                border:10px solid #01B4D2;
+                height: 510px;
+            }
+            .apps.dragging app:not(.current){
+                -webkit-transform:scale(.9);
+                -moz-transform:scale(.9);
+                transform:scale(.9);
+            }
+            app{
+                display: inline-block;
+                position: absolute;
+                -webkit-transition:-webkit-transform .3s ease-in-out;
+                -moz-transition:-moz-transform .3s ease-in-out;
+                transition:transform .3s ease-in-out;
+                z-index:1;
+            }
+            app.current{
+                z-index:100;
+                opacity: 0.5;
+                transform:scale(1.1);
+            }
+            app.small{
+                width:120px;
+                height:120px;
+            }
+            app.big{
+                width:250px;
+                height:250px;
+            }
+            app.middle{
+                width:250px;
+                height:120px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="apps" ms-controller="apps" id="metro" ms-class="{{dragClass}}"ms-each="apps" data-each-rendered="onLayout">
+            <app ms-draggable="apps" data-drag-start="start" 
+                 data-drag-drag="drag" data-drag-stop="stop" 
+                 data-drag-before-stop="beforeStop" 
+                 ms-class="{{el.type}}" 
+                 ms-data-vm="el" 
+                 ms-css-background="getColor()" 
+                 ms-css-top="top" ms-css-left="left">
+                {{el.text }}</app>
+        </div> 
+    </body>
+</html>
