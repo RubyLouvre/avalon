@@ -175,7 +175,11 @@
                         {
                             text: "5",
                             type: "small"
-                        }
+                        },
+                          {
+                         text: "yyyy",
+                         type: "middle"
+                         }
 //                        {
 //                            text: "6",
 //                            type: "small"
@@ -328,12 +332,15 @@
 
 
                             var swapArray = []
+                            var updown = false
                             if (extrusion) {
-                                console.log("dropper  " + drop.element.innerHTML.trim())
-                                console.log("dragger  " + drag.element.innerHTML.trim())
+                              //  console.log("dropper  " + drop.element.innerHTML.trim())
+                             //   console.log("dragger  " + drag.element.innerHTML.trim())
                                 extrusion = false
+
                                 //   console.log("dropIndex " + dropIndex)
                                 var tempArray = model.apps.slice(dropIndex)
+                                 console.log(dropIndex+"!!!!!!!!!!!!!!!!")
                                 tempArray.unshift(drag)
                                 for (var i = 0, tempLength = tempArray.length; i < tempLength; i++) {
                                     var app = tempArray[i]
@@ -350,11 +357,48 @@
                                     }
                                     swapArray.push(swapObj)
                                 }
+                               
                                 //得到要交换的位置
-
                                 for (var i = 0, swapLength = swapArray.length; i < swapLength; i++) {
                                     var curr = swapArray[i]
                                     var next = swapArray[i + 1]
+                                    if (curr.app.type === "middle") {
+                                        //如果碰到middle那么它及其后的所有元素都是纯粹的上下移动
+                                        var row = curr.row + 1
+                                        var col = curr.col
+                                        if (row > model.maxRow) {
+                                            col++
+                                            row = 0
+                                        }
+                                        curr.newRow = row
+                                        curr.newCol = col
+                                        curr.newTop = 130 * row + model.parentTop
+                                        curr.newLeft = col * 260 + model.parentLeft
+                                        curr.newSleft = 1
+                                        curr.updown = true
+                                        updown = true
+                                        return
+                                    }
+                                    if (updown) {
+                                        var row = curr.row + 1
+                                        var col = curr.col
+                                        if (row > model.maxRow) {
+                                            col++
+                                            row = 0
+                                        }
+                                        curr.newRow = row
+                                        curr.newCol = col
+                                        //el.top = 130 * row + coffset.top
+                                        //el.left = col * 260 + 130 + coffset.left
+                                        curr.newTop = 130 * row + model.parentTop
+                                        curr.newLeft = col * 260 + model.parentLeft + (curr.sleft === 0 ? 130 : 0)
+                                        curr.newSleft = 0
+                                        curr.updown = true
+                                        return
+                                    }
+
+
+
                                     if (next) { //其他元素都是它的后一个元素的位置
                                         resetNewValue(curr, next)
                                     } else {//如果是最后一个
@@ -376,7 +420,7 @@
                                                     curr.newRow = row
                                                     curr.newCol = col
                                                     curr.newTop = 130 * row + model.parentTop
-                                                    curr.newLeft = col * 260  + model.parentLeft
+                                                    curr.newLeft = col * 260 + model.parentLeft
                                                     curr.newSleft = 0
                                                 }
                                                 break
@@ -478,6 +522,17 @@
                                 (function(movable, app, elem) {
                                     //  console.log("innerHTML "+app.element.innerHTML.trim() )
                                     app.animate = true;
+                                    if (movable.updown) {
+                                      
+                                        $(elem).animate({top: movable.newTop}, 500, function() {
+                                            elem.style.left = movable.newLeft + "px"
+                                            elem.style.top = movable.newTop + "px"
+                                            lastCallback(app, movable)
+                                        })
+                                        return
+                                    }
+
+
                                     if (movable.top == movable.newTop) {
                                         //如果是水平移动 
                                         $(elem).animate({left: movable.newLeft}, 500, function() {
