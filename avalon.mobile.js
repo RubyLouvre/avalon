@@ -2534,6 +2534,8 @@
     function gatherRemovedNodes(array, node, length) {
         for (var i = 1; i < length; i++) {
             node = node.nextSibling
+            if(!node)
+                break
             array.push(node)
         }
         return array

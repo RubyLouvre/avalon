@@ -9,20 +9,15 @@
         <script>
             require("avalon.draggable", function() {
                 var check = false, animate = false
-
-
-                function enter(dropper, event, model) {
-                    var pageX = event.pageX - model.parentLeft
-                    var pageY = event.pageY - model.parentTop
-                    // 如果光标能进入矩形的内部
+                function enter(dropper, point1, point2) {
                     var left = dropper.left + dropper.height * 0.1 / 2
                     var top = dropper.top + dropper.height * 0.1 / 2
                     var right = dropper.left + dropper.width - dropper.height * 0.1 / 2
                     var bottom = dropper.top + dropper.height - dropper.height * 0.1 / 2
-                    if (check) {
-                        //   console.log([event.pageX, event.pageY, left, right, top, bottom])
+                    if (point1[0] > left && point1[0] < right && point1[1] > top && point1[1] < bottom) {
+                        return dropper
                     }
-                    if (pageX > left && pageX < right && pageY > top && pageY < bottom) {
+                    if (point2 && point2[0] > left && point2[0] < right && point2[1] > top && point2[1] < bottom) {
                         return dropper
                     }
                 }
@@ -134,7 +129,9 @@
                     vm.parentTop = 0
                     vm.parentLeft = 0
                     vm.onLayout = function() {
-                        var coffset = $(this).offset()
+
+
+
                         var children = this.children
                         var maxRow = model.maxRow //每一列最多 多少行，用于配置
                         var parentLeft = 0 //model.parentLeft = coffset.left
@@ -319,8 +316,7 @@
                     vm.start = function(e, data) {
                         avalon(this).addClass("current")
                         this.style.zIndex = 100
-                        data._startPageX = data.pageX
-                        data._startPageY = data.pageY
+
 
                         model.dragClass = "dragging"
                     }
@@ -401,14 +397,25 @@
                      
                      * 
                      */
-                    vm.drag = function(event) {
-                        var drag = this["data-vm"]
-                        drag.animate = true
+                    vm.drag = function(event, data) {
                         if (animate)
                             return
+                        var drag = this["data-vm"]
+                        switch (drag.type) {
+                            case "small":
+                                var point1 = [data.left + drag.width * 0.5, data.top + drag.height * 0.5]
+                                break;
+                            case "middel":
+                                var point1 = [data.left + drag.width * 0.25, data.top + drag.height * 0.5]
+                                var point2 = [data.left + drag.width * 0.75, data.top + drag.height * 0.5]
+                                break;
+                        }
+
+                        drag.animate = true
+
                         var drop = false
                         for (var i = 0, el; el = model.apps[i]; i++) {
-                            if (!el.animate && enter(el, event, model)) {
+                            if (!el.animate && enter(el, point1, point2)) {
                                 drop = el
                                 break
                             }
@@ -504,7 +511,7 @@
                                             return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
                                                     el.top + "  --> t " + el.newTop
                                         })
-                                        console.log(str)
+
                                     }
 
 
