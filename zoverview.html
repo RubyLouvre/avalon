@@ -41,8 +41,6 @@
                 }
                 function swapProperties(array, first, model) {
                     var maxRow = model.maxRow //每一列最多有几行（配置项）
-                    var parentLeft = model.parentLeft
-                    var parentTop = model.parentTop
                     var row = typeof first.newRow === "number" ? first.newRow : first.row //当前APP所在的栏数
                     var col = typeof first.newCol === "number" ? first.newCol : first.col //当前APP所在的栏数
                     var sleft = typeof first.newSleft === "number" ? first.newSleft : first.sleft
@@ -51,15 +49,15 @@
                         if (el.type === "small") {
                             if (sleft) {
                                 sleft = 0
-                                el.newTop = 130 * row + parentTop
-                                el.newLeft = col * 260 + parentLeft
+                                el.newTop = 130 * row
+                                el.newLeft = col * 260
                                 el.newRow = row
                                 el.newCol = col
                                 el.newSleft = 1
                             } else {
                                 sleft = 1
-                                el.newTop = 130 * row + parentTop
-                                el.newLeft = col * 260 + 130 + parentLeft//130为一个small的宽
+                                el.newTop = 130 * row
+                                el.newLeft = col * 260 + 130 //130为一个small的宽
                                 el.newRow = row
                                 el.newCol = col
                                 el.newSleft = 0
@@ -74,8 +72,8 @@
                             if (!sleft) {
                                 row++
                             }
-                            el.newTop = 130 * row + parentTop
-                            el.newLeft = col * 260 + parentLeft
+                            el.newTop = 130 * row
+                            el.newLeft = col * 260
                             el.newRow = row
                             el.newCol = col
                             row++
@@ -93,8 +91,8 @@
                                 row = 0
                                 col++
                             }
-                            el.newTop = 130 * row + parentTop
-                            el.newLeft = col * 260 + parentLeft
+                            el.newTop = 130 * row
+                            el.newLeft = col * 260
                             el.newRow = row
                             el.newCol = col
                             row += 2
@@ -107,14 +105,6 @@
                     }
                 }
 
-                /* 
-                 插入到后面  
-                 var array = ["a","b","c", "d"]
-                 var dragIndex = 0, dropIndex = 3, insertAfter
-                 var arr = array.splice(dragIndex, 1)
-                 array.splice(dropIndex, 0, arr[0])
-                 console.log(array) //["b", "c", "d", "a"]
-                 */
                 var crossRow = false
                 var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
@@ -126,16 +116,9 @@
                         return color;
                     }
                     vm.maxRow = 3
-                    vm.parentTop = 0
-                    vm.parentLeft = 0
                     vm.onLayout = function() {
-
-
-
                         var children = this.children
                         var maxRow = model.maxRow //每一列最多 多少行，用于配置
-                        var parentLeft = 0 //model.parentLeft = coffset.left
-                        var parentTop = 0//model.parentTop = coffset.top
                         var row = 0 //当前APP所在的栏数
                         var col = 0 //当前APP所在的栏数
                         var sleft = 1
@@ -143,15 +126,15 @@
                             if (el.type == "small") {
                                 if (sleft) {
                                     sleft = 0
-                                    el.top = 130 * row + parentTop
-                                    el.left = col * 260 + parentLeft
+                                    el.top = 130 * row
+                                    el.left = col * 260
                                     el.row = row
                                     el.col = col
                                     el.sleft = 1
                                 } else {
                                     sleft = 1
-                                    el.top = 130 * row + parentTop
-                                    el.left = col * 260 + 130 + parentLeft//130为一个small的宽
+                                    el.top = 130 * row
+                                    el.left = col * 260 + 130 //130为一个small的宽
                                     el.row = row
                                     el.col = col
                                     el.sleft = 0
@@ -165,21 +148,28 @@
                                 }
                             } else if (el.type == "middle") {
                                 el.sleft = 1
-                                if (!sleft) {
-                                    row++
-                                }
-                                el.top = 130 * row + parentTop
-                                el.left = col * 260 + parentLeft
-                                el.row = row
-                                el.col = col
-                                el.width = 250
-                                el.height = 120
-                                row++
-                                sleft = 1
+                                console.log("==============" + row + "================")
+//                                if (!sleft) {
+//                                    row++
+//                                }
                                 if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
+                                 sleft = 1
+                                console.log("==============" + row + "================")
+                                el.top = 130 * row
+                                el.left = col * 260
+                                el.row = row
+                                el.col = col
+                                el.width = 250
+                                el.height = 120
+                               row++
+                               
+                              //  if (row > maxRow) {
+                              //      row = 0
+                              //      col++
+                              //  }
                             } else if (el.type == "big") {
                                 el.sleft = 1
                                 if (!sleft) {
@@ -191,8 +181,8 @@
                                     row = 0
                                     col++
                                 }
-                                el.top = 130 * row + parentTop
-                                el.left = col * 260 + parentLeft
+                                el.top = 130 * row
+                                el.left = col * 260
                                 el.row = row
                                 el.col = col
                                 row += 2
@@ -235,10 +225,10 @@
                             text: "1",
                             type: "small"
                         },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
+//                          {
+//                            text: "555555555",
+//                            type: "middle"
+//                        },
                         {
                             text: "2",
                             type: "small"
@@ -259,22 +249,27 @@
                             text: "6",
                             type: "small"
                         },
+           
                         {
-                            text: "7",
-                            type: "small"
+                            text: "yyyy",
+                            type: "middle"
                         },
-                        {
-                            text: "8",
-                            type: "small"
-                        },
-                        {
-                            text: "9",
-                            type: "small"
-                        },
-                        {
-                            text: "10",
-                            type: "small"
-                        }
+//                        {
+//                            text: "7",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "8",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "9",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "10",
+//                            type: "small"
+//                        }
                         /*   {
                          text: "11",
                          type: "small"
@@ -405,7 +400,7 @@
                             case "small":
                                 var point1 = [data.left + drag.width * 0.5, data.top + drag.height * 0.5]
                                 break;
-                            case "middel":
+                            case "middle":
                                 var point1 = [data.left + drag.width * 0.25, data.top + drag.height * 0.5]
                                 var point2 = [data.left + drag.width * 0.75, data.top + drag.height * 0.5]
                                 break;
@@ -483,41 +478,50 @@
                                     swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
                                 }
                             } else if (drag.type === "middle") {
-                                if (drag.col === drag.col) {//如果是在同一列
-                                    if (dragIndex < dropIndex) {
-                                        var middleDropIndex = dropIndex
-                                        for (var i = dropIndex + 1, n = dropIndex + 2; i < n; i++) {
-                                            var obj = model.apps[i]
-                                            if (obj.row === drop.row) {
-                                                middleDropIndex = i
-                                                break
-                                            }
+                                //  dragIndex < dropIndex 向下 向右 ↓ →  插入到后面
+                                //  dragIndex 〉dropIndex 向上 向左 ↑← 插入到前面
+                                var maybeDropIndex = dropIndex
+                                if (drop.type === "small") {
+                                    var i = dropIndex - 1
+                                    if (i < 0)
+                                        i = 0
+                                    for (var n = i + 4; i < n; i++) {
+                                        var obj = model.apps[i]
+                                        if (obj && obj !== drop && obj.row === drop.row) {
+                                            maybeDropIndex = i
+                                            break
                                         }
-                                        insertAfter = true //插到前面
-                                        swapElements(model.apps, dragIndex, middleDropIndex)
-                                        swapArray = model.apps.slice(0)
-                                        swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                                        var str = model.apps.map(function(el) {
-                                            return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
-                                                    el.top + "  --> t " + el.newTop
-                                        })
-                                        console.log(str)
-                                    } else {
-                                        insertAfter = false //插到前面
-                                        swapElements(model.apps, dragIndex, dropIndex)
-                                        swapArray = model.apps.slice(0)
-                                        swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                                        var str = model.apps.map(function(el) {
-                                            return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
-                                                    el.top + "  --> t " + el.newTop
-                                        })
-
                                     }
-
-
+                                }
+                                if (dragIndex < dropIndex) {
+                                    if (maybeDropIndex !== dropIndex) {
+                                        maybeDropIndex = maybeDropIndex > dropIndex ? maybeDropIndex : dropIndex
+                                    }
+                                    insertAfter = true //插到前面
+                                    swapElements(model.apps, dragIndex, maybeDropIndex)
+                                    swapArray = model.apps.slice(0)
+                                    swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
+                                    var str = model.apps.map(function(el) {
+                                        return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
+                                                el.top + "  --> t " + el.newTop
+                                    })
+                                    //   console.log(str)
                                 } else {
+                                    if (maybeDropIndex !== dropIndex) {
+                                        maybeDropIndex = maybeDropIndex < dropIndex ? maybeDropIndex : dropIndex
+                                    }
+                                    insertAfter = false //插到前面
+                                    swapElements(model.apps, dragIndex, maybeDropIndex)
+                                    swapArray = model.apps.slice(0)
+                                    swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
+                                    var str = model.apps.map(function(el) {
+                                        return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
+                                                el.top + "  --> t " + el.newTop
+                                    })
 
                                 }
+
+
                             }
 
                             var str = swapArray.map(function(el) {
