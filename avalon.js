@@ -2947,7 +2947,18 @@
                         deleteRange.setEndBefore(data.endRepeat)
                         deleteRange.deleteContents()
                     } else {
-                        removeView(locatedNode, group, Infinity)
+                        var node = locatedNode
+                        var removeNodes = [locatedNode]
+                        do {
+                            if (node == data.endRepeat) {
+                                break
+                            }
+                            removeNodes.push(node)
+                        } while (node = node.nextSibling)
+                        var view = documentFragment.cloneNode(false)
+                        for (var i = 0, node; node = removeNodes[i++]; ) {
+                            view.appendChild(node) //通常添加到文档碎片实现移除
+                        }
                     }
                 } else {
                     avalon.clearChild(parent)
@@ -3014,8 +3025,6 @@
     function gatherRemovedNodes(array, node, length) {
         for (var i = 1; i < length; i++) {
             node = node.nextSibling
-            if (!node)
-                break
             array.push(node)
         }
         return array
