@@ -2947,17 +2947,13 @@
                         deleteRange.setEndBefore(data.endRepeat)
                         deleteRange.deleteContents()
                     } else {
-                        var node = locatedNode
-                        var removeNodes = [locatedNode]
-                        do {
-                            if (node == data.endRepeat) {
+                        while (true) {
+                            var node = data.startRepeat.nextSibling
+                            if (node && node !== data.endRepeat) {
+                                node.parentNode.removeChild(node)
+                            } else {
                                 break
                             }
-                            removeNodes.push(node)
-                        } while (node = node.nextSibling)
-                        var view = documentFragment.cloneNode(false)
-                        for (var i = 0, node; node = removeNodes[i++]; ) {
-                            view.appendChild(node) //通常添加到文档碎片实现移除
                         }
                     }
                 } else {
