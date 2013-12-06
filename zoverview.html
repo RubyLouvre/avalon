@@ -583,7 +583,8 @@
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
-                                            $(elem).animate({top: movable.height}, 490, function() {
+                                            console.log("不同列的上下移动 A")
+                                            cloneWrapper.find("app").animate({top: movable.height}, 490, function() {
                                                 cloneWrapper.remove()
                                             })
                                             wrapper.height(0).animate({height: movable.height}, 500, function() {
@@ -595,11 +596,12 @@
                                             })
                                             return
                                         }
-                                        //从高列移动低列
+
                                         if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.top == 0) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
+                                            console.log("不同列的上下移动 B")
                                             cloneWrapper.animate({height: 0}, 490, function() {
                                                 cloneWrapper.remove()
                                             })
@@ -615,7 +617,8 @@
                                             return
                                         }
                                         //当前行的水平移动
-                                        if (movable.row == movable.newRow && movable.top == movable.newTop) {
+                                        if (movable.col == movable.newCol && movable.row == movable.newRow && movable.sleft != movable.newSleft) {
+                                            console.log("当前行的水平移动")
                                             $(elem).animate({left: movable.newLeft}, 500, function() {
                                                 elem.style.left = movable.newLeft + "px"
                                                 elem.style.top = movable.newTop + "px"
@@ -624,7 +627,8 @@
                                             return
                                         }
                                         //当前列的上下移动
-                                        if (movable.newCol == movable.col && movable.row !== movable.newRow) {
+                                        if (movable.col == movable.newCol && movable.row !== movable.newRow && movable.sleft == movable.newSleft) {
+                                            console.log("当前列的上下移动")
                                             $(elem).animate({top: movable.newTop}, 500, function() {
                                                 elem.style.left = movable.newLeft + "px"
                                                 elem.style.top = movable.newTop + "px"
@@ -633,11 +637,12 @@
                                             return
                                         }
                                         //不同列的上下移动
-                                        if (movable.newCol !== movable.col && movable.row !== movable.newRow) {
+                                        if (movable.row !== movable.newRow) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
                                             if (insertAfter) {
+                                                console.log("不同列的水平移动 A")
                                                 //旧位置的，container width慢慢变小
                                                 cloneWrapper.animate({width: 0}, 490, function() {
                                                     cloneWrapper.remove()
@@ -651,6 +656,7 @@
                                                     lastCallback(movable)
                                                 });
                                             } else {
+                                                console.log("不同列的水平移动 B")
                                                 //旧位置的，app left慢慢变大
                                                 cloneWrapper.find("app").animate({left: movable.width}, 490, function() {
                                                     cloneWrapper.remove()
