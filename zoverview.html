@@ -35,6 +35,28 @@
                     object.newSleft = ""
                 }
 
+                function createWrapper(movable, elem) {
+                    var wrapper = $("<div/>").css({
+                        top: movable.newTop,
+                        left: movable.newLeft,
+                        width: movable.width,
+                        height: movable.height,
+                        overflow: "hidden",
+                        position: "absolute",
+                        "z-index": 2
+                    }).insertBefore(elem).append(elem)
+                    wrapper.find("app").css({
+                        top: 0,
+                        left: 0
+                    })
+                    //这个容器将插入到旧位置
+                    var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
+                        top: movable.top,
+                        left: movable.left
+                    })
+                    return [wrapper, cloneWrapper]
+                }
+
                 function swapElements(array, dragIndex, dropIndex) {
                     var arr = array._splice(dragIndex, 1)
                     array._splice(dropIndex, 0, arr[0])
@@ -545,56 +567,77 @@
                                 if (swapArray[i] !== drag) {
                                     (function(movable, elem) {
                                         movable.animate = true;
+                                        //没有发生交换
                                         if (typeof movable.newTop === "string") {
                                             movable.animate = false
                                             lastCallback({})
                                             return
                                         }
+                                        //没有发生交换
                                         if (movable.left === movable.newLeft && movable.top === movable.newTop) {
                                             lastCallback(movable)
                                             return
                                         }
-
-
-                                        if (movable.top == movable.newTop) {
-                                            //如果是水平移动 
+                                        //从低列移动高列
+                                        if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.newRow == 0) {
+                                            var wrappers = createWrapper(movable, elem)
+                                            var wrapper = wrappers[0]
+                                            var cloneWrapper = wrappers[1]
+                                            $(elem).animate({top: movable.height}, 490, function() {
+                                                cloneWrapper.remove()
+                                            })
+                                            wrapper.height(0).animate({height: movable.height}, 500, function() {
+                                                $(elem).replaceAll(wrapper).css({
+                                                    top: movable.newTop,
+                                                    left: movable.newLeft
+                                                })
+                                                lastCallback(movable)
+                                            })
+                                            return
+                                        }
+                                        //从高列移动低列
+                                        if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.top == 0) {
+                                            var wrappers = createWrapper(movable, elem)
+                                            var wrapper = wrappers[0]
+                                            var cloneWrapper = wrappers[1]
+                                            cloneWrapper.animate({height: 0}, 490, function() {
+                                                cloneWrapper.remove()
+                                            })
+                                            $(elem).css({
+                                                top: movable.height
+                                            }).animate({top: 0}, 500, function() {
+                                                $(elem).replaceAll(wrapper).css({
+                                                    top: movable.newTop,
+                                                    left: movable.newLeft
+                                                })
+                                                lastCallback(movable)
+                                            })
+                                            return
+                                        }
+                                        //当前行的水平移动
+                                        if (movable.row == movable.newRow && movable.top == movable.newTop) {
                                             $(elem).animate({left: movable.newLeft}, 500, function() {
                                                 elem.style.left = movable.newLeft + "px"
                                                 elem.style.top = movable.newTop + "px"
                                                 lastCallback(movable)
                                             })
-                                        } else {
-                                            if (movable.type === "middle" || (movable.type == "small" && movable.left === movable.newLeft)) {
-                                                $(elem).animate({top: movable.newTop}, 500, function() {
-                                                    elem.style.left = movable.newLeft + "px"
-                                                    elem.style.top = movable.newTop + "px"
-                                                    lastCallback(movable)
-                                                })
-                                                return
-                                            }
-
-
-                                            //如果是跨行移动 
-                                            //这个容器将插入到新位置
-                                            var wrapper = $("<div/>").css({
-                                                top: movable.newTop,
-                                                left: movable.newLeft,
-                                                width: movable.width,
-                                                height: movable.height,
-                                                overflow: "hidden",
-                                                position: "absolute",
-                                                "z-index": 2
-                                            }).insertBefore(elem).append(elem)
-                                            wrapper.find("app").css({
-                                                top: 0,
-                                                left: 0
+                                            return
+                                        }
+                                        //当前列的上下移动
+                                        if (movable.newCol == movable.col && movable.row !== movable.newRow) {
+                                            $(elem).animate({top: movable.newTop}, 500, function() {
+                                                elem.style.left = movable.newLeft + "px"
+                                                elem.style.top = movable.newTop + "px"
+                                                lastCallback(movable)
                                             })
-                                            //这个容器将插入到旧位置
-                                            var cloneWrapper = wrapper.clone(true).insertAfter(wrapper).css({
-                                                top: movable.top,
-                                                left: movable.left
-                                            })
-                                            if (insertAfter === true) {
+                                            return
+                                        }
+                                        //不同列的上下移动
+                                        if (movable.newCol !== movable.col && movable.row !== movable.newRow) {
+                                            var wrappers = createWrapper(movable, elem)
+                                            var wrapper = wrappers[0]
+                                            var cloneWrapper = wrappers[1]
+                                            if (insertAfter) {
                                                 //旧位置的，container width慢慢变小
                                                 cloneWrapper.animate({width: 0}, 490, function() {
                                                     cloneWrapper.remove()
@@ -621,8 +664,10 @@
                                                     lastCallback(movable)
                                                 });
                                             }
-
+                                            return
                                         }
+
+
                                     })(swapArray[i], swapArray[i].element);
                                 } else {
                                     lastCallback({})
