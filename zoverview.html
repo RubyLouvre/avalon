@@ -71,13 +71,17 @@
                             el.newSleft = 1
                             if (!sleft) {
                                 row++
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
                             }
+                            sleft = 1
                             el.newTop = 130 * row
                             el.newLeft = col * 260
                             el.newRow = row
                             el.newCol = col
                             row++
-                            sleft = 1
                             if (row > maxRow) {
                                 row = 0
                                 col++
@@ -148,28 +152,25 @@
                                 }
                             } else if (el.type == "middle") {
                                 el.sleft = 1
-                                console.log("==============" + row + "================")
-//                                if (!sleft) {
-//                                    row++
-//                                }
-                                if (row > maxRow) {
-                                    row = 0
-                                    col++
+                                if (!sleft) {
+                                    row++
+                                    if (row > maxRow) {
+                                        row = 0
+                                        col++
+                                    }
                                 }
-                                 sleft = 1
-                                console.log("==============" + row + "================")
+                                sleft = 1
                                 el.top = 130 * row
                                 el.left = col * 260
                                 el.row = row
                                 el.col = col
                                 el.width = 250
                                 el.height = 120
-                               row++
-                               
-                              //  if (row > maxRow) {
-                              //      row = 0
-                              //      col++
-                              //  }
+                                row++
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
                             } else if (el.type == "big") {
                                 el.sleft = 1
                                 if (!sleft) {
@@ -225,10 +226,10 @@
                             text: "1",
                             type: "small"
                         },
-//                          {
-//                            text: "555555555",
-//                            type: "middle"
-//                        },
+                        {
+                            text: "555555555",
+                            type: "middle"
+                        },
                         {
                             text: "2",
                             type: "small"
@@ -249,15 +250,14 @@
                             text: "6",
                             type: "small"
                         },
-           
+                        {
+                            text: "7",
+                            type: "small"
+                        },
                         {
                             text: "yyyy",
                             type: "middle"
-                        },
-//                        {
-//                            text: "7",
-//                            type: "small"
-//                        },
+                        }
 //                        {
 //                            text: "8",
 //                            type: "small"
