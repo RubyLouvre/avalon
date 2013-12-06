@@ -2,113 +2,18 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>测试用例</title>
-        <script src="avalon.js"></script>        
-        <style>
-            .gridheader,
-            .gridtbody {
-                width: 100%;
-                height: 24px;
-                background: #DCDCDC;
-                margin:0px;
-                color:#000;
-            }
-
-            .gridwrapper {
-                width: 100%;
-                height: 300px;
-                overflow: auto;
-                margin:0px;
-            }
-
-            .gridtbody {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            .gridtbody td,
-            .gridtbody th {
-                background: #fff;
-                border-top: 1px solid #b6b6b6;
-
-            }
-
-            .grid th {
-                width: 60px;
-            }
-
-            .grid td:nth-child(2) {
-                width: 10%;
-            }
-
-            .grid td:nth-child(3) {
-                width: 18%;
-            }
-
-            .hover td,
-            .hover th {
-                background: #9fe3ee;
-            }
-
-            .highlight td,
-            .highlight th {
-                background: #40C7DD!important;
-            }
-
-            .grid td:nth-child(4) {
-                width: 18%;
-            }
-        </style>
-    </head>
-    <body >
-        <div ms-controller="test">
-            <table class="gridheader grid">
-                <tbody><tr>
-                        <th><input type="checkbox" ms-duplex-radio="checkall"></th>
-                        <td>名称</td>
-                        <td>主板</td>
-                        <td>CPU</td>
-                        <td>内存</td>
-                        <td>硬盘</td>
-                    </tr>
-                </tbody></table>
-            <div class="gridwrapper">
-                <table class="gridtbody grid"  >
-                    <tr ms-repeat="datagrid" ms-hover="hover" ms-class-highlight="checked" >
-                        <th><input type="checkbox" ms-duplex-radio="el.checked" ></th>
-                        <td>{{el.name}}</td>
-                        <td>{{el.mainboard}}</td>
-                        <td>{{el.cpu}}</td>
-                        <td>{{el.memory}}</td>
-                        <td>{{el.harddisk}}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
+        <title>TEST</title>
+        <script src="avalon.js"></script>
         <script>
-            var cell = {name: "电脑001",
-                mainboard: "华硕P5K3 Deluxe/WiFi-AP",
-                cpu: " Intel酷睿2四核 Q6600(盒)",
-                memory: "宇瞻1GB DDR3 1333",
-                harddisk: "希捷320GB 7200.10 16M(串口/3年盒)",
-                checked: false
-            }
-            var grids = avalon.range(1, 20).map(function(el, i) {
-                return avalon.mix({}, cell, {name: "电脑0" + i})
-            })
-            grids[1].checked = grids[4].checked = true
             avalon.define("test", function(vm) {
-                vm.datagrid = grids
-                vm.checkall = false
-                vm.$watch("checkall", function(a) {
-                    vm.datagrid.forEach(function(el) {
-                        el.checked = a
-                    })
-                })
-            })
-
+                vm.array = [{name: "aaaa"},{name: "bbbb"},{name: "cccc"}]
+            });
 
         </script>
+    </head>
+    <body>
+        <ul ms-controller="test">
+            <li ms-repeat="array"><input ms-duplex="el.name">{{el.name}}</li>
+        </ul>
     </body>
 </html>
