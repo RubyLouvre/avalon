@@ -277,9 +277,26 @@
                             type: "small"
                         },
                         {
+                            text: "xxx",
+                            type: "big"
+                        },
+                        {
+                            text: "8",
+                            type: "small"
+                        },
+                        {
                             text: "yyyy",
                             type: "middle"
+                        },
+                        {
+                            text: "yyyy",
+                            type: "middle"
+                        },
+                        {
+                            text: "xxx",
+                            type: "big"
                         }
+
 //                        {
 //                            text: "8",
 //                            type: "small"
@@ -466,7 +483,8 @@
                                 swapProperties(swapArray, first, model)//交错元素的坐标
                                 animate = true
 
-                            } else if (drag.type === "small" && drop.type === "middle") {
+                            } else if ((drag.type === "small" && /middle|big/.test(drop.type))
+                                    || (drag.type === "middle" && drop.type === "big")) {
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row < drop.row) {//如果由上往下拖动
                                         crossRow = drop

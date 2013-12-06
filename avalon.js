@@ -2848,6 +2848,7 @@
             data.parent.replaceChild(endRepeat, elem)
             data.parent.insertBefore(startRepeat, endRepeat)
             view.appendChild(elem.cloneNode(true))
+            avalon.clearChild(elem)
         } else {
             while (elem.firstChild) {
                 view.appendChild(elem.firstChild)
