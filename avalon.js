@@ -2759,6 +2759,7 @@
                 } else if (valueType === "array") {
                     target.clear().push.apply(target, val)
                 } else if (target !== val) {
+                    this[index] = val
                     notifySubscribers(this, "set", index, val)
                 }
             }
