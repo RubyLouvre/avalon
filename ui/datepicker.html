@@ -16,9 +16,49 @@
                     vm.skin = "cangas"
                     vm.options = ["cangas", "latoja", "lugo", "melon", "nigran", "santiago", "siena", "vigo"]
                 })
+                avalon.define("bbb", function(vm) {
+                    //http://designify.me/web-design/7-jquery-datepicker-skins/
+                    vm.datepicker = {
+                        dayNames: ["日", "月", "火", "水", "木", "金", "土"],
+                        dayNameTitles: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"]
+                    }
+
+                })
+                 avalon.define("ccc", function(vm) {
+                    //http://designify.me/web-design/7-jquery-datepicker-skins/
+                    vm.datepicker = {
+                        titleFormat: "",
+                        changeYear: true,
+                        yearSuffix: "year",
+                        dateFormat: "dd   MM   yyyy",
+                        titleFormatOnlyMonth: ["风月","芽月","花月","牧月","获月","热月","果月","霞月","雾月","霜月","雪月", "雨月"],
+                        onHide: function(datepickerVM){
+                            avalon.log(datepickerVM.selectedTime)
+                        }
+                    }
+
+                })
                 avalon.scan()
             })
         </script>
+        <style>
+            #first{
+                position: absolute;
+                top: 0px;
+                left:20px;
+            }
+
+            #second{
+                position: absolute;
+                top: 0px;
+                left:300px;
+            }
+            #third{
+                position: absolute;
+                top: 0px;
+                left:600px;
+            }
+        </style>
     </head>
     <body ms-controller="theme" ms-class="ll-skin-{{skin}}" >
         <div >
@@ -27,8 +67,12 @@
             </select>
             <link rel="stylesheet"  ms-href="datepicker/{{skin}}.datepicker.css">
         </div>
-        <input ms-widget="datepicker,aaa" style="position: relative;">
+        <div style="position:relative">
+            <input id="first" ms-widget="datepicker,aaa" style="position: relative;"> 
+            <input id="second" ms-controller="bbb" ms-widget="datepicker"   data-datepicker-date-format="yyyy-MM-dd">
+            <input id="third" ms-controller="ccc" ms-widget="datepicker"  >
 
+        </div>
         <ul>
             <li>http://www.michaelvanderheeren.be/archives/382</li>
             <li>http://taitems.github.io/Aristo-jQuery-UI-Theme/</li>
@@ -40,6 +84,5 @@
             <div><input type="checkbox" ms-duplex-radio="showButtonPanel" />显示按钮面板</div>
             <div><input type="checkbox" ms-duplex-radio="showOtherMonths" />显示其他月份的日期</div>
         </div>
-
     </body>
 </html>
