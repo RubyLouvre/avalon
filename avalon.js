@@ -2547,9 +2547,9 @@
         }
         $elem.bind("change", updateModel)
         setTimeout(function() {
-            //先等到select里的option元素被扫描后，才根据model设置selected属性
+            //先等到select里的option元素被扫描后，才根据model设置selected属性  
             registerSubscriber(updateView, data)
-        })
+        },300)
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2980,7 +2980,9 @@
         }
         var callback = getBindingCallback(data.callbackName, data.vmodels)
         if (callback) {
-            callback.call(data.parent, method)
+            avalon.nextTick(function() {
+                callback.call(data.parent, method)
+            })
         }
     }
 

@@ -39,6 +39,8 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                         return formatYear.call(this, currentDate, this.titleFormatOnlyYear)
                     } else if (this.changeYear && !this.changeMonth) {
                         return formatMonth.call(this, currentDate, this.titleFormatOnlyMonth)
+                    }else{
+                        return ""
                     }
                     return avalon.filters.date(currentDate, format);
                 }
@@ -53,6 +55,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                     return avalon.range(min, max + 1)
                 }
             }
+  
             vm.$watch("currentMonth", function(val) {
                 var d = new Date(vm.currentYear, vm.currentMonth, vm.currentDate)
                 d.setMonth(val);

@@ -24,15 +24,15 @@
                     }
 
                 })
-                 avalon.define("ccc", function(vm) {
+                avalon.define("ccc", function(vm) {
                     //http://designify.me/web-design/7-jquery-datepicker-skins/
                     vm.datepicker = {
                         titleFormat: "",
                         changeYear: true,
                         yearSuffix: "year",
                         dateFormat: "dd   MM   yyyy",
-                        titleFormatOnlyMonth: ["风月","芽月","花月","牧月","获月","热月","果月","霞月","雾月","霜月","雪月", "雨月"],
-                        onHide: function(datepickerVM){
+                        titleFormatOnlyMonth: ["风月", "芽月", "花月", "牧月", "获月", "热月", "果月", "霞月", "雾月", "霜月", "雪月", "雨月"],
+                        onHide: function(datepickerVM) {
                             avalon.log(datepickerVM.selectedTime)
                         }
                     }
