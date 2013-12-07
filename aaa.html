@@ -1,19 +1,24 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <title>TEST</title>
-        <script src="avalon.js"></script>
-        <script>
-            avalon.define("test", function(vm) {
-                vm.array = [{name: "aaaa"},{name: "bbbb"},{name: "cccc"}]
-            });
-
-        </script>
+        <meta charset="utf-8">
+        <title></title>
     </head>
-    <body>
-        <ul ms-controller="test">
-            <li ms-repeat="array"><input ms-duplex="el.name">{{el.name}}</li>
-        </ul>
+    <body ms-controller="page">
+        <div ms-each="aaa.arr">{{el}},</div>
+        {{aaa.arr[0]}}
+        <script src="avalon.mobile.js"></script>
+        <script>
+            var model = avalon.define('page', function(vm) {
+                vm.aaa = {
+                    arr: [1, 2, 3]
+                }
+            });
+            setInterval(function() {
+                model.aaa = {
+                    arr: [+new Date()]
+                }
+            }, 50)
+        </script>
     </body>
 </html>

@@ -772,6 +772,9 @@
     }
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
+        if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/.test(html)) {
+            return DOC.createRange().createContextualFragment(html)
+        }
         var fragment = documentFragment.cloneNode(false)
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
         if (!(tag in tagHooks)) {
@@ -1926,7 +1929,7 @@
                     $elem.bind(event2, function() {
                         toggle && $elem.removeClass(className)
                     })
-                    if(event3){
+                    if (event3) {
                         $elem.bind(event3, function() {
                             toggle && $elem.removeClass(className)
                         })
@@ -2112,7 +2115,7 @@
     } : {}
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
-        bindingHandlers[name] = (function (dataParam) {
+        bindingHandlers[name] = (function(dataParam) {
             return function(data) {
                 data.param = dataParam;
                 bindingHandlers.on.apply(0, arguments)
@@ -2288,9 +2291,8 @@
                     }
                 } else if (valueType === "array") {
                     target.clear().push.apply(target, val)
-                }
-                if (target !== val) {
-                    target = val
+                } else if (target !== val) {
+                    this[index] = val
                     notifySubscribers(this, "set", index, val)
                 }
             }
@@ -2535,7 +2537,7 @@
     function gatherRemovedNodes(array, node, length) {
         for (var i = 1; i < length; i++) {
             node = node.nextSibling
-            if(!node)
+            if (!node)
                 break
             array.push(node)
         }

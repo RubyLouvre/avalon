@@ -2758,9 +2758,7 @@
                     }
                 } else if (valueType === "array") {
                     target.clear().push.apply(target, val)
-                }
-                if (target !== val) {
-                    target = val
+                } else if (target !== val) {
                     notifySubscribers(this, "set", index, val)
                 }
             }
