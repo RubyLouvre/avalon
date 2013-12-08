@@ -25,19 +25,13 @@
                 margin:0px;
                 padding:0px;
                 width:100%;
-
             }
-
-
             .ui-mainmenu-item{
-                float: left;
-                list-style: none;
-                display:block;
+                display:inline-block;
                 padding:0px 20px;
                 position: relative;
             }
             .ui-submenu-item{
-                list-style: none;
                 display:block;
                 padding:0px 20px;
                 position: relative;
@@ -58,7 +52,6 @@
                 right:0px;
                 top:15px;
             }
-
             .ui-mainmenu-item a, .ui-submenu-item a{
                 padding-top:10px;
                 padding-bottom: 10px;
@@ -72,7 +65,6 @@
                 display: block;
                 height: 1px;
                 width:1px;
-                border: 1px solid blue;
             }
 
             .ui-submenu-item .position-span{
@@ -80,6 +72,9 @@
                 position: absolute;
                 top:0px;
                 right:0px;
+            }
+            .ui-menu-hide-son-slider li ui-submenu-slide{
+                visibility: hidden;
             }
             .ui-mainmenu-slider{
                 position:absolute;
@@ -107,10 +102,7 @@
                 padding:2px;
                 margin:0px;
             }
-            .ui-menu-slider ul li{
-                padding:10px;
-                border:1px solid green;
-            }
+
 
         </style>
 
@@ -144,7 +136,7 @@
             }
             var model = avalon.define("menu", function(vm) {
                 vm.array = fix([{content: "aaaa", submenu:
-                                [{content: "aaaaaaaaaaaaaaaaaaaaa", submenu: [{content: "dddd"}]},
+                                [{content: "aaaaaaaaaaaaaaaaaaaaa", submenu: ["dddddddddddd", "eeeeeeeeeeee", "ffffffffff"]},
                                     {content: "a2", submenu: []}, {content: "a3", submenu: []}]},
                     {content: "bbbb", submenu: [{content: "b1", submenu: []}, {content: "b2", submenu: []}]},
                     {content: "ccc", submenu: []}])
@@ -162,10 +154,12 @@
                             slider.style.width = w + 'px'
                             slider.style.height = 0 + 'px'
                             slider.style.visibility = "visible"
+                            avalon(slider).addClass("ui-menu-hide-son-slider")
                             var submenu = document.getElementById("submenu-" + scope.$id)
                             submenu.style.left = "0px"
                             $(slider).animate({height: h}, 500, function() {
                                 scope.animate = false
+                                slider.style.overflow = "visible"
                                 var icomElem = document.getElementById("icon-" + scope.$id)
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
@@ -181,6 +175,7 @@
                         var slider = document.getElementById("ui-menu-slider-" + scope.$id)
                         if (slider) {
                             var h = slider._height + 8
+                            slider.style.overflow = "hidden"
                             $(slider).animate({height: 0}, 250, function() {
                                 scope.animate = false
                                 slider.style.visibility = "hidden"
@@ -192,7 +187,7 @@
                         }
                     }
                 }
-            
+
                 vm.showSubmenu = function(scope, array) {
                     console.log(model.hideSubmenu)
                     if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
@@ -208,11 +203,12 @@
                             slider.style.width = 0 + 'px'
                             slider.style.height = h + 'px'
                             slider.style.visibility = "visible"
-                            this.parentNode.parentNode.style.overflow = "visible"
+                            $(slider).parents(".ui-menu-hide-son-slider").removeClass("ui-menu-hide-son-slider")
                             var submenu = document.getElementById("submenu-" + scope.$id)
                             submenu.style.top = "0px"
                             $(slider).animate({width: w}, 500, function() {
                                 scope.animate = false
+                                slider.style.overflow = "visible"
                                 var icomElem = document.getElementById("icon-" + scope.$id)
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
@@ -228,6 +224,7 @@
                         var slider = document.getElementById("ui-menu-slider-" + scope.$id)
                         if (slider) {
                             var w = slider._width + 8
+                            slider.style.overflow = "hidden"
                             $(slider).animate({width: 0}, 250, function() {
                                 scope.animate = false
                                 slider.style.visibility = "hidden"
@@ -239,7 +236,7 @@
                         }
                     }
                 }
-                    vm.renderSubmenu = function() {
+                vm.renderSubmenu = function() {
                     var height = this.offsetHeight;
                     var width = this.offsetWidth;
                     this.style.top = -1 * height + "px"
