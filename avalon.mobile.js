@@ -1114,6 +1114,19 @@
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea")
 
+    //确保元素的内容被完全扫描渲染完毕才调用回调
+    function checkScan(elem, callback) {
+        var innerHTML = NaN, id = setInterval(function() {
+            var currHTML = elem.innerHTML
+            if (currHTML === innerHTML) {
+                clearInterval(id)
+                callback()
+            } else {
+                innerHTML = currHTML
+            }
+        }, 15);
+    }
+
     function scanNodes(parent, vmodels, state) {
         var nodes = aslice.call(parent.childNodes)
         for (var i = 0, node; node = nodes[i++]; ) {
@@ -1125,9 +1138,11 @@
         }
     }
 
+
+
     function scanTag(elem, vmodels, state, node) {
         vmodels = vmodels || []
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat -->...
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat -->...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1703,7 +1718,9 @@
                         }
                         avalon.innerHTML(elem, text)
                         scanNodes(elem, vmodels, data.state)
-                        rendered && rendered.call(elem)
+                        rendered && checkScan(elem, function() {
+                            rendered.call(elem)
+                        })
                     }
                     if (data.param === "src") {
                         if (includeContents[val]) {
@@ -2092,18 +2109,12 @@
             }
         }
         $elem.bind("change", updateModel)
-        var innerHTML = NaN, elem = $elem[0]
-        var id = setInterval(function() {
-            var currHTML = elem.innerHTML
-            if (currHTML === innerHTML) {
-                clearInterval(id)
-                //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                registerSubscriber(updateView, data)
-            } else {
-                innerHTML = currHTML
-            }
-        }, 15);
+        checkScan($elem[0], function() {
+            //先等到select里的option元素被扫描后，才根据model设置selected属性  
+            registerSubscriber(updateView, data)
+        })
     }
+
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================
     var eventName = {
@@ -2503,11 +2514,9 @@
                 break
         }
         var callback = getBindingCallback(data.callbackName, data.vmodels)
-        if (callback) {
-            avalon.nextTick(function() {
-                callback.call(data.parent, method)
-            })
-        }
+        callback && checkScan(parent, function() {
+            callback.call(data.parent, method)
+        })
     }
 
     function withIterator(method, object, group, data, getter) {
@@ -2538,9 +2547,9 @@
                 break;
         }
         var callback = getBindingCallback(data.callbackName, data.vmodels)
-        if (callback) {
+        callback && checkScan(parent, function() {
             callback.call(data.parent, method)
-        }
+        })
     }
     //收集要移除的节点，第一个节点要求先放进去
 
