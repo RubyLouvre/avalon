@@ -2092,10 +2092,17 @@
             }
         }
         $elem.bind("change", updateModel)
-        setTimeout(function() {
-            //先等到select里的option元素被扫描后，才根据model设置selected属性  
-            registerSubscriber(updateView, data)
-        }, 300)
+        var innerHTML = NaN, elem = $elem[0]
+        var id = setInterval(function() {
+            var currHTML = elem.innerHTML
+            if (currHTML === innerHTML) {
+                clearInterval(id)
+                //先等到select里的option元素被扫描后，才根据model设置selected属性  
+                registerSubscriber(updateView, data)
+            } else {
+                innerHTML = currHTML
+            }
+        }, 15);
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //========================= event binding ====================
