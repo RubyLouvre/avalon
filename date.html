@@ -19,7 +19,7 @@
                 width:700px;
 
             }
-            .ui-main-menu{
+            .ui-mainmenu{
                 float: left;
                 list-style: none;
                 margin:0px;
@@ -29,7 +29,7 @@
             }
 
 
-            .ui-main-menu-item{
+            .ui-mainmenu-item{
                 float: left;
                 list-style: none;
                 display:block;
@@ -42,7 +42,7 @@
                 padding:0px 20px;
                 position: relative;
             }
-            .ui.main-menu-item a{
+            .ui-mainmenu-item a{
                 display: block;
             }
             .icon-span, .text-span{
@@ -59,49 +59,61 @@
                 top:15px;
             }
 
-            .ui-main-menu-item a{
+            .ui-mainmenu-item a, .ui-submenu-item a{
                 padding-top:10px;
                 padding-bottom: 10px;
             }
-            .ui-submenu-item a{
-                padding-top:10px;
-                padding-bottom: 10px;
-            }
-            .ui-main-menu-item a,  .ui-main-menu-item a span, .ui-submenu-item a, .ui-submenu-item a span {
+            .ui-mainmenu-item a,  .ui-mainmenu-item a span, .ui-submenu-item a, .ui-submenu-item a span {
                 display: block;
                 text-decoration:none;
             }
-            .position-span{
+            .ui-mainmenu-item .position-span{
                 position: relative;
                 display: block;
                 height: 1px;
                 width:1px;
+                border: 1px solid blue;
             }
+          
             .ui-submenu-item .position-span{
                 display:inline!important;
+                position: absolute;
+                top:0px;
+                right:0px;
             }
-            .submenu-div{
+            .ui-mainmenu-slider{
                 position:absolute;
                 padding-top:2px;
-
                 left:0px;
+                top: -2px;
                 height:0px;
                 visibility: hidden;
-                /* border:1px solid red;*/
                 overflow: hidden;
             }
-            .submenu-div ul{
+            .ui-submenu-slider{
+                position:absolute;
+                padding-top:2px;
+                left:-2px;
+                top: 0px;
+                width:0px;
+                visibility: hidden;
+                overflow: hidden;
+            }
+            .ui-menu-slider ul{
                 position: absolute;
+                z-index:1000;
                 top:-10px;
                 display: block;
                 padding:2px;
                 margin:0px;
             }
-            .submenu-div ul li{
+            .ui-menu-slider ul li{
                 padding:10px;
+                border:1px solid green;
             }
 
         </style>
+
         <script>
 
             function fix(array) {
@@ -117,7 +129,7 @@
                     }
                     el.animate = false
                     el.elem = {}
-                    el.$skipArray = ["elem"]
+                    el.$skipArray = ["elem", "animate", "href"]
                     if (typeof el.content !== "string") {
                         el.content = "&nbsp;"
                     }
@@ -132,8 +144,8 @@
             }
             var model = avalon.define("menu", function(vm) {
                 vm.array = fix([{content: "aaaa", submenu:
-                                [{content: "aaaaaaaaaaaaaaaaaaaaaaaa", submenu: [{content:"xxxx"}]}, 
-                            {content: "a2", submenu: []}, {content: "a3", submenu: []}]},
+                                [{content: "aaaaaaaaaaaaaaaaaaaaa", submenu: [{content: "dddd"}]},
+                                    {content: "a2", submenu: []}, {content: "a3", submenu: []}]},
                     {content: "bbbb", submenu: [{content: "b1", submenu: []}, {content: "b2", submenu: []}]},
                     {content: "ccc", submenu: []}])
                 vm.showMain = function(scope, array) {
@@ -143,15 +155,16 @@
                     if (!scope.animate) {
                         scope.animate = true
                         array.lastScope = scope
-                        var submenuDiv = document.getElementById("submenu-div-" + scope.$id)
-                        if (submenuDiv) {
-                            var h = submenuDiv._height + 8
-                            var w = submenuDiv._width + 8
-                            submenuDiv.style.width = w + 'px'
-                            submenuDiv.style.visibility = "visible"
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            var w = slider._width + 8
+                            slider.style.width = w + 'px'
+                            slider.style.height = 0 + 'px'
+                            slider.style.visibility = "visible"
                             var submenu = document.getElementById("submenu-" + scope.$id)
-                            submenu.style.top = -1 * h + "px"
-                            $(submenuDiv).animate({height: h}, 500, function() {
+                            submenu.style.left = "0px"
+                            $(slider).animate({height: h}, 500, function() {
                                 scope.animate = false
                                 var icomElem = document.getElementById("icon-" + scope.$id)
                                 if (icomElem)
@@ -162,16 +175,16 @@
                     }
                 }
                 vm.hideMain = function(scope, time) {
-                    return
+                    //   return
                     time = time || 250
                     if (!scope.animate || time !== 250) {
                         scope.animate = true
-                        var submenuDiv = document.getElementById("submenu-div-" + scope.$id)
-                        if (submenuDiv) {
-                            var h = submenuDiv._height + 8
-                            $(submenuDiv).animate({height: 0}, 250, function() {
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            $(slider).animate({height: 0}, 250, function() {
                                 scope.animate = false
-                                submenuDiv.style.visibility = "hidden"
+                                slider.style.visibility = "hidden"
                                 var icomElem = document.getElementById("icon-" + scope.$id)
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-n").addClass("ui-icon-triangle-1-s")
@@ -183,7 +196,8 @@
                 vm.renderSubmenu = function() {
                     var height = this.offsetHeight;
                     var width = this.offsetWidth;
-                 //   this.style.top = -1 * height + "px"
+                    this.style.top = -1 * height + "px"
+                    this.style.left = -1 * width + "px"
                     this.style.width = width + "px"
                     this.style.height = height + "px"
                     this.parentNode._width = width
@@ -191,25 +205,62 @@
 
                 }
                 vm.showSubmenu = function(scope, array) {
-                    return
+                    console.log(model.hideSubmenu)
+                    if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
+                        model.hideSubmenu(array.lastScope, 100)
+                    }
+                    console.log("11111111111111111111")
                     if (!scope.animate) {
                         scope.animate = true
                         array.lastScope = scope
-                        var submenuDiv = document.getElementById("submenu-div-" + scope.$id)
-                        if (submenuDiv) {
-                            var h = submenuDiv._height + 8
-                            var w = submenuDiv._width + 8
-                            submenuDiv.style.height = h + 'px'
-                            submenuDiv.style.visibility = "visible"
-                            $(submenuDiv).animate({width: w}, 500, function() {
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            var w = slider._width + 8
+                            slider.style.width = 0 + 'px'
+                            slider.style.height = h + 'px'
+                            slider.style.visibility = "visible"
+                            this.parentNode.parentNode.style.overflow = "visible"
+                            //     slider.style.overflow = "visible"
+                            var submenu = document.getElementById("submenu-" + scope.$id)
+                            submenu.style.top = "0px"
+                            $(slider).animate({width: w}, 500, function() {
                                 scope.animate = false
                                 var icomElem = document.getElementById("icon-" + scope.$id)
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
                             })
-                            $(document.getElementById("submenu-" + scope.$id)).animate({left: w}, 500)
+                            $(document.getElementById("submenu-" + scope.$id)).animate({left: -10}, 500)
                         }
                     }
+                }
+                vm.hideSubmenu = function(scope, time) {
+                    console.log("ssssssssssss")
+                    time = time || 250
+                    if (!scope.animate || time !== 250) {
+                        scope.animate = true
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var w = slider._width + 8
+                            $(slider).animate({width: 0}, 250, function() {
+                                scope.animate = false
+                                slider.style.visibility = "hidden"
+                                var icomElem = document.getElementById("icon-" + scope.$id)
+                                if (icomElem)
+                                    avalon(icomElem).removeClass("ui-icon-triangle-1-n").addClass("ui-icon-triangle-1-s")
+                            })
+                            $(document.getElementById("submenu-" + scope.$id)).animate({left: -1 * w}, 250)
+                        }
+                    }
+                }
+                vm.processTemplate = function(text) {
+
+                    var REPLACE = avalon(this).data("name")
+                    var SUBSTITUTE = "avalon" + Math.random().toString(36).substring(2, 15)
+                    var ret = text.replace(/PARENTITEM/g, REPLACE).replace(/SONITEM/g, SUBSTITUTE)
+                     console.log(ret)
+                    return ret
+
                 }
                 vm.hideSubmenu = function() {
 
@@ -223,40 +274,39 @@
             <p>This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>
         </div>
         <noscript id="submenutmpl">
-        <ul class="ui-submenu ui-corner-all  ui-widget-content" ms-attr-id="submenu-{{el.$id}}" ms-each-elem="el.submenu" data-each-rendered="renderSubmenu"  >
-            <li class="ui-submenu-item  ui-corner-all" ms-hover='ui-state-hover'  ms-mouseenter="showSubmenu(elem, el.submenu)" ms-mouseleave="hideSubmenu(elem)" ms-data-vm="elem">
-                <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix  "  ms-class="has-submenu: elem.submenu.length">
-                    <span class="text-span">{{elem.content}}</span>
-                    <span ms-if='elem.submenu.length' class="icon-span ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{elem.$id}}">
+        <ul class="ui-submenu ui-corner-all  ui-widget-content" 
+            ms-attr-id="submenu-{{PARENTITEM.$id}}" 
+            ms-each-SONITEM="PARENTITEM.submenu" 
+            data-each-rendered="renderSubmenu"  >
+            <li class="ui-submenu-item  ui-corner-all"  ms-hover='ui-state-hover'   ms-mouseenter="showSubmenu(SONITEM, PARENTITEM.submenu)" ms-mouseleave="hideSubmenu(SONITEM)" ms-data-vm="SONITEM">
+                <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix" >
+                    <span class="text-span">{{SONITEM.content}}</span>
+                    <span ms-if='SONITEM.submenu.length' class="icon-span ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{PARENTITEM.$id}}">
                     </span>
                 </a>
                 <span class="position-span">
-                    <div ms-if="elem.submenu.length" 
-                         ms-attr-id="submenu-div-{{elem.$id}}"
-
-                         class="submenu-div" ms-include="'submenutmpl' ">
-
+                    <div ms-if="SONITEM.submenu.length" 
+                         ms-attr-id="ui-menu-slider-{{SONITEM.$id}}"
+                         class="ui-menu-slider ui-submenu-slider" ms-include="'submenutmpl'" ms-data-name="'SONITEM'" data-include-loaded="processTemplate">
                     </div>
                 </span>
             </li>
-
         </ul>    
 
 
         </noscript>
         <div  ms-controller="menu" id="menu" class="ui-widget ui-helper-clearfix ">
-            <ul class="ui-widget-header ui-main-menu ui-corner-all" ms-each="array"  >
-                <li class="ui-main-menu-item" ms-mouseenter="showMain(el,array)" ms-mouseleave="hideMain(el)" ms-data-vm="el">
-                    <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix" ms-class="has-submenu: el.submenu.length">
+            <ul class="ui-widget-header ui-mainmenu ui-corner-all" ms-each="array"  >
+                <li class="ui-mainmenu-item" ms-mouseenter="showMain(el,array)" ms-mouseleave="hideMain(el)" ms-data-vm="el">
+                    <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix" >
                         <span class="text-span">{{el.content}}</span>
                         <span ms-if='el.submenu.length' class="icon-span ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{el.$id}}">
                         </span>
                     </a>
                     <span class="position-span">
                         <div ms-if="el.submenu.length"
-                             ms-css-visibility="elem.animate ? 'hidden' : 'visible' "
-                             ms-attr-id="submenu-div-{{el.$id}}"
-                             class="submenu-div" ms-include="'submenutmpl' ">
+                             ms-attr-id="ui-menu-slider-{{el.$id}}"
+                             class="ui-menu-slider ui-mainmenu-slider" ms-include="'submenutmpl'" ms-data-name="'el'" data-include-loaded="processTemplate">
 
                         </div>
                     </span>
