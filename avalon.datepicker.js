@@ -1,26 +1,25 @@
 define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl) {
 //http://xdsoft.net/jqplugins/datetimepicker/
+    function formatMonth(date, format) {
+        if (Array.isArray(format)) {
+            return format[this.currentMonth]
+        } else if (format) {
+            return avalon.filters.date(date, format);
+        } else {
+            return this.currentMonth
+        }
+    }
+    function formatYear(date, format) {
+        if (format) {
+            return avalon.filters.date(date, format);
+        } else {
+            return this.currentYear + (this.yearSuffix || "")
+        }
+    }
     var widget = avalon.ui.datepicker = function(element, data, vmodels) {
         var $element = avalon(element), options = data.datepickerOptions, model
         var now = new Date, datepickerEl
-        //   element.stopScan = true
         var nowTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - 0
-        function formatMonth(date, format) {
-            if (Array.isArray(format)) {
-                return format[this.currentMonth]
-            } else if (format) {
-                return avalon.filters.date(date, format);
-            } else {
-                return this.currentMonth
-            }
-        }
-        function formatYear(date, format) {
-            if (format) {
-                return avalon.filters.date(date, format);
-            } else {
-                return this.currentYear + (this.yearSuffix || "")
-            }
-        }
         var model = avalon.define(data.datepickerId, function(vm) {
             avalon.mix(vm, options)
             vm.currentYear = now.getFullYear()
@@ -39,7 +38,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                         return formatYear.call(this, currentDate, this.titleFormatOnlyYear)
                     } else if (this.changeYear && !this.changeMonth) {
                         return formatMonth.call(this, currentDate, this.titleFormatOnlyMonth)
-                    }else{
+                    } else {
                         return ""
                     }
                     return avalon.filters.date(currentDate, format);
@@ -55,7 +54,7 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                     return avalon.range(min, max + 1)
                 }
             }
-  
+
             vm.$watch("currentMonth", function(val) {
                 var d = new Date(vm.currentYear, vm.currentMonth, vm.currentDate)
                 d.setMonth(val);
@@ -279,8 +278,8 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
         maxDate: null,
         numberOfMonths: 1,
         yearSuffix: "年",
-        onShow: avalon.noop,//当我们只点它时，就会调用此方法，this指向input，参数为VM
-        onHide: avalon.noop,//当我们选中一个日期时，它会使用dateFormat格式化它，将它输入到目标input里，并调用此方法，this指向input，参数为VM
+        onShow: avalon.noop, //当我们只点它时，就会调用此方法，this指向input，参数为VM
+        onHide: avalon.noop, //当我们选中一个日期时，它会使用dateFormat格式化它，将它输入到目标input里，并调用此方法，this指向input，参数为VM
         titleFormat: "MM月yyyy年",
         titleFormatOnlyYear: "yyyy年",
         titleFormatOnlyMonth: "MM月", //可以是数组，如["风月","芽月","花月","牧月","获月","热月","果月","霞月","雾月","霜月","雪月", "雨月"]

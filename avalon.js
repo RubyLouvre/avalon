@@ -2135,7 +2135,7 @@
                                     var tag = noscripts[i]
                                     if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
                                         tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
-                                        tag.fixIE78 = (array[i].match(rnoscriptText) || ["", ""])[1]
+                                        tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
                                     }
                                 }
                             }
