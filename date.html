@@ -73,7 +73,7 @@
                 top:0px;
                 right:0px;
             }
-            .ui-menu-hide-son-slider li ui-submenu-slide{
+            .ui-menu-hide-son-slider li .ui-submenu-slider{
                 visibility: hidden;
             }
             .ui-mainmenu-slider{
@@ -151,8 +151,8 @@
                         if (slider) {
                             var h = slider._height + 8
                             var w = slider._width + 8
-                            slider.style.width = w + 'px'
-                            slider.style.height = 0 + 'px'
+                            slider.style.width = w + "0px"
+                            slider.style.height = "0px"
                             slider.style.visibility = "visible"
                             avalon(slider).addClass("ui-menu-hide-son-slider")
                             var submenu = document.getElementById("submenu-" + scope.$id)
@@ -200,8 +200,8 @@
                         if (slider) {
                             var h = slider._height + 8
                             var w = slider._width + 8
-                            slider.style.width = 0 + 'px'
-                            slider.style.height = h + 'px'
+                            slider.style.width = "0px"
+                            slider.style.height = h + "px"
                             slider.style.visibility = "visible"
                             $(slider).parents(".ui-menu-hide-son-slider").removeClass("ui-menu-hide-son-slider")
                             var submenu = document.getElementById("submenu-" + scope.$id)
