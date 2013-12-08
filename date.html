@@ -137,10 +137,13 @@
             }
             var model = avalon.define("menu", function(vm) {
                 vm.array = fix([{content: "aaaa", submenu:
-                                [{content: "aaaaaaaaaaaaaaaaaaaaa", submenu: ["dddddddddddd", "eeeeeeeeeeee", "ffffffffff"]},
-                                    {content: "a2", submenu: []}, {content: "a3", submenu: []}]},
+                                [
+                                    {content: "aaaaaaa", submenu: [{content: "dddddddddddd", submenu: ["qqqqq", "ppppp"]}, "eeeeeeeeeeee", "ffffffffff"]},
+                                    {content: "bbbbbbbbbbbb", submenu: ["11111111111", "2222222222", "33dd3333"]},
+                                    {content: "cccccccccccc", submenu: ["vvvvvvvv", "oooooooooo", "fffffffff"]}
+                                ]},
                     {content: "bbbb", submenu: [{content: "b1", submenu: []}, {content: "b2", submenu: []}]},
-                    {content: "ccc", submenu: []}])
+                    {content: "ccc", submenu: ["eddd"]}, "dddd"])
                 vm.showMain = function(scope, array) {
                     if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
                         model.hideMain(array.lastScope, 100)
@@ -181,7 +184,7 @@
                                 scope.animate = false
                                 slider.style.visibility = "hidden"
                                 var icomElem = document.getElementById("icon-" + scope.$id)
-                                  avalon(slider).addClass("ui-menu-hide-son-slider")
+                                avalon(slider).addClass("ui-menu-hide-son-slider")
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-n").addClass("ui-icon-triangle-1-s")
                             })
@@ -211,9 +214,7 @@
                             $(slider).animate({width: w}, 500, function() {
                                 scope.animate = false
                                 slider.style.overflow = "visible"
-                                var icomElem = document.getElementById("icon-" + scope.$id)
-                                if (icomElem)
-                                    avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
+
                             })
                             $(document.getElementById("submenu-" + scope.$id)).animate({left: 0}, 500)
                         }
@@ -230,10 +231,7 @@
                             $(slider).animate({width: 0}, 250, function() {
                                 scope.animate = false
                                 slider.style.visibility = "hidden"
-                                var icomElem = document.getElementById("icon-" + scope.$id)
-                                avalon(slider).addClass("ui-menu-hide-son-slider")
-                                if (icomElem)
-                                    avalon(icomElem).removeClass("ui-icon-triangle-1-n").addClass("ui-icon-triangle-1-s")
+
                             })
                             $(document.getElementById("submenu-" + scope.$id)).animate({left: -1 * w}, 250)
                         }
@@ -280,7 +278,7 @@
                                 {{SONITEM.content}}
                             </td>
                             <td>
-                                <span ms-if='SONITEM.submenu.length' class="icon-span ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{PARENTITEM.$id}}">
+                                <span ms-if='SONITEM.submenu.length' class=" ui-icon ui-icon-triangle-1-e">
                                 </span>
                             </td>
                         </tr>
@@ -307,7 +305,7 @@
                                 <td class="ui-menu-text">
                                     {{el.content}}
                                 </td>  <td>
-                                    <span ms-if='el.submenu.length' class="icon-span ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{el.$id}}">
+                                    <span ms-if='el.submenu.length' class="ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{el.$id}}">
                                     </span>
                                 </td>
                             </tr>
