@@ -74,7 +74,7 @@
                 width:1px;
                 border: 1px solid blue;
             }
-          
+
             .ui-submenu-item .position-span{
                 display:inline!important;
                 position: absolute;
@@ -170,12 +170,11 @@
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
                             })
-                            $(submenu).animate({top: -10}, 500)
+                            $(submenu).animate({top: 0}, 500)
                         }
                     }
                 }
                 vm.hideMain = function(scope, time) {
-                    //   return
                     time = time || 250
                     if (!scope.animate || time !== 250) {
                         scope.animate = true
@@ -193,23 +192,12 @@
                         }
                     }
                 }
-                vm.renderSubmenu = function() {
-                    var height = this.offsetHeight;
-                    var width = this.offsetWidth;
-                    this.style.top = -1 * height + "px"
-                    this.style.left = -1 * width + "px"
-                    this.style.width = width + "px"
-                    this.style.height = height + "px"
-                    this.parentNode._width = width
-                    this.parentNode._height = height
-
-                }
+            
                 vm.showSubmenu = function(scope, array) {
                     console.log(model.hideSubmenu)
                     if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
                         model.hideSubmenu(array.lastScope, 100)
                     }
-                    console.log("11111111111111111111")
                     if (!scope.animate) {
                         scope.animate = true
                         array.lastScope = scope
@@ -221,7 +209,6 @@
                             slider.style.height = h + 'px'
                             slider.style.visibility = "visible"
                             this.parentNode.parentNode.style.overflow = "visible"
-                            //     slider.style.overflow = "visible"
                             var submenu = document.getElementById("submenu-" + scope.$id)
                             submenu.style.top = "0px"
                             $(slider).animate({width: w}, 500, function() {
@@ -230,12 +217,11 @@
                                 if (icomElem)
                                     avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
                             })
-                            $(document.getElementById("submenu-" + scope.$id)).animate({left: -10}, 500)
+                            $(document.getElementById("submenu-" + scope.$id)).animate({left: 0}, 500)
                         }
                     }
                 }
                 vm.hideSubmenu = function(scope, time) {
-                    console.log("ssssssssssss")
                     time = time || 250
                     if (!scope.animate || time !== 250) {
                         scope.animate = true
@@ -253,18 +239,26 @@
                         }
                     }
                 }
+                    vm.renderSubmenu = function() {
+                    var height = this.offsetHeight;
+                    var width = this.offsetWidth;
+                    this.style.top = -1 * height + "px"
+                    this.style.left = -1 * width + "px"
+                    this.style.width = width + "px"
+                    this.style.height = height + "px"
+                    this.parentNode._width = width
+                    this.parentNode._height = height
+
+                }
                 vm.processTemplate = function(text) {
 
                     var REPLACE = avalon(this).data("name")
                     var SUBSTITUTE = "avalon" + Math.random().toString(36).substring(2, 15)
                     var ret = text.replace(/PARENTITEM/g, REPLACE).replace(/SONITEM/g, SUBSTITUTE)
-                     console.log(ret)
                     return ret
 
                 }
-                vm.hideSubmenu = function() {
 
-                }
             })
         </script>
     </head>
