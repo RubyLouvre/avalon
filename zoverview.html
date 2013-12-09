@@ -132,13 +132,13 @@
                     }
                 }
 
-                function swapProperties2(model) {
+                function swapProperties2(array, model) {
                     vapps = []
                     var maxRow = model.maxRow //每一列最多 多少行，用于配置
                     var row = 0 //当前APP所在的栏数
                     var col = 0 //当前APP所在的栏数
                     var sleft = 1
-                    for (var i = 0, el; el = model.apps[i]; i++) {
+                    for (var i = 0, el; el = array[i]; i++) {
                         if (el.type == "small") {
                             if (sleft) {//如果是左边
                                 sleft = 0
@@ -163,7 +163,7 @@
                                 el.newTop = 130 * row
                                 el.newLeft = col * 260 + 130 //130为一个small的宽
                                 el.newRow = row
-                                el.newcol = col
+                                el.newCol = col
                                 el.newSleft = 0
                                 row++
                             }
@@ -379,7 +379,7 @@
                             }
 
                         }
-                        console.log(vapps)
+
                     }
                     function fix(array) {
                         for (var i = 0, el; el = array[i++]; ) {
@@ -411,20 +411,8 @@
                             type: "small"
                         },
                         {
-                            text: "middle1",
-                            type: "middle"
-                        },
-                        {
-                            text: "2",
-                            type: "small"
-                        },
-                        {
-                            text: "middle2",
-                            type: "middle"
-                        },
-                        {
                             text: "3",
-                            type: "small"
+                            type: "middle"
                         },
                         {
                             text: "4",
@@ -443,11 +431,23 @@
                             type: "small"
                         },
                         {
-                            text: "xxx",
-                            type: "big"
+                            text: "8",
+                            type: "small"
                         },
                         {
-                            text: "8",
+                            text: "9",
+                            type: "middle"
+                        },
+                        {
+                            text: "10",
+                            type: "middle"
+                        },
+                        {
+                            text: "11",
+                            type: "small"
+                        },
+                        {
+                            text: "12",
                             type: "small"
                         },
 //                        {
@@ -516,15 +516,10 @@
                     vm.start = function(e, data) {
                         avalon(this).addClass("current")
                         this.style.zIndex = 100
-
-
                         model.dragClass = "dragging"
                     }
                     vm.beforeStop = function(event) {
                         vm.dragClass = ""
-
-                        check = true
-
                     }
                     vm.stop = function() {
                         var drag = this["data-vm"]
@@ -544,7 +539,7 @@
                             avalon(this).removeClass("current")
                             this.style.zIndex = 0
                         } else {
-                            console.log("进行dragger的动画")
+                            //   console.log("进行dragger的动画")
                             $(this).animate({left: drag.newLeft, top: drag.newTop}, 300, function() {
                                 this.style.left = drag.newLeft + "px"
                                 this.style.top = drag.newTop + "px"
@@ -555,7 +550,7 @@
                                 var str = model.apps.map(function(el) {
                                     return  el.element.innerHTML.trim() + " th  " + el.left + "  " + el.top + "  " + el.sleft + "s;"
                                 })
-                                console.log(str)
+                                //  console.log(str)
                             })
                         }
                     }
@@ -614,36 +609,27 @@
                         drag.animate = true
 
                         var drop = false
-                        for (var i = 0, el; el = model.apps[i]; i++) {
+                        for (var i = 0, el; el = model.apps[i]; i++) {//检测拖动块与真实APP的碰撞
                             if (!el.animate && enter(el, point1, point2)) {
                                 drop = el
                                 break
                             }
                         }
-                        if (!drop && vapps.length) {
+                        if (!drop && vapps.length) {//如果不与真实APP发生碰撞，那么将检测它与所有空格的碰撞
                             var insertion = false
                             for (var i = 0, el; el = vapps[i]; i++) {
-                                if (el !== drag && enter(el, point1, point2)) {
+                                if (enter(el, point1, point2)) {
                                     insertion = el
                                     break
                                 }
                             }
                             if (insertion) {
                                 var insertIndex = model.apps.indexOf(insertion.el)
-
                                 var dragIndex = model.apps.indexOf(drag)
-                                //   model.apps.splice(dragIndex)
                                 swapElements(model.apps, dragIndex, insertIndex + 1)
-                                model.apps.forEach(function(el) {
-                                    console.log(el.element.innerHTML.trim())
-                                })
-
                                 animate = true
-
                                 swapArray = model.apps.slice(0)
-                                console.log("11111111111111111111")
-                                swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                                //   console.log(swapArray)
+                                swapProperties2(swapArray, model)
                             } else {
                                 return
                             }
@@ -657,37 +643,31 @@
                             var dropIndex = model.apps.indexOf(drop)
                             var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
                             var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
-                            var first = model.apps.slice(startIndex)[0]
-                            var insertAfter = false, swapArray = []
+                            var swapArray = []
+                          //  console.log(crossRow)
                             if (crossRow && crossRow !== drop) {
-                                crossRow = insertAfter = false
+                                crossRow = false
+                             console.log("-------"+dragIndex+"-------"+dropIndex+"--------")
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
-                                swapArray = model.apps.slice(0)
-                                swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                            } else if (drag.type === "small" && drop.type === "small") {//✓
-                                if (drag.col !== drop.col) {   //如果在不同列
-                                    insertAfter = drag.col < drop.col //判定插入目标的前面还是后面
-                                    swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
-                                    swapArray = model.apps.slice(startIndex)//判定一共有多少个参与交换
-                                } else {//  如果在同一列
-                                    insertAfter = drag.row * 10 + Number(!drag.sleft) < drop.row * 10 + Number(!drop.sleft)
-                                    swapElements(model.apps, dragIndex, dropIndex)
-                                    swapArray = model.apps.slice(startIndex, endIndex + 1)
-                                }
-                                swapProperties(swapArray, first, model)//交错元素的坐标
+//                                model.apps.forEach(function(el) {
+//                                    console.log(el.element.innerHTML.trim() + "!!!!!!!!!!!")
+//                                })
                                 animate = true
-
+                            } else if (drag.type === "small" && drop.type === "small") {//✓
+                                swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
+         
+                                animate = true
                             } else if ((drag.type === "small" && /middle|big/.test(drop.type))
                                     || (drag.type === "middle" && drop.type === "big")) {
                                 if (drag.col === drop.col) {//如果是在同一列
+                                    console.log(drag.row +"<"+ drop.row)
                                     if (drag.row < drop.row) {//如果由上往下拖动
                                         crossRow = drop
+                                        console.log(crossRow)
                                         if (drag.sleft === 1) {
                                             if (dropIndex - dragIndex > 1) {//如果拖动块在左，右边没有东西，下方就是大方块
-                                                insertAfter = true //插到前面
                                                 swapElements(model.apps, dragIndex, dropIndex - 1)
-                                                swapArray = model.apps.slice(startIndex, endIndex)
-                                                swapProperties(swapArray, first, model)
+                                                animate = true
                                             } else {
                                                 return
                                             }
@@ -695,21 +675,18 @@
                                             return
                                         }
                                     } else {//如果由下往上拖动✓
-                                        insertAfter = false //插到前面
+                                      //   crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)
-                                        swapArray = model.apps.slice(0)
-                                        swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
 
+                                        animate = true
                                     }
                                 } else {//如果是在不同列
-                                    insertAfter = false //插到前面
                                     if (dragIndex < dropIndex) {
                                         swapElements(model.apps, dragIndex, dropIndex - 1)
                                     } else {
                                         swapElements(model.apps, dragIndex, dropIndex)
                                     }
-                                    swapArray = model.apps.slice(0)
-                                    swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
+                                    animate = true
                                 }
                             } else if (drag.type === "middle") {
                                 //  dragIndex < dropIndex 向下 向右 ↓ →  插入到后面
@@ -731,43 +708,19 @@
                                     if (maybeDropIndex !== dropIndex) {
                                         maybeDropIndex = maybeDropIndex > dropIndex ? maybeDropIndex : dropIndex
                                     }
-                                    insertAfter = true //插到前面
-                                    swapElements(model.apps, dragIndex, maybeDropIndex)
-                                    swapArray = model.apps.slice(0)
-                                    swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                                    var str = model.apps.map(function(el) {
-                                        return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
-                                                el.top + "  --> t " + el.newTop
-                                    })
-                                    //   console.log(str)
                                 } else {
                                     if (maybeDropIndex !== dropIndex) {
                                         maybeDropIndex = maybeDropIndex < dropIndex ? maybeDropIndex : dropIndex
                                     }
-                                    insertAfter = false //插到前面
-                                    swapElements(model.apps, dragIndex, maybeDropIndex)
-                                    swapArray = model.apps.slice(0)
-                                    swapProperties(swapArray, {row: 0, col: 0, sleft: 1}, model)
-                                    var str = model.apps.map(function(el) {
-                                        return  el.element.innerHTML.trim() + " th  " + el.left + "  --> l  " + el.newLeft + "  " +
-                                                el.top + "  --> t " + el.newTop
-                                    })
-
                                 }
-
-
+                                swapElements(model.apps, dragIndex, maybeDropIndex)
+                                animate = true
                             }
-
-                            var str = swapArray.map(function(el) {
-                                return " 第" + el.element.innerHTML.trim() + "元素由 " + [el.left, el.top, el.sleft] + " 变 " + [el.newLeft, el.newTop, el.newSleft]
-                            })
-                            //   console.log("可以拖动时" + str)
-
-
-
                         }
 
                         if (animate) {
+                            swapArray = model.apps.slice(0)
+                            swapProperties2(swapArray, model)
                             var swapLength = swapArray.length
                             var animateIndex = 0
                             function lastCallback(obj) {
@@ -853,13 +806,15 @@
                                             })
                                             return
                                         }
-                                        //不同列的上下移动
+                                        //不同行的上下移动
                                         if (movable.row !== movable.newRow) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
-                                            if (insertAfter) {
-                                                console.log("不同列的水平移动 A")
+
+                                            if (movable.col * 100 + movable.row * 10 > movable.newCol * 100 + movable.newRow * 10) {//insrtAfter
+
+                                                console.log("不同行的水平移动 A")
                                                 //旧位置的，container width慢慢变小
                                                 cloneWrapper.animate({width: 0}, 490, function() {
                                                     cloneWrapper.remove()
@@ -873,7 +828,7 @@
                                                     lastCallback(movable)
                                                 });
                                             } else {
-                                                console.log("不同列的水平移动 B")
+                                                console.log("不同行的水平移动 B")
                                                 //旧位置的，app left慢慢变大
                                                 cloneWrapper.find("app").animate({left: movable.width}, 490, function() {
                                                     cloneWrapper.remove()
