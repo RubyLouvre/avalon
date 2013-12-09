@@ -93,7 +93,6 @@
                         } else if (el.type === "middle") {
                             el.newSleft = 1
                             if (!sleft) {
-
                                 row++
                                 if (row > maxRow) {
                                     row = 0
@@ -133,6 +132,95 @@
                     }
                 }
 
+                function swapProperties2(model) {
+                    vapps = []
+                    var maxRow = model.maxRow //每一列最多 多少行，用于配置
+                    var row = 0 //当前APP所在的栏数
+                    var col = 0 //当前APP所在的栏数
+                    var sleft = 1
+                    for (var i = 0, el; el = model.apps[i]; i++) {
+                        if (el.type == "small") {
+                            if (sleft) {//如果是左边
+                                sleft = 0
+                                el.newTop = 130 * row
+                                el.newLeft = col * 260
+                                el.newRow = row
+                                el.newCol = col
+                                el.newSleft = 1
+                                //判定右边是不是small
+                                var vapp = model.apps[i + 1]
+                                if (vapp && vapp.type !== "small") {
+                                    vapps.push(el)//位于XXX之后
+                                }
+                            } else {
+                                sleft = 1
+                                el.newTop = 130 * row
+                                el.newLeft = col * 260 + 130 //130为一个small的宽
+                                el.newRow = row
+                                el.newcol = col
+                                el.newSleft = 0
+                                row++
+                            }
+                            if (row > maxRow) {
+                                row = 0
+                                col++
+                            }
+                        } else if (el.type == "middle") {
+                            el.newSleft = 1
+                            if (!sleft) {
+                                row++
+                                if (row > maxRow) {
+                                    row = 0
+                                    col++
+                                }
+                            }
+                            sleft = 1
+                            el.newTop = 130 * row
+                            el.newLeft = col * 260
+                            el.newRow = row
+                            el.newCol = col
+                            row++
+                            if (row > maxRow) {
+                                row = 0
+                                col++
+                            }
+                        } else if (el.type == "big") {
+                            el.newSleft = 1
+                            if (!sleft) {
+                                row++
+                            }
+                            if (row + 1 > maxRow) {
+                                if (sleft == 0) {
+                                    vapps.push(model.apps[i - 1])
+                                }
+                                row = 0
+                                col++
+                            }
+                            el.newTop = 130 * row
+                            el.newLeft = col * 260
+                            el.newRow = row
+                            el.newCol = col
+                            row += 2
+                            sleft = 1
+                            if (row >= maxRow) {
+                                row = 0
+                                col++
+                            }
+                        }
+                        el.animate = false
+                    }
+                    var lastEl = model.apps[ model.apps.length - 1], flagLast = true
+                    while (row <= maxRow) {
+                        if (flagLast && lastEl.type === "small") {
+                            vapps.push(lastEl)
+                        } else {
+                            vapps.push(lastEl)
+                        }
+                        flagLast = false
+                        row++
+                    }
+                }
+
                 var crossRow = false
                 var vapps = []
                 var model = avalon.define("apps", function(vm) {
@@ -145,6 +233,7 @@
                         return color;
                     }
                     vm.maxRow = 3
+                    //#########
                     vm.onLayout = function() {
                         var children = this.children
                         var maxRow = model.maxRow //每一列最多 多少行，用于配置
@@ -163,15 +252,7 @@
                                     //判定右边是不是small
                                     var vapp = model.apps[i + 1]
                                     if (vapp && vapp.type !== "small") {
-                                        vapps.push({
-                                            sleft: 0,
-                                            row: row,
-                                            col: col,
-                                            top: 130 * row,
-                                            left: col * 260 + 130, //130为一个small的宽
-                                            width: 120,
-                                            height: 120
-                                        })
+                                        vapps.push(el)//位于XXX之后
                                     }
                                 } else {
                                     sleft = 1
@@ -218,15 +299,7 @@
                                 el.height = 250
                                 if (row + 1 > maxRow) {
                                     if (sleft == 0) {
-                                        vapps.push({
-                                            sleft: 0,
-                                            row: row,
-                                            col: col,
-                                            top: 130 * row,
-                                            left: col * 260, //130为一个small的宽
-                                            width: 250,
-                                            height: 120
-                                        })
+                                        vapps.push(model.apps[i - 1])//位于XXX之后
                                     }
                                     row = 0
                                     col++
@@ -245,36 +318,17 @@
                             el.element = children[i]
                             el.animate = false
                         }
-                        var el = model.apps[ model.apps.length - 1], last = true
+                        var lastEl = model.apps[ model.apps.length - 1], flagLast = true
                         while (row <= maxRow) {
-                            if (last && el.type === "small") {
-
-                                vapps.push({
-                                    sleft: 0,
-                                    row: row,
-                                    col: col,
-                                    top: 130 * row,
-                                    left: col * 260 + 130, //130为一个small的宽
-                                    width: 120,
-                                    height: 120
-                                })
-                                last = false
+                            if (flagLast && lastEl.type === "small") {
+                                vapps.push(lastEl)//位于XXX之后
+                                flagLast = false
                                 row++
                             } else {
-                                vapps.push({
-                                    sleft: 1,
-                                    row: row,
-                                    col: col,
-                                    top: 130 * row,
-                                    left: col * 260, //130为一个small的宽
-                                    width: 25,
-                                    height: 120
-                                })
+                                vapps.push(lastEl)//位于XXX之后
+                                flagLast = false
                                 row++
                             }
-
-
-
 
                         }
                         console.log(vapps)
@@ -518,6 +572,24 @@
                                 break
                             }
                         }
+                        if (!drop && vapps.length) {
+                            var insertion = false
+                            for (var i = 0, el; el = vapps[i]; i++) {
+                                if (enter(el, point1, point2)) {
+                                    insertion = el
+                                    break
+                                }
+                            }
+                            if (insertion) {
+
+                                var insertIndex = model.apps.indexOf(insertion)
+                                var dragIndex = model.apps.indexOf(drag)
+
+                            }
+                            return
+                        }
+
+
                         if (drop) {
                             //求出是左移右移上移下移
                             if (drop.animate) {
