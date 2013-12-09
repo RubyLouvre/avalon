@@ -186,7 +186,7 @@
             return aslice.call(nodes, start, end)
         } : function(nodes, start, end) {
             var ret = [],
-                    n = nodes.length;
+                    n = nodes.length
             start = resetNumber(start, n)
             end = resetNumber(end, n, 1)
             for (var i = start; i < end; ++i) {
@@ -266,7 +266,7 @@
                 node.style[name] = ""
             } else { //设置样式
                 if (value == null || value !== value) {
-                    return;
+                    return
                 }
                 if (isFinite(value) && !avalon.cssNumber[prop]) {
                     value += "px"
@@ -279,7 +279,7 @@
     })
 
     //视浏览器情况采用最快的异步回调
-    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver
     if (BrowserMutationObserver) { //chrome18+, safari6+, firefox14+,ie11+,opera15
         avalon.nextTick = function(callback) { //2-3ms
             var input = DOC.createElement("input")
@@ -322,7 +322,7 @@
                     if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
                         return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
                     }
-                    return true;
+                    return true
                 } catch (e) { //IE的NodeList直接抛错
                     return true
                 }
@@ -629,9 +629,9 @@
                     parentOffset = {
                 top: 0,
                 left: 0
-            };
+            }
             if (!elem) {
-                return;
+                return
             }
             if (this.css("position") === "fixed") {
                 offset = elem.getBoundingClientRect()
@@ -647,12 +647,12 @@
             return {
                 top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
                 left: offset.left - parentOffset.left - avalon.css(elem, "marginLeft", true)
-            };
+            }
         },
         offsetParent: function() {
-            var offsetParent = this[0].offsetParent || root;
+            var offsetParent = this[0].offsetParent || root
             while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
-                offsetParent = offsetParent.offsetParent;
+                offsetParent = offsetParent.offsetParent
             }
             return avalon(offsetParent || root)
         },
@@ -703,14 +703,14 @@
     }, function(method, prop) {
         avalon.fn[method] = function(val) {
             var node = this[0] || {}, win = getWindow(node),
-                    top = method === "scrollTop";
+                    top = method === "scrollTop"
             if (!arguments.length) {
-                return win ? (prop in win) ? win[prop] : root[method] : node[method];
+                return win ? (prop in win) ? win[prop] : root[method] : node[method]
             } else {
                 if (win) {
                     win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
                 } else {
-                    node[method] = val;
+                    node[method] = val
                 }
             }
         }
@@ -743,8 +743,6 @@
     }
     cssHooks["@:set"] = function(node, name, value) {
         try { //node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine 在旧式IE下会抛异常
-            // Support: 在Chrome, Safari下用空字符串去掉 !important;
-            node.style[name] = "";
             node.style[name] = value
         } catch (e) {
         }
@@ -1037,7 +1035,7 @@
     avalon.innerHTML = function(node, html) {
         if (!W3C && (!rcreate.test(html) && !rnest.test(html))) {
             try {
-                node.innerHTML = html;
+                node.innerHTML = html
                 return
             } catch (e) {
             }
@@ -1481,7 +1479,7 @@
             } else {
                 innerHTML = currHTML
             }
-        }, interval);
+        }, interval)
     }
 
     function scanNodes(parent, vmodels, state) {
@@ -2246,7 +2244,7 @@
                 ret = 1
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
 
-            data.remove = ret;
+            data.remove = ret
         },
         "ui": function(data, vmodels) {
             log("ms-ui已废弃，请使用更方便的ms-widget")
@@ -2490,7 +2488,7 @@
                         } else {
                             document.removeEventListener("selectionchange", updateModel)
                         }
-                    };
+                    }
                     element.addEventListener("focus", selectionchange)
                     element.addEventListener("blur", selectionchange)
                     var rollback = updateView.rollback
@@ -2573,7 +2571,7 @@
             } else {
                 innerHTML = currHTML
             }
-        }, 20);
+        }, 20)
     }
     modelBinding.TEXTAREA = modelBinding.INPUT
     //============================= event binding =======================
@@ -2585,7 +2583,7 @@
     for (var name in eventName) {
         if (/object|function/.test(typeof window[name])) {
             eventMap.animationend = eventName[name]
-            break;
+            break
         }
     }
 
@@ -2664,7 +2662,7 @@
         _splice: _splice,
         _add: function(arr, pos) {
             var oldLength = this.length
-            pos = typeof pos === "number" ? pos : oldLength;
+            pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
                 added[i] = convert(arr[i])
@@ -3034,7 +3032,7 @@
                     }
                 }
                 parent.appendChild(transation) //再插到最后
-                break;
+                break
         }
         var callback = getBindingCallback(data.callbackName, data.vmodels)
         callback && checkScan(parent, function() {
@@ -3058,7 +3056,7 @@
     function getLocatedNode(parent, data, pos) {
         if (data.startRepeat) {
             var ret = data.startRepeat,
-                    end = data.endRepeat;
+                    end = data.endRepeat
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
@@ -3316,7 +3314,7 @@
                     tzMin = toInt(match[9] + match[11])
                 }
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-                var h = toInt(match[4] || 0) - tzHour;
+                var h = toInt(match[4] || 0) - tzHour
                 var m = toInt(match[5] || 0) - tzMin
                 var s = toInt(match[6] || 0)
                 var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)

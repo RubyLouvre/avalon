@@ -6,11 +6,11 @@
     var expose = Date.now()
     var subscribers = "$" + expose
     var otherRequire = window.require
-    var otherDefine = window.define;
+    var otherDefine = window.define
     var stopRepeatAssign = false
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var class2type = {}
-    var oproto = Object.prototype;
+    var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
     var prefix = "ms-"
     var root = DOC.documentElement
@@ -51,7 +51,7 @@
                 class2type[serialize.call(obj)] || "object" :
                 typeof obj
     }
-    avalon.type = getType;
+    avalon.type = getType
     avalon.isWindow = function(obj) {
         return rwindow.test(serialize.call(obj))
     }
@@ -215,7 +215,7 @@
                 node.style[name] = ""
             } else { //设置样式
                 if (value == null || value !== value) {
-                    return;
+                    return
                 }
                 if (isFinite(value) && !avalon.cssNumber[prop]) {
                     value += "px"
@@ -227,7 +227,7 @@
         }
     })
     //视浏览器情况采用最快的异步回调
-    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver
     if (BrowserMutationObserver) {
         avalon.nextTick = function(callback) {
             var input = DOC.createElement("input")
@@ -329,8 +329,8 @@
         },
         loader: function(bool) {
             if (bool) {
-                window.define = innerRequire.define;
-                window.require = innerRequire;
+                window.define = innerRequire.define
+                window.require = innerRequire
             } else {
                 window.define = otherDefine
                 window.require = otherRequire
@@ -440,7 +440,7 @@
                 left: 0
             };
             if (!elem) {
-                return;
+                return 
             }
             if (this.css("position") === "fixed") {
                 offset = elem.getBoundingClientRect()
@@ -456,12 +456,12 @@
             return {
                 top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
                 left: offset.left - parentOffset.left - avalon.css(elem, "marginLeft", true)
-            };
+            }
         },
         offsetParent: function() {
             var offsetParent = this[0].offsetParent || root
             while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
-                offsetParent = offsetParent.offsetParent;
+                offsetParent = offsetParent.offsetParent
             }
             return avalon(offsetParent || root)
         },
@@ -509,7 +509,7 @@
 
     if (root.dataset) {
         avalon.data = function(name, val) {
-            var dataset = this[0].dataset;
+            var dataset = this[0].dataset
             switch (arguments.length) {
                 case 2:
                     dataset[name] = val
@@ -544,14 +544,14 @@
     }, function(method, prop) {
         avalon.fn[method] = function(val) {
             var node = this[0] || {}, win = getWindow(node),
-                    top = method === "scrollTop";
+                    top = method === "scrollTop"
             if (!arguments.length) {
-                return win ? win[prop] : node[method];
+                return win ? win[prop] : node[method]
             } else {
                 if (win) {
                     win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
                 } else {
-                    node[method] = val;
+                    node[method] = val
                 }
             }
         }
@@ -559,7 +559,7 @@
 
 
     function getWindow(node) {
-        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false;
+        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
     }
     //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
@@ -584,8 +584,6 @@
         return null
     }
     cssHooks["@:set"] = function(node, name, value) {
-        // Support: 在Chrome, Safari下用空字符串去掉 !important;
-        node.style[name] = "";
         node.style[name] = value
     }
 
@@ -675,7 +673,7 @@
     var valHooks = {
         "option:get": function(node) {
             //IE9-10 如果不指定value，它会自造一个value，在node.text两边加空白返回给你
-            return node.hasAttribute("value") ? node.value : node.text;
+            return node.hasAttribute("value") ? node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,
@@ -760,9 +758,9 @@
             legend: DOC.createElement("fieldset"),
             "*": DOC.createElement("div")
         }
-        object.optgroup = object.option;
-        object.tbody = object.tfoot = object.colgroup = object.caption = object.thead;
-        object.th = object.td;
+        object.optgroup = object.option
+        object.tbody = object.tfoot = object.colgroup = object.caption = object.thead
+        object.th = object.td
         return object
     }
 
@@ -778,22 +776,22 @@
         var fragment = documentFragment.cloneNode(false)
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
         if (!(tag in tagHooks)) {
-            tag = "*";
+            tag = "*"
         }
-        var parent = tagHooks[tag];
-        parent.innerHTML = html;
+        var parent = tagHooks[tag]
+        parent.innerHTML = html
         var els = parent.getElementsByTagName("script"),
                 firstChild
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             var script = DOC.createElement("script"),
-                    neo;
+                    neo
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
                     for (var j = 0, attr; attr = el.attributes[j++]; ) {
-                        neo[attr.name] = attr.value; //复制其属性
+                        neo[attr.name] = attr.value //复制其属性
                     }
-                    neo.text = el.text; //必须指定,因为无法在attributes中遍历出来
+                    neo.text = el.text //必须指定,因为无法在attributes中遍历出来
                     el.parentNode.replaceChild(neo, el) //替换节点
                 }
             }
@@ -801,14 +799,14 @@
         while (firstChild = parent.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
-        return fragment;
+        return fragment
     }
     avalon.innerHTML = function(node, html) {
         if (rnest.test(html)) {
             var a = this.parseHTML(html)
             this.clearChild(node).appendChild(a)
         } else {
-            node.innerHTML = html;
+            node.innerHTML = html
         }
     }
     /*********************************************************************
@@ -1124,7 +1122,7 @@
             } else {
                 innerHTML = currHTML
             }
-        }, 15);
+        }, 15)
     }
 
     function scanNodes(parent, vmodels, state) {
@@ -1214,7 +1212,7 @@
                         filters: leach.length ? leach : void 0
                     })
                 }
-                start = stop + closeTag.length;
+                start = stop + closeTag.length
             } while (1)
             value = str.slice(start)
             if (value) { //}} 右边的文本
@@ -1339,12 +1337,12 @@
             // ECMA 5 - use strict
             + ',arguments,let,yield'
 
-            + ',undefined';
-    var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g;
-    var rsplit = /[^\w$]+/g;
+            + ',undefined'
+    var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
+    var rsplit = /[^\w$]+/g
     var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var rnumber = /\b\d[^,]*/g;
-    var rcomma = /^,+|,+$/g;
+    var rnumber = /\b\d[^,]*/g
+    var rcomma = /^,+|,+$/g
     var getVariables = function(code) {
         code = code
                 .replace(rrexpstr, '')
@@ -1372,7 +1370,7 @@
     }
 
     function uniqArray(arr, vm) {
-        var length = arr.length;
+        var length = arr.length
         if (length <= 1) {
             return arr
         } else if (length === 2) {
@@ -1552,7 +1550,7 @@
             }
         }
     }
-    var includeContents = {};
+    var includeContents = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels, callback) {
             callback = callback || avalon.noop
@@ -1829,7 +1827,7 @@
                 constructor(element, data, vmodels)
                 ret = 1
             }
-            data.remove = ret;
+            data.remove = ret
         },
         "ui": function(data, vmodels) {
             log("ms-ui已废弃，请使用更方便的ms-widget")
@@ -2124,7 +2122,7 @@
     for (var name in eventName) {
         if (/object|function/.test(typeof window[name])) {
             eventMap.animationend = eventName[name]
-            break;
+            break
         }
     }
     // 用于替换 click 的 touch 事件
@@ -2136,7 +2134,7 @@
             replace(rword, function(name) {
         bindingHandlers[name] = (function(dataParam) {
             return function(data) {
-                data.param = dataParam;
+                data.param = dataParam
                 bindingHandlers.on.apply(0, arguments)
             }
         })(click2Touch[name] || name)
@@ -2544,7 +2542,7 @@
                     }
                 }
                 parent.appendChild(transation) //再插到最后
-                break;
+                break
         }
         var callback = getBindingCallback(data.callbackName, data.vmodels)
         callback && checkScan(parent, function() {
@@ -2570,7 +2568,7 @@
     function getLocatedNode(parent, data, pos) {
         if (data.startRepeat) {
             var ret = data.startRepeat,
-                    end = data.endRepeat;
+                    end = data.endRepeat
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
@@ -2827,7 +2825,7 @@
                     tzMin = toInt(match[9] + match[11])
                 }
                 dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-                var h = toInt(match[4] || 0) - tzHour;
+                var h = toInt(match[4] || 0) - tzHour
                 var m = toInt(match[5] || 0) - tzMin
                 var s = toInt(match[6] || 0)
                 var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
@@ -3083,7 +3081,7 @@
             })
 
             plugin = plugin || "js"
-            plugin = plugins[plugin] || noop;
+            plugin = plugins[plugin] || noop
             //4. 补全路径
             if (/^(\w+)(\d)?:.*/.test(url)) {
                 ret = url
@@ -3112,7 +3110,7 @@
             var ext = plugin.ext
             if (ext) {
                 if (url.slice(0 - ext.length) !== ext) {
-                    ret += ext;
+                    ret += ext
                 }
             }
             //6. 缓存处理
