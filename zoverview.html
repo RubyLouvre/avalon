@@ -61,6 +61,7 @@
                     var arr = array._splice(dragIndex, 1)
                     array._splice(dropIndex, 0, arr[0])
                 }
+
                 function swapProperties(array, first, model) {
                     var maxRow = model.maxRow //每一列最多有几行（配置项）
                     var row = typeof first.newRow === "number" ? first.newRow : first.row //当前APP所在的栏数
@@ -92,6 +93,7 @@
                         } else if (el.type === "middle") {
                             el.newSleft = 1
                             if (!sleft) {
+
                                 row++
                                 if (row > maxRow) {
                                     row = 0
@@ -132,6 +134,7 @@
                 }
 
                 var crossRow = false
+                var vapps = []
                 var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
                         var letters = 'A523456789ABCDEF'.split('');
@@ -150,13 +153,26 @@
                         var sleft = 1
                         for (var i = 0, el; el = model.apps[i]; i++) {
                             if (el.type == "small") {
-                                if (sleft) {
+                                if (sleft) {//如果是左边
                                     sleft = 0
                                     el.top = 130 * row
                                     el.left = col * 260
                                     el.row = row
                                     el.col = col
                                     el.sleft = 1
+                                    //判定右边是不是small
+                                    var vapp = model.apps[i + 1]
+                                    if (vapp && vapp.type !== "small") {
+                                        vapps.push({
+                                            sleft: 0,
+                                            row: row,
+                                            col: col,
+                                            top: 130 * row,
+                                            left: col * 260 + 130, //130为一个small的宽
+                                            width: 120,
+                                            height: 120
+                                        })
+                                    }
                                 } else {
                                     sleft = 1
                                     el.top = 130 * row
@@ -201,6 +217,17 @@
                                 el.width = 250
                                 el.height = 250
                                 if (row + 1 > maxRow) {
+                                    if (sleft == 0) {
+                                        vapps.push({
+                                            sleft: 0,
+                                            row: row,
+                                            col: col,
+                                            top: 130 * row,
+                                            left: col * 260, //130为一个small的宽
+                                            width: 250,
+                                            height: 120
+                                        })
+                                    }
                                     row = 0
                                     col++
                                 }
@@ -218,6 +245,39 @@
                             el.element = children[i]
                             el.animate = false
                         }
+                        var el = model.apps[ model.apps.length - 1], last = true
+                        while (row <= maxRow) {
+                            if (last && el.type === "small") {
+
+                                vapps.push({
+                                    sleft: 0,
+                                    row: row,
+                                    col: col,
+                                    top: 130 * row,
+                                    left: col * 260 + 130, //130为一个small的宽
+                                    width: 120,
+                                    height: 120
+                                })
+                                last = false
+                                row++
+                            } else {
+                                vapps.push({
+                                    sleft: 1,
+                                    row: row,
+                                    col: col,
+                                    top: 130 * row,
+                                    left: col * 260, //130为一个small的宽
+                                    width: 25,
+                                    height: 120
+                                })
+                                row++
+                            }
+
+
+
+
+                        }
+                        console.log(vapps)
                     }
                     function fix(array) {
                         for (var i = 0, el; el = array[i++]; ) {
@@ -249,12 +309,16 @@
                             type: "small"
                         },
                         {
-                            text: "555555555",
+                            text: "middle1",
                             type: "middle"
                         },
                         {
                             text: "2",
                             type: "small"
+                        },
+                        {
+                            text: "middle2",
+                            type: "middle"
                         },
                         {
                             text: "3",
@@ -284,18 +348,18 @@
                             text: "8",
                             type: "small"
                         },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "yyyy",
-                            type: "middle"
-                        },
-                        {
-                            text: "xxx",
-                            type: "big"
-                        }
+//                        {
+//                            text: "yyyy",
+//                            type: "middle"
+//                        }
+//                        {
+//                            text: "yyyy",
+//                            type: "middle"
+//                        },
+//                        {
+//                            text: "xxx",
+//                            type: "big"
+//                        }
 
 //                        {
 //                            text: "8",

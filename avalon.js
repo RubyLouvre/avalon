@@ -1471,6 +1471,7 @@
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea")
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
+    var interval = W3C ? 15 : 50
     function checkScan(elem, callback) {
         var innerHTML = NaN, id = setInterval(function() {
             var currHTML = elem.innerHTML
@@ -1480,7 +1481,7 @@
             } else {
                 innerHTML = currHTML
             }
-        }, 15);
+        }, interval);
     }
 
     function scanNodes(parent, vmodels, state) {

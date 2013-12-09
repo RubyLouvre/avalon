@@ -4,21 +4,20 @@
         <meta charset="utf-8">
         <title></title>
     </head>
-    <body ms-controller="page">
-        <div ms-each="aaa.arr">{{el}},</div>
-        {{aaa.arr[0]}}
-        <script src="avalon.mobile.js"></script>
+    <body >
+        <script src="avalon.js"></script>
         <script>
-            var model = avalon.define('page', function(vm) {
-                vm.aaa = {
-                    arr: [1, 2, 3]
+            avalon.define('mson', function(vm) {
+                vm.click = function() {
+                    alert('click')
                 }
             });
-            setInterval(function() {
-                model.aaa = {
-                    arr: [+new Date()]
-                }
-            }, 50)
+
         </script>
+        <div ms-controller="mson" >
+            <div ms-click="click">
+                点击我
+            </div>
+        </div>
     </body>
 </html>
