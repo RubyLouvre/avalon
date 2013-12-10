@@ -9,7 +9,7 @@
         <script>
             require("avalon.draggable", function() {
                 var check = false, animate = false
-                function enter(dropper, point1, point2) {
+                function enter(dropper, point1, point2, point3, point4) {
                     var left = dropper.left + dropper.height * 0.1 / 2
                     var top = dropper.top + dropper.height * 0.1 / 2
                     var right = dropper.left + dropper.width - dropper.height * 0.1 / 2
@@ -18,6 +18,12 @@
                         return dropper
                     }
                     if (point2 && point2[0] > left && point2[0] < right && point2[1] > top && point2[1] < bottom) {
+                        return dropper
+                    }
+                    if (point3 && point3[0] > left && point3[0] < right && point3[1] > top && point3[1] < bottom) {
+                        return dropper
+                    }
+                    if (point4 && point4[0] > left && point4[0] < right && point4[1] > top && point4[1] < bottom) {
                         return dropper
                     }
                 }
@@ -458,10 +464,10 @@
 //                            text: "yyyy",
 //                            type: "middle"
 //                        },
-//                        {
-//                            text: "xxx",
-//                            type: "big"
-//                        }
+                        {
+                            text: "xxx",
+                            type: "big"
+                        }
 
 //                        {
 //                            text: "8",
@@ -604,13 +610,19 @@
                                 var point1 = [data.left + drag.width * 0.25, data.top + drag.height * 0.5]
                                 var point2 = [data.left + drag.width * 0.75, data.top + drag.height * 0.5]
                                 break;
+                            case "big":
+                                var point1 = [data.left + drag.width * 0.25, data.top + drag.height * 0.5]
+                                var point2 = [data.left + drag.width * 0.75, data.top + drag.height * 0.5]
+                                var point3 = [data.left + drag.width * 0.25, data.top + drag.height * 0.75]
+                                var point4 = [data.left + drag.width * 0.75, data.top + drag.height * 0.75]
+                                break;
                         }
 
                         drag.animate = true
 
                         var drop = false
                         for (var i = 0, el; el = model.apps[i]; i++) {//检测拖动块与真实APP的碰撞
-                            if (!el.animate && enter(el, point1, point2)) {
+                            if (!el.animate && enter(el, point1, point2, point3, point4)) {
                                 drop = el
                                 break
                             }
@@ -618,7 +630,7 @@
                         if (!drop && vapps.length) {//如果不与真实APP发生碰撞，那么将检测它与所有空格的碰撞
                             var insertion = false
                             for (var i = 0, el; el = vapps[i]; i++) {
-                                if (enter(el, point1, point2)) {
+                                if (enter(el, point1, point2, point3, point4)) {
                                     insertion = el
                                     break
                                 }
@@ -644,10 +656,10 @@
                             var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
                             var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
                             var swapArray = []
-                          //  console.log(crossRow)
+                            //  console.log(crossRow)
                             if (crossRow && crossRow !== drop) {
                                 crossRow = false
-                             console.log("-------"+dragIndex+"-------"+dropIndex+"--------")
+                                console.log("-------" + dragIndex + "-------" + dropIndex + "--------")
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
 //                                model.apps.forEach(function(el) {
 //                                    console.log(el.element.innerHTML.trim() + "!!!!!!!!!!!")
@@ -655,12 +667,11 @@
                                 animate = true
                             } else if (drag.type === "small" && drop.type === "small") {//✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
-         
                                 animate = true
                             } else if ((drag.type === "small" && /middle|big/.test(drop.type))
                                     || (drag.type === "middle" && drop.type === "big")) {
                                 if (drag.col === drop.col) {//如果是在同一列
-                                    console.log(drag.row +"<"+ drop.row)
+                                    console.log(drag.row + "<" + drop.row)
                                     if (drag.row < drop.row) {//如果由上往下拖动
                                         crossRow = drop
                                         console.log(crossRow)
@@ -675,7 +686,7 @@
                                             return
                                         }
                                     } else {//如果由下往上拖动✓
-                                      //   crossRow = drop
+                                        //   crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)
 
                                         animate = true
@@ -692,7 +703,7 @@
                                 //  dragIndex < dropIndex 向下 向右 ↓ →  插入到后面
                                 //  dragIndex 〉dropIndex 向上 向左 ↑← 插入到前面
                                 var maybeDropIndex = dropIndex
-                                if (drop.type === "small") {
+                                if (drag.type === "middle" && drop.type === "small") {
                                     var i = dropIndex - 1
                                     if (i < 0)
                                         i = 0
@@ -715,6 +726,8 @@
                                 }
                                 swapElements(model.apps, dragIndex, maybeDropIndex)
                                 animate = true
+                            } else if (drag.type === "big") {
+
                             }
                         }
 
