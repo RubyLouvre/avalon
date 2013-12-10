@@ -483,6 +483,10 @@
                         {
                             text: "14",
                             type: "small"
+                        },
+                        {
+                            text: "15",
+                            type: "middle"
                         }
 
                     ])
@@ -633,23 +637,30 @@
                             } else if (drag.type === drop.type) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
                                 animate = true
-                            } else if ((drag.type === "small" && /middle/.test(drop.type))) {
+                            } else if (drag.type === "small" && drop.type == "middle") {
                                 if (drag.col === drop.col) {//如果是在同一列
-                                    if (drag.row < drop.row) {//如果由上往下拖动
-                                        crossRow = drop
-                                        if (drag.sleft === 1) {
-                                            if (dropIndex - dragIndex > 1) {//如果拖动块在左，右边没有东西，下方就是大方块
-                                                swapElements(model.apps, dragIndex, dropIndex - 1)
-                                                animate = true
-                                            } else {
-                                                return
-                                            }
-                                        } else {
-                                            return
-                                        }
-                                    } else {//如果由下往上拖动✓
+                                    if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
                                         animate = true
+                                    } else {//如果由下往上拖动✓
+                                        console.log("插入这一行的后面")
+                                        var maybeDropIndex = dropIndex
+                                        var maybe = model.apps[dropIndex + 1]
+                                        if (maybe && maybe.row == drop.row) {
+                                            maybeDropIndex = dropIndex + 1
+                                        }
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
+//                                        crossRow = drop
+//                                        if (drag.sleft === 1) {
+//                                            if (dropIndex - dragIndex > 1) {//如果拖动块在左，右边没有东西，下方就是大方块
+//                                                swapElements(model.apps, dragIndex, dropIndex - 1)
+//                                                animate = true
+//                                            } else {
+//                                                return
+//                                            }
+//                                        } else {
+//                                            return
+//                                        }
                                     }
                                 } else {//如果是在不同列
                                     if (dragIndex < dropIndex) {
@@ -659,22 +670,51 @@
                                     }
                                     animate = true
                                 }
+                            } else if (drag.type === "middle" && drop.type == "small") {//✓
+                                if (drag.col === drop.col) {//如果是在同一列
+                                    if (drag.row > drop.row) {//如果是往上
+                                        swapElements(model.apps, dragIndex, dropIndex)
+                                        animate = true
+                                    } else {//如果由下往上拖动✓
+                                        var maybeDropIndex = dropIndex
+                                        var maybe = model.apps[dropIndex + 1]
+                                        if (maybe && maybe.row == drop.row) {
+                                            maybeDropIndex = dropIndex + 1
+                                        }
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
+                                        animate = true
+                                    }
+                                } else {
+                                    var maybeDropIndex = dropIndex
+                                    if (drag.col > drop.col) {//往左
+                                        var maybe = model.apps[dropIndex - 1]
+                                        if (maybe && maybe.row == drop.row) {
+                                            maybeDropIndex = dropIndex - 1
+                                        }
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行前面
+                                    } else {
+                                        var maybe = model.apps[dropIndex + 1]
+                                        if (maybe && maybe.row == drop.row) {
+                                            maybeDropIndex = dropIndex + 1
+                                        }
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
+                                    }
+                                    animate = true
+                                }
                             } else if ((drag.type === "middle" && drop.type === "big")) {//✓
-                                console.log("drag middle  drop big")
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {//往下
-                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
                                     animate = true
                                 } else {
                                     if (drag.col > drop.col) {//往左
-                                        console.log("往左")
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {
-                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
                                     animate = true
                                 }
@@ -698,6 +738,7 @@
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)//插入这一行前面
                                     } else {
+
                                         var maybeDropIndex = dropIndex
                                         var maybe = model.apps[dropIndex + 1]
                                         if (maybe && maybe.row == drop.row) {
@@ -725,35 +766,6 @@
                                     animate = true
                                 }
 
-                            } else if (
-                                    (drag.type === "middle" && drop.type === "small") ||
-                                    //   (drag.type === "big" && drop.type === "middle") ||
-                                            (drag.type === "big" && drop.type === "small")
-                                            ) {
-                                //  dragIndex < dropIndex 向下 向右 ↓ →  插入到后面
-                                //  dragIndex 〉dropIndex 向上 向左 ↑← 插入到前面
-                                var maybeDropIndex = dropIndex
-                                var i = dropIndex - 1
-                                if (i < 0)
-                                    i = 0
-                                for (var n = i + 4; i < n; i++) {
-                                    var obj = model.apps[i]
-                                    if (obj && obj !== drop && obj.row === drop.row) {
-                                        maybeDropIndex = i
-                                        break
-                                    }
-                                }
-                                if (dragIndex < dropIndex) {
-                                    if (maybeDropIndex !== dropIndex) {
-                                        maybeDropIndex = maybeDropIndex > dropIndex ? maybeDropIndex : dropIndex
-                                    }
-                                } else {
-                                    if (maybeDropIndex !== dropIndex) {
-                                        maybeDropIndex = maybeDropIndex < dropIndex ? maybeDropIndex : dropIndex
-                                    }
-                                }
-                                swapElements(model.apps, dragIndex, maybeDropIndex)
-                                animate = true
                             }
                         }
 
@@ -786,12 +798,11 @@
                                             lastCallback(movable)
                                             return
                                         }
-                                        //从低列移动高列
+                                        //不同列的上下移动 A
                                         if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.newRow == 0) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
-                                            console.log("不同列的上下移动 A")
                                             cloneWrapper.find("app").animate({top: movable.height}, 490, function() {
                                                 cloneWrapper.remove()
                                             })
@@ -804,12 +815,11 @@
                                             })
                                             return
                                         }
-
+                                        //不同列的上下移动 B
                                         if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.top == 0) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
-                                            console.log("不同列的上下移动 B")
                                             cloneWrapper.animate({height: 0}, 490, function() {
                                                 cloneWrapper.remove()
                                             })
@@ -826,7 +836,6 @@
                                         }
                                         //当前行的水平移动
                                         if (movable.col == movable.newCol && movable.row == movable.newRow && movable.sleft != movable.newSleft) {
-                                            console.log("当前行的水平移动")
                                             $(elem).animate({left: movable.newLeft}, 500, function() {
                                                 elem.style.left = movable.newLeft + "px"
                                                 elem.style.top = movable.newTop + "px"
@@ -836,7 +845,6 @@
                                         }
                                         //当前列的上下移动
                                         if (movable.col == movable.newCol && movable.row !== movable.newRow && movable.sleft == movable.newSleft) {
-                                            console.log("当前列的上下移动")
                                             $(elem).animate({top: movable.newTop}, 500, function() {
                                                 elem.style.left = movable.newLeft + "px"
                                                 elem.style.top = movable.newTop + "px"
@@ -851,8 +859,6 @@
                                             var cloneWrapper = wrappers[1]
 
                                             if (movable.col * 100 + movable.row * 10 > movable.newCol * 100 + movable.newRow * 10) {//insrtAfter
-
-                                                console.log("不同行的水平移动 A")
                                                 //旧位置的，container width慢慢变小
                                                 cloneWrapper.animate({width: 0}, 490, function() {
                                                     cloneWrapper.remove()
@@ -866,7 +872,6 @@
                                                     lastCallback(movable)
                                                 });
                                             } else {
-                                                console.log("不同行的水平移动 B")
                                                 //旧位置的，app left慢慢变大
                                                 cloneWrapper.find("app").animate({left: movable.width}, 490, function() {
                                                     cloneWrapper.remove()
