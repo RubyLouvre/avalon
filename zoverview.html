@@ -444,14 +444,14 @@
                             text: "4",
                             type: "small"
                         },
-                        {
-                            text: "5",
-                            type: "small"
-                        },
-                        {
-                            text: "6",
-                            type: "small"
-                        },
+//                        {
+//                            text: "5",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "6",
+//                            type: "small"
+//                        },
                         {
                             text: "===========",
                             type: "middle"
@@ -461,9 +461,13 @@
                             type: "small"
                         },
                         {
-                            text: "8",
-                            type: "small"
+                            text: "===========",
+                            type: "middle"
                         },
+//                        {
+//                            text: "8",
+//                            type: "small"
+//                        },
                         {
                             text: "9",
                             type: "small"
@@ -606,26 +610,25 @@
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
                                         animate = true
-                                    } else {//如果由下往上拖动✓
+                                    } else {
                                         dragsmalldropmiddledown = drop
                                         if (drag.sleft === 1) {
                                             var maybe = model.apps[dropIndex + 1]
                                             if (maybe == drop) {//如果它位于左边，紧接着就是中型的
+                                                return
+                                            } else {//否则做水平交换动画
                                                 swapElements(model.apps, dragIndex, dropIndex - 1)
                                                 animate = true
-                                            }else{
-                                                return 
                                             }
-                                           
-                                        }else{
+                                        } else {
                                             return
                                         }
                                     }
                                 } else {//如果是在不同列
-                                    if (dragIndex < dropIndex) {
-                                        swapElements(model.apps, dragIndex, dropIndex - 1)
+                                    if (drag.col > drop.col) {
+                                        swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {
-                                        swapElements(model.apps, dragIndex, dropIndex)
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
                                     animate = true
                                 }
@@ -663,7 +666,7 @@
                             } else if ((drag.type === "middle" && drop.type === "big")) {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
-                                        crossRow = drop
+                                     //   crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {//往下
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
