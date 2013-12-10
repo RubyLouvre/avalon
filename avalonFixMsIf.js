@@ -447,11 +447,7 @@
             every: iterator('', 'if(!_)return false', 'return true')
         })
     }
-    if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
-        Node.prototype.contains = function(arg) {
-            return !!(this.compareDocumentPosition(arg) & 16)
-        }
-    }
+
     /*********************************************************************
      *                      Configure                                 *
      **********************************************************************/
@@ -1431,26 +1427,15 @@
                 var data = fn.data || fakeData
                 var el = data.element,
                         remove
-                if (el && ifSanctuary.indexOf(el) === -1) {
+                if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
                         remove = el.sourceIndex === 0
                     } else {
-                        try {
-                            remove = !root.contains(el)
-                        } catch (e) { //如果不存在contains方法
-                            remove = true
-                            while (el == el.parentNode) {
-                                if (el === root) {
-                                    remove = false
-                                    break
-                                }
-                            }
-                        }
+                        remove = !avalon.contains(root, el)
                     }
-
                     if (remove) {//如果它没有在DOM树
                         avalon.Array.remove(list, fn)
-                        log("remove " + fn)
+                        log("remove " + fn.name)
                     }
                 }
                 fn.apply(0, args) //强制重新计算自身
@@ -1527,7 +1512,7 @@
     }
 
 
-    function scanAttr(elem, vmodels,  ifBinding, repeatBinding) {
+    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
         var bindings = []
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
@@ -1933,13 +1918,38 @@
 
 
     var includeContents = {}
-    var ifSanctuary = []
+    var ifSanctuary = DOC.createElement("div")
+    ifSanctuary.innerHTML = "a"
+    try {
+        ifSanctuary.contains(ifSanctuary.firstChild)
+        avalon.contains = function(a, b) {
+            return a.contains(b)
+        }
+    } catch (e) {
+        if (ifSanctuary.compareDocumentPosition) {
+            avalon.contains = function(a, b) {
+                return a.compareDocumentPosition(b) & 16
+            }
+        } else {
+            avalon.contains = function(a, b) {
+                if (b) {
+                    while ((b = b.parentNode)) {
+                        if (b === a) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+    }
+
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var placehoder = DOC.createComment("ms-if"),
                     elem = data.element
             avalon(elem).addClass("fixMsIfFlicker")
-            if (!root.contains(elem)) {//如果它不存在于DOM树
+            if (!avalon.contains(root, elem)) {//如果它不存在于DOM树
                 var scopes = elem["data-if-vmodels"]
                 if (!scopes && vmodels.length) {
                     elem["data-if-vmodels"] = vmodels
@@ -1957,17 +1967,19 @@
             scanAttr(elem, vmodels)
             updateViewFactory(data.value, vmodels, data, function(val) {
                 if (val) { //如果它不在到其父节点里，则添加回去
-                    avalon.Array.remove(ifSanctuary, elem)
-                    if (!parent.contains(elem)) {
+                    if (!avalon.contains(parent, elem)) {
                         try {
                             parent.replaceChild(elem, placehoder)
                         } catch (e) {
                         }
                     }
+                    // console.log(ifSanctuary.contains(elem))
                 } else { //如果它在其父节点里，则移除它，用注释节点占位
-                    avalon.Array.ensure(ifSanctuary, elem)
-                    if (parent.contains(elem)) {
+                    //  avalon.Array.ensure(ifSanctuary, elem)
+                    if (avalon.contains(parent, elem)) {
                         parent.replaceChild(placehoder, elem)
+                        ifSanctuary.appendChild(elem)
+                      //  console.log(ifSanctuary.contains(elem) + "!!!!!!!")
                     }
                 }
             })
@@ -2051,7 +2063,7 @@
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
             var elem = data.element
-            if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
+            if (!supportDisplay && !avalon.contains(root, elem)) { //fuck firfox 全家！
                 var display = parseDisplay(elem.tagName)
             }
             display = display || avalon(elem).css("display")
@@ -3003,8 +3015,12 @@
             if (callback) {
                 callback.call(parent, method)
             }
-            if (method == "add" && /\sms-if=/i.test(parent.innerHTML)) {
-                scanNodes(parent, [])
+            if (method == "add" ) {
+                setTimeout(function(){
+                  //  console.log("11111111111")
+                     scanNodes(parent, [])
+                },50)
+               
             }
         })
     }

@@ -3,32 +3,32 @@
     <head>
         <meta charset="utf-8">
         <title></title>
-        <script src="avalon2.js"></script>
+        <script src="avalonFixMsIf.js"></script>
     </head>
     <body>
         <script>
-            var model = avalon.define("update", function(vm) {
-                vm.object = {
-                    o1: "k1",
-                    o2: "k2",
-                    o3: "k3"
-                }
-
+            var model = avalon.define("test", function(vm) {
+                vm.aaa = true
+                vm.bbb = "bbb"
+                vm.color = "red"
             })
 
             setTimeout(function() {
-                //如果要更新对象，直接赋给它一个对象，注意不能将一个VM赋给它，可以到VM的$model赋给它（要不会在IE6-8中报错）
-                model.object = {
-                    aaaa: "aaaa",
-                    bbbb: "bbbb",
-                    cccc: "cccc",
-                    dddd: "dddd"
-                }
-            }, 3000)
+                model.aaa = false
+            }, 2000)
+
+            setTimeout(function() {
+                model.color = "blue"
+                model.bbb = "xxxxxxx"
+            }, 2500)
+            
+            setTimeout(function() {
+                model.aaa = true
+            }, 3400)
 
         </script>
-        <div ms-controller="update">
-         
+        <div ms-controller="test">
+            <div ms-if="aaa" ms-css-color="color">{{bbb}}</div>
         </div>
     </body>
 </html>

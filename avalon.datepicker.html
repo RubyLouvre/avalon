@@ -14,10 +14,10 @@
                 <span class="ui-icon ui-icon-circle-triangle-e">next</span></a>
             <div class="ui-datepicker-title">
                 <select  ms-each-el="monthNames" ms-duplex="currentMonth" ms-if="changeMonth">
-                    <option  ms-if="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth + group.number === $index">{{el}}</option>
+                    <option  ms-visible="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth + group.number === $index">{{el}}</option>
                 </select>
                 <select  ms-each-el="years" ms-duplex="currentYear" ms-if="changeYear">
-                    <option ms-if="showYear(el)" ms-value="el" >{{el}}{{yearSuffix}}</option>
+                    <option ms-visible="showYear(el)" ms-value="el" >{{el + yearSuffix}}</option>
                 </select>
                 {{title}}</div>
         </div>
