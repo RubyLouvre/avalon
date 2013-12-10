@@ -1,25 +1,34 @@
-<!doctype html>
-<html ng-app>
-  <head>
-    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"></script>
-  </head>
-  <body ng-controller="test">
-    <input type="checkbox" ng-model="bTmp1" ng-init="bTmp1=true" /><br/>
-    <input type="checkbox" ng-model="bTmp2" ng-init="bTmp2=true" /><br/>
-    <button ng-click="f1()">test</button>{{bTmp2}}<br/>
-    Show when checked:
-    <span ng-if="bTmp1">
-      <span ng-if="bTmp2" style="color:red">{{bTmp2}}</span>
-    </span>
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <script src="avalon.js"></script>
+    </head>
+    <body>
+        <script>
+            var model = avalon.define("update", function(vm) {
+                vm.object = {
+                    o1: "k1",
+                    o2: "k2",
+                    o3: "k3"
+                }
 
-    <script>
-    function test($scope) {
-      $scope.f1 = function() {
-        $scope.bTmp1 = false
-        $scope.bTmp2 = !$scope.bTmp2
-        $scope.bTmp1 = true
-      };
-    }
-    </script>
-  </body>
+            })
+
+            setTimeout(function() {
+                //如果要更新对象，直接赋给它一个对象，注意不能将一个VM赋给它，可以到VM的$model赋给它（要不会在IE6-8中报错）
+                model.object = {
+                    aaaa: "aaaa",
+                    bbbb: "bbbb",
+                    cccc: "cccc",
+                    dddd: "dddd"
+                }
+            }, 3000)
+
+        </script>
+        <div ms-controller="update">
+
+        </div>
+    </body>
 </html>

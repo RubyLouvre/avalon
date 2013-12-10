@@ -409,28 +409,60 @@
 
                     vm.apps = fix([
                         {
-                            text: "0",
-                            type: "small"
+                            text: "first",
+                            type: "big"
+                        },
+//                        {
+//                            text: "0",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "1",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "3",
+//                            type: "middle"
+//                        },
+//                        {
+//                            text: "4",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "5",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "6",
+//                            type: "small"
+//                        },
+//                        {
+//                            text: "xxx",
+//                            type: "big"
+//                        },
+                        {
+                            text: "yyy",
+                            type: "big"
                         },
                         {
-                            text: "1",
-                            type: "small"
+                            text: "zzz",
+                            type: "big"
                         },
                         {
-                            text: "3",
+                            text: "middle1",
                             type: "middle"
                         },
                         {
-                            text: "4",
-                            type: "small"
+                            text: "middle2",
+                            type: "middle"
                         },
                         {
-                            text: "5",
-                            type: "small"
+                            text: "middle3",
+                            type: "middle"
                         },
                         {
-                            text: "6",
-                            type: "small"
+                            text: "middle4",
+                            type: "middle"
                         },
                         {
                             text: "7",
@@ -455,7 +487,7 @@
                         {
                             text: "12",
                             type: "small"
-                        },
+                        }
 //                        {
 //                            text: "yyyy",
 //                            type: "middle"
@@ -464,10 +496,7 @@
 //                            text: "yyyy",
 //                            type: "middle"
 //                        },
-                        {
-                            text: "xxx",
-                            type: "big"
-                        }
+
 
 //                        {
 //                            text: "8",
@@ -653,28 +682,22 @@
                             }
                             var dragIndex = model.apps.indexOf(drag)
                             var dropIndex = model.apps.indexOf(drop)
-                            var startIndex = dropIndex < dragIndex ? dropIndex : dragIndex
-                            var endIndex = dropIndex < dragIndex ? dragIndex : dropIndex
                             var swapArray = []
                             //  console.log(crossRow)
                             if (crossRow && crossRow !== drop) {
                                 crossRow = false
-                                console.log("-------" + dragIndex + "-------" + dropIndex + "--------")
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
 //                                model.apps.forEach(function(el) {
 //                                    console.log(el.element.innerHTML.trim() + "!!!!!!!!!!!")
 //                                })
                                 animate = true
-                            } else if (drag.type === "small" && drop.type === "small") {//✓
+                            } else if (drag.type === drop.type) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
                                 animate = true
-                            } else if ((drag.type === "small" && /middle|big/.test(drop.type))
-                                    || (drag.type === "middle" && drop.type === "big")) {
+                            } else if ((drag.type === "small" && /middle|big/.test(drop.type)) ) {
                                 if (drag.col === drop.col) {//如果是在同一列
-                                    console.log(drag.row + "<" + drop.row)
                                     if (drag.row < drop.row) {//如果由上往下拖动
                                         crossRow = drop
-                                        console.log(crossRow)
                                         if (drag.sleft === 1) {
                                             if (dropIndex - dragIndex > 1) {//如果拖动块在左，右边没有东西，下方就是大方块
                                                 swapElements(model.apps, dragIndex, dropIndex - 1)
@@ -686,9 +709,7 @@
                                             return
                                         }
                                     } else {//如果由下往上拖动✓
-                                        //   crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)
-
                                         animate = true
                                     }
                                 } else {//如果是在不同列
@@ -699,20 +720,24 @@
                                     }
                                     animate = true
                                 }
-                            } else if (drag.type === "middle") {
+                            }else if((drag.type === "middle" && drop.type === "big")){
+                                
+                            } else if (
+                                    (drag.type === "middle" && drop.type === "small") ||
+                                    (drag.type === "big" && drop.type === "middle") ||
+                                    (drag.type === "big" && drop.type === "small")
+                                    ) {
                                 //  dragIndex < dropIndex 向下 向右 ↓ →  插入到后面
                                 //  dragIndex 〉dropIndex 向上 向左 ↑← 插入到前面
                                 var maybeDropIndex = dropIndex
-                                if (drag.type === "middle" && drop.type === "small") {
-                                    var i = dropIndex - 1
-                                    if (i < 0)
-                                        i = 0
-                                    for (var n = i + 4; i < n; i++) {
-                                        var obj = model.apps[i]
-                                        if (obj && obj !== drop && obj.row === drop.row) {
-                                            maybeDropIndex = i
-                                            break
-                                        }
+                                var i = dropIndex - 1
+                                if (i < 0)
+                                    i = 0
+                                for (var n = i + 4; i < n; i++) {
+                                    var obj = model.apps[i]
+                                    if (obj && obj !== drop && obj.row === drop.row) {
+                                        maybeDropIndex = i
+                                        break
                                     }
                                 }
                                 if (dragIndex < dropIndex) {
@@ -726,9 +751,7 @@
                                 }
                                 swapElements(model.apps, dragIndex, maybeDropIndex)
                                 animate = true
-                            } else if (drag.type === "big") {
-
-                            }
+                            } 
                         }
 
                         if (animate) {
@@ -741,7 +764,6 @@
                                 obj.animate = false
                                 animateIndex++
                                 if (animateIndex == swapLength) {
-                                    console.log("=======lastCallback========")
                                     animate = false
                                 }
                             }
