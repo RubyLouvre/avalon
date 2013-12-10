@@ -1124,9 +1124,6 @@
         } else {
             var iterators = a[subscribers]
 
-            if (!iterators.length)
-                return
-
             iterators.forEach(function(fn) {
                 fn.rollback && fn.rollback()
             })
