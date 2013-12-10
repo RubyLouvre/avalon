@@ -251,7 +251,7 @@
                     }
                 }
 
-                var crossRow = false
+                var dragsmalldropmiddledown = false
                 var vapps = []
                 var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
@@ -453,6 +453,10 @@
                             type: "small"
                         },
                         {
+                            text: "===========",
+                            type: "middle"
+                        },
+                        {
                             text: "7",
                             type: "small"
                         },
@@ -532,44 +536,7 @@
                             })
                         }
                     }
-                    /**
-                     * 
-                     主要分支
-                     如果drag, drop都为small 分两种情况
-                     
-                     如果都是同一列，最多影响它们同一列的四个
-                     
-                     如果不在同一列，插入drop的前面，影响drop及其后的所有元素
-                     
-                     如果drag为small, drop为middle， 
-                     如果在同一列
-                     如果drag.sleft = 1, 右边往左移，  标记为插入前面 后面整体往上移
-                     如果drag.sleft = 0, 不动 直接return  标记为插入前面 后面整体往上移
-                     如果drag.sleft = 1,右边没有东西， middle往上移，drag插入到middle的位置，后面整体往上提
-                     
-                     如果在同一列
-                     右移， middle不动，drag到middle间的所有元素重排
-                     左移， 插入到middle的前面，middle及它后面的都往后移
-                     
-                     如果drag为middle，
-                     如果在同一列
-                     上一行或下一行 往上往下移动
-                     如果不在同一列
-                     往右，插入后面 middle到右边的目标行整体向上移
-                     往左，插入前面 middle到右边的目标行整体向下移
-                     
-                     //=================主流程================
-                     确认drag, drop
-                     确认它们的类型
-                     移动方式
-                     交换数组位置
-                     交换最终位置
-                     加锁
-                     动画
-                     
-                     
-                     * 
-                     */
+
                     vm.drag = function(event, data) {
                         if (animate)
                             return
@@ -626,13 +593,10 @@
                             var dragIndex = model.apps.indexOf(drag)
                             var dropIndex = model.apps.indexOf(drop)
                             var swapArray = []
-                            //  console.log(crossRow)
-                            if (crossRow && crossRow !== drop) {
-                                crossRow = false
+                            if (dragsmalldropmiddledown && dragsmalldropmiddledown !== drop) {
+                                dragsmalldropmiddledown = false
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
-//                                model.apps.forEach(function(el) {
-//                                    console.log(el.element.innerHTML.trim() + "!!!!!!!!!!!")
-//                                })
+
                                 animate = true
                             } else if (drag.type === drop.type) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
@@ -643,24 +607,19 @@
                                         swapElements(model.apps, dragIndex, dropIndex)
                                         animate = true
                                     } else {//如果由下往上拖动✓
-                                        console.log("插入这一行的后面")
-                                        var maybeDropIndex = dropIndex
-                                        var maybe = model.apps[dropIndex + 1]
-                                        if (maybe && maybe.row == drop.row) {
-                                            maybeDropIndex = dropIndex + 1
+                                        dragsmalldropmiddledown = drop
+                                        if (drag.sleft === 1) {
+                                            var maybe = model.apps[dropIndex + 1]
+                                            if (maybe == drop) {//如果它位于左边，紧接着就是中型的
+                                                swapElements(model.apps, dragIndex, dropIndex - 1)
+                                                animate = true
+                                            }else{
+                                                return 
+                                            }
+                                           
+                                        }else{
+                                            return
                                         }
-                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
-//                                        crossRow = drop
-//                                        if (drag.sleft === 1) {
-//                                            if (dropIndex - dragIndex > 1) {//如果拖动块在左，右边没有东西，下方就是大方块
-//                                                swapElements(model.apps, dragIndex, dropIndex - 1)
-//                                                animate = true
-//                                            } else {
-//                                                return
-//                                            }
-//                                        } else {
-//                                            return
-//                                        }
                                     }
                                 } else {//如果是在不同列
                                     if (dragIndex < dropIndex) {
