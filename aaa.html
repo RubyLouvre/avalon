@@ -1,23 +1,25 @@
-<!DOCTYPE HTML>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title></title>
-    </head>
-    <body >
-        <script src="avalon.js"></script>
-        <script>
-            avalon.define('mson', function(vm) {
-                vm.click = function() {
-                    alert('click')
-                }
-            });
+<!doctype html>
+<html ng-app>
+  <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"></script>
+  </head>
+  <body ng-controller="test">
+    <input type="checkbox" ng-model="bTmp1" ng-init="bTmp1=true" /><br/>
+    <input type="checkbox" ng-model="bTmp2" ng-init="bTmp2=true" /><br/>
+    <button ng-click="f1()">test</button>{{bTmp2}}<br/>
+    Show when checked:
+    <span ng-if="bTmp1">
+      <span ng-if="bTmp2" style="color:red">{{bTmp2}}</span>
+    </span>
 
-        </script>
-        <div ms-controller="mson" >
-            <div ms-click="click">
-                点击我
-            </div>
-        </div>
-    </body>
+    <script>
+    function test($scope) {
+      $scope.f1 = function() {
+        $scope.bTmp1 = false
+        $scope.bTmp2 = !$scope.bTmp2
+        $scope.bTmp1 = true
+      };
+    }
+    </script>
+  </body>
 </html>
