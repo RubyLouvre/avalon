@@ -263,7 +263,7 @@
                         return color;
                     }
                     vm.maxRow = 3
-                    //#########
+                    //#############################
                     vm.onLayout = function() {
                         var children = this.children
                         var maxRow = model.maxRow //每一列最多 多少行，用于配置
@@ -444,14 +444,15 @@
                             text: "yyy",
                             type: "big"
                         },
+                         {
+                            text: "middle1",
+                            type: "middle"
+                        },
                         {
                             text: "zzz",
                             type: "big"
                         },
-                        {
-                            text: "middle1",
-                            type: "middle"
-                        },
+                       
                         {
                             text: "middle2",
                             type: "middle"
@@ -720,8 +721,11 @@
                                     }
                                     animate = true
                                 }
-                            }else if((drag.type === "middle" && drop.type === "big")){
-                                
+                            }else if((drag.type === "middle" && drop.type === "big") || (drag.type === "big" && drop.type === "middle")){
+                                   if (drag.col === drop.col) {//如果是在同一列
+                                         swapElements(model.apps, dragIndex, dropIndex)
+                                         animate = true
+                                   }
                             } else if (
                                     (drag.type === "middle" && drop.type === "small") ||
                                     (drag.type === "big" && drop.type === "middle") ||
