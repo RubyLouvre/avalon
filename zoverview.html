@@ -351,7 +351,6 @@
                                 el.row = row
                                 el.col = col
                                 row += 2
-                                console.log("++++++++++"+row)
                                 sleft = 1
                                 if (row > maxRow) {
                                     row = 0
@@ -445,15 +444,14 @@
                             text: "yyy",
                             type: "big"
                         },
-                         {
-                            text: "middle1",
-                            type: "middle"
-                        },
                         {
                             text: "zzz",
                             type: "big"
                         },
-                       
+                        {
+                            text: "middle1",
+                            type: "middle"
+                        },
                         {
                             text: "middle2",
                             type: "middle"
@@ -696,7 +694,7 @@
                             } else if (drag.type === drop.type) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
                                 animate = true
-                            } else if ((drag.type === "small" && /middle|big/.test(drop.type)) ) {
+                            } else if ((drag.type === "small" && /middle|big/.test(drop.type))) {
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row < drop.row) {//如果由上往下拖动
                                         crossRow = drop
@@ -722,11 +720,24 @@
                                     }
                                     animate = true
                                 }
-                            }else if((drag.type === "middle" && drop.type === "big") || (drag.type === "big" && drop.type === "middle")){
-                                   if (drag.col === drop.col) {//如果是在同一列
-                                         swapElements(model.apps, dragIndex, dropIndex)
-                                         animate = true
-                                   }
+                            } else if ((drag.type === "middle" && drop.type === "big")) {//✓
+                                if (drag.col === drop.col) {//如果是在同一列
+                                    if (dragIndex > dropIndex) {
+                                        crossRow = drop
+                                        swapElements(model.apps, dragIndex, dropIndex)//插入后面
+                                        return
+                                    } else {
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
+                                        animate = true
+                                    }
+                                } else {
+                                    if (dragIndex > dropIndex) {
+                                        swapElements(model.apps, dragIndex, dropIndex)//插入前面
+                                    } else {
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
+                                    }
+                                    animate = true
+                                }
                             } else if (
                                     (drag.type === "middle" && drop.type === "small") ||
                                     (drag.type === "big" && drop.type === "middle") ||
@@ -756,7 +767,7 @@
                                 }
                                 swapElements(model.apps, dragIndex, maybeDropIndex)
                                 animate = true
-                            } 
+                            }
                         }
 
                         if (animate) {
