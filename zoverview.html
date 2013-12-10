@@ -220,7 +220,7 @@
                             el.newCol = col
                             row += 2
                             sleft = 1
-                            if (row >= maxRow) {
+                            if (row > maxRow) {
                                 row = 0
                                 col++
                             }
@@ -351,8 +351,9 @@
                                 el.row = row
                                 el.col = col
                                 row += 2
+                                console.log("++++++++++"+row)
                                 sleft = 1
-                                if (row >= maxRow) {
+                                if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
