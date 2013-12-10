@@ -666,7 +666,6 @@
                             } else if ((drag.type === "middle" && drop.type === "big")) {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
-                                     //   crossRow = drop
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {//往下
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
@@ -691,7 +690,12 @@
                                     if (drag.col > drop.col) {//如果是往左
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {
-                                        swapElements(model.apps, dragIndex, dropIndex)//插入后面
+                                        var maybeDropIndex = dropIndex
+                                        var maybe = model.apps[dropIndex + 1]
+                                        if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                            maybeDropIndex = dropIndex + 1
+                                        }
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行后面
                                     }
                                 }
                                 animate = true
@@ -700,7 +704,6 @@
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)//插入这一行前面
                                     } else {
-
                                         var maybeDropIndex = dropIndex
                                         var maybe = model.apps[dropIndex + 1]
                                         if (maybe && maybe.row == drop.row) {
@@ -716,14 +719,22 @@
                                         if (maybe && maybe.row == drop.row) {
                                             maybeDropIndex = dropIndex - 1
                                         }
-                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行前面
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行前面
                                     } else {
                                         var maybeDropIndex = dropIndex
                                         var maybe = model.apps[dropIndex + 1]
                                         if (maybe && maybe.row == drop.row) {
                                             maybeDropIndex = dropIndex + 1
+                                            maybe = model.apps[dropIndex + 2]
+                                            if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                                maybeDropIndex++
+                                                maybe = model.apps[dropIndex + 3]
+                                                if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                                    maybeDropIndex++
+                                                }
+                                            }
                                         }
-                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
+                                        swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行后面
                                     }
                                     animate = true
                                 }
