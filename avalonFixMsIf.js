@@ -1973,13 +1973,10 @@
                         } catch (e) {
                         }
                     }
-                    // console.log(ifSanctuary.contains(elem))
                 } else { //如果它在其父节点里，则移除它，用注释节点占位
-                    //  avalon.Array.ensure(ifSanctuary, elem)
                     if (avalon.contains(parent, elem)) {
                         parent.replaceChild(placehoder, elem)
                         ifSanctuary.appendChild(elem)
-                      //  console.log(ifSanctuary.contains(elem) + "!!!!!!!")
                     }
                 }
             })
@@ -3015,12 +3012,8 @@
             if (callback) {
                 callback.call(parent, method)
             }
-            if (method == "add" ) {
-                setTimeout(function(){
-                  //  console.log("11111111111")
-                     scanNodes(parent, [])
-                },50)
-               
+            if (method == "add") {
+                scanNodes(parent, [])
             }
         })
     }

@@ -11,6 +11,7 @@
                 vm.aaa = true
                 vm.bbb = "bbb"
                 vm.color = "red"
+                vm.array = [{a:true, b:"111111111111111111"}]
             })
 
             setTimeout(function() {
@@ -29,6 +30,9 @@
         </script>
         <div ms-controller="test">
             <div ms-if="aaa" ms-css-color="color">{{bbb}}</div>
+            <ul ms-each="array">
+                <li ms-if="el.a">{{el.b}}</li>
+            </ul>
         </div>
     </body>
 </html>
