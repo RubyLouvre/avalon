@@ -96,7 +96,7 @@
                     var col = 0 //当前APP所在的栏数
                     var sleft = 1
                     for (var i = 0, el; el = array[i]; i++) {
-                        if (el.type == "small") {
+                        if (el.size == "small") {
                             if (sleft) {//如果是左边
                                 sleft = 0
                                 el.newTop = 130 * row
@@ -106,7 +106,7 @@
                                 el.newSleft = 1
                                 //判定右边是不是small
                                 var vapp = model.apps[i + 1]
-                                if (vapp && vapp.type !== "small") {
+                                if (vapp && vapp.size !== "small") {
                                     vapps.push({
                                         top: 130 * row,
                                         left: col * 260 + 130,
@@ -128,7 +128,7 @@
                                 row = 0
                                 col++
                             }
-                        } else if (el.type == "middle") {
+                        } else if (el.size == "middle") {
                             el.newSleft = 1
                             if (!sleft) {
                                 row++
@@ -147,7 +147,7 @@
                                 row = 0
                                 col++
                             }
-                        } else if (el.type == "big") {
+                        } else if (el.size == "big") {
                             el.newSleft = 1
                             if (!sleft) {
                                 row++
@@ -180,7 +180,7 @@
                     }
                     var lastEl = model.apps[ model.apps.length - 1], flagLast = true
                     while (row <= maxRow) {
-                        if (flagLast && lastEl.type === "small") {
+                        if (flagLast && lastEl.size === "small") {
                             vapps.push({
                                 el: lastEl,
                                 top: row * 130,
@@ -222,7 +222,7 @@
                         var col = 0 //当前APP所在的栏数
                         var sleft = 1
                         for (var i = 0, el; el = model.apps[i]; i++) {
-                            if (el.type == "small") {
+                            if (el.size == "small") {
                                 if (sleft) {//如果是左边
                                     sleft = 0
                                     el.top = 130 * row
@@ -232,7 +232,7 @@
                                     el.sleft = 1
                                     //判定右边是不是small
                                     var vapp = model.apps[i + 1]
-                                    if (vapp && vapp.type !== "small") {
+                                    if (vapp && vapp.size !== "small") {
                                         vapps.push({
                                             top: 130 * row,
                                             left: col * 260 + 130,
@@ -256,7 +256,7 @@
                                     row = 0
                                     col++
                                 }
-                            } else if (el.type == "middle") {
+                            } else if (el.size == "middle") {
                                 el.sleft = 1
                                 if (!sleft) {
                                     row++
@@ -277,7 +277,7 @@
                                     row = 0
                                     col++
                                 }
-                            } else if (el.type == "big") {
+                            } else if (el.size == "big") {
                                 el.sleft = 1
                                 if (!sleft) {
                                     row++
@@ -313,7 +313,7 @@
                         }
                         var lastEl = model.apps[ model.apps.length - 1], flagLast = true
                         while (row <= maxRow) {
-                            if (flagLast && lastEl.type === "small") {
+                            if (flagLast && lastEl.size === "small") {
                                 vapps.push({
                                     el: lastEl,
                                     top: row * 130,
@@ -361,83 +361,89 @@
                     vm.apps = fix([
                         {
                             text: "22222",
-                            type: "middle"
+                            size: "middle"
                         },
                         {
                             text: "1",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "2",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "yyy",
-                            type: "big"
+                           size: "big"
                         },
                         {
                             text: "zzz",
-                            type: "big"
+                            size: "big"
                         },
                         {
                             text: "middle2",
-                            type: "middle"
+                            size: "middle"
                         },
                         {
                             text: "middle3",
-                            type: "middle"
+                            size: "middle"
                         },
                         {
                             text: "===========",
-                            type: "middle"
+                           size: "middle"
                         },
                         {
                             text: "3",
-                            type: "small"
+                           size: "small"
                         },
                         {
                             text: "15",
-                            type: "middle"
+                           size: "middle"
                         },
                         {
                             text: "7",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "===========",
-                            type: "middle"
+                            size: "middle"
                         },
                         {
                             text: "9",
-                            type: "small"
+                           size: "small"
                         },
                         {
                             text: "4",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "10",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "11",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "12",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "13",
-                            type: "small"
+                            size: "small"
                         },
                         {
                             text: "14",
-                            type: "small"
+                            size:"small"
                         }
 
 
                     ])
+                    vm.handle = function(e) {
+                        var el = e.target
+                        if (/apphead/.test(el.className)) {
+                            return el
+                        }
+                    }
                     vm.dragClass = ""
                     vm.start = function(e, data) {
                         avalon(this).addClass("current")
@@ -485,7 +491,7 @@
                         if (animate)
                             return
                         var drag = this["data-vm"]
-                        switch (drag.type) {
+                        switch (drag.size) {
                             case "small":
                                 var point1 = [data.left + drag.width * 0.5, data.top + drag.height * 0.5]
                                 break;
@@ -542,10 +548,10 @@
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
 
                                 animate = true
-                            } else if (drag.type === drop.type) {// small === small middle === middle big === big✓
+                            } else if (drag.size === drop.size) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
                                 animate = true
-                            } else if (drag.type === "small" && drop.type == "middle") {
+                            } else if (drag.size === "small" && drop.size == "middle") {
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
@@ -572,7 +578,7 @@
                                     }
                                     animate = true
                                 }
-                            } else if (drag.type === "small" && drop.type == "big") {
+                            } else if (drag.size === "small" && drop.size == "big") {
                                 if (drag.col === drop.col) {//如果是在同一列
                                     var dropPosition = enter2(drop, point1)
                                     if (drag.row > drop.row) {//如果是往上
@@ -600,7 +606,7 @@
                                     }
                                     animate = true
                                 }
-                            } else if (drag.type === "middle" && drop.type == "small") {//✓
+                            } else if (drag.size === "middle" && drop.size == "small") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
@@ -631,7 +637,7 @@
                                     }
                                     animate = true
                                 }
-                            } else if ((drag.type === "middle" && drop.type === "big")) {//✓
+                            } else if ((drag.size === "middle" && drop.size === "big")) {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
@@ -647,7 +653,7 @@
                                     }
                                     animate = true
                                 }
-                            } else if (drag.type == "big" && drop.type === "middle") {//✓
+                            } else if (drag.size == "big" && drop.size === "middle") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
@@ -660,14 +666,14 @@
                                     } else {
                                         var maybeDropIndex = dropIndex
                                         var maybe = model.apps[dropIndex + 1]
-                                        if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                        if (maybe && maybe.size !== "big" && maybe.row == drop.row + 1) {
                                             maybeDropIndex = dropIndex + 1
                                         }
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行后面
                                     }
                                 }
                                 animate = true
-                            } else if (drag.type == "big" && drop.type === "small") {//✓
+                            } else if (drag.size == "big" && drop.size === "small") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)//插入这一行前面
@@ -694,10 +700,10 @@
                                         if (maybe && maybe.row == drop.row) {
                                             maybeDropIndex = dropIndex + 1
                                             maybe = model.apps[dropIndex + 2]
-                                            if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                            if (maybe && maybe.size !== "big" && maybe.row == drop.row + 1) {
                                                 maybeDropIndex++
                                                 maybe = model.apps[dropIndex + 3]
-                                                if (maybe && maybe.type !== "big" && maybe.row == drop.row + 1) {
+                                                if (maybe && maybe.size !== "big" && maybe.row == drop.row + 1) {
                                                     maybeDropIndex++
                                                 }
                                             }
@@ -893,6 +899,9 @@
                 width:250px;
                 height:120px;
             }
+            app:hover {
+                outline: 5px solid #b1e8f3;
+            }
         </style>
     </head>
     <body>
@@ -900,10 +909,12 @@
             <app ms-draggable="apps" data-drag-start="start" 
                  data-drag-drag="drag" data-drag-stop="stop" 
                  data-drag-before-stop="beforeStop" 
-                 ms-class="{{el.type}}" 
+                 data-drag-handle="handle"
+                 ms-class="{{el.size}}" 
                  ms-data-vm="el" 
                  ms-css-background="getColor()" 
-                 ms-css-top="top" ms-css-left="left">
+                 ms-css-top="top"
+                 ms-css-left="left">
                 <div class="apphead">{{el.text }}</div></app>
         </div> 
     </body>
