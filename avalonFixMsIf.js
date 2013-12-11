@@ -413,7 +413,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1119,9 +1119,6 @@
             return a
         } else {
             var iterators = a[subscribers]
-
-            if (!iterators.length)
-                return
 
             iterators.forEach(function(fn) {
                 fn.rollback && fn.rollback()
@@ -1976,6 +1973,8 @@
                 } else { //如果它在其父节点里，则移除它，用注释节点占位
                     if (avalon.contains(parent, elem)) {
                         parent.replaceChild(placehoder, elem)
+                        placehoder.elem = elem
+                        //   alert(placehoder.elem.tagName + "")
                         ifSanctuary.appendChild(elem)
                     }
                 }
@@ -2850,7 +2849,7 @@
         data.parent = elem
         data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
         var check0 = "$first",
-                check1 = "$first"
+                check1 = "$last"
         if (name == "with") {
             check0 = "$key", check1 = "$val"
         }
@@ -2907,20 +2906,47 @@
                 data.parent.replaceChild(data.element, data.startRepeat)
                 data.parent.removeChild(data.endRepeat)
             } else {
-                avalon.clearChild(elem).appendChild(view)
+                var deleteFragment = documentFragment.cloneNode(false)
+                while (elem.firstChild) {
+                    deleteFragment.appendChild(elem.firstChild)
+                }
+                removeFromSanctuary(deleteFragment)
+                elem.appendChild(view)
             }
 
         }
         list[subscribers] && list[subscribers].push(updateView)
         updateView("add", list, 0)
     }
-    var deleteRange = DOC.createRange && DOC.createRange()
+//得到某一元素节点或文档碎片对象下的所有注释节点
+    var queryComments = DOC.createTreeWalker ? function(parent) {
+        var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
+                comment, ret = []
+        while (comment = tw.nextNode()) {
+            ret.push(comment)
+        }
+        return ret
+    } : function(parent) {
+        return  parent.getElementsByTagName("!")
+    }
+//将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
+    function removeFromSanctuary(parent) {
+        var comments = queryComments(parent)
+        for (var i = 0, comment; comment = comments[i++]; ) {
+            if (comment.nodeValue == "ms-if") {
+                var msIfEl = comment.elem
+                if (msIfEl.parentNode) {
+                    msIfEl.parentNode.removeChild(msIfEl)
+                }
+            }
+        }
+    }
 
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
         var parent = data.parent
         var mapper = data.mapper
-        if (method == "del" || method == "move" || (!deleteRange && method == "clear")) {
+        if (method == "del" || method == "move") {
             var locatedNode = getLocatedNode(parent, data, pos)
         }
         switch (method) {
@@ -2958,7 +2984,7 @@
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
-                removeView(locatedNode, group, el)
+                removeFromSanctuary(removeView(locatedNode, group, el))
                 break
             case "index":
                 for (; el = mapper[pos]; pos++) {
@@ -2966,24 +2992,22 @@
                 }
                 break
             case "clear":
+                var deleteFragment = documentFragment.cloneNode(false)
                 if (data.startRepeat) {
-                    if (deleteRange) {
-                        deleteRange.setStartAfter(data.startRepeat)
-                        deleteRange.setEndBefore(data.endRepeat)
-                        deleteRange.deleteContents()
-                    } else {
-                        while (true) {
-                            var node = data.startRepeat.nextSibling
-                            if (node && node !== data.endRepeat) {
-                                node.parentNode.removeChild(node)
-                            } else {
-                                break
-                            }
+                    while (true) {
+                        var node = data.startRepeat.nextSibling
+                        if (node && node !== data.endRepeat) {
+                            deleteFragment.appendChild(node)
+                        } else {
+                            break
                         }
                     }
                 } else {
-                    avalon.clearChild(parent)
+                    while (parent.firstChild) {
+                        deleteFragment.appendChild(parent.firstChild)
+                    }
                 }
+                removeFromSanctuary(deleteFragment)
                 mapper.length = 0
                 break
             case "move":
