@@ -3323,7 +3323,6 @@
                     return
                 }
                 cancelHold()
-                // e.preventDefault()
                 touchProxy.x2 = firstTouch.pageX
                 touchProxy.y2 = firstTouch.pageY
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)

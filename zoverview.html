@@ -6,6 +6,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
         <script src="jquery.js"></script>
+
         <script>
             require("avalon.draggable", function() {
                 var animate = false
@@ -587,7 +588,7 @@
                                             return
                                         }
                                         if (dropPosition === "bottom") {
-                                            swapElements(model.apps, dragIndex, dropIndex )
+                                            swapElements(model.apps, dragIndex, dropIndex)
                                             animate = true
                                         }
                                     }
@@ -863,6 +864,18 @@
                 transition:transform .3s ease-in-out;
                 z-index:1;
             }
+            .apphead {
+                width: 100%;
+                height: 30px;
+                line-height: 30px;
+                text-align: right;
+                padding-right: 20px;
+                box-sizing: border-box;
+                -moz-box-sizing: border-box;
+                color: #000;
+                font-size: 14px;
+                cursor: move;
+            }
             app.current{
                 z-index:100;
                 opacity: 0.5;
@@ -891,7 +904,7 @@
                  ms-data-vm="el" 
                  ms-css-background="getColor()" 
                  ms-css-top="top" ms-css-left="left">
-                {{el.text }}</app>
+                <div class="apphead">{{el.text }}</div></app>
         </div> 
     </body>
 </html>
