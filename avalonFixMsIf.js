@@ -2994,6 +2994,12 @@
             case "clear":
                 var deleteFragment = documentFragment.cloneNode(false)
                 if (data.startRepeat) {
+//                    //这个分支将应用于avalon.mobile
+//                    var deleteRange = document.createRange()
+//                    deleteRange.setStartAfter(data.startRepeat)
+//                    deleteRange.setEndBefore(data.endRepeat)
+//                    var deleteFragment = deleteRange.extractContents()
+//                    removeFromSanctuary(deleteFragment)
                     while (true) {
                         var node = data.startRepeat.nextSibling
                         if (node && node !== data.endRepeat) {

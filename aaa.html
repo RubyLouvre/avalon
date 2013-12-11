@@ -34,10 +34,18 @@
                 var i = 0
                 while (i < 4) {
                     documentFragment.appendChild(document.createComment("ms-if"))
-i++
+                    i++
                 }
                 var a = queryComments(documentFragment)
-                alert(a.length)
+                avalon.log(a.length)
+                var testParent = document.getElementById("testParent")
+                if (document.createRange) {
+                    var deleteRange = document.createRange()
+                    deleteRange.setStartBefore(testParent.firstChild)
+                    deleteRange.setEndAfter(testParent.lastChild)
+                    var deleteFragment = deleteRange.extractContents()
+                    console.log(deleteFragment)
+                }
             }
 
             var queryComments = document.createTreeWalker ? function(parent) {
@@ -63,5 +71,6 @@ i++
             <!--eeeeeeeeee-->
             <!--ffffffffff-->
         </div>
+        <div id="testParent"><b>111</b><span>ssssssss</span><select><option>22</option></select>6666</div>
     </body>
 </html>
