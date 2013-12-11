@@ -1053,17 +1053,29 @@
             name = generateID()
             args.unshift(name)
         }
-        if (typeof args[1] !== "function") {
-            avalon.error("factory必须是函数")
+
+        var isModel = avalon.type(factory) === 'object'
+        if (typeof args[1] !== "function" && !isModel) {
+            avalon.error("factory必须是函数或对象")
         }
+        
         factory = args[1]
         var scope = {
             $watch: noop
         }
-        factory(scope) //得到所有定义
+        // 得到所有定义
+        if (isModel) {
+            for (var key in factory){
+                if (factory.hasOwnProperty(key)) {
+                    scope[key] = factory[key]
+                };
+            }
+        }else{
+            factory(scope)
+        }
         var model = modelFactory(scope) //偷天换日，将scope换为model
         stopRepeatAssign = true
-        factory(model)
+        !isModel && factory(model)
         stopRepeatAssign = false
         model.$id = name
         return VMODELS[name] = model
