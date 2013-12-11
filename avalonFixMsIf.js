@@ -2998,6 +2998,7 @@
 //                    var deleteRange = document.createRange()
 //                    deleteRange.setStartAfter(data.startRepeat)
 //                    deleteRange.setEndBefore(data.endRepeat)
+//                 //   https://developer.mozilla.org/en-US/docs/Web/API/Range.extractContents
 //                    var deleteFragment = deleteRange.extractContents()
 //                    removeFromSanctuary(deleteFragment)
                     while (true) {

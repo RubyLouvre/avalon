@@ -2,17 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8"/>
-        <style>
-            .red {
-                background-color: red;
-                width: 30px;
-                height: 30px;
-            }
-            .green {
-                background-color: green;
-            }
-        </style>
-            <script src="avalon.js"></script>
+        <script src="avalon.js"></script>
     </head>
     <body>
         <script>
@@ -29,29 +19,5 @@
             <input ms-duplex="value" />
             <button type="button" ms-click="plus">ClickMe</button>
         </div>
-
-    
-        <script>
-           avalon.ready(function() {
-               var model = avalon.define('viewportCtrl', function(vm) {
-                   vm.vpList = [];
-                   while (vm.vpList.length < 10) {
-                       vm.vpList.push({
-                           name: 'nop',
-                           tpl: 'partial/placeholder.html'
-                       });
-                   }
-                   vm.toggling = true;
-               });
-
-               avalon.scan();
-
-               setInterval(function() {
-                   console.log(model.toggling);
-                   model.toggling = !model.toggling;
-               }, 1000)
-
-           })
-        </script>
     </body>
 </html>

@@ -1,8 +1,9 @@
 define(["avalon"], function(avalon) {
+    //  必须 在avalon.ui上注册一个函数，它有三个参数，分别为容器元素，data， vmodels
     avalon.ui["testui"] = function(element, data, vmodels) {
-
-        var innerHTML = element.innerHTML //将它内部作为模板，或者使用文档碎片进行处理
-        //由于innerHTML要依赖许多widget后来添加的新属性，这时如果被扫描肯定报“不存在”
+        //将它内部作为模板，或者使用文档碎片进行处理，那么你就需要用appendChild方法添加回去
+        var innerHTML = element.innerHTML
+        //由于innerHTML要依赖许多widget后来添加的新属性，这时如果被扫描肯定报“不存在”错误
         //因此先将它清空
         avalon.clearChild(element)
         var model = avalon.define(data.testuiId, function(vm) {
@@ -17,15 +18,16 @@ define(["avalon"], function(avalon) {
             element.innerHTML = innerHTML
             avalon.scan(element, [model].concat(vmodels))
         })
-        return model
+        return model//必须返回新VM
     }
     avalon.ui["testui"].defaults = {
         aaa: "aaa",
         bbb: "bbb",
         ccc: "ccc"
     }
-    return avalon
+    return avalon//必须返回avalon
 })
+
 
 
 //http://mottie.github.io/Keyboard/navigate.html
