@@ -1411,9 +1411,7 @@
         }
     }
 
-    var fakeData = {
-        state: {}
-    }
+    var fakeData = {  }
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
@@ -1553,7 +1551,6 @@
         }
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-            // 使用共享对象state，实现同一棵树中的绑定之间 的通信
             bindingHandlers["if"](ifBinding, vmodels)
         } else {
             executeBindings(bindings, vmodels)

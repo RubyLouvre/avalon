@@ -1110,7 +1110,7 @@
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
-    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea")
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea".toUpperCase())
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
     function checkScan(elem, callback) {
@@ -1155,9 +1155,9 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //IE6-10 removeAttributeNode不会刷新[ms-controller]样式规则
         }
-        scanAttr(elem, vmodels, function(cmodels, cstate) { //扫描特性节点
-            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML) && (!elem.stopScan)) {
-                scanNodes(elem, cmodels, cstate) //扫描子孙元素
+       scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
+            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                scanNodes(elem, cmodel, cstate) //扫描子孙元素
             }
         }, state)
 

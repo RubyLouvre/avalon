@@ -1463,7 +1463,7 @@
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
-    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea")
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea".toUpperCase())
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
     var interval = W3C ? 15 : 50
@@ -1502,7 +1502,8 @@
         var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
             return
-        } else if (node = b || c) {
+        } 
+        if (node = b || c) {
             var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
                 return
@@ -1512,7 +1513,7 @@
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         }
         scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
-            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML) && (!elem.stopScan)) {
+            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, cmodel, cstate) //扫描子孙元素
             }
         }, state)
