@@ -887,15 +887,15 @@
                 opacity: 0.5;
                 transform:scale(1.1);
             }
-            app.small{
+            app.app_small{
                 width:120px;
                 height:120px;
             }
-            app.big{
+            app.app_big{
                 width:250px;
                 height:250px;
             }
-            app.middle{
+            app.app_middle{
                 width:250px;
                 height:120px;
             }
@@ -910,7 +910,7 @@
                  data-drag-drag="drag" data-drag-stop="stop" 
                  data-drag-before-stop="beforeStop" 
                  data-drag-handle="handle"
-                 ms-class="{{el.size}}" 
+                 ms-class="app_{{el.size}}" 
                  ms-data-vm="el" 
                  ms-css-background="getColor()" 
                  ms-css-top="top"
