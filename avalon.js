@@ -2846,7 +2846,7 @@
         data.parent = elem
         data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
         var check0 = "$first",
-                check1 = "$first"
+                check1 = "$last"
         if (name == "with") {
             check0 = "$key", check1 = "$val"
         }
