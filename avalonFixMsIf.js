@@ -1411,7 +1411,7 @@
         }
     }
 
-    var fakeData = {  }
+    var fakeData = {}
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
@@ -1448,7 +1448,7 @@
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
-    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea")
+    var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea".toUpperCase())
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
     var interval = W3C ? 15 : 50
@@ -1525,9 +1525,9 @@
                                 node: node,
                                 value: node.nodeValue
                             }
-                            if (binding.type === "repeat") {
+                            if (type === "repeat") {
                                 repeatBinding = binding
-                            } else if (node.name === "ms-if") {
+                            } else if (type === "if") {
                                 ifBinding = binding
                             } else {
                                 bindings.push(binding)
@@ -1554,12 +1554,11 @@
             bindingHandlers["if"](ifBinding, vmodels)
         } else {
             executeBindings(bindings, vmodels)
-            if (!stopScan[elem.tagName.toLowerCase()] && rbind.test(elem.innerHTML) && (!elem.stopScan)) {
+            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, vmodels) //扫描子孙元素
             }
         }
     }
-
     function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
             if (data.type === "widget" || vmodels.length) {//https://github.com/RubyLouvre/avalon/issues/171
@@ -1577,29 +1576,28 @@
     function extractTextBindings(textNode) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
-        if (tokens.length) {
-            while (tokens.length) { //将文本转换为文本节点，并替换原来的文本节点
-                var token = tokens.shift()
-                var node = DOC.createTextNode(token.value)
-                if (token.expr) {
-                    var filters = token.filters
-                    var binding = {
-                        type: "text",
-                        node: node,
-                        param: "",
-                        element: textNode.parentNode,
-                        value: token.value,
-                        filters: filters
-                    }
-                    if (filters && filters.indexOf("html") !== -1) {
-                        avalon.Array.remove(filters, "html")
-                        binding.type = "html"
-                        binding.replaceNodes = [node]
-                    }
-                    bindings.push(binding) //收集带有插值表达式的文本
+        for (var i = 0, token; token = tokens[i++]; ) {
+            var node = DOC.createTextNode(token.value)//将文本转换为文本节点，并替换原来的文本节点
+            if (token.expr) {
+                var filters = token.filters
+                var binding = {
+                    type: "text",
+                    node: node,
+                    param: "",
+                    element: textNode.parentNode,
+                    value: token.value,
+                    filters: filters
                 }
-                documentFragment.appendChild(node)
+                if (filters && filters.indexOf("html") !== -1) {
+                    avalon.Array.remove(filters, "html")
+                    binding.type = "html"
+                    binding.replaceNodes = [node]
+                }
+                bindings.push(binding) //收集带有插值表达式的文本
             }
+            documentFragment.appendChild(node)
+        }
+        if (tokens.length) {
             textNode.parentNode.replaceChild(documentFragment, textNode)
         }
         return bindings

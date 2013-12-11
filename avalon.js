@@ -1502,7 +1502,7 @@
         var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
             return
-        } 
+        }
         if (node = b || c) {
             var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
@@ -1599,9 +1599,9 @@
                                 node: node,
                                 value: node.nodeValue
                             }
-                            if (binding.type === "repeat") {
+                            if (type === "repeat") {
                                 repeatBinding = binding
-                            } else if (node.name === "ms-if") {
+                            } else if (type === "if") {
                                 ifBinding = binding
                             } else {
                                 bindings.push(binding)
@@ -1655,29 +1655,28 @@
     function extractTextBindings(textNode) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
-        if (tokens.length) {
-            while (tokens.length) { //将文本转换为文本节点，并替换原来的文本节点
-                var token = tokens.shift()
-                var node = DOC.createTextNode(token.value)
-                if (token.expr) {
-                    var filters = token.filters
-                    var binding = {
-                        type: "text",
-                        node: node,
-                        param: "",
-                        element: textNode.parentNode,
-                        value: token.value,
-                        filters: filters
-                    }
-                    if (filters && filters.indexOf("html") !== -1) {
-                        avalon.Array.remove(filters, "html")
-                        binding.type = "html"
-                        binding.replaceNodes = [node]
-                    }
-                    bindings.push(binding) //收集带有插值表达式的文本
+        for (var i = 0, token; token = tokens[i++]; ) {
+            var node = DOC.createTextNode(token.value)//将文本转换为文本节点，并替换原来的文本节点
+            if (token.expr) {
+                var filters = token.filters
+                var binding = {
+                    type: "text",
+                    node: node,
+                    param: "",
+                    element: textNode.parentNode,
+                    value: token.value,
+                    filters: filters
                 }
-                documentFragment.appendChild(node)
+                if (filters && filters.indexOf("html") !== -1) {
+                    avalon.Array.remove(filters, "html")
+                    binding.type = "html"
+                    binding.replaceNodes = [node]
+                }
+                bindings.push(binding) //收集带有插值表达式的文本
             }
+            documentFragment.appendChild(node)
+        }
+        if (tokens.length) {
             textNode.parentNode.replaceChild(documentFragment, textNode)
         }
         return bindings
