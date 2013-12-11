@@ -8,7 +8,7 @@
         <script src="jquery.js"></script>
         <script>
             require("avalon.draggable", function() {
-                var  animate = false
+                var animate = false
                 function enter(dropper, point1, point2, point3, point4) {
                     var left = dropper.left + dropper.height * 0.1 / 2
                     var top = dropper.top + dropper.height * 0.1 / 2
@@ -27,7 +27,26 @@
                         return dropper
                     }
                 }
-
+                function enter2(drop, point) {
+                    var topArea = {
+                        top: drop.top,
+                        left: drop.left,
+                        width: 250,
+                        height: 120
+                    }
+                    var bottomArea = {
+                        top: drop.top + 250 / 2,
+                        left: drop.left,
+                        width: 250,
+                        height: 120
+                    }
+                    if (enter(topArea, point)) {
+                        return "top"
+                    }
+                    if (enter(bottomArea, point)) {
+                        return "bottom"
+                    }
+                }
                 function resetOldValue(object) {
                     object.left = object.newLeft
                     object.top = object.newTop
@@ -546,6 +565,34 @@
                                     }
                                 } else {//如果是在不同列
                                     if (drag.col > drop.col) {
+                                        swapElements(model.apps, dragIndex, dropIndex)//插入前面
+                                    } else {
+                                        swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
+                                    }
+                                    animate = true
+                                }
+                            } else if (drag.type === "small" && drop.type == "big") {
+                                if (drag.col === drop.col) {//如果是在同一列
+                                    var dropPosition = enter2(drop, point1)
+                                    if (drag.row > drop.row) {//如果是往上
+                                        if (dropPosition === "bottom") {
+                                            return
+                                        }
+                                        if (dropPosition === "top") {
+                                            swapElements(model.apps, dragIndex, dropIndex)
+                                            animate = true
+                                        }
+                                    } else {
+                                        if (dropPosition === "top") {
+                                            return
+                                        }
+                                        if (dropPosition === "bottom") {
+                                            swapElements(model.apps, dragIndex, dropIndex )
+                                            animate = true
+                                        }
+                                    }
+                                } else {
+                                    if (drag.col > drop.col) {//往左
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面

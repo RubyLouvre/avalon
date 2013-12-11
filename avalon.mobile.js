@@ -440,7 +440,7 @@
                 left: 0
             };
             if (!elem) {
-                return 
+                return
             }
             if (this.css("position") === "fixed") {
                 offset = elem.getBoundingClientRect()
@@ -2488,10 +2488,11 @@
                 if (data.startRepeat) {
                     deleteRange.setStartAfter(data.startRepeat)
                     deleteRange.setEndBefore(data.endRepeat)
-                    deleteRange.deleteContents()
                 } else {
-                    avalon.clearChild(parent)
+                    deleteRange.setStartBefore(parent.firstChild)
+                    deleteRange.setEndAfter(parent.lastChild)
                 }
+                deleteRange.extractContents()
                 mapper.length = 0
                 break
             case "move":
