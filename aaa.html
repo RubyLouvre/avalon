@@ -1,80 +1,28 @@
-<!DOCTYPE HTML>
-<html>
+<!doctype html>
+<html >
     <head>
-        <meta charset="utf-8">
-        <title></title>
-        <script src="avalonFixMsIf.js"></script>
+        <script src="avalon.mobile.js"></script>
     </head>
-    <body>
+    <body ms-controller="test">
+        <input type="checkbox" ms-duplex-radio="bTmp1" /><br/>
+        <input type="checkbox" ms-duplex-radio="bTmp2" /><br/>
+        <button ms-click="f1">test</button>{{bTmp2}}<br/>
+        Show when checked:
+        <span ms-if="bTmp1">
+            <span ms-if="bTmp2" style="color:red">{{bTmp2}}</span>
+        </span>
+
         <script>
-            var model = avalon.define("test", function(vm) {
-                vm.aaa = true
-                vm.bbb = "bbb"
-                vm.color = "red"
-                vm.a = "-----------"
-                vm.b = "ppppppppppp"
-                vm.c = "ooooooooooo"
-                vm.array = [{a: true, b: "111111111111111111"}]
+            avalon.define("test", function(vm) {
+                vm.bTmp1 = true
+                vm.bTmp2 = true
+                vm.f1 = function() {
+                    vm.bTmp1 = false
+                    vm.bTmp2 = !vm.bTmp2
+                    vm.bTmp1 = true
+                }
             })
 
-            setTimeout(function() {
-                model.aaa = false
-            }, 2000)
-
-            setTimeout(function() {
-                model.color = "blue"
-                model.bbb = "xxxxxxx"
-            }, 2500)
-
-            setTimeout(function() {
-                model.aaa = true
-            }, 3400)
-            window.onload = function() {
-                //   var comments = document.getElementsByTagName("!")
-                var comments = queryComments(document.body)
-                avalon.log(comments.length + "!!!!!!!")
-                var documentFragment = document.createDocumentFragment()
-                var i = 0
-                while (i < 4) {
-                    documentFragment.appendChild(document.createComment("ms-if"))
-                    i++
-                }
-                var a = queryComments(documentFragment)
-                avalon.log(a.length)
-                var testParent = document.getElementById("testParent")
-                if (document.createRange) {
-                    var deleteRange = document.createRange()
-                    deleteRange.setStartBefore(testParent.firstChild)
-                    deleteRange.setEndAfter(testParent.lastChild)
-                    var deleteFragment = deleteRange.extractContents()
-                    console.log(deleteFragment)
-                }
-            }
-
-            var queryComments = document.createTreeWalker ? function(parent) {
-                var tw = document.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
-                        comment, ret = []
-                while (comment = tw.nextNode()) {
-                    ret.push(comment)
-                }
-                return ret
-            } : function(parent) {
-                return  parent.getElementsByTagName("!")
-            }
-
-
-
         </script>
-        <div ms-controller="test">
-            <div ms-if="aaa" ms-css-color="color">{{bbb}}</div>
-            <ul ms-each="array">
-                <li ms-if="el.a">{{el.b}}</li>
-            </ul>
-            <div>{{a}}|{{b}}|{{c}}</div>
-            <!--ddddddddd-->
-            <!--eeeeeeeeee-->
-            <!--ffffffffff-->
-        </div>
-        <div id="testParent"><b>111</b><span>ssssssss</span><select><option>22</option></select>6666</div>
     </body>
 </html>

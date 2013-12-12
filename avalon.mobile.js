@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 0.981 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 0.982 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -181,6 +181,9 @@
         slice: function(nodes, start, end) {
             return aslice.call(nodes, start, end)
         },
+        contains: function(a, b) {
+            return a.contains(b)
+        },
         bind: function(el, type, fn, phase) {
             function callback(ex) {
                 var ret = fn.call(el, ex)
@@ -249,6 +252,11 @@
         }
     }
 
+    if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+        Node.prototype.contains = function(arg) {
+            return !!(this.compareDocumentPosition(arg) & 16)
+        }
+    }
     var VMODELS = avalon.vmodels = {}
 
     //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
@@ -765,7 +773,7 @@
     }
 
     avalon.clearChild = function(node) {
-        node.textContent = ""//它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
+        node.textContent = "" //它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
         return node
     }
     avalon.parseHTML = function(html) {
@@ -1078,20 +1086,17 @@
             list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
         }
     }
-    var fakeData = {
-        state: {}
-    }
+    var fakeData = {}
 
-    function notifySubscribers(accessor, el) { //通知依赖于这个访问器的订阅者更新自身
+    function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 var data = fn.data || fakeData,
-                        el = data.element,
-                        state = data.state
-                if (el && (!state || state.sourceIndex !== 0) && (!root.contains(el))) {
+                        el = data.element
+                if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     avalon.Array.remove(list, fn)
                     log("remove " + fn.name)
                 } else {
@@ -1103,18 +1108,20 @@
     /*********************************************************************
      *                           Scan                                     *
      **********************************************************************/
-    avalon.scan = function(elem, vmodel, state) {
+    avalon.scan = function(elem, vmodel) {
         elem = elem || root
         var vmodels = vmodel ? [].concat(vmodel) : []
-        scanTag(elem, vmodels, state)
+        scanTag(elem, vmodels)
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea".toUpperCase())
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
+
     function checkScan(elem, callback) {
-        var innerHTML = NaN, id = setInterval(function() {
+        var innerHTML = NaN,
+                id = setInterval(function() {
             var currHTML = elem.innerHTML
             if (currHTML === innerHTML) {
                 clearInterval(id)
@@ -1125,22 +1132,10 @@
         }, 15)
     }
 
-    function scanNodes(parent, vmodels, state) {
-        var nodes = aslice.call(parent.childNodes)
-        for (var i = 0, node; node = nodes[i++]; ) {
-            if (node.nodeType === 1) {
-                scanTag(node, vmodels, state) //扫描元素节点
-            } else if (node.nodeType === 3) {
-                scanText(node, vmodels, state) //扫描文本节点
-            }
-        }
-    }
 
-
-
-    function scanTag(elem, vmodels, state, node) {
+    function scanTag(elem, vmodels, node) {
         vmodels = vmodels || []
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat -->...--〉ms-duplex垫后
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1153,23 +1148,128 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttribute(node.name) //IE6-10 removeAttributeNode不会刷新[ms-controller]样式规则
+            elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         }
-        scanAttr(elem, vmodels, function(cmodel, cstate) { //扫描特性节点
-            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, cmodel, cstate) //扫描子孙元素
-            }
-        }, state)
-
+        scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanText(textNode, vmodels, state) {
+    function scanNodes(parent, vmodels) {
+        var nodes = []
+        for (var i = 0, node; node = parent.childNodes[i++]; ) {
+            nodes.push(node)
+        }
+        for (var i = 0; node = nodes[i++]; ) {
+            if (node.nodeType === 1) {
+                scanTag(node, vmodels) //扫描元素节点
+            } else if (node.nodeType === 3) {
+                scanText(node, vmodels) //扫描文本节点
+            }
+        }
+    }
+
+    function scanText(textNode, vmodels) {
         var bindings = extractTextBindings(textNode)
         if (bindings.length) {
-            executeBindings(bindings, vmodels, state)
+            executeBindings(bindings, vmodels)
         }
     }
 
+
+    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
+        var bindings = []
+        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
+            if (attr.specified) {
+                if (attr.name.indexOf(prefix) !== -1) {
+                    //如果是以指定前缀命名的
+                    var array = attr.name.split("-")
+                    var type = array[1]
+                    if (typeof bindingHandlers[type] === "function") {
+                        (function(node) {
+                            var binding = {
+                                type: type,
+                                param: array.slice(2).join("-"),
+                                element: elem,
+                                remove: true,
+                                node: node,
+                                value: node.nodeValue
+                            }
+                            if (type === "repeat") {
+                                repeatBinding = binding
+                            } else if (type === "if") {
+                                ifBinding = binding
+                            } else {
+                                bindings.push(binding)
+                            }
+                        })(attr)
+                    }
+                }
+            }
+        }
+        bindings.sort(function(a, b) {
+            if (a.type === "duplex") { //确保duplex排在ms-value的后面
+                return Infinity
+            }
+            if (b.type == "duplex") {
+                return -Infinity
+            }
+            return a.node.name > b.node.name
+        })
+        if (repeatBinding) {
+            bindings = [repeatBinding]
+        }
+        if (ifBinding) {
+            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
+            bindingHandlers["if"](ifBinding, vmodels)
+        } else {
+            executeBindings(bindings, vmodels)
+            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                scanNodes(elem, vmodels) //扫描子孙元素
+            }
+        }
+    }
+
+    function executeBindings(bindings, vmodels) {
+        bindings.forEach(function(data) {
+            if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
+                bindingHandlers[data.type](data, vmodels)
+                if (data.remove) { //移除数据绑定，防止被二次解析
+                    data.element.removeAttribute(data.node.name)
+                }
+                data.remove = true
+            }
+        })
+        bindings.length = 0
+    }
+
+    function extractTextBindings(textNode) {
+        var bindings = [],
+                tokens = scanExpr(textNode.nodeValue)
+        for (var i = 0, token; token = tokens[i++]; ) {
+            var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
+            if (token.expr) {
+                var filters = token.filters
+                var binding = {
+                    type: "text",
+                    node: node,
+                    param: "",
+                    element: textNode.parentNode,
+                    value: token.value,
+                    filters: filters
+                }
+                if (filters && filters.indexOf("html") !== -1) {
+                    avalon.Array.remove(filters, "html")
+                    binding.type = "html"
+                    binding.replaceNodes = [node]
+                }
+                bindings.push(binding) //收集带有插值表达式的文本
+            }
+            documentFragment.appendChild(node)
+        }
+        if (tokens.length) {
+            textNode.parentNode.replaceChild(documentFragment, textNode)
+        }
+        return bindings
+    }
 
     var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
 
@@ -1224,104 +1324,6 @@
         }
         return tokens
     }
-
-    function scanAttr(el, vmodels, callback, state, ifBinding, repeatBinding) {
-        var bindings = []
-        for (var i = 0, attr; attr = el.attributes[i++]; ) {
-            if (attr.name.indexOf(prefix) !== -1) {
-                //如果是以指定前缀命名的
-                var array = attr.name.split("-")
-                var type = array[1]
-                if (typeof bindingHandlers[type] === "function") {
-                    (function(node) {
-                        var binding = {
-                            type: type,
-                            param: array.slice(2).join("-"),
-                            element: el,
-                            remove: true,
-                            node: node,
-                            value: node.nodeValue
-                        }
-                        if (type === "repeat") {
-                            repeatBinding = binding
-                        } else if (type === "if") {
-                            ifBinding = binding
-                        } else {
-                            bindings.push(binding)
-                        }
-                    })(attr)
-                }
-            }
-        }
-        bindings.sort(function(a, b) {
-            if (a.type === "duplex") {//确保duplex排在ms-value的后面
-                return Infinity
-            }
-            if (b.type == "duplex") {
-                return -Infinity
-            }
-            return a.node.name > b.node.name
-        })
-        if (repeatBinding) {
-            bindings = [repeatBinding]
-        }
-        if (ifBinding) {
-            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-            ifBinding.state = {}
-            bindingHandlers["if"](ifBinding, vmodels, function(cmodels, cstate) {
-                executeBindings(bindings, cmodels, cstate)
-                callback(cmodels, cstate)
-            })
-        } else {
-            executeBindings(bindings, vmodels, state)
-            callback(vmodels, state)
-        }
-    }
-
-    function executeBindings(bindings, vmodels, state) {
-        bindings.forEach(function(data) {
-            if (data.type === "widget" || vmodels.length) {//https://github.com/RubyLouvre/avalon/issues/171
-                data.state = state
-                bindingHandlers[data.type](data, vmodels)
-                if (data.remove) { //移除数据绑定，防止被二次解析
-                    data.element.removeAttribute(data.node.name)
-                }
-                data.remove = true
-            }
-        })
-        bindings.length = 0
-    }
-
-    function extractTextBindings(textNode) {
-        var bindings = [],
-                tokens = scanExpr(textNode.nodeValue)
-        for (var i = 0, token; token = tokens[i++]; ) {
-            var node = DOC.createTextNode(token.value)//将文本转换为文本节点，并替换原来的文本节点
-            if (token.expr) {
-                var filters = token.filters
-                var binding = {
-                    type: "text",
-                    node: node,
-                    param: "",
-                    element: textNode.parentNode,
-                    value: token.value,
-                    filters: filters
-                }
-                if (filters && filters.indexOf("html") !== -1) {
-                    avalon.Array.remove(filters, "html")
-                    binding.type = "html"
-                    binding.replaceNodes = [node]
-                }
-                bindings.push(binding) //收集带有插值表达式的文本
-            }
-            documentFragment.appendChild(node)
-        }
-        if (tokens.length) {
-            textNode.parentNode.replaceChild(documentFragment, textNode)
-        }
-        return bindings
-    }
-
     /*********************************************************************
      *                          Parse                                    *
      **********************************************************************/
@@ -1343,11 +1345,11 @@
     var rcomma = /^,+|,+$/g
     var getVariables = function(code) {
         code = code
-                .replace(rrexpstr, '')
-                .replace(rsplit, ',')
-                .replace(rkeywords, '')
-                .replace(rnumber, '')
-                .replace(rcomma, '')
+                .replace(rrexpstr, "")
+                .replace(rsplit, ",")
+                .replace(rkeywords, "")
+                .replace(rnumber, "")
+                .replace(rcomma, "")
 
         return code ? code.split(/,+/) : []
     }
@@ -1549,50 +1551,45 @@
         }
     }
     var includeContents = {}
+    var ifSanctuary = DOC.createElement("div")
     var bindingHandlers = avalon.bindingHandlers = {
-        "if": function(data, vmodels, callback) {
-            callback = callback || avalon.noop
+        "if": function(data, vmodels) {
             var placehoder = DOC.createComment("ms-if"),
-                    elem = data.element,
-                    state = data.state,
-                    parent
-
-            if (!root.contains(elem)) {
-                elem.classList.add("fixMsIfFlicker")
-            }
-            var id = setInterval(ifCheck, 20)
-
-            function ifCheck() {
-                if (root.contains(elem)) {
-                    ifCall()
-                    elem.classList.remove("fixMsIfFlicker")
-                    clearInterval(id)
+                    elem = data.element
+            elem.classList.add("fixMsIfFlicker")
+            if (!root.contains(elem)) { //如果它不存在于DOM树
+                var scopes = elem["data-if-vmodels"]
+                if (!scopes && vmodels.length) {
+                    elem["data-if-vmodels"] = vmodels
                 }
+                return
             }
+            var oldVmodels = elem["data-if-vmodels"] || []
+            vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
+            if (!vmodels.length)
+                return
+            elem["data-if-vmodels"] = void 0
+            elem.removeAttribute("ms-if")
+            elem.classList.remove("fixMsIfFlicker")
+            var parent = elem.parentNode
+            scanAttr(elem, vmodels)
 
-            function ifCall() {
-                parent = elem.parentNode
-                updateViewFactory(data.value, vmodels, data, function(val) {
-                    if (val) { //添加 如果它不在DOM树中, 插入DOM树
-                        if (!root.contains(elem)) {
-                            try {
-                                parent.replaceChild(elem, placehoder)
-                                delete state.sourceIndex
-                            } catch (e) {
-                            }
-                        }
-                        if (elem.attributes["ms-if"]) {
-                            callback(vmodels, state)
-                            elem.removeAttribute("ms-if")
-                        }
-                    } else { //移除  如果它还在DOM树中， 移出DOM树
-                        if (root.contains(elem)) {
-                            parent.replaceChild(placehoder, elem)
-                            state.sourceIndex = 0
+            updateViewFactory(data.value, vmodels, data, function(val) {
+                if (val) { //如果它不在到其父节点里，则添加回去
+                    if (!parent.contains(elem)) {
+                        try {
+                            parent.replaceChild(elem, placehoder)
+                        } catch (e) {
                         }
                     }
-                })
-            }
+                } else { //如果它在其父节点里，则移除它，用注释节点占位
+                    if (parent.contains(elem)) {
+                        parent.replaceChild(placehoder, elem)
+                        placehoder.elem = elem
+                        ifSanctuary.appendChild(elem)
+                    }
+                }
+            })
         },
         "on": function(data, vmodels) {
             data.type = "on"
@@ -1708,6 +1705,7 @@
                 } else if (method === "include" && val) {
                     var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
                     var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+
                     function scanTemplate(text) {
                         if (loaded) {
                             text = loaded.apply(elem, [text].concat(vmodels))
@@ -2427,7 +2425,11 @@
                 data.parent.replaceChild(data.element, data.startRepeat)
                 data.parent.removeChild(data.endRepeat)
             } else {
-                elem.innerHTML = ""
+                var deleteFragment = documentFragment.cloneNode(false)
+                while (elem.firstChild) {
+                    deleteFragment.appendChild(elem.firstChild)
+                }
+                removeFromSanctuary(deleteFragment)
                 elem.appendChild(view)
             }
         }
@@ -2435,6 +2437,42 @@
         updateView("add", list, 0)
     }
     var deleteRange = DOC.createRange()
+
+    //得到某一元素节点或文档碎片对象下的所有注释节点
+    var queryComments = function(parent) {
+        var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
+                comment, ret = []
+        while (comment = tw.nextNode()) {
+            ret.push(comment)
+        }
+        return ret
+    }
+    //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
+
+    function removeFromSanctuary(parent) {
+        var comments = queryComments(parent)
+        for (var i = 0, comment; comment = comments[i++]; ) {
+            if (comment.nodeValue == "ms-if") {
+                var msIfEl = comment.elem
+                if (msIfEl.parentNode) {
+                    msIfEl.parentNode.removeChild(msIfEl)
+                }
+            }
+        }
+    }
+
+    function iteratorCallback(data, method) {
+        var callback = getBindingCallback(data.callbackName, data.vmodels)
+        var parent = data.parent
+        checkScan(parent, function() {
+            if (callback) {
+                callback.call(parent, method)
+            }
+            if (method == "add") {
+                scanNodes(parent, [])
+            }
+        })
+    }
 
     function eachIterator(method, pos, el, data, getter) {
         var group = data.group
@@ -2460,7 +2498,7 @@
                      IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
                      IE9-IE11 文档碎片拥有 querySelectorAll
                      chrome firefox拥有children querySelectorAll firstElementChild*/
-                    scanNodes(tview, base.concat(data.vmodels), data.state)
+                    scanNodes(tview, base.concat(data.vmodels))
                     proxy.$accessor.$last.get.data = {
                         element: tview.firstElementChild || tview.firstChild
                     }
@@ -2475,7 +2513,7 @@
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
-                removeView(locatedNode, group, el)
+                removeFromSanctuary(removeView(locatedNode, group, el))
                 break
             case "index":
                 for (; el = mapper[pos]; pos++) {
@@ -2490,7 +2528,7 @@
                     deleteRange.setStartBefore(parent.firstChild)
                     deleteRange.setEndAfter(parent.lastChild)
                 }
-                deleteRange.extractContents()
+                removeFromSanctuary(deleteRange.extractContents())
                 mapper.length = 0
                 break
             case "move":
@@ -2510,10 +2548,7 @@
                 }
                 break
         }
-        var callback = getBindingCallback(data.callbackName, data.vmodels)
-        callback && checkScan(parent, function() {
-            callback.call(data.parent, method)
-        })
+        iteratorCallback(data, method)
     }
 
     function withIterator(method, object, group, data, getter) {
@@ -2532,7 +2567,7 @@
                                 mapper[key] = proxy
                             }
                             var tview = data.template.cloneNode(true)
-                            scanNodes(tview, [mapper[key], val].concat(data.vmodels), data.state)
+                            scanNodes(tview, [mapper[key], val].concat(data.vmodels))
                             if (typeof group !== "number") {
                                 data.group = tview.childNodes.length
                             }
@@ -2543,10 +2578,7 @@
                 parent.appendChild(transation) //再插到最后
                 break
         }
-        var callback = getBindingCallback(data.callbackName, data.vmodels)
-        callback && checkScan(parent, function() {
-            callback.call(data.parent, method)
-        })
+        iteratorCallback(data, method)
     }
     //收集要移除的节点，第一个节点要求先放进去
 
@@ -3257,124 +3289,126 @@
      **********************************************************************/
 
     if ("ontouchstart" in window) {
-        void function() {
-            var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
-                    now, firstTouch, _isPointerType, delta, deltaX = 0, deltaY = 0, touchNames = []
-            function swipeDirection(x1, x2, y1, y2) {
-                return Math.abs(x1 - x2) >=
-                        Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
-            }
-            function longTap() {
-                if (touchProxy.last) {
-                    touchProxy.fire('hold')
-                    touchProxy = {}
-                }
-            }
+        void
+                function() {
+                    var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
+                            now, firstTouch, _isPointerType, delta, deltaX = 0,
+                            deltaY = 0,
+                            touchNames = []
 
-            function cancelHold() {
-                clearTimeout(holdTimeout)
-            }
+                    function swipeDirection(x1, x2, y1, y2) {
+                        return Math.abs(x1 - x2) >=
+                                Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
+                    }
 
-            function cancelAll() {
-                clearTimeout(touchTimeout)
-                clearTimeout(tapTimeout)
-                clearTimeout(swipeTimeout)
-                clearTimeout(holdTimeout)
-                touchProxy = {}
-            }
+                    function longTap() {
+                        if (touchProxy.last) {
+                            touchProxy.fire('hold')
+                            touchProxy = {}
+                        }
+                    }
 
-            if (window.navigator.pointerEnabled) {//IE11 与 W3C
-                touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
-            } else if (window.navigator.msPointerEnabled) {//IE9-10
-                touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
-            } else {
-                touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
-            }
+                    function cancelHold() {
+                        clearTimeout(holdTimeout)
+                    }
 
-            function isPrimaryTouch(event) {//是否纯净的触摸事件，非mousemove等模拟的事件，也不是手势事件
-                return (event.pointerType == "touch" ||
-                        event.pointerType == event.MSPOINTER_TYPE_TOUCH)
-                        && event.isPrimary
-            }
-            function isPointerEventType(e, type) {//是否最新发布的PointerEvent
-                return (e.type == "pointer" + type ||
-                        e.type.toLowerCase() == "mspointer" + type)
-            }
-
-            DOC.addEventListener(touchNames[0], function(e) {
-                if ((_isPointerType = isPointerEventType(e, "down")) &&
-                        !isPrimaryTouch(e))
-                    return
-                firstTouch = _isPointerType ? e : e.touches[0]
-                if (e.touches && e.touches.length === 1 && touchProxy.x2) {
-                    touchProxy.x2 = touchProxy.y2 = void 0
-                }
-                now = Date.now()
-                delta = now - (touchProxy.last || now)
-                var el = firstTouch.target
-                touchProxy.el = 'tagName' in el ? el : el.parentNode
-                clearTimeout(touchTimeout)
-                touchProxy.x1 = firstTouch.pageX
-                touchProxy.y1 = firstTouch.pageY
-                touchProxy.fire = function(name) {
-                    avalon.fire(this.el, name)
-                }
-                if (delta > 0 && delta <= 250) { //双击
-                    touchProxy.isDoubleTap = true
-                }
-                touchProxy.last = now
-                holdTimeout = setTimeout(longTap, 750)
-            })
-            DOC.addEventListener(touchNames[1], function(e) {
-                if ((_isPointerType = isPointerEventType(e, "move")) &&
-                        !isPrimaryTouch(e))
-                    return
-                firstTouch = _isPointerType ? e : e.touches[0]
-                cancelHold()
-                touchProxy.x2 = firstTouch.pageX
-                touchProxy.y2 = firstTouch.pageY
-                deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
-                deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
-            })
-
-            DOC.addEventListener(touchNames[2], function(e) {
-                if ((_isPointerType = isPointerEventType(e, "up")) &&
-                        !isPrimaryTouch(e))
-                    return
-                cancelHold()
-                // swipe
-                if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
-                        (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
-                    //如果是滑动，根据最初与最后的位置判定其滑动方向
-                    swipeTimeout = setTimeout(function() {
-                        touchProxy.fire('swipe')
-                        touchProxy.fire('swipe' + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
-                        touchProxy = {}
-                    }, 0)
-                    // normal tap 
-                } else if ('last' in touchProxy) {
-                    if (deltaX < 30 && deltaY < 30) { //如果移动的距离太小
-                        tapTimeout = setTimeout(function() {
-                            touchProxy.fire("tap")
-                            if (touchProxy.isDoubleTap) {
-                                touchProxy.fire('doubletap')
-                                touchProxy = {}
-                            } else {
-                                touchTimeout = setTimeout(function() {
-                                    touchProxy.fire('singletap')
-                                    touchProxy = {}
-                                }, 250)
-                            }
-                        }, 0)
-                    } else {
+                    function cancelAll() {
+                        clearTimeout(touchTimeout)
+                        clearTimeout(tapTimeout)
+                        clearTimeout(swipeTimeout)
+                        clearTimeout(holdTimeout)
                         touchProxy = {}
                     }
-                }
-                deltaX = deltaY = 0
-            })
 
-            DOC.addEventListener(touchNames[3], cancelAll)
-        }()
+                    if (window.navigator.pointerEnabled) { //IE11 与 W3C
+                        touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
+                    } else if (window.navigator.msPointerEnabled) { //IE9-10
+                        touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
+                    } else {
+                        touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
+                    }
+
+                    function isPrimaryTouch(event) { //是否纯净的触摸事件，非mousemove等模拟的事件，也不是手势事件
+                        return (event.pointerType == "touch" ||
+                                event.pointerType == event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
+                    }
+
+                    function isPointerEventType(e, type) { //是否最新发布的PointerEvent
+                        return (e.type == "pointer" + type ||
+                                e.type.toLowerCase() == "mspointer" + type)
+                    }
+
+                    DOC.addEventListener(touchNames[0], function(e) {
+                        if ((_isPointerType = isPointerEventType(e, "down")) && !isPrimaryTouch(e))
+                            return
+                        firstTouch = _isPointerType ? e : e.touches[0]
+                        if (e.touches && e.touches.length === 1 && touchProxy.x2) {
+                            touchProxy.x2 = touchProxy.y2 = void 0
+                        }
+                        now = Date.now()
+                        delta = now - (touchProxy.last || now)
+                        var el = firstTouch.target
+                        touchProxy.el = 'tagName' in el ? el : el.parentNode
+                        clearTimeout(touchTimeout)
+                        touchProxy.x1 = firstTouch.pageX
+                        touchProxy.y1 = firstTouch.pageY
+                        touchProxy.fire = function(name) {
+                            avalon.fire(this.el, name)
+                        }
+                        if (delta > 0 && delta <= 250) { //双击
+                            touchProxy.isDoubleTap = true
+                        }
+                        touchProxy.last = now
+                        holdTimeout = setTimeout(longTap, 750)
+                    })
+                    DOC.addEventListener(touchNames[1], function(e) {
+                        if ((_isPointerType = isPointerEventType(e, "move")) && !isPrimaryTouch(e))
+                            return
+                        firstTouch = _isPointerType ? e : e.touches[0]
+                        cancelHold()
+                        touchProxy.x2 = firstTouch.pageX
+                        touchProxy.y2 = firstTouch.pageY
+                        deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
+                        deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
+                    })
+
+                    DOC.addEventListener(touchNames[2], function(e) {
+                        if ((_isPointerType = isPointerEventType(e, "up")) && !isPrimaryTouch(e))
+                            return
+                        cancelHold()
+                        // swipe
+                        if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
+                                (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
+                            //如果是滑动，根据最初与最后的位置判定其滑动方向
+                            swipeTimeout = setTimeout(function() {
+                                touchProxy.fire('swipe')
+                                touchProxy.fire('swipe' + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
+                                touchProxy = {}
+                            }, 0)
+                            // normal tap 
+                        } else if ('last' in touchProxy) {
+                            if (deltaX < 30 && deltaY < 30) { //如果移动的距离太小
+                                tapTimeout = setTimeout(function() {
+                                    touchProxy.fire("tap")
+                                    if (touchProxy.isDoubleTap) {
+                                        touchProxy.fire('doubletap')
+                                        touchProxy = {}
+                                    } else {
+                                        touchTimeout = setTimeout(function() {
+                                            touchProxy.fire('singletap')
+                                            touchProxy = {}
+                                        }, 250)
+                                    }
+                                }, 0)
+                            } else {
+                                touchProxy = {}
+                            }
+                        }
+                        deltaX = deltaY = 0
+                    })
+
+                    DOC.addEventListener(touchNames[3], cancelAll)
+                }()
         //http://quojs.tapquo.com/ http://code.baidu.com/
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
     }
