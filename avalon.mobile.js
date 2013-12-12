@@ -3257,40 +3257,39 @@
      **********************************************************************/
 
     if ("ontouchstart" in window) {
-        var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout
+        void function() {
+            var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout
 
-        function swipeDirection(x1, x2, y1, y2) {
-            return Math.abs(x1 - x2) >=
-                    Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
-        }
+            function swipeDirection(x1, x2, y1, y2) {
+                return Math.abs(x1 - x2) >=
+                        Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
+            }
 
-        function longTap() {
-            if (touchProxy.last) {
-                touchProxy.fire('hold')
+            function longTap() {
+                if (touchProxy.last) {
+                    touchProxy.fire('hold')
+                    touchProxy = {}
+                }
+            }
+
+            function cancelHold() {
+                clearTimeout(holdTimeout)
+            }
+
+            function cancelAll() {
+                clearTimeout(touchTimeout)
+                clearTimeout(tapTimeout)
+                clearTimeout(swipeTimeout)
+                clearTimeout(holdTimeout)
                 touchProxy = {}
             }
-        }
+            var isWP = window.navigator.msPointerEnabled
 
-        function cancelHold() {
-            clearTimeout(holdTimeout)
-        }
-
-        function cancelAll() {
-            clearTimeout(touchTimeout)
-            clearTimeout(tapTimeout)
-            clearTimeout(swipeTimeout)
-            clearTimeout(holdTimeout)
-            touchProxy = {}
-        }
-        var isWP = window.navigator.msPointerEnabled
-
-        function isPrimaryTouch(event) {
-            if (isWP) {
-                return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
+            function isPrimaryTouch(event) {
+                if (isWP) {
+                    return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
+                }
             }
-        }
-        DOC.addEventListener("DOMContentLoaded", function() {
-
             var now, delta, deltaX = 0,
                     deltaY = 0,
                     firstTouch
@@ -3362,7 +3361,7 @@
                 deltaX = deltaY = 0
             })
             DOC.addEventListener(isWP ? "MSPointerCancel" : "touchcancel", cancelAll)
-        })
+        }()
         //http://quojs.tapquo.com/ http://code.baidu.com/
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
     }
