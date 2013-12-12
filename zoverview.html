@@ -9,7 +9,7 @@
 
         <script>
             require("avalon.draggable", function() {
-                var animate = false
+
                 function enter(dropper, point1, point2, point3, point4) {
                     var left = dropper.left + dropper.height * 0.1 / 2
                     var top = dropper.top + dropper.height * 0.1 / 2
@@ -32,14 +32,14 @@
                     var topArea = {
                         top: drop.top,
                         left: drop.left,
-                        width: 250,
-                        height: 120
+                        width: 320,
+                        height: 160
                     }
                     var bottomArea = {
-                        top: drop.top + 250 / 2,
+                        top: drop.top + 320 / 2,
                         left: drop.left,
-                        width: 250,
-                        height: 120
+                        width: 320,
+                        height: 160
                     }
                     if (enter(topArea, point)) {
                         return "top"
@@ -49,22 +49,22 @@
                     }
                 }
                 function resetOldValue(object) {
-                    object.left = object.newLeft
-                    object.top = object.newTop
-                    object.row = object.newRow
-                    object.col = object.newCol
-                    object.sleft = object.newSleft
-                    object.newLeft = ""
-                    object.newTop = ""
-                    object.newRow = ""
-                    object.newCol = ""
-                    object.newSleft = ""
+                    object.left = object.new_left
+                    object.top = object.new_top
+                    object.row = object.new_row
+                    object.col = object.new_col
+                    object.sleft = object.new_sleft
+                    object.new_left = ""
+                    object.new_top = ""
+                    object.new_row = ""
+                    object.new_col = ""
+                    object.new_sleft = ""
                 }
 
                 function createWrapper(movable, elem) {
                     var wrapper = $("<div/>").css({
-                        top: movable.newTop,
-                        left: movable.newLeft,
+                        top: movable.new_top,
+                        left: movable.new_left,
                         width: movable.width,
                         height: movable.height,
                         overflow: "hidden",
@@ -89,121 +89,10 @@
                 }
 
 
-                function swapProperties2(array, model) {
-                    vapps = []
-                    var maxRow = model.maxRow //每一列最多 多少行，用于配置
-                    var row = 0 //当前APP所在的栏数
-                    var col = 0 //当前APP所在的栏数
-                    var sleft = 1
-                    for (var i = 0, el; el = array[i]; i++) {
-                        if (el.size == "small") {
-                            if (sleft) {//如果是左边
-                                sleft = 0
-                                el.newTop = 130 * row
-                                el.newLeft = col * 260
-                                el.newRow = row
-                                el.newCol = col
-                                el.newSleft = 1
-                                //判定右边是不是small
-                                var vapp = model.apps[i + 1]
-                                if (vapp && vapp.size !== "small") {
-                                    vapps.push({
-                                        top: 130 * row,
-                                        left: col * 260 + 130,
-                                        width: 120,
-                                        height: 120,
-                                        el: el
-                                    })//位于XXX之后
-                                }
-                            } else {
-                                sleft = 1
-                                el.newTop = 130 * row
-                                el.newLeft = col * 260 + 130 //130为一个small的宽
-                                el.newRow = row
-                                el.newCol = col
-                                el.newSleft = 0
-                                row++
-                            }
-                            if (row > maxRow) {
-                                row = 0
-                                col++
-                            }
-                        } else if (el.size == "middle") {
-                            el.newSleft = 1
-                            if (!sleft) {
-                                row++
-                                if (row > maxRow) {
-                                    row = 0
-                                    col++
-                                }
-                            }
-                            sleft = 1
-                            el.newTop = 130 * row
-                            el.newLeft = col * 260
-                            el.newRow = row
-                            el.newCol = col
-                            row++
-                            if (row > maxRow) {
-                                row = 0
-                                col++
-                            }
-                        } else if (el.size == "big") {
-                            el.newSleft = 1
-                            if (!sleft) {
-                                row++
-                            }
-                            if (row + 1 > maxRow) {
-                                if (sleft == 0) {
-                                    vapps.push({
-                                        width: 250,
-                                        height: 120,
-                                        top: row * 130,
-                                        left: col * 260,
-                                        el: model.apps[i - 1]
-                                    })
-                                }
-                                row = 0
-                                col++
-                            }
-                            el.newTop = 130 * row
-                            el.newLeft = col * 260
-                            el.newRow = row
-                            el.newCol = col
-                            row += 2
-                            sleft = 1
-                            if (row > maxRow) {
-                                row = 0
-                                col++
-                            }
-                        }
-                        el.animate = false
-                    }
-                    var lastEl = model.apps[ model.apps.length - 1], flagLast = true
-                    while (row <= maxRow) {
-                        if (flagLast && lastEl.size === "small") {
-                            vapps.push({
-                                el: lastEl,
-                                top: row * 130,
-                                left: col * 260 + 130, //130为一个small的宽
-                                width: 120,
-                                height: 120
-                            })
-                        } else {
-                            vapps.push({
-                                el: lastEl,
-                                top: row * 130,
-                                left: col * 260,
-                                width: 250,
-                                height: 120
-                            })
-                        }
-                        flagLast = false
-                        row++
-                    }
+                function swapProperties3(array, model) {
+                    model.onLayout("new_", array)
                 }
 
-                var dragsmalldropmiddledown = false
-                var vapps = []
                 var model = avalon.define("apps", function(vm) {
                     vm.getColor = function() {
                         var letters = 'A523456789ABCDEF'.split('');
@@ -214,50 +103,69 @@
                         return color;
                     }
                     vm.maxRow = 3
+                    vm.dragsmalldropmiddledown = false
+                    vm.$skipArray = ["maxRow", "vapps", "animate", "dragsmalldropmiddledown"]
+                    vm.vapps = []
+                    vm.animate = false
                     //#############################
-                    vm.onLayout = function() {
+                    vm.onLayout = function(prefix, array) {
                         var children = this.children
                         var maxRow = model.maxRow //每一列最多 多少行，用于配置
                         var row = 0 //当前APP所在的栏数
                         var col = 0 //当前APP所在的栏数
                         var sleft = 1
-                        for (var i = 0, el; el = model.apps[i]; i++) {
+                        prefix = prefix == "new_" ? prefix : ""
+                        array = array || model.apps
+                        for (var i = 0, el; el = array[i]; i++) {
                             if (el.size == "small") {
                                 if (sleft) {//如果是左边
                                     sleft = 0
-                                    el.top = 130 * row
-                                    el.left = col * 260
-                                    el.row = row
-                                    el.col = col
-                                    el.sleft = 1
+                                    el[prefix + "top"] = row * 170//(small.height + 20)
+                                    el[prefix + "left"] = col * 340//(big.width + 20)
+                                    el[prefix + "row"] = row
+                                    el[prefix + "col"] = col
+                                    el[prefix + "sleft"] = 1
                                     //判定右边是不是small
                                     var vapp = model.apps[i + 1]
                                     if (vapp && vapp.size !== "small") {
-                                        vapps.push({
-                                            top: 130 * row,
-                                            left: col * 260 + 130,
-                                            width: 120,
-                                            height: 120,
+                                        model.vapps.push({
+                                            top: row * 170,
+                                            left: col * 340 + 170,
+                                            type: "small",
+                                            width: 150,
+                                            height: 150,
                                             el: el
                                         })
                                     }
                                 } else {
                                     sleft = 1
-                                    el.top = row * 130
-                                    el.left = col * 260 + 130 //130为一个small的宽
-                                    el.row = row
-                                    el.col = col
-                                    el.sleft = 0
+                                    el[prefix + "top"] = row * 170//(small.height + 20)
+                                    el[prefix + "left"] = col * 340 + 170//(big.width + 20)
+                                    el[prefix + "row"] = row
+                                    el[prefix + "col"] = col
+                                    el[prefix + "sleft"] = 0
                                     row++
+                                    if (row === maxRow && model.apps[i + 1] && model.apps[i + 1].size === "big") {
+                                        model.vapps.push({
+                                            width: 320,
+                                            height: 150,
+                                            type: "middle",
+                                            top: row * 170,
+                                            left: col * 340,
+                                            el: el
+                                        })
+                                    }
                                 }
-                                el.width = 120
-                                el.height = 120
+                                if (children) {
+                                    el.width = 150
+                                    el.height = 150
+                                }
                                 if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
                             } else if (el.size == "middle") {
-                                el.sleft = 1
+                                el[prefix + "sleft"] = 1
                                 if (!sleft) {
                                     row++
                                     if (row > maxRow) {
@@ -265,42 +173,47 @@
                                         col++
                                     }
                                 }
+                                if (row + 1 === maxRow && model.apps[i + 1] && model.apps[i + 1].size === "big") {
+                                    model.vapps.push({
+                                        width: 320,
+                                        height: 150,
+                                        type: "middle",
+                                        top: (row + 1) * 170,
+                                        left: col * 340,
+                                        el: el
+                                    })
+                                }
                                 sleft = 1
-                                el.top = row * 130
-                                el.left = col * 260
-                                el.row = row
-                                el.col = col
-                                el.width = 250
-                                el.height = 120
+                                el[prefix + "top"] = row * 170//(small.height + 20)
+                                el[prefix + "left"] = col * 340//(big.width + 20)
+                                el[prefix + "row"] = row
+                                el[prefix + "col"] = col
+                                if (children) {
+                                    el.width = 320
+                                    el.height = 150
+                                }
                                 row++
                                 if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
                             } else if (el.size == "big") {
-                                el.sleft = 1
+                                el[prefix + "sleft"] = 1
                                 if (!sleft) {
                                     row++
                                 }
-                                el.width = 250
-                                el.height = 250
+                                if (children) {
+                                    el.width = 320
+                                    el.height = 320
+                                }
                                 if (row + 1 > maxRow) {
-                                    if (sleft == 0) {
-                                        vapps.push({
-                                            width: 250,
-                                            height: 120,
-                                            top: row * 130,
-                                            left: col * 260,
-                                            el: model.apps[i - 1]
-                                        })
-                                    }
                                     row = 0
                                     col++
                                 }
-                                el.top = row * 130
-                                el.left = col * 260
-                                el.row = row
-                                el.col = col
+                                el[prefix + "top"] = row * 170//(small.height + 20)
+                                el[prefix + "left"] = col * 340//(big.width + 20)
+                                el[prefix + "row"] = row
+                                el[prefix + "col"] = col
                                 row += 2
                                 sleft = 1
                                 if (row > maxRow) {
@@ -308,28 +221,32 @@
                                     col++
                                 }
                             }
-                            el.element = children[i]
+                            if (children) {
+                                el.element = children[i]
+                            }
                             el.animate = false
                         }
                         var lastEl = model.apps[ model.apps.length - 1], flagLast = true
                         while (row <= maxRow) {
                             if (flagLast && lastEl.size === "small") {
-                                vapps.push({
+                                model.vapps.push({
                                     el: lastEl,
-                                    top: row * 130,
-                                    left: col * 260 + 130, //130为一个small的宽
-                                    width: 120,
-                                    height: 120
+                                    top: row * 170,
+                                    left: col * 340 + 170, //170 = small.width + border-width
+                                    type: "small",
+                                    width: 150,
+                                    height: 150
                                 })//位于XXX之后
                                 flagLast = false
                                 row++
                             } else {
-                                vapps.push({
+                                model.vapps.push({
                                     el: lastEl,
-                                    top: row * 130,
-                                    left: col * 260, //130为一个small的宽
-                                    width: 250,
-                                    height: 120
+                                    top: row * 170,
+                                    left: col * 340, //170 = small.width + border-width
+                                    width: 320,
+                                    type: "middle",
+                                    height: 150
                                 })//位于XXX之后
                                 flagLast = false
                                 row++
@@ -347,13 +264,13 @@
                             el.sleft = 1
                             el.width = 0
                             el.height = 0
-                            el.newTop = ""
-                            el.newLeft = ""
-                            el.newRow = ""
-                            el.newCol = ""
-                            el.newSleft = ""
+                            el.new_top = ""
+                            el.new_left = ""
+                            el.new_row = ""
+                            el.new_col = ""
+                            el.new_sleft = ""
                             el.element = {}
-                            el.$skipArray = ["width", "height", "sleft", "animate", "element", "row", "col", "newTop", "newLeft", "newCol", "newRow", "newSleft"]
+                            el.$skipArray = ["width", "height", "sleft", "animate", "element", "row", "col", "new_top", "new_left", "new_col", "new_row", "new_sleft"]
                         }
                         return array
                     }
@@ -372,11 +289,15 @@
                             size: "small"
                         },
                         {
-                            text: "yyy",
-                           size: "big"
+                            text: "1",
+                            size: "small"
                         },
                         {
-                            text: "zzz",
+                            text: "2",
+                            size: "small"
+                        },
+                        {
+                            text: "yyy",
                             size: "big"
                         },
                         {
@@ -384,20 +305,24 @@
                             size: "middle"
                         },
                         {
+                            text: "3",
+                            size: "small"
+                        },
+                        {
                             text: "middle3",
                             size: "middle"
                         },
                         {
-                            text: "===========",
-                           size: "middle"
+                            text: "zzz",
+                            size: "big"
                         },
                         {
-                            text: "3",
-                           size: "small"
+                            text: "===========",
+                            size: "middle"
                         },
                         {
                             text: "15",
-                           size: "middle"
+                            size: "middle"
                         },
                         {
                             text: "7",
@@ -409,7 +334,7 @@
                         },
                         {
                             text: "9",
-                           size: "small"
+                            size: "small"
                         },
                         {
                             text: "4",
@@ -433,7 +358,7 @@
                         },
                         {
                             text: "14",
-                            size:"small"
+                            size: "small"
                         }
 
 
@@ -445,19 +370,19 @@
                         }
                     }
                     vm.dragClass = ""
-                    vm.start = function(e, data) {
+                    vm.start = function() {
                         avalon(this).addClass("current")
                         this.style.zIndex = 100
                         model.dragClass = "dragging"
                     }
-                    vm.beforeStop = function(event) {
+                    vm.beforeStop = function() {
                         vm.dragClass = ""
                     }
                     vm.stop = function() {
                         var drag = this["data-vm"]
                         drag.animate = false
-                        if (animate === true) {
-                            animate = false
+                        if (model.animate === true) {
+                            model.animate = false
                             var elem = this
                             var id = setInterval(function() {
                                 clearInterval(id)
@@ -465,30 +390,27 @@
                             }, 100)
                             return
                         }
-                        if (typeof drag.newTop === "string" || typeof drag.newLeft === "string" || (drag.top === drag.newTop && drag.left === drag.newLeft)) {
+                        if (typeof drag.new_top === "string" || typeof drag.new_left === "string" || (drag.top === drag.new_top && drag.left === drag.new_left)) {
                             this.style.top = drag.top + "px"
                             this.style.left = drag.left + "px"
                             avalon(this).removeClass("current")
                             this.style.zIndex = 0
                         } else {
                             //   console.log("进行dragger的动画")
-                            $(this).animate({left: drag.newLeft, top: drag.newTop}, 300, function() {
-                                this.style.left = drag.newLeft + "px"
-                                this.style.top = drag.newTop + "px"
+                            $(this).animate({left: drag.new_left, top: drag.new_top}, 300, function() {
+                                this.style.left = drag.new_left + "px"
+                                this.style.top = drag.new_top + "px"
                                 avalon(this).removeClass("current")
                                 this.style.zIndex = 0
                                 resetOldValue(drag)
-                                animate = false
-                                var str = model.apps.map(function(el) {
-                                    return  el.element.innerHTML.trim() + " th  " + el.left + "  " + el.top + "  " + el.sleft + "s;"
-                                })
-                                //  console.log(str)
+                                model.animate = false
+
                             })
                         }
                     }
 
                     vm.drag = function(event, data) {
-                        if (animate)
+                        if (model.animate)
                             return
                         var drag = this["data-vm"]
                         switch (drag.size) {
@@ -516,9 +438,9 @@
                                 break
                             }
                         }
-                        if (!drop && vapps.length) {//如果不与真实APP发生碰撞，那么将检测它与所有空格的碰撞
+                        if (!drop && model.vapps.length) {//如果不与真实APP发生碰撞，那么将检测它与所有空格的碰撞
                             var insertion = false
-                            for (var i = 0, el; el = vapps[i]; i++) {
+                            for (var i = 0, el; el = model.vapps[i]; i++) {
                                 if (enter(el, point1, point2, point3, point4)) {
                                     insertion = el
                                     break
@@ -528,9 +450,9 @@
                                 var insertIndex = model.apps.indexOf(insertion.el)
                                 var dragIndex = model.apps.indexOf(drag)
                                 swapElements(model.apps, dragIndex, insertIndex + 1)
-                                animate = true
+                                model.animate = true
                                 swapArray = model.apps.slice(0)
-                                swapProperties2(swapArray, model)
+                                swapProperties3(swapArray, model)
                             } else {
                                 return
                             }
@@ -543,21 +465,21 @@
                             var dragIndex = model.apps.indexOf(drag)
                             var dropIndex = model.apps.indexOf(drop)
                             var swapArray = []
-                            if (dragsmalldropmiddledown && dragsmalldropmiddledown !== drop) {
-                                dragsmalldropmiddledown = false
+                            if (model.dragsmalldropmiddledown && model.dragsmalldropmiddledown !== drop) {
+                                model.dragsmalldropmiddledown = false
                                 swapElements(model.apps, dragIndex, dropIndex - 1)
 
-                                animate = true
+                                model.animate = true
                             } else if (drag.size === drop.size) {// small === small middle === middle big === big✓
                                 swapElements(model.apps, dragIndex, dropIndex)//交换元素的位置
-                                animate = true
+                                model.animate = true
                             } else if (drag.size === "small" && drop.size == "middle") {
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
-                                        animate = true
+                                        model.animate = true
                                     } else {
-                                        dragsmalldropmiddledown = drop
+                                        model.dragsmalldropmiddledown = drop
                                         if (drag.sleft === 1) {
                                             var maybe = model.apps[dropIndex + 1]
                                             if (maybe == drop) {//如果它位于左边，紧接着就是中型的
@@ -576,7 +498,7 @@
                                     } else {
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入前面
                                     }
-                                    animate = true
+                                    model.animate = true
                                 }
                             } else if (drag.size === "small" && drop.size == "big") {
                                 if (drag.col === drop.col) {//如果是在同一列
@@ -587,7 +509,7 @@
                                         }
                                         if (dropPosition === "top") {
                                             swapElements(model.apps, dragIndex, dropIndex)
-                                            animate = true
+                                            model.animate = true
                                         }
                                     } else {
                                         if (dropPosition === "top") {
@@ -595,7 +517,7 @@
                                         }
                                         if (dropPosition === "bottom") {
                                             swapElements(model.apps, dragIndex, dropIndex)
-                                            animate = true
+                                            model.animate = true
                                         }
                                     }
                                 } else {
@@ -604,13 +526,12 @@
                                     } else {
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
-                                    animate = true
+                                    model.animate = true
                                 }
                             } else if (drag.size === "middle" && drop.size == "small") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
                                         swapElements(model.apps, dragIndex, dropIndex)
-                                        animate = true
                                     } else {//如果由下往上拖动✓
                                         var maybeDropIndex = dropIndex
                                         var maybe = model.apps[dropIndex + 1]
@@ -618,7 +539,6 @@
                                             maybeDropIndex = dropIndex + 1
                                         }
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
-                                        animate = true
                                     }
                                 } else {
                                     var maybeDropIndex = dropIndex
@@ -635,8 +555,8 @@
                                         }
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
                                     }
-                                    animate = true
                                 }
+                                model.animate = true
                             } else if ((drag.size === "middle" && drop.size === "big")) {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
@@ -644,15 +564,14 @@
                                     } else {//往下
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
-                                    animate = true
                                 } else {
                                     if (drag.col > drop.col) {//往左
                                         swapElements(model.apps, dragIndex, dropIndex)//插入前面
                                     } else {
                                         swapElements(model.apps, dragIndex, dropIndex - 1)//插入后面
                                     }
-                                    animate = true
                                 }
+                                model.animate = true
                             } else if (drag.size == "big" && drop.size === "middle") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
@@ -672,7 +591,7 @@
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行后面
                                     }
                                 }
-                                animate = true
+                                model.animate = true
                             } else if (drag.size == "big" && drop.size === "small") {//✓
                                 if (drag.col === drop.col) {//如果是在同一列
                                     if (drag.row > drop.row) {//如果是往上
@@ -685,7 +604,6 @@
                                         }
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这一行后面
                                     }
-                                    animate = true
                                 } else {
                                     var maybeDropIndex = dropIndex
                                     if (drag.col > drop.col) {//如果是往左
@@ -710,15 +628,14 @@
                                         }
                                         swapElements(model.apps, dragIndex, maybeDropIndex)//插入这两行后面
                                     }
-                                    animate = true
                                 }
-
+                                model.animate = true
                             }
                         }
 
-                        if (animate) {
+                        if (model.animate) {
                             swapArray = model.apps.slice(0)
-                            swapProperties2(swapArray, model)
+                            swapProperties3(swapArray, model)
                             var swapLength = swapArray.length
                             var animateIndex = 0
                             function lastCallback(obj) {
@@ -726,7 +643,7 @@
                                 obj.animate = false
                                 animateIndex++
                                 if (animateIndex == swapLength) {
-                                    animate = false
+                                    model.animate = false
                                 }
                             }
 
@@ -735,18 +652,18 @@
                                     (function(movable, elem) {
                                         movable.animate = true;
                                         //没有发生交换
-                                        if (typeof movable.newTop === "string") {
+                                        if (typeof movable.new_top === "string") {
                                             movable.animate = false
                                             lastCallback({})
                                             return
                                         }
                                         //没有发生交换
-                                        if (movable.left === movable.newLeft && movable.top === movable.newTop) {
+                                        if (movable.left === movable.new_left && movable.top === movable.new_top) {
                                             lastCallback(movable)
                                             return
                                         }
                                         //不同列的上下移动 A
-                                        if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.newRow == 0) {
+                                        if (movable.sleft == movable.new_sleft && movable.new_col !== movable.col && movable.new_row == 0) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
@@ -755,15 +672,15 @@
                                             })
                                             wrapper.height(0).animate({height: movable.height}, 500, function() {
                                                 $(elem).replaceAll(wrapper).css({
-                                                    top: movable.newTop,
-                                                    left: movable.newLeft
+                                                    top: movable.new_top,
+                                                    left: movable.new_left
                                                 })
                                                 lastCallback(movable)
                                             })
                                             return
                                         }
                                         //不同列的上下移动 B
-                                        if (movable.sleft == movable.newSleft && movable.newCol !== movable.col && movable.top == 0) {
+                                        if (movable.sleft == movable.new_sleft && movable.new_col !== movable.col && movable.top == 0) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
@@ -774,38 +691,38 @@
                                                 top: movable.height
                                             }).animate({top: 0}, 500, function() {
                                                 $(elem).replaceAll(wrapper).css({
-                                                    top: movable.newTop,
-                                                    left: movable.newLeft
+                                                    top: movable.new_top,
+                                                    left: movable.new_left
                                                 })
                                                 lastCallback(movable)
                                             })
                                             return
                                         }
                                         //当前行的水平移动
-                                        if (movable.col == movable.newCol && movable.row == movable.newRow && movable.sleft != movable.newSleft) {
-                                            $(elem).animate({left: movable.newLeft}, 500, function() {
-                                                elem.style.left = movable.newLeft + "px"
-                                                elem.style.top = movable.newTop + "px"
+                                        if (movable.col == movable.new_col && movable.row == movable.new_row && movable.sleft != movable.new_sleft) {
+                                            $(elem).animate({left: movable.new_left}, 500, function() {
+                                                elem.style.left = movable.new_left + "px"
+                                                elem.style.top = movable.new_top + "px"
                                                 lastCallback(movable)
                                             })
                                             return
                                         }
                                         //当前列的上下移动
-                                        if (movable.col == movable.newCol && movable.row !== movable.newRow && movable.sleft == movable.newSleft) {
-                                            $(elem).animate({top: movable.newTop}, 500, function() {
-                                                elem.style.left = movable.newLeft + "px"
-                                                elem.style.top = movable.newTop + "px"
+                                        if (movable.col == movable.new_col && movable.row !== movable.new_row && movable.sleft == movable.new_sleft) {
+                                            $(elem).animate({top: movable.new_top}, 500, function() {
+                                                elem.style.left = movable.new_left + "px"
+                                                elem.style.top = movable.new_top + "px"
                                                 lastCallback(movable)
                                             })
                                             return
                                         }
                                         //不同行的上下移动
-                                        if (movable.row !== movable.newRow) {
+                                        if (movable.row !== movable.new_row) {
                                             var wrappers = createWrapper(movable, elem)
                                             var wrapper = wrappers[0]
                                             var cloneWrapper = wrappers[1]
 
-                                            if (movable.col * 100 + movable.row * 10 > movable.newCol * 100 + movable.newRow * 10) {//insrtAfter
+                                            if (movable.col * 100 + movable.row * 10 > movable.new_col * 100 + movable.new_row * 10) {//insrtAfter
                                                 //旧位置的，container width慢慢变小
                                                 cloneWrapper.animate({width: 0}, 490, function() {
                                                     cloneWrapper.remove()
@@ -813,8 +730,8 @@
                                                 //新位置的，app left慢慢变小
                                                 $(elem).css({left: movable.width}).animate({left: 0}, 500, function() {
                                                     $(elem).replaceAll(wrapper).css({
-                                                        top: movable.newTop,
-                                                        left: movable.newLeft
+                                                        top: movable.new_top,
+                                                        left: movable.new_left
                                                     })
                                                     lastCallback(movable)
                                                 });
@@ -826,8 +743,8 @@
                                                 //新位置的，container width慢慢变大
                                                 wrapper.width(0).animate({width: movable.width}, 500, function() {
                                                     $(elem).replaceAll(wrapper).css({
-                                                        top: movable.newTop,
-                                                        left: movable.newLeft
+                                                        top: movable.new_top,
+                                                        left: movable.new_left
                                                     })
                                                     lastCallback(movable)
                                                 });
@@ -853,7 +770,7 @@
             .apps{
                 position: relative;
                 border:10px solid #01B4D2;
-                height: 510px;
+                height: 680px;
             }
             .apps.dragging app:not(.current){
                 -webkit-transform:scale(.9);
@@ -888,16 +805,16 @@
                 transform:scale(1.1);
             }
             app.app_small{
-                width:120px;
-                height:120px;
+                width:150px;
+                height:150px;
             }
             app.app_big{
-                width:250px;
-                height:250px;
+                width:320px;
+                height:320px;
             }
             app.app_middle{
-                width:250px;
-                height:120px;
+                width:320px;
+                height:150px;
             }
             app:hover {
                 outline: 5px solid #b1e8f3;
