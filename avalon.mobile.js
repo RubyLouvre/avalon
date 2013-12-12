@@ -3258,13 +3258,12 @@
 
     if ("ontouchstart" in window) {
         void function() {
-            var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout
-
+            var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
+                    now, firstTouch, _isPointerType, delta, deltaX = 0, deltaY = 0, touchNames = []
             function swipeDirection(x1, x2, y1, y2) {
                 return Math.abs(x1 - x2) >=
                         Math.abs(y1 - y2) ? (x1 - x2 > 0 ? 'left' : 'right') : (y1 - y2 > 0 ? 'up' : 'down')
             }
-
             function longTap() {
                 if (touchProxy.last) {
                     touchProxy.fire('hold')
@@ -3283,20 +3282,32 @@
                 clearTimeout(holdTimeout)
                 touchProxy = {}
             }
-            var isWP = window.navigator.msPointerEnabled
 
-            function isPrimaryTouch(event) {
-                if (isWP) {
-                    return event.pointerType == event.MSPOINTER_TYPE_TOUCH && event.isPrimary
-                }
+            if (window.navigator.pointerEnabled) {//IE11 与 W3C
+                touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
+            } else if (window.navigator.msPointerEnabled) {//IE9-10
+                touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
+            } else {
+                touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
             }
-            var now, delta, deltaX = 0,
-                    deltaY = 0,
-                    firstTouch
-            DOC.addEventListener(isWP ? "MSPointerDown" : "touchstart", function(e) {
-                firstTouch = e.touches[0]
-                if (isPrimaryTouch(e) === false) {
+
+            function isPrimaryTouch(event) {//是否纯净的触摸事件，非mousemove等模拟的事件，也不是手势事件
+                return (event.pointerType == "touch" ||
+                        event.pointerType == event.MSPOINTER_TYPE_TOUCH)
+                        && event.isPrimary
+            }
+            function isPointerEventType(e, type) {//是否最新发布的PointerEvent
+                return (e.type == "pointer" + type ||
+                        e.type.toLowerCase() == "mspointer" + type)
+            }
+
+            DOC.addEventListener(touchNames[0], function(e) {
+                if ((_isPointerType = isPointerEventType(e, "down")) &&
+                        !isPrimaryTouch(e))
                     return
+                firstTouch = _isPointerType ? e : e.touches[0]
+                if (e.touches && e.touches.length === 1 && touchProxy.x2) {
+                    touchProxy.x2 = touchProxy.y2 = void 0
                 }
                 now = Date.now()
                 delta = now - (touchProxy.last || now)
@@ -3314,11 +3325,11 @@
                 touchProxy.last = now
                 holdTimeout = setTimeout(longTap, 750)
             })
-            DOC.addEventListener(isWP ? "MSPointerMove" : "touchmove", function(e) {
-                firstTouch = e.touches[0]
-                if (isPrimaryTouch(e) === false) {
+            DOC.addEventListener(touchNames[1], function(e) {
+                if ((_isPointerType = isPointerEventType(e, "move")) &&
+                        !isPrimaryTouch(e))
                     return
-                }
+                firstTouch = _isPointerType ? e : e.touches[0]
                 cancelHold()
                 touchProxy.x2 = firstTouch.pageX
                 touchProxy.y2 = firstTouch.pageY
@@ -3326,11 +3337,12 @@
                 deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
             })
 
-            DOC.addEventListener(isWP ? "MSPointerUp" : "touchend", function(e) {
-                cancelHold()
-                if (isPrimaryTouch(e) === false) {
+            DOC.addEventListener(touchNames[2], function(e) {
+                if ((_isPointerType = isPointerEventType(e, "up")) &&
+                        !isPrimaryTouch(e))
                     return
-                }
+                cancelHold()
+                // swipe
                 if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
                         (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
                     //如果是滑动，根据最初与最后的位置判定其滑动方向
@@ -3339,7 +3351,8 @@
                         touchProxy.fire('swipe' + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
                         touchProxy = {}
                     }, 0)
-                } else if ('last' in touchProxy)
+                    // normal tap 
+                } else if ('last' in touchProxy) {
                     if (deltaX < 30 && deltaY < 30) { //如果移动的距离太小
                         tapTimeout = setTimeout(function() {
                             touchProxy.fire("tap")
@@ -3349,7 +3362,6 @@
                             } else {
                                 touchTimeout = setTimeout(function() {
                                     touchProxy.fire('singletap')
-                                    //  touchProxy.fire("click")
                                     touchProxy = {}
                                 }, 250)
                             }
@@ -3357,10 +3369,11 @@
                     } else {
                         touchProxy = {}
                     }
-                window.getSelection().removeAllRanges()
+                }
                 deltaX = deltaY = 0
             })
-            DOC.addEventListener(isWP ? "MSPointerCancel" : "touchcancel", cancelAll)
+
+            DOC.addEventListener(touchNames[3], cancelAll)
         }()
         //http://quojs.tapquo.com/ http://code.baidu.com/
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
