@@ -199,28 +199,41 @@
                                 }
                             } else if (el.size == "big") {
                                 el[prefix + "sleft"] = 1
-                                if (!sleft) {
+                                if (!sleft) {//如果前面是一个小型的，后面是一个大型的，那么换行
                                     row++
                                 }
                                 if (children) {
                                     el.width = 320
                                     el.height = 320
                                 }
-                                if (row + 1 > maxRow) {
+                                if (row + 1 > maxRow) {//如果前方是一个大方块，后面是一个大方块，但这一列放不进后面的，那么要补上一个中型的
+
                                     row = 0
                                     col++
                                 }
+
                                 el[prefix + "top"] = row * 170//(small.height + 20)
                                 el[prefix + "left"] = col * 340//(big.width + 20)
                                 el[prefix + "row"] = row
                                 el[prefix + "col"] = col
                                 row += 2
                                 sleft = 1
+                                if (row === maxRow && model.apps[i + 1] && model.apps[i + 1].size == "big") {
+                                    model.vapps.push({
+                                        el: el,
+                                        top: maxRow * 170,
+                                        left: col * 340, //170 = small.width + border-width
+                                        type: "middle",
+                                        width: 320,
+                                        height: 150
+                                    })//位于XXX之后
+                                }
                                 if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
                             }
+                            //  }
                             if (children) {
                                 el.element = children[i]
                             }
@@ -274,95 +287,45 @@
                         }
                         return array
                     }
-
                     vm.apps = fix([
                         {
-                            text: "22222",
+                            name: "0",
                             size: "middle"
                         },
                         {
-                            text: "1",
+                            name: "1",
                             size: "small"
                         },
                         {
-                            text: "2",
+                            name: "2",
                             size: "small"
                         },
                         {
-                            text: "1",
+                            name: "3",
+                            size: "middle"
+                        },
+                        {
+                            name: "4",
                             size: "small"
                         },
                         {
-                            text: "2",
-                            size: "small"
+                            name: "5",
+                            size: "middle"
                         },
                         {
-                            text: "yyy",
+                            name: "6",
                             size: "big"
                         },
                         {
-                            text: "middle2",
+                            name: "7",
                             size: "middle"
                         },
                         {
-                            text: "3",
-                            size: "small"
-                        },
-                        {
-                            text: "middle3",
-                            size: "middle"
-                        },
-                        {
-                            text: "zzz",
+                            name: "8",
                             size: "big"
-                        },
-                        {
-                            text: "===========",
-                            size: "middle"
-                        },
-                        {
-                            text: "15",
-                            size: "middle"
-                        },
-                        {
-                            text: "7",
-                            size: "small"
-                        },
-                        {
-                            text: "===========",
-                            size: "middle"
-                        },
-                        {
-                            text: "9",
-                            size: "small"
-                        },
-                        {
-                            text: "4",
-                            size: "small"
-                        },
-                        {
-                            text: "10",
-                            size: "small"
-                        },
-                        {
-                            text: "11",
-                            size: "small"
-                        },
-                        {
-                            text: "12",
-                            size: "small"
-                        },
-                        {
-                            text: "13",
-                            size: "small"
-                        },
-                        {
-                            text: "14",
-                            size: "small"
                         }
-
-
                     ])
+
                     vm.handle = function(e) {
                         var el = e.target
                         if (/apphead/.test(el.className)) {
@@ -396,7 +359,6 @@
                             avalon(this).removeClass("current")
                             this.style.zIndex = 0
                         } else {
-                            //   console.log("进行dragger的动画")
                             $(this).animate({left: drag.new_left, top: drag.new_top}, 300, function() {
                                 this.style.left = drag.new_left + "px"
                                 this.style.top = drag.new_top + "px"
@@ -770,7 +732,8 @@
             .apps{
                 position: relative;
                 border:10px solid #01B4D2;
-                height: 680px;
+                height:570px;
+
             }
             .apps.dragging app:not(.current){
                 -webkit-transform:scale(.9);
@@ -782,10 +745,18 @@
                 position: absolute;
                 text-align: center;
                 line-height: 1;
+                -webkit-transform: translate3d(0, 0, 0);
+                -moz-transform: translate3d(0, 0, 0);
+                -ms-transform: translate3d(0, 0, 0);
+                transform: translate3d(0, 0, 0);
                 -webkit-transition:-webkit-transform .3s ease-in-out;
                 -moz-transition:-moz-transform .3s ease-in-out;
                 transition:transform .3s ease-in-out;
+
                 z-index:1;
+            }
+            app:hover {
+                box-shadow:0px 0px 1px 5px #b1e8f3;
             }
             .apphead {
                 width: 100%;
@@ -795,6 +766,7 @@
                 padding-right: 20px;
                 box-sizing: border-box;
                 -moz-box-sizing: border-box;
+
                 color: #000;
                 font-size: 14px;
                 cursor: move;
@@ -816,9 +788,7 @@
                 width:320px;
                 height:150px;
             }
-            app:hover {
-                outline: 5px solid #b1e8f3;
-            }
+
         </style>
     </head>
     <body>
@@ -832,7 +802,7 @@
                  ms-css-background="getColor()" 
                  ms-css-top="top"
                  ms-css-left="left">
-                <div class="apphead">{{el.text }}</div></app>
+                <div class="apphead">{{el.name }}</div></app>
         </div> 
     </body>
 </html>
