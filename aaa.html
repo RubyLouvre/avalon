@@ -1,28 +1,23 @@
 <!doctype html>
 <html >
     <head>
-        <script src="avalon.mobile.js"></script>
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.aaa = 11111
+                vm.$watch("aaa", function(e){
+                    var el = document.getElementById("aaa")
+                    if(el){
+                        el.innerHTML = e
+                    }
+                })
+            })
+            setInterval(function() {
+                model.aaa = new Date - 0
+            }, 50)
+        </script>
     </head>
     <body ms-controller="test">
-        <input type="checkbox" ms-duplex-radio="bTmp1" /><br/>
-        <input type="checkbox" ms-duplex-radio="bTmp2" /><br/>
-        <button ms-click="f1">test</button>{{bTmp2}}<br/>
-        Show when checked:
-        <span ms-if="bTmp1">
-            <span ms-if="bTmp2" style="color:red">{{bTmp2}}</span>
-        </span>
-
-        <script>
-            avalon.define("test", function(vm) {
-                vm.bTmp1 = true
-                vm.bTmp2 = true
-                vm.f1 = function() {
-                    vm.bTmp1 = false
-                    vm.bTmp2 = !vm.bTmp2
-                    vm.bTmp1 = true
-                }
-            })
-
-        </script>
+        <div ms-attr-id="'aaa'">TEXT</div>
     </body>
 </html>

@@ -1825,49 +1825,11 @@
             }
             data.remove = ret
         },
-        "ui": function(data, vmodels) {
+        "ui": function() {
             log("ms-ui已废弃，请使用更方便的ms-widget")
-            var args = data.value.match(rword)
-            var elem = data.element,
-                    widget = args[0],
-                    ret = 0
-            if (args.length == 1) {
-                var id = (elem.getAttribute("data-id") || "").trim() || widget + setTimeout("1")
-                args.push(id)
-            }
-            data.node.value = args.join(",")
-            if (typeof avalon.ui[widget] === "function") {
-                var optsName = data.param,
-                        vmodel = vmodels[0],
-                        ret = 1
-                var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
-                avalon.ui[widget](elem, args[1], vmodels, opts)
-            }
-            data.remove = ret
         },
-        //ms-bind="name:callback",绑定一个属性，当属性变化时执行对应的回调，this为绑定元素
-        "bind": function(data, vmodels) {
-            var value = data.value,
-                    match = value.match(/[\w\.]+/g)
-            if (match && match.length === 2) {
-                var fnName = match[1],
-                        callback = avalon.noop,
-                        preValue
-                for (var i = 0, scope; scope = vmodels[i++]; ) {
-                    if (scope.hasOwnProperty(fnName)) {
-                        callback = scope[fnName]
-                        break
-                    }
-                }
-                updateViewFactory(match[0], vmodels, data, function(val, elem) {
-                    if (preValue !== val) {
-                        callback.call(elem, val, preValue)
-                        preValue = val
-                    }
-                })
-            } else {
-                data.remove = 0
-            }
+        "bind": function() {
+            log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
         }
     }
 
