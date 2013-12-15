@@ -6,19 +6,26 @@
     </head>
     <body ms-controller="page">
         <table>
-            <tbody ms-each="arr">
-                <tr><td>{{el}}</td></tr>
+            <tbody>
+                <tr ms-repeat="arr"><td>{{el}}</td></tr>
             </tbody>
         </table>
         <script src="avalon.mobile.js"></script>
         <script>
             var vm1 = avalon.define('page', function(vm) {
                 vm.arr = []
+
             });
             setTimeout(function() {
                 // 赋值报错
-                vm1.arr = [1,2]
-            }, 100)
+                vm1.arr = [1, 2, 3]
+                console.log("111111111111")
+            }, 1000)
+            setTimeout(function() {
+                // 赋值报错
+                vm1.arr = [1, 2, 3]
+                console.log("111111111111")
+            }, 2000)
         </script>
     </body>
 </html>
