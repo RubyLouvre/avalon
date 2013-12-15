@@ -478,15 +478,22 @@
     }
     var plugins = {
         alias: function(val) {
-            var map = kernel.alias
+            log("alias方法已经被废弃")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
-                    var prevValue = map[c]
                     var currValue = val[c]
-                    if (prevValue) {
-                        avalon.error("注意 " + c + " 已经重写过")
+                    switch (getType(currValue)) {
+                        case "string":
+                            kernel.paths[c] = currValue
+                            break;
+                        case "object":
+                            if (currValue.src) {
+                                kernel.paths[c] = currValue.src
+                                delete currValue.src
+                            }
+                            kernel.shim[c] = currValue
+                            break;
                     }
-                    map[c] = currValue
                 }
             }
         },
@@ -514,7 +521,8 @@
 
     kernel.plugins = plugins
     kernel.plugins['interpolate'](["{{", "}}"])
-    kernel.alias = {}
+    kernel.paths = {}
+    kernel.shim = {}
     avalon.config = kernel
 
     /*********************************************************************
@@ -1415,7 +1423,7 @@
         }
     }
 
-     var fakeData = {}
+    var fakeData = {}
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
@@ -2260,7 +2268,7 @@
             data.remove = ret
         },
         "bind": function(data, vmodels) {
-           log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
+            log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
         }
     }
 
@@ -2934,7 +2942,7 @@
         var group = data.group
         var parent = data.parent
         var mapper = data.mapper
-        if (method == "del" || method == "move" ) {
+        if (method == "del" || method == "move") {
             var locatedNode = getLocatedNode(parent, data, pos)
         }
         switch (method) {
@@ -3568,12 +3576,11 @@
                 return url
             }
             //2. 转化为完整路径
-            if (kernel.alias[url]) { //别名机制
-                url = kernel.alias[url]
-                if (typeof url === "object") {
-                    shim = url
-                    url = url.src
-                }
+            if (kernel.shim[url] === "object") {
+                shim = kernel.shim[url]
+            }
+            if (kernel.paths[url]) { //别名机制
+                url = kernel.paths[url]
             }
             //3.  处理text!  css! 等资源
             var plugin

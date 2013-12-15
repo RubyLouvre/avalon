@@ -323,15 +323,22 @@
     }
     var plugins = {
         alias: function(val) {
-            var map = kernel.alias
+            log("alias方法已经被废弃")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
-                    var prevValue = map[c]
                     var currValue = val[c]
-                    if (prevValue) {
-                        avalon.error("注意 " + c + " 已经重写过")
+                    switch (getType(currValue)) {
+                        case "string":
+                            kernel.paths[c] = currValue
+                            break;
+                        case "object":
+                            if (currValue.src) {
+                                kernel.paths[c] = currValue.src
+                                delete currValue.src
+                            }
+                            kernel.shim[c] = currValue
+                            break;
                     }
-                    map[c] = currValue
                 }
             }
         },
@@ -359,7 +366,8 @@
 
     kernel.plugins = plugins
     kernel.plugins['interpolate'](["{{", "}}"])
-    kernel.alias = {}
+    kernel.paths = {}
+    kernel.shim = {}
     avalon.config = kernel
 
     /*********************************************************************
@@ -2482,7 +2490,7 @@
                 if (data.startRepeat) {
                     deleteRange.setStartAfter(data.startRepeat)
                     deleteRange.setEndBefore(data.endRepeat)
-                } else if(parent.firstChild) {//确保它原来就有东西
+                } else if (parent.firstChild) {//确保它原来就有东西
                     deleteRange.setStartBefore(parent.firstChild)
                     deleteRange.setEndAfter(parent.lastChild)
                 }
@@ -3055,12 +3063,11 @@
                 return url
             }
             //2. 转化为完整路径
-            if (kernel.alias[url]) { //别名机制
-                url = kernel.alias[url]
-                if (typeof url === "object") {
-                    shim = url
-                    url = url.src
-                }
+            if (kernel.shim[url] === "object") {
+                shim = kernel.shim[url]
+            }
+            if (kernel.paths[url]) { //别名机制
+                url = kernel.paths[url]
             }
             //3.  处理text!  css! 等资源
             var plugin
