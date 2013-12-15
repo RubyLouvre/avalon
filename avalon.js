@@ -820,6 +820,18 @@
                     op = alpha ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
+        //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
+        "width,height".replace(rword, function(name) {
+            cssHooks[name + ":get"] = function(node) {
+                if (name === "width") {
+                    return  node.offsetWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true) -
+                            -avalon.css(node, "borderLeftWidth", true) - avalon.css(node, "borderRightWidth", true)
+                } else {
+                    return  node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) -
+                            -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
+                }
+            }
+        })
     }
 
     "top,left".replace(rword, function(name) {
