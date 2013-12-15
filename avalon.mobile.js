@@ -2486,7 +2486,7 @@
                 if (data.startRepeat) {
                     deleteRange.setStartAfter(data.startRepeat)
                     deleteRange.setEndBefore(data.endRepeat)
-                } else {
+                } else if(parent.firstChild) {//确保它原来就有东西
                     deleteRange.setStartBefore(parent.firstChild)
                     deleteRange.setEndAfter(parent.lastChild)
                 }

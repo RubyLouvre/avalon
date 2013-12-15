@@ -1,23 +1,24 @@
-<!doctype html>
-<html >
+<!DOCTYPE HTML>
+<html>
     <head>
-        <script src="avalon.js"></script>
-        <script>
-            var model = avalon.define("test", function(vm) {
-                vm.aaa = 11111
-                vm.$watch("aaa", function(e){
-                    var el = document.getElementById("aaa")
-                    if(el){
-                        el.innerHTML = e
-                    }
-                })
-            })
-            setInterval(function() {
-                model.aaa = new Date - 0
-            }, 50)
-        </script>
+        <meta charset="utf-8">
+        <title></title>
     </head>
-    <body ms-controller="test">
-        <div ms-attr-id="'aaa'">TEXT</div>
+    <body ms-controller="page">
+        <table>
+            <tbody ms-each="arr">
+                <tr><td>{{el}}</td></tr>
+            </tbody>
+        </table>
+        <script src="avalon.mobile.js"></script>
+        <script>
+            var vm1 = avalon.define('page', function(vm) {
+                vm.arr = []
+            });
+            setTimeout(function() {
+                // 赋值报错
+                vm1.arr = [1,2]
+            }, 100)
+        </script>
     </body>
 </html>
