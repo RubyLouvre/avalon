@@ -784,10 +784,13 @@
         node.textContent = "" //它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
         return node
     }
+   
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
         if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/.test(html)) {
-            return DOC.createRange().createContextualFragment(html)
+            var range = DOC.createRange()
+            range.selectNodeContents(root);
+            return range.createContextualFragment(html)
         }
         var fragment = documentFragment.cloneNode(false)
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
