@@ -1008,6 +1008,7 @@
         }
         return node
     }
+    var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
@@ -1015,15 +1016,13 @@
                 wrap = tagHooks[tag] || tagHooks._default,
                 fragment = documentFragment.cloneNode(false),
                 wrapper = domParser,
-                firstChild
+                firstChild, neo
         if (!W3C) { //fix IE
             html = html.replace(rcreate, "<br class=fixNoscope>$1") //在link style script等标签之前添加一个补丁
         }
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
-            var script = DOC.createElement("script"),
-                    neo
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数

@@ -784,7 +784,7 @@
         node.textContent = "" //它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
         return node
     }
-   
+    var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
         if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/.test(html)) {
@@ -800,10 +800,8 @@
         var parent = tagHooks[tag]
         parent.innerHTML = html
         var els = parent.getElementsByTagName("script"),
-                firstChild
+                firstChild, neo
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
-            var script = DOC.createElement("script"),
-                    neo
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
