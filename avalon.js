@@ -101,7 +101,8 @@
                 target = arguments[0] || {},
                 i = 1,
                 length = arguments.length,
-                deep = false
+                deep = false,
+                lastArg = arguments[length - 1], mixIf = false
 
         // 如果第一个参数为布尔,判定是否深拷贝
         if (typeof target === "boolean") {
@@ -109,7 +110,11 @@
             target = arguments[1] || {}
             i++
         }
-
+        // 如果最后一个参数为布尔，判定是否是mixIf调用
+        if(typeof lastArg === "boolean") {
+            mixIf = lastArg
+            length--
+        }
         //确保接受方为一个复杂的数据类型
         if (typeof target !== "object" && getType(target) !== "function") {
             target = {}
@@ -142,14 +147,18 @@
                             clone = src && avalon.isPlainObject(src) ? src : {}
                         }
 
-                        target[name] = avalon.mix(deep, clone, copy)
-                    } else if (copy !== void 0) {
+                        target[name] = avalon.mix(deep, clone, copy, mixIf)
+                    } else if (copy !== void 0 && (!mixIf || src === void 0)) {
                         target[name] = copy
                     }
                 }
             }
         }
         return target
+    }
+    avalon.mixIf = avalon.fn.mixIf = function () {
+        arguments[arguments.length++] = true
+        return avalon.mix.apply(avalon,arguments)
     }
     var eventMap = avalon.eventMap = {}
 
