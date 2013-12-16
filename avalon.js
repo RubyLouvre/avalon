@@ -1563,22 +1563,26 @@
                 }
             }
         }
-        bindings.sort(function(a, b) {
-            if (a.type === "duplex") { //确保duplex排在ms-value的后面
-                return Infinity
-            }
-            if (b.type == "duplex") {
-                return -Infinity
-            }
-            return a.node.name > b.node.name
-        })
-        if (repeatBinding) {
-            bindings = [repeatBinding]
-        }
+
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             bindingHandlers["if"](ifBinding, vmodels)
         } else {
+            if (repeatBinding) {
+                bindings = [repeatBinding]
+            } else {
+                if (bindings.length >= 2) {
+                    bindings.sort(function(a, b) {
+                        if (a.type === "duplex") { //确保duplex排在ms-value的后面
+                            return Infinity
+                        }
+                        if (b.type == "duplex") {
+                            return -Infinity
+                        }
+                        return a.node.name > b.node.name
+                    })
+                }
+            }
             executeBindings(bindings, vmodels)
             if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, vmodels) //扫描子孙元素
