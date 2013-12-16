@@ -2023,10 +2023,8 @@
             }
             updateModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    if (fixType === "text") {
-                        if (element.checked) {
-                            fn(scope, element.value)
-                        }
+                    if (fixType === "text") {//由于点击它就肯定被选中，因此无需element.checked检测
+                        fn(scope, element.value)
                     } else {
                         var val = !element.beforeChecked
                         fn(scope, val)
