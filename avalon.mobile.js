@@ -1401,6 +1401,22 @@
             return false
         })
     }
+
+    //缓存求值函数，以便多次利用
+    function createCache(maxLength) {
+        var keys = []
+        function cache(key, value) {
+            if (keys.push(key + " ") > maxLength) {
+                delete cache[ keys.shift() ]
+            }
+            cache[ key + " " ] = value;
+        }
+        cache.get = function(key) {
+            return cache[ key + " " ]
+        }
+        return cache;
+    }
+    var cacheExpr = createCache(512)
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
 
     function parseExpr(code, scopes, data, four) {
@@ -1412,16 +1428,25 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = ""
+                    prefix = "",
+                    _code = code
+
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-            for (var i = 0, n = scopes.length; i < n; i++) {
+            for (var i = 0, sn = scopes.length; i < sn; i++) {
                 if (vars.length) {
                     var name = "vm" + expose + "_" + i
                     names.push(name)
                     args.push(scopes[i])
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
+            }
+            fn = cacheExpr.get(sn + _code)
+            if (fn) {
+                if (data.filters) {
+                    args.push(avalon.filters)
+                }
+                return  [fn, args]
             }
             var prefix = assigns.join(", ")
             if (prefix) {
@@ -1458,7 +1483,6 @@
                 code += "\nreturn ret" + expose
                 names.push("filters" + expose)
                 args.push(avalon.filters)
-                delete data.filters //释放内存
             } else {
                 code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             }
@@ -1477,6 +1501,7 @@
             if (data.type !== "on" && four !== "setget") {
                 fn.apply(fn, args)
             }
+            cacheExpr(sn + _code, fn)
             return [fn, args]
         } catch (e) {
             delete data.remove

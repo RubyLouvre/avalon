@@ -1710,7 +1710,7 @@
     var getVariables = function(code) {
         code = code
                 .replace(rrexpstr, "")
-                .replace(rsplit, ',')
+                .replace(rsplit, ",")
                 .replace(rkeywords, "")
                 .replace(rnumber, "")
                 .replace(rcomma, "")
@@ -1731,7 +1731,6 @@
             }
         }
         return ret
-
     }
 
     function uniqArray(arr, vm) {
@@ -1751,8 +1750,22 @@
             return false
         })
     }
+    //缓存求值函数，以便多次利用
+    function createCache(maxLength) {
+        var keys = []
+        function cache(key, value) {
+            if (keys.push(key + " ") > maxLength) {
+                delete cache[ keys.shift() ]
+            }
+            cache[ key + " " ] = value;
+        }
+        cache.get = function(key) {
+            return cache[ key + " " ]
+        }
+        return cache;
+    }
+    var cacheExpr = createCache(512)
     //取得求值函数及其传参
-
     function parseExpr(code, scopes, data, four) {
         if (four === "setget") {
             var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
@@ -1762,10 +1775,11 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = ""
+                    prefix = "",
+                    _code = code
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-            for (var i = 0, n = scopes.length; i < n; i++) {
+            for (var i = 0, sn = scopes.length; i < sn; i++) {
                 if (vars.length) {
                     var name = "vm" + expose + "_" + i
                     names.push(name)
@@ -1773,8 +1787,14 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
+            fn = cacheExpr.get(sn + _code)
+            if (fn) {
+                if (data.filters) {
+                    args.push(avalon.filters)
+                }
+                return  [fn, args]
+            }
             var prefix = assigns.join(", ")
-
             if (prefix) {
                 prefix = "var " + prefix
             }
@@ -1809,7 +1829,6 @@
                 code += "\nreturn ret" + expose
                 names.push("filters" + expose)
                 args.push(avalon.filters)
-                delete data.filters //释放内存
             } else {
                 code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             }
@@ -1828,6 +1847,7 @@
             if (data.type !== "on" && four !== "setget") {
                 fn.apply(fn, args)
             }
+            cacheExpr(sn + _code, fn)
             return [fn, args]
         } catch (e) {
             delete data.remove

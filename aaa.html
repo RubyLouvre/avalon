@@ -1,25 +1,26 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8">
-        <title></title>
-    </head>
-    <body ms-controller="page">
-        <table>
-            <tbody>
-                <tr ms-repeat="arr"><td>{{el}}</td></tr>
-            </tbody>
-        </table>
-        <script src="avalon.js"></script>
+        <title>ms-duplex</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" type="text/javascript"></script>
         <script>
-            var vm1 = avalon.define('page', function(vm) {
-                vm.arr = []
-
+            var model = avalon.define("model", function(vm) {
+                vm.txt = {
+                    code : "AAA"
+                };
             });
-            require("ready!", function(){
-                alert(avalon.css(document.documentElement,"width"))
-            })
-           
-        </script>
+
+            setTimeout(function(){
+                model.txt = {
+                    code : "BBB"
+                };
+            },500)
+        </script> 
+    </head>
+    <body >
+        <div ms-controller="model">
+            {{ txt.code | lowercase }}
+        </div>
     </body>
 </html>
