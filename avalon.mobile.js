@@ -2869,7 +2869,7 @@
             }
             parts.forEach(function(value) {
                 fn = DATE_FORMATS[value]
-                text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/""/g, "'")
+                text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/''/g, "'")
             })
             return text
         }
