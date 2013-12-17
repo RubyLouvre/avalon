@@ -480,7 +480,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("alias方法已经被废弃")
+            log("alias已经被废弃，请使用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -1577,7 +1577,7 @@
                         if (a.type === "duplex") { //确保duplex排在ms-value的后面
                             return Infinity
                         }
-                        if (b.type == "duplex") {
+                        if (b.type === "duplex") {
                             return -Infinity
                         }
                         return a.node.name > b.node.name
@@ -2158,7 +2158,7 @@
                         if (el) {
                             if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
                                 var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
-                                xhr.open("GET", window.location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
+                                xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
                                 xhr.send(null)
                                 //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
                                 var noscripts = DOC.getElementsByTagName("noscript")
@@ -2461,7 +2461,7 @@
             if (event === "change") {
                 avalon.bind(element, event, updateModel)
             } else {
-                if (window.addEventListener) { //先执行W3C
+                if (W3C) { //先执行W3C
                     element.addEventListener("input", updateModel)
                     updateView.rollback = function() {
                         element.removeEventListener("input", updateModel)
@@ -2481,9 +2481,9 @@
                 if (DOC.documentMode === 9) { //fuck IE9
                     var selectionchange = function(e) {
                         if (e.type === "focus") {
-                            document.addEventListener("selectionchange", updateModel)
+                            DOC.addEventListener("selectionchange", updateModel)
                         } else {
-                            document.removeEventListener("selectionchange", updateModel)
+                            DOC.removeEventListener("selectionchange", updateModel)
                         }
                     }
                     element.addEventListener("focus", selectionchange)
@@ -3501,7 +3501,7 @@
         plugins.js.ext = ".js"
         var cur = getCurrentScript(true)
         if (!cur) { //处理window safari的Error没有stack的问题
-            cur = avalon.slice(document.scripts).pop().src
+            cur = avalon.slice(DOC.scripts).pop().src
         }
         var url = cleanUrl(cur)
         basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
@@ -3609,7 +3609,7 @@
             if (/^(\w+)(\d)?:.*/.test(url)) {
                 ret = url
             } else {
-                parent = parent.substr(0, parent.lastIndexOf('/'))
+                parent = parent.substr(0, parent.lastIndexOf("/"))
                 var tmp = url.charAt(0)
                 if (tmp !== "." && tmp !== "/") { //相对于根路径
                     ret = basepath + url
@@ -3785,7 +3785,7 @@
     var ready = W3C ? "DOMContentLoaded" : "readystatechange"
 
     function fireReady() {
-        if (document.body) { //  在IE8 iframe中doScrollCheck可能不正确
+        if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
             modules["ready!"].state = 2
             innerRequire.checkDeps()
             fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
@@ -3825,6 +3825,6 @@
         loader: true
     })
     avalon.ready(function() {
-        avalon.scan(document.body)
+        avalon.scan(DOC.body)
     })
 })(document)
