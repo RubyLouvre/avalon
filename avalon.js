@@ -358,7 +358,7 @@
      **********************************************************************/
     if (!"司徒正美".trim) {
         String.prototype.trim = function() {
-            return this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, '')
+            return this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "")
         }
     }
     for (var i in {
@@ -436,15 +436,15 @@
                 return -1
             },
             //迭代操作，将数组的元素挨个儿传入一个函数中执行。Ptototype.js的对应名字为each。
-            forEach: iterator('', '_', ''),
+            forEach: iterator("", '_', ""),
             //迭代类 在数组中的每个项上运行一个函数，如果此函数的值为真，则此元素作为新数组的元素收集起来，并返回新数组
             filter: iterator('r=[],j=0,', 'if(_)r[j++]=this[i]', 'return r'),
             //收集操作，将数组的元素挨个儿传入一个函数中执行，然后把它们的返回值组成一个新数组返回。Ptototype.js的对应名字为collect。
             map: iterator('r=[],', 'r[i]=_', 'return r'),
             //只要数组中有一个元素满足条件（放进给定函数返回true），那么它就返回true。Ptototype.js的对应名字为any。
-            some: iterator('', 'if(_)return true', 'return false'),
+            some: iterator("", 'if(_)return true', 'return false'),
             //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Ptototype.js的对应名字为all。
-            every: iterator('', 'if(!_)return false', 'return true')
+            every: iterator("", 'if(!_)return false', 'return true')
         })
     }
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -731,9 +731,9 @@
     }
     //=============================css相关=======================
     var cssHooks = avalon.cssHooks = {}
-    var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']
+    var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
     var cssMap = {
-        "float": 'cssFloat' in root.style ? 'cssFloat' : 'styleFloat',
+        "float": "cssFloat",
         background: "backgroundColor"
     }
     avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
@@ -1337,7 +1337,7 @@
                 if ('value' in desc) {
                     obj[prop] = desc.value
                 }
-                if ('get' in desc) {
+                if ("get" in desc) {
                     obj.__defineGetter__(prop, desc.get)
                 }
                 if ('set' in desc) {
@@ -1709,11 +1709,11 @@
     var rcomma = /^,+|,+$/g
     var getVariables = function(code) {
         code = code
-                .replace(rrexpstr, '')
+                .replace(rrexpstr, "")
                 .replace(rsplit, ',')
-                .replace(rkeywords, '')
-                .replace(rnumber, '')
-                .replace(rcomma, '')
+                .replace(rkeywords, "")
+                .replace(rnumber, "")
+                .replace(rcomma, "")
 
         return code ? code.split(/,+/) : []
     }
@@ -3196,24 +3196,24 @@
             //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
             //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
             // http://kevin.vanzonneveld.net
-            number = (number + "").replace(/[^0-9+\-Ee.]/g, '')
+            number = (number + "").replace(/[^0-9+\-Ee.]/g, "")
             var n = !isFinite(+number) ? 0 : +number,
                     prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
                     sep = thousands_sep || ",",
                     dec = dec_point || ".",
-                    s = '',
+                    s = "",
                     toFixedFix = function(n, prec) {
                 var k = Math.pow(10, prec)
-                return '' + Math.round(n * k) / k
+                return "" + Math.round(n * k) / k
             }
             // Fix for IE parseFloat(0.55).toFixed(0) = 0 
-            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.')
+            s = (prec ? toFixedFix(n, prec) : "" + Math.round(n)).split('.')
             if (s[0].length > 3) {
                 s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
             }
-            if ((s[1] || '').length < prec) {
-                s[1] = s[1] || ''
-                s[1] += new Array(prec - s[1].length + 1).join('0')
+            if ((s[1] || "").length < prec) {
+                s[1] = s[1] || ""
+                s[1] += new Array(prec - s[1].length + 1).join("0")
             }
             return s.join(dec)
         }
@@ -3257,14 +3257,14 @@
         }
 
         function padNumber(num, digits, trim) {
-            var neg = ''
+            var neg = ""
             if (num < 0) {
                 neg = '-'
                 num = -num
             }
-            num = '' + num
+            num = "" + num
             while (num.length < digits)
-                num = '0' + num
+                num = "0" + num
             if (trim)
                 num = num.substr(num.length - digits)
             return neg + num
@@ -3272,7 +3272,7 @@
 
         function dateGetter(name, size, offset, trim) {
             return function(date) {
-                var value = date['get' + name]()
+                var value = date["get" + name]()
                 if (offset > 0 || value > -offset)
                     value += offset
                 if (value === 0 && offset === -12) {
@@ -3284,8 +3284,8 @@
 
         function dateStrGetter(name, shortForm) {
             return function(date, formats) {
-                var value = date['get' + name]()
-                var get = (shortForm ? ('SHORT' + name) : name).toUpperCase()
+                var value = date["get" + name]()
+                var get = (shortForm ? ("SHORT" + name) : name).toUpperCase()
                 return formats[get][value]
             }
         }
@@ -3293,7 +3293,7 @@
         function timeZoneGetter(date) {
             var zone = -1 * date.getTimezoneOffset()
             var paddedZone = (zone >= 0) ? "+" : ""
-            paddedZone += padNumber(Math[zone > 0 ? 'floor' : 'ceil'](zone / 60), 2) + padNumber(Math.abs(zone % 60), 2)
+            paddedZone += padNumber(Math[zone > 0 ? "floor" : "ceil"](zone / 60), 2) + padNumber(Math.abs(zone % 60), 2)
             return paddedZone
         }
         //取得上午下午
@@ -3302,26 +3302,26 @@
             return date.getHours() < 12 ? formats.AMPMS[0] : formats.AMPMS[1]
         }
         var DATE_FORMATS = {
-            yyyy: dateGetter('FullYear', 4),
-            yy: dateGetter('FullYear', 2, 0, true),
-            y: dateGetter('FullYear', 1),
-            MMMM: dateStrGetter('Month'),
-            MMM: dateStrGetter('Month', true),
-            MM: dateGetter('Month', 2, 1),
-            M: dateGetter('Month', 1, 1),
-            dd: dateGetter('Date', 2),
-            d: dateGetter('Date', 1),
-            HH: dateGetter('Hours', 2),
-            H: dateGetter('Hours', 1),
-            hh: dateGetter('Hours', 2, -12),
-            h: dateGetter('Hours', 1, -12),
-            mm: dateGetter('Minutes', 2),
-            m: dateGetter('Minutes', 1),
-            ss: dateGetter('Seconds', 2),
-            s: dateGetter('Seconds', 1),
-            sss: dateGetter('Milliseconds', 3),
-            EEEE: dateStrGetter('Day'),
-            EEE: dateStrGetter('Day', true),
+            yyyy: dateGetter("FullYear", 4),
+            yy: dateGetter("FullYear", 2, 0, true),
+            y: dateGetter("FullYear", 1),
+            MMMM: dateStrGetter("Month"),
+            MMM: dateStrGetter("Month", true),
+            MM: dateGetter("Month", 2, 1),
+            M: dateGetter("Month", 1, 1),
+            dd: dateGetter("Date", 2),
+            d: dateGetter("Date", 1),
+            HH: dateGetter("Hours", 2),
+            H: dateGetter("Hours", 1),
+            hh: dateGetter("Hours", 2, -12),
+            h: dateGetter("Hours", 1, -12),
+            mm: dateGetter("Minutes", 2),
+            m: dateGetter("Minutes", 1),
+            ss: dateGetter("Seconds", 2),
+            s: dateGetter("Seconds", 1),
+            sss: dateGetter("Milliseconds", 3),
+            EEEE: dateStrGetter("Day"),
+            EEE: dateStrGetter("Day", true),
             a: ampmGetter,
             Z: timeZoneGetter
         }
@@ -3385,7 +3385,7 @@
             }
             parts.forEach(function(value) {
                 fn = DATE_FORMATS[value]
-                text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, '').replace(/''/g, "'")
+                text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/""/g, "'")
             })
             return text
         }
