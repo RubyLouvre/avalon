@@ -1768,7 +1768,8 @@
     //取得求值函数及其传参
     function parseExpr(code, scopes, data, four) {
         if (four === "setget") {
-            var fn = cacheExpr.get(scopes.length + _code),  args = scopes
+            var args = scopes
+            var fn = cacheExpr.get(scopes.length + code)
             if (fn) {
                 return  [fn, args]
             }
