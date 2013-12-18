@@ -67,7 +67,7 @@
         if (!obj)
             return false
         // 利用IE678 window == document为true,document == window竟然为false的神奇特性
-        // 标准浏览器及IE9，IE19等使用 正则检测
+        // 标准浏览器及IE9，IE10等使用 正则检测
         return obj == obj.document && obj.document != obj
     }
 
@@ -1770,11 +1770,11 @@
     var cacheExpr = createCache(512)
     //取得求值函数及其传参
     function parseExpr(code, scopes, data, four) {
-        var _code = code, scopeIds = scopes.map(function(el) {
+        var exprId = scopes.map(function(el) {
             return el.$id
-        })
+        }) + code + four
         if (four === "duplex") {
-            var fn = cacheExpr.get(scopeIds + _code + four)
+            var fn = cacheExpr.get(exprId)
             if (fn) {
                 return  [fn]
             }
@@ -1784,8 +1784,7 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = "",
-                    _code = code
+                    prefix = ""
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, sn = scopes.length; i < sn; i++) {
@@ -1796,7 +1795,7 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
-            fn = cacheExpr.get(scopeIds + _code + four)
+            fn = cacheExpr.get(exprId)
             if (fn) {
                 if (data.filters) {
                     args.push(avalon.filters)
@@ -1856,7 +1855,7 @@
             if (data.type !== "on" && four !== "duplex") {
                 fn.apply(fn, args)
             }
-            cacheExpr(scopeIds + _code + four, fn)
+            cacheExpr(exprId, fn)
             return [fn, args]
         } catch (e) {
             delete data.remove
@@ -2295,23 +2294,6 @@
         },
         "ui": function(data, vmodels) {
             log("ms-ui已废弃，请使用更方便的ms-widget")
-            var args = data.value.match(rword)
-            var elem = data.element,
-                    widget = args[0],
-                    ret = 0
-            if (args.length == 1) {
-                var id = (elem.getAttribute("data-id") || "").trim() || widget + setTimeout("1")
-                args.push(id)
-            }
-            data.node.value = args.join(",")
-            if (typeof avalon.ui[widget] === "function") {
-                var optsName = data.param,
-                        vmodel = vmodels[0],
-                        ret = 1
-                var opts = vmodel && optsName && typeof vmodel[optsName] == "object" ? vmodel[optsName] : {}
-                avalon.ui[widget](elem, args[1], vmodels, opts)
-            }
-            data.remove = ret
         },
         "bind": function(data, vmodels) {
             log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")

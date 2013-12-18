@@ -1,5 +1,5 @@
 define(["avalon"], function(avalon) {
-    //  必须 在avalon.ui上注册一个函数，它有三个参数，分别为容器元素，data， vmodels
+    //    必须 在avalon.ui上注册一个函数，它有三个参数，分别为容器元素，data， vmodels
     avalon.ui["testui"] = function(element, data, vmodels) {
         //将它内部作为模板，或者使用文档碎片进行处理，那么你就需要用appendChild方法添加回去
         var innerHTML = element.innerHTML
@@ -27,8 +27,6 @@ define(["avalon"], function(avalon) {
     }
     return avalon//必须返回avalon
 })
-
-
 
 //http://mottie.github.io/Keyboard/navigate.html
 //http://bgrins.github.io/spectrum/#why-footprint

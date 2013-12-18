@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            body, html{
+                width:100%;
+                height:100%;
+            }
+            #appterminal {
+                width:100%;
+                height:100%;
+                white-space: nowrap;
+                overflow-x: hidden;
+                overflow-y: auto;
+                color: #28fe14;
+                background-color: #1b2224;
+
+            }
+            #appterminal .line{
+                width:100%;
+                height:20px;
+                line-height:1;
+                margin: 0px;
+                padding: 0px;
+            }
+            #appterminal textarea{
+                position:relative;
+                top: 10px;
+                width:90%;
+                background: transparent;
+                border:0 none;
+                color:white;
+                height:20px;
+                line-height: 1;
+                vertical-align: baseline;
+                resize: none;
+            }
+            #appterminal textarea:focus{
+                outline: 0 none;
+            }
+        </style>
+        <script src="avalon.js">
+
+        </script>
+        <script>
+            var username = "<b>{{username}}:&nbsp&nbsp;</b>"
+            var model = avalon.define("appterminal", function(vm) {
+                vm.message = [username + "<textarea ms-duplex='newMessage' autofocus></textarea>"]
+                vm.newMessage = ""
+                vm.username = "rubylouvre"
+                vm.$watch("newMessage", function(a) {
+                    if (a.indexOf("\\n") >= 0) {
+                        alert(a + " 中有\n");
+                    }
+                    //在这里处理语法高亮
+                })
+                vm.maxLines = 40
+                vm.scroll = function(){
+                    alert(1)
+                }
+                vm.input = function(e) {
+
+                    if (e.which === 13 || e.which === 108) {
+                        var msg = vm.newMessage
+                        vm.newMessage = ""
+                        vm.message.set(vm.message.length - 1, username + msg)
+                        //在这里面把数据抛给后端
+                        vm.message.push(msg, username + '<textarea ms-duplex="newMessage" autofocus ms-on-resize="scroll"></textarea>')
+                        if (vm.message.length >= vm.maxLines) {
+                            vm.message.unshift()
+                        }
+
+                    }
+                }
+            })
+            require("ready!", function() {
+                var height = avalon(document.getElementById("appterminal")).height()
+                model.maxLines = Math.floor(height / 20) - 1
+            })
+        </script>
+    </head>
+    <body>
+        <div id="appterminal" ms-controller="appterminal" ms-each="message" ms-keyup="input">
+            <div class="line">{{el|html}}</div>
+        </div>
+    </body>
+</html>

@@ -1423,11 +1423,11 @@
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
 
     function parseExpr(code, scopes, data, four) {
-        var _code = code, scopeIds = scopes.map(function(el) {
+         var exprId = scopes.map(function(el) {
             return el.$id
-        })
+        }) + code + four
         if (four === "duplex") {
-            var fn = cacheExpr.get(scopeIds + _code + four)
+            var fn = cacheExpr.get(exprId)
             if (fn) {
                 return  [fn]
             }
@@ -1437,8 +1437,7 @@
                     assigns = [],
                     names = [],
                     args = [],
-                    prefix = "",
-                    _code = code
+                    prefix = ""
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, sn = scopes.length; i < sn; i++) {
@@ -1449,7 +1448,7 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
-            fn = cacheExpr.get(sn + _code)
+            fn = cacheExpr.get(exprId)
             if (fn) {
                 if (data.filters) {
                     args.push(avalon.filters)
@@ -1509,7 +1508,7 @@
             if (data.type !== "on" && four !== "duplex") {
                 fn.apply(fn, args)
             }
-            cacheExpr(sn + _code, fn)
+            cacheExpr(exprId, fn)
             return [fn, args]
         } catch (e) {
             delete data.remove
