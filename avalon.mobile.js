@@ -1406,13 +1406,13 @@
     function createCache(maxLength) {
         var keys = []
         function cache(key, value) {
-            if (keys.push(key + " ") > maxLength) {
+            if (keys.push(key + expose) > maxLength) {
                 delete cache[ keys.shift() ]
             }
-            cache[ key + " " ] = value;
+            cache[ key + expose ] = value;
         }
         cache.get = function(key) {
-            return cache[ key + " " ]
+            return cache[ key + expose ]
         }
         return cache;
     }
@@ -1421,8 +1421,11 @@
 
     function parseExpr(code, scopes, data, four) {
         if (four === "setget") {
-            var fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
-            args = scopes
+            var fn = cacheExpr.get(scopes.length + _code), args = scopes
+            if (fn) {
+                return  [fn, args]
+            }
+            fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
                     assigns = [],
