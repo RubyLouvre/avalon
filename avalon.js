@@ -1770,10 +1770,15 @@
     var cacheExpr = createCache(512)
     //取得求值函数及其传参
     function parseExpr(code, scopes, data, four) {
-        var _code = code
-        if (four === "setget") {
-            var args = scopes,
-                    fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
+        var _code = code, scopeIds = scopes.map(function(el) {
+            return el.$id
+        })
+        if (four === "duplex") {
+            var fn = cacheExpr.get(scopeIds + _code + four)
+            if (fn) {
+                return  [fn]
+            }
+            fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
                     assigns = [],
@@ -1791,7 +1796,7 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
-            fn = cacheExpr.get(sn + _code)
+            fn = cacheExpr.get(scopeIds + _code + four)
             if (fn) {
                 if (data.filters) {
                     args.push(avalon.filters)
@@ -1848,10 +1853,10 @@
             }
         }
         try {
-            if (data.type !== "on" && four !== "setget") {
+            if (data.type !== "on" && four !== "duplex") {
                 fn.apply(fn, args)
             }
-            cacheExpr(sn + _code, fn)
+            cacheExpr(scopeIds + _code + four, fn)
             return [fn, args]
         } catch (e) {
             delete data.remove
@@ -2423,7 +2428,7 @@
         }
         delete data.remove
         if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
-            var array = parseExpr(data.value, vmodels, data, "setget")
+            var array = parseExpr(data.value, vmodels, data, "duplex")
             if (array) {
                 var val = data.value.split("."),
                         first = val[0],

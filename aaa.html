@@ -54,7 +54,9 @@
             .highlight th {
                 background: #40C7DD!important;
             }
-
+            .light{
+                background:red;
+            }
             .grid td:nth-child(4) {
                 width: 18%;
             }
@@ -82,6 +84,7 @@
             })
             grids[1].checked = grids[4].checked = true
             avalon.define("test", function(vm) {
+                vm.radio = true
                 vm.datagrid = grids
                 vm.checkall = false
                 vm.$watch("checkall", function(a) {
@@ -100,7 +103,10 @@
         </div> 
 
         <div ms-controller="test">
-            <table class="gridheader grid">
+            <div ms-class-light="radio" >
+                <input type="checkbox" ms-duplex-radio="radio">
+            </div>
+           <table class="gridheader grid">
                 <tbody><tr>
                         <th><input type="checkbox" ms-duplex-radio="checkall"></th>
                         <td>名称</td>
@@ -111,18 +117,18 @@
                     </tr>
                 </tbody></table>
             <div class="gridwrapper">
-                <table class="gridtbody grid" ms-each-el="datagrid" >
-                                <tr ms-hover="hover" ms-class-highlight="el.checked" >
-                                    <th><input type="checkbox" ms-duplex-radio="el.checked" ></th>
-                                    <td>{{el.name}}</td>
-                                    <td>{{el.mainboard}}</td>
-                                    <td>{{el.cpu}}</td>
-                                    <td>{{el.memory}}</td>
-                                    <td>{{el.harddisk}}</td>
-                                </tr>
-                            </table>
-                </div>
+               <table class="gridtbody grid" ms-each-el="datagrid" >
+                    <tr ms-hover="hover" ms-class-highlight="el.checked" >
+                        <th><input type="checkbox" ms-duplex-radio="el.checked" ></th>
+                        <td>{{el.name}}</td>
+                        <td>{{el.mainboard}}</td>
+                        <td>{{el.cpu}}</td>
+                        <td>{{el.memory}}</td>
+                        <td>{{el.harddisk}}</td>
+                    </tr>
+                </table>
             </div>
+        </div>
 
-        </body>
-    </html>
+    </body>
+</html>

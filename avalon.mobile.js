@@ -1423,8 +1423,14 @@
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
 
     function parseExpr(code, scopes, data, four) {
-        if (four === "setget") {
-            var args = scopes,
+        var _code = code, scopeIds = scopes.map(function(el) {
+            return el.$id
+        })
+        if (four === "duplex") {
+            var fn = cacheExpr.get(scopeIds + _code + four)
+            if (fn) {
+                return  [fn]
+            }
             fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
@@ -1500,7 +1506,7 @@
             }
         }
         try {
-            if (data.type !== "on" && four !== "setget") {
+            if (data.type !== "on" && four !== "duplex") {
                 fn.apply(fn, args)
             }
             cacheExpr(sn + _code, fn)
@@ -1984,7 +1990,7 @@
             log("ms-model已经被废弃，请使用ms-duplex")
         }
         if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
-            var array = parseExpr(data.value, vmodels, data, "setget")
+            var array = parseExpr(data.value, vmodels, data, "duplex")
             if (array) {
                 var val = data.value.split("."),
                         first = val[0],
