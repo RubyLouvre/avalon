@@ -1624,6 +1624,9 @@
                     avalon.Array.remove(filters, "html")
                     binding.type = "html"
                     binding.replaceNodes = [node]
+                    if(!filters.length){
+                        delete bindings.filters
+                    }
                 }
                 bindings.push(binding) //收集带有插值表达式的文本
             }

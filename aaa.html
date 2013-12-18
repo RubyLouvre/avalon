@@ -4,7 +4,7 @@
         <title>ms-duplex</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" type="text/javascript"></script>
-         <style>
+        <style>
             .gridheader,
             .gridtbody {
                 width: 100%;
@@ -64,7 +64,12 @@
                 vm.txt = {
                     code: "AAA"
                 };
+                vm.eee = '另一个数据'
             });
+            window.onload = function() {
+                var el = document.getElementById("id")
+                console.log(el.childNodes.length)
+            }
             var cell = {name: "电脑001",
                 mainboard: "华硕P5K3 Deluxe/WiFi-AP",
                 cpu: " Intel酷睿2四核 Q6600(盒)",
@@ -72,7 +77,7 @@
                 harddisk: "希捷320GB 7200.10 16M(串口/3年盒)",
                 checked: false
             }
-            var grids = avalon.range(1, 20).map(function(el, i) {
+            var grids = avalon.range(1, 100).map(function(el, i) {
                 return avalon.mix({}, cell, {name: "电脑0" + i})
             })
             grids[1].checked = grids[4].checked = true
@@ -81,23 +86,18 @@
                 vm.checkall = false
                 vm.$watch("checkall", function(a) {
                     vm.datagrid.forEach(function(el) {
-                        console.log(a+"-----------------------")
                         el.checked = a
                     })
                 })
             })
 
-            setTimeout(function() {
-                model.txt = {
-                    code: "BBB"
-                };
-            }, 500)
+
         </script> 
     </head>
     <body >
-        <div ms-controller="model">
-            {{ txt.code | lowercase }}
-        </div>
+        <div ms-controller="model" id="id">
+            {{ txt.code | lowercase }}你好{{eee}}
+        </div> 
 
         <div ms-controller="test">
             <table class="gridheader grid">
@@ -112,17 +112,17 @@
                 </tbody></table>
             <div class="gridwrapper">
                 <table class="gridtbody grid" ms-each-el="datagrid" >
-                    <tr ms-hover="hover" ms-class-highlight="el.checked" >
-                        <th><input type="radio" ms-duplex="el.checked" ></th>
-                        <td>{{el.name}}</td>
-                        <td>{{el.mainboard}}</td>
-                        <td>{{el.cpu}}</td>
-                        <td>{{el.memory}}</td>
-                        <td>{{el.harddisk}}</td>
-                    </tr>
-                </table>
+                                <tr ms-hover="hover" ms-class-highlight="el.checked" >
+                                    <th><input type="checkbox" ms-duplex-radio="el.checked" ></th>
+                                    <td>{{el.name}}</td>
+                                    <td>{{el.mainboard}}</td>
+                                    <td>{{el.cpu}}</td>
+                                    <td>{{el.memory}}</td>
+                                    <td>{{el.harddisk}}</td>
+                                </tr>
+                            </table>
+                </div>
             </div>
-        </div>
 
-    </body>
-</html>
+        </body>
+    </html>
