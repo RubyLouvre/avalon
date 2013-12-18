@@ -102,7 +102,7 @@
                         }
                         return color;
                     }
-                    vm.maxRow = 3
+                    vm.maxRow = 2
                     vm.dragsmalldropmiddledown = false
                     vm.$skipArray = ["maxRow", "vapps", "animate", "dragsmalldropmiddledown"]
                     vm.vapps = []
@@ -126,8 +126,7 @@
                                     el[prefix + "col"] = col
                                     el[prefix + "sleft"] = 1
                                     //判定右边是不是small
-                                    var vapp = model.apps[i + 1]
-                                    if (vapp && vapp.size !== "small") {
+                                    if (model.apps[i + 1] && model.apps[i + 1].size !== "small") {
                                         model.vapps.push({
                                             top: row * 170,
                                             left: col * 340 + 170,
@@ -154,6 +153,8 @@
                                             left: col * 340,
                                             el: el
                                         })
+                                        row = 0
+                                        col++
                                     }
                                 }
                                 if (children) {
@@ -165,57 +166,59 @@
                                     col++
                                 }
                             } else if (el.size == "middle") {
-                                el[prefix + "sleft"] = 1
-                                if (!sleft) {
+                                if (!sleft) {//如果前面是一个小型的，后面是一个中型的，那么换行
                                     row++
-                                    if (row > maxRow) {
+                                    if (row > maxRow) {//如果原来就是最后一行，那么换另一列
                                         row = 0
                                         col++
                                     }
-                                }
-                                if (row + 1 === maxRow && model.apps[i + 1] && model.apps[i + 1].size === "big") {
-                                    model.vapps.push({
-                                        width: 320,
-                                        height: 150,
-                                        type: "middle",
-                                        top: (row + 1) * 170,
-                                        left: col * 340,
-                                        el: el
-                                    })
                                 }
                                 sleft = 1
                                 el[prefix + "top"] = row * 170//(small.height + 20)
                                 el[prefix + "left"] = col * 340//(big.width + 20)
                                 el[prefix + "row"] = row
                                 el[prefix + "col"] = col
+                                el[prefix + "sleft"] = 1
                                 if (children) {
                                     el.width = 320
                                     el.height = 150
                                 }
                                 row++
+
+                                if (row === maxRow && model.apps[i + 1] && model.apps[i + 1].size === "big") {
+                                    console.log(row + "________________________" + el.size)
+                                    model.vapps.push({
+                                        width: 320,
+                                        height: 150,
+                                        type: "middle",
+                                        top: row * 170,
+                                        left: col * 340,
+                                        el: el
+                                    })
+                                    row = 0
+                                    col++
+                                }
                                 if (row > maxRow) {
                                     row = 0
                                     col++
                                 }
                             } else if (el.size == "big") {
-                                el[prefix + "sleft"] = 1
                                 if (!sleft) {//如果前面是一个小型的，后面是一个大型的，那么换行
                                     row++
+                                    if (row > maxRow) {//如果原来就是最后一行，那么换另一列
+                                        row = 0
+                                        col++
+                                    }
                                 }
-                                if (children) {
-                                    el.width = 320
-                                    el.height = 320
-                                }
-                                if (row + 1 > maxRow) {//如果前方是一个大方块，后面是一个大方块，但这一列放不进后面的，那么要补上一个中型的
-
-                                    row = 0
-                                    col++
-                                }
-
                                 el[prefix + "top"] = row * 170//(small.height + 20)
                                 el[prefix + "left"] = col * 340//(big.width + 20)
                                 el[prefix + "row"] = row
                                 el[prefix + "col"] = col
+                                el[prefix + "sleft"] = 1
+                                if (children) {
+                                    el.width = 320
+                                    el.height = 320
+                                }
                                 row += 2
                                 sleft = 1
                                 if (row === maxRow && model.apps[i + 1] && model.apps[i + 1].size == "big") {
@@ -227,6 +230,8 @@
                                         width: 320,
                                         height: 150
                                     })//位于XXX之后
+                                    row = 0
+                                    col++
                                 }
                                 if (row > maxRow) {
                                     row = 0
@@ -266,7 +271,7 @@
                             }
 
                         }
-
+                        console.log(model.vapps)
                     }
                     function fix(array) {
                         for (var i = 0, el; el = array[i++]; ) {
@@ -290,7 +295,7 @@
                     vm.apps = fix([
                         {
                             name: "0",
-                            size: "middle"
+                            size: "small"
                         },
                         {
                             name: "1",
@@ -298,7 +303,7 @@
                         },
                         {
                             name: "2",
-                            size: "small"
+                            size: "middle"
                         },
                         {
                             name: "3",
@@ -306,11 +311,11 @@
                         },
                         {
                             name: "4",
-                            size: "small"
+                            size: "middle"
                         },
                         {
                             name: "5",
-                            size: "middle"
+                            size: "big"
                         },
                         {
                             name: "6",
@@ -318,10 +323,6 @@
                         },
                         {
                             name: "7",
-                            size: "middle"
-                        },
-                        {
-                            name: "8",
                             size: "big"
                         }
                     ])
