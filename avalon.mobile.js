@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 0.982 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 0.99 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1275,6 +1275,9 @@
                     avalon.Array.remove(filters, "html")
                     binding.type = "html"
                     binding.replaceNodes = [node]
+                    if (!filters.length) {
+                        delete bindings.filters
+                    }
                 }
                 bindings.push(binding) //收集带有插值表达式的文本
             }
@@ -1421,11 +1424,7 @@
 
     function parseExpr(code, scopes, data, four) {
         if (four === "setget") {
-            var args = scopes
-            var fn = cacheExpr.get(scopes.length + code)
-            if (fn) {
-                return  [fn, args]
-            }
+            var args = scopes,
             fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
@@ -1434,7 +1433,6 @@
                     args = [],
                     prefix = "",
                     _code = code
-
             //args 是一个对象数组， names 是将要生成的求值函数的参数
             vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
             for (var i = 0, sn = scopes.length; i < sn; i++) {
@@ -2484,12 +2482,10 @@
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add命令一致，需要对调一下第2，第3参数
-                var arr = pos,
-                        pos = el,
-                        transation = documentFragment.cloneNode(false)
+                var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], getter(), data)
+                    var proxy = createEachProxy(ii, arr[i], host, data)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]

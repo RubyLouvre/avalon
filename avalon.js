@@ -1,5 +1,5 @@
 //==================================================
-// avalon 0.982   by 司徒正美 2013.10.21
+// avalon 0.99   by 司徒正美 2013.10.21
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -1624,7 +1624,7 @@
                     avalon.Array.remove(filters, "html")
                     binding.type = "html"
                     binding.replaceNodes = [node]
-                    if(!filters.length){
+                    if (!filters.length) {
                         delete bindings.filters
                     }
                 }
@@ -1770,13 +1770,10 @@
     var cacheExpr = createCache(512)
     //取得求值函数及其传参
     function parseExpr(code, scopes, data, four) {
+        var _code = code
         if (four === "setget") {
-            var args = scopes
-            var fn = cacheExpr.get(scopes.length + code)
-            if (fn) {
-                return  [fn, args]
-            }
-            fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
+            var args = scopes,
+                    fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
                     assigns = [],
@@ -2990,12 +2987,10 @@
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
-                var arr = pos
-                var pos = el
-                var transation = documentFragment.cloneNode(false)
+                var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], getter(), data)
+                    var proxy = createEachProxy(ii, arr[i], host, data)
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
