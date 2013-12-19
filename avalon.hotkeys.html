@@ -15,11 +15,11 @@
             require("avalon.hotkeys", function(avalon) {
                 avalon.define("xxx", function(vm) {
                     vm.callback1 = function() {
-                        console.log(Date.now() + "  ctrl+1")
+                        alert(new Date - 0 + "  ctrl+1")
                         return false//避开浏览器默认的热键
                     }
                     vm.callback2 = function() {
-                        console.log(Date.now() + "  ctrl+alt+f")
+                        alert(new Date - 0 + "  ctrl+alt+f")
                         return false//避开浏览器默认的热键
                     }
                 })

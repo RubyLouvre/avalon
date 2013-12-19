@@ -1,4 +1,5 @@
 define(["avalon"], function(avalon) {
+    //组合键绑定
     var specialKeys = {
         8: "backspace", 9: "tab", 10: "return", 13: "return", 16: "shift", 17: "ctrl", 18: "alt", 19: "pause",
         20: "capslock", 27: "esc", 32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
@@ -55,7 +56,6 @@ define(["avalon"], function(avalon) {
             }
 
         }
-        console.log(possible)
         if (possible[ hotkeys ] && event.type == "keyup") {
             return true
         }
