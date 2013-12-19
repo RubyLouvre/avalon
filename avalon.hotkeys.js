@@ -27,10 +27,10 @@ define(["avalon"], function(avalon) {
         }
 
         var special = specialKeys[ event.keyCode ],
-                // character codes are available only in keypress
+                //将keyCode转换为各种值
                 character = String.fromCharCode(event.which).toLowerCase(),
                 modif = "", possible = {};
-        // check combinations (alt|ctrl|shift+anything)
+        // 处理各种组合情况 (alt|ctrl|shift+X)
         if (event.altKey && special !== "alt") {
             modif += "alt+";
         }
@@ -50,11 +50,10 @@ define(["avalon"], function(avalon) {
         if (character) {
             possible[ sortKey(modif + character) ] = true;
             possible[ sortKey(modif + shiftNums[ character ]) ] = true;
-            // "$" can be triggered as "Shift+4" or "Shift+$" or just "$"
+         
             if (modif === "shift+") {
                 possible[ shiftNums[ character ] ] = true;
             }
-
         }
         if (possible[ hotkeys ] && event.type == "keyup") {
             return true
