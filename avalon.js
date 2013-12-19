@@ -1907,7 +1907,6 @@
             registerSubscriber(updateView, data)
         }
     }
-
     avalon.updateViewFactory = updateViewFactory
     /*********************************************************************
      *                         Bind                                    *
@@ -2063,11 +2062,19 @@
                 if (type && typeof callback === "function") {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                    var removeFn = avalon.bind(elem, type, callback)
+                    if (typeof data.specialBind === "function") {
+                        data.specialBind(elem, callback)
+                    } else {
+                        var removeFn = avalon.bind(elem, type, callback)
+                    }
                     ret = 1
                     updateView.vmodels = vmodels
                     updateView.rollback = function() {
-                        avalon.unbind(elem, type, removeFn)
+                        if (typeof data.specialUnbind === "function") {
+                            data.specialUnbind()
+                        } else {
+                            avalon.unbind(elem, type, removeFn)
+                        }
                     }
                     registerSubscriber(updateView, data)
                 }

@@ -4,7 +4,8 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <style>
+        <link href="terminal.css" media="screen" rel="stylesheet" type="text/css" />
+<!--        <style>
             body, html{
                 width:100%;
                 height:100%;
@@ -45,7 +46,7 @@
             #appterminal textarea:focus{
                 outline: 0 none;
             }
-        </style>
+        </style>-->
         <script src="avalon.js">
 
         </script>
@@ -80,11 +81,7 @@
                 }
                 vm.$skipArray = ["textarea", "command"]
                 vm.textarea = {}
-                vm.render = function(a) {
-                    if (a == "add") {
-                        model.textarea = document.getElementById("textarea")
-                    }
-                }
+            
                 vm.input = function(e) {
 
                     if (e.which === 13 || e.which === 108) {
@@ -112,7 +109,7 @@
         </script>
     </head>
     <body>
-        <div id="appterminal" ms-controller="appterminal" ms-each="message" ms-keyup="input" data-each-rendered="render">
+        <div id="appterminal" ms-controller="appterminal" ms-each="message" ms-keyup="input" >
             <div class="line">{{el|html}}</div>
         </div>
     </body>

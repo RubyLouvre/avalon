@@ -1423,7 +1423,7 @@
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
 
     function parseExpr(code, scopes, data, four) {
-         var exprId = scopes.map(function(el) {
+        var exprId = scopes.map(function(el) {
             return el.$id
         }) + code + four
         if (four === "duplex") {
@@ -1620,7 +1620,6 @@
             elem.classList.remove("fixMsIfFlicker")
             var parent = elem.parentNode
             scanAttr(elem, vmodels)
-
             updateViewFactory(data.value, vmodels, data, function(val) {
                 if (val) { //如果它不在到其父节点里，则添加回去
                     if (!parent.contains(elem)) {
@@ -1676,11 +1675,19 @@
                 if (type && typeof callback === "function") {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels
-                    var removeFn = avalon.bind(elem, type, callback)
+                    if (typeof data.specialBind === "function") {
+                        data.specialBind(elem, callback)
+                    } else {
+                        var removeFn = avalon.bind(elem, type, callback)
+                    }
                     ret = 1
                     updateView.vmodels = vmodels
                     updateView.rollback = function() {
-                        avalon.unbind(elem, type, removeFn)
+                        if (typeof data.specialUnbind === "function") {
+                            data.specialUnbind()
+                        } else {
+                            avalon.unbind(elem, type, removeFn)
+                        }
                     }
                     registerSubscriber(updateView, data)
                 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>avalon.hotkeys</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" type="text/javascript"></script>
+        <style>
+            #aaa textarea{
+                width:400px;
+                height:200px;
+                border:1px solid red;
+            }
+        </style>
+        <script>
+            require("avalon.hotkeys", function(avalon) {
+                avalon.define("xxx", function(vm) {
+                    vm.callback1 = function() {
+                        console.log(Date.now() + "  ctrl+1")
+                        return false//避开浏览器默认的热键
+                    }
+                    vm.callback2 = function() {
+                        console.log(Date.now() + "  ctrl+alt+f")
+                        return false//避开浏览器默认的热键
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body >
+        <div id="aaa" ms-controller="xxx" >
+            <textarea class="bbb" ms-hotkeys-ctrl+1="callback1">ctrl+1</textarea>
+            <textarea class="bbb" ms-hotkeys-ctrl+alt+f="callback2">ctrl+alt+f</textarea>
+        </div>
+
+    </body>
+</html>
