@@ -15,17 +15,12 @@ define(["avalon"], function(avalon) {
         "8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ": ", "'": "\"", ",": "<",
         ".": ">", "/": "?", "\\": "|"
     }
-    var textAcceptingInputTypes = avalon.oneObject("text,password,number,email,url,range,date,month,week,time,datetime,search,color,tel")
-    var reg = /textarea|select/i
+
     function sortKey(key) {
         return key.replace("++", "+add").split("+").sort().join("+")
     }
+    var callbacks = []
     function check(event, hotkeys) {
-        if (this !== event.target && (reg.test(event.target.nodeName) ||
-                textAcceptingInputTypes[event.target.type] == void 0)) {
-            return;
-        }
-
         var special = specialKeys[ event.keyCode ],
                 //将keyCode转换为各种值
                 character = String.fromCharCode(event.which).toLowerCase(),
@@ -50,7 +45,7 @@ define(["avalon"], function(avalon) {
         if (character) {
             possible[ sortKey(modif + character) ] = true;
             possible[ sortKey(modif + shiftNums[ character ]) ] = true;
-         
+
             if (modif === "shift+") {
                 possible[ shiftNums[ character ] ] = true;
             }
@@ -60,25 +55,37 @@ define(["avalon"], function(avalon) {
         }
     }
     avalon.bindingHandlers.hotkeys = function(data, vmodels) {
-        var hotkeys = sortKey(data.param)
         data.specialBind = function(elem, fn) {
-            callback = function(e) {
-                if (check.call(this, e, hotkeys)) {
-                    return fn.call(this, e)
-                }
-                return false
+            var obj = {
+                elem: elem,
+                fn: fn,
+                hotkeys: sortKey(data.param)
             }
-            var keydownFn = avalon.bind(elem, "keydown", callback)
-            var keyupFn = avalon.bind(elem, "keyup", callback)
+            callbacks.push(obj)
             data.specialUnbind = function() {
-                avalon.unbind(elem, "keydown", keydownFn)
-                avalon.unbind(elem, "keyup", keyupFn)
+                avalon.Array.remove(callbacks, obj)
                 delete data.specialBind
                 delete data.specialUnbind
             }
         }
         avalon.bindingHandlers.on(data, vmodels)
     }
+    var root = document.documentElement
+    var hotkeysCallback = function(e) {
+        var safelist = callbacks.concat()
+        for (var i = 0, obj; obj = safelist[i++]; ) {
+            if (root.contains(obj.elem)) {
+                if (check.call(obj.elem, e, obj.hotkeys)) {
+                    return obj.fn.call(obj.elem, e)
+                }
+            } else {
+                avalon.Array.remove(callbacks, obj)
+            }
+        }
+        return false
+    }
+    avalon.bind(document, "keydown", hotkeysCallback)
+    avalon.bind(document, "keyup", hotkeysCallback)
     return avalon
 })
 
