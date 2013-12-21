@@ -1,5 +1,5 @@
 //==================================================
-//性能优化方案1,改善ms-each的扫描过程
+// 性能优化方案2,重用所有视图刷新函数
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1488,6 +1488,8 @@
         }, interval)
     }
 
+
+
     function scanTag(elem, vmodels, node) {
         vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
@@ -1496,10 +1498,6 @@
         var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
             return
-        } else if (elem.getAttribute("ms-" + expose + "1") === "loop") {
-            vmodels = elem["ms-" + expose]
-            elem.removeAttribute("ms-" + expose + "1")
-            elem["ms-" + expose] = void 0
         } else if (node = b || c) {
             var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
@@ -1512,30 +1510,18 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels, loop) {
-        var nodes = [], firstElement
+    function scanNodes(parent, vmodels) {
+        var nodes = []
         for (var i = 0, node; node = parent.childNodes[i++]; ) {
             nodes.push(node)
         }
         for (var i = 0; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
-                if (loop) {
-                    if (!firstElement) {
-                        firstElement = node
-                    }
-                    if (rbind.test(node.innerHTML)) {
-
-                        node.setAttribute("ms-" + expose + "1", "loop")
-                        node["ms-" + expose] = vmodels
-                    }
-                } else {
-                    scanTag(node, vmodels) //扫描元素节点
-                }
+                scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
                 scanText(node, vmodels) //扫描文本节点
             }
         }
-        return firstElement
     }
 
     function scanText(textNode, vmodels) {
@@ -2001,7 +1987,21 @@
         "if": function(data, vmodels) {
             var placehoder = DOC.createComment("ms-if"),
                     elem = data.element
+            avalon(elem).addClass("fixMsIfFlicker")
+            if (!root.contains(elem)) { //如果它不存在于DOM树
+                var scopes = elem["data-if-vmodels"]
+                if (!scopes && vmodels.length) {
+                    elem["data-if-vmodels"] = vmodels
+                }
+                return
+            }
+            var oldVmodels = elem["data-if-vmodels"] || []
+            vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
+            if (!vmodels.length)
+                return
+            elem["data-if-vmodels"] = void 0
             elem.removeAttribute("ms-if")
+            avalon(elem).removeClass("fixMsIfFlicker")
             var parent = elem.parentNode
             scanAttr(elem, vmodels)
             updateViewFactory(data.value, vmodels, data, function(val) {
@@ -2160,7 +2160,7 @@
                             text = loaded.apply(elem, [text].concat(vmodels))
                         }
                         avalon.innerHTML(elem, text)
-                        scanNodes(elem, vmodels)
+                        scanNodes(elem, vmodels, data.state)
                         rendered && checkScan(elem, function() {
                             rendered.call(elem)
                         })
@@ -2179,10 +2179,9 @@
                                 }
                             }
                             xhr.open("GET", val, true)
-                            try {
+                            if ("withCredentials" in xhr) {
                                 xhr.withCredentials = true
-                            } catch (e) {
-                            }//IE67会抛错
+                            }
                             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
                             xhr.send(null)
                         }
@@ -2253,7 +2252,7 @@
                     avalon.innerHTML(elem, val)
                 }
                 avalon.nextTick(function() {
-                    scanNodes(elem, vmodels)
+                    scanNodes(elem, vmodels, data.state)
                 })
             })
         },
@@ -2965,6 +2964,9 @@
             if (callback) {
                 callback.call(parent, method)
             }
+            if (method == "add") {
+                scanNodes(parent, [])
+            }
         })
     }
 
@@ -2980,26 +2982,29 @@
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                 var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
-                    (function(i, ii, item) {
-                        var proxy = createEachProxy(ii, item, host, data)
-                        var tview = data.template.cloneNode(true)
-                        mapper.splice(ii, 0, proxy)
-                        var base = typeof arr[i] === "object" ? [proxy, item] : [proxy]
-                        var firstChild = scanNodes(tview, base.concat(data.vmodels), true)
-                        proxy.$accessor.$last.get.data = {
-                            element: firstChild || tview.firstChild
-                        }
-                        if (typeof group !== "number") {
-                            data.group = tview.childNodes.length //记录每个模板一共有多少子节点
-                        }
-                        transation.appendChild(tview)
-                    })(i, i + pos, arr[i])
-
+                    var ii = i + pos
+                    var proxy = createEachProxy(ii, arr[i], host, data)
+                    var tview = data.template.cloneNode(true)
+                    mapper.splice(ii, 0, proxy)
+                    var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
+                    /*
+                     IE6-7 文档碎片拥有 all  getElementsByTagName
+                     IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
+                     IE9-IE11 文档碎片拥有 querySelectorAll
+                     chrome firefox拥有children querySelectorAll firstElementChild*/
+                    var all = getAll(tview)
+                    scanNodes(tview, base.concat(data.vmodels))
+                    proxy.$accessor.$last.get.data = {
+                        element: all[0] || tview.firstChild
+                    }
+                    if (typeof group !== "number") {
+                        data.group = tview.childNodes.length //记录每个模板一共有多少子节点
+                    }
+                    transation.appendChild(tview)
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, data, pos)
                 parent.insertBefore(transation, locatedNode)
-                scanNodes(parent, [])
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM

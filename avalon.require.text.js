@@ -21,10 +21,11 @@
                 }
             }
             xhr.open("GET", url, true)
-            try {
+            if ("withCredentials" in xhr) {
+                // Check if the XMLHttpRequest object has a "withCredentials" property.
+                // "withCredentials" only exists on XMLHTTPRequest2 objects.
                 xhr.withCredentials = true
-            } catch (e) {
-            }//IE6 7下会报错
+            }
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
             xhr.send()
             return id

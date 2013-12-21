@@ -2182,10 +2182,9 @@
                                 }
                             }
                             xhr.open("GET", val, true)
-                            try {
+                            if ("withCredentials" in xhr) {
                                 xhr.withCredentials = true
-                            } catch (e) {
-                            }//IE67下会报错
+                            }
                             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
                             xhr.send(null)
                         }

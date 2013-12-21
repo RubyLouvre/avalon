@@ -1782,7 +1782,9 @@
                                 }
                             }
                             xhr.open("GET", val, true)
-                            xhr.withCredentials = true
+                            if ("withCredentials" in xhr) {
+                                xhr.withCredentials = true
+                            }
                             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
                             xhr.send(null)
                         }
