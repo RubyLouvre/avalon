@@ -21,7 +21,10 @@
                 }
             }
             xhr.open("GET", url, true)
-            xhr.withCredentials = true
+            try {
+                xhr.withCredentials = true
+            } catch (e) {
+            }//IE6 7下会报错
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
             xhr.send()
             return id
