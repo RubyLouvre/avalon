@@ -2977,6 +2977,7 @@
         }
         switch (method) {
             case "add":
+                var now = new Date - 0
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                 var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
@@ -3000,6 +3001,7 @@
                 locatedNode = getLocatedNode(parent, data, pos)
                 parent.insertBefore(transation, locatedNode)
                 scanNodes(parent, [])
+                  log(new Date - now)
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM

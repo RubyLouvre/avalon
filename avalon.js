@@ -1513,18 +1513,22 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels) {
+    function scanNodes(parent, vmodels, loop) {
         var nodes = []
         for (var i = 0, node; node = parent.childNodes[i++]; ) {
             nodes.push(node)
         }
         for (var i = 0; node = nodes[i++]; ) {
             if (node.nodeType === 1) {
+                if (loop === true) {
+                    loop = node
+                }
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
                 scanText(node, vmodels) //扫描文本节点
             }
         }
+        return loop
     }
 
     function scanText(textNode, vmodels) {
@@ -1538,7 +1542,7 @@
         var bindings = []
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
-                if (attr.name.indexOf(prefix) !== -1) {
+                if (attr.name.slice(0,3) === prefix) {
                     //如果是以指定前缀命名的
                     var array = attr.name.split("-")
                     var type = array[1]
@@ -2929,9 +2933,7 @@
         updateView("add", list, 0)
     }
 
-    function getAll(fragment) {
-        return fragment.querySelectorAll ? fragment.querySelectorAll("*") : fragment.getElementsByTagName("*")
-    }
+
     //得到某一元素节点或文档碎片对象下的所有注释节点
     var queryComments = DOC.createTreeWalker ? function(parent) {
         var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
@@ -2979,23 +2981,18 @@
         }
         switch (method) {
             case "add":
+                var now = new Date - 0
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                 var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], host, data)
+                    var proxy = createEachProxy(ii, arr[i], host, data)//300
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    /*
-                     IE6-7 文档碎片拥有 all  getElementsByTagName
-                     IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
-                     IE9-IE11 文档碎片拥有 querySelectorAll
-                     chrome firefox拥有children querySelectorAll firstElementChild*/
-                    var all = getAll(tview)
-                    scanNodes(tview, base.concat(data.vmodels))
+                    var firstChild = scanNodes(tview, base.concat(data.vmodels), true)//1600
                     proxy.$accessor.$last.get.data = {
-                        element: all[0] || tview.firstChild
+                        element: firstChild || tview.firstChild
                     }
                     if (typeof group !== "number") {
                         data.group = tview.childNodes.length //记录每个模板一共有多少子节点
@@ -3004,7 +3001,14 @@
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, data, pos)
+                if (pos === 0) {
+                    avalon(parent).addClass("fixMsIfFlicker")
+                }
                 parent.insertBefore(transation, locatedNode)
+                if (pos === 0) {
+                    avalon(parent).removeClass("fixMsIfFlicker")
+                }
+                log(new Date - now)
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM

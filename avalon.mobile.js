@@ -1190,7 +1190,7 @@
         var bindings = []
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
-                if (attr.name.indexOf(prefix) !== -1) {
+                if (attr.name.slice(0, 3) === prefix) {
                     //如果是以指定前缀命名的
                     var array = attr.name.split("-")
                     var type = array[1]
@@ -2500,11 +2500,6 @@
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    /*
-                     IE6-7 文档碎片拥有 all  getElementsByTagName
-                     IE8 文档碎片拥有 all querySelectorAll getElementsByTagName
-                     IE9-IE11 文档碎片拥有 querySelectorAll
-                     chrome firefox拥有children querySelectorAll firstElementChild*/
                     scanNodes(tview, base.concat(data.vmodels))
                     proxy.$accessor.$last.get.data = {
                         element: tview.firstElementChild || tview.firstChild
@@ -2516,7 +2511,13 @@
                 }
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, data, pos)
+                if (pos === 0) {
+                    avalon(parent).addClass("fixMsIfFlicker")
+                }
                 parent.insertBefore(transation, locatedNode)
+                if (pos === 0) {
+                    avalon(parent).removeClass("fixMsIfFlicker")
+                }
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM

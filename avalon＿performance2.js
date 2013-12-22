@@ -1868,6 +1868,8 @@
         var cacheKey = data.cacheKey
         if (cacheKey && !updateViewCache[cacheKey + "Callback"]) {
             updateViewCache[cacheKey + "Callback"] = callback
+        }else{
+            callback = null
         }
         var realCallback = updateViewCache[cacheKey + "Callback"] || callback
         if (!tokens) {
@@ -2010,8 +2012,8 @@
             data.placehoder = DOC.createComment("ms-if")
             data.parent = elem.parentNode
             scanAttr(elem, vmodels)
-            data.cacheKey = "if"
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
+            data.cacheKey = data.type
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {//ok
                 var parent = data.parent, placehoder = data.placehoder
                 if (val) { //如果它不在到其父节点里，则添加回去
                     if (!parent.contains(elem)) {
@@ -2087,8 +2089,8 @@
             data.remove = ret
         },
         "data": function(data, vmodels) {//ok
-            data.cacheKey = "data"
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
+            data.cacheKey = data.type
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
                     elem[key] = val
@@ -2101,8 +2103,8 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            data.cacheKey = "text"
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
+            data.cacheKey = data.type
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {//ok
                 if (data.node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
                     if ("textContent" in elem) {
                         elem.textContent = val
@@ -2122,7 +2124,7 @@
             }
             display = display || avalon(elem).css("display")
             data.display = display === "none" ? parseDisplay(elem.tagName) : display
-            data.cacheKey = "visible"
+            data.cacheKey = data.type
             updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem.style.display = val ? data.display : "none"
             })
@@ -2139,7 +2141,7 @@
                     text = RegExp.$1
                 }
             }
-            updateViewFactory(text, vmodels, data, function(val, elem, data) {
+            updateViewFactory(text, vmodels, data, function(val, elem) {
                 var dataParam = data.param
                 switch (data.type) {
                     case "css":
@@ -2234,13 +2236,15 @@
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
         //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
         "disabled": function(data, vmodels) {//ok
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
+            data.cacheKey = data.type
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 var name = data.type
                 elem[name === "readonly" ? "readOnly" : name] = !!val
             })
         },
         "html": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
+            data.cacheKey = data.type
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {//ok
                 val = val == null ? "" : val
                 if (data.replaceNodes) {
                     var fragment, nodes
@@ -2410,6 +2414,7 @@
         bindingHandlers[name] = bindingHandlers.disabled
     })
     bindingHandlers.enabled = function(data, vmodels) {
+        data.cacheKey = "enabled"
         updateViewFactory(data.value, vmodels, data, function(val, elem) {
             elem.disabled = !val
         })
@@ -2993,6 +2998,7 @@
         }
         switch (method) {
             case "add":
+                var now = new Date - 0
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                 var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
@@ -3019,6 +3025,7 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, data, pos)
                 parent.insertBefore(transation, locatedNode)
+                log(new Date - now)
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
