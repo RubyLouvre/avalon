@@ -1533,21 +1533,18 @@
             array = tokens.map(function(token) {
                 return token.expr ? parseExpr(token.value, scopes, data) || "" : token.value
             })
-            updateView = (function(a, b) {
-                return function() {
-                    var ret = "",
-                            fn
-                    for (var i = 0, el; el = a[i++]; ) {
-                        if (typeof el === "string") {
-                            ret += el
-                        } else {
-                            fn = el[0]
-                            ret += fn.apply(fn, el[1])
-                        }
+            updateView = function(a, b) {
+                var ret = ""
+                for (var i = 0, el; el = array[i++]; ) {
+                    if (typeof el === "string") {
+                        ret += el
+                    } else {
+                        var fn = el[0]
+                        ret += fn.apply(fn, el[1])
                     }
-                    return b(ret, data.element)
                 }
-            })(array, callback)
+                callback(ret, data.element)
+            }
         }
         if (updateView) {
             updateView.toString = function() {

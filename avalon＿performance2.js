@@ -1861,16 +1861,22 @@
         }
     }
     avalon.parseExpr = parseExpr
+    var updateViewCache = {}
 
     function updateViewFactory(expr, scopes, data, callback, tokens) {
         var array, updateView
+        var cacheKey = data.cacheKey
+        if (cacheKey && !updateViewCache[cacheKey + "Callback"]) {
+            updateViewCache[cacheKey + "Callback"] = callback
+        }
+        var realCallback = updateViewCache[cacheKey + "Callback"] || callback
         if (!tokens) {
             array = parseExpr(expr, scopes, data)
             if (array) {
                 var fn = array[0],
                         args = array[1]
                 updateView = function() {
-                    callback(fn.apply(fn, args), data.element)
+                    realCallback(fn.apply(fn, args), data.element, data)
                 }
             }
         } else {
@@ -1889,9 +1895,9 @@
                             ret += fn.apply(fn, el[1])
                         }
                     }
-                    return b(ret, data.element)
+                    return b(ret, data.element, data)
                 }
-            })(array, callback)
+            })(array, realCallback)
         }
         if (updateView) {
             updateView.toString = function() {
@@ -1985,8 +1991,7 @@
 
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
-            var placehoder = DOC.createComment("ms-if"),
-                    elem = data.element
+            var elem = data.element
             avalon(elem).addClass("fixMsIfFlicker")
             if (!root.contains(elem)) { //如果它不存在于DOM树
                 var scopes = elem["data-if-vmodels"]
@@ -2002,9 +2007,11 @@
             elem["data-if-vmodels"] = void 0
             elem.removeAttribute("ms-if")
             avalon(elem).removeClass("fixMsIfFlicker")
-            var parent = elem.parentNode
+            data.placehoder = DOC.createComment("ms-if")
+            data.parent = elem.parentNode
             scanAttr(elem, vmodels)
-            updateViewFactory(data.value, vmodels, data, function(val) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
+                var parent = data.parent, placehoder = data.placehoder
                 if (val) { //如果它不在到其父节点里，则添加回去
                     if (!parent.contains(elem)) {
                         try {
@@ -2078,8 +2085,8 @@
             }
             data.remove = ret
         },
-        "data": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+        "data": function(data, vmodels) {//ok
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
                     elem[key] = val
@@ -2092,16 +2099,15 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            var node = data.node
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                if (node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
+                if (data.node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
                     if ("textContent" in elem) {
                         elem.textContent = val
                     } else {
                         elem.innerText = val
                     }
                 } else {
-                    node.nodeValue = val
+                    data.node.nodeValue = val
                 }
             })
         },
@@ -2112,9 +2118,9 @@
                 var display = parseDisplay(elem.tagName)
             }
             display = display || avalon(elem).css("display")
-            display = display === "none" ? parseDisplay(elem.tagName) : display
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                elem.style.display = val ? display : "none"
+            data.display = display === "none" ? parseDisplay(elem.tagName) : display
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
+                elem.style.display = val ? data.display : "none"
             })
         },
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -2130,7 +2136,7 @@
                     text = RegExp.$1
                 }
             }
-            updateViewFactory(text, vmodels, data, function(val, elem) {
+            updateViewFactory(text, vmodels, data, function(val, elem, data) {
                 if (method === "css") {
                     avalon(elem).css(data.param, val)
                 } else if (method === "attr") {
@@ -2218,15 +2224,15 @@
         },
         //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
         //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
-        "disabled": function(data, vmodels) {
-            var name = data.type,
-                    propName = name === "readonly" ? "readOnly" : name
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+        "disabled": function(data, vmodels) {//ok
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
+                var name = data.type,
+                        propName = name === "readonly" ? "readOnly" : name
                 elem[propName] = !!val
             })
         },
         "html": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
                 val = val == null ? "" : val
                 if (data.replaceNodes) {
                     var fragment, nodes
