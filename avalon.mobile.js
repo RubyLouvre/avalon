@@ -1533,7 +1533,7 @@
             array = tokens.map(function(token) {
                 return token.expr ? parseExpr(token.value, scopes, data) || "" : token.value
             })
-            updateView = function(a, b) {
+            updateView = function() {
                 var ret = ""
                 for (var i = 0, el; el = array[i++]; ) {
                     if (typeof el === "string") {
@@ -1762,7 +1762,7 @@
                             text = loaded.apply(elem, [text].concat(vmodels))
                         }
                         avalon.innerHTML(elem, text)
-                        scanNodes(elem, vmodels, data.state)
+                        scanNodes(elem, vmodels)
                         rendered && checkScan(elem, function() {
                             rendered.call(elem)
                         })
@@ -1833,7 +1833,7 @@
                     avalon.innerHTML(elem, val)
                 }
                 avalon.nextTick(function() {
-                    scanNodes(elem, vmodels, data.state)
+                    scanNodes(elem, vmodels)
                 })
             })
         },

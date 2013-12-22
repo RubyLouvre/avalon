@@ -2010,6 +2010,7 @@
             data.placehoder = DOC.createComment("ms-if")
             data.parent = elem.parentNode
             scanAttr(elem, vmodels)
+            data.cacheKey = "if"
             updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
                 var parent = data.parent, placehoder = data.placehoder
                 if (val) { //如果它不在到其父节点里，则添加回去
@@ -2086,6 +2087,7 @@
             data.remove = ret
         },
         "data": function(data, vmodels) {//ok
+            data.cacheKey = "data"
             updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
                 var key = "data-" + data.param
                 if (val && typeof val === "object") {
@@ -2099,6 +2101,7 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
+            data.cacheKey = "text"
             updateViewFactory(data.value, vmodels, data, function(val, elem, data) {//ok
                 if (data.node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
                     if ("textContent" in elem) {
@@ -2119,7 +2122,8 @@
             }
             display = display || avalon(elem).css("display")
             data.display = display === "none" ? parseDisplay(elem.tagName) : display
-            updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
+            data.cacheKey = "visible"
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
                 elem.style.display = val ? data.display : "none"
             })
         },
@@ -2127,8 +2131,7 @@
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
         "href": function(data, vmodels) {
             var text = data.value.trim(),
-                    simple = true,
-                    method = data.type
+                    simple = true
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
@@ -2137,88 +2140,94 @@
                 }
             }
             updateViewFactory(text, vmodels, data, function(val, elem, data) {
-                if (method === "css") {
-                    avalon(elem).css(data.param, val)
-                } else if (method === "attr") {
-                    // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-                    // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-                    // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-                    var attrName = data.param
-                    var toRemove = (val === false) || (val === null) || (val === void 0)
-                    if (toRemove)
-                        elem.removeAttribute(attrName)
-                    if (fuckIEAttr && attrName in propMap) {
-                        attrName = propMap[attrName]
-                        if (toRemove) {
-                            elem.removeAttribute(attrName)
-                        } else {
-                            elem[attrName] = val
+                var dataParam = data.param
+                switch (data.type) {
+                    case "css":
+                        avalon(elem).css(dataParam, val)
+                        break
+                    case "attr":
+                        // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
+                        // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
+                        // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+                        var toRemove = (val === false) || (val === null) || (val === void 0)
+                        if (toRemove)
+                            elem.removeAttribute(dataParam)
+                        if (fuckIEAttr && dataParam in propMap) {
+                            dataParam = propMap[dataParam]
+                            if (toRemove) {
+                                elem.removeAttribute(dataParam)
+                            } else {
+                                elem[dataParam] = val
+                            }
+                        } else if (!toRemove) {
+                            elem.setAttribute(dataParam, val)
                         }
-                    } else if (!toRemove) {
-                        elem.setAttribute(attrName, val)
-                    }
-                } else if (method === "include" && val) {
-                    var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
-                    var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
-
-                    function scanTemplate(text) {
-                        if (loaded) {
-                            text = loaded.apply(elem, [text].concat(vmodels))
-                        }
-                        avalon.innerHTML(elem, text)
-                        scanNodes(elem, vmodels, data.state)
-                        rendered && checkScan(elem, function() {
-                            rendered.call(elem)
-                        })
-                    }
-                    if (data.param === "src") {
-                        if (includeContents[val]) {
-                            scanTemplate(includeContents[val])
-                        } else {
-                            var xhr = getXHR()
-                            xhr.onreadystatechange = function() {
-                                if (xhr.readyState === 4) {
-                                    var s = xhr.status
-                                    if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                        scanTemplate(includeContents[val] = xhr.responseText)
+                        break
+                    case "include":
+                        if (val) {
+                            var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
+                            var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+                            function scanTemplate(text) {
+                                if (loaded) {
+                                    text = loaded.apply(elem, [text].concat(vmodels))
+                                }
+                                avalon.innerHTML(elem, text)
+                                scanNodes(elem, vmodels)
+                                rendered && checkScan(elem, function() {
+                                    rendered.call(elem)
+                                })
+                            }
+                            if (dataParam === "src") {
+                                if (includeContents[val]) {
+                                    scanTemplate(includeContents[val])
+                                } else {
+                                    var xhr = getXHR()
+                                    xhr.onreadystatechange = function() {
+                                        if (xhr.readyState === 4) {
+                                            var s = xhr.status
+                                            if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                                                scanTemplate(includeContents[val] = xhr.responseText)
+                                            }
+                                        }
                                     }
+                                    xhr.open("GET", val, true)
+                                    if ("withCredentials" in xhr) {
+                                        xhr.withCredentials = true
+                                    }
+                                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                                    xhr.send(null)
+                                }
+                            } else {
+                                //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
+                                //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
+                                var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
+                                if (el) {
+                                    if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+                                        var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                                        xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
+                                        xhr.send(null)
+                                        //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+                                        var noscripts = DOC.getElementsByTagName("noscript")
+                                        var array = (xhr.responseText || "").match(rnoscripts) || []
+                                        var n = array.length
+                                        for (var i = 0; i < n; i++) {
+                                            var tag = noscripts[i]
+                                            if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
+                                                tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
+                                                tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
+                                            }
+                                        }
+                                    }
+                                    avalon.nextTick(function() {
+                                        scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
+                                    })
                                 }
                             }
-                            xhr.open("GET", val, true)
-                            if ("withCredentials" in xhr) {
-                                xhr.withCredentials = true
-                            }
-                            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
-                            xhr.send(null)
                         }
-                    } else {
-                        //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
-                        //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
-                        var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
-                        if (el) {
-                            if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
-                                var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
-                                xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
-                                xhr.send(null)
-                                //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
-                                var noscripts = DOC.getElementsByTagName("noscript")
-                                var array = (xhr.responseText || "").match(rnoscripts) || []
-                                var n = array.length
-                                for (var i = 0; i < n; i++) {
-                                    var tag = noscripts[i]
-                                    if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
-                                        tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
-                                        tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
-                                    }
-                                }
-                            }
-                            avalon.nextTick(function() {
-                                scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
-                            })
-                        }
-                    }
-                } else {
-                    elem[method] = val
+                        break
+                    default:
+                        elem[data.type] = val
+                        break
                 }
             }, simple ? null : scanExpr(data.value))
         },
@@ -2226,9 +2235,8 @@
         //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
         "disabled": function(data, vmodels) {//ok
             updateViewFactory(data.value, vmodels, data, function(val, elem, data) {
-                var name = data.type,
-                        propName = name === "readonly" ? "readOnly" : name
-                elem[propName] = !!val
+                var name = data.type
+                elem[name === "readonly" ? "readOnly" : name] = !!val
             })
         },
         "html": function(data, vmodels) {
@@ -2258,7 +2266,7 @@
                     avalon.innerHTML(elem, val)
                 }
                 avalon.nextTick(function() {
-                    scanNodes(elem, vmodels, data.state)
+                    scanNodes(elem, vmodels)
                 })
             })
         },

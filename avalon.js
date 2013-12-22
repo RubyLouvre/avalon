@@ -2160,7 +2160,7 @@
                             text = loaded.apply(elem, [text].concat(vmodels))
                         }
                         avalon.innerHTML(elem, text)
-                        scanNodes(elem, vmodels, data.state)
+                        scanNodes(elem, vmodels)
                         rendered && checkScan(elem, function() {
                             rendered.call(elem)
                         })
@@ -2252,7 +2252,7 @@
                     avalon.innerHTML(elem, val)
                 }
                 avalon.nextTick(function() {
-                    scanNodes(elem, vmodels, data.state)
+                    scanNodes(elem, vmodels)
                 })
             })
         },
