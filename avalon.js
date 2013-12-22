@@ -1492,9 +1492,7 @@
     }
 
 
-
-    var scanTag = function(elem, vmodels, node) {
-        //  vmodels = vmodels || []
+    function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
@@ -1538,15 +1536,14 @@
         }
     }
     var rmsAttr = /ms-(\w+)-?(.*)/
-    var scanAttr = function(elem, vmodels, ifBinding, repeatBinding) {
+    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
         var bindings = [], match
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
-                  //  var array = attr.name.split("-")
                     var type = match[1]
-                    if (typeof bindingHandlers[match[1]] === "function") {
+                    if (typeof bindingHandlers[type] === "function") {
                         (function(node) {
                             var binding = {
                                 type: type,
@@ -1568,34 +1565,7 @@
                 }
             }
         }
-//        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
-//            if (attr.specified) {
-//                if (attr.name.slice(0, 3) === prefix) {
-//                    //如果是以指定前缀命名的
-//                    var array = attr.name.split("-")
-//                    var type = array[1]
-//                    if (typeof bindingHandlers[type] === "function") {
-//                        (function(node) {
-//                            var binding = {
-//                                type: type,
-//                                param: array.slice(2).join("-"),
-//                                element: elem,
-//                                remove: true,
-//                                node: node,
-//                                value: node.nodeValue
-//                            }
-//                            if (type === "repeat") {
-//                                repeatBinding = binding
-//                            } else if (type === "if") {
-//                                ifBinding = binding
-//                            } else {
-//                                bindings.push(binding)
-//                            }
-//                        })(attr)
-//                    }
-//                }
-//            }
-//        }
+
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             bindingHandlers["if"](ifBinding, vmodels)

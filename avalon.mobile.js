@@ -1145,7 +1145,6 @@
 
 
     function scanTag(elem, vmodels, node) {
-        vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
@@ -1186,19 +1185,19 @@
     }
 
 
+    var rmsAttr = /ms-(\w+)-?(.*)/
     function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
-        var bindings = []
+        var bindings = [], match
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
-                if (attr.name.slice(0, 3) === prefix) {
+                if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
-                    var array = attr.name.split("-")
-                    var type = array[1]
+                    var type = match[1]
                     if (typeof bindingHandlers[type] === "function") {
                         (function(node) {
                             var binding = {
                                 type: type,
-                                param: array.slice(2).join("-"),
+                                param: match[2] || "",
                                 element: elem,
                                 remove: true,
                                 node: node,
@@ -1289,7 +1288,7 @@
         return bindings
     }
 
-    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a =/\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a = /\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
 
     function scanExpr(str) {
         var tokens = [],
