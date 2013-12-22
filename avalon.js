@@ -1493,8 +1493,8 @@
 
 
 
-    function scanTag(elem, vmodels, node) {
-        vmodels = vmodels || []
+    var scanTag = function(elem, vmodels, node) {
+        //  vmodels = vmodels || []
         //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
@@ -1537,20 +1537,20 @@
             executeBindings(bindings, vmodels)
         }
     }
-
-    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
-        var bindings = []
+    var rmsAttr = /ms-(\w+)-?(.*)/
+    var scanAttr = function(elem, vmodels, ifBinding, repeatBinding) {
+        var bindings = [], match
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
-                if (attr.name.slice(0,3) === prefix) {
+                if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
-                    var array = attr.name.split("-")
-                    var type = array[1]
-                    if (typeof bindingHandlers[type] === "function") {
+                  //  var array = attr.name.split("-")
+                    var type = match[1]
+                    if (typeof bindingHandlers[match[1]] === "function") {
                         (function(node) {
                             var binding = {
                                 type: type,
-                                param: array.slice(2).join("-"),
+                                param: match[2] || "",
                                 element: elem,
                                 remove: true,
                                 node: node,
@@ -1568,7 +1568,34 @@
                 }
             }
         }
-
+//        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
+//            if (attr.specified) {
+//                if (attr.name.slice(0, 3) === prefix) {
+//                    //如果是以指定前缀命名的
+//                    var array = attr.name.split("-")
+//                    var type = array[1]
+//                    if (typeof bindingHandlers[type] === "function") {
+//                        (function(node) {
+//                            var binding = {
+//                                type: type,
+//                                param: array.slice(2).join("-"),
+//                                element: elem,
+//                                remove: true,
+//                                node: node,
+//                                value: node.nodeValue
+//                            }
+//                            if (type === "repeat") {
+//                                repeatBinding = binding
+//                            } else if (type === "if") {
+//                                ifBinding = binding
+//                            } else {
+//                                bindings.push(binding)
+//                            }
+//                        })(attr)
+//                    }
+//                }
+//            }
+//        }
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             bindingHandlers["if"](ifBinding, vmodels)
@@ -1594,6 +1621,7 @@
             }
         }
     }
+
 
     function executeBindings(bindings, vmodels) {
         bindings.forEach(function(data) {
@@ -1642,7 +1670,7 @@
         return bindings
     }
 
-    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a = /\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1670,12 +1698,12 @@
                 if (value) { //处理{{ }}插值表达式
                     var leach = []
                     if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+                        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
                             return ""
                         })
-                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||") //还原短路与
+                        value = value.replace(r11b, "||") //还原短路与
                     }
                     tokens.push({
                         value: value,

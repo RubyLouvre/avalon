@@ -1289,7 +1289,7 @@
         return bindings
     }
 
-    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a =/\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1317,12 +1317,12 @@
                 if (value) { //处理{{ }}插值表达式
                     var leach = []
                     if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(/\|\|/g, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+                        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
                         value = value.replace(rfilters, function(c, d, e) {
                             leach.push(d + (e || ""))
                             return ""
                         })
-                        value = value.replace(/U2hvcnRDaXJjdWl0/g, "||") //还原短路与
+                        value = value.replace(r11b, "||") //还原短路与
                     }
                     tokens.push({
                         value: value,
