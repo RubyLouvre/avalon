@@ -1178,84 +1178,6 @@
     }
 
     function scanText(textNode, vmodels) {
-        var bindings = extractTextBindings(textNode)
-        if (bindings.length) {
-            executeBindings(bindings, vmodels)
-        }
-    }
-
-
-    var rmsAttr = /ms-(\w+)-?(.*)/
-    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
-        var bindings = [], match
-        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
-            if (attr.specified) {
-                if (match = attr.name.match(rmsAttr)) {
-                    //如果是以指定前缀命名的
-                    var type = match[1]
-                    if (typeof bindingHandlers[type] === "function") {
-                        (function(node) {
-                            var binding = {
-                                type: type,
-                                param: match[2] || "",
-                                element: elem,
-                                remove: true,
-                                node: node,
-                                value: node.nodeValue
-                            }
-                            if (type === "repeat") {
-                                repeatBinding = binding
-                            } else if (type === "if") {
-                                ifBinding = binding
-                            } else {
-                                bindings.push(binding)
-                            }
-                        })(attr)
-                    }
-                }
-            }
-        }
-
-        if (ifBinding) {
-            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-            bindingHandlers["if"](ifBinding, vmodels)
-        } else {
-            if (repeatBinding) {
-                bindings = [repeatBinding]
-            } else {
-                if (bindings.length >= 2) {
-                    bindings.sort(function(a, b) {
-                        if (a.type === "duplex") { //确保duplex排在ms-value的后面
-                            return Infinity
-                        }
-                        if (b.type == "duplex") {
-                            return -Infinity
-                        }
-                        return a.node.name > b.node.name
-                    })
-                }
-            }
-            executeBindings(bindings, vmodels)
-            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels) //扫描子孙元素
-            }
-        }
-    }
-
-    function executeBindings(bindings, vmodels) {
-        bindings.forEach(function(data) {
-            if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
-                bindingHandlers[data.type](data, vmodels)
-                if (data.remove) { //移除数据绑定，防止被二次解析
-                    data.element.removeAttribute(data.node.name)
-                }
-                data.remove = true
-            }
-        })
-        bindings.length = 0
-    }
-
-    function extractTextBindings(textNode) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
         for (var i = 0, token; token = tokens[i++]; ) {
@@ -1285,10 +1207,88 @@
         if (tokens.length) {
             textNode.parentNode.replaceChild(documentFragment, textNode)
         }
-        return bindings
+        if (bindings.length) {
+            executeBindings(bindings, vmodels)
+        }
     }
 
-    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a = /\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
+
+    var rmsAttr = /ms-(\w+)-?(.*)/
+
+    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
+        var bindings = [],
+                match
+        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
+            if (match = attr.name.match(rmsAttr)) {
+                //如果是以指定前缀命名的
+                var type = match[1]
+                if (typeof bindingHandlers[type] === "function") {
+                    (function(node) {
+                        var binding = {
+                            type: type,
+                            param: match[2] || "",
+                            element: elem,
+                            remove: true,
+                            name: match[0],
+                            node: node,
+                            value: node.nodeValue
+                        }
+                        if (type === "repeat") {
+                            repeatBinding = binding
+                        } else if (type === "if") {
+                            ifBinding = binding
+                        } else {
+                            bindings.push(binding)
+                        }
+                    })(attr)
+                }
+            }
+        }
+
+        if (ifBinding) {
+            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
+            bindingHandlers["if"](ifBinding, vmodels)
+        } else {
+            if (repeatBinding) {
+                bindings = [repeatBinding]
+            } else {
+                if (bindings.length >= 2) {
+                    bindings.sort(function(a, b) {
+                        if (a.type === "duplex") { //确保duplex排在ms-value的后面
+                            return Infinity
+                        }
+                        if (b.type == "duplex") {
+                            return -Infinity
+                        }
+                        return a.name > b.name
+                    })
+                }
+            }
+            executeBindings(bindings, vmodels)
+            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                scanNodes(elem, vmodels) //扫描子孙元素
+            }
+        }
+    }
+
+    function executeBindings(bindings, vmodels) {
+        for (var i = 0, data; data = bindings[i++]; ) {
+            if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
+                bindingHandlers[data.type](data, vmodels)
+                if (data.remove) { //移除数据绑定，防止被二次解析
+                    //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
+                    data.element.removeAttribute(data.name)
+                }
+                data.remove = true
+            }
+        }
+        bindings.length = 0
+    }
+
+
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
+            r11a = /\|\|/g,
+            r11b = /U2hvcnRDaXJjdWl0/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1405,16 +1405,18 @@
     }
 
     //缓存求值函数，以便多次利用
+
     function createCache(maxLength) {
         var keys = []
+
         function cache(key, value) {
             if (keys.push(key + expose) > maxLength) {
-                delete cache[ keys.shift() ]
+                delete cache[keys.shift()]
             }
-            cache[ key + expose ] = value;
+            cache[key + expose] = value;
         }
         cache.get = function(key) {
-            return cache[ key + expose ]
+            return cache[key + expose]
         }
         return cache;
     }
@@ -1428,7 +1430,7 @@
         if (four === "duplex") {
             var fn = cacheExpr.get(exprId)
             if (fn) {
-                return  [fn]
+                return [fn]
             }
             fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
@@ -1452,7 +1454,7 @@
                 if (data.filters) {
                     args.push(avalon.filters)
                 }
-                return  [fn, args]
+                return [fn, args]
             }
             var prefix = assigns.join(", ")
             if (prefix) {
@@ -2062,7 +2064,7 @@
             }
             updateModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    if (fixType === "text") {//由于点击它就肯定被选中，因此无需element.checked检测
+                    if (fixType === "text") { //由于点击它就肯定被选中，因此无需element.checked检测
                         fn(scope, element.value)
                     } else {
                         var val = !element.beforeChecked
@@ -2492,7 +2494,11 @@
         switch (method) {
             case "add":
                 // 为了保证了withIterator的add命令一致，需要对调一下第2，第3参数
-                var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
+                var now = new Date - 0
+                var arr = pos,
+                        pos = el,
+                        host = getter(),
+                        transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], host, data)
@@ -2511,12 +2517,13 @@
                 //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                 locatedNode = getLocatedNode(parent, data, pos)
                 if (pos === 0) {
-                    avalon(parent).addClass("fixMsIfFlicker")
+                    parent.classList.add("fixMsIfFlicker")
                 }
                 parent.insertBefore(transation, locatedNode)
                 if (pos === 0) {
-                    avalon(parent).removeClass("fixMsIfFlicker")
+                    parent.classList.remove("fixMsIfFlicker")
                 }
+                log(new Date - now)
                 break
             case "del":
                 mapper.splice(pos, el) //移除对应的子VM
@@ -2531,7 +2538,7 @@
                 if (data.startRepeat) {
                     deleteRange.setStartAfter(data.startRepeat)
                     deleteRange.setEndBefore(data.endRepeat)
-                } else if (parent.firstChild) {//确保它原来就有东西
+                } else if (parent.firstChild) { //确保它原来就有东西
                     deleteRange.setStartBefore(parent.firstChild)
                     deleteRange.setEndAfter(parent.lastChild)
                 }
@@ -2650,10 +2657,25 @@
 
     function createEachProxy(index, item, list, data) {
         var name = data.param || "el"
-        var source = {}
-        source.$outer = data.$outer || {}
-        source.$index = index
-        source.$itemName = name
+        var source = {
+            $outer: data.$outer || {},
+            $index: index,
+            $itemName: name,
+            $first: {
+                get: function() {
+                    return this.$index === 0
+                }
+            },
+            $last: {
+                get: function() { //有时用户是传个普通数组
+                    var n = typeof list.size === "function" ? list.size() : list.length
+                    return this.$index === n - 1
+                }
+            },
+            $remove: function() {
+                return list.removeAt(ret.$index)
+            }
+        }
         source[name] = {
             get: function() {
                 return item
@@ -2661,20 +2683,6 @@
             set: function(val) {
                 item = val
             }
-        }
-        source.$first = {
-            get: function() {
-                return this.$index === 0
-            }
-        }
-        source.$last = {
-            get: function() { //有时用户是传个普通数组
-                var n = typeof list.size === "function" ? list.size() : list.length
-                return this.$index === n - 1
-            }
-        }
-        source.$remove = function() {
-            return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
         return ret
@@ -3296,6 +3304,7 @@
 
     if ("ontouchstart" in window) {
         void
+
                 function() {
                     var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
                             now, firstTouch, _isPointerType, delta, deltaX = 0,

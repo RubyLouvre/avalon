@@ -826,11 +826,9 @@
         "width,height".replace(rword, function(name) {
             cssHooks[name + ":get"] = function(node) {
                 if (name === "width") {
-                    return  node.offsetWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true) -
-                            -avalon.css(node, "borderLeftWidth", true) - avalon.css(node, "borderRightWidth", true)
+                    return node.offsetWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true) - -avalon.css(node, "borderLeftWidth", true) - avalon.css(node, "borderRightWidth", true)
                 } else {
-                    return  node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) -
-                            -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
+                    return node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) - -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
                 }
             }
         })
@@ -1453,7 +1451,7 @@
                     } else {
                         remove = !avalon.contains(root, el)
                     }
-                    if (remove) {//如果它没有在DOM树
+                    if (remove) { //如果它没有在DOM树
                         avalon.Array.remove(list, fn)
                         log("remove " + fn.name)
                     }
@@ -1529,15 +1527,47 @@
         return loop
     }
 
+
     function scanText(textNode, vmodels) {
-        var bindings = extractTextBindings(textNode)
+        var bindings = [],
+                tokens = scanExpr(textNode.nodeValue)
+        for (var i = 0, token; token = tokens[i++]; ) {
+            var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
+            if (token.expr) {
+                var filters = token.filters
+                var binding = {
+                    type: "text",
+                    node: node,
+                    param: "",
+                    element: textNode.parentNode,
+                    value: token.value,
+                    filters: filters
+                }
+                if (filters && filters.indexOf("html") !== -1) {
+                    avalon.Array.remove(filters, "html")
+                    binding.type = "html"
+                    binding.replaceNodes = [node]
+                    if (!filters.length) {
+                        delete bindings.filters
+                    }
+                }
+                bindings.push(binding) //收集带有插值表达式的文本
+            }
+            documentFragment.appendChild(node)
+        }
+        if (tokens.length) {
+            textNode.parentNode.replaceChild(documentFragment, textNode)
+        }
         if (bindings.length) {
             executeBindings(bindings, vmodels)
         }
     }
+
     var rmsAttr = /ms-(\w+)-?(.*)/
+
     function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
-        var bindings = [], match
+        var bindings = [],
+                match
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
@@ -1550,6 +1580,7 @@
                                 param: match[2] || "",
                                 element: elem,
                                 remove: true,
+                                name: match[0],
                                 node: node,
                                 value: node.nodeValue
                             }
@@ -1581,7 +1612,7 @@
                         if (b.type === "duplex") {
                             return -Infinity
                         }
-                        return a.node.name > b.node.name
+                        return a.name > b.name
                     })
                 }
             }
@@ -1594,53 +1625,23 @@
 
 
     function executeBindings(bindings, vmodels) {
-        bindings.forEach(function(data) {
+        for (var i = 0, data; data = bindings[i++]; ) {
             if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
                 bindingHandlers[data.type](data, vmodels)
                 if (data.remove) { //移除数据绑定，防止被二次解析
                     //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
-                    data.element.removeAttribute(data.node.name)
+                    data.element.removeAttribute(data.name)
                 }
                 data.remove = true
             }
-        })
+        }
         bindings.length = 0
     }
 
-    function extractTextBindings(textNode) {
-        var bindings = [],
-                tokens = scanExpr(textNode.nodeValue)
-        for (var i = 0, token; token = tokens[i++]; ) {
-            var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
-            if (token.expr) {
-                var filters = token.filters
-                var binding = {
-                    type: "text",
-                    node: node,
-                    param: "",
-                    element: textNode.parentNode,
-                    value: token.value,
-                    filters: filters
-                }
-                if (filters && filters.indexOf("html") !== -1) {
-                    avalon.Array.remove(filters, "html")
-                    binding.type = "html"
-                    binding.replaceNodes = [node]
-                    if (!filters.length) {
-                        delete bindings.filters
-                    }
-                }
-                bindings.push(binding) //收集带有插值表达式的文本
-            }
-            documentFragment.appendChild(node)
-        }
-        if (tokens.length) {
-            textNode.parentNode.replaceChild(documentFragment, textNode)
-        }
-        return bindings
-    }
 
-    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g, r11a = /\|\|/g, r11b = /U2hvcnRDaXJjdWl0/g
+    var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
+            r11a = /\|\|/g,
+            r11b = /U2hvcnRDaXJjdWl0/g
 
     function scanExpr(str) {
         var tokens = [],
@@ -1756,29 +1757,29 @@
         })
     }
     //缓存求值函数，以便多次利用
+
     function createCache(maxLength) {
         var keys = []
+
         function cache(key, value) {
             if (keys.push(key + expose) > maxLength) {
-                delete cache[ keys.shift() ]
+                delete cache[keys.shift()]
             }
-            cache[ key + expose ] = value;
-        }
-        cache.get = function(key) {
-            return cache[ key + expose ]
+            cache[key + expose] = value;
         }
         return cache;
     }
     var cacheExpr = createCache(512)
     //取得求值函数及其传参
+
     function parseExpr(code, scopes, data, four) {
         var exprId = scopes.map(function(el) {
             return el.$id
         }) + code + four
         if (four === "duplex") {
-            var fn = cacheExpr.get(exprId)
+            var fn = cacheExpr[exprId + expose]
             if (fn) {
-                return  [fn]
+                return [fn]
             }
             fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
         } else {
@@ -1797,12 +1798,12 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
-            fn = cacheExpr.get(exprId)
+            fn = cacheExpr[exprId + expose]
             if (fn) {
                 if (data.filters) {
                     args.push(avalon.filters)
                 }
-                return  [fn, args]
+                return [fn, args]
             }
             var prefix = assigns.join(", ")
             if (prefix) {
@@ -2981,14 +2982,17 @@
             case "add":
                 var now = new Date - 0
                 // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
-                var arr = pos, pos = el, host = getter(), transation = documentFragment.cloneNode(false)
+                var arr = pos,
+                        pos = el,
+                        host = getter(),
+                        transation = documentFragment.cloneNode(false)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], host, data)//300
+                    var proxy = createEachProxy(ii, arr[i], host, data) //300
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    var firstChild = scanNodes(tview, base.concat(data.vmodels), true)//1600
+                    var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
                     proxy.$accessor.$last.get.data = {
                         element: firstChild || tview.firstChild
                     }
@@ -3147,10 +3151,25 @@
 
     function createEachProxy(index, item, list, data) {
         var name = data.param || "el"
-        var source = {}
-        source.$outer = data.$outer || {}
-        source.$index = index
-        source.$itemName = name
+        var source = {
+            $outer: data.$outer || {},
+            $index: index,
+            $itemName: name,
+            $first: {
+                get: function() {
+                    return this.$index === 0
+                }
+            },
+            $last: {
+                get: function() { //有时用户是传个普通数组
+                    var n = typeof list.size === "function" ? list.size() : list.length
+                    return this.$index === n - 1
+                }
+            },
+            $remove: function() {
+                return list.removeAt(ret.$index)
+            }
+        }
         source[name] = {
             get: function() {
                 return item
@@ -3158,20 +3177,6 @@
             set: function(val) {
                 item = val
             }
-        }
-        source.$first = {
-            get: function() {
-                return this.$index === 0
-            }
-        }
-        source.$last = {
-            get: function() { //有时用户是传个普通数组
-                var n = typeof list.size === "function" ? list.size() : list.length
-                return this.$index === n - 1
-            }
-        }
-        source.$remove = function() {
-            return list.removeAt(ret.$index)
         }
         var ret = modelFactory(source, 0, watchEachOne)
         return ret
