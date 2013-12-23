@@ -25,6 +25,7 @@ define(["avalon"], function(avalon) {
                 //将keyCode转换为各种值
                 character = String.fromCharCode(event.which).toLowerCase(),
                 modif = "", possible = {};
+
         // 处理各种组合情况 (alt|ctrl|shift+X)
         if (event.altKey && special !== "alt") {
             modif += "alt+";
@@ -50,7 +51,7 @@ define(["avalon"], function(avalon) {
                 possible[ shiftNums[ character ] ] = true;
             }
         }
-        if (possible[ hotkeys ] && event.type == "keyup") {
+        if (possible[ hotkeys ]) {
             return true
         }
     }
@@ -82,12 +83,10 @@ define(["avalon"], function(avalon) {
                 avalon.Array.remove(callbacks, obj)
             }
         }
-        return false
     }
     avalon.bind(document, "keydown", hotkeysCallback)
-    avalon.bind(document, "keyup", hotkeysCallback)
     return avalon
 })
 
 
-//用法  ms-hotkeys-ctrl+1="callback"
+//用法  ms-hotkeys-ctrl+1="jumpHead" ms-hotkeys-ctrl+u="deleteLine"
