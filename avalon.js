@@ -19,7 +19,8 @@
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var serialize = oproto.toString
-    var aslice = [].slice
+    var ap = Array.prototype
+    var aslice = ap.slice
     var head = DOC.head || DOC.getElementsByTagName("head")[0] //HEAD元素
     var documentFragment = DOC.createDocumentFragment()
     var DONT_ENUM = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
@@ -1142,7 +1143,6 @@
             return a
         } else {
             var iterators = a[subscribers]
-
             iterators.forEach(function(fn) {
                 fn.rollback && fn.rollback()
             })
@@ -1186,7 +1186,8 @@
             var setter = val.set, getter = val.get
             accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                 var vmodel = watchProperties.vmodel
-                var value = accessor.value, preValue = value
+                var value = accessor.value,
+                        preValue = value
                 if (arguments.length) {
                     if (stopRepeatAssign) {
                         return //阻止重复赋值
@@ -1226,8 +1227,7 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            var value = updateModel(preValue, newValue, valueType)
-                            accessor.value = value
+                            var value = accessor.value = updateModel(preValue, newValue, valueType)
                             var fn = updateLater[value.$id]
                             fn && fn()
                             vmodel.$fire(name, value, preValue)
@@ -1239,16 +1239,16 @@
                         }
                         notifySubscribers(accessor) //通知顶层改变
                         if (simpleType) {
-                            vmodel.$fire(name, accessor.value, preValue)
+                            vmodel.$fire(name, newValue, preValue)
                         }
                     }
                 } else {
                     collectSubscribers(accessor) //收集视图函数
-                    return preValue
+                    return  preValue
                 }
             }
             if (rchecktype.test(valueType)) {
-                var complexValue = val.$model ? val : modelFactory(val)
+                var complexValue = val.$model ? val : modelFactory(val, val)
                 accessor.value = complexValue
                 accessor[subscribers] = complexValue[subscribers]
                 model[name] = complexValue.$model
@@ -1290,7 +1290,6 @@
                 normalProperties[name] = true
             }
         }
-        //IE6-8的JS引擎有点问题，无法将vmodel传进去
         for (var i in scope) {
             loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
@@ -2652,7 +2651,7 @@
     function convert(val) {
         var type = getType(val)
         if (rchecktype.test(type)) {
-            val = val.$id ? val : modelFactory(val, val, type)
+            val = val.$id ? val : modelFactory(val, val)
         }
         return val
     }
@@ -2670,7 +2669,7 @@
         return -1
     }
 
-    var _splice = [].splice
+    var _splice = ap.splice
     var CollectionPrototype = {
         _splice: _splice,
         _add: function(arr, pos) {
@@ -2697,11 +2696,11 @@
             return ret
         },
         push: function() {
-            [].push.apply(this.$model, arguments)
+            ap.push.apply(this.$model, arguments)
             return this._add(arguments) //返回长度
         },
         unshift: function() {
-            [].unshift.apply(this.$model, arguments)
+            ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
             notifySubscribers(this, "index", arguments.length)
             return ret
@@ -2803,7 +2802,7 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            [][method].apply(this.$model, arguments)
+            ap[method].apply(this.$model, arguments)
             var sorted = false
             for (var i = 0, n = this.length; i < n; i++) {
                 var a = this.$model[i],
@@ -2986,7 +2985,7 @@
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], host, data) //300
-                    avalon.vmodels.proxy = proxy
+                    //  avalon.vmodels.proxy = proxy
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -3070,11 +3069,12 @@
                     if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
                         (function(key, val) {
                             if (!mapper[key]) {
-                                var proxy = createWithProxy(key, getter, data.$outer)
-                                mapper[key] = proxy
+                                mapper[key] = createWithProxy(key, getter, data.$outer)
                             }
                             var tview = data.template.cloneNode(true)
-                            scanNodes(tview, [mapper[key], val].concat(data.vmodels))
+                            var firstVM = mapper[key]
+                            var base = typeof val === "object" ? [firstVM, firstVM.$val] : [firstVM]
+                            scanNodes(tview, base.concat(data.vmodels))
                             if (typeof group !== "number") {
                                 data.group = tview.childNodes.length
                             }
@@ -3137,7 +3137,8 @@
                 }
             }
         }, 0, {
-            $val: 1
+            $val: 1,
+            $key: 1
         })
     }
     var watchEachOne = oneObject("$index,$first,$last")
