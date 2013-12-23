@@ -1170,9 +1170,102 @@
         }
         return x !== x && y !== y
     }
-    var unwatchOne = oneObject("$id,$skipArray,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers)
+    function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
+        if (normalProperties[name]) {//如果是指明不用监控的系统属性，或放到 $skipArray里面
+            return  normalProperties[name] = val
+        }
+        if (name.charAt(0) === "$" && !watchProperties[name]) {//如果是$开头，并且不在watchMore里面的
+            return normalProperties[name] = val
+        }
+        var valueType = getType(val)
+        if (valueType === "function") {//如果是函数，也不用监控
+            return model[name] = normalProperties[name] = val
+        }
+        var accessor, oldArgs
+        if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+            var setter = val.set, getter = val.get
+            accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
+                var vmodel = watchProperties.vmodel
+                var value = accessor.value, preValue = value
+                if (arguments.length) {
+                    if (stopRepeatAssign) {
+                        return //阻止重复赋值
+                    }
+                    if (typeof setter === "function") {
+                        var backup = vmodel.$events[name]
+                        vmodel.$events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                        setter.call(vmodel, newValue)
+                        vmodel.$events[name] = backup
+                    }
+                    if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
+                        oldArgs = newValue
+                        newValue = accessor.value = model[name] = getter.call(vmodel)
+                        notifySubscribers(accessor) //通知顶层改变
+                        vmodel.$fire(name, newValue, preValue)
+                    }
+                } else {
+                    if (avalon.openComputedCollect) { // 收集视图刷新函数
+                        collectSubscribers(accessor)
+                    }
+                    newValue = accessor.value = model[name] = getter.call(vmodel)
+                    if (!isEqual(value, newValue)) {
+                        oldArgs = void 0
+                        vmodel.$fire(name, newValue, preValue)
+                    }
+                    return newValue
+                }
+            }
+            computedProperties.push(accessor)
+        } else {
+            accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
+                var vmodel = watchProperties.vmodel
+                var preValue = accessor.value, simpleType
+                if (arguments.length) {
+                    if (stopRepeatAssign) {
+                        return //阻止重复赋值
+                    }
+                    if (!isEqual(preValue, newValue)) {
+                        if (rchecktype.test(valueType)) {
+                            var value = updateModel(preValue, newValue, valueType)
+                            accessor.value = value
+                            var fn = updateLater[value.$id]
+                            fn && fn()
+                            vmodel.$fire(name, value, preValue)
+                            accessor[subscribers] = value[subscribers]
+                            model[name] = value.$model
+                        } else { //如果是其他数据类型
+                            model[name] = accessor.value = newValue //更新$model中的值
+                            simpleType = true
+                        }
+                        notifySubscribers(accessor) //通知顶层改变
+                        if (simpleType) {
+                            vmodel.$fire(name, accessor.value, preValue)
+                        }
+                    }
+                } else {
+                    collectSubscribers(accessor) //收集视图函数
+                    return preValue
+                }
+            }
+            if (rchecktype.test(valueType)) {
+                var complexValue = val.$model ? val : modelFactory(val)
+                accessor.value = complexValue
+                accessor[subscribers] = complexValue[subscribers]
+                model[name] = complexValue.$model
+            } else {
+                model[name] = accessor.value = val
+            }
+        }
+        accessor[subscribers] = [] //订阅者数组
+        accessingProperties[name] = {
+            set: accessor,
+            get: accessor,
+            enumerable: true
+        }
+    }
+    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers).match(rword)
 
-    function modelFactory(scope, model, watchMore) {
+    function modelFactory(scope, model) {
         if (Array.isArray(scope)) {
             var collection = Collection(scope)
             collection._add(scope)
@@ -1181,143 +1274,56 @@
         if (typeof scope.nodeType === "number") {
             return scope
         }
-        var skipArray = scope.$skipArray, //要忽略监控的属性名列表
-                vmodel = {}, //要返回的对象
-                accessores = {}, //内部用于转换的对象
-                callSetters = [],
-                callGetters = [],
-                VBPublics = Object.keys(unwatchOne) //抽取不用监控的属性名，它们也将应用于IE6-8
-        model = model || {} //这是vmodel上的$model属性
-        watchMore = watchMore || {} //放置强制要监听的属性名，即便它是$开头
-        skipArray = Array.isArray(skipArray) ? skipArray.concat(VBPublics) : VBPublics
-
-        function loop(name, val) {
-            if (!unwatchOne[name]) {
-                model[name] = val
-            }
-            var valueType = getType(val)
-            if (valueType === "function") {
-                VBPublics.push(name) //函数无需要转换
-            } else {
-                if (skipArray.indexOf(name) !== -1 || (name.charAt(0) === "$" && !watchMore[name])) {
-                    return VBPublics.push(name)
-                }
-                var accessor, oldArgs
-                if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
-                    var setter = val.set,
-                            getter = val.get
-                    accessor = function(neo) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
-                        var value = accessor.value,
-                                preValue = value
-                        if (arguments.length) {
-                            if (stopRepeatAssign) {
-                                return //阻止重复赋值
-                            }
-                            if (typeof setter === "function") {
-                                var backup = vmodel.$events[name]
-                                vmodel.$events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
-                                setter.call(vmodel, neo)
-                                vmodel.$events[name] = backup
-                            }
-                            if (!isEqual(oldArgs, neo)) { //只检测用户的传参是否与上次是否一致
-                                oldArgs = neo
-                                value = accessor.value = model[name] = getter.call(vmodel)
-                                notifySubscribers(accessor) //通知顶层改变
-                                vmodel.$fire && vmodel.$fire(name, value, preValue)
-                            }
-                        } else {
-                            if (avalon.openComputedCollect) { // 收集视图刷新函数
-                                collectSubscribers(accessor)
-                            }
-                            neo = accessor.value = model[name] = getter.call(vmodel)
-                            if (!isEqual(value, neo)) {
-                                oldArgs = void 0
-                                vmodel.$fire && vmodel.$fire(name, neo, value)
-                            }
-                            return neo
-                        }
-                    }
-                    callGetters.push(accessor)
-                } else {
-                    accessor = function(neo) { //创建监控属性或数组，自变量，由用户触发其改变
-                        var value = accessor.value,
-                                preValue = value,
-                                complexValue
-                        if (arguments.length) {
-                            if (stopRepeatAssign) {
-                                return //阻止重复赋值
-                            }
-                            if (!isEqual(value, neo)) {
-                                if (rchecktype.test(valueType)) {
-                                    if ("value" in accessor) { //如果已经转换过
-                                        value = updateViewModel(value, neo, valueType)
-                                        accessor.value = value
-                                        var fn = updateLater[value.$id]
-                                        fn && fn()
-                                        vmodel.$fire && vmodel.$fire(name, value, preValue)
-                                    } else { //如果本来就是VM就直接输出，否则要转换
-                                        value = neo.$model ? neo : modelFactory(neo, neo)
-                                    }
-                                    accessor[subscribers] = value[subscribers]
-                                    complexValue = value.$model
-                                } else { //如果是其他数据类型
-                                    value = neo
-                                }
-                                accessor.value = value
-                                model[name] = complexValue ? complexValue : value //更新$model中的值
-                                notifySubscribers(accessor) //通知顶层改变
-                                if (!complexValue) {
-                                    vmodel.$fire && vmodel.$fire(name, value, preValue)
-                                }
-                            }
-                        } else {
-                            collectSubscribers(accessor) //收集视图函数
-                            return value
-                        }
-                    }
-                    callSetters.push(name)
-                }
-                accessor[subscribers] = [] //订阅者数组
-
-                accessores[name] = {
-                    set: accessor,
-                    get: accessor,
-                    enumerable: true
-                }
+        var vmodel = {} //要返回的对象
+        model = model || {}          //放置$model上的属性
+        var accessingProperties = {} //放置监控属性
+        var normalProperties = {}//放置普通属性
+        var computedProperties = []//放置计算属性的访问器
+        var watchProperties = arguments[2] || {}
+        for (var i = 0, name; name = skipProperties[i++]; ) {
+            normalProperties[name] = true
+        }
+        var skipArray = scope.$skipArray //要忽略监控的属性名列表
+        delete scope.$skipArray
+        if (Array.isArray(skipArray)) {
+            for (var i = 0, name; name = skipArray[i++]; ) {
+                normalProperties[name] = true
             }
         }
+        //IE6-8的JS引擎有点问题，无法将vmodel传进去
         for (var i in scope) {
-            loop(i, scope[i])
+            loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
-        vmodel = defineProperties(vmodel, accessores, VBPublics) //生成一个空的ViewModel
-        VBPublics.forEach(function(name) {
-            if (!unwatchOne[name]) { //先为函数等不被监控的属性赋值
-                vmodel[name] = scope[name]
-            }
-        })
-        callSetters.forEach(function(prop) { //再为监控属性赋值
-            vmodel[prop] = scope[prop]
-        })
-        callGetters.forEach(function(fn) { //最后强逼计算属性 计算自己的值
-            Registry[expose] = fn
-            fn()
-            collectSubscribers(fn)
-            delete Registry[expose]
-        })
+        vmodel = defineProperties(vmodel, accessingProperties, normalProperties) //生成一个空的ViewModel
+        for (var name in normalProperties) {
+            vmodel[name] = normalProperties[name]
+        }
+        watchProperties.vmodel = vmodel
+//        if (!W3C) {
+//            for (var fuckIE in accessingProperties) {//强制传它的VM进去
+//                accessingProperties[fuckIE].get.fuckIE = vmodel
+//            }
+//        }
         vmodel.$model = model
         vmodel.$events = {}
         vmodel.$id = generateID()
-        vmodel.$accessor = accessores
+        vmodel.$accessor = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
             var fn = Observable[i]
-            if (!W3C) { //只有在IE678才加此补丁，因为VB对象的方法里的this并不指向自身，需要用bind处理一下
+            if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
                 fn = fn.bind(vmodel)
             }
             vmodel[i] = fn
         }
         vmodel.hasOwnProperty = function(name) {
             return name in vmodel.$model
+        }
+        for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
+            Registry[expose] = fn
+            fn()
+            collectSubscribers(fn)
+            delete Registry[expose]
         }
         return vmodel
     }
@@ -1361,19 +1367,16 @@
             "End Function"
         ].join("\n"), "VBScript")
 
-        function VBMediator(description, name, value) {
-            var fn = description[name] && description[name].set
+        function VBMediator(accessingProperties, name, value) {
+            var accessor = accessingProperties[name] && accessingProperties[name].set
             if (arguments.length === 3) {
-                fn(value)
+                accessor(value)
             } else {
-                return fn()
+                return accessor()
             }
         }
-        defineProperties = function(publics, description, array) {
-            publics = array.slice(0)
-            publics.push("hasOwnProperty")
-            var className = "VBClass" + setTimeout("1"),
-                    owner = {}, buffer = []
+        defineProperties = function(name, accessingProperties, normalProperties) {
+            var className = "VBClass" + setTimeout("1"), buffer = []
             buffer.push(
                     "Class " + className,
                     "\tPrivate [__data__], [__proxy__]",
@@ -1381,30 +1384,31 @@
                     "\t\tSet [__data__] = d: set [__proxy__] = p",
                     "\t\tSet [__const__] = Me", //链式调用
                     "\tEnd Function")
-            publics.forEach(function(name) { //添加公共属性,如果此时不加以后就没机会了
-                if (owner[name] !== true) {
-                    owner[name] = true //因为VBScript对象不能像JS那样随意增删属性
-                    buffer.push("\tPublic [" + name + "]") //你可以预先放到skipArray中
+            //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
+            for (name in normalProperties) {
+                buffer.push("\tPublic [" + name + "]")
+            }
+            buffer.push("\tPublic [" + 'hasOwnProperty' + "]")
+            //添加访问器属性 
+            for (name in accessingProperties) {
+                if (!(name in normalProperties)) {//防止重复定义
+                    buffer.push(
+                            //由于不知对方会传入什么,因此set, let都用上
+                            "\tPublic Property Let [" + name + "](val" + expose + ")", //setter
+                            "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
+                            "\tEnd Property",
+                            "\tPublic Property Set [" + name + "](val" + expose + ")", //setter
+                            "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
+                            "\tEnd Property",
+                            "\tPublic Property Get [" + name + "]", //getter
+                            "\tOn Error Resume Next", //必须优先使用set语句,否则它会误将数组当字符串返回
+                            "\t\tSet[" + name + "] = [__proxy__]([__data__],\"" + name + "\")",
+                            "\tIf Err.Number <> 0 Then",
+                            "\t\t[" + name + "] = [__proxy__]([__data__],\"" + name + "\")",
+                            "\tEnd If",
+                            "\tOn Error Goto 0",
+                            "\tEnd Property")
                 }
-            })
-            for (var name in description) {
-                owner[name] = true
-                buffer.push(
-                        //由于不知对方会传入什么,因此set, let都用上
-                        "\tPublic Property Let [" + name + "](val" + expose + ")", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
-                        "\tEnd Property",
-                        "\tPublic Property Set [" + name + "](val" + expose + ")", //setter
-                        "\t\tCall [__proxy__]([__data__], \"" + name + "\", val" + expose + ")",
-                        "\tEnd Property",
-                        "\tPublic Property Get [" + name + "]", //getter
-                        "\tOn Error Resume Next", //必须优先使用set语句,否则它会误将数组当字符串返回
-                        "\t\tSet[" + name + "] = [__proxy__]([__data__],\"" + name + "\")",
-                        "\tIf Err.Number <> 0 Then",
-                        "\t\t[" + name + "] = [__proxy__]([__data__],\"" + name + "\")",
-                        "\tEnd If",
-                        "\tOn Error Goto 0",
-                        "\tEnd Property")
             }
             buffer.push("End Class") //类定义完毕
             buffer.push(
@@ -1414,7 +1418,7 @@
                     "\tSet " + className + "Factory = o",
                     "End Function")
             window.parseVB(buffer.join("\r\n")) //先创建一个VB类工厂
-            return window[className + "Factory"](description, VBMediator) //得到其产品
+            return window[className + "Factory"](accessingProperties, VBMediator) //得到其产品
         }
     }
 
@@ -3117,7 +3121,7 @@
             var nextSibling = node.nextSibling
             view.appendChild(node)
             node = nextSibling
-            if(!node){
+            if (!node) {
                 break
             }
         }

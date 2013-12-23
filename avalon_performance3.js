@@ -1186,7 +1186,8 @@
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             var setter = val.set, getter = val.get
             accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
-                var vmodel = accessor.fuckIE, value = accessor.value, preValue = value
+                var vmodel = watchProperties.vmodel
+                var value = accessor.value, preValue = value
                 if (arguments.length) {
                     if (stopRepeatAssign) {
                         return //阻止重复赋值
@@ -1218,7 +1219,8 @@
             computedProperties.push(accessor)
         } else {
             accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
-                var vmodel = accessor.fuckIE, preValue = accessor.value, simpleType
+                var vmodel = watchProperties.vmodel
+                var preValue = accessor.value, simpleType
                 if (arguments.length) {
                     if (stopRepeatAssign) {
                         return //阻止重复赋值
@@ -1297,9 +1299,7 @@
         for (var name in normalProperties) {
             vmodel[name] = normalProperties[name]
         }
-        for (var fuckIE in accessingProperties) {//强制传它的VM进去
-            accessingProperties[fuckIE].get.fuckIE = vmodel
-        }
+        watchProperties.vmodel = vmodel
         vmodel.$model = model
         vmodel.$events = {}
         vmodel.$id = generateID()
