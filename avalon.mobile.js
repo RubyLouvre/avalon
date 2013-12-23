@@ -1163,20 +1163,23 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels) {
-        var nodes = []
-        for (var i = 0, node; node = parent.childNodes[i++]; ) {
-            nodes.push(node)
-        }
-        for (var i = 0; node = nodes[i++]; ) {
+    function scanNodes(parent, vmodels, loop) {
+        var node = parent.firstChild
+        while (node) {
+            var nextNode = node.nextSibling
             if (node.nodeType === 1) {
+                if (loop === true) {
+                    loop = node
+                }
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
                 scanText(node, vmodels) //扫描文本节点
             }
+            node = nextNode
         }
+        return loop
     }
-
+    
     function scanText(textNode, vmodels) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
@@ -2594,17 +2597,7 @@
         }
         iteratorCallback(data, method)
     }
-    //收集要移除的节点，第一个节点要求先放进去
 
-    function gatherRemovedNodes(array, node, length) {
-        for (var i = 1; i < length; i++) {
-            node = node.nextSibling
-            if (!node)
-                break
-            array.push(node)
-        }
-        return array
-    }
     // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
@@ -2627,11 +2620,15 @@
     }
 
     function removeView(node, group, n) {
-        n = n || 1
-        var removeNodes = gatherRemovedNodes([node], node, group * n)
+        var length = group * (n || 1)
         var view = documentFragment.cloneNode(false)
-        for (var i = 0, node; node = removeNodes[i++]; ) {
-            view.appendChild(node) //通常添加到文档碎片实现移除
+        while (--length >= 0) {
+            var nextSibling = node.nextSibling
+            view.appendChild(node)
+            node = nextSibling
+            if (!node) {
+                break
+            }
         }
         return view
     }
