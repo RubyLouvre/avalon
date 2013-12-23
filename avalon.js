@@ -1186,7 +1186,7 @@
             var setter = val.set, getter = val.get
             accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                 var vmodel = watchProperties.vmodel
-                var value = accessor.value,
+                var value = model[name],
                         preValue = value
                 if (arguments.length) {
                     if (stopRepeatAssign) {
@@ -1200,7 +1200,7 @@
                     }
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
-                        newValue = accessor.value = model[name] = getter.call(vmodel)
+                        newValue =  model[name] = getter.call(vmodel)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -1208,7 +1208,7 @@
                     if (avalon.openComputedCollect) { // 收集视图刷新函数
                         collectSubscribers(accessor)
                     }
-                    newValue = accessor.value = model[name] = getter.call(vmodel)
+                    newValue =  model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
                         vmodel.$fire(name, newValue, preValue)
@@ -1220,21 +1220,21 @@
         } else {
             accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
                 var vmodel = watchProperties.vmodel
-                var preValue = accessor.value, simpleType
+                var preValue = model[name], simpleType
                 if (arguments.length) {
                     if (stopRepeatAssign) {
                         return //阻止重复赋值
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            var value = accessor.value = updateModel(preValue, newValue, valueType)
+                            var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
                             var fn = updateLater[value.$id]
                             fn && fn()
-                            vmodel.$fire(name, value, preValue)
+                            vmodel.$fire(name, value.$model, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
-                            model[name] = accessor.value = newValue //更新$model中的值
+                            model[name] = newValue //更新$model中的值
                             simpleType = true
                         }
                         notifySubscribers(accessor) //通知顶层改变
@@ -1244,16 +1244,16 @@
                     }
                 } else {
                     collectSubscribers(accessor) //收集视图函数
-                    return  preValue
+                    return  accessor.$vmodel || preValue
                 }
             }
             if (rchecktype.test(valueType)) {
                 var complexValue = val.$model ? val : modelFactory(val, val)
-                accessor.value = complexValue
+                accessor.$vmodel = complexValue
                 accessor[subscribers] = complexValue[subscribers]
                 model[name] = complexValue.$model
             } else {
-                model[name] = accessor.value = val
+                model[name]  = val
             }
         }
         accessor[subscribers] = [] //订阅者数组
