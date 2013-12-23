@@ -2987,6 +2987,7 @@
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = createEachProxy(ii, arr[i], host, data) //300
+                    avalon.vmodels.proxy = proxy
                     var tview = data.template.cloneNode(true)
                     mapper.splice(ii, 0, proxy)
                     var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]

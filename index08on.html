@@ -7,7 +7,7 @@
         <script>
 
 
-            avalon.define("xxx", function(vm) {
+            avalon.define("on", function(vm) {
                 vm.firstName = "司徒"
                 vm.array = ["aaa", "bbb", "ccc"]
                 vm.argsClick = function(e, a, b) {
@@ -22,7 +22,7 @@
     </head>
     <body>
         <h3 style="text-align: center">ms-on-*</h3>
-        <fieldset ms-controller="xxx">
+        <fieldset ms-controller="on">
             <legend>有关事件回调传参</legend>
             <div ms-click="argsClick($event, 100, firstName)">点我</div>
             <div ms-each-el="array" >
