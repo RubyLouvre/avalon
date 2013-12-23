@@ -1299,11 +1299,6 @@
             vmodel[name] = normalProperties[name]
         }
         watchProperties.vmodel = vmodel
-//        if (!W3C) {
-//            for (var fuckIE in accessingProperties) {//强制传它的VM进去
-//                accessingProperties[fuckIE].get.fuckIE = vmodel
-//            }
-//        }
         vmodel.$model = model
         vmodel.$events = {}
         vmodel.$id = generateID()
