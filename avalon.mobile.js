@@ -899,7 +899,7 @@
     }
     var updateLater = {}
 
-    function updateViewModel(a, b, valueType) {
+    function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             var bb = b.concat()
