@@ -1879,26 +1879,21 @@
     avalon.parseExpr = parseExpr
 
     function updateViewFactory(expr, scopes, data, tokens) {
-        //  var array, updateView
         if (!tokens) {
             parseExpr(expr, scopes, data)
-
         } else {
-//            array = tokens.map(function(token) {
-//                return token.expr ? parseExpr(token.value, scopes, data) || "" : token.value
-//            })
-//            updateView = function() {
-//                var ret = ""
-//                for (var i = 0, el; el = array[i++]; ) {
-//                    if (typeof el === "string") {
-//                        ret += el
-//                    } else {
-//                        var fn = el[0]
-//                        ret += fn.apply(fn, el[1])
-//                    }
-//                }
-//                callback(ret, data.element)
-//            }
+            var array = tokens.map(function(token) {
+                var tmpl = {}
+                return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
+            })
+            data.evaluator = function() {
+                var ret = ""
+                for (var i = 0, el; el = array[i++]; ) {
+                    ret += typeof el === "string" ? el : el.evaluator.apply(0, el.args)
+                }
+                return ret
+            }
+            data.args = []
         }
         if (data.evaluator) {
             data.handler = bindingExecutors[data.type]
@@ -2150,8 +2145,48 @@
             avalon.nextTick(function() {
                 scanNodes(elem, data.vmodels)
             })
+        },
+        "class": function(cls, elem, data) {
+            var $elem = avalon(elem), method = data.type, oldClass
+            if (method === "class" && data.param) {//如果是旧风格
+                $elem.toggleClass(data.param, !!cls)
+            } else {
+                var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
+                var className = data._class || cls
+                if (!data.init) {
+                    switch (method) {
+                        case "class":
+                            if (toggle && oldClass) {
+                                $elem.removeClass(oldClass)
+                            }
+                            $elem.toggleClass(className, toggle)
+                            oldClass = className
+                            break;
+                        case "hover":
+                        case "active":
+                            if (method === "hover") { //在移出移入时切换类名
+                                var event1 = "mouseenter", event2 = "mouseleave"
+                            } else { //在聚焦失焦中切换类名
+                                elem.tabIndex = elem.tabIndex || -1
+                                event1 = "mousedown", event2 = "mouseup"
+                                $elem.bind("mouseleave", function() {
+                                    toggle && $elem.removeClass(className)
+                                })
+                            }
+                            $elem.bind(event1, function() {
+                                toggle && $elem.addClass(className)
+                            })
+                            $elem.bind(event2, function() {
+                                toggle && $elem.removeClass(className)
+                            })
+                            break;
+                    }
+                    data.init = 1
+                }
+            }
         }
     }
+    bindingExecutors.hover = bindingExecutors.active = bindingExecutors["class"]
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var elem = data.element
@@ -2343,70 +2378,34 @@
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     "class,hover,active".replace(rword, function(method) {
         bindingHandlers[method] = function(data, vmodels) {
-            var oldStyle = data.param,
-                    elem = data.element,
-                    $elem = avalon(elem),
-                    toggle, oldClass
+            var oldStyle = data.param, text = data.value, rightExpr
             if (!oldStyle || isFinite(oldStyle)) {
-                var text = data.value
+                data.param = ""
                 var noExpr = text.replace(rexprg, function(a) {
                     return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
                 })
                 var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
                 if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
-                    var className = text,
-                            rightExpr
+                    var className = text
                 } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
-                    var array = parseExpr(rightExpr, vmodels, {})
-                    if (!Array.isArray(array)) {
+                    parseExpr(rightExpr, vmodels, data)
+                    if (!data.evaluator) {
                         log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
+                    } else {
+                        data._evaluator = data.evaluator
+                        data._args = data.args
                     }
-                    var callback = array[0],
-                            args = array[1]
                 }
                 var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
-
-                updateViewFactory("", vmodels, data, function(cls) {
-                    toggle = callback ? !!callback.apply(elem, args) : true
-                    className = hasExpr ? cls : className
-                    if (method === "class") {
-                        if (toggle && oldClass) {
-                            $elem.removeClass(oldClass)
-                        }
-                        $elem.toggleClass(className, toggle)
-                        oldClass = className
-                    }
-                }, (hasExpr ? scanExpr(className) : null))
-
-                if (method === "hover" || method === "active") {
-                    if (method === "hover") { //在移出移入时切换类名
-                        var event1 = "mouseenter"
-                        var event2 = "mouseleave"
-                        var event3
-                    } else { //在聚焦失焦中切换类名
-                        elem.tabIndex = elem.tabIndex || -1
-                        event1 = "mousedown", event2 = "mouseup", event3 = "mouseleave"
-                    }
-                    $elem.bind(event1, function() {
-                        toggle && $elem.addClass(className)
-                    })
-                    $elem.bind(event2, function() {
-                        toggle && $elem.removeClass(className)
-                    })
-                    if (event3) {
-                        $elem.bind(event3, function() {
-                            toggle && $elem.removeClass(className)
-                        })
-                    }
+                if (hasExpr) {
+                    data._class = className
                 }
-
+                updateViewFactory("", vmodels, data, (hasExpr ? scanExpr(className) : null))
             } else if (method === "class") {
-                updateViewFactory(data.value, vmodels, data, function(val) {
-                    $elem.toggleClass(oldStyle, !!val)
-                })
+                updateViewFactory(text, vmodels, data)
             }
         }
     })

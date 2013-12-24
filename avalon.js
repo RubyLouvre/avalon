@@ -2370,36 +2370,40 @@
                 updateViewFactory("", vmodels, data, function(cls) {
                     toggle = callback ? !!callback.apply(elem, args) : true
                     className = hasExpr ? cls : className
-                    if (method === "class") {
-                        if (toggle && oldClass) {
-                            $elem.removeClass(oldClass)
+                    if (!data.init) {
+                        switch (data.type) {
+                            case "class":
+                                if (toggle && oldClass) {
+                                    $elem.removeClass(oldClass)
+                                }
+                                $elem.toggleClass(className, toggle)
+                                oldClass = className
+                                break;
+                            case "hover":
+                            case "active":
+                                if (data.type === "hover") { //在移出移入时切换类名
+                                    var event1 = "mouseenter", event2 = "mouseleave", event3
+                                } else { //在聚焦失焦中切换类名
+                                    elem.tabIndex = elem.tabIndex || -1
+                                    event1 = "mousedown", event2 = "mouseup", event3 = "mouseleave"
+                                }
+                                $elem.bind(event1, function() {
+                                    toggle && $elem.addClass(className)
+                                })
+                                $elem.bind(event2, function() {
+                                    toggle && $elem.removeClass(className)
+                                })
+                                if (event3) {
+                                    $elem.bind(event3, function() {
+                                        toggle && $elem.removeClass(className)
+                                    })
+                                }
+                                break;
                         }
-                        $elem.toggleClass(className, toggle)
-                        oldClass = className
+                        data.init = 1
                     }
-                }, (hasExpr ? scanExpr(className) : null))
 
-                if (method === "hover" || method === "active") {
-                    if (method === "hover") { //在移出移入时切换类名
-                        var event1 = "mouseenter"
-                        var event2 = "mouseleave"
-                        var event3
-                    } else { //在聚焦失焦中切换类名
-                        elem.tabIndex = elem.tabIndex || -1
-                        event1 = "mousedown", event2 = "mouseup", event3 = "mouseleave"
-                    }
-                    $elem.bind(event1, function() {
-                        toggle && $elem.addClass(className)
-                    })
-                    $elem.bind(event2, function() {
-                        toggle && $elem.removeClass(className)
-                    })
-                    if (event3) {
-                        $elem.bind(event3, function() {
-                            toggle && $elem.removeClass(className)
-                        })
-                    }
-                }
+                }, (hasExpr ? scanExpr(className) : null))
 
             } else if (method === "class") {
                 updateViewFactory(data.value, vmodels, data, function(val) {
