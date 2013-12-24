@@ -1878,7 +1878,7 @@
     }
     avalon.parseExpr = parseExpr
 
-    function updateViewFactory(expr, scopes, data, callback, tokens) {
+    function updateViewFactory(expr, scopes, data, tokens) {
         //  var array, updateView
         if (!tokens) {
             parseExpr(expr, scopes, data)
@@ -1991,7 +1991,6 @@
     }
     var bindingExecutors = avalon.bindingExecutors = {
         "if": function(val, elem, data) {
-            console.log("1111111111111111")
             var parent = data.parent, placehoder = data.placehoder
             if (val) { //如果它不在到其父节点里，则添加回去
                 if (!parent.contains(elem)) {
@@ -2018,6 +2017,139 @@
                     elem.innerText = val
                 }
             }
+        },
+        "data": function(val, elem, data) {
+            var key = "data-" + data.param
+            if (val && typeof val === "object") {
+                elem[key] = val
+            } else {
+                elem.setAttribute(key, String(val))
+            }
+        },
+        "visible": function(val, elem, data) {
+            elem.style.display = val ? data.display : "none"
+        },
+        "disabled": function(val, elem, data) {
+            var name = data.type,
+                    propName = name === "readonly" ? "readOnly" : name
+            elem[propName] = !!val
+        },
+        "enabled": function(val, elem, data) {
+            elem.disabled = !val
+        },
+        //     bindingExecutors
+        "href": function(val, elem, data) {
+            var method = data.type, attrName = data.param
+            if (method === "css") {
+                avalon(elem).css(attrName, val)
+            } else if (method === "attr") {
+                // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
+                // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
+                // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+                var toRemove = (val === false) || (val === null) || (val === void 0)
+                if (toRemove)
+                    elem.removeAttribute(attrName)
+                if (fuckIEAttr && attrName in propMap) {
+                    attrName = propMap[attrName]
+                    if (toRemove) {
+                        elem.removeAttribute(attrName)
+                    } else {
+                        elem[attrName] = val
+                    }
+                } else if (!toRemove) {
+                    elem.setAttribute(attrName, val)
+                }
+            } else if (method === "include" && val) {
+                var vmodels = data.vmodels
+                var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
+                var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+                function scanTemplate(text) {
+                    if (loaded) {
+                        text = loaded.apply(elem, [text].concat(vmodels))
+                    }
+                    avalon.innerHTML(elem, text)
+                    scanNodes(elem, vmodels)
+                    rendered && checkScan(elem, function() {
+                        rendered.call(elem)
+                    })
+                }
+                if (data.param === "src") {
+                    if (includeContents[val]) {
+                        scanTemplate(includeContents[val])
+                    } else {
+                        var xhr = getXHR()
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                var s = xhr.status
+                                if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                                    scanTemplate(includeContents[val] = xhr.responseText)
+                                }
+                            }
+                        }
+                        xhr.open("GET", val, true)
+                        if ("withCredentials" in xhr) {
+                            xhr.withCredentials = true
+                        }
+                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                        xhr.send(null)
+                    }
+                } else {
+                    //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
+                    //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
+                    var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
+                    if (el) {
+                        if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+                            var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                            xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
+                            xhr.send(null)
+                            //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+                            var noscripts = DOC.getElementsByTagName("noscript")
+                            var array = (xhr.responseText || "").match(rnoscripts) || []
+                            var n = array.length
+                            for (var i = 0; i < n; i++) {
+                                var tag = noscripts[i]
+                                if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
+                                    tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
+                                    tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
+                                }
+                            }
+                        }
+                        avalon.nextTick(function() {
+                            scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
+                        })
+                    }
+                }
+            } else {
+                elem[method] = val
+            }
+        },
+        "html": function(val, elem, data) {
+            val = val == null ? "" : val
+            if (data.replaceNodes) {
+                var fragment, nodes
+                if (val.nodeType === 11) {
+                    fragment = val
+                } else if (val.nodeType === 1 || val.item) {
+                    nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
+                    fragment = documentFragment.cloneNode(true)
+                    while (nodes[0]) {
+                        fragment.appendChild(nodes[0])
+                    }
+                } else {
+                    fragment = avalon.parseHTML(val)
+                }
+                var replaceNodes = avalon.slice(fragment.childNodes)
+                elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+                for (var i = 0, node; node = data.replaceNodes[i++]; ) {
+                    elem.removeChild(node)
+                }
+                data.replaceNodes = replaceNodes
+            } else {
+                avalon.innerHTML(elem, val)
+            }
+            avalon.nextTick(function() {
+                scanNodes(elem, data.vmodels)
+            })
         }
     }
     var bindingHandlers = avalon.bindingHandlers = {
@@ -2100,23 +2232,20 @@
             }
             data.remove = ret
         },
-        "data": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                var key = "data-" + data.param
-                if (val && typeof val === "object") {
-                    elem[key] = val
-                } else {
-                    elem.setAttribute(key, String(val))
-                }
-            })
-        },
+//        "data": function(data, vmodels) {
+//            updateViewFactory(data.value, vmodels, data)
+//        },
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data)
-
         },
+        //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
+        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
+//        "disabled": function(data, vmodels) {
+//            updateViewFactory(data.value, vmodels, data)
+//        },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
             var elem = data.element
@@ -2124,17 +2253,14 @@
                 var display = parseDisplay(elem.tagName)
             }
             display = display || avalon(elem).css("display")
-            display = display === "none" ? parseDisplay(elem.tagName) : display
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                elem.style.display = val ? display : "none"
-            })
+            data.display = display === "none" ? parseDisplay(elem.tagName) : display
+            updateViewFactory(data.value, vmodels, data)
         },
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
         "href": function(data, vmodels) {
             var text = data.value.trim(),
-                    simple = true,
-                    method = data.type
+                    simple = true
             if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
                 simple = false
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
@@ -2142,131 +2268,14 @@
                     text = RegExp.$1
                 }
             }
-            updateViewFactory(text, vmodels, data, function(val, elem) {
-                if (method === "css") {
-                    avalon(elem).css(data.param, val)
-                } else if (method === "attr") {
-                    // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-                    // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-                    // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-                    var attrName = data.param
-                    var toRemove = (val === false) || (val === null) || (val === void 0)
-                    if (toRemove)
-                        elem.removeAttribute(attrName)
-                    if (fuckIEAttr && attrName in propMap) {
-                        attrName = propMap[attrName]
-                        if (toRemove) {
-                            elem.removeAttribute(attrName)
-                        } else {
-                            elem[attrName] = val
-                        }
-                    } else if (!toRemove) {
-                        elem.setAttribute(attrName, val)
-                    }
-                } else if (method === "include" && val) {
-                    var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
-                    var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
-
-                    function scanTemplate(text) {
-                        if (loaded) {
-                            text = loaded.apply(elem, [text].concat(vmodels))
-                        }
-                        avalon.innerHTML(elem, text)
-                        scanNodes(elem, vmodels)
-                        rendered && checkScan(elem, function() {
-                            rendered.call(elem)
-                        })
-                    }
-                    if (data.param === "src") {
-                        if (includeContents[val]) {
-                            scanTemplate(includeContents[val])
-                        } else {
-                            var xhr = getXHR()
-                            xhr.onreadystatechange = function() {
-                                if (xhr.readyState === 4) {
-                                    var s = xhr.status
-                                    if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                                        scanTemplate(includeContents[val] = xhr.responseText)
-                                    }
-                                }
-                            }
-                            xhr.open("GET", val, true)
-                            if ("withCredentials" in xhr) {
-                                xhr.withCredentials = true
-                            }
-                            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
-                            xhr.send(null)
-                        }
-                    } else {
-                        //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
-                        //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
-                        var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
-                        if (el) {
-                            if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
-                                var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
-                                xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
-                                xhr.send(null)
-                                //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
-                                var noscripts = DOC.getElementsByTagName("noscript")
-                                var array = (xhr.responseText || "").match(rnoscripts) || []
-                                var n = array.length
-                                for (var i = 0; i < n; i++) {
-                                    var tag = noscripts[i]
-                                    if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
-                                        tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
-                                        tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
-                                    }
-                                }
-                            }
-                            avalon.nextTick(function() {
-                                scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
-                            })
-                        }
-                    }
-                } else {
-                    elem[method] = val
-                }
-            }, simple ? null : scanExpr(data.value))
-        },
-        //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
-        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
-        "disabled": function(data, vmodels) {
-            var name = data.type,
-                    propName = name === "readonly" ? "readOnly" : name
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                elem[propName] = !!val
-            })
+            if (data.type == "include") {
+                data.vmodels = vmodels
+            }
+            updateViewFactory(data.value, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
         "html": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                val = val == null ? "" : val
-                if (data.replaceNodes) {
-                    var fragment, nodes
-                    if (val.nodeType === 11) {
-                        fragment = val
-                    } else if (val.nodeType === 1 || val.item) {
-                        nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
-                        fragment = documentFragment.cloneNode(true)
-                        while (nodes[0]) {
-                            fragment.appendChild(nodes[0])
-                        }
-                    } else {
-                        fragment = avalon.parseHTML(val)
-                    }
-                    var replaceNodes = avalon.slice(fragment.childNodes)
-                    elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
-                    for (var i = 0, node; node = data.replaceNodes[i++]; ) {
-                        elem.removeChild(node)
-                    }
-                    data.replaceNodes = replaceNodes
-
-                } else {
-                    avalon.innerHTML(elem, val)
-                }
-                avalon.nextTick(function() {
-                    scanNodes(elem, vmodels)
-                })
-            })
+            data.vmodels = vmodels
+            updateViewFactory(data.value, vmodels, data)
         },
         //https://github.com/RubyLouvre/avalon/issues/27
         "with": function(data, vmodels) {
@@ -2405,18 +2414,17 @@
     //============================= boolean preperty binding =======================
     //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {
-        bindingHandlers[name] = bindingHandlers.disabled
+        bindingHandlers[name] = bindingHandlers.text
+        bindingExecutors[name] = bindingExecutors.disabled
     })
-    bindingHandlers.enabled = function(data, vmodels) {
-        updateViewFactory(data.value, vmodels, data, function(val, elem) {
-            elem.disabled = !val
-        })
-    }
+    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled = bindingHandlers.text
+
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
     "title,alt,src,value,css,include,attr".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.href
+        bindingExecutors[name] = bindingExecutors.href
     })
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
@@ -3858,3 +3866,6 @@
         avalon.scan(DOC.body)
     })
 })(document)
+/**
+ http://dev.oupeng.com/wp-content/uploads/20131109-kennyluck-optimizing-js-games.html#controls-slide
+ */
