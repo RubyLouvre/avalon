@@ -414,7 +414,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1421,7 +1421,7 @@
         avalon.openComputedCollect = true
         var fn = data.evaluator
         if (fn) {//如果是求值函数
-            fn.apply(0, data.args)
+            data.handler(fn.apply(0, data.args), data.element, data)
         } else {//如果是计算属性的accessor
             data()
         }
@@ -1464,8 +1464,7 @@
                 if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else {
-                    // callback(fn.apply(fn, args), data.element)
-                    fn.handler(fn.evaluator.apply(0, fn.args), el)
+                    fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
                 }
 
             }
@@ -1902,7 +1901,7 @@
 //            }
         }
         if (data.evaluator) {
-            data.handler = updateViewFactory[data.type + "Handler"]
+            data.handler = bindingExecutors[data.type]
             data.evaluator.toString = function() {
                 return data.type + " binding to eval(" + expr + ")"
             }
@@ -1990,11 +1989,40 @@
             return false;
         }
     }
-
+    var bindingExecutors = avalon.bindingExecutors = {
+        "if": function(val, elem, data) {
+            console.log("1111111111111111")
+            var parent = data.parent, placehoder = data.placehoder
+            if (val) { //如果它不在到其父节点里，则添加回去
+                if (!parent.contains(elem)) {
+                    try {
+                        parent.replaceChild(elem, placehoder)
+                    } catch (e) {
+                    }
+                }
+            } else { //如果它在其父节点里，则移除它，用注释节点占位
+                if (parent.contains(elem)) {
+                    parent.replaceChild(placehoder, elem)
+                    placehoder.elem = elem
+                    ifSanctuary.appendChild(elem)
+                }
+            }
+        },
+        "text": function(val, elem, data) {
+            if (data.nodeType === 3) { //绑定在文本节点上
+                data.node.nodeValue = val
+            } else {//绑定在特性节点上
+                if ("textContent" in elem) {
+                    elem.textContent = val
+                } else {
+                    elem.innerText = val
+                }
+            }
+        }
+    }
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
-            var placehoder = DOC.createComment("ms-if"),
-                    elem = data.element
+            var elem = data.element
             avalon(elem).addClass("fixMsIfFlicker")
             if (!root.contains(elem)) { //如果它不存在于DOM树
                 var scopes = elem["data-if-vmodels"]
@@ -2007,27 +2035,13 @@
             vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
             if (!vmodels.length)
                 return
-            elem["data-if-vmodels"] = void 0
+            data.placehoder = DOC.createComment("ms-if"),
+                    elem["data-if-vmodels"] = void 0
             elem.removeAttribute("ms-if")
             avalon(elem).removeClass("fixMsIfFlicker")
-            var parent = elem.parentNode
+            data.parent = elem.parentNode
             scanAttr(elem, vmodels)
-            updateViewFactory(data.value, vmodels, data, function(val) {
-                if (val) { //如果它不在到其父节点里，则添加回去
-                    if (!parent.contains(elem)) {
-                        try {
-                            parent.replaceChild(elem, placehoder)
-                        } catch (e) {
-                        }
-                    }
-                } else { //如果它在其父节点里，则移除它，用注释节点占位
-                    if (parent.contains(elem)) {
-                        parent.replaceChild(placehoder, elem)
-                        placehoder.elem = elem
-                        ifSanctuary.appendChild(elem)
-                    }
-                }
-            })
+            updateViewFactory(data.value, vmodels, data)
         },
         "on": function(data, vmodels) {
             data.type = "on"
@@ -2100,21 +2114,8 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            bindingHandlers["text"] = function(data, vmodels) {
-                updateViewFactory(data.value, vmodels, data)
-            }
-            updateViewFactory.textHandler = function(val, elem, data) {
-                if (data.nodeType === 3) { //绑定在文本节点上
-                    data.node.nodeValue = val
-                } else {//绑定在特性节点上
-                    if ("textContent" in elem) {
-                        elem.textContent = val
-                    } else {
-                        elem.innerText = val
-                    }
-                }
-            }
-            bindingHandlers["text"](data, vmodels)
+            updateViewFactory(data.value, vmodels, data)
+
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
