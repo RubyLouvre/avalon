@@ -1879,9 +1879,7 @@
     avalon.parseExpr = parseExpr
 
     function updateViewFactory(expr, scopes, data, tokens) {
-        if (!tokens) {
-            parseExpr(expr, scopes, data)
-        } else {
+        if (Array.isArray(tokens)) {
             var array = tokens.map(function(token) {
                 var tmpl = {}
                 return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
@@ -1894,6 +1892,8 @@
                 return ret
             }
             data.args = []
+        } else {
+            parseExpr(expr, scopes, data)
         }
         if (data.evaluator) {
             data.handler = bindingExecutors[data.type]
@@ -2029,10 +2029,9 @@
                     propName = name === "readonly" ? "readOnly" : name
             elem[propName] = !!val
         },
-        "enabled": function(val, elem, data) {
+        "enabled": function(val, elem) {
             elem.disabled = !val
         },
-        //     bindingExecutors
         "href": function(val, elem, data) {
             var method = data.type, attrName = data.param
             if (method === "css") {
@@ -2146,13 +2145,49 @@
                 scanNodes(elem, data.vmodels)
             })
         },
-        "class": function(cls, elem, data) {
+        "on": function(val, elem, data) {
+            if (!data.init) {
+                data.init = 1
+                var fn = data.evaluator
+                var args = data.args
+                var vmodels = data.vmodels
+                if (!data._event) {
+                    callback = function(e) {
+                        return fn.apply(0, args).call(this, e)
+                    }
+                } else {
+                    callback = function(e) {
+                        return fn.apply(this, args.concat(e))
+                    }
+                }
+                elem.$vmodel = vmodels[0]
+                elem.$vmodels = vmodels
+                if (typeof data.specialBind === "function") {
+                    data.specialBind(elem, callback)
+                } else {
+                    var removeFn = avalon.bind(elem, data.type, callback)
+                }
+                data.rollback = function() {
+                    if (typeof data.specialUnbind === "function") {
+                        data.specialUnbind()
+                    } else {
+                        avalon.unbind(elem, data.type, removeFn)
+                    }
+                }
+            }
+        },
+        "duplex": function(val, elem, data) {
+            if (!data.remove) {
+                modelBinding[elem.tagName](elem, data.evaluator, data.vmodel, data)
+            }
+        },
+        "class": function(val, elem, data) {
             var $elem = avalon(elem), method = data.type, oldClass
             if (method === "class" && data.param) {//如果是旧风格
-                $elem.toggleClass(data.param, !!cls)
+                $elem.toggleClass(data.param, !!val)
             } else {
                 var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
-                var className = data._class || cls
+                var className = data._class || val
                 if (!data.init) {
                     switch (method) {
                         case "class":
@@ -2186,7 +2221,7 @@
             }
         }
     }
-    bindingExecutors.hover = bindingExecutors.active = bindingExecutors["class"]
+
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var elem = data.element
@@ -2211,12 +2246,8 @@
             updateViewFactory(data.value, vmodels, data)
         },
         "on": function(data, vmodels) {
-            data.type = "on"
             var value = data.value,
-                    four = "$event",
-                    elem = data.element,
-                    type = data.param,
-                    ret = 0
+                    four = "$event"
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -2226,61 +2257,50 @@
             } else {
                 four = void 0
             }
-            var array = parseExpr(value, vmodels, data, four)
-            if (array) {
-                var fn = array[0],
-                        args = array[1],
-                        updateView = function() {
-                    if (!updateView.check) {
-                        updateView.check = 1
-                        return fn.apply(0, args)
-                    }
-                }
-                if (!four) {
-                    callback = function(e) {
-                        return fn.apply(0, args).call(this, e)
-                    }
-                } else {
-                    callback = function(e) {
-                        return fn.apply(this, args.concat(e))
-                    }
-                }
-                if (type && typeof callback === "function") {
-                    elem.$vmodel = vmodels[0]
-                    elem.$vmodels = vmodels
-                    if (typeof data.specialBind === "function") {
-                        data.specialBind(elem, callback)
-                    } else {
-                        var removeFn = avalon.bind(elem, type, callback)
-                    }
-                    ret = 1
-                    updateView.vmodels = vmodels
-                    updateView.rollback = function() {
-                        if (typeof data.specialUnbind === "function") {
-                            data.specialUnbind()
-                        } else {
-                            avalon.unbind(elem, type, removeFn)
-                        }
-                    }
-                    registerSubscriber(updateView, data)
-                }
-            }
-            data.remove = ret
+            data.type = "on"
+            data._event = four
+            data.vmodels = vmodels
+            updateViewFactory(data.value, vmodels, data, four)
         },
-//        "data": function(data, vmodels) {
-//            updateViewFactory(data.value, vmodels, data)
-//        },
+        //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
+        //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
+        "class": function(data, vmodels) {
+            var oldStyle = data.param, text = data.value, rightExpr
+            if (!oldStyle || isFinite(oldStyle)) {
+                data.param = "" //去掉数字
+                var noExpr = text.replace(rexprg, function(a) {
+                    return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+                })
+                var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
+                if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
+                    var className = text
+                } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
+                    className = text.slice(0, colonIndex)
+                    rightExpr = text.slice(colonIndex + 1)
+                    parseExpr(rightExpr, vmodels, data)
+                    if (!data.evaluator) {
+                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        return false
+                    } else {
+                        data._evaluator = data.evaluator
+                        data._args = data.args
+                    }
+                }
+                var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
+                if (hasExpr) {
+                    data._class = className
+                }
+                updateViewFactory("", vmodels, data, (hasExpr ? scanExpr(className) : null))
+            } else if (data.type === "class") {
+                updateViewFactory(text, vmodels, data)
+            }
+        },
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
             updateViewFactory(data.value, vmodels, data)
         },
-        //这是一个布尔属性绑定的范本，布尔属性插值要求整个都是一个插值表达式，用{{}}包起来
-        //布尔属性在IE下无法取得原来的字符串值，变成一个布尔
-//        "disabled": function(data, vmodels) {
-//            updateViewFactory(data.value, vmodels, data)
-//        },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
             var elem = data.element
@@ -2311,6 +2331,32 @@
         "html": function(data, vmodels) {
             data.vmodels = vmodels
             updateViewFactory(data.value, vmodels, data)
+        },
+        "duplex": function(data, vmodels) {
+            var elem = data.element,
+                    tagName = elem.tagName
+            delete data.remove
+            if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
+                var val = data.value.split("."),
+                        first = val[0],
+                        second = val[1]
+                for (var vm, i = vmodels.length - 1; vm = vmodels[i--]; ) {
+                    if (vm.hasOwnProperty(first)) {
+                        if (second && vm[first]) {
+                            if (vm[first].hasOwnProperty(second)) {
+                                break
+                            }
+                        } else {
+                            break
+                        }
+                    }
+                }
+                if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
+                    elem.name = generateID()
+                }
+                data.vmodel = vm
+                bindingHandlers.each(data.value, vmodels, data, "duplex")
+            }
         },
         //https://github.com/RubyLouvre/avalon/issues/27
         "with": function(data, vmodels) {
@@ -2373,51 +2419,17 @@
         }
         return result
     }
-    //============================================================================
-    //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
-    //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-    "class,hover,active".replace(rword, function(method) {
-        bindingHandlers[method] = function(data, vmodels) {
-            var oldStyle = data.param, text = data.value, rightExpr
-            if (!oldStyle || isFinite(oldStyle)) {
-                data.param = ""
-                var noExpr = text.replace(rexprg, function(a) {
-                    return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
-                })
-                var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
-                if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
-                    var className = text
-                } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
-                    className = text.slice(0, colonIndex)
-                    rightExpr = text.slice(colonIndex + 1)
-                    parseExpr(rightExpr, vmodels, data)
-                    if (!data.evaluator) {
-                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
-                        return false
-                    } else {
-                        data._evaluator = data.evaluator
-                        data._args = data.args
-                    }
-                }
-                var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
-                if (hasExpr) {
-                    data._class = className
-                }
-                updateViewFactory("", vmodels, data, (hasExpr ? scanExpr(className) : null))
-            } else if (method === "class") {
-                updateViewFactory(text, vmodels, data)
-            }
-        }
+    //============================   class preperty binding  =======================
+    "hover,active".replace(rword, function(method) {
+        bindingHandlers[method] = bindingHandlers["class"]
+        bindingExecutors[method] = bindingExecutors["class"]
     })
-
     //============================= boolean preperty binding =======================
-    //与disabled绑定器 用法差不多的其他布尔属性的绑定器
     "checked,readonly,selected".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.text
         bindingExecutors[name] = bindingExecutors.disabled
     })
     bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled = bindingHandlers.text
-
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
@@ -2427,48 +2439,10 @@
     })
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
-    var modelBinding = bindingHandlers.duplex = bindingHandlers.model = function(data, vmodels) {
-        var elem = data.element,
-                tagName = elem.tagName
-        if (data.type === "model") {
-            log("ms-model已经被废弃，请使用ms-duplex")
-        }
-        delete data.remove
-        if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
-            var array = parseExpr(data.value, vmodels, data, "duplex")
-            if (array) {
-                var val = data.value.split("."),
-                        first = val[0],
-                        second = val[1]
-                for (var vm, i = vmodels.length - 1; vm = vmodels[i--]; ) {
-                    if (vm.hasOwnProperty(first)) {
-                        if (second && vm[first]) {
-                            if (vm[first].hasOwnProperty(second)) {
-                                break
-                            }
-                        } else {
-                            break
-                        }
-                    }
-                }
-                if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
-                    elem.name = generateID()
-                }
-                data.remove = true
-                var updateView = modelBinding[tagName](data, array[0], vm)
-            }
-            if (!updateView) {
-                updateView = function() {
-                }
-            }
-            updateView.vmodels = vmodels
-            registerSubscriber(updateView, data)
-        }
-    }
+    var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-    modelBinding.INPUT = function(data, fn, scope) {
-        var element = data.element
+    modelBinding.INPUT = function(element, fn, scope, data) {
         var fixType = data.param
         var type = element.type,
                 removeFn,
