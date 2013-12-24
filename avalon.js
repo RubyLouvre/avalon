@@ -1200,7 +1200,7 @@
                     }
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
-                        newValue =  model[name] = getter.call(vmodel)
+                        newValue = model[name] = getter.call(vmodel)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -1208,7 +1208,7 @@
                     if (avalon.openComputedCollect) { // 收集视图刷新函数
                         collectSubscribers(accessor)
                     }
-                    newValue =  model[name] = getter.call(vmodel)
+                    newValue = model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
                         vmodel.$fire(name, newValue, preValue)
@@ -1253,7 +1253,7 @@
                 accessor[subscribers] = complexValue[subscribers]
                 model[name] = complexValue.$model
             } else {
-                model[name]  = val
+                model[name] = val
             }
         }
         accessor[subscribers] = [] //订阅者数组
@@ -1441,7 +1441,7 @@
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
                 var data = fn.data || fakeData
-                var el = data.element,
+                var el = data.element || fn.element,
                         remove
                 if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
@@ -1450,11 +1450,20 @@
                         remove = !avalon.contains(root, el)
                     }
                     if (remove) { //如果它没有在DOM树
+                        for (var i in fn) {
+                            delete fn[i]
+                        }
                         avalon.Array.remove(list, fn)
                         log("remove " + fn.name)
                     }
                 }
-                fn.apply(0, args) //强制重新计算自身
+                if (typeof fn === "function") {
+                    fn.apply(0, args) //强制重新计算自身
+                } else {
+                    // callback(fn.apply(fn, args), data.element)
+                    fn.handler(fn.evaluator.apply(0, fn.args), el)
+                }
+
             }
         }
     }
@@ -1535,6 +1544,7 @@
                     type: "text",
                     node: node,
                     param: "",
+                    nodeType: 3,
                     element: textNode.parentNode,
                     value: token.value,
                     filters: filters
@@ -1577,7 +1587,6 @@
                                 element: elem,
                                 remove: true,
                                 name: match[0],
-                                node: node,
                                 value: node.nodeValue
                             }
                             if (type === "repeat") {
@@ -1774,6 +1783,7 @@
         }) + code + four
         if (four === "duplex") {
             var fn = cacheExpr[exprId + expose]
+            data.evaluator = fn
             if (fn) {
                 return [fn]
             }
@@ -1799,6 +1809,8 @@
                 if (data.filters) {
                     args.push(avalon.filters)
                 }
+                data.evaluator = fn
+                data.args = args
                 return [fn, args]
             }
             var prefix = assigns.join(", ")
@@ -1855,6 +1867,8 @@
                 fn.apply(fn, args)
             }
             cacheExpr(exprId, fn)
+            data.evaluator = fn
+            data.args = args
             return [fn, args]
         } catch (e) {
             delete data.remove
@@ -1981,7 +1995,17 @@
             return false;
         }
     }
-
+    updateViewFactory.textHandler = function(val, elem, data) {
+        if (data.nodeType === 3) { //绑定在文本节点上
+            data.node.nodeValue = val
+        } else {//绑定在特性节点上
+            if ("textContent" in elem) {
+                elem.textContent = val
+            } else {
+                elem.innerText = val
+            }
+        }
+    }
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var placehoder = DOC.createComment("ms-if"),
@@ -2091,18 +2115,14 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            var node = data.node
-            updateViewFactory(data.value, vmodels, data, function(val, elem) {
-                if (node.nodeType === 2) { //如果是特性节点，说明在元素节点上使用了ms-text
-                    if ("textContent" in elem) {
-                        elem.textContent = val
-                    } else {
-                        elem.innerText = val
-                    }
-                } else {
-                    node.nodeValue = val
-                }
-            })
+            parseExpr(data.value, vmodels, data)
+            data.handler = updateViewFactory.textHandler
+            Registry[expose] = data //暴光此函数,方便collectSubscribers收集
+            avalon.openComputedCollect = true
+            var fn = data.evaluator
+            fn.apply(0, data.args)
+            avalon.openComputedCollect = false
+            delete Registry[expose]
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
@@ -2273,7 +2293,7 @@
             if (!args[1]) {
                 args[1] = widget + setTimeout("1")
             }
-            data.node.value = args.join(",")
+            data.value = args.join(",")
             element.stopScan = true
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
@@ -2874,7 +2894,7 @@
             data.element = data.parent = elem.parentNode
             data.startRepeat = startRepeat
             data.endRepeat = endRepeat
-            elem.removeAttribute(data.node.name)
+            elem.removeAttribute(data.name)
             data.parent.replaceChild(endRepeat, elem)
             data.parent.insertBefore(startRepeat, endRepeat)
             view.appendChild(elem.cloneNode(true))
