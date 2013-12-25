@@ -1261,13 +1261,24 @@
             }
         }
         accessor[subscribers] = [] //订阅者数组
-        accessingProperties[name] = {
-            set: accessor,
-            get: accessor,
-            enumerable: true
-        }
+        accessingProperties[name] = accessor
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers).match(rword)
+
+    var descriptorFactory = W3C ?  function(obj) {
+        var descriptors = {}
+        for (var i in obj) {
+            descriptors[i] = {
+                get: obj[i],
+                set: obj[i],
+                enumerable: true,
+                configurable: true
+            }
+        }
+        return descriptors
+    } : function(a){
+        return a
+    }
 
     function modelFactory(scope, model) {
         if (Array.isArray(scope)) {
@@ -1297,7 +1308,7 @@
         for (var i in scope) {
             loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
-        vmodel = defineProperties(vmodel, accessingProperties, normalProperties) //生成一个空的ViewModel
+        vmodel = defineProperties(vmodel, descriptorFactory(accessingProperties), normalProperties) //生成一个空的ViewModel
         for (var name in normalProperties) {
             vmodel[name] = normalProperties[name]
         }
@@ -1366,7 +1377,7 @@
         ].join("\n"), "VBScript")
 
         function VBMediator(accessingProperties, name, value) {
-            var accessor = accessingProperties[name] && accessingProperties[name].set
+            var accessor = accessingProperties[name] 
             if (arguments.length === 3) {
                 accessor(value)
             } else {
@@ -2249,7 +2260,7 @@
                         mapper.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
-                        proxy.$accessor.$last.get.element = firstChild || tview.firstChild
+                        proxy.$accessor.$last.element = firstChild || tview.firstChild
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
