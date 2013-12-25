@@ -414,7 +414,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
-//定位操作，返回数组中第一个等于给定参数的元素的索引值。
+            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1003,12 +1003,7 @@
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-    avalon.clearHTML = function(node) {
-        while (node.firstChild) {
-            node.removeChild(node.firstChild)
-        }
-        return node
-    }
+
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         html = html.replace(rxhtml, "<$1></$2>").trim()
@@ -1062,6 +1057,12 @@
         }
         var a = this.parseHTML(html)
         this.clearHTML(node).appendChild(a)
+    }
+    avalon.clearHTML = function(node) {
+        while (node.firstChild) {
+            node.removeChild(node.firstChild)
+        }
+        return node
     }
     /*********************************************************************
      *                           Define                                 *
@@ -1171,15 +1172,16 @@
     }
 
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
+        model[name] = true
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
-            return  model[name] = normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
-            return   model[name] = normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         var valueType = getType(val)
         if (valueType === "function") { //如果是函数，也不用监控
-            return model[name] = normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         var accessor, oldArgs
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
@@ -2179,13 +2181,13 @@
                 if (typeof data.specialBind === "function") {
                     data.specialBind(elem, callback)
                 } else {
-                    var removeFn = avalon.bind(elem, data.type, callback)
+                    var removeFn = avalon.bind(elem, data.param, callback)
                 }
                 data.rollback = function() {
                     if (typeof data.specialUnbind === "function") {
                         data.specialUnbind()
                     } else {
-                        avalon.unbind(elem, data.type, removeFn)
+                        avalon.unbind(elem, data.param, removeFn)
                     }
                 }
             }
@@ -2274,6 +2276,7 @@
                     log(new Date - now)
                     break
                 case "del":
+                    console.log([pos, el])
                     mapper.splice(pos, el) //移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
@@ -2623,7 +2626,7 @@
         bindingHandlers[name] = bindingHandlers.text
         bindingExecutors[name] = bindingExecutors.disabled
     })
-    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled 
+    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled
             = bindingHandlers.html = bindingHandlers.text
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
@@ -2878,6 +2881,7 @@
             if (ret.length) {
                 notifySubscribers(this, "del", pos, n)
                 if (!this._stopFireLength) {
+                    console.log("==============" + this.length)
                     this._.length = this.length
                 }
             }
