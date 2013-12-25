@@ -1894,8 +1894,9 @@
         }
     }
     avalon.parseExpr = parseExpr
-
-    function updateViewFactory(expr, scopes, data, tokens) {
+    avalon.subscribe = registerSubscriber
+   //parseExpr的智能引用代理（Smart Reference）
+    function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
             var array = tokens.map(function(token) {
                 var tmpl = {}
@@ -1910,7 +1911,7 @@
             }
             data.args = []
         } else {
-            parseExpr(expr, scopes, data)
+            parseExpr(code, scopes, data)
         }
         if (data.evaluator) {
             data.handler = bindingExecutors[data.type]
@@ -1923,7 +1924,6 @@
             registerSubscriber(data)
         }
     }
-    avalon.updateViewFactory = updateViewFactory
     /*********************************************************************
      *                         Bind                                    *
      **********************************************************************/
@@ -2372,7 +2372,7 @@
             data.parent = elem.parentNode
             data.vmodels = vmodels
             scanAttr(elem, vmodels)
-            updateViewFactory(data.value, vmodels, data)
+            parseExprProxy(data.value, vmodels, data)
         },
         "on": function(data, vmodels) {
             var value = data.value,
@@ -2388,7 +2388,7 @@
             }
             data.type = "on"
             data._event = four
-            updateViewFactory(data.value, vmodels, data, four)
+            parseExprProxy(data.value, vmodels, data, four)
         },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
@@ -2420,16 +2420,16 @@
                 if (!hasExpr) {
                     data._class = className
                 }
-                updateViewFactory("", vmodels, data, (hasExpr ? scanExpr(className) : null))
+                parseExprProxy("", vmodels, data, (hasExpr ? scanExpr(className) : null))
             } else if (data.type === "class") {
-                updateViewFactory(text, vmodels, data)
+                parseExprProxy(text, vmodels, data)
             }
         },
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data)
+            parseExprProxy(data.value, vmodels, data)
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
@@ -2439,7 +2439,7 @@
             }
             display = display || avalon(elem).css("display")
             data.display = display === "none" ? parseDisplay(elem.tagName) : display
-            updateViewFactory(data.value, vmodels, data)
+            parseExprProxy(data.value, vmodels, data)
         },
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
@@ -2453,10 +2453,10 @@
                     text = RegExp.$1
                 }
             }
-            updateViewFactory(data.value, vmodels, data, (simple ? null : scanExpr(data.value)))
+            parseExprProxy(data.value, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
         "html": function(data, vmodels) {
-            updateViewFactory(data.value, vmodels, data)
+            parseExprProxy(data.value, vmodels, data)
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
@@ -2481,7 +2481,7 @@
                     elem.name = generateID()
                 }
 
-                //由于情况特殊，不再经过updateViewFactory
+                //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
                 modelBinding[elem.tagName](elem, data.evaluator, vm, data)
                 data.remove = true
