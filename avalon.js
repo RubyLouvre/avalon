@@ -1003,7 +1003,7 @@
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-    avalon.clearChild = function(node) {
+    avalon.clearHTML = function(node) {
         while (node.firstChild) {
             node.removeChild(node.firstChild)
         }
@@ -1061,7 +1061,7 @@
             }
         }
         var a = this.parseHTML(html)
-        this.clearChild(node).appendChild(a)
+        this.clearHTML(node).appendChild(a)
     }
     /*********************************************************************
      *                           Define                                 *
@@ -2902,7 +2902,7 @@
             data.parent.replaceChild(endRepeat, elem)
             data.parent.insertBefore(startRepeat, endRepeat)
             view.appendChild(elem.cloneNode(true))
-            avalon.clearChild(elem)
+            avalon.clearHTML(elem)
         } else {
             while (elem.firstChild) {
                 view.appendChild(elem.firstChild)

@@ -1003,7 +1003,7 @@
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-    avalon.clearChild = function(node) {
+    avalon.clearHTML = function(node) {
         while (node.firstChild) {
             node.removeChild(node.firstChild)
         }
@@ -1061,7 +1061,7 @@
             }
         }
         var a = this.parseHTML(html)
-        this.clearChild(node).appendChild(a)
+        this.clearHTML(node).appendChild(a)
     }
     /*********************************************************************
      *                           Define                                 *
@@ -2187,7 +2187,9 @@
                 $elem.toggleClass(data.param, !!val)
             } else {
                 var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
+                //  console.log(toggle)
                 var className = data._class || val
+                console.log(className)
                 if (!data.init) {
                     switch (method) {
                         case "class":
@@ -2277,7 +2279,7 @@
                 } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
-                    parseExpr(rightExpr, vmodels, data)
+                    parseExpr(rightExpr, vmodels, data)//决定是添加还是删除
                     if (!data.evaluator) {
                         log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
@@ -2287,7 +2289,7 @@
                     }
                 }
                 var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
-                if (hasExpr) {
+                if (!hasExpr) {
                     data._class = className
                 }
                 updateViewFactory("", vmodels, data, (hasExpr ? scanExpr(className) : null))
@@ -2872,7 +2874,7 @@
             data.parent.replaceChild(endRepeat, elem)
             data.parent.insertBefore(startRepeat, endRepeat)
             view.appendChild(elem.cloneNode(true))
-            avalon.clearChild(elem)
+            avalon.clearHTML(elem)
         } else {
             while (elem.firstChild) {
                 view.appendChild(elem.firstChild)

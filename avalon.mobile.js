@@ -782,7 +782,7 @@
         return object
     }
 
-    avalon.clearChild = function(node) {
+    avalon.clearHTML = function(node) {
         node.textContent = "" //它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
         return node
     }
@@ -823,7 +823,7 @@
     avalon.innerHTML = function(node, html) {
         if (rnest.test(html)) {
             var a = this.parseHTML(html)
-            this.clearChild(node).appendChild(a)
+            this.clearHTML(node).appendChild(a)
         } else {
             node.innerHTML = html
         }
