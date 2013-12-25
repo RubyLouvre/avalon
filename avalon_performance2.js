@@ -1143,19 +1143,18 @@
             return a
         } else {
             var iterators = a[subscribers]
-            iterators.forEach(function(fn) {
-                fn.rollback && fn.rollback()
+            iterators.forEach(function(data) {
+                data.rollback && data.rollback()
             })
             var ret = modelFactory(b)
-            updateLater[ret.$id] = function(fn) {
-                while (fn = iterators.shift()) {
+            updateLater[ret.$id] = function(data) {
+                while (data = iterators.shift()) {
                     try {
-                        (function(f) {
-                            var data = f.data
-                            data && avalon.nextTick(function() {
-                                bindingHandlers[data.type](data, f.vmodels)
+                        if (data.type) {
+                            avalon.nextTick(function() {
+                                bindingHandlers[data.type](data, data.vmodels)
                             })
-                        })(fn)
+                        }
                     } catch (e) {
                     }
                 }
@@ -1170,20 +1169,22 @@
         }
         return x !== x && y !== y
     }
+
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
-        if (normalProperties[name]) {//如果是指明不用监控的系统属性，或放到 $skipArray里面
-            return  normalProperties[name] = val
+        if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
+            return  model[name] = normalProperties[name] = val
         }
-        if (name.charAt(0) === "$" && !watchProperties[name]) {//如果是$开头，并且不在watchMore里面的
-            return normalProperties[name] = val
+        if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
+            return   model[name] = normalProperties[name] = val
         }
         var valueType = getType(val)
-        if (valueType === "function") {//如果是函数，也不用监控
+        if (valueType === "function") { //如果是函数，也不用监控
             return model[name] = normalProperties[name] = val
         }
         var accessor, oldArgs
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
-            var setter = val.set, getter = val.get
+            var setter = val.set,
+                    getter = val.get
             accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
                 var vmodel = watchProperties.vmodel
                 var value = model[name],
@@ -1220,7 +1221,8 @@
         } else {
             accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
                 var vmodel = watchProperties.vmodel
-                var preValue = model[name], simpleType
+                var preValue = model[name],
+                        simpleType
                 if (arguments.length) {
                     if (stopRepeatAssign) {
                         return //阻止重复赋值
@@ -1244,7 +1246,7 @@
                     }
                 } else {
                     collectSubscribers(accessor) //收集视图函数
-                    return  accessor.$vmodel || preValue
+                    return accessor.$vmodel || preValue
                 }
             }
             if (rchecktype.test(valueType)) {
@@ -1275,10 +1277,10 @@
             return scope
         }
         var vmodel = {} //要返回的对象
-        model = model || {}          //放置$model上的属性
+        model = model || {} //放置$model上的属性
         var accessingProperties = {} //放置监控属性
-        var normalProperties = {}//放置普通属性
-        var computedProperties = []//放置计算属性的访问器
+        var normalProperties = {} //放置普通属性
+        var computedProperties = [] //放置计算属性的访问器
         var watchProperties = arguments[2] || {}
         for (var i = 0, name; name = skipProperties[i++]; ) {
             normalProperties[name] = true
@@ -1370,7 +1372,8 @@
             }
         }
         defineProperties = function(name, accessingProperties, normalProperties) {
-            var className = "VBClass" + setTimeout("1"), buffer = []
+            var className = "VBClass" + setTimeout("1"),
+                    buffer = []
             buffer.push(
                     "Class " + className,
                     "\tPrivate [__data__], [__proxy__]",
@@ -1385,7 +1388,7 @@
             buffer.push("\tPublic [" + 'hasOwnProperty' + "]")
             //添加访问器属性 
             for (name in accessingProperties) {
-                if (!(name in normalProperties)) {//防止重复定义
+                if (!(name in normalProperties)) { //防止重复定义
                     buffer.push(
                             //由于不知对方会传入什么,因此set, let都用上
                             "\tPublic Property Let [" + name + "](val" + expose + ")", //setter
@@ -1420,9 +1423,13 @@
         Registry[expose] = data //暴光此函数,方便collectSubscribers收集
         avalon.openComputedCollect = true
         var fn = data.evaluator
-        if (fn) {//如果是求值函数
-            data.handler(fn.apply(0, data.args), data.element, data)
-        } else {//如果是计算属性的accessor
+        if (fn) { //如果是求值函数
+            if (data.type === "duplex") {
+                data.handler()
+            } else {
+                data.handler(fn.apply(0, data.args), data.element, data)
+            }
+        } else { //如果是计算属性的accessor
             data()
         }
         avalon.openComputedCollect = false
@@ -1463,6 +1470,8 @@
                 }
                 if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
+                } else if (/each|repeat|width/.test(fn.type)) {
+                    fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
                     fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
                 }
@@ -1635,6 +1644,7 @@
     function executeBindings(bindings, vmodels) {
         for (var i = 0, data; data = bindings[i++]; ) {
             if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
+                data.vmodels = vmodels
                 bindingHandlers[data.type](data, vmodels)
                 if (data.remove) { //移除数据绑定，防止被二次解析
                     //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
@@ -1786,9 +1796,10 @@
         }) + code + four
         if (four === "duplex") {
             var fn = cacheExpr[exprId + expose]
-            data.evaluator = fn
-            return
-            fn = Function("a", "b", "if(arguments.length === 2){\n\ta." + code + " = b;\n }else{\n\treturn a." + code + ";\n}")
+            if (fn) {
+                return data.evaluator = fn
+            }
+            fn = Function("a", "b", "switch(arguments.length){\n case 2:\n\ta." + code + " = b\n\tbreak;\ncase 1:\n\treturn a." + code + ";\n}")
         } else {
             var vars = getVariables(code),
                     assigns = [],
@@ -1986,7 +1997,8 @@
     }
     var bindingExecutors = avalon.bindingExecutors = {
         "if": function(val, elem, data) {
-            var parent = data.parent, placehoder = data.placehoder
+            var parent = data.parent,
+                    placehoder = data.placehoder
             if (val) { //如果它不在到其父节点里，则添加回去
                 if (!parent.contains(elem)) {
                     try {
@@ -2005,7 +2017,7 @@
         "text": function(val, elem, data) {
             if (data.nodeType === 3) { //绑定在文本节点上
                 data.node.nodeValue = val
-            } else {//绑定在特性节点上
+            } else { //绑定在特性节点上
                 if ("textContent" in elem) {
                     elem.textContent = val
                 } else {
@@ -2033,7 +2045,8 @@
             elem.disabled = !val
         },
         "href": function(val, elem, data) {
-            var method = data.type, attrName = data.param
+            var method = data.type,
+                    attrName = data.param
             if (method === "css") {
                 avalon(elem).css(attrName, val)
             } else if (method === "attr") {
@@ -2057,6 +2070,7 @@
                 var vmodels = data.vmodels
                 var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
                 var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+
                 function scanTemplate(text) {
                     if (loaded) {
                         text = loaded.apply(elem, [text].concat(vmodels))
@@ -2176,18 +2190,14 @@
                 }
             }
         },
-        "duplex": function(val, elem, data) {
-            if (!data.remove) {
-                modelBinding[elem.tagName](elem, data.evaluator, data.vmodel, data)
-            }
-        },
         "class": function(val, elem, data) {
-            var $elem = avalon(elem), method = data.type, oldClass
-            if (method === "class" && data.param) {//如果是旧风格
+            var $elem = avalon(elem),
+                    method = data.type,
+                    oldClass
+            if (method === "class" && data.param) { //如果是旧风格
                 $elem.toggleClass(data.param, !!val)
             } else {
                 var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
-                //  console.log(toggle)
                 var className = data._class || val
                 if (!data.init) {
                     switch (method) {
@@ -2201,7 +2211,8 @@
                         case "hover":
                         case "active":
                             if (method === "hover") { //在移出移入时切换类名
-                                var event1 = "mouseenter", event2 = "mouseleave"
+                                var event1 = "mouseenter",
+                                        event2 = "mouseleave"
                             } else { //在聚焦失焦中切换类名
                                 elem.tabIndex = elem.tabIndex || -1
                                 event1 = "mousedown", event2 = "mouseup"
@@ -2220,6 +2231,118 @@
                     data.init = 1
                 }
             }
+        },
+        "each": function(method, pos, el) {
+            var data = this
+            var group = data.group
+            var parent = data.parent
+            var mapper = data.mapper
+            if (method == "del" || method == "move") {
+                var locatedNode = getLocatedNode(parent, data, pos)
+            }
+            switch (method) {
+                case "add":
+                    var now = new Date - 0
+                    // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
+                    var arr = el,
+                            host = data.getter(),
+                            transation = documentFragment.cloneNode(false)
+                    for (var i = 0, n = arr.length; i < n; i++) {
+                        var ii = i + pos
+                        var proxy = createEachProxy(ii, arr[i], host, data) //300
+                        var tview = data.template.cloneNode(true)
+                        mapper.splice(ii, 0, proxy)
+                        var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
+                        var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
+                        proxy.$accessor.$last.get.data = {
+                            element: firstChild || tview.firstChild
+                        }
+                        if (typeof group !== "number") {
+                            data.group = tview.childNodes.length //记录每个模板一共有多少子节点
+                        }
+                        transation.appendChild(tview)
+                    }
+                    //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
+                    locatedNode = getLocatedNode(parent, data, pos)
+                    if (pos === 0) {
+                        avalon(parent).addClass("fixMsIfFlicker")
+                    }
+                    parent.insertBefore(transation, locatedNode)
+                    if (pos === 0) {
+                        avalon(parent).removeClass("fixMsIfFlicker")
+                    }
+                    log(new Date - now)
+                    break
+                case "del":
+                    mapper.splice(pos, el) //移除对应的子VM
+                    removeFromSanctuary(removeView(locatedNode, group, el))
+                    break
+                case "index":
+                    for (; el = mapper[pos]; pos++) {
+                        el.$index = pos
+                    }
+                    break
+                case "clear":
+                    var deleteFragment = documentFragment.cloneNode(false)
+                    if (data.startRepeat) {
+                        while (true) {
+                            var node = data.startRepeat.nextSibling
+                            if (node && node !== data.endRepeat) {
+                                deleteFragment.appendChild(node)
+                            } else {
+                                break
+                            }
+                        }
+                    } else {
+                        while (parent.firstChild) {
+                            deleteFragment.appendChild(parent.firstChild)
+                        }
+                    }
+                    removeFromSanctuary(deleteFragment)
+                    mapper.length = 0
+                    break
+                case "move":
+                    var t = mapper.splice(pos, 1)[0]
+                    if (t) {
+                        mapper.splice(el, 0, t)
+                        var moveNode = removeView(locatedNode, group)
+                        locatedNode = getLocatedNode(parent, data, el)
+                        parent.insertBefore(moveNode, locatedNode)
+                    }
+                    break
+                case "set":
+                    var model = mapper[pos]
+                    if (model) {
+                        var n = model.$itemName
+                        model[n] = el
+                    }
+                    break
+                case "append":
+                    var object = pos;
+                    var $id = data.getter().$id
+                    var mapper = withMapper[$id] || (withMapper[$id] = {})
+                    var transation = documentFragment.cloneNode(false)
+                    for (var i in object) {
+                        if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
+                            (function(key, val) {
+                                if (!mapper[key]) {
+                                    mapper[key] = createWithProxy(key, data)
+                                }
+                                var tview = data.template.cloneNode(true)
+                                var firstVM = mapper[key]
+                                var base = typeof val === "object" ? [firstVM, firstVM.$val] : [firstVM]
+                                scanNodes(tview, base.concat(data.vmodels))
+                                if (typeof group !== "number") {
+                                    data.group = tview.childNodes.length
+                                }
+                                transation.appendChild(tview)
+                            })(i, object[i])
+                        }
+                    }
+                    parent.appendChild(transation) //再插到最后
+                    break
+            }
+            iteratorCallback(data, method)
         }
     }
 
@@ -2243,6 +2366,7 @@
             elem.removeAttribute("ms-if")
             avalon(elem).removeClass("fixMsIfFlicker")
             data.parent = elem.parentNode
+            data.vmodels = vmodels
             scanAttr(elem, vmodels)
             updateViewFactory(data.value, vmodels, data)
         },
@@ -2260,13 +2384,14 @@
             }
             data.type = "on"
             data._event = four
-            data.vmodels = vmodels
             updateViewFactory(data.value, vmodels, data, four)
         },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
         "class": function(data, vmodels) {
-            var oldStyle = data.param, text = data.value, rightExpr
+            var oldStyle = data.param,
+                    text = data.value,
+                    rightExpr
             if (!oldStyle || isFinite(oldStyle)) {
                 data.param = "" //去掉数字
                 var noExpr = text.replace(rexprg, function(a) {
@@ -2278,7 +2403,7 @@
                 } else { // 比如 ms-class-1="ui-state-active:checked" 的情况 
                     className = text.slice(0, colonIndex)
                     rightExpr = text.slice(colonIndex + 1)
-                    parseExpr(rightExpr, vmodels, data)//决定是添加还是删除
+                    parseExpr(rightExpr, vmodels, data) //决定是添加还是删除
                     if (!data.evaluator) {
                         log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
@@ -2324,13 +2449,9 @@
                     text = RegExp.$1
                 }
             }
-            if (data.type == "include") {
-                data.vmodels = vmodels
-            }
             updateViewFactory(data.value, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
         "html": function(data, vmodels) {
-            data.vmodels = vmodels
             updateViewFactory(data.value, vmodels, data)
         },
         "duplex": function(data, vmodels) {
@@ -2355,19 +2476,85 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-                data.vmodel = vm
+
                 //由于情况特殊，不再经过updateViewFactory
                 parseExpr(data.value, vmodels, data, "duplex")
-                modelBinding[elem.tagName](elem, data.evaluator, data.vmodel, data)
+                modelBinding[elem.tagName](elem, data.evaluator, vm, data)
                 data.remove = true
             }
         },
-        //https://github.com/RubyLouvre/avalon/issues/27
-        "with": function(data, vmodels) {
-            bindingHandlers.each(data, vmodels, "with")
-        },
-        "repeat": function(data, vmodels) {
-            bindingHandlers.each(data, vmodels, "repeat")
+        "each": function(data, vmodels) {
+            var type = data.type,
+                    elem = data.element,
+                    list
+            parseExpr(data.value, vmodels, data)
+            data.getter = function() {
+                return this.evaluator.apply(0, this.args)
+            }
+            data.parent = elem
+            data.callbackName = elem.getAttribute("data-" + (type || "each") + "-rendered")
+            var check0 = "$first",
+                    check1 = "$last"
+            if (type == "with") {
+                check0 = "$key", check1 = "$val"
+            }
+            for (var i = 0, p; p = vmodels[i++]; ) {
+                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                    data.$outer = p
+                    break
+                }
+            }
+            var template = documentFragment.cloneNode(false)
+            if (type === "repeat") {
+                var startRepeat = DOC.createComment("ms-repeat-start")
+                var endRepeat = DOC.createComment("ms-repeat-end")
+                data.element = data.parent = elem.parentNode
+                data.startRepeat = startRepeat
+                data.endRepeat = endRepeat
+                elem.removeAttribute(data.name)
+                data.parent.replaceChild(endRepeat, elem)
+                data.parent.insertBefore(startRepeat, endRepeat)
+                template.appendChild(elem.cloneNode(true))
+                avalon.clearHTML(elem)
+            } else {
+                while (elem.firstChild) {
+                    template.appendChild(elem.firstChild)
+                }
+            }
+            data.template = template
+            try {
+                list = data.getter()
+                if (typeof list !== "object") {
+                    return
+                }
+            } catch (e) {
+                return
+            }
+
+            data.rollback = function() {
+                var parent = this.parent
+                if (type == "repeat") {
+                    this.handler("clear", 0)
+                    this.element = this.template.firstChild
+                    parent.replaceChild(this.element, this.startRepeat)
+                    parent.removeChild(this.endRepeat)
+                } else {
+                    var deleteFragment = documentFragment.cloneNode(false)
+                    while (parent.firstChild) {
+                        deleteFragment.appendChild(parent.firstChild)
+                    }
+                    removeFromSanctuary(deleteFragment)
+                    parent.appendChild(this.template)
+                }
+            }
+            data.handler = bindingExecutors[type]
+            list[subscribers] && list[subscribers].push(data)
+            if (type != "with") {
+                data.mapper = []
+                data.handler("add", 0, list)
+            } else {
+                data.handler("append", list)
+            }
         },
         "widget": function(data, vmodels) {
             var args = data.value.match(rword),
@@ -2401,13 +2588,12 @@
                 constructor(element, data, vmodels)
                 ret = 1
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
-
             data.remove = ret
         },
-        "ui": function(data, vmodels) {
+        "ui": function() {
             log("ms-ui已废弃，请使用更方便的ms-widget")
         },
-        "bind": function(data, vmodels) {
+        "bind": function() {
             log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
         }
     }
@@ -2428,12 +2614,17 @@
         bindingHandlers[method] = bindingHandlers["class"]
         bindingExecutors[method] = bindingExecutors["class"]
     })
+    "with,repeat".replace(rword, function(name) {
+        bindingHandlers[name] = bindingHandlers.each
+        bindingExecutors[name] = bindingExecutors.each
+    })
     //============================= boolean preperty binding =======================
     "checked,readonly,selected".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.text
         bindingExecutors[name] = bindingExecutors.disabled
     })
-    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled = bindingHandlers.text
+    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled 
+            = bindingHandlers.html = bindingHandlers.text
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
@@ -2460,6 +2651,7 @@
                 fn(scope, element.value)
             }
         }
+
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var curValue = fn(scope)
@@ -2467,7 +2659,6 @@
                 element.value = curValue
             }
         }
-
         //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
         if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
@@ -2546,10 +2737,12 @@
                 $elem.unbind("click", removeFn)
             }
         }
+
         registerSubscriber(data)
     }
     modelBinding.SELECT = function(element, fn, scope, data, oldValue) {
         var $elem = avalon(element)
+
         function updateModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var curValue = $elem.val() //字符串或字符串数组
@@ -2667,7 +2860,7 @@
     var _splice = ap.splice
     var CollectionPrototype = {
         _splice: _splice,
-        _add: function(arr, pos) {
+        _add: function(arr, pos) { //在第pos个位置上，添加一组元素
             var oldLength = this.length
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
@@ -2675,12 +2868,12 @@
                 added[i] = convert(arr[i])
             }
             _splice.apply(this, [pos, 0].concat(added))
-            notifySubscribers(this, "add", added, pos)
+            notifySubscribers(this, "add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
             }
         },
-        _del: function(pos, n) {
+        _del: function(pos, n) { //在第pos个位置上，删除N个元素
             var ret = this._splice(pos, n)
             if (ret.length) {
                 notifySubscribers(this, "del", pos, n)
@@ -2837,92 +3030,9 @@
         return array
     }
 
-    //====================== each binding  =================================
-
+    //====================== each/repeat/with binding 用到的辅助函数与对象 =================================
 
     var withMapper = {}
-    bindingHandlers["each"] = function(data, vmodels, name) {
-        var elem = data.element,
-                list, updateView
-        var array = parseExpr(data.value, vmodels, data)
-
-        function getter() {
-            return array[0].apply(0, array[1])
-        }
-        var view = documentFragment.cloneNode(false)
-        data.parent = elem
-        data.callbackName = elem.getAttribute("data-" + (name || "each") + "-rendered")
-        var check0 = "$first",
-                check1 = "$last"
-        if (name == "with") {
-            check0 = "$key", check1 = "$val"
-        }
-        for (var i = 0, p; p = vmodels[i++]; ) {
-            if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
-                data.$outer = p
-                break
-            }
-        }
-        if (name === "repeat") {
-            var startRepeat = DOC.createComment("ms-repeat-start")
-            var endRepeat = DOC.createComment("ms-repeat-end")
-            data.element = data.parent = elem.parentNode
-            data.startRepeat = startRepeat
-            data.endRepeat = endRepeat
-            elem.removeAttribute(data.name)
-            data.parent.replaceChild(endRepeat, elem)
-            data.parent.insertBefore(startRepeat, endRepeat)
-            view.appendChild(elem.cloneNode(true))
-            avalon.clearHTML(elem)
-        } else {
-            while (elem.firstChild) {
-                view.appendChild(elem.firstChild)
-            }
-        }
-        data.template = view
-        data.vmodels = vmodels
-        try {
-            list = getter()
-            if (typeof list !== "object") {
-                return
-            }
-        } catch (e) {
-            return
-        }
-        // 由于eachIterator、withIterator为内存开销非常大的复杂函数，因此我们只创建一个，
-        // 然后通过updateView这个虚拟代理来内部调用它
-        if (Array.isArray(list)) {
-            data.mapper = []
-            updateView = function(method, pos, el) {
-                eachIterator(method, pos, el, data, getter)
-            }
-        } else {
-            updateView = function(method, pos, el) {
-                withIterator(method, pos, el, data, getter)
-            }
-        }
-        updateView.data = data
-        updateView.vmodels = vmodels
-        updateView.rollback = function() {
-            if (name == "repeat") {
-                updateView("clear", 0)
-                data.element = view.firstChild
-                data.parent.replaceChild(data.element, data.startRepeat)
-                data.parent.removeChild(data.endRepeat)
-            } else {
-                var deleteFragment = documentFragment.cloneNode(false)
-                while (elem.firstChild) {
-                    deleteFragment.appendChild(elem.firstChild)
-                }
-                removeFromSanctuary(deleteFragment)
-                elem.appendChild(view)
-            }
-
-        }
-        list[subscribers] && list[subscribers].push(updateView)
-        updateView("add", list, 0)
-    }
-
 
     //得到某一元素节点或文档碎片对象下的所有注释节点
     var queryComments = DOC.createTreeWalker ? function(parent) {
@@ -2956,133 +3066,11 @@
             if (callback) {
                 callback.call(parent, method)
             }
-            if (method == "add") {
+            if (method === "add" || method === "append") {
                 scanNodes(parent, [])
             }
         })
     }
-
-    function eachIterator(method, pos, el, data, getter) {
-        var group = data.group
-        var parent = data.parent
-        var mapper = data.mapper
-        if (method == "del" || method == "move") {
-            var locatedNode = getLocatedNode(parent, data, pos)
-        }
-        switch (method) {
-            case "add":
-                var now = new Date - 0
-                // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
-                var arr = pos,
-                        pos = el,
-                        host = getter(),
-                        transation = documentFragment.cloneNode(false)
-                for (var i = 0, n = arr.length; i < n; i++) {
-                    var ii = i + pos
-                    var proxy = createEachProxy(ii, arr[i], host, data) //300
-                    //  avalon.vmodels.proxy = proxy
-                    var tview = data.template.cloneNode(true)
-                    mapper.splice(ii, 0, proxy)
-                    var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                    var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
-                    proxy.$accessor.$last.get.data = {
-                        element: firstChild || tview.firstChild
-                    }
-                    if (typeof group !== "number") {
-                        data.group = tview.childNodes.length //记录每个模板一共有多少子节点
-                    }
-                    transation.appendChild(tview)
-                }
-                //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
-                locatedNode = getLocatedNode(parent, data, pos)
-                if (pos === 0) {
-                    avalon(parent).addClass("fixMsIfFlicker")
-                }
-                parent.insertBefore(transation, locatedNode)
-                if (pos === 0) {
-                    avalon(parent).removeClass("fixMsIfFlicker")
-                }
-                log(new Date - now)
-                break
-            case "del":
-                mapper.splice(pos, el) //移除对应的子VM
-                removeFromSanctuary(removeView(locatedNode, group, el))
-                break
-            case "index":
-                for (; el = mapper[pos]; pos++) {
-                    el.$index = pos
-                }
-                break
-            case "clear":
-                var deleteFragment = documentFragment.cloneNode(false)
-                if (data.startRepeat) {
-                    while (true) {
-                        var node = data.startRepeat.nextSibling
-                        if (node && node !== data.endRepeat) {
-                            deleteFragment.appendChild(node)
-                        } else {
-                            break
-                        }
-                    }
-                } else {
-                    while (parent.firstChild) {
-                        deleteFragment.appendChild(parent.firstChild)
-                    }
-                }
-                removeFromSanctuary(deleteFragment)
-                mapper.length = 0
-                break
-            case "move":
-                var t = mapper.splice(pos, 1)[0]
-                if (t) {
-                    mapper.splice(el, 0, t)
-                    var moveNode = removeView(locatedNode, group)
-                    locatedNode = getLocatedNode(parent, data, el)
-                    parent.insertBefore(moveNode, locatedNode)
-                }
-                break
-            case "set":
-                var model = mapper[pos]
-                if (model) {
-                    var n = model.$itemName
-                    model[n] = el
-                }
-                break
-        }
-        iteratorCallback(data, method)
-    }
-
-    function withIterator(method, object, group, data, getter) {
-        group = data.group
-        var parent = data.parent
-        var transation = documentFragment.cloneNode(false)
-        switch (method) {
-            case "add":
-                var $id = getter().$id
-                var mapper = withMapper[$id] || (withMapper[$id] = {})
-                for (var i in object) {
-                    if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                        (function(key, val) {
-                            if (!mapper[key]) {
-                                mapper[key] = createWithProxy(key, getter, data.$outer)
-                            }
-                            var tview = data.template.cloneNode(true)
-                            var firstVM = mapper[key]
-                            var base = typeof val === "object" ? [firstVM, firstVM.$val] : [firstVM]
-                            scanNodes(tview, base.concat(data.vmodels))
-                            if (typeof group !== "number") {
-                                data.group = tview.childNodes.length
-                            }
-                            transation.appendChild(tview)
-                        })(i, object[i])
-                    }
-                }
-                parent.appendChild(transation) //再插到最后
-                break
-        }
-        iteratorCallback(data, method)
-    }
-
     // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
@@ -3119,14 +3107,14 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, getter, $outer) {
+    function createWithProxy(key, data) {
         return modelFactory({
             $key: key,
-            $outer: $outer || {},
+            $outer: data.$outer || {},
             $val: {
                 get: function() {
                     try {
-                        return (getter() || {})[key]
+                        return (data.getter() || {})[key]
                     } catch (e) {
                     }
                 }
