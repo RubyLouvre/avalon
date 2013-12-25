@@ -2189,7 +2189,6 @@
                 var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
                 //  console.log(toggle)
                 var className = data._class || val
-                console.log(className)
                 if (!data.init) {
                     switch (method) {
                         case "class":
@@ -2357,7 +2356,10 @@
                     elem.name = generateID()
                 }
                 data.vmodel = vm
-                bindingHandlers.each(data.value, vmodels, data, "duplex")
+                //由于情况特殊，不再经过updateViewFactory
+                parseExpr(data.value, vmodels, data, "duplex")
+                modelBinding[elem.tagName](elem, data.evaluator, data.vmodel, data)
+                data.remove = true
             }
         },
         //https://github.com/RubyLouvre/avalon/issues/27
@@ -2459,10 +2461,10 @@
             }
         }
         //当model变化时,它就会改变value的值
-        var updateView = function() { //先执行updateView
-            var neo = fn(scope)
-            if (neo !== element.value) {
-                element.value = neo
+        data.handler = function() {
+            var curValue = fn(scope)
+            if (curValue !== element.value) {
+                element.value = curValue
             }
         }
 
@@ -2475,7 +2477,7 @@
             } else {
                 if (W3C) { //先执行W3C
                     element.addEventListener("input", updateModel)
-                    updateView.rollback = function() {
+                    data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
                 } else {
@@ -2485,7 +2487,7 @@
                         }
                     }
                     element.attachEvent("onpropertychange", removeFn)
-                    updateView.rollback = function() {
+                    data.rollback = function() {
                         element.detachEvent("onpropertychange", removeFn)
                     }
                 }
@@ -2500,8 +2502,8 @@
                     }
                     element.addEventListener("focus", selectionchange)
                     element.addEventListener("blur", selectionchange)
-                    var rollback = updateView.rollback
-                    updateView.rollback = function() {
+                    var rollback = data.rollback
+                    data.rollback = function() {
                         rollback()
                         element.removeEventListener("focus", selectionchange)
                         element.removeEventListener("blur", selectionchange)
@@ -2509,7 +2511,7 @@
                 }
             }
         } else if (type === "radio") {
-            updateView = function() {
+            data.handler = function() {
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
                 element.beforeChecked = element.checked
             }
@@ -2525,7 +2527,7 @@
                 }
             }
             removeFn = $elem.bind("click", updateModel)
-            updateView.rollback = function() {
+            data.rollback = function() {
                 $elem.unbind("click", removeFn)
             }
         } else if (type === "checkbox") {
@@ -2535,47 +2537,44 @@
                     avalon.Array[method](fn(scope), element.value)
                 }
             }
-            updateView = function() {
+            data.handler = function() {
                 var array = [].concat(fn(scope)) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
             removeFn = $elem.bind("click", updateModel) //IE6-8
-            updateView.rollback = function() {
+            data.rollback = function() {
                 $elem.unbind("click", removeFn)
             }
         }
-        return updateView
+        registerSubscriber(data)
     }
-    modelBinding.SELECT = function(data, fn, scope, oldValue) {
-        var $elem = avalon(data.element)
-
+    modelBinding.SELECT = function(element, fn, scope, data, oldValue) {
+        var $elem = avalon(element)
         function updateModel() {
             if ($elem.data("duplex-observe") !== false) {
-                var neo = $elem.val() //字符串或字符串数组
-                if (neo + "" !== oldValue) {
-                    fn(scope, neo)
-                    oldValue = neo + ""
+                var curValue = $elem.val() //字符串或字符串数组
+                if (curValue + "" !== oldValue) {
+                    fn(scope, curValue)
+                    oldValue = curValue + ""
                 }
             }
         }
-
-        function updateView() {
-            var neo = fn(scope)
-            neo = Array.isArray(neo) ? neo.map(String) : neo + ""
-            if (neo + "" !== oldValue) {
-                $elem.val(neo)
-                oldValue = neo + ""
+        data.handler = function() {
+            var curValue = fn(scope)
+            curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
+            if (curValue + "" !== oldValue) {
+                $elem.val(curValue)
+                oldValue = curValue + ""
             }
         }
         $elem.bind("change", updateModel)
-        var innerHTML = NaN,
-                elem = $elem[0]
+        var innerHTML = NaN
         var id = setInterval(function() {
-            var currHTML = elem.innerHTML
+            var currHTML = element.innerHTML
             if (currHTML === innerHTML) {
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                registerSubscriber(updateView, data)
+                registerSubscriber(data)
             } else {
                 innerHTML = currHTML
             }
