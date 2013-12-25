@@ -1,5 +1,5 @@
 //==================================================
-// avalon 1.0pre   by 司徒正美 2013.10.21
+// avalon 1.0alpha  by 司徒正美 2013.10.21
 // 疑问:
 //    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
 //    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
@@ -1470,7 +1470,7 @@
                 }
                 if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
-                } else if (/each|repeat|width/.test(fn.type)) {
+                } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
                     fn.handler(fn.evaluator.apply(0, fn.args), el, fn)

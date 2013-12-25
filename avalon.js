@@ -1995,17 +1995,7 @@
             return false;
         }
     }
-    updateViewFactory.textHandler = function(val, elem, data) {
-        if (data.nodeType === 3) { //绑定在文本节点上
-            data.node.nodeValue = val
-        } else {//绑定在特性节点上
-            if ("textContent" in elem) {
-                elem.textContent = val
-            } else {
-                elem.innerText = val
-            }
-        }
-    }
+
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var placehoder = DOC.createComment("ms-if"),
@@ -2115,14 +2105,18 @@
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
         //<div>ruby + java</div>
         "text": function(data, vmodels) {
-            parseExpr(data.value, vmodels, data)
-            data.handler = updateViewFactory.textHandler
-            Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-            avalon.openComputedCollect = true
-            var fn = data.evaluator
-            fn.apply(0, data.args)
-            avalon.openComputedCollect = false
-            delete Registry[expose]
+
+            updateViewFactory(data.value, vmodels, data, function(val, elem) {
+                if (data.nodeType === 3) { //绑定在文本节点上
+                    data.node.nodeValue = val
+                } else {//绑定在特性节点上
+                    if ("textContent" in elem) {
+                        elem.textContent = val
+                    } else {
+                        elem.innerText = val
+                    }
+                }
+            })
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
