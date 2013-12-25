@@ -43,8 +43,6 @@
         </script>
     </head>
     <body>
-
-
         <ol class="header">
             <li><a href="#top0">关于AvalonJs</a></li>
             <li><a href="#top1">开始的例子</a></li>    
@@ -66,14 +64,15 @@
             <li><a href="#top17">字符串属性绑定(ms-title, ms-src, ms-href……)</a></li>
             <li><a href="#top18">万能属性绑定(ms-attr)</a></li>
             <li><a href="#top19">万能绑定(ms-bind)</a></li>
-            <li><a href="#top20">数组循环绑定(ms-each)</a></li>
+            <li><a href="#top20">数组循环绑定(ms-each,ms-repeat)</a></li>
             <li><a href="#top21">对象循环绑定(ms-with)</a></li>
-            <li><a href="#top22">UI绑定(ms-ui)</a></li>
+            <li><a href="#top22">UI绑定(ms-widget)</a></li>
             <li><a href="#top23">$watch</a></li>
             <li><a href="#top24">过滤器</a></li>
             <li><a href="#top25">AMD加载器</a></li>
-            <li><a href="#top26">路由系统</a></li>
-            <li><a href="#top27">功能扩展</a></li>
+            <li><a href="#top26">路由系统</a></li>  
+            <li><a href="#top27">通过AJAX加载新数据到已存在的VM中</a></li>
+            <li><a href="#top28">功能扩展</a></li>
         </ol>
 
 
@@ -161,8 +160,8 @@
          &lt;div ms-controller="box"&gt;
              &lt;div style=" background: #a9ea00;" ms-css-width="w" ms-css-height="h"  ms-click="click"&gt;&lt;/div&gt;
              &lt;p&gt;{{ w }} x {{ h }}&lt;/p&gt;
-             &lt;p&gt;W: &lt;input type="text" ms-model="w" data-event="change"/&gt;&lt;/p&gt;
-             &lt;p&gt;H: &lt;input type="text" ms-model="h" /&gt;&lt;/p&gt;
+             &lt;p&gt;W: &lt;input type="text" ms-duplex="w" data-duplex-event="change"/&gt;&lt;/p&gt;
+             &lt;p&gt;H: &lt;input type="text" ms-duplex="h" /&gt;&lt;/p&gt;
          &lt;/div&gt;
          &lt;script&gt;
              avalon.define("box", function(vm) {
@@ -206,6 +205,12 @@
          scanTag(elem, vmodels)
      }
         </pre>
+        <p>现在扫描的顺序是 ms-skip --&gt;  ms-important --&gt;  ms-controller --&gt; ms-if ...
+            只要元素存在ms-skip  这个绑定属性时，就忽略扫描此元素及子孙。然后是ms-important,  ms-controller这
+            两个与作用域有关的绑定，如果它们指向的VM在avalon.vmodels 不存在时，规则同ms-skip。
+            最后ms-if，如果ms-if的表达式的结果为true，那么走如下步骤：如果没有插入到DOM树，插入它，并扫描此元素。
+            如果值为假，就移除此元素，并停止扫描此元素的其他绑定属性及子孙。</p>
+
         <h3 id="top3">视图模型</h3>
         <p>我们是通过avalon.define函数返回一个视图对象VM，并且avalon.define(vmName, function(vm){})中的vm并不等于VM，工厂函数中的vm是用于转换为VM的。生成的VM比用户指定的属性还多了许多属性。
         </p>
@@ -264,6 +269,80 @@
          })
         </pre>
         <p style="color:purple">所有定义好的VM都会储放在avalon.vmodels中！</p>
+
+        <p style="color:green;font-weight:bolder;" id="top3.1">我们再看看如何更新VM中的属性(重点)：</p>
+        <pre class="brush:html;gutter:false;toolbar:false;">     
+      &lt;script&gt;
+            var model = avalon.define("update", function(vm) {
+                vm.aaa = "str"
+                vm.bbb = false
+                vm.ccc = 1223
+                vm.time = new Date
+                vm.simpleArray = [1, 2, 3, 4]
+                vm.objectArray = [{name: "a"}, {name: "b"}, {name: "c"}, {name: "d"}]
+                vm.object = {
+                    o1: "k1",
+                    o2: "k2",
+                    o3: "k3"
+                }
+                vm.simpleArray = [1, 2, 3, 4]
+                vm.objectArray = [{name: "a", value: "aa"}, {name: "b", value: "bb"}, {name: "c", value: "cc"}, {name: "d", value: "dd"}]
+                vm.object = {
+                    o1: "k1",
+                    o2: "k2",
+                    o3: "k3"
+                }
+            })
+            setTimeout(function() {
+                //如果是更新简单数据类型（string, boolean, number）或Date类型
+                model.aaa = "这是字符串"
+                model.bbb = true
+                model.ccc = 999999999999
+                var date = new Date
+                model.time = new Date(date.setFullYear(2005))
+            }, 2000)
+
+            setTimeout(function() {
+                //如果是数组，注意保证它们的元素的类型是一致的
+                //只能全是字符串，或是全是布尔，不能有一些是这种类型，另一些是其他类型
+                //这时我们可以使用set方法来更新（它有两个参数，第一个是index，第2个是新值）
+                model.simpleArray.set(0, 1000)
+                model.simpleArray.set(2, 3000)
+                model.objectArray.set(0, {name: "xxxxxxxxxxxxxxxx", value: "xxx"})
+            }, 2500)
+            setTimeout(function() {
+                model.objectArray[1].name = "5555"
+            }, 3000)
+            setTimeout(function() {
+                //如果要更新对象，直接赋给它一个对象，注意不能将一个VM赋给它，可以到VM的$model赋给它（要不会在IE6-8中报错）
+                model.object = {
+                    aaaa: "aaaa",
+                    bbbb: "bbbb",
+                    cccc: "cccc",
+                    dddd: "dddd"
+                }
+            }, 3000)
+        &lt;/script&gt;
+        &lt;div ms-controller="update"&gt;
+            &lt;div&gt;{{aaa}}&lt;/div&gt;
+            &lt;div&gt;{{bbb}}&lt;/div&gt;
+            &lt;div&gt;{{ccc}}&lt;/div&gt;
+            &lt;div&gt;{{time | date("yyyy - MM - dd mm:ss")}}&lt;/div&gt;
+            &lt;ul ms-each="simpleArray"&gt;
+                &lt;li&gt;{{el}}&lt;/li&gt;
+            &lt;/ul&gt;
+            &lt;div&gt;  &lt;select ms-each="objectArray"&gt;
+                    &lt;option ms-value="el.value"&gt;{{el.name}}&lt;/option&gt;
+                &lt;/select&gt;
+            &lt;/div&gt;
+            &lt;ol ms-with="object"&gt;
+                &lt;li&gt;{{$key}}                {{$val}}&lt;/li&gt;
+            &lt;/ol&gt;
+        &lt;/div&gt;
+        </pre>
+
+        <p><a href="https://github.com/RubyLouvre/avalon/issues/181">这里还有个例子，大家认真看看。</a></p>
+
         <h3 id="top4">数据模型</h3>
         <p>当我们要用AJAX与后端交互时，如果直接把VM传上去太大了，这时我们需要把它对应的纯数组的JS对象。在VM中有个叫$model的属性，这是一个对象，就是数据模型M了。当我们更改VM时，框架就会自动同步M</p>
 
@@ -292,6 +371,10 @@
             其次，它更新视图总是一大片一大片地处理，改动太大。最后，是由于第2点引发的问题，它对事件绑定等不友好，因为一更新，原来的节点都被消灭了，需要重新绑定。幸好，jQuery普及了事件代理，这问题才没有
             暴露出来。
         </p>
+        <p>再次，字符串模块没有对样式的操作，流程的操作进行封装，没有计算属性，监控数组的东西，很容易诱导用户在页面上写大量业务逻辑，导致代码无法维护。</p>
+        <p>下面就是一个PHP+原生JS+JQ的例子：</p>
+        <div><img src="http://images.cnblogs.com/cnblogs_com/rubylouvre/495346/o_QQ%E5%9B%BE%E7%89%8720131106174350.jpg"/></div>
+        <div><img src="http://images.cnblogs.com/cnblogs_com/rubylouvre/495346/o_QQ%E5%9B%BE%E7%89%8720131106174411.jpg"/></div>
         <p>再看动态模板，几乎所有MVVM框架都用动态模板（当然也有例外，如emberjs）。动态模板以整个DOM树为容器，它通过扫描方式进行第一次更新视图。
             在静态模板，通过&lt;& 与 &&gt;划分的部分，转换为绑定属性与{{}}插值表达式（这是一种文本绑定，在avalon中，我们可以通过|html过滤器，转换html绑定）
             这样就有效阻止用户在页面上写逻辑。虽然动态模板也支持ms-if, ms-each等表示逻辑关系的绑定，但它的值最复杂也只能是一个表达式。
@@ -323,7 +406,7 @@
         <p>
             如果单是把DOM树作为一个模板远远不够的，比如有几个地方，需要重复利用一套HTML结构，这就要用到内部模板或外部模板了。
         </p>
-        <p>内部模板是，这个模板与目标节点是位于同一个DOM树中。我们用一个MIME不明的script保存它，然后通过ms-include="id"引用它。</p>
+        <p>内部模板是，这个模板与目标节点是位于同一个DOM树中。我们用一个MIME不明的script标签或者noscript标签（0.94后支持，建议使用它）保存它，然后通过ms-include="id"引用它。</p>
         <pre class="brush:html;gutter:false;toolbar:false;">
          &lt;script type="text/avalon" id="tpl"&gt;
              here, {{ 1 + 1 }}
@@ -334,6 +417,7 @@
         <p>注意，ms-include的值要用引号括起，表示这只是一个字符串，这时它就会搜索页面的具有此ID的节点，取其innerHTML，放进ms-include所在的元素内部。否则这个tpl会被当成一个变量，
             框架就会在VM中检测有没有此属性，有就取其值，重复上面的步骤。如果成功，页面会出现here, 2的字样。
         </p>
+        <p>如果大家想在模板渲染后再执行一些操作，可以使用data-include-loaded来指定回调的名字。</p>
         <p>外部模板，通常用于多个页面的复用，因此需要整成一个独立的文件。这时我们就需要通过ms-include-src="src"进行加载。</p>
         <p>比如有一个HTML文件tmpl.html，它的内容为：</p>
         <pre class="brush:html;gutter:false;toolbar:false;">
@@ -345,6 +429,7 @@
          &lt;div  ms-include-src="'tmpl.html'"&gt;&lt;/div&gt;
         </pre>
         <p>有关它的高级应用的例子可见这里<a href="https://github.com/RubyLouvre/avalon/issues/46">利用ms-include与监控数组实现一个树</a> </p>
+
         <h3 id="top8">数据填充(ms-text, ms-html)</h3>
         <p>这分两种：文本绑定与HTML绑定，每种都有两个实现方式</p>
         <pre class="brush:html;gutter:false;toolbar:false;">
@@ -387,7 +472,6 @@
             <li>ms-change</li>
             <li>ms-on-*</li>
         </ul>
-
         <pre class="brush:html;gutter:false;toolbar:false;">
 &lt;!DOCTYPE HTML&gt;
 &lt;html&gt;
@@ -425,9 +509,9 @@
     &lt;/body&gt;
 &lt;/html&gt;
         </pre>
-         <p>另外，这里有一些结合ms-data实现事件代理的技巧，<a href="https://github.com/RubyLouvre/avalon/issues/94">建议事件绑定接口支持事件代理，最简单就是table上可以绑定td的点击事件</a></p>
+        <p>另外，这里有一些结合ms-data实现事件代理的技巧，<a href="https://github.com/RubyLouvre/avalon/issues/94">建议事件绑定接口支持事件代理，最简单就是table上可以绑定td的点击事件</a></p>
         <h3 id="top11">显示绑定(ms-visible)</h3>
-        <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，它是style.display="none"进行隐藏。</p>
+        <p>avalon通过ms-visible="bool"实现对某个元素显示隐藏控制，它用是style.display="none"进行隐藏。</p>
         <br/>
         <h3 id="top12">插入绑定(ms-if)</h3>
         <p>这个功能是抄自knockout的，ms-if="bool",同样隐藏，但它是将元素移出DOM。这个功能直接影响到CSS :empty伪类的渲染结果，因此比较有用。</p>
@@ -437,7 +521,7 @@
         <p>这个绑定，它除了负责将VM中对应的值放到表单元素的value中，还对元素偷偷绑定一些事件，用于监听用户的输入从而自动刷新VM。具体如下：</p>
         <dl>
             <dt>text, password, textarea</dt>
-            <dd>默认是通过input事件进行监听，旧式IE是通过propertychange实现，换言之，每改一个字符串都触发。如果想在失去焦点时才触发，可以在元素上使用data-event="change"进行调整。
+            <dd>默认是通过input事件进行监听，旧式IE是通过propertychange实现，换言之，每改一个字符串都触发。如果想在失去焦点时才触发，可以在元素上使用data-duplex-event="change"进行调整。
                 它要求VM对应的属性为一个字符串或数字，不过触发一次之后，属性就会变成字符串。</dd>
             <dt>radio</dt>
             <dd>默认是通过change事件进行监听，旧式IE是通过chick实现， 它要求VM对应的属性为一个布尔。 </dd>
@@ -447,18 +531,20 @@
             <dd>默认是通过change事件进行监听， 它要求VM对应的属性为一个字符串或字符串数组（视multiple的值）。 </dd>
         </dl>
         <p style="color:red">注意：ms-duplex与ms-checked不能在同时使用于一个元素节点上。</p>
+
         <h3 id="top14">样式绑定(ms-css)</h3>
         <p>用法为ms-css-name="value"</p>
         <pre class="brush:js;gutter:false;toolbar:false;">
               <div ms-css-width="aaa"></div>
         </pre>
+        <br/>
         <h3 id="top15">数据绑定(ms-data)</h3>
         <p>用法为ms-data-name="value", 用于为元素节点绑定HTML5 data-*属性。</p>
         <br/>
         <h3 id="top16">布尔属性绑定</h3>
         <p>这主要涉及到表单元素几个非常重要的布尔属性，即disabed, readyOnly, selected , checked，
-            分别使用ms-disabled, ms-enabled, ms-readonly, ms-checked, ms-selected。ms-disabled与ms-enabled是对立的，一个true为添加属性，另一个true为移除属性。</p>
-        <br/>
+            分别使用ms-disabled, ms-enabled, ms-readonly, ms-checked, ms-selected。ms-disabled与ms-enabled是对立的，一个true为添加属性，另一个true为移除属性。</p><br/>
+
         <h3 id="top17">字符串属性绑定</h3>
         <p>这主要涉及到几个非常常用的字符串属性，即href, src, alt, title, value,
             分别使用ms-href, ms-src, ms-alt, ms-title, ms-value。它们的值的解析情况与其他绑定不一样，如果值没有{{}}插值表达式，那么就当成VM中的一个属性，并且可以与加号，减号混用，
@@ -469,32 +555,13 @@
         </pre>
         <h3 id="top18">万能属性绑定(ms-attr)</h3>
         <p>ms-attr-name="value"，这个允许我们在元素上绑定更多种类的属性，如className, tabIndex, name, colSpan什么的。</p>
-        <br/>
         <h3 id="top19">万能绑定(ms-bind)</h3>
-        <p>ms-bind是一种非常强大的同步机制，因为它允许你持续监听某一个VM属性的变化，并且它的参数是一个函数，this又是指向绑定属性的元素节点，因此比ms-css, ms-attr, ms-data, ms-click等有着因定DOM操作的绑定来得更灵活。</p>
-        <p>用法： ms-bind="prop:callback", 其中prop, callback都要求来自同一个VM。callback为一个函数，this指向元素节点。</p>
-        <div ms-skip>
-            <pre class="brush:html;gutter:false;toolbar:false">
-        &lt;div ms-controller="test"&gt;
-             &lt;div ms-bind="aaa:callback"&gt;&lt;/div&gt;
-             &lt;button ms-click="one"&gt;点我&lt;/button&gt;
-        &lt;/div&gt;
- 
-            </pre>   
-            <pre class="brush:js;gutter:false;toolbar:false">
-            avalon.define("test", function(vm) {
-                 vm.aaa = 1111;
-                 vm.callback = function() {
-                     this.innerHTML = vm.aaa
-                 }
-                 vm.one = function() {
-                     vm.aaa = new Date - 0
-                 }
-             });
-            </pre>   
-        </div>
-        <h3 id="top20">数组循环绑定(ms-each)</h3>
+        <p>已废弃。替换方案见<a href="https://github.com/RubyLouvre/avalon/issues/196">这里</a></p>
+
+        <h3 id="top20">数组循环绑定(ms-each, ms-repeat)</h3>
         <p>用法为ms-each-xxx="array", 其中xxx可以随意改，如item, el, 它是用于在子元素中进行引用。array对应VM中的一个普通数组或一个监控数组。详见<a href="http://rubylouvre.github.io/mvvm/avalon.each.html">这里</a>。</p>
+        <p>ms-each与ms-repeat的不同之处在于，前者循环它的孩子，后者循环它自身。</p>
+        <p>注意，ms-each, ms-repeat会生成一个或两个新VM插入当前的vmodels中。如果是数组的元素是简单类型，那么会生成一个，如果是对象，那么就生成两个。</p>
         <pre class="brush:html;gutter:false;toolbar:false">
  
          &lt;script&gt;
@@ -604,57 +671,75 @@
     &lt;/body&gt;
 &lt;/html&gt;
         </pre>
-        <h3 id="top22">UI绑定(ms-ui)</h3>
-        <p>它的格式为ms-ui-$opts="uiName", 其他$opts可有可无，存在时对应VM中的一个对象，建议将它设置为不可监控的，因为它只是作为一个配置对象。uiName为控件的名字。</p>
-        <p>此外，在绑定元素上还应该设置一个data-id属性，用于指定生成的UI控件对应的VM的名字。你也可以设置更多的data-*属性，方便用于配置UI。</p>
+        <h3 id="top22">UI绑定(ms-widget)</h3>
+        <p>它的格式为ms-widget="uiName, id?, optsName?"</p>
+        <ul>
+
+            <li>uiName，必选，一定要全部字母小写，表示组件的类型</li>
+            <li>id 可选 这表示新生成的VM的$id，方便我们从avalon.vmodels[id]中获取它操作它，如果它等于$，那么表示它是随机生成，与不写这个效果一样，框架会在uiName加上时间截，生成随机ID</li>
+            <li>optName 可选， 配置对象的名字。指在已有的VM中定义一个对象（最好指定它为不可监控的外），作为配置的一部分（因为每个UI都有它的默认配置对象，并且我们也可以用data- uiName? -xxx来做更个性化的处理 ）。如果不指optName默认与uiName同名。框架总是找离它(定义ms-widget的那个元素节点)最近的那个VM来取这个配置项。</li>
+        </ul>
         <p>下面是一个完整的实例用于教导你如何定义使用一个UI。</p>
         <fieldset><legend>例子</legend>
             <p>首先，以AMD规范定义一个模块，文件名为avalon.testui.js，把它放到与avalon.js同一目录下。内容为：</p>
             <pre class="brush:js;gutter:false;toolbar:false;">
- define(["avalon"],function( av ) {
-    //UI  控件的模板
-    var defaults = {}
-   // 必须 在avalon.ui上注册一个函数，它有四个参数，最后一个是可选的，其他分别为容器元素，VM的ID名， vmodels
-     av.ui["testui"] = function(element, id, vmodels, opts) {
-         var $element = avalon(element);
-         var options = avalon.mix({}, defaults, opts, $element.data());
-         var model = av.define(id, function(vm) {
-             vm.name = "这是控件的默认内容"
-             vm.xxx = "xxx"//添加其属性与方法
-             vm.yyy = function(){}
-             avalon.mix(vm, options)
-         })
-         //必须在nextTick的回调里插入新节点 与 进行扫描
-         av.nextTick(function() {
-             element.innerHTML = "&lt;div&gt;{{ name }}&lt;/div&gt;"
-             //这里的格式是固定的
-             av.scan(element, [model].concat(vmodels))
-         })
-         return model //这里必须返回VM对象，好让avalon.bindingHandlers.ui方法，将它放到avalon.vmodels中
-     }
-     return av //必须有返回值
- })
- 
+define(["avalon"], function(avalon) {
+    //    必须 在avalon.ui上注册一个函数，它有三个参数，分别为容器元素，data， vmodels
+    avalon.ui["testui"] = function(element, data, vmodels) {
+      //将它内部作为模板，或者使用文档碎片进行处理，那么你就需要用appendChild方法添加回去
+        var innerHTML = element.innerHTML
+        //由于innerHTML要依赖许多widget后来添加的新属性，这时如果被扫描肯定报“不存在”错误
+        //因此先将它清空
+        avalon.clearChild(element)
+        var model = avalon.define(data.testuiId, function(vm) {
+            avalon.mix(vm, data.testuiOptions)//优先添加用户的配置，防止它覆盖掉widget的一些方法与属性
+            vm.value = 0; // 给input一个个默认的数值
+            vm.plus = function(e) { // 只添加了这个plus
+                model.value++;
+            }
+        })
+        avalon.nextTick(function() {
+            //widget的VM已经生成，可以添加回去让它被扫描
+            element.innerHTML = innerHTML
+            avalon.scan(element, [model].concat(vmodels))
+        })
+        return model//必须返回新VM
+    }
+    avalon.ui["testui"].defaults = {
+        aaa: "aaa",
+        bbb: "bbb",
+        ccc: "ccc"
+    }
+    return avalon//必须返回avalon
+})
+     
             </pre>
             <p>然后页面这样使用它</p>
             <pre class="brush:html;gutter:false;toolbar:false;">
         
-         &lt;script&gt;
- 
-             require("avalon.testui", function() {
-                 avalon.define("test", function(vm) {
-                     vm.$opts = {
-                         name: "这是控件的内容"
-                     }
-                 })
-                 avalon.scan()
-                 console.log(avalon.vmodels.ddd)
-             })
- 
- 
-         &lt;/script&gt;
-       
-         &lt;div ms-controller="test" ms-ui-$opts="testui" data-id="ddd"&gt;&lt;/div&gt;
+     &lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"/&gt;
+        &lt;script src="avalon.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;script&gt;
+            require("avalon.testui", function() {
+                avalon.define("test", function(vm) {
+                    vm.$opts = {
+                        name: "这是控件的内容"
+                    }
+                })
+                avalon.scan()
+            })
+        &lt;/script&gt;
+        &lt;div ms-controller="test" ms-widget="testui,ddd,$opts" &gt;
+            &lt;input ms-duplex="value" /&gt;
+            &lt;button type="button" ms-click="plus"&gt;ClickMe&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
  
             </pre>
         </fieldset>
@@ -810,7 +895,7 @@
             然后将avalon.modules.jquery 加个预设值（exports: jquery用于shim机制， state: 2 表明它已经加载完毕）就行了。</p>
         <fieldset>
             <legend>例子</legend>
-                    <pre class="brush:javascript;gutter:false;toolbar:false">
+            <pre class="brush:javascript;gutter:false;toolbar:false">
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 
@@ -876,12 +961,24 @@
             &lt;/p&gt;
         &lt;/div&gt;
         &lt;script type="text/javascript"&gt;
-
+/* 0.982之前可以
             avalon.config({
                 alias: {
                     jquery: {
                         exports: "jQuery",
                         src: "jquery.js"
+                    }
+                }
+            })
+*/
+//下面是兼容requirejs的方法，推荐使用这个
+           avalon.config({
+                paths: {
+                    jquery: "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+                },
+                shim: {
+                    jquery: {
+                        exports: "jQuery"
                     }
                 }
             })
@@ -955,8 +1052,19 @@
             <p>使用别名机制管理模块的链接。</p>
             <pre class="brush:javascript;gutter:false;toolbar:false">
              var path = location.protocol + "//" + location.host + "/doc/scripts/loadtest/"
+/* 0.982之前可以
              require.config({
                  alias: {
+                     "aaa": path + "aaa.js",
+                     "bbb": path + "bbb.js",
+                     "ccc": path + "ccc.js",
+                     "ddd": path + "ddd.js"
+                 }
+             })
+*/
+//下面是兼容requirejs的方法，推荐使用这个
+             require.config({
+                paths: {
                      "aaa": path + "aaa.js",
                      "bbb": path + "bbb.js",
                      "ccc": path + "ccc.js",
@@ -985,13 +1093,15 @@
   !function() {
                  var path = "http://files.cnblogs.com/shuicaituya/"
                  require.config({
-                     alias: {
-                         "jquery": {
-                             "src": path + "jquery.js",
+                     pashs: {
+                         "jquery":  path + "jquery.js"
+                     },
+                     shim:{
+                         jquery:   {
                              deps: [], //没有依赖可以不写
                              exports: "jQuery"
                          }
-                     }
+                    }
                  });
                  require("jquery", function($) {
                      alert($)
@@ -1008,8 +1118,9 @@
  deps
  可选。String|Array。依赖列表。
  factory
- 必需。Function|Object。模块工厂。它的参数列参为其依赖模块所有返回的值，如果某个模块没有返回值，则对应位置为undefine
+ 必需。Function|Object。模块工厂。它的参数列参为其依赖模块所有返回的值，如果某个模块没有返回值，则对应位置为undefined
         </pre>
+        <p style="color:red">注意， define方法不能写在script标签的innerHTML中，只能写在JS文件里。</p>
         <fieldset>
             <legend>例子</legend>
             <p>加载不按规范编写的JS文件，可以让你不用改jQuery的源码就加载它。相当于其他加载器的shim插件。
@@ -1040,7 +1151,36 @@
         <h3 id="top26">路由系统</h3>
         <p>它需要依赖于另一个独立的组件mmRouter，用法请见<a href="http://rubylouvre.github.io/mvvm/avalon.router.html">这里</a></p>
         <br/>
-        <h3 id="top27">扩展功能</h3>
+        <h3 id="top27">通过AJAX加载新数据到已存在的VM中</h3>
+        <p>AJAX可以使用jQuery或<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>, mmRequest体积更少，覆盖jQuery ajax模块的90%功能，并且在现代浏览器中使用了XMLHttpRequest2实现，性能更佳。</p>
+        <pre class="brush:javascript;gutter:false;toolbar:false">
+
+var model = avalon.define("test", function(vm){
+   vm.ajaxData = {} //这是一个占位符
+   vm.arrayData = [1,2,3,4]
+
+})
+
+$.ajax({
+  type: "GET",
+  url: "xxx",
+  success: function(data){
+    var newData = fn(data) //fn是你自己定义一个方法，对data进行扁平化，最好变成一重的对象
+    //如果你的vm.ajaxData如果是个空对象，可以直接赋值
+    model.ajaxData = newData
+    //如果它不是一个空对象，那么需要使用avalon.mix，先已有的数据，新的数据，全部拷贝到一个全新的空对象中，再赋值
+    //  newData = avalon.mix({}, model.ajaxData.$model, newData )//这是关键，防止影响原来的$model
+    // model.ajaxData = newData
+
+     
+  //  model.arrayData.push.apply(model.arrayData, data.newData)//添加更多元素
+  //  model.arrayData =  data.newData//直接替换
+
+  }
+
+})
+        </pre>
+        <h3 id="top28">扩展功能</h3>
         <p>avalon现在有三个扩展点，一是在avalon.fn上添加新的原型方法，这是用于处理DOM的，二是在avalon.bindingHandlers上添加新的绑定（ms-xxx）,三是在avalon.filters添加新的过滤器。</p>
         <p>添加原型方法就不用多说，建议尽可能返回this，实现链式操作，this[0]为它包含的元素节点。</p>
         <p>添加过滤器也很简，翻看源码看看lowercase如何实现就行了。</p>
@@ -1100,6 +1240,7 @@
         </pre>
         <h3>更多学习资料</h3>
         <p><a href="http://www.cnblogs.com/rubylouvre/p/3213430.html">利用avalon 实现一个简单的成绩单</a>， 教你如何使用ms-each数组循环绑定与$watch回调</p>
+
     </body>
 
 
