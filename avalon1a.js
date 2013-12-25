@@ -1445,16 +1445,13 @@
         }
     }
 
-    var fakeData = {}
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
-            var safelist = list.concat()
-            for (var i = 0, fn; fn = safelist[i++]; ) {
-                var data = fn.data || fakeData
-                var el = data.element || fn.element,
+            for (var i = list.length, fn; fn = list[--i]; ) {
+                var el = fn.element,
                         remove
                 if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
@@ -1463,10 +1460,7 @@
                         remove = !avalon.contains(root, el)
                     }
                     if (remove) { //如果它没有在DOM树
-                        for (var i in fn) {
-                            delete fn[i]
-                        }
-                        avalon.Array.remove(list, fn)
+                        list.splice(i, 1)
                         log("remove " + fn.name)
                     }
                 }
@@ -1477,7 +1471,6 @@
                 } else {
                     fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
                 }
-
             }
         }
     }
@@ -2256,9 +2249,7 @@
                         mapper.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
-                        proxy.$accessor.$last.get.data = {
-                            element: firstChild || tview.firstChild
-                        }
+                        proxy.$accessor.$last.get.element = firstChild || tview.firstChild
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -2276,7 +2267,6 @@
                     log(new Date - now)
                     break
                 case "del":
-                    console.log([pos, el])
                     mapper.splice(pos, el) //移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
@@ -2881,7 +2871,6 @@
             if (ret.length) {
                 notifySubscribers(this, "del", pos, n)
                 if (!this._stopFireLength) {
-                    console.log("==============" + this.length)
                     this._.length = this.length
                 }
             }
