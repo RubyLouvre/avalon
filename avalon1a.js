@@ -1534,21 +1534,17 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels, loop) {
+    function scanNodes(parent, vmodels) {
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
-                if (loop === true) {
-                    loop = node
-                }
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
-        return loop
     }
 
     function scanText(textNode, vmodels) {
@@ -2259,8 +2255,7 @@
                         var tview = data.template.cloneNode(true)
                         mapper.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                        var firstChild = scanNodes(tview, base.concat(data.vmodels), true) //1600
-                        proxy.$accessor.$last.element = firstChild || tview.firstChild
+                        scanNodes(tview, base.concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -3112,7 +3107,7 @@
         }
         return view
     }
-    //为子视图创建一个ViewModel
+   // 为ms-each, ms-repeat创建一个代理对象，通过它能访问对象的键值对（$key，$val）
 
     function createWithProxy(key, data) {
         return modelFactory({
@@ -3132,8 +3127,7 @@
         })
     }
     var watchEachOne = oneObject("$index,$first,$last")
-    // 创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
-
+    // 为ms-each, ms-repeat创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
 
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
@@ -3147,7 +3141,6 @@
             return data.getter().removeAt(this.$index)
         }
         return modelFactory(source, 0, watchEachOne)
-
     }
     /*********************************************************************
      *                            Filters                              *
