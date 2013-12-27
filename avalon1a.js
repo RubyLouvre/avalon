@@ -414,7 +414,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(Array.prototype, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1590,63 +1590,61 @@
         if (tokens.length) {
             textNode.parentNode.replaceChild(documentFragment, textNode)
         }
-        if (bindings.length) {
+        if(bindings.length){
             executeBindings(bindings, vmodels)
         }
     }
 
     var rmsAttr = /ms-(\w+)-?(.*)/
 
-    function scanAttr(elem, vmodels, ifBinding, repeatBinding) {
+    function scanAttr(elem, vmodels, repeatBinding, ifBinding) {
+        var attributes = getAttributes ? getAttributes(elem) : elem.attributes
         var bindings = [],
                 match
-        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
+        for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
                     if (typeof bindingHandlers[type] === "function") {
-                        (function(node) {
-                            var binding = {
-                                type: type,
-                                param: match[2] || "",
-                                element: elem,
-                                remove: true,
-                                name: match[0],
-                                value: node.nodeValue
-                            }
-                            if (type === "repeat") {
-                                repeatBinding = binding
-                            } else if (type === "if") {
-                                ifBinding = binding
-                            } else {
-                                bindings.push(binding)
-                            }
-                        })(attr)
+                        var binding = {
+                            type: type,
+                            param: match[2] || "",
+                            element: elem,
+                            remove: true,
+                            name: match[0],
+                            value: attr.nodeValue
+                        }
+                        if (type === "repeat") {
+                            repeatBinding = binding
+                        } else if (type === "if") {
+                            ifBinding = binding
+                        } else {
+                            bindings.push(binding)
+                        }
                     }
                 }
             }
         }
-
         if (ifBinding) {
             // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             bindingHandlers["if"](ifBinding, vmodels)
+        } else if (repeatBinding) {
+            repeatBinding.vmodels = vmodels
+            bindingHandlers["repeat"](repeatBinding, vmodels)
         } else {
-            if (repeatBinding) {
-                bindings = [repeatBinding]
-            } else {
-                if (bindings.length >= 2) {
-                    bindings.sort(function(a, b) {
-                        if (a.type === "duplex") { //确保duplex排在ms-value的后面
-                            return Infinity
-                        }
-                        if (b.type === "duplex") {
-                            return -Infinity
-                        }
-                        return a.name > b.name
-                    })
-                }
+            if (bindings.length >= 2) {
+                bindings.sort(function(a, b) {
+                    if (a.type === "duplex") { //确保duplex排在ms-value的后面
+                        return Infinity
+                    }
+                    if (b.type === "duplex") {
+                        return -Infinity
+                    }
+                    return a.name > b.name
+                })
             }
+
             executeBindings(bindings, vmodels)
             if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, vmodels) //扫描子孙元素
@@ -1654,7 +1652,34 @@
         }
     }
 
-
+    //IE6下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
+    //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
+    if (!"1"[0]) {
+        var cacheAttr = createCache(512)
+        var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
+                rquote = /^['"]/,
+                rtag = /<(?:".+"|[^>])+>|$/
+        var getAttributes = function(elem) {
+            var str = elem.outerHTML.match(rtag, "")[0]
+            var attributes = [], match,
+                    k, v;
+            if (cacheAttr[str + expose]) {
+                return cacheAttr[str + expose]
+            }
+            while (k = rattrs.exec(str)) { //属性值只有双引号与无引号的情况
+                v = k[2];
+                var name = k[1].toLowerCase()
+                match = name.match(rmsAttr)
+                var binding = {
+                    name: name,
+                    specified: true,
+                    nodeValue: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
+                }
+                attributes.push(binding)
+            }
+            return cacheAttr(str, attributes)
+        }
+    }
     function executeBindings(bindings, vmodels) {
         for (var i = 0, data; data = bindings[i++]; ) {
             if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
@@ -1792,12 +1817,11 @@
 
     function createCache(maxLength) {
         var keys = []
-
         function cache(key, value) {
             if (keys.push(key + expose) > maxLength) {
                 delete cache[keys.shift()]
             }
-            cache[key + expose] = value;
+            return cache[key + expose] = value;
         }
         return cache;
     }
@@ -2420,6 +2444,7 @@
                 if (!hasExpr) {
                     data._class = className
                 }
+                //   alert("111111")
                 parseExprProxy("", vmodels, data, (hasExpr ? scanExpr(className) : null))
             } else if (data.type === "class") {
                 parseExprProxy(text, vmodels, data)
@@ -2518,8 +2543,7 @@
                 elem.removeAttribute(data.name)
                 data.parent.replaceChild(endRepeat, elem)
                 data.parent.insertBefore(startRepeat, endRepeat)
-                template.appendChild(elem.cloneNode(true))
-                avalon.clearHTML(elem)
+                template.appendChild(elem)
             } else {
                 while (elem.firstChild) {
                     template.appendChild(elem.firstChild)

@@ -5,18 +5,19 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-        <script src="avalon1a.js"></script>
+     <script src="avalon1a.js"></script>
+
         <script>
             var model = avalon.define("performance", function(vm) {
                 vm.aaa = "<span>2222222</span>"
                 vm.bbb = "司徒正美"
                 vm.array = avalon.range(0, 2000)
             })
-            
-            setTimeout(function(){
-             //   console.log("111111111111111111111")
-             //   model.array.reverse()
-            },2000)
+
+            setTimeout(function() {
+                //   console.log("111111111111111111111")
+                //  model.array.reverse()
+            }, 2000)
 
 
         </script>
@@ -26,6 +27,7 @@
             <div  ms-each="array">
                 <div>{{el}}   <span>88888888888888888888888</span></div>
             </div>
+
 
         </fieldset>
 
