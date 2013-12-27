@@ -1144,6 +1144,7 @@
             return a
         } else {
             var iterators = a[subscribers]
+            delete withProxyPool[a.$id]
             iterators.forEach(function(data) {
                 data.rollback && data.rollback()
             })
@@ -1172,8 +1173,13 @@
         }
         return x !== x && y !== y
     }
-
-    function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
+    function updateWithProxy($id, name, val) {
+        var pool = withProxyPool[$id]
+        if (pool && pool[name]) {
+            pool[name].$val = val
+        }
+    }
+    function loopModel($id, name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = true
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
             return  normalProperties[name] = val
@@ -1206,6 +1212,7 @@
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
                         newValue = model[name] = getter.call(vmodel)
+                        updateWithProxy($id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -1233,17 +1240,17 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            console.log(accessor.$vmodel)
-                            console.log(newValue)
                             var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
                             var fn = updateLater[value.$id]
                             fn && fn()
+                            updateWithProxy($id, name, value)
                             vmodel.$fire(name, value.$model, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
                             model[name] = newValue //更新$model中的值
                             simpleType = true
+                            updateWithProxy($id, name, newValue)
                         }
                         notifySubscribers(accessor) //通知顶层改变
                         if (simpleType) {
@@ -1299,6 +1306,7 @@
         var normalProperties = {} //放置普通属性
         var computedProperties = [] //放置计算属性的访问器
         var watchProperties = arguments[2] || {}
+        var $id = arguments[3] || generateID()
         for (var i = 0, name; name = skipProperties[i++]; ) {
             normalProperties[name] = true
         }
@@ -1310,7 +1318,7 @@
             }
         }
         for (var i in scope) {
-            loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
+            loopModel($id, i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
         vmodel = defineProperties(vmodel, descriptorFactory(accessingProperties), normalProperties) //生成一个空的ViewModel
         for (var name in normalProperties) {
@@ -1319,7 +1327,7 @@
         watchProperties.vmodel = vmodel
         vmodel.$model = model
         vmodel.$events = {}
-        vmodel.$id = generateID()
+        vmodel.$id = $id
         vmodel.$accessor = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
@@ -2549,13 +2557,16 @@
                 data.mapper = []
                 data.handler("add", 0, list)
             } else {
-                if (!withProxyPool[list.$id]) {
-                    var pool = withProxyPool[list.$id] = {}
+                var pool = withProxyPool[list.$id]
+                if (!pool) {
+                    pool = withProxyPool[list.$id] = {}
                     for (var key in list) {
-                        pool[key] = createWithProxy(key, data)
+                        if (list.hasOwnProperty(key) && key !== "hasOwnPropery") {
+                            pool[key] = createWithProxy(key, list[key], data.$outer)
+                        }
                     }
                 }
-                data.handler("append", list, withProxyPool[list.$id])
+                data.handler("append", list, pool)
             }
         },
         "widget": function(data, vmodels) {
@@ -3106,18 +3117,11 @@
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它能访问对象的键值对（$key，$val）
 
-    function createWithProxy(key, data) {
+    function createWithProxy(key, val, $outer) {
         return modelFactory({
             $key: key,
-            $outer: data.$outer || {},
-            $val: {
-                get: function() {
-                    try {
-                        return (data.getter() || {})[key]
-                    } catch (e) {
-                    }
-                }
-            }
+            $outer: $outer || {},
+            $val: val
         }, 0, {
             $val: 1,
             $key: 1
