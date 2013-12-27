@@ -1150,14 +1150,16 @@
             var ret = modelFactory(b)
             updateLater[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
-                    try {
-                        if (data.type) {
-                            avalon.nextTick(function() {
-                                bindingHandlers[data.type](data, data.vmodels)
-                            })
+                    (function(el) {
+                        try {
+                            if (el.type) {
+                                avalon.nextTick(function() {
+                                    bindingHandlers[el.type](el, el.vmodels)
+                                })
+                            }
+                        } catch (e) {
                         }
-                    } catch (e) {
-                    }
+                    })(data)
                 }
                 delete updateLater[ret.$id]
             }
@@ -1231,6 +1233,8 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
+                            console.log(accessor.$vmodel)
+                            console.log(newValue)
                             var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
                             var fn = updateLater[value.$id]
                             fn && fn()
@@ -2320,25 +2324,14 @@
                     }
                     break
                 case "append":
-                    var object = pos;
-                    var $id = data.getter().$id
-                    var mapper = withMapper[$id] || (withMapper[$id] = {})
+                    var object = pos, pool = el
                     var transation = documentFragment.cloneNode(false)
-                    for (var i in object) {
-                        if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                            (function(key, val) {
-                                if (!mapper[key]) {
-                                    mapper[key] = createWithProxy(key, data)
-                                }
-                                var tview = data.template.cloneNode(true)
-                                var firstVM = mapper[key]
-                                var base = typeof val === "object" ? [firstVM, firstVM.$val] : [firstVM]
-                                scanNodes(tview, base.concat(data.vmodels))
-                                if (typeof group !== "number") {
-                                    data.group = tview.childNodes.length
-                                }
-                                transation.appendChild(tview)
-                            })(i, object[i])
+                    for (var key in object) {
+                        if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                            var tview = data.template.cloneNode(true), proxy = pool[key]
+                            var base = typeof object[key] === "object" ? [proxy, proxy.$val] : [proxy]
+                            scanNodes(tview, base.concat(data.vmodels))
+                            transation.appendChild(tview)
                         }
                     }
                     parent.appendChild(transation) //再插到最后
@@ -2347,7 +2340,8 @@
             iteratorCallback(data, method)
         }
     }
-
+    //with绑定生成的代理对象储存池
+    var withProxyPool = {}
     var bindingHandlers = avalon.bindingHandlers = {
         "if": function(data, vmodels) {
             var elem = data.element
@@ -2555,7 +2549,13 @@
                 data.mapper = []
                 data.handler("add", 0, list)
             } else {
-                data.handler("append", list)
+                if (!withProxyPool[list.$id]) {
+                    var pool = withProxyPool[list.$id] = {}
+                    for (var key in list) {
+                        pool[key] = createWithProxy(key, data)
+                    }
+                }
+                data.handler("append", list, withProxyPool[list.$id])
             }
         },
         "widget": function(data, vmodels) {
@@ -3033,9 +3033,6 @@
     }
 
     //====================== each/repeat/with binding 用到的辅助函数与对象 =================================
-
-    var withMapper = {}
-
     //得到某一元素节点或文档碎片对象下的所有注释节点
     var queryComments = DOC.createTreeWalker ? function(parent) {
         var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
@@ -3107,7 +3104,7 @@
         }
         return view
     }
-   // 为ms-each, ms-repeat创建一个代理对象，通过它能访问对象的键值对（$key，$val）
+    // 为ms-each, ms-repeat创建一个代理对象，通过它能访问对象的键值对（$key，$val）
 
     function createWithProxy(key, data) {
         return modelFactory({
