@@ -1101,12 +1101,11 @@
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
-            var safelist = list.concat()
-            for (var i = 0, fn; fn = safelist[i++]; ) {
+            for (var i = list.length, fn; fn = list[--i]; ) {
                 var data = fn.data || fakeData,
                         el = data.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
-                    avalon.Array.remove(list, fn)
+                    list.splice(i, 1)
                     log("remove " + fn.name)
                 } else {
                     fn.apply(0, args) //强制重新计算自身
@@ -1161,21 +1160,17 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels, loop) {
+    function scanNodes(parent, vmodels) {
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
-                if (loop === true) {
-                    loop = node
-                }
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
-        return loop
     }
 
     function scanText(textNode, vmodels) {
@@ -2586,7 +2581,7 @@
                             }
                             var tview = data.template.cloneNode(true)
                             scanNodes(tview, [mapper[key], val].concat(data.vmodels))
-      
+
                             transation.appendChild(tview)
                         })(i, object[i])
                     }
