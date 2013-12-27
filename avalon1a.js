@@ -2251,8 +2251,7 @@
                     var now = new Date - 0
                     // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                     var arr = el,
-                            host = data.getter(),
-                            last = host.length - 1
+                            last = data.getter().length - 1
                     transation = documentFragment.cloneNode(false)
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
@@ -2320,10 +2319,9 @@
                     }
                     break
                 case "set":
-                    var model = mapper[pos]
-                    if (model) {
-                        var n = model.$itemName
-                        model[n] = el
+                    var proxy = mapper[pos]
+                    if (proxy) {
+                        proxy[ proxy.$itemName] = el
                     }
                     break
                 case "append":
