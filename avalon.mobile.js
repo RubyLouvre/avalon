@@ -935,7 +935,15 @@
         }
         return x !== x && y !== y
     }
-    function loopModel(name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
+    var withProxyPool = {}
+    function updateWithProxy($id, name, val) {
+        var pool = withProxyPool[$id]
+        if (pool && pool[name]) {
+            pool[name].$val = val
+        }
+    }
+    function loopModel($id, name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
+        model[name] = true
         if (normalProperties[name]) {//如果是指明不用监控的系统属性，或放到 $skipArray里面
             return  normalProperties[name] = val
         }
@@ -944,7 +952,7 @@
         }
         var valueType = getType(val)
         if (valueType === "function") {//如果是函数，也不用监控
-            return model[name] = normalProperties[name] = val
+            return normalProperties[name] = val
         }
         var accessor, oldArgs
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
@@ -964,6 +972,7 @@
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
                         newValue = accessor.value = model[name] = getter.call(vmodel)
+                        updateWithProxy($id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -993,11 +1002,13 @@
                             accessor.value = value
                             var fn = updateLater[value.$id]
                             fn && fn()
+                            updateWithProxy($id, name, value)
                             vmodel.$fire(name, value, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
                             model[name] = accessor.value = newValue //更新$model中的值
+                            updateWithProxy($id, name, newValue)
                             simpleType = true
                         }
                         notifySubscribers(accessor) //通知顶层改变
@@ -1043,6 +1054,7 @@
         var normalProperties = {}//放置普通属性
         var computedProperties = []//放置计算属性的访问器
         var watchProperties = arguments[2] || {}
+        var $id = arguments[3] || generateID()
         for (var i = 0, name; name = skipProperties[i++]; ) {
             normalProperties[name] = true
         }
@@ -1054,7 +1066,7 @@
             }
         }
         for (var i in scope) {
-            loopModel(i, scope[i], model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties)
+            loopModel($id, i, scope[i], model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
         vmodel = Object.defineProperties(vmodel, accessingProperties) //生成ViewModel
         for (var name in normalProperties) {
@@ -1062,7 +1074,7 @@
         }
         vmodel.$model = model
         vmodel.$events = {}
-        vmodel.$id = generateID()
+        vmodel.$id = $id
         vmodel.$accessor = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
@@ -2570,20 +2582,23 @@
         var transation = documentFragment.cloneNode(false)
         switch (method) {
             case "add":
-                var $id = getter().$id
-                var mapper = withMapper[$id] || (withMapper[$id] = {})
-                for (var i in object) {
-                    if (object.hasOwnProperty(i) && i !== "hasOwnProperty") {
-                        (function(key, val) {
-                            if (!mapper[key]) {
-                                var proxy = createWithProxy(key, getter)
-                                mapper[key] = proxy
-                            }
-                            var tview = data.template.cloneNode(true)
-                            scanNodes(tview, [mapper[key], val].concat(data.vmodels))
-
-                            transation.appendChild(tview)
-                        })(i, object[i])
+                var list = getter()
+                var $id = list.$id
+                var pool = withProxyPool[$id]
+                if (!pool) {
+                    pool = withProxyPool[$id] = {}
+                    for (var key in list) {
+                        if (list.hasOwnProperty(key) && key !== "hasOwnPropery") {
+                            pool[key] = createWithProxy(key, list[key], data.$outer)
+                        }
+                    }
+                }
+                for (var key in object) {
+                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                        var proxy = pool[key]
+                        var tview = data.template.cloneNode(true)
+                        scanNodes(tview, [proxy, proxy.$val].concat(data.vmodels))
+                        transation.appendChild(tview)
                     }
                 }
                 parent.appendChild(transation) //再插到最后
@@ -2628,20 +2643,14 @@
     }
     //为子视图创建一个ViewModel
 
-    function createWithProxy(key, getter, $outer) {
+    function createWithProxy(key, val, $outer) {
         return modelFactory({
             $key: key,
             $outer: $outer || {},
-            $val: {
-                get: function() {
-                    try {
-                        return (getter() || {})[key]
-                    } catch (e) {
-                    }
-                }
-            }
+            $val: val
         }, 0, {
-            $val: 1
+            $val: 1,
+            $key: 1
         })
     }
     var watchEachOne = oneObject("$index,$first,$last")
@@ -2658,38 +2667,7 @@
         }
         return modelFactory(source, 0, watchEachOne)
     }
-//    function createEachProxy(index, item, list, data) {
-//        var name = data.param || "el"
-//        var source = {
-//            $outer: data.$outer || {},
-//            $index: index,
-//            $itemName: name,
-//            $first: {
-//                get: function() {
-//                    return this.$index === 0
-//                }
-//            },
-//            $last: {
-//                get: function() { //有时用户是传个普通数组
-//                    var n = typeof list.size === "function" ? list.size() : list.length
-//                    return this.$index === n - 1
-//                }
-//            },
-//            $remove: function() {
-//                return list.removeAt(ret.$index)
-//            }
-//        }
-//        source[name] = {
-//            get: function() {
-//                return item
-//            },
-//            set: function(val) {
-//                item = val
-//            }
-//        }
-//        var ret = modelFactory(source, 0, watchEachOne)
-//        return ret
-//    }
+
 
     /*********************************************************************
      *                            Filters                              *
