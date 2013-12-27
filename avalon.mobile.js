@@ -943,7 +943,7 @@
             pool[name].$val = val
         }
     }
-    function loopModel($id, name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
+    function loopModel(name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = true
         if (normalProperties[name]) {//如果是指明不用监控的系统属性，或放到 $skipArray里面
             return  normalProperties[name] = val
@@ -973,7 +973,7 @@
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
                         newValue = accessor.value = model[name] = getter.call(vmodel)
-                        updateWithProxy($id, name, newValue)
+                        updateWithProxy(vmodel.$id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -1003,13 +1003,13 @@
                             accessor.value = value
                             var fn = updateLater[value.$id]
                             fn && fn()
-                            updateWithProxy($id, name, value)
+                            updateWithProxy(vmodel.$id, name, value)
                             vmodel.$fire(name, value, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
                             model[name] = accessor.value = newValue //更新$model中的值
-                            updateWithProxy($id, name, newValue)
+                            updateWithProxy(vmodel.$id, name, newValue)
                             simpleType = true
                         }
                         notifySubscribers(accessor) //通知顶层改变
@@ -1055,7 +1055,6 @@
         var normalProperties = {}//放置普通属性
         var computedProperties = []//放置计算属性的访问器
         var watchProperties = arguments[2] || {}
-        var $id = arguments[3] || generateID()
         for (var i = 0, name; name = skipProperties[i++]; ) {
             normalProperties[name] = true
         }
@@ -1067,7 +1066,7 @@
             }
         }
         for (var i in scope) {
-            loopModel($id, i, scope[i], model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties)
+            loopModel(i, scope[i], model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
         vmodel = Object.defineProperties(vmodel, accessingProperties) //生成ViewModel
         for (var name in normalProperties) {
@@ -1075,7 +1074,7 @@
         }
         vmodel.$model = model
         vmodel.$events = {}
-        vmodel.$id = $id
+        vmodel.$id = generateID()
         vmodel.$accessor = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
