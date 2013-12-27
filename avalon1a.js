@@ -39,7 +39,6 @@
         window.console && console.log(W3C ? a : a + "")
     }
 
-
     /*********************************************************************
      *                 命名空间                                            *
      **********************************************************************/
@@ -413,7 +412,7 @@
         return Function("fn,scope", fun)
     }
     if (!rnative.test([].map)) {
-        avalon.mix(Array.prototype, {
+        avalon.mix(ap, {
 //定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
@@ -2444,7 +2443,6 @@
                 if (!hasExpr) {
                     data._class = className
                 }
-                //   alert("111111")
                 parseExprProxy("", vmodels, data, (hasExpr ? scanExpr(className) : null))
             } else if (data.type === "class") {
                 parseExprProxy(text, vmodels, data)
