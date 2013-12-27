@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <!--        <script src="avalon_performance2.js"></script>-->
+        <script src="avalon1a.js"></script>
+        <script>
+            var model = avalon.define("performance", function(vm) {
+                vm.aaa = "<span>2222222</span>"
+                vm.bbb = "司徒正美"
+                vm.toggle = false
+                vm.w = 80
+                vm.value = "不能修改与提交"
+                vm.array = ["a", "b", "c", "d", "f"]
+                //  vm.$skipArray = ["array"]
+                vm.obj = {
+                    a: 1,
+                    b: 2,
+                    c: 33
+                }
+                vm.remove = function() {
+                    console.log("移除元素")
+                    this.$vmodel.$remove()
+                }
+            })
+            setTimeout(function() {
+                model.array.reverse()
+            }, 2000)
+
+
+        </script>
+        <style>
+            .width80{
+                background: red;
+            }
+        </style>
+    </head>
+    <body>
+        <fieldset ms-controller="performance">
+            <div>{{aaa}}--------{{bbb}}</div>
+
+            <div ><input ms-duplex="bbb" ><input ms-duplex="toggle" type="radio"><input ms-disabled="true" ms-value="value" ></div>
+            <div ms-if="toggle">测试ms-if</div>
+            <div ms-visible="toggle">测试ms-visible</div>
+            <div ms-class="width{{w}}">测试ms-class</div>
+            <div ms-each="array">
+                <p ms-click="remove">{{el}}   {{$index}}  {{$first}}  {{$last}}</p>
+            </div>
+            <!--            <div ms-with="obj">
+                            <p>{{$key}}---{{$val}}</p>
+                        </div>-->
+        </fieldset>
+
+
+        <!--        <fieldset ms-controller="simple">
+                    <legend>例子</legend>
+                    <p>First name: <input ms-duplex="firstName" /></p>
+                    <p>Last name: <input ms-duplex="lastName"  /></p>
+                    <p>Hello,    <input ms-duplex="fullName"></p>
+                    <div>{{firstName +" | "+ lastName }}</div>
+                    <p>nick name: <input ms-duplex="nick.name"  /></p>
+                    <p>{{nick.name}}</p>
+                </fieldset>
+                <fieldset ms-controller="on">
+                    <legend>有关事件回调传参</legend>
+                    <div ms-click="argsClick($event, 100, firstName)">点我</div>
+                    <div ms-each-el="array" >
+                        <p ms-click="loopClick(el)">{{el}}</p>
+                    </div>
+                </fieldset>
+                <div ms-controller="array">
+                    <ul ms-each-el="array">
+                        <li>数组的第{{$index+1}}个元素为{{el}}</li>
+                    </ul>
+                    <p>对数组进行push操作，并回车<input ms-keypress="push"></p>
+                    <p>对数组进行unshift操作，并回车<input ms-keypress="unshift"></p>
+                    <p>对数组进行ensure操作，并回车<input ms-keypress="ensure"><br/>
+                        (只有数组不存在此元素才push进去)</p>
+                    <p>对数组进行remove操作，并回车<input ms-keypress="remove"></p>
+                    <p>对数组进行removeAt操作，并回车<input ms-keypress="removeAt"></p>
+                    <p><button type="button" ms-click="sort">对数组进行sort操作</button>
+                        <button type="button" ms-click="reverse">对数组进行reverse操作</button>
+                        <button type="button" ms-click="shift">对数组进行shift操作</button>
+                        <button type="button" ms-click="pop">对数组进行pop操作</button></p>
+                    <p>当前数组的长度为{{array.size()}}，……</p>
+                </div>-->
+
+    </body>
+</html>

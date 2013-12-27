@@ -2252,11 +2252,11 @@
                     // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                     var arr = el,
                             host = data.getter(),
-                            transation = documentFragment.cloneNode(false)
+                            last = host.length - 1
+                    transation = documentFragment.cloneNode(false)
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
-                        var proxy = createEachProxy(ii, arr[i], host, data) //300
-
+                        var proxy = createEachProxy(ii, arr[i], data, last) //300
                         var tview = data.template.cloneNode(true)
                         mapper.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -2283,8 +2283,12 @@
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
+                    var last = mapper.length - 1, host = data.getter()
                     for (; el = mapper[pos]; pos++) {
                         el.$index = pos
+                        el.$first = pos === 0
+                        el.$last = pos === last
+                        el[el.$itemName] = host[pos]
                     }
                     break
                 case "clear":
@@ -3132,36 +3136,21 @@
     var watchEachOne = oneObject("$index,$first,$last")
     // 创建一个代理对象，通过它能访问元素的索引值（$index），是否位于开头($first)，结尾($last)等特征
 
-    function createEachProxy(index, item, list, data) {
-        var name = data.param || "el"
-        var source = {
-            $outer: data.$outer || {},
-            $index: index,
-            $itemName: name,
-            $first: {
-                get: function() {
-                    return this.$index === 0
-                }
-            },
-            $last: {
-                get: function() { //有时用户是传个普通数组
-                    var n = typeof list.size === "function" ? list.size() : list.length
-                    return this.$index === n - 1
-                }
-            },
-            $remove: function() {
-                return list.removeAt(ret.$index)
-            }
-        }
-        source[name] = {
-            get: function() {
-                return item
-            }
-        }
-        var ret = modelFactory(source, 0, watchEachOne)
-        return ret
-    }
 
+    function createEachProxy(index, item, data, last) {
+        var param = data.param || "el"
+        var source = {}
+        source.$index = index
+        source.$itemName = param
+        source[param] = item
+        source.$first = index === 0
+        source.$last = index === last
+        source.$remove = function() {
+            return data.getter().removeAt(this.$index)
+        }
+        return modelFactory(source, 0, watchEachOne)
+
+    }
     /*********************************************************************
      *                            Filters                              *
      **********************************************************************/
