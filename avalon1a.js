@@ -8,6 +8,7 @@
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
     var subscribers = "$" + expose
+    var window = this || (0, eval)('this')
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
