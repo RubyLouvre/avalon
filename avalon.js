@@ -1440,8 +1440,7 @@
             var args = aslice.call(arguments, 1)
             var safelist = list.concat()
             for (var i = 0, fn; fn = safelist[i++]; ) {
-                var data = fn.data || fakeData
-                var el = data.element || fn.element,
+                var data = fn.data || fakeData, el = data.element,
                         remove
                 if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
@@ -1450,20 +1449,12 @@
                         remove = !avalon.contains(root, el)
                     }
                     if (remove) { //如果它没有在DOM树
-                        for (var i in fn) {
-                            delete fn[i]
-                        }
                         avalon.Array.remove(list, fn)
                         log("remove " + fn.name)
                     }
                 }
-                if (typeof fn === "function") {
-                    fn.apply(0, args) //强制重新计算自身
-                } else {
-                    // callback(fn.apply(fn, args), data.element)
-                    fn.handler(fn.evaluator.apply(0, fn.args), el)
-                }
 
+                fn.apply(0, args) //强制重新计算自身
             }
         }
     }
@@ -2051,6 +2042,7 @@
                 four = void 0
             }
             var array = parseExpr(value, vmodels, data, four)
+            console.log(array)
             if (array) {
                 var fn = array[0],
                         args = array[1],
@@ -2075,6 +2067,7 @@
                     if (typeof data.specialBind === "function") {
                         data.specialBind(elem, callback)
                     } else {
+                        console.log(type)
                         var removeFn = avalon.bind(elem, type, callback)
                     }
                     ret = 1

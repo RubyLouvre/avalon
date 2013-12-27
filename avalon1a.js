@@ -1265,7 +1265,7 @@
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers).match(rword)
 
-    var descriptorFactory = W3C ?  function(obj) {
+    var descriptorFactory = W3C ? function(obj) {
         var descriptors = {}
         for (var i in obj) {
             descriptors[i] = {
@@ -1276,7 +1276,7 @@
             }
         }
         return descriptors
-    } : function(a){
+    } : function(a) {
         return a
     }
 
@@ -1377,7 +1377,7 @@
         ].join("\n"), "VBScript")
 
         function VBMediator(accessingProperties, name, value) {
-            var accessor = accessingProperties[name] 
+            var accessor = accessingProperties[name]
             if (arguments.length === 3) {
                 accessor(value)
             } else {
@@ -1895,7 +1895,7 @@
     }
     avalon.parseExpr = parseExpr
     avalon.subscribe = registerSubscriber
-   //parseExpr的智能引用代理（Smart Reference）
+    //parseExpr的智能引用代理（Smart Reference）
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
             var array = tokens.map(function(token) {
@@ -2256,6 +2256,7 @@
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
                         var proxy = createEachProxy(ii, arr[i], host, data) //300
+
                         var tview = data.template.cloneNode(true)
                         mapper.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
@@ -3155,9 +3156,6 @@
         source[name] = {
             get: function() {
                 return item
-            },
-            set: function(val) {
-                item = val
             }
         }
         var ret = modelFactory(source, 0, watchEachOne)
