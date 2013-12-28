@@ -1144,7 +1144,10 @@
             return a
         } else {
             var iterators = a[subscribers]
-            delete withProxyPool[a.$id]
+            if (withProxyPool[a.$id]) {
+                withProxyCount--
+                delete withProxyPool[a.$id]
+            }
             iterators.forEach(function(data) {
                 data.rollback && data.rollback()
             })
@@ -1173,6 +1176,7 @@
         }
         return x !== x && y !== y
     }
+    var withProxyCount = 0
     function updateWithProxy($id, name, val) {
         var pool = withProxyPool[$id]
         if (pool && pool[name]) {
@@ -1212,7 +1216,7 @@
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
                         newValue = model[name] = getter.call(vmodel)
-                        updateWithProxy(vmodel.$id, name, newValue)
+                        withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
                         vmodel.$fire(name, newValue, preValue)
                     }
@@ -1243,14 +1247,14 @@
                             var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
                             var fn = updateLater[value.$id]
                             fn && fn()
-                            updateWithProxy(vmodel.$id, name, value)
+                            withProxyCount && updateWithProxy(vmodel.$id, name, value)
                             vmodel.$fire(name, value.$model, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
                             model[name] = newValue //更新$model中的值
                             simpleType = true
-                            updateWithProxy(vmodel.$id, name, newValue)
+                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
                         }
                         notifySubscribers(accessor) //通知顶层改变
                         if (simpleType) {
@@ -1317,7 +1321,7 @@
             }
         }
         for (var i in scope) {
-            loopModel( i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
+            loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
         vmodel = defineProperties(vmodel, descriptorFactory(accessingProperties), normalProperties) //生成一个空的ViewModel
         for (var name in normalProperties) {
@@ -1589,7 +1593,7 @@
         if (tokens.length) {
             textNode.parentNode.replaceChild(documentFragment, textNode)
         }
-        if(bindings.length){
+        if (bindings.length) {
             executeBindings(bindings, vmodels)
         }
     }
@@ -2581,6 +2585,7 @@
             } else {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
+                    withProxyCount++
                     pool = withProxyPool[list.$id] = {}
                     for (var key in list) {
                         if (list.hasOwnProperty(key) && key !== "hasOwnPropery") {
