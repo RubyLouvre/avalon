@@ -278,14 +278,11 @@
             return that
         },
         Array: {
-            ensure: function(target) {
+            ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
-                var args = aslice.call(arguments, 1)
-                args.forEach(function(el) {
-                    if (!~target.indexOf(el)) {
-                        target.push(el)
-                    }
-                })
+                if (target.indexOf(item) === -1) {
+                    target.push(item)
+                }
                 return target
             },
             removeAt: function(target, index) {
