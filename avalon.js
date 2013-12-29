@@ -1593,7 +1593,8 @@
                 documentFragment.appendChild(node)
             }
             textNode.parentNode.replaceChild(documentFragment, textNode)
-            executeBindings(bindings, vmodels)
+            if (bindings.length)
+                executeBindings(bindings, vmodels)
         }
     }
 
@@ -3838,8 +3839,25 @@
     avalon.config({
         loader: true
     })
+    var msSelector = "[ms-controller],[ms-important],[ms-widget]"
     avalon.ready(function() {
-        avalon.scan(DOC.body)
+        if (W3C && DOC.querySelectorAll) {
+            var elems = DOC.querySelectorAll(msSelector), nodes = []
+            for (var i = 0, elem; elem = elems[i++]; ) {
+                if (!elem.__root__) {
+                    var array = elem.querySelectorAll(msSelector)
+                    for (var j = 0, el; el = array[j++]; ) {
+                        el.__root__ = true
+                    }
+                    nodes.push(elem)
+                }
+            }
+            for (var i = 0, elem; elem = nodes[i++]; ) {
+                avalon.scan(elem)
+            }
+        } else {
+            avalon.scan(DOC.body)
+        }
     })
 })(document)
 /**

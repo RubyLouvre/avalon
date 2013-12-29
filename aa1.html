@@ -5,9 +5,9 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-     <script src="avalon.js"></script>
+        <script src="avalon.js"></script>
 
-        <script>
+        <script >
             var model = avalon.define("performance", function(vm) {
                 vm.aaa = "<span>2222222</span>"
                 vm.bbb = "司徒正美"
@@ -21,16 +21,25 @@
 
 
         </script>
+        <script>
+            window.onload = function() {
+                var root = document.documentElement;
+                var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+              
+             
+                //console.log(root.innerHTML.match(rattrs))
+            }
+        </script>
     </head>
     <body>
         <fieldset ms-controller="performance">
             <div  ms-each="array">
                 <div>{{el}}   <span>88888888888888888888888</span></div>
             </div>
-
+         
 
         </fieldset>
-
+      
 
     </body>
 </html>
