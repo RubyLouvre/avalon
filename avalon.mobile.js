@@ -1204,44 +1204,42 @@
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
-                scanText(node, vmodels) //扫描文本节点
+                scanText(parent, node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
     }
 
-    function scanText(textNode, vmodels) {
+    function scanText(parent, textNode, vmodels) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
-        for (var i = 0, token; token = tokens[i++]; ) {
-            var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
-            if (token.expr) {
-                var filters = token.filters
-                var binding = {
-                    type: "text",
-                    node: node,
-                    param: "",
-                    nodeType: 3,
-                    element: textNode.parentNode,
-                    value: token.value,
-                    filters: filters
-                }
-                if (filters && filters.indexOf("html") !== -1) {
-                    avalon.Array.remove(filters, "html")
-                    binding.type = "html"
-                    binding.replaceNodes = [node]
-                    if (!filters.length) {
-                        delete bindings.filters
-                    }
-                }
-                bindings.push(binding) //收集带有插值表达式的文本
-            }
-            documentFragment.appendChild(node)
-        }
         if (tokens.length) {
+            for (var i = 0, token; token = tokens[i++]; ) {
+                var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
+                if (token.expr) {
+                    var filters = token.filters
+                    var binding = {
+                        type: "text",
+                        node: node,
+                        param: "",
+                        nodeType: 3,
+                        element: parent,
+                        value: token.value,
+                        filters: filters
+                    }
+                    if (filters && filters.indexOf("html") !== -1) {
+                        avalon.Array.remove(filters, "html")
+                        binding.type = "html"
+                        binding.replaceNodes = [node]
+                        if (!filters.length) {
+                            delete bindings.filters
+                        }
+                    }
+                    bindings.push(binding) //收集带有插值表达式的文本
+                }
+                documentFragment.appendChild(node)
+            }
             textNode.parentNode.replaceChild(documentFragment, textNode)
-        }
-        if (bindings.length) {
             executeBindings(bindings, vmodels)
         }
     }
