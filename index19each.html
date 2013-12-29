@@ -39,7 +39,6 @@
                         }
                     })
                     model.left.removeAll(function(el) {
-
                         return el.checked
                     })
                     model.right.push.apply(model.right, array)
@@ -47,6 +46,7 @@
                 }
                 vm.addToLeft = function() {
                     var array = []
+                    console.log( model.right)
                     model.right.forEach(function(el) {
                         if (el.checked) {
                             var model = avalon.mix({}, el.$model)

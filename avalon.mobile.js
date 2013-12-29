@@ -1828,7 +1828,7 @@
             var data = this
             var group = data.group
             var parent = data.parent
-            var mapper = data.mapper
+            var proxies = data.proxies
             if (method == "del" || method == "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
             }
@@ -1843,7 +1843,7 @@
                         var ii = i + pos
                         var proxy = createEachProxy(ii, arr[i], data, last) //300
                         var tview = data.template.cloneNode(true)
-                        mapper.splice(ii, 0, proxy)
+                        proxies.splice(ii, 0, proxy)
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         scanNodes(tview, base.concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
@@ -1863,17 +1863,15 @@
                     log(new Date - now)
                     break
                 case "del":
-                    mapper.splice(pos, el) //移除对应的子VM
+                    proxies.splice(pos, el) //移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
-                    var last = mapper.length - 1,
-                            host = data.getter()
-                    for (; el = mapper[pos]; pos++) {
+                    var last = proxies.length - 1
+                    for (; el = proxies[pos]; pos++) {
                         el.$index = pos
                         el.$first = pos === 0
                         el.$last = pos === last
-                        el[el.$itemName] = host[pos]
                     }
                     break
                 case "clear":
@@ -1885,19 +1883,19 @@
                         deleteRange.setEndAfter(parent.lastChild)
                     }
                     removeFromSanctuary(deleteRange.extractContents())
-                    mapper.length = 0
+                    proxies.length = 0
                     break
                 case "move":
-                    var t = mapper.splice(pos, 1)[0]
+                    var t = proxies.splice(pos, 1)[0]
                     if (t) {
-                        mapper.splice(el, 0, t)
+                        proxies.splice(el, 0, t)
                         var moveNode = removeView(locatedNode, group)
                         locatedNode = getLocatedNode(parent, data, el)
                         parent.insertBefore(moveNode, locatedNode)
                     }
                     break
                 case "set":
-                    var proxy = mapper[pos]
+                    var proxy = proxies[pos]
                     if (proxy) {
                         proxy[proxy.$itemName] = el
                     }
@@ -2125,7 +2123,7 @@
             data.handler = bindingExecutors[type]
             list[subscribers] && list[subscribers].push(data)
             if (type != "with") {
-                data.mapper = []
+                data.proxies = []
                 data.handler("add", 0, list)
             } else {
                 var pool = withProxyPool[list.$id]

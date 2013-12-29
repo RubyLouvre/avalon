@@ -13,7 +13,9 @@
                 vm.toggle = false
                 vm.w = 80
                 vm.value = "不能修改与提交"
-                vm.array = ["a", "b", "c", "d", "f"]
+                vm.array = [{name:"a", selected: false},{name:"b", selected: false},
+                    {name:"c", selected: false},{name:"d", selected: false},
+                   {name:"f", selected: false},{name:"g", selected: false} ]
                 //  vm.$skipArray = ["array"]
                 vm.obj = {
                     a: 1,
@@ -30,13 +32,13 @@
             })
             setTimeout(function() {
                 model.array.reverse()
-            }, 2000)
+            }, 6000)
             setTimeout(function() {
                 model.obj = {
                     xxx:"111",
                     yyy:"eee"
                 }
-                model.array.set(2, "xxxxxxx")
+             //   model.array.set(2, "xxxxxxx")
             }, 3000)
 
 
@@ -44,6 +46,9 @@
         <style>
             .width80{
                 background: red;
+            }
+            .selected {
+                background: #a9ea00;
             }
         </style>
     </head>
@@ -56,7 +61,7 @@
             <div ms-visible="toggle">测试ms-visible</div>
             <div ms-class="width{{w}}">测试ms-class</div>
             <div ms-each="array">
-                <p ms-click="remove">{{el}}   {{$index}}  {{$first}}  {{$last}}</p>
+                <p ms-class-selected="el.selected"><input type="checkbox" ms-duplex-radio="el.selected" >{{el.name}}   {{$index}}  {{$first}}  {{$last}}<b ms-click="remove">删除</b></p>
             </div>
             <div ms-with="obj">
                 <p>{{$key}}---{{$val}}</p>

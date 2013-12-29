@@ -1,4 +1,4 @@
-﻿define(function() {
+define(function() {
     return [{
             "name": "Average.queue.Length",
             "resource_id": "f90af1c6-3dad-3f9c-9d0f-8a8d89420f4f",
