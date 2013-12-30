@@ -9,37 +9,30 @@
 
         <script >
             var model = avalon.define("performance", function(vm) {
-                vm.aaa = "<span>2222222</span>"
-                vm.bbb = "司徒正美"
-                vm.array = avalon.range(0, 2000)
+                vm.langtext = ""
+                vm.array = ["aaa", "bbb", "ccc"]
+                vm.lang = []
             })
 
-            setTimeout(function() {
-                //   console.log("111111111111111111111")
-                //  model.array.reverse()
-            }, 2000)
+            model.lang.$watch("length", function() {
+                model.langtext = model.lang.join(",")
+            })
 
 
         </script>
         <script>
-            window.onload = function() {
-                var root = document.documentElement;
-                var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
-              
-             
-                //console.log(root.innerHTML.match(rattrs))
-            }
+
         </script>
     </head>
     <body>
         <fieldset ms-controller="performance">
             <div  ms-each="array">
-                <div>{{el}}   <span>88888888888888888888888</span></div>
+                <div><input type="checkbox" ms-duplex="lang" ms-value="el">{{el}}</div>
             </div>
-         
+            <div>{{langtext}}</div>
 
         </fieldset>
-      
+
 
     </body>
 </html>

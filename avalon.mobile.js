@@ -1201,13 +1201,13 @@
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
-                scanText(parent, node, vmodels) //扫描文本节点
+                scanText( node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
     }
 
-    function scanText(parent, textNode, vmodels) {
+    function scanText(textNode, vmodels) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
         if (tokens.length) {
@@ -1220,7 +1220,7 @@
                         node: node,
                         param: "",
                         nodeType: 3,
-                        element: parent,
+                        element: textNode.parentNode,
                         value: token.value,
                         filters: filters
                     }
