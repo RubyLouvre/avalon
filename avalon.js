@@ -1927,9 +1927,9 @@
             textBuffer = names = null //释放内存
         }
     }
-    avalon.parseExpr = parseExpr
-    avalon.subscribe = registerSubscriber
-    //parseExpr的智能引用代理（Smart Reference）
+
+
+    //parseExpr的智能引用代理
 
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
@@ -1949,7 +1949,7 @@
             parseExpr(code, scopes, data, tokens)
         }
         if (data.evaluator) {
-            data.handler = bindingExecutors[data.type]
+            data.handler = bindingExecutors[data.handlerName || data.type]
             data.evaluator.toString = function() {
                 return data.type + " binding to eval(" + code + ")"
             }
@@ -1959,6 +1959,7 @@
             registerSubscriber(data)
         }
     }
+    avalon.parseExprProxy = parseExprProxy
     /*********************************************************************
      *                         Bind                                    *
      **********************************************************************/
@@ -2174,7 +2175,7 @@
                 elem.setAttribute(key, String(val))
             }
         },
-        "disabled": function(val, elem, data) {
+        "checked": function(val, elem, data) {
             var name = data.type;
             if (name === "enabled") {
                 elem.disabled = !val
@@ -2378,6 +2379,7 @@
         }
     }
 
+
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
@@ -2391,10 +2393,15 @@
                     text = RegExp.$1
                 }
             }
+            data.handlerName = "attr"//handleName用于处理多种绑定共用同一种bindingExecutor的情况
             parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
         "bind": function() {
             log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
+        },
+        "checked": function(data, vmodels) {
+            data.handlerName = "checked"
+            parseExprProxy(data.value, vmodels, data)
         },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
@@ -2402,6 +2409,7 @@
             var oldStyle = data.param,
                     text = data.value,
                     rightExpr
+            data.handlerName = "class"
             if (!oldStyle || isFinite(oldStyle)) {
                 data.param = "" //去掉数字
                 var noExpr = text.replace(rexprg, function(a) {
@@ -2466,6 +2474,7 @@
                 return this.evaluator.apply(0, this.args)
             }
             data.parent = elem
+            data.handler = bindingExecutors.each
             data.callbackName = elem.getAttribute("data-" + (type || "each") + "-rendered")
             var check0 = "$first",
                     check1 = "$last"
@@ -2520,7 +2529,6 @@
                     parent.appendChild(this.template)
                 }
             }
-            data.handler = bindingExecutors[type]
             list[subscribers] && list[subscribers].push(data)
             if (type != "with") {
                 data.proxies = []
@@ -2579,13 +2587,8 @@
             }
             data.type = "on"
             data.hasArgs = four
+            data.handlerName = "on"
             parseExprProxy(value, vmodels, data, four)
-        },
-        //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
-        //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
-        //<div>ruby + java</div>
-        "text": function(data, vmodels) {
-            parseExprProxy(data.value, vmodels, data)
         },
         "ui": function() {
             log("ms-ui已废弃，请使用更方便的ms-widget")
@@ -2646,27 +2649,25 @@
         }
         return result
     }
+
+
     //============================   class preperty binding  =======================
     "hover,active".replace(rword, function(method) {
         bindingHandlers[method] = bindingHandlers["class"]
-        bindingExecutors[method] = bindingExecutors["class"]
     })
     "with,repeat".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.each
-        bindingExecutors[name] = bindingExecutors.each
     })
     //============================= boolean preperty binding =======================
-    "checked,readonly,selected".replace(rword, function(name) {
-        bindingHandlers[name] = bindingHandlers.text
-        bindingExecutors[name] = bindingExecutors.disabled
+    "disabled,enabled,readonly,selected".replace(rword, function(name) {
+        bindingHandlers[name] = bindingHandlers.checked
     })
-    bindingHandlers.data = bindingHandlers.disabled = bindingHandlers.enabled = bindingHandlers.html = bindingHandlers.text
+    bindingHandlers.data = bindingHandlers.text = bindingHandlers.html
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
     "title,alt,src,value,css,include,href".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.attr
-        bindingExecutors[name] = bindingExecutors.attr
     })
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
