@@ -1921,7 +1921,7 @@
                     text = RegExp.$1
                 }
             }
-            parseExprProxy(data.value, vmodels, data, (simple ? null : scanExpr(data.value)))
+            parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
         "bind": function() {
             log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
@@ -2110,7 +2110,7 @@
             }
             data.type = "on"
             data.hasArgs = four
-            parseExprProxy(data.value, vmodels, data, four)
+            parseExprProxy(value, vmodels, data, four)
         },
         //抽取innerText中插入表达式，置换成真实数据放在它原来的位置
         //<div>{{firstName}} + java</div>，如果model.firstName为ruby， 那么变成
