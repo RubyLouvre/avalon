@@ -1939,12 +1939,12 @@
             }
             data.args = []
         } else {
-            parseExpr(code, scopes, data)
+            parseExpr(code, scopes, data, tokens)
         }
         if (data.evaluator) {
             data.handler = bindingExecutors[data.type]
             data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + expr + ")"
+                return data.type + " binding to eval(" + code + ")"
             }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
