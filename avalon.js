@@ -1557,13 +1557,13 @@
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3) {
-                scanText( node, vmodels) //扫描文本节点
+                scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
     }
 
-    function scanText( textNode, vmodels) {
+    function scanText(textNode, vmodels) {
         var bindings = [],
                 tokens = scanExpr(textNode.nodeValue)
         if (tokens.length) {
@@ -1614,7 +1614,6 @@
                             type: type,
                             param: match[2] || "",
                             element: elem,
-                            remove: true,
                             name: match[0],
                             value: attr.nodeValue
                         }
@@ -1690,11 +1689,10 @@
             if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
                 data.vmodels = vmodels
                 bindingHandlers[data.type](data, vmodels)
-                if (data.remove) { //移除数据绑定，防止被二次解析
+                if (data.evaluator) { //移除数据绑定，防止被二次解析
                     //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                     data.element.removeAttribute(data.name)
                 }
-                data.remove = true
             }
         }
         bindings.length = 0
@@ -1926,7 +1924,6 @@
             data.evaluator = fn
             data.args = args
         } catch (e) {
-            delete data.remove
         } finally {
             textBuffer = names = null //释放内存
         }
@@ -2082,12 +2079,13 @@
             elem.style.display = val ? data.display : "none"
         },
         "disabled": function(val, elem, data) {
-            var name = data.type,
-                    propName = name === "readonly" ? "readOnly" : name
-            elem[propName] = !!val
-        },
-        "enabled": function(val, elem) {
-            elem.disabled = !val
+            var name = data.type;
+            if (name === "enabled") {
+                elem.disabled = !val
+            } else {
+                var propName = name === "readonly" ? "readOnly" : name
+                elem[propName] = !!val
+            }
         },
         "href": function(val, elem, data) {
             var method = data.type,
@@ -2492,7 +2490,6 @@
         "duplex": function(data, vmodels) {
             var elem = data.element,
                     tagName = elem.tagName
-            delete data.remove
             if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
                 var val = data.value.split("."),
                         first = val[0],
@@ -2515,7 +2512,6 @@
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
                 modelBinding[elem.tagName](elem, data.evaluator, vm, data)
-                data.remove = true
             }
         },
         "each": function(data, vmodels) {
@@ -2603,8 +2599,7 @@
         "widget": function(data, vmodels) {
             var args = data.value.match(rword),
                     element = data.element,
-                    widget = args[0],
-                    ret = 0
+                    widget = args[0]
             if (args[1] === "$") {
                 args[1] = void 0
             }
@@ -2630,9 +2625,9 @@
                 element.stopScan = false
                 element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
-                ret = 1
+                data.evaluator = noop
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
-            data.remove = ret
+
         },
         "ui": function() {
             log("ms-ui已废弃，请使用更方便的ms-widget")
