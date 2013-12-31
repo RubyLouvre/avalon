@@ -1569,7 +1569,6 @@
                             var binding = {
                                 type: "text",
                                 node: node,
-                                param: "",
                                 nodeType: 3,
                                 element: textNode.parentNode,
                                 value: token.value,
