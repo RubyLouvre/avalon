@@ -71,6 +71,7 @@ define(["avalon"], function(avalon) {
         }
         avalon.bindingHandlers.on(data, vmodels)
     }
+    avalon.bindingExecutors.hotkeys = avalon. bindingExecutors.on
     var root = document.documentElement
     var hotkeysCallback = function(e) {
         var safelist = callbacks.concat()
