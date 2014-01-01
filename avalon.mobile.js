@@ -251,32 +251,11 @@
         }
     })
     //视浏览器情况采用最快的异步回调
-    if (window.setImmediate) {//IE10-11
-        avalon.nextTick = setImmediate.bind(window)
-    } else if (window.postMessage) {
-        var handlerQueue = []
-        function drainQueue() {
-            var fn = handlerQueue.shift()
-            if (fn) {
-                fn()
-                if (handlerQueue.length) {
-                    avalon.nextTick()
-                }
-            }
-        }
-        avalon.nextTick = function(callback) {
-            if (typeof callback === "function") {
-                handlerQueue.push(callback)
-            }
-            var image = new Image
-            image.onerror = drainQueue
-            image.src = expose + Math.random()
-        }
-    } else {
-        avalon.nextTick = function(callback) {
-            setTimeout(callback, 0)
-        }
+
+    avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
+        setTimeout(callback, 0)
     }
+
 
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
         Node.prototype.contains = function(arg) {
