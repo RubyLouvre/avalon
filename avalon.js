@@ -300,23 +300,28 @@
     })
 
     //视浏览器情况采用最快的异步回调
-    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver
-    if (BrowserMutationObserver) { //chrome18+, safari6+, firefox14+,ie11+,opera15
-        var now
-        var mutationInput = DOC.createElement("input"), mutationCallbacks = []
-        var observer = new BrowserMutationObserver(function(_, fn) {
-            while (fn = mutationCallbacks.shift()) {
+    if (window.setImmediate) {//IE10-11
+        avalon.nextTick = setImmediate.bind(window)
+    } else if (W3C) {
+        var handlerQueue = [];
+        function drainQueue() {
+            var fn = handlerQueue.shift()
+            if (fn) {
                 fn()
+                if (handlerQueue.length) {
+                    avalon.nextTick()
+                }
             }
-        })
-        observer.observe(mutationInput, {
-            attributes: true
-        })
-        avalon.nextTick = function(callback) { //2-3ms
-            mutationCallbacks.push(callback)
-            mutationInput.setAttribute("value", Math.random())
         }
-    } else if (window.VBArray) { //IE下这个通常只要1ms,而且没有副作用，不会发现请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
+        avalon.nextTick = function(callback) {
+            if (typeof callback === "function") {
+                handlerQueue.push(callback)
+            }
+            var image = new Image
+            image.onerror = drainQueue
+            image.src = expose + Math.random()
+        }
+    } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发现请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
         avalon.nextTick = function(callback) {
             var node = DOC.createElement("script")
             node.onreadystatechange = function() {

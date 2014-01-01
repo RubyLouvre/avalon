@@ -251,22 +251,27 @@
         }
     })
     //视浏览器情况采用最快的异步回调
-    var BrowserMutationObserver = window.MutationObserver || window.WebKitMutationObserver
-    if (BrowserMutationObserver) {
-        avalon.nextTick = function(callback) {
-            var input = DOC.createElement("input")
-            var observer = new BrowserMutationObserver(function(mutations) {
-                mutations.forEach(function() {
-                    callback()
-                })
-            })
-            observer.observe(input, {
-                attributes: true
-            })
-            input.setAttribute("value", Math.random())
+    if (window.setImmediate) {//IE10-11
+        avalon.nextTick = setImmediate.bind(window)
+    } else if (window.addEventListener) {
+        var handlerQueue = [];
+        function drainQueue() {
+            var fn = handlerQueue.shift()
+            if (fn) {
+                fn()
+                if (handlerQueue.length) {
+                    avalon.nextTick()
+                }
+            }
         }
-    } else if (window.setImmediate) {
-        avalon.nextTick = setImmediate
+        avalon.nextTick = function(callback) {
+            if (typeof callback === "function") {
+                handlerQueue.push(callback)
+            }
+            var image = new Image
+            image.onerror = drainQueue
+            image.src = expose + Math.random()
+        }
     } else {
         avalon.nextTick = function(callback) {
             setTimeout(callback, 0)
