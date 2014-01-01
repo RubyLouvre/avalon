@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0alpha ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.0beta ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1272,25 +1272,25 @@
                 })
             }
 
-            executeBindings(bindings, vmodels)
-            if ((!elem.stopScan) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+            var isWidget = executeBindings(bindings, vmodels)
+            if ((!isWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, vmodels) //扫描子孙元素
             }
         }
     }
 
     function executeBindings(bindings, vmodels) {
+        var stopScan
         for (var i = 0, data; data = bindings[i++]; ) {
-            if (data.type === "widget" || vmodels.length) { //https://github.com/RubyLouvre/avalon/issues/171
-                data.vmodels = vmodels
-                bindingHandlers[data.type](data, vmodels)
-                if (data.evaluator) { //移除数据绑定，防止被二次解析
-                    //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
-                    data.element.removeAttribute(data.name)
-                }
+            data.vmodels = vmodels
+            stopScan ^= bindingHandlers[data.type](data, vmodels)
+            if (data.evaluator) { //移除数据绑定，防止被二次解析
+                //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
+                data.element.removeAttribute(data.name)
             }
         }
         bindings.length = 0
+        return stopScan
     }
 
 
@@ -2132,7 +2132,6 @@
                 args[1] = widget + setTimeout("1")
             }
             data.value = args.join(",")
-            element.stopScan = true
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
                 var vmodel = vmodels[0],
@@ -2147,12 +2146,13 @@
                 var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
-                element.stopScan = false
                 element.removeAttribute("ms-widget")
                 constructor(element, data, vmodels)
                 data.evaluator = noop
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
+            return  true
         }
+
     }
 
     function filterData(obj, prefix) {
