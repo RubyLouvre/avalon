@@ -253,8 +253,8 @@
     //视浏览器情况采用最快的异步回调
     if (window.setImmediate) {//IE10-11
         avalon.nextTick = setImmediate.bind(window)
-    } else if (window.addEventListener) {
-        var handlerQueue = [];
+    } else if (window.postMessage) {
+        var handlerQueue = []
         function drainQueue() {
             var fn = handlerQueue.shift()
             if (fn) {

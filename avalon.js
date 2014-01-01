@@ -298,21 +298,20 @@
             }
         }
     })
-
     //视浏览器情况采用最快的异步回调
+    var handlerQueue = []
+    function drainQueue() {
+        var fn = handlerQueue.shift()
+        if (fn) {
+            fn()
+            if (handlerQueue.length) {
+                avalon.nextTick()
+            }
+        }
+    }
     if (window.setImmediate) {//IE10-11
         avalon.nextTick = setImmediate.bind(window)
     } else if (W3C) {
-        var handlerQueue = [];
-        function drainQueue() {
-            var fn = handlerQueue.shift()
-            if (fn) {
-                fn()
-                if (handlerQueue.length) {
-                    avalon.nextTick()
-                }
-            }
-        }
         avalon.nextTick = function(callback) {
             if (typeof callback === "function") {
                 handlerQueue.push(callback)
@@ -323,9 +322,12 @@
         }
     } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发现请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
         avalon.nextTick = function(callback) {
+            if (typeof callback === "function") {
+                handlerQueue.push(callback)
+            }
             var node = DOC.createElement("script")
             node.onreadystatechange = function() {
-                callback() //在interactive阶段就触发
+                drainQueue() //在interactive阶段就触发
                 node.onreadystatechange = null
                 root.removeChild(node)
                 node = null
