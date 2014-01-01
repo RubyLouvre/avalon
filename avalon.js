@@ -311,16 +311,7 @@
     }
     if (window.setImmediate) {//IE10-11
         avalon.nextTick = setImmediate.bind(window)
-    } else if (W3C) {
-        avalon.nextTick = function(callback) {
-            if (typeof callback === "function") {
-                handlerQueue.push(callback)
-            }
-            var image = new Image
-            image.onerror = drainQueue
-            image.src = expose + Math.random()
-        }
-    } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发现请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
+    } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
         avalon.nextTick = function(callback) {
             if (typeof callback === "function") {
                 handlerQueue.push(callback)
