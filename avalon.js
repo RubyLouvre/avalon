@@ -880,12 +880,12 @@
             cssHooks[name + "::get"] = function(node) {
                 var hidden = [];
                 showHidden(node, hidden);
-                var val = cssHooks[name + ":get"](node)
+                var val = avalon.css(node, name, true)
                 for (var i = 0, obj; obj = hidden[i++]; ) {
                     node = obj.node
-                    for (name in obj) {
-                        if (typeof obj[name] === "string") {
-                            node.style[name] = obj[name]
+                    for (var n in obj) {
+                        if (typeof obj[n] === "string") {
+                            node.style[n] = obj[n]
                         }
                     }
                 }
@@ -922,7 +922,7 @@
                 }
                 return parseFloat(this.css(method)) || 0
             } else {
-                return arguments.length ? this.css(method, value) : cssHooks[method+"::get"](node)
+                return arguments.length ? this.css(method, value) : cssHooks[method + "::get"](node)
             }
         }
 

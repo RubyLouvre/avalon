@@ -667,7 +667,7 @@
         cssHooks[method + "::get"] = function(node) {
             var hidden = [];
             showHidden(node, hidden);
-            var val = cssHooks[method + ":get"](node)
+            var val =  avalon.css(node, method, true)
             for (var i = 0, obj; obj = hidden[i++]; ) {
                 node = obj.node
                 for (var n in obj) {
