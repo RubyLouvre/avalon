@@ -2657,8 +2657,13 @@
             data.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
-                var vmodel = vmodels[0],
-                        opts = args[2] || widget //options在最近的一个VM中的名字
+                for (var i = 0, v; v = vmodels[i++]; ) {
+                    if (VMODELS[v.$id]) {
+                        var vmodel = v
+                        break
+                    }
+                }
+                var opts = args[2] || widget //options在最近的一个VM中的名字
                 var vmOptions = {}
                 if (vmodel && opts && typeof vmodel[opts] === "object") {
                     vmOptions = vmodel[opts]
