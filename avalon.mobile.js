@@ -1184,7 +1184,7 @@
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3) {
+            } else if (node.nodeType === 3 && rexpr.test(node.nodeValue)) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
@@ -1302,51 +1302,51 @@
         var tokens = [],
                 value, start = 0,
                 stop
-        if (rexpr.test(str)) {
-            do {
-                stop = str.indexOf(openTag, start)
-                if (stop === -1) {
-                    break
-                }
-                value = str.slice(start, stop)
-                if (value) { // {{ 左边的文本
-                    tokens.push({
-                        value: value,
-                        expr: false
-                    })
-                }
-                start = stop + openTag.length
-                stop = str.indexOf(closeTag, start)
-                if (stop === -1) {
-                    break
-                }
-                value = str.slice(start, stop)
-                if (value) { //处理{{ }}插值表达式
-                    var leach = []
-                    if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                        value = value.replace(rfilters, function(c, d, e) {
-                            leach.push(d + (e || ""))
-                            return ""
-                        })
-                        value = value.replace(r11b, "||") //还原短路与
-                    }
-                    tokens.push({
-                        value: value,
-                        expr: true,
-                        filters: leach.length ? leach : void 0
-                    })
-                }
-                start = stop + closeTag.length
-            } while (1)
-            value = str.slice(start)
-            if (value) { //}} 右边的文本
+
+        do {
+            stop = str.indexOf(openTag, start)
+            if (stop === -1) {
+                break
+            }
+            value = str.slice(start, stop)
+            if (value) { // {{ 左边的文本
                 tokens.push({
                     value: value,
                     expr: false
                 })
             }
+            start = stop + openTag.length
+            stop = str.indexOf(closeTag, start)
+            if (stop === -1) {
+                break
+            }
+            value = str.slice(start, stop)
+            if (value) { //处理{{ }}插值表达式
+                var leach = []
+                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+                    value = value.replace(rfilters, function(c, d, e) {
+                        leach.push(d + (e || ""))
+                        return ""
+                    })
+                    value = value.replace(r11b, "||") //还原短路与
+                }
+                tokens.push({
+                    value: value,
+                    expr: true,
+                    filters: leach.length ? leach : void 0
+                })
+            }
+            start = stop + closeTag.length
+        } while (1)
+        value = str.slice(start)
+        if (value) { //}} 右边的文本
+            tokens.push({
+                value: value,
+                expr: false
+            })
         }
+
         return tokens
     }
     /*********************************************************************

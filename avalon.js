@@ -299,19 +299,19 @@
         }
     })
     //视浏览器情况采用最快的异步回调
-    var handlerQueue = []
-    function drainQueue() {
-        var fn = handlerQueue.shift()
-        if (fn) {
-            fn()
-            if (handlerQueue.length) {
-                avalon.nextTick()
-            }
-        }
-    }
     if (window.setImmediate) {//IE10-11
         avalon.nextTick = setImmediate.bind(window)
     } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
+        var handlerQueue = []
+        function drainQueue() {
+            var fn = handlerQueue.shift()
+            if (fn) {
+                fn()
+                if (handlerQueue.length) {
+                    avalon.nextTick()
+                }
+            }
+        }
         avalon.nextTick = function(callback) {
             if (typeof callback === "function") {
                 handlerQueue.push(callback)
@@ -1157,6 +1157,7 @@
             }
             iterators.forEach(function(data) {
                 data.rollback && data.rollback()
+                data.type = null
             })
             var ret = modelFactory(b)
             updateLater[ret.$id] = function(data) {
@@ -1494,7 +1495,7 @@
                 if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
-                    fn.handler.apply(fn, args) //强制重新计算自身
+                    fn.handler.apply(fn, args) //处理监控数组的方法
                 } else {
                     fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
                 }
@@ -1556,7 +1557,7 @@
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3) {
+            } else if (node.nodeType === 3 && rexpr.test(node.nodeValue)) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
@@ -1668,7 +1669,7 @@
             if (cacheAttr[str + expose]) {
                 return cacheAttr[str + expose]
             }
-            while (k = rattrs.exec(str)) { //属性值只有双引号与无引号的情况
+            while (k = rattrs.exec(str)) {
                 v = k[2];
                 var name = k[1].toLowerCase()
                 match = name.match(rmsAttr)
@@ -1706,51 +1707,50 @@
         var tokens = [],
                 value, start = 0,
                 stop
-        if (rexpr.test(str)) {
-            do {
-                stop = str.indexOf(openTag, start)
-                if (stop === -1) {
-                    break
-                }
-                value = str.slice(start, stop)
-                if (value) { // {{ 左边的文本
-                    tokens.push({
-                        value: value,
-                        expr: false
-                    })
-                }
-                start = stop + openTag.length
-                stop = str.indexOf(closeTag, start)
-                if (stop === -1) {
-                    break
-                }
-                value = str.slice(start, stop)
-                if (value) { //处理{{ }}插值表达式
-                    var leach = []
-                    if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                        value = value.replace(rfilters, function(c, d, e) {
-                            leach.push(d + (e || ""))
-                            return ""
-                        })
-                        value = value.replace(r11b, "||") //还原短路与
-                    }
-                    tokens.push({
-                        value: value,
-                        expr: true,
-                        filters: leach.length ? leach : void 0
-                    })
-                }
-                start = stop + closeTag.length
-            } while (1)
-            value = str.slice(start)
-            if (value) { //}} 右边的文本
+        do {
+            stop = str.indexOf(openTag, start)
+            if (stop === -1) {
+                break
+            }
+            value = str.slice(start, stop)
+            if (value) { // {{ 左边的文本
                 tokens.push({
                     value: value,
                     expr: false
                 })
             }
+            start = stop + openTag.length
+            stop = str.indexOf(closeTag, start)
+            if (stop === -1) {
+                break
+            }
+            value = str.slice(start, stop)
+            if (value) { //处理{{ }}插值表达式
+                var leach = []
+                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+                    value = value.replace(rfilters, function(c, d, e) {
+                        leach.push(d + (e || ""))
+                        return ""
+                    })
+                    value = value.replace(r11b, "||") //还原短路与
+                }
+                tokens.push({
+                    value: value,
+                    expr: true,
+                    filters: leach.length ? leach : void 0
+                })
+            }
+            start = stop + closeTag.length
+        } while (1)
+        value = str.slice(start)
+        if (value) { //}} 右边的文本
+            tokens.push({
+                value: value,
+                expr: false
+            })
         }
+
         return tokens
     }
     /*********************************************************************
