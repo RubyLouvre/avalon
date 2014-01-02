@@ -848,27 +848,7 @@
             visibility: "hidden",
             display: "block"
         }
-        //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
-        var rdisplayswap = /^(none|table(?!-c[ea]).+)/
-        function showHidden(node, array) {
-            //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
-            if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
-                if (rdisplayswap.test(cssHooks["@:get"](node, "display"))) {
-                    var obj = {
-                        node: node
-                    }
-                    for (var name in cssShow) {
-                        obj[name] = node.style[name]
-                        node.style[name] = cssShow[name]
-                    }
-                    array.push(obj)
-                }
-                var parent = node.parentNode
-                if (parent && parent.nodeType == 1) {
-                    showHidden(parent, array)
-                }
-            }
-        }
+
         "width,height".replace(rword, function(name) {
             cssHooks[name + ":get"] = function(node) {
                 if (name === "width") {
@@ -876,20 +856,6 @@
                 } else {
                     return node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) - -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
                 }
-            }
-            cssHooks[name + "::get"] = function(node) {
-                var hidden = [];
-                showHidden(node, hidden);
-                var val = avalon.css(node, name, true)
-                for (var i = 0, obj; obj = hidden[i++]; ) {
-                    node = obj.node
-                    for (var n in obj) {
-                        if (typeof obj[n] === "string") {
-                            node.style[n] = obj[n]
-                        }
-                    }
-                }
-                return val;
             }
         })
     }
@@ -901,12 +867,46 @@
                     avalon(node).position()[name] + "px"
         }
     })
-
+    //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
+    var rdisplayswap = /^(none|table(?!-c[ea]).+)/
+    function showHidden(node, array) {
+        //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+        if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+            if (rdisplayswap.test(cssHooks["@:get"](node, "display"))) {
+                var obj = {
+                    node: node
+                }
+                for (var name in cssShow) {
+                    obj[name] = node.style[name]
+                    node.style[name] = cssShow[name]
+                }
+                array.push(obj)
+            }
+            var parent = node.parentNode
+            if (parent && parent.nodeType == 1) {
+                showHidden(parent, array)
+            }
+        }
+    }
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
                 scrollProp = "scroll" + name,
                 offsetProp = "offset" + name
+        cssHooks[method + "::get"] = function(node) {
+            var hidden = [];
+            showHidden(node, hidden);
+            var val = avalon.css(node, method, true)
+            for (var i = 0, obj; obj = hidden[i++]; ) {
+                node = obj.node
+                for (var n in obj) {
+                    if (typeof obj[n] === "string") {
+                        node.style[n] = obj[n]
+                    }
+                }
+            }
+            return val;
+        }
         avalon.fn[method] = function(value) {
             var node = this[0]
             if (arguments.length === 0) {
