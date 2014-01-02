@@ -843,7 +843,32 @@
                     op = alpha ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
+        var cssShow = {
+            position: "absolute",
+            visibility: "hidden",
+            display: "block"
+        }
         //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
+        var rdisplayswap = /^(none|table(?!-c[ea]).+)/
+        function showHidden(node, array) {
+            //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+            if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+                if (rdisplayswap.test(cssHooks["@:get"](node, "display"))) {
+                    var obj = {
+                        node: node
+                    }
+                    for (var name in cssShow) {
+                        obj[name] = node.style[name]
+                        node.style[name] = cssShow[name]
+                    }
+                    array.push(obj)
+                }
+                var parent = node.parentNode
+                if (parent && parent.nodeType == 1) {
+                    showHidden(parent, array)
+                }
+            }
+        }
         "width,height".replace(rword, function(name) {
             cssHooks[name + ":get"] = function(node) {
                 if (name === "width") {
@@ -851,6 +876,20 @@
                 } else {
                     return node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) - -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
                 }
+            }
+            cssHooks[name + "::get"] = function(node) {
+                var hidden = [];
+                showHidden(node, hidden);
+                var val = cssHooks[name + ":get"](node)
+                for (var i = 0, obj; obj = hidden[i++]; ) {
+                    node = obj.node
+                    for (name in obj) {
+                        if (typeof obj[name] === "string") {
+                            node.style[name] = obj[name]
+                        }
+                    }
+                }
+                return val;
             }
         })
     }
@@ -883,7 +922,7 @@
                 }
                 return parseFloat(this.css(method)) || 0
             } else {
-                return this.css(method, value)
+                return arguments.length ? this.css(method, value) : cssHooks[method+"::get"](node)
             }
         }
 
@@ -998,6 +1037,9 @@
 
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
+        if (typeof html !== "string") {
+            html = html + ""
+        }
         html = html.replace(rxhtml, "<$1></$2>").trim()
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
                 //取得其标签名

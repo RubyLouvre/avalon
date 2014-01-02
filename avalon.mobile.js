@@ -632,12 +632,52 @@
                     avalon(node).position()[name] + "px"
         }
     })
+    var cssShow = {
+        position: "absolute",
+        visibility: "hidden",
+        display: "block"
+    }
+    var rdisplayswap = /^(none|table(?!-c[ea]).+)/
+    function showHidden(node, array) {
+        //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+        if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+            var styles = window.getComputedStyle(node, null)
+            if (rdisplayswap.test(styles["display"])) {
+                var obj = {
+                    node: node
+                }
+                for (var name in cssShow) {
+                    obj[name] = styles[name]
+                    node.style[name] = cssShow[name]
+                }
+                array.push(obj)
+            }
+            var parent = node.parentNode
+            if (parent && parent.nodeType == 1) {
+                showHidden(parent, array)
+            }
+        }
+    }
 
     "Width,Height".replace(rword, function(name) {
         var method = name.toLowerCase(),
                 clientProp = "client" + name,
                 scrollProp = "scroll" + name,
                 offsetProp = "offset" + name
+        cssHooks[method + "::get"] = function(node) {
+            var hidden = [];
+            showHidden(node, hidden);
+            var val = cssHooks[method + ":get"](node)
+            for (var i = 0, obj; obj = hidden[i++]; ) {
+                node = obj.node
+                for (var n in obj) {
+                    if (typeof obj[n] === "string") {
+                        node.style[n] = obj[n]
+                    }
+                }
+            }
+            return val;
+        }
         avalon.fn[method] = function(value) {
             var node = this[0]
             if (arguments.length === 0) {
@@ -654,7 +694,7 @@
                 }
                 return parseFloat(this.css(method)) || 0
             } else {
-                return this.css(method, value)
+                return arguments.length ? this.css(method, value) : cssHooks[method + "::get"](node)
             }
         }
 
@@ -767,10 +807,13 @@
     }
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
+        if (typeof html !== "string") {
+            html = html + ""
+        }
         html = html.replace(rxhtml, "<$1></$2>").trim()
         if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/.test(html)) {
             var range = DOC.createRange()
-            range.selectNodeContents(root);
+            range.selectNodeContents(root)
             return range.createContextualFragment(html)
         }
         var fragment = documentFragment.cloneNode(false)
