@@ -1,9 +1,13 @@
-//==================================================
-// avalon 1.0beta  by 司徒正美 2013.12.28
-// 疑问:
-//    什么协议? MIT, (五种开源协议的比较(BSD,Apache,GPL,LGPL,MIThttp://www.awflasher.com/blog/archives/939)
-//    依赖情况? 没有任何依赖，可自由搭配jQuery, mass等使用,并不会引发冲突问题
-//==================================================
+/*==================================================
+Copyright (c) 2013 UnitedStackt Inc.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ by 司徒正美  http://weibo.com/jslouvre/
+ avalon 1.0beta
+==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
