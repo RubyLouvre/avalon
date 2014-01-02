@@ -2127,24 +2127,23 @@
         },
         "class": function(val, elem, data) {
             var $elem = avalon(elem),
-                    method = data.type,
-                    oldClass
+                    method = data.type
             if (method === "class" && data.param) { //如果是旧风格
                 $elem.toggleClass(data.param, !!val)
             } else {
                 var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
                 var className = data._class || val
-                if (!data.init) {
-                    switch (method) {
-                        case "class":
-                            if (toggle && oldClass) {
-                                $elem.removeClass(oldClass)
-                            }
-                            $elem.toggleClass(className, toggle)
-                            oldClass = className
-                            break;
-                        case "hover":
-                        case "active":
+                switch (method) {
+                    case "class":
+                        if (toggle && data.oldClass) {
+                            $elem.removeClass(data.oldClass)
+                        }
+                        $elem.toggleClass(className, toggle)
+                        data.oldClass = className
+                        break;
+                    case "hover":
+                    case "active":
+                        if (!data.init) {//确保只绑定一次
                             if (method === "hover") { //在移出移入时切换类名
                                 var event1 = "mouseenter",
                                         event2 = "mouseleave"
@@ -2161,9 +2160,9 @@
                             $elem.bind(event2, function() {
                                 toggle && $elem.removeClass(className)
                             })
-                            break;
-                    }
-                    data.init = 1
+                            data.init = 1
+                        }
+                        break;
                 }
             }
         },

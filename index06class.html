@@ -31,6 +31,11 @@
             .aaa{
                 background: black;
             }
+            .hover{
+                background: whitesmoke;
+                border:1px solid #FF77F1;
+                color:#000!important;
+            }
             .bbb{
                 color:white;
             }
@@ -40,19 +45,28 @@
             }
         </style>
         <script type="text/javascript">
-            avalon.define("xxx", function(vm) {
-                vm.toggle = true
+            var model = avalon.define("xxx", function(vm) {
                 vm.w = 500
                 vm.h = 200
                 vm.bottom = true
+                vm.toggleBottom = function() {
+                    vm.bottom = !vm.bottom
+                }
+                vm.num = "00"
+                vm.className = "点我"
+                vm.changeClassName = function() {
+                    vm.num = (100 * Math.random()).toFixed(0);
+                    vm.className = this.className
+                };
             })
         </script>
     </head>
     <body ms-controller="xxx">
-          <h3 style="text-align: center">ms-class</h3>
+        <h3 style="text-align: center">ms-class</h3>
         <div ms-class-ui-corner-bottom="bottom" 
-             ms-class-ui-corner-all="!bottom">切换两个类名</div>
-        <div ms-class="aaa bbb ccc">添加多个类名</div>
-        <div ms-class="bgRed width{{w}} height{{h}}: toggle">类名通过插值表达式生成</div>
+             ms-class-ui-corner-all="!bottom" ms-click='toggleBottom' >点我切换类名</div>
+        <div ms-class="aaa bbb ccc" ms-hover='hover'>添加多个类名，并且移上去会有hover效果</div>
+        <div ms-class="bgRed width{{w}} height{{h}}">类名通过插值表达式生成</div>
+        <p><button type='button' ms-class="test{{num}}" ms-click="changeClassName">{{className}}</button></p>
     </body>
 </html>
