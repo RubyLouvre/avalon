@@ -45,7 +45,7 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         var options = data.paginationOptions
         $element.addClass("ui-pagination ui-widget-header ui-corner-all ui-buttonset ")
         var model = avalon.define(data.paginationId, function(vm) {
-            avalon.$skipArray = ["perPages", "showPages", "currentIndex", "total"]
+            avalon.$skipArray = ["perPages", "showPages", "currentIndex", "total", "ellipseText"]//这些属性不被监控
             avalon.mix(vm, options)
             vm.jumpPage = function(event, page) {
                 event.preventDefault()
@@ -53,25 +53,25 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
                     switch (page) {
                         case "first":
                             vm.currentPage = 1
-                            break;
+                            break
                         case "last":
                             vm.currentPage = vm.maxPage
-                            break;
+                            break
                         case "next":
                             vm.currentPage++
                             if (vm.currentPage > vm.maxPage) {
                                 vm.currentPage = vm.maxPage
                             }
-                            break;
+                            break
                         case "prev":
                             vm.currentPage--
                             if (vm.currentPage < 1) {
                                 vm.currentPage = 1
                             }
-                            break;
+                            break
                         default:
                             vm.currentPage = page
-                            break;
+                            break
                     }
                     vm.pages = getPages(vm)
                 }
@@ -102,15 +102,15 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         getTitle: function(a) {
             switch (a) {
                 case "first":
-                    return "Go To First Page";
+                    return "Go To First Page"
                 case "prev":
-                    return "Go To Previous Page";
+                    return "Go To Previous Page"
                 case "next":
-                    return "Go To Next Page";
+                    return "Go To Next Page"
                 case "last":
-                    return "Go To Last Page";
+                    return "Go To Last Page"
                 default:
-                    return "Go to page " + a + "";
+                    return "Go to page " + a + ""
             }
         }
     }

@@ -473,7 +473,7 @@ define(["avalon"], function(avalon) {
             var args = [].concat.apply([props], arguments)
             return this.fx.apply(this, args)
         }
-    });
+    })
 
     "toggle, show,hide".replace(avalon.rword, function(name) {
         var pre = avalon.fn[name]
@@ -500,8 +500,7 @@ define(["avalon"], function(avalon) {
     }
     if (window.VBArray) {
         var parseColor = new function() {
-            var trim = /^\s+|\s+$/g;
-            var bod;
+            var trim = /^\s+|\s+$/g, bod
             try {
                 var docum = new ActiveXObject("htmlfile")
                 docum.write("<body>")
