@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-live</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            .red { color:#f00; }
+        </style>
+    </head>
+    <body >
+        <div ms-controller="model">
+            <div ms-html="aaa" ms-live-click="live"></div>
+        </div> 
+
+        <script src="avalon.js" type="text/javascript"></script>
+        <script>
+            require("avalon.live", function() {
+                var model = avalon.define("model", function(vm) {
+                    vm.aaa = "<b>ddd</b>"
+                    vm.live = function(e) {
+                        avalon.log(this)
+                        avalon.log(e.target)
+                    }
+                });
+                setTimeout(function() {
+                    model.aaa = "<em>dddd</em>"
+                }, 3000)
+                setTimeout(function() {
+                    model.aaa = "<em>3333</em>"
+                }, 4000)
+                avalon.scan()
+            })
+
+
+
+        </script> 
+    </body>
+</html>
