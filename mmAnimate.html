@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+                <script src="http://apycom.com/ssc-data/themes/default/scripts/jquery.js" language="javascript"></script>
+
+        <script>
+            require("mmAnimate,ready!", function() {
+                var el = document.getElementById("test")
+               
+                el.onclick = function() {
+                   
+                    switch (el.innerHTML) {
+                        case "resize":
+                            avalon(el).fx({
+                                width: 400,
+                                height: 400,
+                                background:"green"
+                            }, 1200, function() {
+                                avalon.log("complete")
+                                el.innerHTML = "translation"
+                            })
+                            break;
+                        case "translation":
+                            avalon(el).fx({
+                                top: 300,
+                                left: 300,
+                                width: 100,
+                                height: 100
+                            }, 1000, function() {
+                                avalon.log("complete")
+                                this.style.top = "40px"
+                                this.style.left = "40px"
+                                el.innerHTML = "toggle"
+                            })
+                            break
+                        case "toggle":
+                            avalon(el).hide(1000, function() {
+                                avalon(el).show(1000, function() {
+                                    avalon.log("complete")
+                                    el.innerHTML = "fade"
+                                })
+                            })
+                            break
+                        case "fade":
+                            avalon(el).fadeOut(1000, function() {
+                                avalon(el).fadeIn(1000, function() {
+                                    avalon.log("complete")
+                                    el.innerHTML = "slide"
+                                })
+                            })
+                            break;
+                        case "slide":
+                            avalon(el).slideUp(1000, function() {
+                                avalon(el).slideDown(1000, function() {
+                                    avalon.log("complete")
+                                    el.innerHTML = "slideDown"
+                                })
+                            })
+                            break;
+                    }
+
+
+                }
+            })
+        </script>
+        <style>
+            #test{
+
+                width:200px;
+                height:200px;
+                background: red;
+                position: absolute;
+            }
+        </style>
+    </head>
+    <body>
+        <div ms-controller="animate">
+            <div id="test">resize</div>
+        </div>
+    </body>
+</html>
