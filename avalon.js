@@ -438,7 +438,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(ap, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1551,6 +1551,9 @@
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
                         log("remove " + fn.name)
+                        for (var j in fn) {
+                            fn[j] = null
+                        }
                     }
                 }
                 if (typeof fn === "function") {
@@ -1558,7 +1561,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args||[]), el, fn)
+                    fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
                 }
             }
         }
@@ -1663,7 +1666,7 @@
 
     function scanAttr(elem, vmodels, repeatBinding, ifBinding) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
-        var bindings = [],
+        var bindings = [], hasWidget,
                 match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
@@ -1678,7 +1681,9 @@
                             name: match[0],
                             value: attr.nodeValue
                         }
-                        if (type === "repeat") {
+                        if (type === "widget") {
+                            hasWidget = true
+                        } else if (type === "repeat") {
                             repeatBinding = binding
                         } else if (type === "if") {
                             ifBinding = binding
@@ -1707,9 +1712,10 @@
                     return a.name > b.name
                 })
             }
-
-            var isWidget = executeBindings(bindings, vmodels)
-            if ((!isWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+            if (vmodels.length || hasWidget) {
+                executeBindings(bindings, vmodels)
+            }
+            if ((!hasWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                 scanNodes(elem, vmodels) //扫描子孙元素
             }
         }
@@ -1746,17 +1752,18 @@
     }
 
     function executeBindings(bindings, vmodels) {
-        var stopScan
+        var skip = vmodels.length
         for (var i = 0, data; data = bindings[i++]; ) {
-            data.vmodels = vmodels
-            stopScan ^= bindingHandlers[data.type](data, vmodels)
-            if (data.evaluator) { //移除数据绑定，防止被二次解析
-                //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
-                data.element.removeAttribute(data.name)
+            if (skip || data.type == "widget") {
+                data.vmodels = vmodels
+                bindingHandlers[data.type](data, vmodels)
+                if (data.evaluator) { //移除数据绑定，防止被二次解析
+                    //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
+                    data.element.removeAttribute(data.name)
+                }
             }
         }
         bindings.length = 0
-        return stopScan
     }
 
 
@@ -1889,7 +1896,7 @@
         }
         return cache;
     }
-    var cacheExpr = createCache(512)
+    var cacheExpr = createCache(256)
     //取得求值函数及其传参
 
     function parseExpr(code, scopes, data, four) {
@@ -1985,7 +1992,7 @@
             data.args = args
         } catch (e) {
         } finally {
-            textBuffer = names = null //释放内存
+            vars = textBuffer = names = null //释放内存
         }
     }
 
@@ -3147,6 +3154,7 @@
                 }
             }
         }
+        parent.textContent = ""
     }
 
     function iteratorCallback(data, method) {
