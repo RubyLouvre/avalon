@@ -170,7 +170,7 @@
         }
         return a
     }
-    var rfxnum = /^([+\-/*]=)?([\d+.\-]+)([a-z%]*)/i
+  
     function oneObject(array, val) {
         if (typeof array === "string") {
             array = array.match(rword) || []
