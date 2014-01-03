@@ -1,13 +1,13 @@
 /*==================================================
-Copyright (c) 2013 UnitedStackt Inc.
+ Copyright (c) 2013 UnitedStackt Inc.
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
  by 司徒正美  http://weibo.com/jslouvre/
  avalon 1.0beta
-==================================================*/
+ ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
@@ -170,7 +170,7 @@ Copyright (c) 2013 UnitedStackt Inc.
         }
         return a
     }
-
+    var rfxnum = /^([+\-/*]=)?([\d+.\-]+)([a-z%]*)/i
     function oneObject(array, val) {
         if (typeof array === "string") {
             array = array.match(rword) || []
@@ -258,7 +258,7 @@ Copyright (c) 2013 UnitedStackt Inc.
         },
         css: function(node, name, value) {
             if (node instanceof avalon) {
-                var that = node
+                var that = node, ret
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
@@ -472,9 +472,24 @@ Copyright (c) 2013 UnitedStackt Inc.
             every: iterator("", 'if(!_)return false', 'return true')
         })
     }
+    function fixContains(a, b) {
+        if (b) {
+            while ((b = b.parentNode)) {
+                if (b === a) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
+        }
+    }
+    if (!DOC.contains) { //IE6-11的文档对象没有contains
+        DOC.contains = function(b) {
+            return fixContains(this, b)
         }
     }
     /*********************************************************************
@@ -2072,16 +2087,7 @@ Copyright (c) 2013 UnitedStackt Inc.
             return a.contains(b)
         }
     } catch (e) {
-        avalon.contains = function(a, b) {
-            if (b) {
-                while ((b = b.parentNode)) {
-                    if (b === a) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+        avalon.contains = fixContains
     }
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {

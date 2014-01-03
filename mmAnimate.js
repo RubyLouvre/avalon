@@ -475,7 +475,7 @@ define(["avalon"], function(avalon) {
         }
     })
 
-    "toggle, show,hide".replace(avalon.rword, function(name) {
+    "toggle,show,hide".replace(avalon.rword, function(name) {
         var pre = avalon.fn[name]
         avalon.fn[name] = function(a) {
             if (!arguments.length || typeof a === "boolean") {
