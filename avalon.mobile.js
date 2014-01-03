@@ -1290,7 +1290,8 @@
                     }
                     if (type === "widget") {
                         hasWidget = true
-                    } else if (type === "repeat") {
+                    } 
+                    if (type === "repeat") {
                         repeatBinding = binding
                     } else if (type === "if") {
                         ifBinding = binding
