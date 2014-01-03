@@ -1558,7 +1558,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
+                    fn.handler(fn.evaluator.apply(0, fn.args||[]), el, fn)
                 }
             }
         }

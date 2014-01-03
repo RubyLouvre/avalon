@@ -1162,6 +1162,9 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
+                    for (var j in fn) {
+                        fn[j] = null
+                    }
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -1468,7 +1471,7 @@
         }
         return cache;
     }
-    var cacheExpr = createCache(512)
+    var cacheExpr = createCache(256)
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
 
     function parseExpr(code, scopes, data, four) {
@@ -2610,6 +2613,7 @@
                 }
             }
         }
+        parent.textContent = ""
     }
 
     function iteratorCallback(data, method) {

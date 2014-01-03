@@ -20,9 +20,27 @@
             }
         </style>
         <script>
+            var vms;
+        function test() {
+            var array = [],json = {
+                name:'leo',
+                resource_id : 'yewo328328288229',
+                resource_name:'xxx',
+                selected : false,
+                service : 'leo-test-service'
+            };
+            for(var i = 0; i < 500; i++) {
+                array.push(json);
+            }
+            vms.data = array;
+        }
+
+        setInterval(function(){
+            test();
+        }, 2000);
             require("index26each,ready!", function(array) {
           
-                avalon.define('bigdata', function(scope) {
+              vms=  avalon.define('bigdata', function(scope) {
                     scope.selected = "name"
                     scope.options = ["name", "resource_name", "service"]
                     scope.trend = 1
