@@ -1170,7 +1170,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
+                    fn.handler(fn.evaluator.apply(0, fn.args||[]), el, fn)
                 }
             }
         }
