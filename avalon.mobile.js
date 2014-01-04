@@ -939,9 +939,17 @@
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var bb = b.concat()
-            a.clear()
-            a.push.apply(a, bb)
+            var an = a.length,
+                    bn = b.length
+            if (an > bn) {
+                a.splice(bn, an - bn)
+            } else if (bn > an) {
+                a.push.apply(a, b.slice(an))
+            }
+            var n = Math.min(an, bn)
+            for (var i = 0; i < n; i++) {
+                a.set(i, b[i])
+            }
             return a
         } else {
             var iterators = a[subscribers]
@@ -1162,9 +1170,6 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
-                    for (var j in fn) {
-                        fn[j] = null
-                    }
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -1290,7 +1295,7 @@
                     }
                     if (type === "widget") {
                         hasWidget = true
-                    } 
+                    }
                     if (type === "repeat") {
                         repeatBinding = binding
                     } else if (type === "if") {
@@ -1806,7 +1811,7 @@
                     log(new Date - now)
                     break
                 case "del":
-                    proxies.splice(pos, el) //移除对应的子VM
+                    clearAccessors(proxies.splice(pos, el)) //移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
@@ -1826,6 +1831,7 @@
                         deleteRange.setEndAfter(parent.lastChild)
                     }
                     removeFromSanctuary(deleteRange.extractContents())
+                    clearAccessors(proxies)
                     proxies.length = 0
                     break
                 case "move":
@@ -2083,28 +2089,8 @@
             } catch (e) {
                 return
             }
-
-            data.rollback = function() {
-                var parent = this.parent
-                if (type == "repeat") {
-                    this.handler("clear", 0)
-                    this.element = this.template.firstChild
-                    parent.replaceChild(this.element, this.startRepeat)
-                    parent.removeChild(this.endRepeat)
-                } else {
-                    var deleteFragment = documentFragment.cloneNode(false)
-                    while (parent.firstChild) {
-                        deleteFragment.appendChild(parent.firstChild)
-                    }
-                    removeFromSanctuary(deleteFragment)
-                    parent.appendChild(this.template)
-                }
-            }
             list[subscribers] && list[subscribers].push(data)
-            if (type != "with") {
-                data.proxies = []
-                data.handler("add", 0, list)
-            } else {
+            if (type === "with") {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
                     withProxyCount++
@@ -2115,7 +2101,19 @@
                         }
                     }
                 }
+                data.rollback = function() {
+                    var parent = this.parent
+                    var deleteFragment = documentFragment.cloneNode(false)
+                    while (parent.firstChild) {
+                        deleteFragment.appendChild(parent.firstChild)
+                    }
+                    removeFromSanctuary(deleteFragment)
+                    parent.appendChild(this.template)
+                }
                 data.handler("append", list, pool)
+            } else {
+                data.proxies = []
+                data.handler("add", 0, list)
             }
         },
         "html": function(data, vmodels) {
@@ -2606,6 +2604,14 @@
             ret.push(comment)
         }
         return ret
+    }
+    //用于加快CG回收
+    function clearAccessors(array) {
+        for (var i = 0, el; el = array[i++]; ) {
+            for (var name in el.$accessors) {
+                el.$accessors[name][subscribers].length = 0
+            }
+        }
     }
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
 

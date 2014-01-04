@@ -3,7 +3,7 @@ define(["avalon"], function(avalon) {
     var root = DOC.documentElement
     var liveMap = avalon.bindingHandlers.live = function(data, vmodels) {
         var type = data.param
-        if (!document.createEvent && /focus|blur|change|submit|reset|select/.test(type)) {
+        if (!DOC.createEvent && /focus|blur|change|submit|reset|select/.test(type)) {
             throw Error("IE6-8不支持" + type + "的事件代理")
         }
         if (!liveMap[type]) {

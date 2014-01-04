@@ -16,31 +16,32 @@
                 border-collapse: collapse;
             }
             table td{
-                 border:1px solid #000;
+                border:1px solid #000;
             }
         </style>
         <script>
             var vms;
-        function test() {
-            var array = [],json = {
-                name:'leo',
-                resource_id : 'yewo328328288229',
-                resource_name:'xxx',
-                selected : false,
-                service : 'leo-test-service'
-            };
-            for(var i = 0; i < 500; i++) {
-                array.push(json);
-            }
-            vms.data = array;
-        }
+            function test() {
+                var array = [];
+                for (var i = 0; i < 500; i++) {
+                    array.push({
+                        name: 'leo' + (new Date - 0 + i),
+                        resource_id: 'yewo328328288229',
+                        resource_name: 'xxx' + (new Date - 0),
+                        selected: false,
+                        service: 'leo-test-service'
+                    });
 
-        setInterval(function(){
-            test();
-        }, 2000);
+                }
+                vms.data = array;
+            }
+
+            setInterval(function() {
+                test();
+            }, 2000);
             require("index26each,ready!", function(array) {
-          
-              vms=  avalon.define('bigdata', function(scope) {
+
+                vms = avalon.define('bigdata', function(scope) {
                     scope.selected = "name"
                     scope.options = ["name", "resource_name", "service"]
                     scope.trend = 1
@@ -81,7 +82,7 @@
             <table >
                 <tbody ms-each-el="data">
                     <tr ms-class-selected="el.selected">
-                        <td> <input type="checkbox" ms-duplex-radio="el.selected" ></td> <td>{{el.name}}</td> <td>{{el.resource_name}}</td>
+                        <td> <input type="checkbox" ms-duplex-radio="el.selected" >{{$index}}</td> <td>{{el.name}}</td> <td>{{el.resource_name}}</td>
                     </tr>
                 </tbody>
             </table>

@@ -170,7 +170,7 @@
         }
         return a
     }
-  
+
     function oneObject(array, val) {
         if (typeof array === "string") {
             array = array.match(rword) || []
@@ -1206,9 +1206,17 @@
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var bb = b.concat()
-            a.clear()
-            a.push.apply(a, bb)
+            var an = a.length,
+                    bn = b.length
+            if (an > bn) {
+                a.splice(bn, an - bn)
+            } else if (bn > an) {
+                a.push.apply(a, b.slice(an))
+            }
+            var n = Math.min(an, bn)
+            for (var i = 0; i < n; i++) {
+                a.set(i, b[i])
+            }
             return a
         } else {
             var iterators = a[subscribers]
@@ -1217,7 +1225,7 @@
                 delete withProxyPool[a.$id]
             }
             iterators.forEach(function(data) {
-                data.rollback && data.rollback()
+                data.rollback && data.rollback()//ms-with ms-on
                 data.type = null
             })
             var ret = modelFactory(b)
@@ -1338,7 +1346,7 @@
         accessor[subscribers] = [] //订阅者数组
         accessingProperties[name] = accessor
     }
-    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessor," + subscribers).match(rword)
+    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessors," + subscribers).match(rword)
 
     var descriptorFactory = W3C ? function(obj) {
         var descriptors = {}
@@ -1391,7 +1399,7 @@
         vmodel.$model = model
         vmodel.$events = {}
         vmodel.$id = generateID()
-        vmodel.$accessor = accessingProperties
+        vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
             var fn = Observable[i]
@@ -1551,9 +1559,6 @@
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
                         log("remove " + fn.name)
-                        for (var j in fn) {
-                            fn[j] = null
-                        }
                     }
                 }
                 if (typeof fn === "function") {
@@ -2263,6 +2268,7 @@
                         var proxy = createEachProxy(ii, arr[i], data, last) //300
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
+                        avalon.vmodels["proxy" + ii] = proxy
                         var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         scanNodes(tview, base.concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
@@ -2282,7 +2288,7 @@
                     log(new Date - now)
                     break
                 case "del":
-                    proxies.splice(pos, el) //移除对应的子VM
+                    clearAccessors(proxies.splice(pos, el)) //移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
@@ -2310,6 +2316,7 @@
                         }
                     }
                     removeFromSanctuary(deleteFragment)
+                    clearAccessors(proxies)
                     proxies.length = 0
                     break
                 case "move":
@@ -2437,7 +2444,6 @@
             elem.style.display = val ? data.display : "none"
         }
     }
-
 
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -2572,27 +2578,8 @@
                 return
             }
 
-            data.rollback = function() {
-                var parent = this.parent
-                if (type == "repeat") {
-                    this.handler("clear", 0)
-                    this.element = this.template.firstChild
-                    parent.replaceChild(this.element, this.startRepeat)
-                    parent.removeChild(this.endRepeat)
-                } else {
-                    var deleteFragment = documentFragment.cloneNode(false)
-                    while (parent.firstChild) {
-                        deleteFragment.appendChild(parent.firstChild)
-                    }
-                    removeFromSanctuary(deleteFragment)
-                    parent.appendChild(this.template)
-                }
-            }
             list[subscribers] && list[subscribers].push(data)
-            if (type != "with") {
-                data.proxies = []
-                data.handler("add", 0, list)
-            } else {
+            if (type === "with") {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
                     withProxyCount++
@@ -2603,7 +2590,19 @@
                         }
                     }
                 }
+                data.rollback = function() {
+                    var parent = this.parent
+                    var deleteFragment = documentFragment.cloneNode(false)
+                    while (parent.firstChild) {
+                        deleteFragment.appendChild(parent.firstChild)
+                    }
+                    removeFromSanctuary(deleteFragment)
+                    parent.appendChild(this.template)
+                }
                 data.handler("append", list, pool)
+            } else {
+                data.proxies = []
+                data.handler("add", 0, list)
             }
         },
         "html": function(data, vmodels) {
@@ -3157,6 +3156,15 @@
             }
         }
         parent.textContent = ""
+    }
+
+    //用于加快CG回收
+    function clearAccessors(array) {
+        for (var i = 0, el; el = array[i++]; ) {
+            for (var name in el.$accessors) {
+                el.$accessors[name][subscribers].length = 0
+            }
+        }
     }
 
     function iteratorCallback(data, method) {
