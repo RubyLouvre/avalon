@@ -1,11 +1,10 @@
 /*==================================================
- Copyright (c) 2013 UnitedStackt Inc.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- http://www.apache.org/licenses/LICENSE-2.0
- 
- by 司徒正美  http://weibo.com/jslouvre/
+ Copyright 20013-2014 司徒正美、 UnitedStack and other contributors
+ http://www.cnblogs.com/rubylouvre/
+ https://github.com/RubyLouvre
+ http://weibo.com/jslouvre/
+
+ Released under the MIT license
  avalon 1.0beta
  ==================================================*/
 (function(DOC) {
