@@ -2288,7 +2288,7 @@
                     log(new Date - now)
                     break
                 case "del":
-                    clearAccessors(proxies.splice(pos, el)) //移除对应的子VM
+                    proxies.splice(pos, el)//移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
@@ -2316,7 +2316,6 @@
                         }
                     }
                     removeFromSanctuary(deleteFragment)
-                    clearAccessors(proxies)
                     proxies.length = 0
                     break
                 case "move":
@@ -3156,15 +3155,6 @@
             }
         }
         parent.textContent = ""
-    }
-
-    //用于加快CG回收
-    function clearAccessors(array) {
-        for (var i = 0, el; el = array[i++]; ) {
-            for (var name in el.$accessors) {
-                el.$accessors[name][subscribers].length = 0
-            }
-        }
     }
 
     function iteratorCallback(data, method) {

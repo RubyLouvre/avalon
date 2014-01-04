@@ -1811,7 +1811,7 @@
                     log(new Date - now)
                     break
                 case "del":
-                    clearAccessors(proxies.splice(pos, el)) //移除对应的子VM
+                    proxies.splice(pos, el)//移除对应的子VM
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index":
@@ -1831,7 +1831,6 @@
                         deleteRange.setEndAfter(parent.lastChild)
                     }
                     removeFromSanctuary(deleteRange.extractContents())
-                    clearAccessors(proxies)
                     proxies.length = 0
                     break
                 case "move":
@@ -2605,14 +2604,7 @@
         }
         return ret
     }
-    //用于加快CG回收
-    function clearAccessors(array) {
-        for (var i = 0, el; el = array[i++]; ) {
-            for (var name in el.$accessors) {
-                el.$accessors[name][subscribers].length = 0
-            }
-        }
-    }
+
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
 
     function removeFromSanctuary(parent) {
