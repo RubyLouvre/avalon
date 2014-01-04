@@ -10,9 +10,12 @@ define(["avalon"], function(avalon) {
             liveMap[type] = []
             avalon.bind(DOC, type, function(e) {
                 var callbacks = liveMap[type]
+                var target = e.target
                 for (var i = callbacks.length, obj; obj = callbacks[--i]; ) {
                     if (root.contains(obj.elem)) {
-                        obj.fn.call(obj.elem, e)
+                        if (obj.elem === target || obj.elem.contains(target)) {
+                            obj.fn.call(obj.elem, e)
+                        }
                     } else {
                         callbacks.splice(i, 1)
                     }
