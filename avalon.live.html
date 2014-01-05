@@ -46,7 +46,7 @@
                         avalon.log(e.type + e.originalEvent)
                     }
                     vm.check = function(e) {
-                        avalon.log(e.type + " " + this.value + " " + this.checked)
+                        avalon.log(e.type + " " + avalon(this).val())
                     }
                     vm.blur = function(e) {
                         avalon.log(e.type + e.originalEvent)

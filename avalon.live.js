@@ -6,7 +6,6 @@ define(["avalon"], function(avalon) {
         "focus": "focusin",
         "blur": "focusout"
     }
-    var checkMap = {}
     function getVal(elem) {
         var type = elem.type
         if (type === "select-multiple") {
@@ -49,15 +48,23 @@ define(["avalon"], function(avalon) {
     }
     var liveMap = avalon.bindingHandlers.live = function(data, vmodels) {
         var type = data.param
+        var elem = data.element
         var live = "noFix"
         if (!DOC.createEvent) {
             if (/focus|blur/.test(type)) {
                 live = "fixFocus"//旧式IE下使用focusin与focusout来模拟focus、blur，使用click来模拟复选框，单选框的change事件
             } else if (type == "change") {
-                var elem = data.element
                 var elemType = elem.type
                 if (elemType == "radio" || elemType === "checkbox") {
                     live = "fixFocus"
+                    if (!("_just_changed" in elem)) {//确保只绑定一次
+                        elem._just_changed = false
+                        elem.attachEvent("onpropertychange", function(e) {
+                            if (e.propertyName == "checked") {
+                                elem._just_changed = true
+                            }
+                        })
+                    }
                 } else {
                     live = "fixChange"
                 }
@@ -70,7 +77,7 @@ define(["avalon"], function(avalon) {
             if (!liveMap[live + type]) {
                 liveMap[live + type] = []
                 if (live === "noFix") {
-                    avalon.bind(DOC, type, function(e) {
+                    avalon.bind(DOC, type, function(e) {//W3C
                         var callbacks = liveMap[live + type]
                         var target = e.target
                         for (var i = callbacks.length, obj; obj = callbacks[--i]; ) {
@@ -83,10 +90,9 @@ define(["avalon"], function(avalon) {
                             }
                         }
                     }, true)
-
                 }
 
-                if (live === "fixFocus") {
+                if (live === "fixFocus") {//旧式浏览器的focus，blur，单选框与复选枉的change
                     avalon.bind(DOC, IEEventMap[type], function(e) {
                         var callbacks = liveMap[live + type]
                         var target = e.target
@@ -94,12 +100,15 @@ define(["avalon"], function(avalon) {
                             var elem = obj.elem
                             if (root.contains(elem)) {
                                 if (elem === target || elem.contains(target)) {
-                                    if (type !== "change" || checkMap[elem.name] !== elem.uniqueID) {
+                                    if (type === "change") {
+                                        if (elem._just_changed === true) {
+                                            e.type = "change"
+                                            obj.fn.call(elem, e)
+                                            elem._just_changed = false
+                                        }
+                                    } else {
                                         e.type = type
                                         obj.fn.call(elem, e)
-                                        if (type === "change") {
-                                            checkMap[elem.name] = elem.uniqueID
-                                        }
                                     }
                                 }
                             } else {
@@ -107,6 +116,7 @@ define(["avalon"], function(avalon) {
                             }
                         }
                     })
+
                 }
                 if (live === "fixChange") {
                     avalon.bind(DOC, "beforeactivate", testChange)
