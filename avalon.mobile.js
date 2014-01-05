@@ -186,15 +186,8 @@
             return a.contains(b)
         },
         bind: function(el, type, fn, phase) {
-            function callback(ex) {
-                var ret = fn.call(el, ex)
-                if (ret === false) {
-                    ex.preventDefault(), ex.stopPropagation()
-                }
-                return ret
-            }
-            el.addEventListener(eventMap[type] || type, callback, !!phase)
-            return callback
+            el.addEventListener(eventMap[type] || type, fn, !!phase)
+            return fn
         },
         unbind: function(el, type, fn, phase) {
             el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)

@@ -3,7 +3,7 @@
  http://www.cnblogs.com/rubylouvre/
  https://github.com/RubyLouvre
  http://weibo.com/jslouvre/
-
+ 
  Released under the MIT license
  avalon 1.0beta
  ==================================================*/
@@ -229,24 +229,14 @@
             return result
         },
         bind: function(el, type, fn, phase) { // 绑定事件
-            function callback(e) {
-                if (!e.target) {
-                    fixEvent(e)
-                }
-                var ret = fn.call(el, e)
-                if (ret === false) {
-                    e.preventDefault()
-                    e.stopPropagation()
-                }
-                return ret
+            var callback = W3C ? fn : function (e) {
+                return fn.call(el, fixEvent(e))
             }
-            if (W3C) { //addEventListener对return false不做处理，需要自己fix
+            if (W3C) { 
                 el.addEventListener(eventMap[type] || type, callback, !!phase)
             } else {
-                try {
-                    el.attachEvent("on" + type, callback)
-                } catch (e) {
-                }
+                el.attachEvent("on" + type, callback)
+
             }
             return callback
         },
@@ -2902,6 +2892,7 @@
         event.stopPropagation = function() { //阻止事件在DOM树中的传播
             event.cancelBubble = true
         }
+        return event
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
