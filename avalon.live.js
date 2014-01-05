@@ -32,7 +32,7 @@ define(["avalon"], function(avalon) {
         for (var i = callbacks.length, obj; obj = callbacks[--i]; ) {
             var elem = obj.elem
             if (root.contains(elem)) {
-                if (elem === target || elem.contains(target)) {
+                if (elem === target) {
                     var curVal = getVal(elem)
                     if (obj.__change__ !== curVal) {
                         e.type = "change"
