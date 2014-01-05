@@ -94,11 +94,11 @@ define(["avalon"], function(avalon) {
                             var elem = obj.elem
                             if (root.contains(elem)) {
                                 if (elem === target || elem.contains(target)) {
-                                    if (type !== "change" || checkMap[elem.name] !== elem) {
+                                    if (type !== "change" || checkMap[elem.name] !== elem.uniqueID) {
                                         e.type = type
                                         obj.fn.call(elem, e)
                                         if (type === "change") {
-                                            checkMap[elem.name] = elem
+                                            checkMap[elem.name] = elem.uniqueID
                                         }
                                     }
                                 }
