@@ -229,10 +229,10 @@
             return result
         },
         bind: function(el, type, fn, phase) { // 绑定事件
-            var callback = W3C ? fn : function (e) {
+            var callback = W3C ? fn : function(e) {
                 return fn.call(el, fixEvent(e))
             }
-            if (W3C) { 
+            if (W3C) {
                 el.addEventListener(eventMap[type] || type, callback, !!phase)
             } else {
                 el.attachEvent("on" + type, callback)
@@ -2877,22 +2877,27 @@
     }
 
     function fixEvent(event) {
-        var target = event.target = event.srcElement
-        event.which = event.charCode != null ? event.charCode : event.keyCode
+        var ret = {}
+        for (var i in event) {
+            ret[i] = event[i]
+        }
+        var target = ret.target = event.srcElement
+        ret.which = event.charCode != null ? event.charCode : event.keyCode
         if (/mouse|click/.test(event.type)) {
             var doc = target.ownerDocument || DOC
             var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-            event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-            event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+            ret.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+            ret.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
         }
-        event.timeStamp = new Date - 0
-        event.preventDefault = function() { //阻止默认行为
+        ret.timeStamp = new Date - 0
+        ret.originalEvent = event
+        ret.preventDefault = function() { //阻止默认行为
             event.returnValue = false
         }
-        event.stopPropagation = function() { //阻止事件在DOM树中的传播
+        ret.stopPropagation = function() { //阻止事件在DOM树中的传播
             event.cancelBubble = true
         }
-        return event
+        return ret
     }
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {

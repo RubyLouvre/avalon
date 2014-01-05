@@ -7,7 +7,6 @@ define(["avalon"], function(avalon) {
         "blur": "focusout"
     }
     var checkMap = {}
-
     function getVal(elem) {
         var type = elem.type
         if (type === "select-multiple") {
@@ -27,21 +26,7 @@ define(["avalon"], function(avalon) {
 
         return  elem.value
     }
-    function createEvent(e, type) {
-        var ex = {}
-        for (var j in e) {
-            ex[j] = e[j]
-        }
-        ex.preventDefault = function() { //阻止默认行为
-            e.returnValue = false
-        }
-        ex.stopPropagation = function() { //阻止事件在DOM树中的传播
-            e.cancelBubble = true
-        }
-        ex.originalEvent = e
-        ex.type = type
-        return ex
-    }
+
     function testChange(e) {
         var callbacks = liveMap["fixChangechange"]
         var target = e.target
@@ -51,7 +36,8 @@ define(["avalon"], function(avalon) {
                 if (elem === target || elem.contains(target)) {
                     var curVal = getVal(elem)
                     if (obj.__change__ !== curVal) {
-                        obj.fn.call(elem, createEvent(e, "change"))
+                        e.type = "change"
+                        obj.fn.call(elem, e)
                         obj.__change__ = curVal
                     }
                 }
@@ -66,16 +52,16 @@ define(["avalon"], function(avalon) {
         var live = "noFix"
         if (!DOC.createEvent) {
             if (/focus|blur/.test(type)) {
-                live = "fixIE"//旧式IE下使用focusin与focusout来模拟focus、blur，使用click来模拟复选框，单选框的change事件
+                live = "fixFocus"//旧式IE下使用focusin与focusout来模拟focus、blur，使用click来模拟复选框，单选框的change事件
             } else if (type == "change") {
                 var elem = data.element
                 var elemType = elem.type
                 if (elemType == "radio" || elemType === "checkbox") {
-                    live = "fixIE"
+                    live = "fixFocus"
                 } else {
                     live = "fixChange"
                 }
-            } else if (/change|submit|reset|select/.test(type)) {
+            } else if (/submit|reset|select/.test(type)) {
                 live = false//对于一些模拟成本太大的事件直接使用普通的事件绑定
             }
         }
@@ -100,7 +86,7 @@ define(["avalon"], function(avalon) {
 
                 }
 
-                if (live === "fixIE") {
+                if (live === "fixFocus") {
                     avalon.bind(DOC, IEEventMap[type], function(e) {
                         var callbacks = liveMap[live + type]
                         var target = e.target
@@ -109,7 +95,8 @@ define(["avalon"], function(avalon) {
                             if (root.contains(elem)) {
                                 if (elem === target || elem.contains(target)) {
                                     if (type !== "change" || checkMap[elem.name] !== elem) {
-                                        obj.fn.call(elem, createEvent(e, type))
+                                        e.type = type
+                                        obj.fn.call(elem, e)
                                         if (type === "change") {
                                             checkMap[elem.name] = elem
                                         }
