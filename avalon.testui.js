@@ -5,7 +5,7 @@ define(["avalon"], function(avalon) {
         var innerHTML = element.innerHTML
         //由于innerHTML要依赖许多widget后来添加的新属性，这时如果被扫描肯定报“不存在”错误
         //因此先将它清空
-        avalon.clearChild(element)
+        avalon.clearHTML(element)
         var model = avalon.define(data.testuiId, function(vm) {
             avalon.mix(vm, data.testuiOptions)//优先添加用户的配置，防止它覆盖掉widget的一些方法与属性
             vm.value = 0; // 给input一个个默认的数值

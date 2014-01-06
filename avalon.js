@@ -1555,7 +1555,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args), el, fn)
+                    fn.handler(fn.evaluator.apply(0, fn.args||[]), el, fn)
                 }
             }
         }
@@ -2724,6 +2724,13 @@
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
+    function hasValidate(element) {
+        var form = element.form
+        if (form && form.msValidate) {
+            return form.msValidate(element)
+        }
+        return false
+    }
     modelBinding.INPUT = function(element, fn, scope, data) {
         var fixType = data.param
         var type = element.type,
@@ -2735,7 +2742,7 @@
         //当value变化时改变model的值
         var updateModel = function() {
             if ($elem.data("duplex-observe") !== false) {
-                fn(scope, element.value)
+                 fn(scope, element.value)
             }
         }
 
