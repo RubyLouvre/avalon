@@ -247,7 +247,6 @@
         },
         css: function(node, name, value) {
             if (node instanceof avalon) {
-                var that = node, ret
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
@@ -268,7 +267,6 @@
                 fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
                 fn(node, name, value)
             }
-            return that
         },
         Array: {
             ensure: function(target, item) {
@@ -660,7 +658,14 @@
             return this
         },
         css: function(name, value) {
-            return avalon.css(this, name, value)
+            if (avalon.isPlainObject(name)) {
+                for (var i in name) {
+                    avalon.css(this, i, name[i])
+                }
+            } else {
+                avalon.css(this, name, value)
+            }
+            return this
         },
         position: function() {
             var offsetParent, offset,
@@ -851,18 +856,13 @@
                     op = alpha ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
-        var cssShow = {
-            position: "absolute",
-            visibility: "hidden",
-            display: "block"
-        }
-
+        //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
         "width,height".replace(rword, function(name) {
             cssHooks[name + ":get"] = function(node) {
                 if (name === "width") {
-                    return node.offsetWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true) - -avalon.css(node, "borderLeftWidth", true) - avalon.css(node, "borderRightWidth", true)
+                    return node.clientWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true)
                 } else {
-                    return node.offsetHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true) - -avalon.css(node, "borderTopWidth", true) - avalon.css(node, "borderBottomWidth", true)
+                    return node.clientHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true)
                 }
             }
         })
@@ -875,7 +875,12 @@
                     avalon(node).position()[name] + "px"
         }
     })
-    //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
+    var cssShow = {
+        position: "absolute",
+        visibility: "hidden",
+        display: "block"
+    }
+
     var rdisplayswap = /^(none|table(?!-c[ea]).+)/
     function showHidden(node, array) {
         //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
@@ -1555,7 +1560,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args||[]), el, fn)
+                    fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
                 }
             }
         }
@@ -2727,7 +2732,7 @@
     function validateHook(element) {
         var form = element.form
         if (form && form.msValidate) {
-           form.msValidate(element)
+            form.msValidate(element)
         }
         return true
     }
@@ -2742,8 +2747,8 @@
         //当value变化时改变model的值
         var updateModel = function() {
             if ($elem.data("duplex-observe") !== false) {
-                 fn(scope, element.value)
-                 validateHook(element)
+                fn(scope, element.value)
+                validateHook(element)
             }
         }
 

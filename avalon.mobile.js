@@ -199,7 +199,6 @@
         },
         css: function(node, name, value) {
             if (node instanceof avalon) {
-                var that = node
                 node = node[0]
             }
             var prop = /[_-]/.test(name) ? camelize(name) : name
@@ -220,7 +219,6 @@
                 fn = cssHooks[prop + ":set"] || cssHooks["@:set"]
                 fn(node, name, value)
             }
-            return that
         },
         Array: {
             ensure: function(target, item) {
@@ -446,7 +444,14 @@
             return this
         },
         css: function(name, value) {
-            return avalon.css(this, name, value)
+            if (avalon.isPlainObject(name)) {
+                for (var i in name) {
+                    avalon.css(this, i, name[i])
+                }
+            }else {
+                avalon.css(this, name, value)
+            }
+            return this
         },
         position: function() {
             var offsetParent, offset,
