@@ -2681,7 +2681,6 @@
                         vmOptions = vmOptions.$model
                     }
                 }
-                console.log("11")
                 var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
