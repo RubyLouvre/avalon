@@ -448,7 +448,7 @@
                 for (var i in name) {
                     avalon.css(this, i, name[i])
                 }
-            }else {
+            } else {
                 avalon.css(this, name, value)
             }
             return this
@@ -2172,7 +2172,8 @@
         "widget": function(data, vmodels) {
             var args = data.value.match(rword),
                     element = data.element,
-                    widget = args[0]
+                    widget = args[0],
+                    vmOptions = {}
             if (args[1] === "$") {
                 args[1] = void 0
             }
@@ -2183,17 +2184,18 @@
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
                 for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (VMODELS[v.$id]) {
-                        var vmodel = v
+                    if (VMODELS[v.$id]) {//取得离它最近由用户定义的VM
+                        var nearestVM = v
                         break
                     }
                 }
-                var opts = args[2] || widget //options在最近的一个VM中的名字
-                var vmOptions = {}
-                if (vmodel && opts && typeof vmodel[opts] === "object") {
-                    vmOptions = vmodel[opts]
-                    if (vmOptions.$model) {
-                        vmOptions = vmOptions.$model
+                var optName = args[2] || widget //尝试获得配置项的名字，没有则取widget的名字
+                if (nearestVM && typeof nearestVM[optName] === "object") {
+                    vmOptions = nearestVM[optName]
+                    vmOptions = vmOptions.$model || vmOptions
+                    var id = vmOptions[widget + "Id"]
+                    if (typeof id === "string") {
+                        args[1] = id
                     }
                 }
                 var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
@@ -2203,7 +2205,7 @@
                 constructor(element, data, vmodels)
                 data.evaluator = noop
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
-            return  true
+            return true
         }
 
     }
