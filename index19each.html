@@ -26,6 +26,7 @@
                     {checked: false, text: "4444"},
                     {checked: false, text: "5555"}
                 ]
+                vm.array2 = [1, 2, 3, 4]
                 vm.right = []
                 vm.addToRight = function() {
                     var array = []
@@ -46,7 +47,7 @@
                 }
                 vm.addToLeft = function() {
                     var array = []
-                    console.log( model.right)
+                    console.log(model.right)
                     model.right.forEach(function(el) {
                         if (el.checked) {
                             var model = avalon.mix({}, el.$model)
@@ -75,7 +76,11 @@
         <ul ms-each-el="right">
             <li><input ms-duplex-radio="el.checked" type="checkbox">{{el.text}}</li>
         </ul>
-
-
+        <ol ms-each="array2">
+            <li ms-if="!$last">{{el}}</li>
+        </ol>
+        <ol ms-each="array2">
+            <li ms-if="array.size() == 0">{{el}}</li>
+        </ol>
     </body>
 </html>
