@@ -663,9 +663,9 @@
                     avalon.css(this, i, name[i])
                 }
             } else {
-                avalon.css(this, name, value)
+                var ret = avalon.css(this, name, value)
             }
-            return this
+            return ret !== void 0 ? ret : this
         },
         position: function() {
             var offsetParent, offset,
