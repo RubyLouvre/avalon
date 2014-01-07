@@ -2033,9 +2033,12 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
+                var form = elem.form
+                if (form && form.msValidate) {
+                    form.msValidate(elem)
+                }
                 modelBinding[elem.tagName](elem, data.evaluator, vm, data)
             }
         },

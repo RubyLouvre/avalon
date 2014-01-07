@@ -2520,6 +2520,10 @@
                 }
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
+                var form = elem.form
+                if (form && form.msValidate) {
+                    form.msValidate(elem)
+                }
                 modelBinding[elem.tagName](elem, data.evaluator, vm, data)
             }
         },
@@ -2730,13 +2734,6 @@
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-    function validateHook(element) {
-        var form = element.form
-        if (form && form.msValidate) {
-            form.msValidate(element)
-        }
-        return true
-    }
     modelBinding.INPUT = function(element, fn, scope, data) {
         var fixType = data.param
         var type = element.type,
@@ -2749,7 +2746,6 @@
         var updateModel = function() {
             if ($elem.data("duplex-observe") !== false) {
                 fn(scope, element.value)
-                validateHook(element)
             }
         }
 
@@ -2816,7 +2812,6 @@
                         fn(scope, val)
                         element.checked = val
                     }
-                    validateHook(element)
                 }
             }
             removeFn = $elem.bind("click", updateModel)
@@ -2828,7 +2823,6 @@
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](fn(scope), element.value)
-                    validateHook(element)
                 }
             }
             data.handler = function() {
@@ -2851,7 +2845,6 @@
                 if (curValue + "" !== oldValue) {
                     fn(scope, curValue)
                     oldValue = curValue + ""
-                    validateHook(element)
                 }
             }
         }
