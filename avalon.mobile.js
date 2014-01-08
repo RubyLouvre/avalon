@@ -2019,7 +2019,7 @@
                 var val = data.value.split("."),
                         first = val[0],
                         second = val[1]
-                for (var vm, i = vmodels.length - 1; vm = vmodels[i--]; ) {
+                for (var i = 0, vm; vm = vmodels[i++]; ) {
                     if (vm.hasOwnProperty(first)) {
                         if (second && vm[first]) {
                             if (vm[first].hasOwnProperty(second)) {
