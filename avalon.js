@@ -1639,7 +1639,6 @@
                         type: "text",
                         node: node,
                         nodeType: 3,
-                        element: textNode.parentNode,
                         value: token.value,
                         filters: filters
                     }
