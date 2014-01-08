@@ -2065,6 +2065,7 @@
                     break
                 }
             }
+            data.$outer = data.$outer || {}
             var template = documentFragment.cloneNode(false)
             if (type === "repeat") {
                 var startRepeat = DOC.createComment("ms-repeat-start")
@@ -2674,7 +2675,7 @@
     function createWithProxy(key, val, $outer) {
         return modelFactory({
             $key: key,
-            $outer: $outer || {},
+            $outer: $outer,
             $val: val
         }, 0, {
             $val: 1,

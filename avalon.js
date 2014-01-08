@@ -2548,6 +2548,7 @@
                     break
                 }
             }
+            data.$outer = data.$outer || {}
             var template = documentFragment.cloneNode(false)
             if (type === "repeat") {
                 var startRepeat = DOC.createComment("ms-repeat-start")
@@ -3092,7 +3093,7 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            var aaa = this.$model,bbb = aaa.slice(0), sorted = false
+            var aaa = this.$model, bbb = aaa.slice(0), sorted = false
             ap[method].apply(aaa, arguments)//先移动model
             for (var i = 0, n = bbb.length; i < n; i++) {
                 var a = aaa[i], b = bbb[i]
@@ -3211,7 +3212,7 @@
     function createWithProxy(key, val, $outer) {
         return modelFactory({
             $key: key,
-            $outer: $outer || {},
+            $outer: $outer,
             $val: val
         }, 0, {
             $val: 1,
