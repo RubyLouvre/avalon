@@ -1736,7 +1736,7 @@
                 return cacheAttr[str + expose]
             }
             while (k = rattrs.exec(str)) {
-                v = k[2];
+                v = k[2]
                 var name = k[1].toLowerCase()
                 match = name.match(rmsAttr)
                 var binding = {

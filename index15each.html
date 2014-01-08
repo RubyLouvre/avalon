@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <script src="avalon.js"></script>
+
+        <script >
+            var model = avalon.define("performance", function(vm) {
+
+                vm.array = [[1, 2], [4, 5], [7, 8]]
+                vm.aaa = false
+                vm.eee = "ddd"
+                vm.item = {checked: false}
+                vm.items = [{checked: false}]
+
+
+                vm.list = [{action: "list"}];
+                vm.action = "init";
+
+            })
+            setTimeout(function() {
+                model.action = "xxxx"
+            })
+                    ;
+        </script>
+        <script>
+
+        </script>
+    </head>
+    <body>
+        <fieldset ms-controller="performance">
+            <table border="1" width="100%">
+                <tr ms-repeat="array">
+                    <td ms-repeat="el">{{el}}</td>
+                </tr>
+            </table>
+            <div>repeat外的list:{{action}}</div>
+            <div ms-repeat-item="list">
+                <div>repeat内的list:{{action}}</div>
+            </div>
+
+
+
+            <p ms-each-item='items'>
+                <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
+            </p>
+            <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>
+        </fieldset>
+
+
+    </body>
+</html>
