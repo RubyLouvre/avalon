@@ -1246,9 +1246,9 @@
     }
 
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
-        model[name] = true
+        model[name] = val
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
-            return normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
             return normalProperties[name] = val

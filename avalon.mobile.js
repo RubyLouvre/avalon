@@ -983,16 +983,16 @@
     }
 
     function loopModel(name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
-        model[name] = true
+        model[name] = val
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
-            return normalProperties[name] = val
+            return  model[name] = normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
             return normalProperties[name] = val
         }
         var valueType = getType(val)
         if (valueType === "function") { //如果是函数，也不用监控
-            return normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         var accessor, oldArgs
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
