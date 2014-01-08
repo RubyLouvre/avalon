@@ -1166,7 +1166,7 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.element
+                var el = fn.node ? fn.node.parentNode : fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
                 } else if (typeof fn === "function") {
@@ -1340,7 +1340,7 @@
             if (skip || data.type == "widget") {
                 data.vmodels = vmodels
                 bindingHandlers[data.type](data, vmodels)
-                if (data.evaluator) { //移除数据绑定，防止被二次解析
+                if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
                     //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                     data.element.removeAttribute(data.name)
                 }
