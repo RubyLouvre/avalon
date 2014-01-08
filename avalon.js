@@ -3107,6 +3107,7 @@
                     notifySubscribers(this, "move", index, i)
                 }
             }
+            bbb = void 0
             if (sorted) {
                 notifySubscribers(this, "index", 0)
             }
