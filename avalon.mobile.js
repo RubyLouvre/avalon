@@ -16,7 +16,8 @@
     var prefix = "ms-"
     var root = DOC.documentElement
     var serialize = oproto.toString
-    var aslice = [].slice
+    var ap = Array.prototype
+    var aslice = ap.slice
     var head = DOC.head //HEAD元素
     var documentFragment = DOC.createDocumentFragment()
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
@@ -2409,19 +2410,16 @@
     }
 
     //取得el在array的位置
-
-    function getVMIndex(el, array, start) {
+    function getIndex(a, array, start) {
         for (var i = start, n = array.length; i < n; i++) {
-            var b = array[i]
-            var check = b && b.$model ? b.$model : b
-            if (isEqual(el, check)) {
+            if (isEqual(a, array[i])) {
                 return i
             }
         }
         return -1
     }
 
-    var _splice = [].splice
+    var _splice = ap.splice
     var CollectionPrototype = {
         _splice: _splice,
         _add: function(arr, pos) {
@@ -2448,11 +2446,11 @@
             return ret
         },
         push: function() {
-            [].push.apply(this.$model, arguments)
+            ap.push.apply(this.$model, arguments)
             return this._add(arguments) //返回长度
         },
         unshift: function() {
-            [].unshift.apply(this.$model, arguments)
+            ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
             notifySubscribers(this, "index", arguments.length)
             return ret
@@ -2554,17 +2552,17 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            [][method].apply(this.$model, arguments)
-            var sorted = false
-            for (var i = 0, n = this.length; i < n; i++) {
-                var a = this.$model[i],
-                        b = this[i]
-                b = b && b.$model ? b.$model : b
+            var aaa = this.$model, bbb = aaa.slice(0), sorted = false
+            ap[method].apply(aaa, arguments)//先移动model
+            for (var i = 0, n = bbb.length; i < n; i++) {
+                var a = aaa[i], b = bbb[i]
                 if (!isEqual(a, b)) {
                     sorted = true
-                    var index = getVMIndex(a, this, i)
+                    var index = getIndex(a, bbb, i)
                     var remove = this._splice(index, 1)[0]
+                    var remove2 = bbb.splice(index, 1)[0]
                     this._splice(i, 0, remove)
+                    bbb.splice(i, 0, remove2)
                     notifySubscribers(this, "move", index, i)
                 }
             }

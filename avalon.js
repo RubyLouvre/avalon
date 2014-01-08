@@ -2950,12 +2950,9 @@
     }
 
     //取得el在array的位置
-
-    function getVMIndex(el, array, start) {
+    function getIndex(a, array, start) {
         for (var i = start, n = array.length; i < n; i++) {
-            var b = array[i]
-            var check = b && b.$model ? b.$model : b
-            if (isEqual(el, check)) {
+            if (isEqual(a, array[i])) {
                 return i
             }
         }
@@ -3095,17 +3092,17 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            ap[method].apply(this.$model, arguments)//先移动model
-            var sorted = false
-            for (var i = 0, n = this.length; i < n; i++) {
-                var a = this.$model[i],
-                        b = this[i]
-                b = b && b.$model ? b.$model : b
+            var aaa = this.$model,bbb = aaa.slice(0), sorted = false
+            ap[method].apply(aaa, arguments)//先移动model
+            for (var i = 0, n = bbb.length; i < n; i++) {
+                var a = aaa[i], b = bbb[i]
                 if (!isEqual(a, b)) {
                     sorted = true
-                    var index = getVMIndex(a, this, i)
+                    var index = getIndex(a, bbb, i)
                     var remove = this._splice(index, 1)[0]
+                    var remove2 = bbb.splice(index, 1)[0]
                     this._splice(i, 0, remove)
+                    bbb.splice(i, 0, remove2)
                     notifySubscribers(this, "move", index, i)
                 }
             }
