@@ -2279,7 +2279,6 @@
                     if (pos === 0) {
                         avalon(parent).removeClass("fixMsIfFlicker")
                     }
-                    log(new Date - now)
                     break
                 case "del":
                     proxies.splice(pos, el)//移除对应的子VM
@@ -3096,7 +3095,7 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            ap[method].apply(this.$model, arguments)
+            ap[method].apply(this.$model, arguments)//先移动model
             var sorted = false
             for (var i = 0, n = this.length; i < n; i++) {
                 var a = this.$model[i],
@@ -3228,6 +3227,7 @@
         var source = {}
         source.$index = index
         source.$itemName = param
+        source.$outer = data.$outer
         source[param] = item
         source.$first = index === 0
         source.$last = index === last

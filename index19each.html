@@ -28,6 +28,8 @@
                 ]
                 vm.array2 = [1, 2, 3, 4]
                 vm.right = []
+                vm.array3 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+                //           vm.array3 = [1,2,3]
                 vm.addToRight = function() {
                     var array = []
                     model.left.forEach(function(el) {
@@ -63,6 +65,11 @@
                 }
             });
 
+            setTimeout(function() {
+                avalon.log("-------------")
+                model.array3.reverse()
+            }, 2000)
+
         </script>
     </head>
     <body ms-controller="xxx">
@@ -76,11 +83,16 @@
         <ul ms-each-el="right">
             <li><input ms-duplex-radio="el.checked" type="checkbox">{{el.text}}</li>
         </ul>
-        <ol ms-each="array2">
-            <li ms-if="!$last">{{el}}</li>
+        <ol>
+            <li ms-repeat="array2" ms-if="!$last">{{el}}</li>
         </ol>
         <ol ms-each="array2">
             <li ms-if="array.size() == 0">{{el}}</li>
         </ol>
+        <table border="1">
+            <tr ms-repeat="array3">
+                <td ms-repeat-elem="el">{{elem}}<b>它位于第{{$outer.el}}行</b></td>
+            </tr>
+        </table>
     </body>
 </html>

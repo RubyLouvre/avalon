@@ -2689,6 +2689,7 @@
         var source = {}
         source.$index = index
         source.$itemName = param
+        source.$outer = data.$outer
         source[param] = item
         source.$first = index === 0
         source.$last = index === last
