@@ -66,7 +66,6 @@
             });
 
             setTimeout(function() {
-                avalon.log("-------------")
                 model.array3.reverse()
             }, 2000)
 
@@ -91,7 +90,7 @@
         </ol>
         <table border="1">
             <tr ms-repeat="array3">
-                <td ms-repeat-elem="el">{{elem}}<b>它位于第{{$outer.el}}行</b></td>
+                <td ms-repeat-elem="el">{{elem}}<b>它位于第{{$outer.$index}}行</b></td>
             </tr>
         </table>
     </body>
