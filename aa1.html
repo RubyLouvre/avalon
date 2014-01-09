@@ -12,26 +12,17 @@
                 vm.langtext = ""
                 vm.array = ["aaa", "bbb", "ccc"]
                 vm.lang = []
+                vm.test = '<span>444</span>';
             })
 
             model.lang.$watch("length", function() {
                 model.langtext = model.lang.join(",")
             })
 
-            avalon.config({
-                paths: {
-                    "jquery": "jquery"
-                },
-                shim: {
-                    "jquery": {
-                        exports: "jQuery"
-                    }
-                }
-            })
-            require("mmAnimate,jquery", function() {
-                avalon.log("1111111111")
-            })
-
+            setTimeout(function() {
+             
+                model.test = '<span>666</span>';
+            }, 2000)
         </script>
         <script>
 
@@ -43,6 +34,8 @@
                 <div><input type="checkbox" ms-duplex="lang" ms-value="el">{{el}}</div>
             </div>
             <div>{{langtext}}</div>
+
+            {{test|html}}
 
         </fieldset>
 

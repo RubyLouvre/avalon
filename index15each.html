@@ -13,7 +13,7 @@
                 vm.array = [[1, 2], [4, 5], [7, 8]]
                 vm.aaa = false
                 vm.eee = "ddd"
-                vm.item = {checked: false}
+                vm.item = {checked: 222}
                 vm.items = [{checked: false}]
 
 
@@ -23,7 +23,8 @@
             })
             setTimeout(function() {
                 model.action = "xxxx"
-            })
+                model.array[0].set(1,"更新了")
+            },3000)
                     ;
         </script>
         <script>
@@ -43,10 +44,11 @@
             </div>
 
 
-
-            <p ms-each-item='items'>
+            <p>{{item.checked}}</p>
+            <p ms-each-item='items' style="border:1px solid red;">
                 <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
             </p>
+        
             <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>
         </fieldset>
 

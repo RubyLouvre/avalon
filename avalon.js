@@ -1542,8 +1542,7 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.node ? fn.node.parentNode : fn.element,
-                        remove
+                var el = fn.element,  remove
                 if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
                         remove = el.sourceIndex === 0
@@ -2345,6 +2344,9 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
+            if (!elem) {
+                elem = data.element = data.node.parentNode
+            }
             if (data.replaceNodes) {
                 var fragment, nodes
                 if (val.nodeType === 11) {
@@ -2358,6 +2360,8 @@
                 } else {
                     fragment = avalon.parseHTML(val)
                 }
+
+
                 var replaceNodes = avalon.slice(fragment.childNodes)
                 elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
                 for (var i = 0, node; node = data.replaceNodes[i++]; ) {
@@ -2424,6 +2428,9 @@
             if (data.nodeType === 3) { //绑定在文本节点上
                 data.node.nodeValue = val
             } else { //绑定在特性节点上
+                if(!elem){
+                     elem = data.element = data.node.parentNode
+                }
                 if ("textContent" in elem) {
                     elem.textContent = val
                 } else {

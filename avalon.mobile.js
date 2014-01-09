@@ -1166,9 +1166,10 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.node ? fn.node.parentNode : fn.element
+                var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
+                    log("remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -1945,6 +1946,9 @@
             if (data.nodeType === 3) { //绑定在文本节点上
                 data.node.nodeValue = val
             } else { //绑定在特性节点上
+                if (!elem) {
+                    elem = data.element = data.node.parentNode
+                }
                 elem.textContent = val
             }
         },
