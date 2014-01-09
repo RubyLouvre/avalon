@@ -11,6 +11,7 @@
             var model = avalon.define("performance", function(vm) {
 
                 vm.array = [[1, 2], [4, 5], [7, 8]]
+                vm.simple = ["aaaa", "bbb", "cccc"]
                 vm.aaa = false
                 vm.eee = "ddd"
                 vm.item = {checked: 222}
@@ -23,9 +24,9 @@
             })
             setTimeout(function() {
                 model.action = "xxxx"
-                model.array[0].set(1,"更新了")
-            },3000)
-                    ;
+                model.array[0].set(1, "更新了")
+            }, 3000)
+
         </script>
         <script>
 
@@ -34,22 +35,28 @@
     <body>
         <fieldset ms-controller="performance">
             <table border="1" width="100%">
-                <tr ms-repeat="array">
-                    <td ms-repeat="el">{{el}}</td>
+                <tr ms-repeat-elem="array">
+                    <td ms-repeat="elem">{{el}}</td>
+
                 </tr>
             </table>
-            <div>repeat外的list:{{action}}</div>
-            <div ms-repeat-item="list">
-                <div>repeat内的list:{{action}}</div>
-            </div>
-
-
-            <p>{{item.checked}}</p>
-            <p ms-each-item='items' style="border:1px solid red;">
-                <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
-            </p>
-        
-            <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>
+            <!--            <table border="1" width="100%">
+                            <tr ms-repeat="simple">
+                                <td>{{el}}</td>
+                            </tr>
+                        </table>
+                        <div>repeat外的list:{{action}}</div>
+                        <div ms-repeat-item="list">
+                            <div>repeat内的list:{{action}}</div>
+                        </div>
+            
+            
+                        <p>{{item.checked}}</p>
+                        <p ms-each-item='items' style="border:1px solid red;">
+                            <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
+                        </p>
+            
+                        <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>-->
         </fieldset>
 
 

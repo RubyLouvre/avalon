@@ -1867,6 +1867,9 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
+            if (!elem) {
+                elem = data.element = data.node.parentNode
+            }
             if (data.replaceNodes) {
                 var fragment, nodes
                 if (val.nodeType === 11) {

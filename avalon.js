@@ -1542,7 +1542,7 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.element,  remove
+                var el = fn.element, remove
                 if (el && !avalon.contains(ifSanctuary, el)) {
                     if (typeof el.sourceIndex == "number") { //IE6-IE11
                         remove = el.sourceIndex === 0
@@ -1725,9 +1725,9 @@
         var cacheAttr = createCache(512)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
-                rtag = /<(?:".+"|[^>])+>|$/
+                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
         var getAttributes = function(elem) {
-            var str = elem.outerHTML.match(rtag, "")[0]
+            var str = elem.outerHTML.match(rtag)[0]
             var attributes = [],
                     match,
                     k, v;
@@ -2428,8 +2428,8 @@
             if (data.nodeType === 3) { //绑定在文本节点上
                 data.node.nodeValue = val
             } else { //绑定在特性节点上
-                if(!elem){
-                     elem = data.element = data.node.parentNode
+                if (!elem) {
+                    elem = data.element = data.node.parentNode
                 }
                 if ("textContent" in elem) {
                     elem.textContent = val
@@ -2538,7 +2538,7 @@
                     list
             parseExpr(data.value, vmodels, data)
             data.getter = function() {
-                return this.evaluator.apply(0, this.args)
+                return this.evaluator.apply(0, this.args || [])
             }
             data.parent = elem
             data.handler = bindingExecutors.each
