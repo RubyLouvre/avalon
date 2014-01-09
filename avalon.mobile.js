@@ -926,7 +926,7 @@
     //with绑定生成的代理对象储存池
     var withProxyPool = {}
     var withProxyCount = 0
-    var updateLater = {}
+    var rebindings = {}
 
     function updateWithProxy($id, name, val) {
         var pool = withProxyPool[$id]
@@ -960,7 +960,7 @@
                 data.rollback && data.rollback()
             })
             var ret = modelFactory(b)
-            updateLater[ret.$id] = function(data) {
+            rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
                         if (el.type) {
@@ -970,7 +970,7 @@
                         }
                     })(data)
                 }
-                delete updateLater[ret.$id]
+                delete rebindings[ret.$id]
             }
             return ret
         }
@@ -1043,7 +1043,7 @@
                         if (rchecktype.test(valueType)) {
                             var value = updateModel(preValue, newValue, valueType)
                             accessor.value = value
-                            var fn = updateLater[value.$id]
+                            var fn = rebindings[value.$id]
                             fn && fn()
                             withProxyCount && updateWithProxy(vmodel.$id, name, value)
                             vmodel.$fire(name, value, preValue)
