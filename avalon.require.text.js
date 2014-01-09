@@ -8,6 +8,7 @@ if (window.require && require.config) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 var status = xhr.status;
+
                 if (status > 399 && status < 600) {
                     //An http 4xx or 5xx error. Signal an error.
                     avalon.error(url + ' HTTP status: ' + status)
@@ -29,7 +30,7 @@ if (window.require && require.config) {
         return id
     }
 }
-if (typeof window.define === "function") {
+if (Object.keys(avalon.modules).join("").indexOf("avalon.require.text") > 0) {
     define(["avalon"], function(avalon) {
         return avalon
     })

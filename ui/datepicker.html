@@ -5,41 +5,44 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="../avalon.js"></script>
-        <script src="../avalon.require.text.js"></script>
+             <script src="../avalon.require.text.js"></script>
         <!--        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css">-->
         <link rel="stylesheet" href="datepicker/jquery-ui-1.10.1.css">
 
         <script>
-            require("avalon.datepicker", function() {
-                avalon.define("theme", function(vm) {
-                    //http://designify.me/web-design/7-jquery-datepicker-skins/
-                    vm.skin = "cangas"
-                    vm.options = ["cangas", "latoja", "lugo", "melon", "nigran", "santiago", "siena", "vigo"]
-                })
-                avalon.define("bbb", function(vm) {
-                    //http://designify.me/web-design/7-jquery-datepicker-skins/
-                    vm.datepicker = {
-                        dayNames: ["日", "月", "火", "水", "木", "金", "土"],
-                        dayNameTitles: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"]
-                    }
-
-                })
-                avalon.define("ccc", function(vm) {
-                    //http://designify.me/web-design/7-jquery-datepicker-skins/
-                    vm.datepicker = {
-                        titleFormat: "",
-                        changeYear: true,
-                        yearSuffix: "year",
-                        dateFormat: "dd   MM   yyyy",
-                        titleFormatOnlyMonth: ["风月", "芽月", "花月", "牧月", "获月", "热月", "果月", "霞月", "雾月", "霜月", "雪月", "雨月"],
-                        onHide: function(datepickerVM) {
-                            avalon.log(datepickerVM.selectedTime)
+         //   require("avalon.require.text", function() {
+                require(["avalon.datepicker"], function() {
+                    avalon.define("theme", function(vm) {
+                        //http://designify.me/web-design/7-jquery-datepicker-skins/
+                        vm.skin = "cangas"
+                        vm.options = ["cangas", "latoja", "lugo", "melon", "nigran", "santiago", "siena", "vigo"]
+                    })
+                    avalon.define("bbb", function(vm) {
+                        //http://designify.me/web-design/7-jquery-datepicker-skins/
+                        vm.datepicker = {
+                            dayNames: ["日", "月", "火", "水", "木", "金", "土"],
+                            dayNameTitles: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"]
                         }
-                    }
 
+                    })
+                    avalon.define("ccc", function(vm) {
+                        //http://designify.me/web-design/7-jquery-datepicker-skins/
+                        vm.datepicker = {
+                            titleFormat: "",
+                            changeYear: true,
+                            yearSuffix: "year",
+                            dateFormat: "dd   MM   yyyy",
+                            titleFormatOnlyMonth: ["风月", "芽月", "花月", "牧月", "获月", "热月", "果月", "霞月", "雾月", "霜月", "雪月", "雨月"],
+                            onHide: function(datepickerVM) {
+                                avalon.log(datepickerVM.selectedTime)
+                            }
+                        }
+
+                    })
+                    avalon.scan()
                 })
-                avalon.scan()
-            })
+
+        //    })
         </script>
         <style>
             #first{
