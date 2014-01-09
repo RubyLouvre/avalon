@@ -14,13 +14,13 @@
         <script>
             require("avalon.hotkeys", function(avalon) {
                 avalon.define("xxx", function(vm) {
-                    vm.callback1 = function() {
+                    vm.callback1 = function(e) {
                         alert(new Date - 0 + "  ctrl+1")
-                        return false//避开浏览器默认的热键
+                        e.preventDefault()
                     }
-                    vm.callback2 = function() {
+                    vm.callback2 = function(e) {
                         alert(new Date - 0 + "  ctrl+alt+f")
-                        return false//避开浏览器默认的热键
+                        e.preventDefault()
                     }
                 })
                 avalon.scan()

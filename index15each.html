@@ -18,16 +18,16 @@
                 vm.items = [{checked: false}]
 
 
-                vm.list = [{action: "list"}];
-                vm.action = "init";
+                vm.list = [{action: "数组里的"}];
+                vm.action = "非的数组";
 
             })
             setTimeout(function() {
-                model.action = "xxxx"
+                model.action = "改非数组的"
                 model.array[0].set(1, "更新了")
             }, 3000)
 
-            var reg = /<(?:"[^"]+?"|'[^']+?'|[^>])+\/?>/;
+
 
 
         </script>
@@ -48,14 +48,15 @@
                     <td>{{el}}</td>
                 </tr>
             </table>
-            <div>repeat外的list:{{action}}</div>
-            <div ms-repeat-item="list">
-                <div>repeat内的list:{{action}}</div>
+            <div style="border:1px solid red;">
+                <div>{{action}}</div>
+                <div ms-repeat-item="list">
+                    <div>{{action}} or {{item.action}}</div>
+                </div>
             </div>
 
-
             <p>{{item.checked}}</p>
-            <p ms-each-item='items' style="border:1px solid red;">
+            <p ms-each-item='items' style="border:1px solid greenyellow;">
                 <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
             </p>
 

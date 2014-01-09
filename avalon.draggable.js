@@ -368,8 +368,8 @@ define(["avalon"], function(avalon) {
                 data.containment = [
                     $offset.left,
                     $offset.top,
-                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft - data.$element.width()),
-                    Math.floor($offset.top + elem.offsetHeight - data.marginTop - data.$element.height())
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft ),//- data.$element.width()
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop )//- data.$element.height()
                 ]
 
             }
