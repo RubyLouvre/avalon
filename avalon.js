@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.0beta
+ avalon 1.0beta2
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1219,14 +1219,13 @@
                 delete withProxyPool[a.$id]
             }
             iterators.forEach(function(data) {
-                data.rollback && data.rollback()//ms-with ms-on
-                data.type = null
+                data.rollback && data.rollback()//还原 ms-with ms-on
             })
             var ret = modelFactory(b)
             updateLater[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
-                        if (el.type) {
+                        if (el.type) {//重新绑定
                             avalon.nextTick(function() {
                                 bindingHandlers[el.type](el, el.vmodels)
                             })

@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0beta ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.0beta2 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1781,7 +1781,6 @@
             }
             switch (method) {
                 case "add":
-                    var now = new Date - 0
                     // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                     var arr = el,
                             last = data.getter().length - 1
@@ -1791,8 +1790,8 @@
                         var proxy = createEachProxy(ii, arr[i], data, last) //300
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
-                        var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                        scanNodes(tview, base.concat(data.vmodels)) //1600
+                     //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
+                        scanNodes(tview, [proxy].concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -1807,7 +1806,6 @@
                     if (pos === 0) {
                         parent.classList.remove("fixMsIfFlicker")
                     }
-                    log(new Date - now)
                     break
                 case "del":
                     proxies.splice(pos, el)//移除对应的子VM

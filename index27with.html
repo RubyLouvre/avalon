@@ -7,6 +7,8 @@
 </head>
 <body>
 <div ms-controller="test">
+    <h1>动态更新对象属性</h1>
+    <p>请耐心等待定时器的变化</p>
     <div ms-with="obj">
         <div>{{$val.num}}</div>
     </div>
@@ -33,7 +35,6 @@
                 model.obj.a1.num = 6666
                 model.obj.a2.num = 7777
             }, 2000)
-
 
         }, 2000)
 
