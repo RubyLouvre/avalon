@@ -6,7 +6,7 @@
         <script src="avalon.js"></script>
 
         <script >
-          var a =  avalon.define("xxx", function(vm) {
+            var a = avalon.define("xxx", function(vm) {
                 vm.checked = true
                 vm.$watch("checked", function(a) {
                     avalon.log(a)
@@ -17,17 +17,17 @@
                     c: 3
                 }
             })
-            avalon.log(a.obj)
         </script>
 
     </head>
     <body ms-controller="xxx">
         <h3 style="text-align: center">ms-with</h3>
         <div ms-with="obj">
-            <p>{{$key}} -- {{$val}}</p>
+            <p>{{$key}} -- {{$val}} <input ms-duplex="$val"></p>
         </div>
         <form>
             <input ms-duplex-radio="checked" type="checkbox"/>
+
         </form>
 
     </body>

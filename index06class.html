@@ -66,7 +66,8 @@
         <div ms-class-ui-corner-bottom="bottom" 
              ms-class-ui-corner-all="!bottom" ms-click='toggleBottom' >点我切换类名</div>
         <div ms-class="aaa bbb ccc" ms-hover='hover'>添加多个类名，并且移上去会有hover效果</div>
-        <div ms-class="bgRed width{{w}} height{{h}}">类名通过插值表达式生成</div>
+        <div ms-class="bgRed width{{w}} height{{h}}" ms-css-height="h">类名通过插值表达式生成{{w}} * {{h}}
+            <p><input data-duplex-event="change" ms-duplex="h"></div>
         <p><button type='button' ms-class="test{{num}}" ms-click="changeClassName">{{className}}</button></p>
     </body>
 </html>

@@ -2250,7 +2250,6 @@
             }
             switch (method) {
                 case "add":
-                    var now = new Date - 0
                     // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
                     var arr = el,
                             last = data.getter().length - 1
@@ -2261,8 +2260,8 @@
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
                         avalon.vmodels["proxy" + ii] = proxy
-                        var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                        scanNodes(tview, base.concat(data.vmodels)) //1600
+                     //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
+                        scanNodes(tview,  [proxy].concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
