@@ -27,6 +27,9 @@
                 model.array[0].set(1, "更新了")
             }, 3000)
 
+            var reg = /<(?:"[^"]+?"|'[^']+?'|[^>])+\/?>/;
+
+
         </script>
         <script>
 
@@ -40,23 +43,23 @@
 
                 </tr>
             </table>
-            <!--            <table border="1" width="100%">
-                            <tr ms-repeat="simple">
-                                <td>{{el}}</td>
-                            </tr>
-                        </table>
-                        <div>repeat外的list:{{action}}</div>
-                        <div ms-repeat-item="list">
-                            <div>repeat内的list:{{action}}</div>
-                        </div>
-            
-            
-                        <p>{{item.checked}}</p>
-                        <p ms-each-item='items' style="border:1px solid red;">
-                            <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
-                        </p>
-            
-                        <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>-->
+            <table border="1" width="100%">
+                <tr ms-repeat="simple">
+                    <td>{{el}}</td>
+                </tr>
+            </table>
+            <div>repeat外的list:{{action}}</div>
+            <div ms-repeat-item="list">
+                <div>repeat内的list:{{action}}</div>
+            </div>
+
+
+            <p>{{item.checked}}</p>
+            <p ms-each-item='items' style="border:1px solid red;">
+                <input type='checkbox' ms-duplex-radio='item.checked' /> {{item.checked}}
+            </p>
+
+            <input type='checkbox' ms-duplex-radio='aaa' /> {{aaa}}  <span>{{aaa}}</span>  <b ms-text="aaa"></b>
         </fieldset>
 
 
