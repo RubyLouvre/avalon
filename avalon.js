@@ -1293,6 +1293,7 @@
                     return newValue
                 }
             }
+            accessor[subscribers] = [] //订阅者数组
             computedProperties.push(accessor)
         } else {
             accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
@@ -1327,6 +1328,7 @@
                     return accessor.$vmodel || preValue
                 }
             }
+            accessor[subscribers] = [] //订阅者数组
             if (rchecktype.test(valueType)) {
                 var complexValue = val.$model ? val : modelFactory(val, val)
                 accessor.$vmodel = complexValue
@@ -1336,7 +1338,6 @@
                 model[name] = val
             }
         }
-        accessor[subscribers] = [] //订阅者数组
         accessingProperties[name] = accessor
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessors," + subscribers).match(rword)
@@ -2259,8 +2260,8 @@
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
                         avalon.vmodels["proxy" + ii] = proxy
-                     //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                        scanNodes(tview,  [proxy].concat(data.vmodels)) //1600
+                        //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
+                        scanNodes(tview, [proxy].concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
                             data.group = tview.childNodes.length //记录每个模板一共有多少子节点
                         }
@@ -2423,6 +2424,7 @@
             }
         },
         "text": function(val, elem, data) {
+            val = val == null ? "" : val//不在页面上显示undefined null
             if (data.nodeType === 3) { //绑定在文本节点上
                 data.node.nodeValue = val
             } else { //绑定在特性节点上

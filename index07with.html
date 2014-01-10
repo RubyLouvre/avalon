@@ -6,8 +6,9 @@
         <script src="avalon.js"></script>
 
         <script >
-            var a = avalon.define("xxx", function(vm) {
+            var model = avalon.define("xxx", function(vm) {
                 vm.checked = true
+                vm.data ={}
                 vm.$watch("checked", function(a) {
                     avalon.log(a)
                 })
@@ -17,6 +18,9 @@
                     c: 3
                 }
             })
+             setTimeout(function() {
+                model.data = {"name": "杨xxxx", "nav": "xxxxxxx"};
+            }, 1000)
         </script>
 
     </head>
@@ -27,7 +31,8 @@
         </div>
         <form>
             <input ms-duplex-radio="checked" type="checkbox"/>
-
+            <div>{{data.name}}</div>
+               
         </form>
 
     </body>
