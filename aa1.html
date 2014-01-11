@@ -8,12 +8,13 @@
         <script src="avalon.js"></script>
 
         <script >
-            alert(document.lastModified)
+          //  alert(document.lastModified)
             var model = avalon.define("performance", function(vm) {
                 vm.langtext = ""
                 vm.array = ["aaa", "bbb", "ccc"]
                 vm.lang = []
                 vm.test = '<span>444</span>';
+                vm.h = "<li>ddd</li>"
             })
 
             model.lang.$watch("length", function() {
@@ -37,7 +38,7 @@
             <div>{{langtext}}</div>
 
             {{test|html}}
-
+            <ul ms-html="h"></ul>
         </fieldset>
 
 

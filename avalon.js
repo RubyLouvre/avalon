@@ -1725,7 +1725,7 @@
         var cacheAttr = createCache(512)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
-                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
+                rtag = /<(?:"[^"]+?"|'[^']+?'|[^>])+\/?>/
         var getAttributes = function(elem) {
             var str = elem.outerHTML.match(rtag)[0]
             var attributes = [],
