@@ -2762,9 +2762,43 @@
                 element.value = curValue
             }
         }
-        //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
-        if (/^(password|textarea|text|range|url|email|date|month|time|week|number)$/.test(type)) {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
+        if (type === "radio") {
+            data.handler = function() {
+                element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
+                element.beforeChecked = element.checked
+            }
+            updateModel = function() {
+                if ($elem.data("duplex-observe") !== false) {
+                    if (fixType === "text") {
+                        fn(scope, element.value)
+                    } else {
+                        var val = !element.beforeChecked
+                        fn(scope, val)
+                        element.checked = val
+                    }
+                }
+            }
+            removeFn = $elem.bind("click", updateModel)
+            data.rollback = function() {
+                $elem.unbind("click", removeFn)
+            }
+        } else if (type === "checkbox") {
+            updateModel = function() {
+                if ($elem.data("duplex-observe") !== false) {
+                    var method = element.checked ? "ensure" : "remove"
+                    avalon.Array[method](fn(scope), element.value)
+                }
+            }
+            data.handler = function() {
+                var array = [].concat(fn(scope)) //强制转换为数组
+                element.checked = array.indexOf(element.value) >= 0
+            }
+            removeFn = $elem.bind("click", updateModel) //IE6-8
+            data.rollback = function() {
+                $elem.unbind("click", removeFn)
+            }
+        } else {
+            var event = element.attributes["data-duplex-event"] || {}
             event = event.value
             if (event === "change") {
                 avalon.bind(element, event, updateModel)
@@ -2803,41 +2837,6 @@
                         element.removeEventListener("blur", selectionchange)
                     }
                 }
-            }
-        } else if (type === "radio") {
-            data.handler = function() {
-                element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
-                element.beforeChecked = element.checked
-            }
-            updateModel = function() {
-                if ($elem.data("duplex-observe") !== false) {
-                    if (fixType === "text") {
-                        fn(scope, element.value)
-                    } else {
-                        var val = !element.beforeChecked
-                        fn(scope, val)
-                        element.checked = val
-                    }
-                }
-            }
-            removeFn = $elem.bind("click", updateModel)
-            data.rollback = function() {
-                $elem.unbind("click", removeFn)
-            }
-        } else if (type === "checkbox") {
-            updateModel = function() {
-                if ($elem.data("duplex-observe") !== false) {
-                    var method = element.checked ? "ensure" : "remove"
-                    avalon.Array[method](fn(scope), element.value)
-                }
-            }
-            data.handler = function() {
-                var array = [].concat(fn(scope)) //强制转换为数组
-                element.checked = array.indexOf(element.value) >= 0
-            }
-            removeFn = $elem.bind("click", updateModel) //IE6-8
-            data.rollback = function() {
-                $elem.unbind("click", removeFn)
             }
         }
 

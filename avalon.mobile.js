@@ -2276,17 +2276,7 @@
                 element.value = curValue
             }
         }
-        //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
-        if (/^(password|textarea|text|range|url|email|date|month|time|week|number)$/.test(type)) {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
-            event = event.value
-            var eventType = event === "change" ? event : "input"
-            element.addEventListener(eventType, updateModel)
-            data.rollback = function() {
-                element.removeEventListener(eventType, updateModel)
-            }
-
-        } else if (type === "radio") {
+        if (type === "radio") {
             data.handler = function() {
                 element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
                 element.beforeChecked = element.checked
@@ -2320,6 +2310,14 @@
             element.addEventListener("click", updateModel)
             data.rollback = function() {
                 element.removeEventListener("click", updateModel)
+            }
+        } else {
+            var event = element.attributes["data-duplex-event"] || {}
+            event = event.value
+            var eventType = event === "change" ? event : "input"
+            element.addEventListener(eventType, updateModel)
+            data.rollback = function() {
+                element.removeEventListener(eventType, updateModel)
             }
         }
 
