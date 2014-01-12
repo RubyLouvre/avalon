@@ -13,6 +13,7 @@
                 vm.langtext = ""
                 vm.array = ["aaa", "bbb", "ccc"]
                 vm.lang = []
+                vm.range=50
                 vm.test = '<span>444</span>';
                 vm.h = "<li>ddd</li>"
             })
@@ -22,7 +23,7 @@
             })
 
             setTimeout(function() {
-             
+                model.range = 90
                 model.test = '<span>666</span>';
             }, 2000)
         </script>
@@ -36,6 +37,7 @@
                 <div><input type="checkbox" ms-duplex="lang" ms-value="el">{{el}}</div>
             </div>
             <div>{{langtext}}</div>
+            <input type="range" min="0" max="100" ms-duplex="range"/>
 
             {{test|html}}
             <ul ms-html="h"></ul>

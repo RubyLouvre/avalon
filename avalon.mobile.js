@@ -2277,7 +2277,7 @@
             }
         }
         //https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input
-        if (/^(password|textarea|text|url|email|date|month|time|week|number)$/.test(type)) {
+        if (/^(password|textarea|text|range|url|email|date|month|time|week|number)$/.test(type)) {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             var eventType = event === "change" ? event : "input"
