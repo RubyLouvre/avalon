@@ -29,7 +29,9 @@
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
 <h3>运行github中的示例</h3>
-<p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
+<p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
+<p><img src="https://raw2.github.com/RubyLouvre/avalon/master/example.jpg"/></p>
 
 <p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
 
