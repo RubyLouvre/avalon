@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0beta2 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.0 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2337,6 +2337,7 @@
         }
         data.handler = function() {
             var curValue = fn(scope)
+            curValue = curValue && curValue.$model || curValue
             curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
             if (curValue + "" !== oldValue) {
                 $elem.val(curValue)

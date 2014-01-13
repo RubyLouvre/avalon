@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.0beta2
+ avalon 1.0
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2855,6 +2855,7 @@
         }
         data.handler = function() {
             var curValue = fn(scope)
+            curValue = curValue && curValue.$model || curValue
             curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
             if (curValue + "" !== oldValue) {
                 $elem.val(curValue)
