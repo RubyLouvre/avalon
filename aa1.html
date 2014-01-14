@@ -5,17 +5,19 @@
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-        <script src="avalon.js"></script>
+        <script src="avalon.mobile.js"></script>
 
         <script >
-          //  alert(document.lastModified)
+         
             var model = avalon.define("performance", function(vm) {
                 vm.langtext = ""
-                vm.array = ["aaa", "bbb", "ccc"]
+               // vm.array = ["aaa", "bbb", "ccc"]
+               vm.array = null
                 vm.lang = []
-                vm.range=50
                 vm.test = '<span>444</span>';
-                vm.h = "<li>ddd</li>"
+                vm.more_actions = {
+                    field: "ffff"
+                }
             })
 
             model.lang.$watch("length", function() {
@@ -23,7 +25,10 @@
             })
 
             setTimeout(function() {
-                model.range = 90
+             
+                model.more_actions = {
+                    field: "llllll"
+                }
                 model.test = '<span>666</span>';
             }, 2000)
         </script>
@@ -33,14 +38,11 @@
     </head>
     <body>
         <fieldset ms-controller="performance">
-            <div  ms-each="array">
+            <div ms-if="array" ms-each="array">
                 <div><input type="checkbox" ms-duplex="lang" ms-value="el">{{el}}</div>
             </div>
-            <div>{{langtext}}</div>
-            <input type="range" min="0" max="100" ms-duplex="range"/>
-
-            {{test|html}}
-            <ul ms-html="h"></ul>
+            <p ms-if="more_actions">{{more_actions.field}}</p>
+            <ul ms-html="test"></ul>
         </fieldset>
 
 

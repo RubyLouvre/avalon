@@ -2091,7 +2091,7 @@
             data.template = template
             try {
                 list = data.getter()
-                if (typeof list !== "object") {
+                if (!rchecktype.test(getType(list))) {
                     return
                 }
             } catch (e) {
