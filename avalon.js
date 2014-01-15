@@ -3672,7 +3672,7 @@
                 return url
             }
             //2. 转化为完整路径
-            if (kernel.shim[url] === "object") {
+            if (typeof kernel.shim[url] === "object") {
                 shim = kernel.shim[url]
             }
             if (kernel.paths[url]) { //别名机制
