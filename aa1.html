@@ -18,8 +18,8 @@
                     {
                         'title': '2大学', 'value': 2,
                         'cnode': [
-                            {'name': 'specialty2', 'dataList': [{'title': '临床2', 'value': '1'}, {'title': '中医药', 'value': '2'}]},
-                            {'name': 'language2', 'dataList': [{'title': '英语1', 'value': '1'}, {'title': '法语', 'value': '2'}]}
+                            {'name': 'specialty2', 'dataList': [{'title': 'eee', 'value': '1'}, {'title': 'bbb', 'value': '2'}]},
+                            {'name': 'aaa', 'dataList': [{'title': 'bbb', 'value': '1'}, {'title': 'eee', 'value': '2'}]}
                         ]
                     }];
             });
@@ -31,10 +31,13 @@
             <select ms-attr-name="name" ms-duplex="onSchool" >
                 <option ms-repeat-el="data" ms-attr-value="el.value">{{el.title}}</option>
             </select>
-            <div  ms-each-el="data" >
-                <select  ms-if="onSchool==el.value"  ms-repeat-it="el.cnode" ms-attr-name="it.name" >
+            <div  ms-repeat-el="data" ms-if-loop="onSchool==el.value">
+
+                <input type="text" ms-repeat-ip="el.cinput" ms-attr-name="ip.name" ms-attr-value="ip.value"/>
+                <select ms-repeat-it="el.cnode" ms-attr-name="it.name" >
                     <option ms-repeat-item="it.dataList" ms-attr-value="item.value">{{item.title}}</option>
                 </select>
+
             </div>
         </div>
 

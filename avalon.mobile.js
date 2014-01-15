@@ -1295,9 +1295,8 @@
                     }
                     if (type === "repeat") {
                         repeatBinding = binding
-                    } else if (type === "if") {
+                    } else if (type === "if" && match[2] !== "loop") {
                         ifBinding = binding
-
                     } else {
                         bindings.push(binding)
                     }
@@ -1712,8 +1711,7 @@
         },
         "class": function(val, elem, data) {
             var $elem = avalon(elem),
-                    method = data.type,
-                    oldClass
+                    method = data.type
             if (method === "class" && data.param) { //如果是旧风格
                 $elem.toggleClass(data.param, !!val)
             } else {
@@ -2127,26 +2125,24 @@
         },
         "if": function(data, vmodels) {
             var elem = data.element
-            elem.classList.add("fixMsIfFlicker")
-            if (!root.contains(elem)) { //如果它不存在于DOM树
-                var scopes = elem["data-if-vmodels"]
-                if (!scopes && vmodels.length) {
-                    elem["data-if-vmodels"] = vmodels
-                }
-                return
-            }
-            var oldVmodels = elem["data-if-vmodels"] || []
-            vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
-            if (!vmodels.length)
-                return
-            data.placehoder = DOC.createComment("ms-if"),
-                    elem["data-if-vmodels"] = void 0
-            elem.removeAttribute("ms-if")
-            elem.classList.remove("fixMsIfFlicker")
-            data.parent = elem.parentNode
             data.vmodels = vmodels
-            scanAttr(elem, vmodels)
-            parseExprProxy(data.value, vmodels, data)
+            function ifCheck() {
+                if (root.contains(elem)) {
+                    elem.removeAttribute(data.name)
+                    avalon(elem).removeClass("fixMsIfFlicker")
+                    clearInterval(id)
+                    data.placehoder = DOC.createComment("ms-if")
+                    data.parent = elem.parentNode
+                    scanAttr(elem, vmodels)
+                    parseExprProxy(data.value, vmodels, data)
+                }
+            }
+            if (root.contains(elem)) {
+                ifCheck()
+            } else {
+                avalon(elem).addClass("fixMsIfFlicker")
+                var id = setInterval(ifCheck, 16)
+            }
         },
         "on": function(data, vmodels) {
             var value = data.value,
