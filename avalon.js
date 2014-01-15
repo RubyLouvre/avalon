@@ -1683,7 +1683,7 @@
                         }
                         if (type === "repeat") {
                             repeatBinding = binding
-                        } else if (type === "if" && match[2] !== "loop") {
+                        } else if (binding.name === "ms-if") {
                             ifBinding = binding
                         } else {
                             bindings.push(binding)
