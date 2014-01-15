@@ -1,50 +1,42 @@
-
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title></title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-        <script src="avalon.mobile.js"></script>
-
-        <script >
-         
-            var model = avalon.define("performance", function(vm) {
-                vm.langtext = ""
-               // vm.array = ["aaa", "bbb", "ccc"]
-               vm.array = null
-                vm.lang = []
-                vm.test = '<span>444</span>';
-                vm.more_actions = {
-                    field: "ffff"
-                }
-            })
-
-            model.lang.$watch("length", function() {
-                model.langtext = model.lang.join(",")
-            })
-
-            setTimeout(function() {
-             
-                model.more_actions = {
-                    field: "llllll"
-                }
-                model.test = '<span>666</span>';
-            }, 2000)
-        </script>
+        <meta charset='utf-8'/>
+        <title>联动下拉</title>
+        <script src='avalon.js'></script>
         <script>
+            var md = avalon.define('Mselect', function(vm) {
+                vm.name = 'school';
+                vm.onSchool = 1;//初始学校
+                vm.data = [{
+                        'title': '1大学', 'value': 1,
+                        'cnode': [//select标签
+                            {'name': 'specialty', 'dataList': [{'title': '临床', 'value': '1'}, {'title': '中医药', 'value': '2'}]},
+                            {'name': 'language', 'dataList': [{'title': '英语', 'value': '1'}, {'title': '法语', 'value': '2'}]}
+                        ]
+                    },
+                    {
+                        'title': '2大学', 'value': 2,
+                        'cnode': [
+                            {'name': 'specialty2', 'dataList': [{'title': '临床2', 'value': '1'}, {'title': '中医药', 'value': '2'}]},
+                            {'name': 'language2', 'dataList': [{'title': '英语1', 'value': '1'}, {'title': '法语', 'value': '2'}]}
+                        ]
+                    }];
+            });
 
         </script>
     </head>
     <body>
-        <fieldset ms-controller="performance">
-            <div ms-if="array" ms-each="array">
-                <div><input type="checkbox" ms-duplex="lang" ms-value="el">{{el}}</div>
+        <div ms-controller="Mselect">
+            <select ms-attr-name="name" ms-duplex="onSchool" >
+                <option ms-repeat-el="data" ms-attr-value="el.value">{{el.title}}</option>
+            </select>
+            <div  ms-each-el="data" >
+                <select  ms-if="onSchool==el.value"  ms-repeat-it="el.cnode" ms-attr-name="it.name" >
+                    <option ms-repeat-item="it.dataList" ms-attr-value="item.value">{{item.title}}</option>
+                </select>
             </div>
-            <p ms-if="more_actions">{{more_actions.field}}</p>
-            <ul ms-html="test"></ul>
-        </fieldset>
-
+        </div>
 
     </body>
 </html>
