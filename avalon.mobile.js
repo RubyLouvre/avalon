@@ -1212,7 +1212,7 @@
 
 
     function scanTag(elem, vmodels, node) {
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-repeat(each,with) --> ms-if...--〉ms-duplex垫后
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1278,7 +1278,7 @@
 
     var rmsAttr = /ms-(\w+)-?(.*)/
 
-    function scanAttr(elem, vmodels, ifBinding, loopBinding) {
+    function scanAttr(elem, vmodels, repeatBinding, ifBinding) {
         var bindings = [], hasWidget,
                 match
         for (var i = 0, attr; attr = elem.attributes[i++]; ) {
@@ -1293,13 +1293,11 @@
                         name: match[0],
                         value: attr.nodeValue
                     }
-                    if (type === "repeat" || type == "each" || type === "with") {
-                        if (loopBinding) {
-                            throw Error("一个元素不能同时绑定多个循环绑定（repeat,each,with）")
-                        }
-                        loopBinding = binding
+                    if (type === "repeat") {
+                        repeatBinding = binding
                     } else if (type === "if") {
                         ifBinding = binding
+
                     } else {
                         bindings.push(binding)
                     }
@@ -1307,11 +1305,12 @@
             }
 
         }
-        if (loopBinding) {
-            loopBinding.vmodels = vmodels
-            bindingHandlers[loopBinding.type](loopBinding, vmodels)
-        } else if (ifBinding) {
+        if (ifBinding) {
+            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
             bindingHandlers["if"](ifBinding, vmodels)
+        } else if (repeatBinding) {
+            repeatBinding.vmodels = vmodels
+            bindingHandlers["repeat"](repeatBinding, vmodels)
         } else {
             if (bindings.length >= 2) {
                 bindings.sort(function(a, b) {
