@@ -3,7 +3,7 @@ define(["avalon"], function(avalon) {
     var widget = avalon.ui.progressbar = function(element, data, vmodels) {
         var $element = avalon(element), options = data.progressbarOptions, model, el
         $element.addClass("ui-progressbar ui-widget ui-widget-content ui-corner-all")
-        element.innerHTML = '<div class="ui-progressbar-value ui-widget-header ui-corner-left ui-corner-right" ms-attr-id=progressbar' + data.progressbarId + ' style="width:' + options.value + '%;"></div>'
+        element.innerHTML = '<div class="ui-progressbar-value ui-widget-header ui-corner-left ui-corner-right" ms-attr-id="\'progressbar' + data.progressbarId + '\'" style="width:' + options.value + '%;"></div>'
         var fragment = document.createDocumentFragment()
         while (el = element.firstChild) {
             fragment.appendChild(el)
