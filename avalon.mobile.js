@@ -2372,6 +2372,10 @@
             break
         }
     }
+    //稍微优化下手机上的click事件
+    if('ontouchstart' in window || 'msmaxtouchpoints' in window.navigator){
+        eventMap.click = "touchend";
+    }
 
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
