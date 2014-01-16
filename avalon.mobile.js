@@ -1277,58 +1277,65 @@
 
 
     var rmsAttr = /ms-(\w+)-?(.*)/
+    var priorityMap = {
+        "if": 100,
+        "each": 120,
+        "repeat": 120,
+        "with": 120,
+        "duplex": 20000
+    }
 
-    function scanAttr(elem, vmodels, repeatBinding, ifBinding) {
+    function scanAttr(elem, vmodels) {
+        var attributes = elem.attributes
         var bindings = [], hasWidget,
                 match
-        for (var i = 0, attr; attr = elem.attributes[i++]; ) {
-            if (match = attr.name.match(rmsAttr)) {
-                //如果是以指定前缀命名的
-                var type = match[1]
-                if (typeof bindingHandlers[type] === "function") {
-                    var binding = {
-                        type: type,
-                        param: match[2] || "",
-                        element: elem,
-                        name: match[0],
-                        value: attr.nodeValue
-                    }
-                    if (type === "repeat") {
-                        repeatBinding = binding
-                    } else if (binding.name === "ms-if") {
-                        ifBinding = binding
-                    } else {
+        for (var i = 0, attr; attr = attributes[i++]; ) {
+            if (attr.specified) {
+                if (match = attr.name.match(rmsAttr)) {
+                    //如果是以指定前缀命名的
+                    var type = match[1]
+                    if (typeof bindingHandlers[type] === "function") {
+                        var param = match[2] || ""
+                        var binding = {
+                            type: type,
+                            param: param,
+                            element: elem,
+                            name: match[0],
+                            value: attr.nodeValue,
+                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + Number(param) || 0
+                        }
+                        if (type == "if" && param == "loop") {
+                            binding.priority += 100
+                        }
+                        if (type === "widget") {
+                            hasWidget = true
+                        }
                         bindings.push(binding)
                     }
                 }
             }
-
         }
-        if (ifBinding) {
-            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-            bindingHandlers["if"](ifBinding, vmodels)
-        } else if (repeatBinding) {
-            repeatBinding.vmodels = vmodels
-            bindingHandlers["repeat"](repeatBinding, vmodels)
-        } else {
-            if (bindings.length >= 2) {
-                bindings.sort(function(a, b) {
-                    if (a.type === "duplex") { //确保duplex排在ms-value的后面
-                        return Infinity
-                    }
-                    if (b.type === "duplex") {
-                        return -Infinity
-                    }
-                    return a.name > b.name
-                })
-            }
 
-            if (vmodels.length || hasWidget) {
-                executeBindings(bindings, vmodels)
-            }
-            if ((!hasWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
-                scanNodes(elem, vmodels) //扫描子孙元素
-            }
+        bindings.sort(function(a, b) {
+            return a.priority - b.priority
+        })
+        var firstBinding = bindings[0] || {}
+        switch (firstBinding.type) {
+            case "if":
+                bindingHandlers["if"](firstBinding, vmodels)
+                return
+            case "repeat":
+                firstBinding.vmodels = vmodels
+                bindingHandlers["repeat"](firstBinding, vmodels)
+                return
+            default:
+                if (vmodels.length || hasWidget) {
+                    executeBindings(bindings, vmodels)
+                }
+                if ((!hasWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                    scanNodes(elem, vmodels) //扫描子孙元素
+                }
+                break;
         }
     }
 
