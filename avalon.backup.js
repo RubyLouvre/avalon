@@ -1685,7 +1685,7 @@
                             element: elem,
                             name: match[0],
                             value: attr.nodeValue,
-                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + Number(param) || 0
+                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
                         if (type == "if" && param == "loop") {
                             binding.priority += 100
@@ -1698,7 +1698,6 @@
                 }
             }
         }
-
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
