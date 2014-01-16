@@ -2145,7 +2145,7 @@
                 return
             data.placehoder = DOC.createComment("ms-if"),
                     elem["data-if-vmodels"] = void 0
-            elem.removeAttribute("ms-if")
+            elem.removeAttribute(data.name)
             avalon(elem).removeClass("fixMsIfFlicker")
             data.parent = elem.parentNode
             data.vmodels = vmodels

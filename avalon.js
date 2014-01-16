@@ -2261,6 +2261,7 @@
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
                         avalon.vmodels["proxy" + ii] = proxy
+                       console.log( tview.firstChild.outerHTML )
                         //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         scanNodes(tview, [proxy].concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
@@ -2628,7 +2629,7 @@
                 return
             data.placehoder = DOC.createComment("ms-if"),
                     elem["data-if-vmodels"] = void 0
-            elem.removeAttribute("ms-if")
+            elem.removeAttribute(data.name)
             avalon(elem).removeClass("fixMsIfFlicker")
             data.parent = elem.parentNode
             data.vmodels = vmodels
