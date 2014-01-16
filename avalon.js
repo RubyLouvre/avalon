@@ -1711,10 +1711,10 @@
                 bindingHandlers["repeat"](firstBinding, vmodels)
                 return
             default:
-               if (vmodels.length || hasWidget) {
+                if (vmodels.length || hasWidget) {
                     executeBindings(bindings, vmodels)
                 }
-                if ( !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
                 break;
@@ -1900,7 +1900,7 @@
     function parseExpr(code, scopes, data, four) {
         var exprId = scopes.map(function(el) {
             return el.$id
-        }) + code + data.filters+ (four || "")
+        }) + code + data.filters + (four || "")
         if (four === "duplex") {
             var fn = cacheExpr[exprId]
             if (fn) {
@@ -2260,7 +2260,6 @@
                         var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
                         avalon.vmodels["proxy" + ii] = proxy
-                       console.log( tview.firstChild.outerHTML )
                         //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
                         scanNodes(tview, [proxy].concat(data.vmodels)) //1600
                         if (typeof group !== "number") {
@@ -2376,18 +2375,20 @@
             })
         },
         "if": function(val, elem, data) {
-            var parent = data.parent,
-                    placehoder = data.placehoder
+            var placehoder = data.placehoder
             if (val) { //如果它不在到其父节点里，则添加回去
-                if (!parent.contains(elem)) {
+                if (!data.msInDocument) {//如果替身位于DOM树，说明
+                    data.msInDocument = true
                     try {
-                        parent.replaceChild(elem, placehoder)
+                        placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
+                        avalon.log("ms-if errer" + e.message)
                     }
                 }
             } else { //如果它在其父节点里，则移除它，用注释节点占位
-                if (parent.contains(elem)) {
-                    parent.replaceChild(placehoder, elem)
+                if (data.msInDocument) {
+                    data.msInDocument = false
+                    elem.parentNode.replaceChild(placehoder, elem)
                     placehoder.elem = elem
                     ifSanctuary.appendChild(elem)
                 }
@@ -2615,23 +2616,19 @@
         "if": function(data, vmodels) {
             var elem = data.element
             avalon(elem).addClass("fixMsIfFlicker")
+            var scopes = elem["data-if-vmodels"] || []
+            vmodels = scopes.length < vmodels.length ? vmodels : scopes
             if (!root.contains(elem)) { //如果它不存在于DOM树
-                var scopes = elem["data-if-vmodels"]
-                if (!scopes && vmodels.length) {
-                    elem["data-if-vmodels"] = vmodels
-                }
+                elem["data-if-vmodels"] = vmodels
                 return
             }
-            var oldVmodels = elem["data-if-vmodels"] || []
-            vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
             if (!vmodels.length)
                 return
-            data.placehoder = DOC.createComment("ms-if"),
-                    elem["data-if-vmodels"] = void 0
+            elem["data-if-vmodels"] = void 0
             elem.removeAttribute(data.name)
             avalon(elem).removeClass("fixMsIfFlicker")
-            data.parent = elem.parentNode
-            data.vmodels = vmodels
+            data.placehoder = DOC.createComment("ms-if")
+            data.msInDocument = data.vmodels = vmodels
             scanAttr(elem, vmodels)
             parseExprProxy(data.value, vmodels, data)
         },
