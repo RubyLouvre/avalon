@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.0.1 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -985,7 +985,7 @@
     function loopModel(name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
-            return  model[name] = normalProperties[name] = val
+            return  normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
             return normalProperties[name] = val
@@ -1302,7 +1302,7 @@
                             element: elem,
                             name: match[0],
                             value: attr.nodeValue,
-                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + Number(param) || 0
+                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
                         if (type == "if" && param == "loop") {
                             binding.priority += 100
@@ -1315,7 +1315,6 @@
                 }
             }
         }
-
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
@@ -1329,10 +1328,10 @@
                 bindingHandlers["repeat"](firstBinding, vmodels)
                 return
             default:
-                if (vmodels.length || hasWidget) {
+               if (vmodels.length || hasWidget) {
                     executeBindings(bindings, vmodels)
                 }
-                if ((!hasWidget) && !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                if ( !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
                 break;
@@ -1899,7 +1898,7 @@
             })
         },
         "if": function(val, elem, data) {
-            var parent = data.parent,
+             var parent = data.parent,
                     placehoder = data.placehoder
             if (val) { //如果它不在到其父节点里，则添加回去
                 if (!parent.contains(elem)) {
@@ -2094,7 +2093,7 @@
             data.template = template
             try {
                 list = data.getter()
-                if (!rchecktype.test(getType(list))) {
+                 if (!rchecktype.test(getType(list))) {
                     return
                 }
             } catch (e) {
@@ -2132,24 +2131,26 @@
         },
         "if": function(data, vmodels) {
             var elem = data.element
-            data.vmodels = vmodels
-            function ifCheck() {
-                if (root.contains(elem)) {
-                    elem.removeAttribute(data.name)
-                    avalon(elem).removeClass("fixMsIfFlicker")
-                    clearInterval(id)
-                    data.placehoder = DOC.createComment("ms-if")
-                    data.parent = elem.parentNode
-                    scanAttr(elem, vmodels)
-                    parseExprProxy(data.value, vmodels, data)
+            avalon(elem).addClass("fixMsIfFlicker")
+            if (!root.contains(elem)) { //如果它不存在于DOM树
+                var scopes = elem["data-if-vmodels"]
+                if (!scopes && vmodels.length) {
+                    elem["data-if-vmodels"] = vmodels
                 }
+                return
             }
-            if (root.contains(elem)) {
-                ifCheck()
-            } else {
-                avalon(elem).addClass("fixMsIfFlicker")
-                var id = setInterval(ifCheck, 16)
-            }
+            var oldVmodels = elem["data-if-vmodels"] || []
+            vmodels = oldVmodels.length > vmodels.length ? oldVmodels : vmodels
+            if (!vmodels.length)
+                return
+            data.placehoder = DOC.createComment("ms-if"),
+                    elem["data-if-vmodels"] = void 0
+            elem.removeAttribute("ms-if")
+            avalon(elem).removeClass("fixMsIfFlicker")
+            data.parent = elem.parentNode
+            data.vmodels = vmodels
+            scanAttr(elem, vmodels)
+            parseExprProxy(data.value, vmodels, data)
         },
         "on": function(data, vmodels) {
             var value = data.value,

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.0
+ avalon 1.0.1 2014.1.14
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1660,64 +1660,6 @@
     }
 
     var rmsAttr = /ms-(\w+)-?(.*)/
-
-//    function scanAttr(elem, vmodels, repeatBinding, ifBinding) {
-//        var attributes = getAttributes ? getAttributes(elem) : elem.attributes
-//        var bindings = [], hasWidget,
-//                match
-//        for (var i = 0, attr; attr = attributes[i++]; ) {
-//            if (attr.specified) {
-//                if (match = attr.name.match(rmsAttr)) {
-//                    //如果是以指定前缀命名的
-//                    var type = match[1]
-//                    if (typeof bindingHandlers[type] === "function") {
-//                        var binding = {
-//                            type: type,
-//                            param: match[2] || "",
-//                            element: elem,
-//                            name: match[0],
-//                            value: attr.nodeValue
-//                        }
-//                        if (type === "widget") {
-//                            hasWidget = true
-//                        }
-//                        if (type === "repeat") {
-//                            repeatBinding = binding
-//                        } else if (type === "if") {
-//                            ifBinding = binding
-//                        } else {
-//                            bindings.push(binding)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        if (ifBinding) {
-//            // 优先处理if绑定， 如果if绑定的表达式为假，那么就不处理同级的绑定属性及扫描子孙节点
-//            bindingHandlers["if"](ifBinding, vmodels)
-//        } else if (repeatBinding) {
-//            repeatBinding.vmodels = vmodels
-//            bindingHandlers["repeat"](repeatBinding, vmodels)
-//        } else {
-//            if (bindings.length >= 2) {
-//                bindings.sort(function(a, b) {
-//                    if (a.type === "duplex") { //确保duplex排在ms-value的后面
-//                        return Infinity
-//                    }
-//                    if (b.type === "duplex") {
-//                        return -Infinity
-//                    }
-//                    return a.name > b.name
-//                })
-//            }
-//            if (vmodels.length || hasWidget) {
-//                executeBindings(bindings, vmodels)
-//            }
-//            if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
-//                scanNodes(elem, vmodels) //扫描子孙元素
-//            }
-//        }
-//    }
     var priorityMap = {
         "if": 100,
         "each": 120,
@@ -1769,7 +1711,7 @@
                 bindingHandlers["repeat"](firstBinding, vmodels)
                 return
             default:
-                if (vmodels.length || hasWidget) {
+               if (vmodels.length || hasWidget) {
                     executeBindings(bindings, vmodels)
                 }
                 if ( !stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
@@ -1784,7 +1726,7 @@
         var cacheAttr = createCache(512)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
-                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
+                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
         var getAttributes = function(elem) {
             var str = elem.outerHTML.match(rtag)[0]
             var attributes = [],
@@ -2633,7 +2575,7 @@
             data.template = template
             try {
                 list = data.getter()
-                if (typeof list !== "object") {
+                if (!rchecktype.test(getType(list))) {
                     return
                 }
             } catch (e) {
@@ -3731,7 +3673,7 @@
                 return url
             }
             //2. 转化为完整路径
-            if (kernel.shim[url] === "object") {
+            if (typeof kernel.shim[url] === "object") {
                 shim = kernel.shim[url]
             }
             if (kernel.paths[url]) { //别名机制
