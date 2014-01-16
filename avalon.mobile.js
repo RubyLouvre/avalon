@@ -938,17 +938,9 @@
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var an = a.length,
-                    bn = b.length
-            if (an > bn) {
-                a.splice(bn, an - bn)
-            } else if (bn > an) {
-                a.push.apply(a, b.slice(an))
-            }
-            var n = Math.min(an, bn)
-            for (var i = 0; i < n; i++) {
-                a.set(i, b[i])
-            }
+            var bb = b.concat()
+            a.clear()
+            a.push.apply(a, bb)
             return a
         } else {
             var iterators = a[subscribers]
@@ -1307,10 +1299,11 @@
                         if (type == "if" && param == "loop") {
                             binding.priority += 100
                         }
-                        if (type === "widget") {
-                            hasWidget = true
+                        if (type === "widget" || type == "if") {
+                            bindings.push(binding)
+                        } else if (vmodels.length) {
+                            bindings.push(binding)
                         }
-                        bindings.push(binding)
                     }
                 }
             }
@@ -1328,9 +1321,7 @@
                 bindingHandlers["repeat"](firstBinding, vmodels)
                 return
             default:
-                if (vmodels.length || hasWidget) {
-                    executeBindings(bindings, vmodels)
-                }
+                executeBindings(bindings, vmodels)
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
@@ -1339,15 +1330,12 @@
     }
 
     function executeBindings(bindings, vmodels) {
-        var skip = vmodels.length
         for (var i = 0, data; data = bindings[i++]; ) {
-            if (skip || data.type == "widget") {
-                data.vmodels = vmodels
-                bindingHandlers[data.type](data, vmodels)
-                if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
-                    //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
-                    data.element.removeAttribute(data.name)
-                }
+            data.vmodels = vmodels
+            bindingHandlers[data.type](data, vmodels)
+            if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
+                //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
+                data.element.removeAttribute(data.name)
             }
         }
         bindings.length = 0
