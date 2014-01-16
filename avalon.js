@@ -1732,8 +1732,8 @@
             var attributes = [],
                     match,
                     k, v;
-            if (cacheAttr[str + expose]) {
-                return cacheAttr[str + expose]
+            if (cacheAttr[str]) {
+                return cacheAttr[str]
             }
             while (k = rattrs.exec(str)) {
                 v = k[2]
@@ -1886,12 +1886,11 @@
 
     function createCache(maxLength) {
         var keys = []
-
         function cache(key, value) {
-            if (keys.push(key + expose) > maxLength) {
+            if (keys.push(key) > maxLength) {
                 delete cache[keys.shift()]
             }
-            return cache[key + expose] = value;
+            return cache[key] = value;
         }
         return cache;
     }
@@ -1901,9 +1900,9 @@
     function parseExpr(code, scopes, data, four) {
         var exprId = scopes.map(function(el) {
             return el.$id
-        }) + code + four
+        }) + code + data.filters+ (four || "")
         if (four === "duplex") {
-            var fn = cacheExpr[exprId + expose]
+            var fn = cacheExpr[exprId]
             if (fn) {
                 return data.evaluator = fn
             }
@@ -1924,7 +1923,7 @@
                     assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
                 }
             }
-            fn = cacheExpr[exprId + expose]
+            fn = cacheExpr[exprId]
             if (fn) {
                 if (data.filters) {
                     args.push(avalon.filters)
