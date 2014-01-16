@@ -1340,7 +1340,7 @@
         }
         accessingProperties[name] = accessor
     }
-    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$accessors," + subscribers).match(rword)
+    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
     var descriptorFactory = W3C ? function(obj) {
         var descriptors = {}
