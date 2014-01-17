@@ -1235,7 +1235,11 @@
         }
         return x !== x && y !== y
     }
-
+    var safeFire = function(a, b, c, d) {
+        if (a.$events) {
+            Observable.$fire.call(a, b, c, d)
+        }
+    }
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
@@ -1271,7 +1275,7 @@
                         newValue = model[name] = getter.call(vmodel)
                         withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
-                        vmodel.$fire(name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)
                     }
                 } else {
                     if (avalon.openComputedCollect) { // 收集视图刷新函数
@@ -1280,7 +1284,7 @@
                     newValue = model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
-                        vmodel.$fire(name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)
                     }
                     return newValue
                 }
@@ -1302,7 +1306,7 @@
                             var fn = rebindings[value.$id]
                             fn && fn()
                             withProxyCount && updateWithProxy(vmodel.$id, name, value)
-                            vmodel.$fire(name, value.$model, preValue)
+                            safeFire(vmodel, name, value.$model, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
@@ -1312,7 +1316,7 @@
                         }
                         notifySubscribers(accessor) //通知顶层改变
                         if (simpleType) {
-                            vmodel.$fire(name, newValue, preValue)
+                            safeFire(vmodel, name, newValue, preValue)
                         }
                     }
                 } else {
