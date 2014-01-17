@@ -1662,7 +1662,7 @@
 
     function scanAttr(elem, vmodels) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
-        var bindings = [],  match
+        var bindings = [], match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
@@ -2749,15 +2749,15 @@
         }
         if (type === "radio") {
             data.handler = function() {
-                element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope)
-                element.beforeChecked = element.checked
+                //IE6是通过defaultChecked来实现打勾效果
+                element.defaultChecked = (element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope))
             }
             updateModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     if (fixType === "text") {
                         fn(scope, element.value)
                     } else {
-                        var val = !element.beforeChecked
+                        var val = !element.defaultChecked
                         fn(scope, val)
                         element.checked = val
                     }

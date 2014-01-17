@@ -8,12 +8,25 @@
     <body>
 
         <script>
+            window.console = {}
+            console.log = function(s) {
+                avalon.ready(function() {
+                    var div = document.createElement("div")
+                    document.body.appendChild(div)
+                    div.innerHTML = s
+                })
+            }
             var m = avalon.define('main', function(vm) {
                 vm.moneys = [50, 100, 200, 500, 1000, 2000, 5000, 10000]
                 vm.money = "100"
                 vm.other = ""
+                vm.toggle = true
             });
-           
+
+            setTimeout(function() {
+                m.money = "500"
+            }, 3000)
+
         </script>
         <h3>充值例子，演示ms-repeat与ms-duplex-text的使用</h3>
         <div ms-controller="main">
@@ -23,10 +36,12 @@
                     <input type="radio" ms-value="el"  ms-duplex-text="money" name="aaa">{{el}}元
                 </li>
                 <li style="width:780px; float: left">
-                   <input type="radio" ms-value="other"  ms-duplex-text="money" name="aaa">其他金额: <input ms-duplex="other">
+                    <input type="radio" ms-value="other"  ms-duplex-text="money" name="aaa">其他金额: <input ms-duplex="other">
                 </li>
             </ul>
+
             <br clear="both"/>
+            <p><input ms-duplex="toggle" type="radio"/>{{toggle}}</p>
             <p><b style="color:orange">{{money}}人民币</b>，获得<b style="color:orange">{{money * 10}}</b>元宝</p>
         </div>
 
