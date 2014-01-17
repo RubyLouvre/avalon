@@ -1087,15 +1087,15 @@
         }
         var vmodel = {} //要返回的对象
         model = model || {} //放置$model上的属性
-        var accessingProperties = {} //放置监控属性
-        var normalProperties = {} //放置普通属性
-        var computedProperties = [] //放置计算属性的访问器
-        var watchProperties = arguments[2] || {}
+        var accessingProperties = {} //监控属性
+        var normalProperties = {} //普通属性
+        var computedProperties = [] //计算属性
+        var watchProperties = arguments[2] || {}//强制要监听的属性
+        var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
+            delete scope[name]
             normalProperties[name] = true
         }
-        var skipArray = scope.$skipArray //要忽略监控的属性名列表
-        delete scope.$skipArray
         if (Array.isArray(skipArray)) {
             for (var i = 0, name; name = skipArray[i++]; ) {
                 normalProperties[name] = true
