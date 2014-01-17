@@ -973,8 +973,12 @@
         }
         return x !== x && y !== y
     }
-
-    function loopModel(name, val, model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties) {
+    var safeFire = function(a, b, c, d) {
+        if (a.$events) {
+            Observable.$fire.call(a, b, c, d)
+        }
+    }
+    function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
         if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
             return  normalProperties[name] = val
@@ -984,14 +988,15 @@
         }
         var valueType = getType(val)
         if (valueType === "function") { //如果是函数，也不用监控
-            return  normalProperties[name] = val
+            return normalProperties[name] = val
         }
         var accessor, oldArgs
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             var setter = val.set,
                     getter = val.get
             accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
-                var value = accessor.value,
+                var vmodel = watchProperties.vmodel
+                var value = model[name],
                         preValue = value
                 if (arguments.length) {
                     if (stopRepeatAssign) {
@@ -1005,19 +1010,19 @@
                     }
                     if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
                         oldArgs = newValue
-                        newValue = accessor.value = model[name] = getter.call(vmodel)
-                        updateWithProxy(vmodel.$id, name, newValue)
+                        newValue = model[name] = getter.call(vmodel)
+                        withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
                         notifySubscribers(accessor) //通知顶层改变
-                        withProxyCount && vmodel.$fire(name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)
                     }
                 } else {
                     if (avalon.openComputedCollect) { // 收集视图刷新函数
                         collectSubscribers(accessor)
                     }
-                    newValue = accessor.value = model[name] = getter.call(vmodel)
+                    newValue = model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
-                        vmodel.$fire(name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)
                     }
                     return newValue
                 }
@@ -1026,7 +1031,8 @@
             computedProperties.push(accessor)
         } else {
             accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
-                var preValue = accessor.value,
+                var vmodel = watchProperties.vmodel
+                var preValue = model[name],
                         simpleType
                 if (arguments.length) {
                     if (stopRepeatAssign) {
@@ -1034,47 +1040,54 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            var value = updateModel(preValue, newValue, valueType)
-                            accessor.value = value
+                            var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
                             var fn = rebindings[value.$id]
                             fn && fn()
                             withProxyCount && updateWithProxy(vmodel.$id, name, value)
-                            vmodel.$fire(name, value, preValue)
+                            safeFire(vmodel, name, value.$model, preValue)
                             accessor[subscribers] = value[subscribers]
                             model[name] = value.$model
                         } else { //如果是其他数据类型
-                            model[name] = accessor.value = newValue //更新$model中的值
-                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
+                            model[name] = newValue //更新$model中的值
                             simpleType = true
+                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
                         }
                         notifySubscribers(accessor) //通知顶层改变
                         if (simpleType) {
-                            vmodel.$fire(name, accessor.value, preValue)
+                            safeFire(vmodel, name, newValue, preValue)
                         }
                     }
                 } else {
                     collectSubscribers(accessor) //收集视图函数
-                    return preValue
+                    return accessor.$vmodel || preValue
                 }
             }
             accessor[subscribers] = [] //订阅者数组
             if (rchecktype.test(valueType)) {
-                var complexValue = val.$model ? val : modelFactory(val)
-                accessor.value = complexValue
+                var complexValue = val.$model ? val : modelFactory(val, val)
+                accessor.$vmodel = complexValue
                 accessor[subscribers] = complexValue[subscribers]
                 model[name] = complexValue.$model
             } else {
-                model[name] = accessor.value = val
+                model[name] = val
             }
         }
-        accessingProperties[name] = {
-            get: accessor,
-            set: accessor,
-            enumerable: true,
-            configurable: true
-        }
+        accessingProperties[name] = accessor
     }
-    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model," + subscribers).match(rword)
+    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
+
+    var descriptorFactory = function(obj) {
+        var descriptors = {}
+        for (var i in obj) {
+            descriptors[i] = {
+                get: obj[i],
+                set: obj[i],
+                enumerable: true,
+                configurable: true
+            }
+        }
+        return descriptors
+    }
 
     function modelFactory(scope, model) {
         if (Array.isArray(scope)) {
@@ -1102,15 +1115,17 @@
             }
         }
         for (var i in scope) {
-            loopModel(i, scope[i], model, vmodel, normalProperties, accessingProperties, computedProperties, watchProperties)
+            loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
-        vmodel = Object.defineProperties(vmodel, accessingProperties) //生成ViewModel
+        vmodel = Object.defineProperties(vmodel, descriptorFactory(accessingProperties)) //生成一个空的ViewModel
         for (var name in normalProperties) {
             vmodel[name] = normalProperties[name]
         }
+        watchProperties.vmodel = vmodel
         vmodel.$model = model
         vmodel.$events = {}
         vmodel.$id = generateID()
+        vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
         for (var i in Observable) {
             vmodel[i] = Observable[i]
