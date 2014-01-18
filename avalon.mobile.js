@@ -2700,7 +2700,7 @@
         source.$first = index === 0
         source.$last = index === last
         source.$remove = function() {
-            return data.getter().removeAt(this.$index)
+            return data.getter().removeAt(index)
         }
         return modelFactory(source, 0, watchEachOne)
     }
