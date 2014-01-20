@@ -1591,7 +1591,8 @@
 
 
     function scanTag(elem, vmodels, node) {
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
+        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> 
+        //ms-repeat|ms-each|ms-with --> ms-if-loop --> ...--〉ms-duplex垫后
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -3218,17 +3219,19 @@
 
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
-        var source = {}
-        source.$index = index
-        source.$itemName = param
-        source.$outer = data.$outer
-        source[param] = item
-        source.$first = index === 0
-        source.$last = index === last
-        source.$remove = function() {
-            return data.getter().removeAt(this.$index)
+        var source = {
+            $index: index,
+            $itemName: param,
+            $outer: data.$outer,
+            $first: index === 0,
+            $last: index === last
         }
-        return modelFactory(source, 0, watchEachOne)
+        source[param] = item
+        source.$remove = function() {
+            return data.getter().removeAt(proxy.$index)
+        }
+        var proxy = modelFactory(source, 0, watchEachOne)
+        return proxy
     }
     /*********************************************************************
      *                            Filters                              *

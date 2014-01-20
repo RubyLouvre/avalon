@@ -1294,7 +1294,7 @@
 
     function scanAttr(elem, vmodels) {
         var attributes = elem.attributes
-        var bindings = [],  match
+        var bindings = [], match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
@@ -2692,15 +2692,16 @@
 
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
-        var source = {}
-        source.$index = index
-        source.$itemName = param
-        source.$outer = data.$outer
+        var source = {
+            $index: index,
+            $itemName: param,
+            $outer: data.$outer,
+            $first: index === 0,
+            $last: index === last
+        }
         source[param] = item
-        source.$first = index === 0
-        source.$last = index === last
         source.$remove = function() {
-            return data.getter().removeAt(this.$index)
+            return data.getter().removeAt(source.$index)
         }
         return modelFactory(source, 0, watchEachOne)
     }
