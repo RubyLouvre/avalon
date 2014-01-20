@@ -2047,6 +2047,11 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
+                if (!/radio|checkbox|select/.test(elem.type)) {
+                    log("data-duplex-changed回调只能应用于非radio,checkbox,select等控件中")
+                } else {
+                    data.changed = getBindingCallback(elem.getAttribute("data-duplex-changed"), vmodels)
+                }
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
                 var form = elem.form
@@ -2266,10 +2271,15 @@
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
         }
+        var valueAccessor = data.changed ? function() {
+            return data.changed.call(element, element.value)
+        } : function() {
+            return element.value
+        }
         //当value变化时改变model的值
         var updateModel = function() {
             if ($elem.data("duplex-observe") !== false) {
-                fn(scope, element.value)
+                fn(scope, valueAccessor())
             }
         }
 
