@@ -2313,7 +2313,7 @@
                 element.removeEventListener("click", updateModel)
             }
         } else {
-            var event = element.attributes["data-duplex-event"] || {}
+            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             var eventType = event === "change" ? event : "input"
             element.addEventListener(eventType, updateModel)

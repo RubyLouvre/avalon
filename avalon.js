@@ -1284,7 +1284,7 @@
                     newValue = model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
-                       safeFire(vmodel, name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)
                     }
                     return newValue
                 }
@@ -2748,7 +2748,7 @@
         data.handler = function() {
             var curValue = fn(scope)
             if (curValue !== element.value) {
-                element.value = curValue+""
+                element.value = curValue + ""
             }
         }
         if (type === "radio") {
@@ -2787,7 +2787,7 @@
                 $elem.unbind("click", removeFn)
             }
         } else {
-            var event = element.attributes["data-duplex-event"] || {}
+            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
                 avalon.bind(element, event, updateModel)
@@ -2800,11 +2800,7 @@
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
-                            if(removeFn.delay){
-                                updateModel()
-                            }else{
-                                removeFn.delay = true
-                            }
+                            updateModel()
                         }
                     }
                     element.attachEvent("onpropertychange", removeFn)
