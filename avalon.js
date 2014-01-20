@@ -1284,7 +1284,7 @@
                     newValue = model[name] = getter.call(vmodel)
                     if (!isEqual(value, newValue)) {
                         oldArgs = void 0
-                        safeFire(vmodel, name, newValue, preValue)
+                       safeFire(vmodel, name, newValue, preValue)
                     }
                     return newValue
                 }
@@ -2748,7 +2748,7 @@
         data.handler = function() {
             var curValue = fn(scope)
             if (curValue !== element.value) {
-                element.value = curValue
+                element.value = curValue+""
             }
         }
         if (type === "radio") {
@@ -2800,7 +2800,11 @@
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
-                            updateModel()
+                            if(removeFn.delay){
+                                updateModel()
+                            }else{
+                                removeFn.delay = true
+                            }
                         }
                     }
                     element.attachEvent("onpropertychange", removeFn)
@@ -3917,5 +3921,6 @@
     })
 })(document)
 /**
+ http://www.cnblogs.com/henryzhu/p/mvvm-1-why-mvvm.ht
  http://dev.oupeng.com/wp-content/uploads/20131109-kennyluck-optimizing-js-games.html#controls-slide
  */
