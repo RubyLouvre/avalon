@@ -1817,9 +1817,12 @@
                 case "index":
                     var last = proxies.length - 1
                     for (; el = proxies[pos]; pos++) {
-                        el.$index = pos
-                        el.$first = pos === 0
-                        el.$last = pos === last
+                        try {//https://github.com/RubyLouvre/avalon/issues/249
+                            el.$index = pos
+                            el.$first = pos === 0
+                            el.$last = pos === last
+                        } catch (e) {
+                        }
                     }
                     break
                 case "clear":
