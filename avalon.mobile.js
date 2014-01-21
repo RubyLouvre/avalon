@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0.1 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.0.2 2014.1.21 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2047,7 +2047,7 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-                if (!/radio|checkbox|select/.test(elem.type)) {
+                if (/radio|checkbox|select/.test(elem.type)) {
                     log("data-duplex-changed回调只能应用于非radio,checkbox,select等控件中")
                 } else {
                     data.changed = getBindingCallback(elem.getAttribute("data-duplex-changed"), vmodels)
