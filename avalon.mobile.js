@@ -1921,35 +1921,33 @@
             }
         },
         "on": function(val, elem, data) {
-            if (!data.init) {
-                data.init = 1
-                var fn = data.evaluator
-                var args = data.args
-                var vmodels = data.vmodels
-                if (!data.hasArgs) {
-                    callback = function(e) {
-                        return fn.apply(0, args).call(this, e)
-                    }
-                } else {
-                    callback = function(e) {
-                        return fn.apply(this, args.concat(e))
-                    }
+            var fn = data.evaluator
+            var args = data.args
+            var vmodels = data.vmodels
+            if (!data.hasArgs) {
+                callback = function(e) {
+                    return fn.apply(0, args).call(this, e)
                 }
-                elem.$vmodel = vmodels[0]
-                elem.$vmodels = vmodels
-                if (typeof data.specialBind === "function") {
-                    data.specialBind(elem, callback)
-                } else {
-                    var removeFn = avalon.bind(elem, data.param, callback)
-                }
-                data.rollback = function() {
-                    if (typeof data.specialUnbind === "function") {
-                        data.specialUnbind()
-                    } else {
-                        avalon.unbind(elem, data.param, removeFn)
-                    }
+            } else {
+                callback = function(e) {
+                    return fn.apply(this, args.concat(e))
                 }
             }
+            elem.$vmodel = vmodels[0]
+            elem.$vmodels = vmodels
+            if (typeof data.specialBind === "function") {
+                data.specialBind(elem, callback)
+            } else {
+                var removeFn = avalon.bind(elem, data.param, callback)
+            }
+            data.rollback = function() {
+                if (typeof data.specialUnbind === "function") {
+                    data.specialUnbind()
+                } else {
+                    avalon.unbind(elem, data.param, removeFn)
+                }
+            }
+            data.evaluator = data.handler = noop
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val//不在页面上显示undefined null
