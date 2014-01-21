@@ -1,76 +1,47 @@
-
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title></title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta charset="UTF-8">
+        <script type="text/javascript" src="avalon.js"></script>
+    </head>
 
-        <script src="avalon.js"></script>
-        <script>
-            var model = avalon.define("performance", function(vm) {
-                vm.aaa = "<span>2222222</span>"
-                vm.bbb = "司徒正美"
-                vm.toggle = false
-                vm.w = 80
-                vm.value = "不能修改与提交"
-                vm.array = [{name: "a", selected: false}, {name: "b", selected: false},
-                    {name: "c", selected: false}, {name: "d", selected: false},
-                    {name: "f", selected: false}, {name: "g", selected: false}]
-                //  vm.$skipArray = ["array"]
-                vm.obj = {
-                    a: 1,
-                    b: 2,
-                    c: 33
-                }
-                vm.remove = function(el, event) {
-                    avalon.log("移除元素")
-                    this.$vmodel.$remove()
-                }
-                vm.click = function() {
-                    alert("click")
-                }
-            })
-            setTimeout(function() {
-                model.array.reverse()
-            }, 6000)
-            setTimeout(function() {
-                model.obj = {
-                    xxx: "111",
-                    yyy: "eee"
-                }
-                //   model.array.set(2, "xxxxxxx")
-            }, 3000)
+    <body>
+        <div id="tDiv" ms-controller="test">
+            <ul ms-each-user="users">
+                <li ><span>{{user.name}}</span>  -- 
+                    <a href="javascript:void(0);" ms-click="removeOne($index)">del</a>{{$index}}</li>
+            </ul>
+        </div>
+        <script type="text/javascript">
+            var testVm;
+            avalon.ready(function() {
+                testVm = avalon.define('test', function(vm) {
+                    vm.users = [];
 
+                    vm.removeOne = function(i) {
+                        testVm.users.splice(i, 1)
+                      //  this.$vmodel.$remove()
+                        return false;
+                    }
+                });
+                testVm.users.push({name: 'test 01'});
+                testVm.users.push({name: 'test 02'});
+                testVm.users.push({name: 'test 03'});
+                testVm.users.push({name: 'test 04'});
+                testVm.users.push({name: 'test 05'});
+                testVm.users.push({name: 'test 06'});
+
+
+                avalon.scan(document.getElementById('tDiv'), 'test');
+
+        //        setTimeout(function(){
+        //            console.log("111111111")
+        //            proxies[0].$index = 9
+        //            console.log( proxies[0])
+        //        }, 1000)
+
+            });
 
         </script>
-        <style>
-            .width80{
-                background: red;
-            }
-            .selected {
-                background: #a9ea00;
-            }
-        </style>
-    </head>
-    <body>
-        <fieldset ms-controller="performance">
-            <div>{{aaa}}--------{{bbb}}</div>
-
-            <div ><input ms-duplex="bbb" ><input ms-duplex="toggle" type="radio"><input ms-disabled="true" ms-value="value" ></div>
-            <div ms-if="toggle">测试ms-if</div>
-            <div ms-visible="toggle">测试ms-visible</div>
-            <div ms-class="width{{w}}">测试ms-class</div>
-            <div ms-each="array">
-                <p ms-class-selected="el.selected"><input type="checkbox" ms-duplex-radio="el.selected" >{{el.name}}   {{$index}}  {{$first}}  {{$last}}<b ms-click="remove(el,$event)">删除</b></p>
-            </div>
-            <div ms-with="obj">
-                <p>{{$key}}---{{$val}}</p>
-            </div>
-            <div ms-click="click">ccccccc</div>
-        </fieldset>
-        <div style="background: #90A3C5">111111</div>
-
-      
-
     </body>
 </html>
