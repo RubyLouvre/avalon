@@ -6,7 +6,7 @@
     </head>
 
     <body>
-        <div id="tDiv" ms-controller="test">
+        <div id="tDiv" ms-controller="test" class="ee dd">
             <ul ms-each-user="users">
                 <li ><span>{{user.name}}</span>  -- 
                     <a href="javascript:void(0);" ms-click="removeOne($index)">del</a>{{$index}}</li>
@@ -20,7 +20,7 @@
 
                     vm.removeOne = function(i) {
                         testVm.users.splice(i, 1)
-                      //  this.$vmodel.$remove()
+                        //  this.$vmodel.$remove()
                         return false;
                     }
                 });
@@ -33,12 +33,12 @@
 
 
                 avalon.scan(document.getElementById('tDiv'), 'test');
-
-        //        setTimeout(function(){
-        //            console.log("111111111")
-        //            proxies[0].$index = 9
-        //            console.log( proxies[0])
-        //        }, 1000)
+                alert(avalon(document.getElementById('tDiv')).addClass("aa ss dd aa bb")[0].className)
+                //        setTimeout(function(){
+                //            console.log("111111111")
+                //            proxies[0].$index = 9
+                //            console.log( proxies[0])
+                //        }, 1000)
 
             });
 

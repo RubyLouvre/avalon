@@ -1849,14 +1849,27 @@
                     }
                     break
                 case "append":
-                    var object = pos,
-                            pool = el
+                    var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    for (var key in object) {
-                        if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                    var callback = getBindingCallback(parent.getAttribute("data-with-sorted"), data.vmodels)
+                    var keys = []
+                    for (var key in pos) {//得到所有键名
+                        if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                            keys.push(key)
+                        }
+                    }
+                    if (callback) {//如果有回调，则让它们排序
+                        var keys2 = callback.call(parent, keys)
+                        if (!keys2 || keys.length !== keys2.length) {
+                            throw "键名数目不一致"
+                        }
+                        keys = keys2
+                    }
+                    for (var i = 0, key; key = keys[i++]; ) {
+                        if (key !== "hasOwnProperty") {
                             var tview = data.template.cloneNode(true),
                                     proxy = pool[key]
-                            var base = typeof object[key] === "object" ? [proxy, proxy.$val] : [proxy]
+                            var base = typeof pos[key] === "object" ? [proxy, proxy.$val] : [proxy]
                             scanNodes(tview, base.concat(data.vmodels))
                             transation.appendChild(tview)
                         }
