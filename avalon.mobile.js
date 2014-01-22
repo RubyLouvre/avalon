@@ -521,7 +521,7 @@
             var el = this[0]
             //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
             if (cls && typeof cls === "string" && el && el.nodeType == 1) {
-                cls.replace(rword, function(c) {
+                cls.replace(rnospaces, function(c) {
                     el.classList[method](c)
                 })
             }

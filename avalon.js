@@ -588,12 +588,13 @@
                 if (!node.className) {
                     node.className = cls
                 } else {
-                    var a = (node.className + " " + cls).match(rnospaces)
-                    a.sort()
-                    for (var j = a.length - 1; j > 0; --j)
-                        if (a[j] === a[j - 1])
-                            a.splice(j, 1)
-                    node.className = a.join(" ")
+                    var arr = node.className.match(rnospaces)
+                    cls.replace(rnospaces, function(a) {
+                        if (arr.indexOf(a) === -1) {
+                            arr.push(a)
+                        }
+                    })
+                    node.className = arr.join(" ")
                 }
             }
             return this
