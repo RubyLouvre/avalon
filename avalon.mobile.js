@@ -1860,10 +1860,9 @@
                     }
                     if (callback) {//如果有回调，则让它们排序
                         var keys2 = callback.call(parent, keys)
-                        if (!keys2 || keys.length !== keys2.length) {
-                            throw "键名数目不一致"
+                        if (keys2 && Array.isArray(keys2) && keys2.length) {
+                            keys = keys2
                         }
-                        keys = keys2
                     }
                     for (var i = 0, key; key = keys[i++]; ) {
                         if (key !== "hasOwnProperty") {
