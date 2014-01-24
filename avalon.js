@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.0.2 2014.1.21
+ avalon 1.0.2 2014.1.24
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1169,9 +1169,6 @@
         }
         if (typeof factory !== "function") {
             avalon.error("factory必须是函数")
-        }
-        var scope = {
-            $watch: noop
         }
         var scope = {
             $watch: noop
