@@ -1,47 +1,23 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <script type="text/javascript" src="avalon.js"></script>
+        <meta charset="utf-8">
+        <title></title>
     </head>
-
-    <body>
-        <div id="tDiv" ms-controller="test" class="ee dd">
-            <ul ms-each-user="users">
-                <li ><span>{{user.name}}</span>  -- 
-                    <a href="javascript:void(0);" ms-click="removeOne($index)">del</a>{{$index}}</li>
-            </ul>
+    <body ms-controller="page">
+        <div ms-each="arr">
+            <button ms-click="f1(el)">测试</button>
         </div>
-        <script type="text/javascript">
-            var testVm;
-            avalon.ready(function() {
-                testVm = avalon.define('test', function(vm) {
-                    vm.users = [];
-
-                    vm.removeOne = function(i) {
-                        testVm.users.splice(i, 1)
-                        //  this.$vmodel.$remove()
-                        return false;
-                    }
-                });
-                testVm.users.push({name: 'test 01'});
-                testVm.users.push({name: 'test 02'});
-                testVm.users.push({name: 'test 03'});
-                testVm.users.push({name: 'test 04'});
-                testVm.users.push({name: 'test 05'});
-                testVm.users.push({name: 'test 06'});
-
-
-                avalon.scan(document.getElementById('tDiv'), 'test');
-                alert(avalon(document.getElementById('tDiv')).addClass("aa ss dd aa bb")[0].className)
-                //        setTimeout(function(){
-                //            console.log("111111111")
-                //            proxies[0].$index = 9
-                //            console.log( proxies[0])
-                //        }, 1000)
-
+        <script src="avalon.js"></script>
+        <script>
+            var vm1 = avalon.define('page', function(vm) {
+                vm.arr = [{a:1}]
+                vm.obj = {}
+                vm.f1 = function(el) {
+                  //  console.log(el.$model)
+                    vm1.obj = el.$model
+                }
             });
-
         </script>
     </body>
 </html>

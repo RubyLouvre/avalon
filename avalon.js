@@ -2529,10 +2529,13 @@
                 if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
                     elem.name = generateID()
                 }
-                if (/radio|checkbox|select/.test(elem.type)) {
-                    log("data-duplex-changed回调只能应用于非radio,checkbox,select等控件中")
-                } else {
-                    data.changed = getBindingCallback(elem.getAttribute("data-duplex-changed"), vmodels)
+                var attr = elem.getAttribute("data-duplex-changed")
+                if (attr) {
+                    if (/radio|checkbox|select/.test(elem.type)) {
+                        log("data-duplex-changed回调只能应用于非radio,checkbox,select等控件中")
+                    } else {
+                        data.changed = getBindingCallback(attr, vmodels)
+                    }
                 }
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
@@ -2928,7 +2931,7 @@
         }
         return ret
     }
-    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
+    "animationend,blur,change,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll".
             replace(rword, function(name) {
         bindingHandlers[name] = function(data) {
             data.param = name
