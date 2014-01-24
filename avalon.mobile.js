@@ -902,15 +902,15 @@
      **********************************************************************/
 
     avalon.define = function(name, factory) {
-        var args = avalon.slice(arguments)
         if (typeof name !== "string") {
-            name = generateID()
-            args.unshift(name)
+            avalon.error("必须指定ID")
         }
-        if (typeof args[1] !== "function") {
+        if (typeof factory !== "function") {
             avalon.error("factory必须是函数")
         }
-        factory = args[1]
+        var scope = {
+            $watch: noop
+        }
         var scope = {
             $watch: noop
         }
