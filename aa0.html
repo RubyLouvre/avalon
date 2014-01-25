@@ -6,17 +6,22 @@
     </head>
     <body ms-controller="page">
         <div ms-each="arr">
-            <button ms-click="f1(el)">测试</button>
+            <button>测试{{$index}}</button>{{$index}}
         </div>
+        <table border="1">
+            <tr>
+                <td ms-repeat="arr">
+                    <button>测试{{$index}}</button>{{$index}}
+                </td>
+            </tr>
+        </table>
+        <ul>
+            <li ms-repeat="arr"><button>测试{{$index}}</button>{{$index}}</li>
+        </ul>
         <script src="avalon.js"></script>
         <script>
             var vm1 = avalon.define('page', function(vm) {
-                vm.arr = [{a:1}]
-                vm.obj = {}
-                vm.f1 = function(el) {
-                  //  console.log(el.$model)
-                    vm1.obj = el.$model
-                }
+                vm.arr = ["a", "b", "c", "d"]
             });
         </script>
     </body>
