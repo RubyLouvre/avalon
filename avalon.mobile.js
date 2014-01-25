@@ -2000,9 +2000,6 @@
             data.handlerName = "attr"//handleName用于处理多种绑定共用同一种bindingExecutor的情况
             parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
-        "bind": function() {
-            log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
-        },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
         "class": function(data, vmodels) {
@@ -2162,18 +2159,7 @@
         },
         "if": function(data, vmodels) {
             var elem = data.element
-            elem.classList.add("fixMsIfFlicker")
-            var scopes = elem["data-if-vmodels"] || []
-            vmodels = scopes.length < vmodels.length ? vmodels : scopes
-            if (!root.contains(elem)) { //如果它不存在于DOM树
-                elem["data-if-vmodels"] = vmodels
-                return
-            }
-            if (!vmodels.length)
-                return
-            elem["data-if-vmodels"] = void 0
             elem.removeAttribute(data.name)
-            elem.classList.remove("fixMsIfFlicker")
             data.placehoder = DOC.createComment("ms-if")
             data.msInDocument = data.vmodels = vmodels
             scanAttr(elem, vmodels)
@@ -2195,9 +2181,6 @@
             data.hasArgs = four
             data.handlerName = "on"
             parseExprProxy(value, vmodels, data, four)
-        },
-        "ui": function() {
-            log("ms-ui已废弃，请使用更方便的ms-widget")
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {

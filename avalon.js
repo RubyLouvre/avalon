@@ -2473,9 +2473,6 @@
             data.handlerName = "attr"//handleName用于处理多种绑定共用同一种bindingExecutor的情况
             parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
-        "bind": function() {
-            log("请改用$watch与ms-attr-id实现,详看https://github.com/RubyLouvre/avalon/issues/196")
-        },
         "checked": function(data, vmodels) {
             data.handlerName = "checked"
             parseExprProxy(data.value, vmodels, data)
@@ -2657,9 +2654,6 @@
             data.hasArgs = four
             data.handlerName = "on"
             parseExprProxy(value, vmodels, data, four)
-        },
-        "ui": function() {
-            log("ms-ui已废弃，请使用更方便的ms-widget")
         },
         //控制元素显示或隐藏
         "visible": function(data, vmodels) {
