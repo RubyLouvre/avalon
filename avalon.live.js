@@ -41,10 +41,15 @@ define(["avalon"], function(avalon) {
                     }
                 }
             } else {
-                callbacks.splice(i, 1)
+                dequeue(callbacks, obj, i)
             }
         }
-
+    }
+    function dequeue(callbacks, obj, i) {
+        var parent = obj.elem.parentNode
+        if (!parent || parent.nodeType == 11) {
+            callbacks.splice(i, 1)
+        }
     }
     var liveMap = avalon.bindingHandlers.live = function(data, vmodels) {
         var type = data.param
@@ -86,7 +91,7 @@ define(["avalon"], function(avalon) {
                                     obj.fn.call(obj.elem, e)
                                 }
                             } else {
-                                callbacks.splice(i, 1)
+                                dequeue(callbacks, obj, i)
                             }
                         }
                     }, true)
@@ -112,7 +117,7 @@ define(["avalon"], function(avalon) {
                                     }
                                 }
                             } else {
-                                callbacks.splice(i, 1)
+                                dequeue(callbacks, obj, i)
                             }
                         }
                     })
