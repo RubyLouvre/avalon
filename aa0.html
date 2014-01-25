@@ -18,11 +18,13 @@
         <ul>
             <li ms-repeat="arr"><button>测试{{$index}}</button>{{$index}}</li>
         </ul>
-        <script src="avalon.js"></script>
-        <script>
-            var vm1 = avalon.define('page', function(vm) {
-                vm.arr = ["a", "b", "c", "d"]
-            });
-        </script>
-    </body>
+ 
+<script src="avalon.js"></script>
+<script>
+    var vm1 = avalon.define('page', function(vm) {
+        vm.arr = ["a", "b", "c", "d"]
+    });
+
+</script>
+</body>
 </html>

@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.0.2 2014.1.24 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.1 2014.1.25 ，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1216,8 +1216,8 @@
 
 
     function scanTag(elem, vmodels, node) {
-        //扫描顺序  ms-skip --> ms-important --> ms-controller --> ms-if --> ms-repeat...--〉ms-duplex垫后
-        var a = elem.getAttribute(prefix + "skip")
+        //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
+        //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后        var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
@@ -1226,6 +1226,9 @@
             var newVmodel = VMODELS[node.value]
             if (!newVmodel) {
                 return
+            }
+            if (elem.msLoopData) {
+                delete VMODELS[node.value]
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
@@ -1282,11 +1285,11 @@
 
     var rmsAttr = /ms-(\w+)-?(.*)/
     var priorityMap = {
-        "if": 100,
-        "each": 120,
-        "repeat": 120,
-        "with": 120,
-        "duplex": 20000
+        "if": 10,
+        "repeat": 100,
+        "each": 1400,
+        "with": 1500,
+        "duplex": 2000
     }
 
     function scanAttr(elem, vmodels) {
@@ -1325,18 +1328,27 @@
         var firstBinding = bindings[0] || {}
         switch (firstBinding.type) {
             case "if":
-                bindingHandlers["if"](firstBinding, vmodels)
-                return
             case "repeat":
-                firstBinding.vmodels = vmodels
-                bindingHandlers["repeat"](firstBinding, vmodels)
-                return
+                executeBindings([firstBinding], vmodels)
+                break
             default:
                 executeBindings(bindings, vmodels)
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
                 break;
+        }
+        var data = elem.msLoopData
+        if (data) {
+            delete elem.msLoopData
+            if (typeof data.group !== "number") {
+                data.group = elem.childNodes.length
+            }
+            var p = elem.parentNode
+            while (elem.firstChild) {
+                p.insertBefore(elem.firstChild, elem)
+            }
+            p.removeChild(elem)
         }
     }
 
@@ -1653,6 +1665,7 @@
     }
     var includeContents = {}
     var ifSanctuary = DOC.createElement("div")
+
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
             var method = data.type,
@@ -1782,27 +1795,26 @@
             switch (method) {
                 case "add":
                     // 为了保证了withIterator的add一致，需要对调一下第2，第3参数
-                    var arr = el,
-                            last = data.getter().length - 1
-                    transation = documentFragment.cloneNode(false)
+                    var arr = el
+                    var last = data.getter().length - 1
+                    var transation = documentFragment.cloneNode(false)
+                    var spans = []
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
                         var proxy = createEachProxy(ii, arr[i], data, last) //300
-                        var tview = data.template.cloneNode(true)
                         proxies.splice(ii, 0, proxy)
-                        //   var base = typeof arr[i] === "object" ? [proxy, arr[i]] : [proxy]
-                        scanNodes(tview, [proxy].concat(data.vmodels)) //1600
-                        if (typeof group !== "number") {
-                            data.group = tview.childNodes.length //记录每个模板一共有多少子节点
-                        }
-                        transation.appendChild(tview)
+                        shimController(data, transation, spans, proxy)
                     }
                     //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                     locatedNode = getLocatedNode(parent, data, pos)
                     if (pos === 0) {
-                        parent.classList.add("fixMsIfFlicker")
+                        parent.classList.remove("fixMsIfFlicker")
                     }
                     parent.insertBefore(transation, locatedNode)
+                    for (var i = 0, el; el = spans[i++]; ) {
+                        scanTag(el, data.vmodels)
+                    }
+                    spans = null
                     if (pos === 0) {
                         parent.classList.remove("fixMsIfFlicker")
                     }
@@ -1848,8 +1860,9 @@
                 case "append":
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    var callback = getBindingCallback(parent.getAttribute("data-with-sorted"), data.vmodels)
+                    var callback = getBindingCallback(parent.getAttribute("data-with-ordered"), data.vmodels)
                     var keys = []
+                    var spans = []
                     for (var key in pos) {//得到所有键名
                         if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
                             keys.push(key)
@@ -1863,14 +1876,14 @@
                     }
                     for (var i = 0, key; key = keys[i++]; ) {
                         if (key !== "hasOwnProperty") {
-                            var tview = data.template.cloneNode(true),
-                                    proxy = pool[key]
-                            var base = typeof pos[key] === "object" ? [proxy, proxy.$val] : [proxy]
-                            scanNodes(tview, base.concat(data.vmodels))
-                            transation.appendChild(tview)
+                            shimController(data, transation, spans, pool[key])
                         }
                     }
                     parent.appendChild(transation) //再插到最后
+                    for (var i = 0, el; el = spans[i++]; ) {
+                        scanTag(el, data.vmodels)
+                    }
+                    spans = null
                     break
             }
             iteratorCallback(data, method)
@@ -2656,12 +2669,19 @@
             if (callback) {
                 callback.call(parent, method)
             }
-            if (method == "add") {
-                scanNodes(parent, [])
-            }
         })
     }
-
+    //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
+    function shimController(data, transation, spans, proxy) {
+        var tview = data.template.cloneNode(true)
+        avalon.vmodels[proxy.$id] = proxy
+        var span = DOC.createElement("msloop")
+        span.setAttribute("ms-controller", proxy.$id)
+        span["msLoopData"] = data
+        span.appendChild(tview)
+        spans.push(span)
+        transation.appendChild(span)
+    }
     // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
