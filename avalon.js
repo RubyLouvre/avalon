@@ -2301,13 +2301,15 @@
                                 break
                             }
                         }
+
                     } else {
                         while (parent.firstChild) {
                             deleteFragment.appendChild(parent.firstChild)
                         }
                     }
                     removeFromSanctuary(deleteFragment)
-                    proxies.length = 0
+                    if (proxies)
+                        proxies.length = 0
                     break
                 case "move":
                     var t = proxies.splice(pos, 1)[0]
@@ -2346,7 +2348,7 @@
                             shimController(data, transation, spans, pool[key])
                         }
                     }
-                    parent.appendChild(transation) //再插到最后
+                    parent.insertBefore(transation, data.endRepeat || null) //再插到最后
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
                     }
@@ -2373,8 +2375,6 @@
                 } else {
                     fragment = avalon.parseHTML(val)
                 }
-
-
                 var replaceNodes = avalon.slice(fragment.childNodes)
                 elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
                 for (var i = 0, node; node = data.replaceNodes[i++]; ) {
@@ -2562,10 +2562,18 @@
             data.parent = elem
             data.handler = bindingExecutors.each
             data.callbackName = elem.getAttribute("data-" + (type || "each") + "-rendered")
-            var check0 = "$first",
-                    check1 = "$last"
-            if (type == "with") {
-                check0 = "$key", check1 = "$val"
+            var freturn = true
+            try {
+                list = data.getter()
+                if (rchecktype.test(getType(list))) {
+                    freturn = false
+                }
+            } catch (e) {
+            }
+            var check0 = "$key", check1 = "$val"
+            if (Array.isArray(list)) {
+                check0 = "$first"
+                check1 = "$last"
             }
             for (var i = 0, p; p = vmodels[i++]; ) {
                 if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
@@ -2591,17 +2599,11 @@
                 }
             }
             data.template = template
-            try {
-                list = data.getter()
-                if (!rchecktype.test(getType(list))) {
-                    return
-                }
-            } catch (e) {
+            if (freturn) {
                 return
             }
-
             list[subscribers] && list[subscribers].push(data)
-            if (type === "with") {
+            if (!Array.isArray(list)) {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
                     withProxyCount++
@@ -2613,13 +2615,16 @@
                     }
                 }
                 data.rollback = function() {
+                    notifySubscribers(list, "clear")
+                    var endRepeat = this.endRepeat
                     var parent = this.parent
-                    var deleteFragment = documentFragment.cloneNode(false)
-                    while (parent.firstChild) {
-                        deleteFragment.appendChild(parent.firstChild)
+                    var element = this.template.firstChild
+                    parent.insertBefore(this.template, endRepeat || null)
+                    if (endRepeat) {
+                        parent.removeChild(endRepeat)
+                        parent.removeChild(this.startRepeat)
+                        this.element = element
                     }
-                    removeFromSanctuary(deleteFragment)
-                    parent.appendChild(this.template)
                 }
                 data.handler("append", list, pool)
             } else {

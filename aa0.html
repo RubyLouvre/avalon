@@ -18,13 +18,26 @@
         <ul>
             <li ms-repeat="arr"><button>测试{{$index}}</button>{{$index}}</li>
         </ul>
- 
-<script src="avalon.js"></script>
-<script>
-    var vm1 = avalon.define('page', function(vm) {
-        vm.arr = ["a", "b", "c", "d"]
-    });
-
-</script>
-</body>
+        <ol >
+            <li ms-repeat="object">{{$key}}:{{$val}}</li>
+        </ol>
+        <ol ms-with="object">
+            <li>{{$key}}:{{$val}}</li>
+        </ol>
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define('page', function(vm) {
+                vm.arr = ["a", "b", "c", "d"]
+                vm.object = {
+                    "kkk": "vvv", "kkk2": "vvv2", "kkk3": "vvv3"
+                }
+            });
+            setTimeout(function() {
+                model.object = {
+                    a1: 4444,
+                    a2: 5555
+                }
+            }, 3000)
+        </script>
+    </body>
 </html>
