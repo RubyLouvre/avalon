@@ -733,14 +733,9 @@
         return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
     }
     var valHooks = {
-        "option:get": function(node) {
-            //IE9-10 如果不指定value，它会自造一个value，在node.text两边加空白返回给你
-            return node.hasAttribute("value") ? node.value : node.text
-        },
         "select:get": function(node, value) {
             var option, options = node.options,
                     index = node.selectedIndex,
-                    getter = valHooks["option:get"],
                     one = node.type === "select-one" || index < 0,
                     values = one ? null : [],
                     max = one ? index + 1 : options.length,
@@ -751,7 +746,7 @@
                 //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
                 //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
                 if ((option.selected || i === index) && !option.disabled) {
-                    value = getter(option)
+                    value = option.value
                     if (one) {
                         return value
                     }
@@ -763,9 +758,8 @@
         },
         "select:set": function(node, values, optionSet) {
             values = [].concat(values) //强制转换为数组
-            var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                if ((el.selected = values.indexOf(getter(el)) >= 0)) {
+                if ((el.selected = values.indexOf(el.value) >= 0)) {
                     optionSet = true
                 }
             }
