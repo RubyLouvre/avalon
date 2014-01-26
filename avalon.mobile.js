@@ -1861,7 +1861,7 @@
                 case "append":
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    var callback = getBindingCallback(parent.getAttribute("data-with-ordered"), data.vmodels)
+                    var callback = getBindingCallback(parent.getAttribute("data-with-sorted"), data.vmodels)
                     var keys = []
                     var spans = []
                     for (var key in pos) {//得到所有键名
@@ -1880,7 +1880,7 @@
                             shimController(data, transation, spans, pool[key])
                         }
                     }
-                    parent.appendChild(transation) //再插到最后
+                    parent.insertBefore(transation, data.endRepeat || null) //再插到最后
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
                     }
@@ -2085,16 +2085,23 @@
                     list
             parseExpr(data.value, vmodels, data)
             data.getter = function() {
-                return this.evaluator.apply(0, this.args)
+                return this.evaluator.apply(0, this.args || [])
             }
             data.parent = elem
-            data.vmodels = vmodels
             data.handler = bindingExecutors.each
             data.callbackName = elem.getAttribute("data-" + (type || "each") + "-rendered")
-            var check0 = "$first",
-                    check1 = "$last"
-            if (type == "with") {
-                check0 = "$key", check1 = "$val"
+            var freturn = true
+            try {
+                list = data.getter()
+                if (rchecktype.test(getType(list))) {
+                    freturn = false
+                }
+            } catch (e) {
+            }
+            var check0 = "$key", check1 = "$val"
+            if (Array.isArray(list)) {
+                check0 = "$first"
+                check1 = "$last"
             }
             for (var i = 0, p; p = vmodels[i++]; ) {
                 if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
@@ -2120,16 +2127,11 @@
                 }
             }
             data.template = template
-            try {
-                list = data.getter()
-                if (!rchecktype.test(getType(list))) {
-                    return
-                }
-            } catch (e) {
+            if (freturn) {
                 return
             }
             list[subscribers] && list[subscribers].push(data)
-            if (type === "with") {
+            if (!Array.isArray(list) && type !== "each") {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
                     withProxyCount++
@@ -2141,13 +2143,16 @@
                     }
                 }
                 data.rollback = function() {
+                    notifySubscribers(list, "clear")
+                    var endRepeat = this.endRepeat
                     var parent = this.parent
-                    var deleteFragment = documentFragment.cloneNode(false)
-                    while (parent.firstChild) {
-                        deleteFragment.appendChild(parent.firstChild)
+                    var element = this.template.firstChild
+                    parent.insertBefore(this.template, endRepeat || null)
+                    if (endRepeat) {
+                        parent.removeChild(endRepeat)
+                        parent.removeChild(this.startRepeat)
+                        this.element = element
                     }
-                    removeFromSanctuary(deleteFragment)
-                    parent.appendChild(this.template)
                 }
                 data.handler("append", list, pool)
             } else {
