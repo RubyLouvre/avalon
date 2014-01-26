@@ -979,7 +979,7 @@
     var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, rhasValue = /\bsvalue=/
     var valHooks = {
         "option:get": function(node) {
-            //在IE11及W3C，如果没有指定value，那么node.value默认为node.text.trim()，但IE9-10忘了进行trim操作
+            //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
             if (node.hasAttribute) {
                 return node.hasAttribute("value") ? node.value : node.text
             }
