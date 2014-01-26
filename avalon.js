@@ -1011,13 +1011,15 @@
             }
             return values
         },
-        "select:set": function(node, values) {
+        "select:set": function(node, values, optionSet) {
             values = [].concat(values) //强制转换为数组
             var getter = valHooks["option:get"]
             for (var i = 0, el; el = node.options[i++]; ) {
-                el.selected = !!~values.indexOf(getter(el))
+                if ((el.selected = values.indexOf(getter(el)) >= 0)) {
+                    optionSet = true
+                }
             }
-            if (!values.length) {
+            if (!optionSet) {
                 node.selectedIndex = -1
             }
         }
