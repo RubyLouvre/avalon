@@ -2269,17 +2269,11 @@
                     }
                     //得到插入位置 IE6-10要求insertBefore的第2个参数为节点或null，不能为undefined
                     locatedNode = getLocatedNode(parent, data, pos)
-                    if (pos === 0) {
-                        avalon(parent).addClass("fixMsIfFlicker")
-                    }
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
                     }
                     spans = null
-                    if (pos === 0) {
-                        avalon(parent).removeClass("fixMsIfFlicker")
-                    }
                     break
                 case "del":
                     proxies.splice(pos, el)//移除对应的子VM
@@ -3195,6 +3189,7 @@
         var tview = data.template.cloneNode(true)
         avalon.vmodels[proxy.$id] = proxy
         var span = DOC.createElement("msloop")
+        span.style.visibility = "hidden"
         span.setAttribute("ms-controller", proxy.$id)
         span["msLoopData"] = data
         span.appendChild(tview)
