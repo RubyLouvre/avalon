@@ -976,15 +976,16 @@
         var ret = el.tagName.toLowerCase()
         return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
     }
+    var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, rhasValue = /\bsvalue=/
     var valHooks = {
         "option:get": function(node) {
-            // IE 9-10下如果option元素没有定义value而在设置innerText时没有把两边的空白去掉，那么
-            // 取el.text，浏览器会进行trim, 并且伪造一个value值，此值会在刚才trim的结果两边添加了一些空白
+            //在IE11及W3C，如果没有指定value，那么node.value默认为node.text.trim()，但IE9-10忘了进行trim操作
             if (node.hasAttribute) {
                 return node.hasAttribute("value") ? node.value : node.text
             }
-            var val = node.attributes.value //specified 在较新的浏览器总是返回true, 因此不可靠，需要用hasAttribute
-            return val === void 0 ? node.text : val.specified ? node.value : node.text
+            //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
+            return rhasValue.test(node.outerHTML.replace(node.innerHTML, "").replace(rstring, "")) ?
+                    node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,
