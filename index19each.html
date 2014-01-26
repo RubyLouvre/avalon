@@ -50,7 +50,6 @@
                 }
                 vm.addToLeft = function() {
                     var array = []
-                    console.log(model.right)
                     model.right.forEach(function(el) {
                         if (el.checked) {
                             var model = avalon.mix({}, el.$model)

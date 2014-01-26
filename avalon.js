@@ -2329,7 +2329,7 @@
                 case "append":
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    var callback = getBindingCallback(parent.getAttribute("data-with-ordered"), data.vmodels)
+                    var callback = getBindingCallback(parent.getAttribute("data-with-sorted"), data.vmodels)
                     var keys = []
                     var spans = []
                     for (var key in pos) {//得到所有键名
@@ -2603,7 +2603,7 @@
                 return
             }
             list[subscribers] && list[subscribers].push(data)
-            if (!Array.isArray(list)) {
+            if (!Array.isArray(list) && type !== "each") {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
                     withProxyCount++

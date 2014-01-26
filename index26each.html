@@ -1,91 +1,105 @@
-
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <title>ms-each</title>
-        <script src="avalon.js" type="text/javascript"></script>
-        <style>
-            .selected{
-                background: #01B4D2;
-            }
-            table{
-                width:99%;
-                border:1px solid #000;
-                border-collapse: collapse;
-            }
-            table td{
-                border:1px solid #000;
-            }
-        </style>
-        <script>
-            var vms;
-            function test() {
-                var array = [];
-                for (var i = 0; i < 500; i++) {
-                    array.push({
-                        name: 'leo' + (new Date - 0 + i),
-                        resource_id: 'yewo328328288229',
-                        resource_name: 'xxx' + (new Date - 0),
-                        selected: false,
-                        service: 'leo-test-service'
-                    });
-
-                }
-                vms.data = array;
-            }
-
-            setInterval(function() {
-                test();
-            }, 2000);
-            require("index26each,ready!", function(array) {
-
-                vms = avalon.define('bigdata', function(scope) {
-                    scope.selected = "name"
-                    scope.options = ["name", "resource_name", "service"]
-                    scope.trend = 1
-                    scope.data = array
-                    scope.$watch("selected", function(v) {
-                        var t = parseFloat(scope.trend)
-                        var t1 = new Date
-                        scope.data.sort(function(a, b) {
-                            var ret = a[v] > b[v] ? 1 : -1
-                            return t * ret
-                        })
-                        avalon.log(new Date - t1)
-                    })
-                    scope.$watch("trend", function(t) {
-                        var v = scope.selected, t = parseFloat(t)
-                        scope.data.sort(function(a, b) {
-                            var ret = a[v] > b[v] ? 1 : -1
-                            return t * ret
-                        })
-                    })
-                });
-                avalon.scan()
-            })
-
-        </script>
+        <meta charset="utf-8">
+        <title></title>
     </head>
-    <body>
-        <fieldset ms-controller="bigdata">
-            <legend>大数据的测试例子</legend>
-            <p><select ms-each-el="options" ms-duplex="selected">
-                    <option>{{el}}</option>
-                </select>
-                <select ms-duplex="trend">
-                    <option value="1">up</option>
-                    <option value="-1">down</option>
-                </select>
-            </p>
-            <table >
-                <tbody ms-each-el="data">
-                    <tr ms-class-selected="el.selected">
-                        <td> <input type="checkbox" ms-duplex-radio="el.selected" >{{$index}}</td> <td>{{el.name}}</td> <td>{{el.resource_name}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </fieldset>
+    <body ms-controller="page">
+        <h3>ms-each实现数组循环</h3>
+        <div ms-each="arr">
+            {{$index}} <button ms-click="$remove">{{el}} 点我删除</button>
+        </div>
+        <h3>ms-repeat实现数组循环</h3>
+        <table border="1" width="800px" style="background:blueviolet">
+            <tr>
+                <td ms-repeat="arr">
+                    {{el}}  {{$first}} {{$last}}
+                </td>
+            </tr>
+        </table>
+        <h3>ms-repeat实现数组循环</h3>
+        <ul>
+            <li ms-repeat="arr"><button ms-click="$remove">测试{{$index}}</button>{{el}}</li>
+        </ul>
+        <h3>ms-repeat实现对象循环</h3>
+        <ol >
+            <li ms-repeat="object">{{$key}}:{{$val}}</li>
+        </ol>
+        <h3>ms-with实现对象循环</h3>
+        <ol ms-with="object">
+            <li>{{$key}}:{{$val}}</li>
+        </ol>
+        <h3>通过指定data-with-sorted规定只输出某一部分建值及它们的顺序，只能循环对象时有效</h3>
+        <ol ms-with="bigobject" data-with-sorted="order">
+            <li>{{$key}}:{{$val}}</li>
+        </ol>
+        <h3>ms-repeat实现数组双重循环</h3>
+        <table border="1" style="background:yellow" width="400px">
+            <tr ms-repeat="dbarray"><td ms-repeat-elem="el.array">{{elem}}</td></tr>
+        </table>
+        <h3>ms-each实现数组双重循环</h3>
+        <table border="1" style="background:green" width="400px">
+            <tbody  ms-each="dbarray">
+                <tr ms-each-elem="el.array"><td>{{elem}}</td></tr>
+            </tbody>
+        </table>
+        <h3>ms-with实现对象双重循环，并通过$outer访问外面的键名</h3>
+        <div ms-repeat="dbobjec">{{$key}}:<strong ms-repeat="$val">{{$key}}&nbsp;{{$val}} <span style="font-weight: normal">{{$outer.$key}}</span>|&nbsp;</strong></div>
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define('page', function(vm) {
+                vm.arr = ["a", "b", "c", "d", "e", "f", "g", "h"]
+                vm.object = {
+                    "kkk": "vvv", "kkk2": "vvv2", "kkk3": "vvv3"
+                }
+                vm.aaa = {
+                    aaa2: "vvv2",
+                    aaa21: "vvv21",
+                    aaa22: "vvv22"
+                }
+                vm.bigobject = {
+                    title: 'xxx',
+                    name: '777',
+                    width: 30,
+                    align: 'center',
+                    sortable: true,
+                    cols: "cols3",
+                    url: 'data/stockQuote.json',
+                    method: 'get',
+                    remoteSort: true,
+                    sortName: 'SECUCODE',
+                    sortStatus: 'asc'
+                }
+                vm.order = function() {
+                    return ["name", "sortStatus", "sortName", "method", "align"]
+                }
+                vm.dbobjec = {
+                    aaa: {
+                        aaa2: "vvv2",
+                        aaa21: "vvv21",
+                        aaa22: "vvv22"
+                    },
+                    bbb: {
+                        bbb2: "ccc2",
+                        bbb21: "ccc21",
+                        bbb22: "ccc22"
+                    }
+                }
+                vm.dbarray = [
+                    {
+                        array: ["a", "b", "c"]
+                    },
+                    {
+                        array: ["e", "f", "d"]
+                    }
+                ]
+            });
+            setTimeout(function() {
+                model.object = {
+                    a1: 4444,
+                    a2: 5555
+                }
+            }, 3000)
+        </script>
     </body>
 </html>
