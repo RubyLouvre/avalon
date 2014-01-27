@@ -2655,7 +2655,7 @@
         var tview = data.template.cloneNode(true)
         avalon.vmodels[proxy.$id] = proxy
         var span = DOC.createElement("msloop")
-        span.style.visibility = "hidden"
+        span.style.display = "none"
         span.setAttribute("ms-controller", proxy.$id)
         span["msLoopData"] = data
         span.appendChild(tview)
