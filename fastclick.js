@@ -93,19 +93,39 @@ window.FastClick == function(layer) {
     if (FastClick.notNeeded(layer)) {
         return;
     }
+    /** @type function() */
+    this.onClick = function() {
+        return FastClick.prototype.onClick.apply(self, arguments);
+    };
 
-    // Set up event handlers as required
+    this.onMouse = function() {
+        return FastClick.prototype.onMouse.apply(self, arguments);
+    };
+    this.onTouchStart = function() {
+        return FastClick.prototype.onTouchStart.apply(self, arguments);
+    };
+    this.onTouchMove = function() {
+        return FastClick.prototype.onTouchMove.apply(self, arguments);
+    };
+
+    this.onTouchEnd = function() {
+        return FastClick.prototype.onTouchEnd.apply(self, arguments);
+    };
+
+    this.onTouchCancel = function() {
+        return FastClick.prototype.onTouchCancel.apply(self, arguments);
+    };
     if (this.deviceIsAndroid) {
-        layer.addEventListener('mouseover', this.onMouse.bind(this), true);
-        layer.addEventListener('mousedown', this.onMouse.bind(this), true);
-        layer.addEventListener('mouseup', this.onMouse.bind(this), true);
+        layer.addEventListener('mouseover', this.onMouse, true);
+        layer.addEventListener('mousedown', this.onMouse, true);
+        layer.addEventListener('mouseup', this.onMouse, true);
     }
 
-    layer.addEventListener('click', this.onClick.bind(this), true);
-    "TouchStart TouchMove TouchEnd TouchCanel".replace(/\w+/g, function(type) {
-        layer.addEventListener(type.toLowerCase(), this["on" + type].bind(this), false);
-    })
-
+    layer.addEventListener('click', this.onClick, true);
+    layer.addEventListener('touchstart', this.onTouchStart, false);
+    layer.addEventListener('touchmove', this.onTouchMove, false);
+    layer.addEventListener('touchend', this.onTouchEnd, false);
+    layer.addEventListener('touchcancel', this.onTouchCancel, false);
     // Hack is required for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
     // which is how FastClick normally stops click events bubbling to callbacks registered on the FastClick
     // layer when they are cancelled.
@@ -373,15 +393,6 @@ FastClick.prototype.focus = function(target) {
     }
 };
 
-
-/**
- * On actual clicks, determine whether this is a touch-generated click, a click action occurring
- * naturally after a delay after a touch (which needs to be cancelled to avoid duplication), or
- * an actual click which should be permitted.
- *
- * @param {Event} event
- * @returns {boolean}
- */
 FastClick.prototype.onClick = function(event) {
     'use strict';
     var permitted;

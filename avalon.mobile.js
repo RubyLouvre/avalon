@@ -691,9 +691,9 @@
                     //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
                     return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
-                return parseFloat(this.css(method)) || 0
+                return cssHooks[method + "::get"](node)
             } else {
-                return arguments.length ? this.css(method, value) : cssHooks[method + "::get"](node)
+                return this.css(method, value) 
             }
         }
 
