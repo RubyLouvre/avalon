@@ -1,103 +1,54 @@
 /**
- * @preserve FastClick: polyfill to remove click delays on browsers with touch UIs.
- *
- * @version 0.6.11
- * @codingstandard ftlabs-jsv2
- * @copyright The Financial Times Limited [All Rights Reserved]
- * @license MIT License (see LICENSE.txt)
- */
-
-/*jslint browser:true, node:true*/
-/*global define, Event, Node*/
-
-
-/**
- * Instantiate fast-clicking listeners on the specificed layer.
- *
- * @constructor
- * @param {Element} layer The layer to listen on
+ avalon.mobile特别版，改良chrome32-中的点击事件
  */
 window.FastClick == function(layer) {
-    'use strict';
+    
     var oldOnClick, self = this;
 
 
-    /**
-     * Whether a click is currently being tracked.
-     *
-     * @type boolean
-     */
+//是否触发中
     this.trackingClick = false;
 
-
-    /**
-     * Timestamp for when when click tracking started.
-     *
-     * @type number
-     */
+//触发时间
     this.trackingClickStart = 0;
-
-
-    /**
-     * The element being tracked for a click.
-     *
-     * @type EventTarget
-     */
+    //事件源对象
     this.targetElement = null;
 
 
-    /**
-     * X-coordinate of touch start event.
-     *
-     * @type number
-     */
+    //方位
     this.touchStartX = 0;
-
-
-    /**
-     * Y-coordinate of touch start event.
-     *
-     * @type number
-     */
     this.touchStartY = 0;
-
-
     /**
-     * ID of the last touch, retrieved from Touch.identifier.
-     *
-     * @type number
+     每个触摸事件都包括了三个触摸列表：
+     1. touches：当前位于屏幕上的所有手指的一个列表。
+     2. targetTouches：位于当前DOM元素上的手指的一个列表。
+     3. changedTouches：涉及当前事件的手指的一个列表。
+     例如，在一个touchend事件中，这就会是移开的手指。
+     这些列表由包含了触摸信息的对象组成：
+     1. identifier：一个数值，唯一标识触摸会话（touch session）中的当前手指。
+     2. target：DOM元素，是动作所针对的目标。
+     3. 客户/页面/屏幕坐标：动作在屏幕上发生的位置。
+     4. 半径坐标和 rotationAngle：画出大约相当于手指形状的椭圆形。
      */
     this.lastTouchIdentifier = 0;
 
 
-    /**
-     * Touchmove boundary, beyond which a click will be cancelled.
-     *
-     * @type number
-     */
+    //可充许的移动偏离值
+
     this.touchBoundary = 10;
 
-
-    /**
-     * The FastClick layer.
-     *
-     * @type Element
-     */
+    //绑定监听器的元素（相当于currentTarget， event.target是可变的，event.currentTarget是不会变的））
     this.layer = layer;
 
     if (!layer || !layer.nodeType) {
         throw new TypeError('Layer must be a document node');
     }
-
-
     if (FastClick.notNeeded(layer)) {
         return;
     }
-    /** @type function() */
     this.onClick = function() {
         return FastClick.prototype.onClick.apply(self, arguments);
-    };
-
+    }
     this.onMouse = function() {
         return FastClick.prototype.onMouse.apply(self, arguments);
     };
@@ -126,9 +77,7 @@ window.FastClick == function(layer) {
     layer.addEventListener('touchmove', this.onTouchMove, false);
     layer.addEventListener('touchend', this.onTouchEnd, false);
     layer.addEventListener('touchcancel', this.onTouchCancel, false);
-    // Hack is required for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
-    // which is how FastClick normally stops click events bubbling to callbacks registered on the FastClick
-    // layer when they are cancelled.
+    // 模拟stopImmediatePropagation方法
     if (!Event.prototype.stopImmediatePropagation) {
         layer.removeEventListener = function(type, callback, capture) {
             var rmv = Node.prototype.removeEventListener;
@@ -153,13 +102,8 @@ window.FastClick == function(layer) {
         };
     }
 
-    // If a handler is already declared in the element's onclick attribute, it will be fired before
-    // FastClick's onClick handler. Fix this by pulling out the user-defined handler function and
-    // adding it as listener.
+    // 将已有的内联事件也放进多投事件列表中
     if (typeof layer.onclick === 'function') {
-
-        // Android browser on at least 3.2 requires a new reference to the function in layer.onclick
-        // - the old one won't work if passed to addEventListener directly.
         oldOnClick = layer.onclick;
         layer.addEventListener('click', function(event) {
             oldOnClick(event);
@@ -168,12 +112,7 @@ window.FastClick == function(layer) {
     }
 }
 
-/**
- * On touch start, record the position and scroll offset.
- *
- * @param {Event} event
- * @returns {boolean}
- */
+
 FastClick.prototype.onTouchStart = function(event) {
     var touches = event.targetTouches
     //忽略多点触摸
@@ -222,7 +161,7 @@ FastClick.prototype.onTouchStart = function(event) {
 
 
 FastClick.prototype.onTouchMove = function(event) {
-    'use strict';
+    
     if (!this.trackingClick) {
         return true;
     }
@@ -246,7 +185,7 @@ FastClick.prototype.touchHasMoved = function(event) {
 }
 
 FastClick.prototype.onTouchEnd = function(event) {
-    'use strict';
+    
     var forElement, trackingClickStart, targetTagName, scrollParent, touch, targetElement = this.targetElement;
 
     if (!this.trackingClick) {
@@ -333,14 +272,7 @@ FastClick.prototype.onTouchCancel = function() {
 };
 
 
-/**
- * Determine mouse events which should be permitted.
- *
- * @param {Event} event
- * @returns {boolean}
- */
 FastClick.prototype.onMouse = function(event) {
-    'use strict';
 
     // If a target element was never set (because a touch event was never fired) allow the event
     if (!this.targetElement) {
@@ -382,7 +314,7 @@ FastClick.prototype.onMouse = function(event) {
 };
 
 FastClick.prototype.focus = function(target) {
-    'use strict';
+    
     //在IOS7中，date, datetime控件，由于没有selectionStart selectionEnd属性，直接用setSelectionRange会抛错
     if (!isFinite(target.selectionStart)) {
         var n = target.value.length;
@@ -394,7 +326,7 @@ FastClick.prototype.focus = function(target) {
 };
 
 FastClick.prototype.onClick = function(event) {
-    'use strict';
+    
     var permitted;
     if (this.trackingClick) {
         this.targetElement = this.trackingClick = false;
@@ -427,7 +359,7 @@ FastClick.prototype.deviceIsIOSWithBadTarget = FastClick.prototype.deviceIsIOS &
 
 
 FastClick.prototype.needsClick = function(target) {
-    'use strict';
+    
     switch (target.nodeName.toLowerCase()) {
 
         // Don't send a synthetic click to disabled inputs (issue #62)
@@ -456,7 +388,7 @@ FastClick.prototype.needsClick = function(target) {
 };
 
 FastClick.prototype.needsFocus = function(target) {
-    'use strict';
+    
     switch (target.nodeName.toLowerCase()) {
         case 'textarea':
             return true;
@@ -483,7 +415,7 @@ FastClick.prototype.needsFocus = function(target) {
 
 //手动实现点击事件向上冒泡
 FastClick.prototype.sendClick = function(targetElement, event) {
-    'use strict';
+    
     var clickEvent, touch;
 
     // On some Android devices activeElement needs to be blurred otherwise the synthetic click will have no effect (#24)
@@ -500,7 +432,7 @@ FastClick.prototype.sendClick = function(targetElement, event) {
 };
 
 FastClick.prototype.determineEventType = function(targetElement) {
-    'use strict';
+    
     //Issue #159: Android Chrome Select Box does not open with a synthetic click event
     if (this.deviceIsAndroid && targetElement.tagName.toLowerCase() === 'select') {
         return 'mousedown';
@@ -512,7 +444,7 @@ FastClick.prototype.determineEventType = function(targetElement) {
 
 
 FastClick.prototype.updateScrollParent = function(targetElement) {
-    'use strict';
+    
     var scrollParent, parentElement;
 
     scrollParent = targetElement.fastClickScrollParent;
@@ -540,7 +472,7 @@ FastClick.prototype.updateScrollParent = function(targetElement) {
 
 
 FastClick.prototype.findControl = function(labelElement) {
-    'use strict';
+    
 
     // Fast path for newer browsers supporting the HTML5 control attribute
     if (labelElement.control !== undefined) {
@@ -572,7 +504,7 @@ FastClick.prototype.findControl = function(labelElement) {
  * @returns {void}
  */
 FastClick.prototype.destroy = function() {
-    'use strict';
+    
     var layer = this.layer;
 
     if (this.deviceIsAndroid) {
@@ -595,7 +527,7 @@ FastClick.prototype.destroy = function() {
  * @param {Element} layer The layer to listen on
  */
 FastClick.notNeeded = function(layer) {
-    'use strict';
+    
     var metaViewport;
     var chromeVersion;
 
@@ -637,14 +569,8 @@ FastClick.notNeeded = function(layer) {
     return false;
 };
 
-
-/**
- * Factory method for creating a FastClick object
- *
- * @param {Element} layer The layer to listen on
- */
 FastClick.attach = function(layer) {
-    'use strict';
+    
     return new FastClick(layer);
 };
 
