@@ -976,7 +976,7 @@
         var ret = el.tagName.toLowerCase()
         return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
     }
-    var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, rhasValue = /\bsvalue=/
+    var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, rhasValue = /\bvalue=/
     var valHooks = {
         "option:get": function(node) {
             //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
