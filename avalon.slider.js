@@ -29,10 +29,11 @@ define(["avalon.draggable"], function(avalon) {
         var handleHTML = '<b class="ui-slider-handle ui-state-default ui-corner-all"' +
                 ' ms-css-' + (isHorizontal ? 'left' : 'bottom') + '="{{percent}}%"' +
                 ' data-axis=' + (isHorizontal ? 'x' : 'y') +
-                ' ms-draggable="dragend"' +
-                ' data-start="dragstart"' +
-                ' data-drag="drag"' +
-                ' data-containment="parent"' +
+                ' ms-draggable' +
+                ' data-drag-start="dragstart"' +
+                ' data-drag-stop="dragend"' +
+                ' data-drag-drag="drag"' +
+                ' data-drag-containment="parent"' +
                 ' ms-hover="ui-state-hover"></b>'
         var rangeHTML = ' <div class="ui-slider-range ui-widget-header ui-corner-all"' +
                 ' ms-class-ui-slider-range-max="range === \'max\'" ' +
