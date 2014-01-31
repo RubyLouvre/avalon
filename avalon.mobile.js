@@ -931,7 +931,7 @@
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
-            var bb = b.concat()
+            var bb = b ? b.concat(): []//fix https://github.com/RubyLouvre/avalon/issues/261
             a.clear()
             a.push.apply(a, bb)
             return a
