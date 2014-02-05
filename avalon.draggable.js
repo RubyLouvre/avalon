@@ -379,7 +379,7 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /*
- ms-draggable="VMID?" , VMID为一个VM的ID,可选
+ ms-draggable="ID?,opt?" , ID为一个VM的ID,可选,没有为离它最近的VM；opt为VM的一个对象属性，可选
  下面这些全部可用data-drag-*进行配置
  drag 为VM中一个方法名
  stop 为VM中一个方法名
