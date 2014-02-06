@@ -222,7 +222,7 @@
             }
         },
         each: function(obj, fn) {
-            if (obj) { //不能传个null, undefined进来
+            if (obj) { //排除null, undefined
                 var i = 0
                 if (isArrayLike(obj)) {
                     for (var n = obj.length; i < n; i++) {
@@ -1280,7 +1280,6 @@
         }
     }
 
-
     var rmsAttr = /ms-(\w+)-?(.*)/
     var priorityMap = {
         "if": 10,
@@ -1594,9 +1593,7 @@
         }
     }
 
-
     //parseExpr的智能引用代理
-
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
             var array = tokens.map(function(token) {
@@ -1761,7 +1758,6 @@
                         }
                         break;
                 }
-
             }
         },
         "data": function(val, elem, data) {

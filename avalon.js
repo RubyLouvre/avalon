@@ -269,7 +269,7 @@
             }
         },
         each: function(obj, fn) {
-            if (obj) { //不能传个null, undefined进来
+            if (obj) { //排除null, undefined
                 var i = 0
                 if (isArrayLike(obj)) {
                     for (var n = obj.length; i < n; i++) {
@@ -318,7 +318,7 @@
             var n = obj.length
             if (+n === n && !(n % 1) && n >= 0) { //检测length属性是否为非负整数
                 try {
-                    if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
+                    if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
                         return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
                     }
                     return true
@@ -1540,7 +1540,6 @@
         }
     }
 
-
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
@@ -2010,7 +2009,6 @@
     }
 
     //parseExpr的智能引用代理
-
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
             var array = tokens.map(function(token) {
