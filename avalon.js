@@ -2533,9 +2533,6 @@
                         }
                     }
                 }
-                if (!elem.name) { //如果用户没有写name属性，浏览器默认给它一个空字符串
-                    elem.name = generateID()
-                }
                 var attr = elem.getAttribute("data-duplex-changed")
                 if (attr) {
                     if (/radio|checkbox|select/.test(elem.type)) {
