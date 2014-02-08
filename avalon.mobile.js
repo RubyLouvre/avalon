@@ -1827,7 +1827,8 @@
                         deleteRange.setEndAfter(parent.lastChild)
                     }
                     removeFromSanctuary(deleteRange.extractContents())
-                    proxies.length = 0
+                    if (proxies)
+                        proxies.length = 0
                     break
                 case "move":
                     var t = proxies.splice(pos, 1)[0]
@@ -1847,7 +1848,8 @@
                 case "append":
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    var callback = getBindingCallback(parent.getAttribute("data-with-sorted"), data.vmodels)
+                    var dataElement = data.endRepeat ? data.template.firstChild : data.parent
+                    var callback = getBindingCallback(dataElement.getAttribute("data-with-sorted"), data.vmodels)
                     var keys = []
                     var spans = []
                     for (var key in pos) { //得到所有键名
@@ -2130,15 +2132,15 @@
                     }
                 }
                 data.rollback = function() {
-                    notifySubscribers(list, "clear")
-                    var endRepeat = this.endRepeat
-                    var parent = this.parent
-                    var element = this.template.firstChild
-                    parent.insertBefore(this.template, endRepeat || null)
+                    bindingExecutors.each.call(data, "clear")
+                    var endRepeat = data.endRepeat
+                    var parent = data.parent
+                    var element = data.template.firstChild
+                    parent.insertBefore(data.template, endRepeat || null)
                     if (endRepeat) {
                         parent.removeChild(endRepeat)
                         parent.removeChild(this.startRepeat)
-                        this.element = element
+                        data.element = element
                     }
                 }
                 data.handler("append", list, pool)
