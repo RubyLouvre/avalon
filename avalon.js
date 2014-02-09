@@ -771,7 +771,7 @@
     }
     if (!rnative.test([].map)) {
         avalon.mix(ap, {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+//定位操作，返回数组中第一个等于给定参数的元素的索引值。
             indexOf: function(item, index) {
                 var n = this.length,
                         i = ~~index
@@ -1899,7 +1899,6 @@
 
     function createCache(maxLength) {
         var keys = []
-
         function cache(key, value) {
             if (keys.push(key) > maxLength) {
                 delete cache[keys.shift()]
@@ -1915,92 +1914,99 @@
         var exprId = scopes.map(function(el) {
             return el.$id
         }) + code + data.filters + (four || "")
-        if (four === "duplex") {
-            var fn = cacheExpr[exprId]
-            if (fn) {
-                return data.evaluator = fn
-            }
-            fn = Function("a", "b", "switch(arguments.length){\n case 2:\n\ta." + code + " = b\n\tbreak;\ncase 1:\n\treturn a." + code + ";\n}")
-        } else {
-            var vars = getVariables(code),
-                    assigns = [],
-                    names = [],
-                    args = [],
-                    prefix = ""
-            //args 是一个对象数组， names 是将要生成的求值函数的参数
-            vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
-            for (var i = 0, sn = scopes.length; i < sn; i++) {
-                if (vars.length) {
-                    var name = "vm" + expose + "_" + i
-                    names.push(name)
-                    args.push(scopes[i])
-                    assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
-                }
-            }
-            fn = cacheExpr[exprId]
-            if (fn) {
-                if (data.filters) {
-                    args.push(avalon.filters)
-                }
-                data.evaluator = fn
-                data.args = args
-                return
-            }
-            var prefix = assigns.join(", ")
-            if (prefix) {
-                prefix = "var " + prefix
-            }
-            if (data.type === "on") {
-                if (code.indexOf(".bind(") === -1) {
-                    code = code.replace("(", ".call(this,")
-                } else {
-                    code = code.replace(".bind(", ".call(")
-                }
-                if (four === "$event") {
-                    names.push(four)
-                }
-            }
-            if (data.filters) {
-                code = "\nvar ret" + expose + " = " + code
-                var textBuffer = [],
-                        fargs
-                textBuffer.push(code, "\r\n")
-                for (var i = 0, fname; fname = data.filters[i++]; ) {
-                    var start = fname.indexOf("(")
-                    if (start !== -1) {
-                        fargs = fname.slice(start + 1, fname.lastIndexOf(")")).trim()
-                        fargs = "," + fargs
-                        fname = fname.slice(0, start).trim()
-                    } else {
-                        fargs = ""
-                    }
-                    textBuffer.push(" if(filters", expose, ".", fname, "){\n\ttry{\nret", expose,
-                            " = filters", expose, ".", fname, "(ret", expose, fargs, ")\n\t}catch(e){} \n}\n")
-                }
-                code = textBuffer.join("")
-                code += "\nreturn ret" + expose
-                names.push("filters" + expose)
-                args.push(avalon.filters)
-            } else {
-                code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
-            }
-            if (data.type === "on") {
-                var lastIndex = code.lastIndexOf("\nreturn")
-                var header = code.slice(0, lastIndex)
-                var footer = code.slice(lastIndex)
-                code = header + "\nif(avalon.openComputedCollect) return ;" + footer
-            }
-            try {
-                fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
-            } catch (e) {
+
+        var vars = getVariables(code),
+                assigns = [],
+                names = [],
+                args = [],
+                prefix = ""
+        //args 是一个对象数组， names 是将要生成的求值函数的参数
+        vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
+        for (var i = 0, sn = scopes.length; i < sn; i++) {
+            if (vars.length) {
+                var name = "vm" + expose + "_" + i
+                names.push(name)
+                args.push(scopes[i])
+                assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
             }
         }
+        var fn = cacheExpr[exprId]//直接从缓存，免得重复生成
+        if (fn) {
+            data.evaluator = fn
+            if (data.filters) {
+                args.push(avalon.filters)
+            }
+            data.args = args
+            return
+        }
+        var prefix = assigns.join(", ")
+        if (prefix) {
+            prefix = "var " + prefix
+        }
+        if (four === "duplex") {
+            var _body = "'use strict';\nreturn function(vvv){\n\t" +
+                    prefix +
+                    ";\n\tif(!arguments.length){\n\t\treturn " +
+                    code +
+                    "\n\t}\n\t" + (code.indexOf(".") === -1 ? names[0]+"."+code : code)+
+                     "= vvv;\n} "
+            try {
+                fn = Function.apply(Function, names.concat(_body))
+                data.evaluator = cacheExpr(exprId, fn)
+                data.args = args
+            } catch (e) {
+            }
+            return
+        }
+        if (data.type === "on") {
+            if (code.indexOf(".bind(") === -1) {
+                code = code.replace("(", ".call(this,")
+            } else {
+                code = code.replace(".bind(", ".call(")
+            }
+            if (four === "$event") {
+                names.push(four)
+            }
+        }
+        if (data.filters) {
+            code = "\nvar ret" + expose + " = " + code
+            var textBuffer = [],
+                    fargs
+            textBuffer.push(code, "\r\n")
+            for (var i = 0, fname; fname = data.filters[i++]; ) {
+                var start = fname.indexOf("(")
+                if (start !== -1) {
+                    fargs = fname.slice(start + 1, fname.lastIndexOf(")")).trim()
+                    fargs = "," + fargs
+                    fname = fname.slice(0, start).trim()
+                } else {
+                    fargs = ""
+                }
+                textBuffer.push(" if(filters", expose, ".", fname, "){\n\ttry{\nret", expose,
+                        " = filters", expose, ".", fname, "(ret", expose, fargs, ")\n\t}catch(e){} \n}\n")
+            }
+            code = textBuffer.join("")
+            code += "\nreturn ret" + expose
+            names.push("filters" + expose)
+            args.push(avalon.filters)
+        } else {
+            code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
+        }
+        if (data.type === "on") {
+            var lastIndex = code.lastIndexOf("\nreturn")
+            var header = code.slice(0, lastIndex)
+            var footer = code.slice(lastIndex)
+            code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+        }
         try {
-            if (data.type !== "on" && four !== "duplex") {
+            fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+        } catch (e) {
+        }
+        try {
+            if (data.type !== "on") {
                 fn.apply(fn, args)
             }
-            cacheExpr(exprId, fn)
-            data.evaluator = fn
+            data.evaluator = cacheExpr(exprId, fn)
             data.args = args
         } catch (e) {
         } finally {
@@ -2302,7 +2308,6 @@
                                 break
                             }
                         }
-
                     } else {
                         while (parent.firstChild) {
                             deleteFragment.appendChild(parent.firstChild)
@@ -2518,21 +2523,7 @@
         "duplex": function(data, vmodels) {
             var elem = data.element,
                     tagName = elem.tagName
-            if (typeof modelBinding[tagName] === "function" && vmodels && vmodels.length) {
-                var val = data.value.split("."),
-                        first = val[0],
-                        second = val[1]
-                for (var i = 0, vm; vm = vmodels[i++]; ) {
-                    if (vm.hasOwnProperty(first)) {
-                        if (second && vm[first]) {
-                            if (vm[first].hasOwnProperty(second)) {
-                                break
-                            }
-                        } else {
-                            break
-                        }
-                    }
-                }
+            if (typeof modelBinding[tagName] === "function") {
                 var attr = elem.getAttribute("data-duplex-changed")
                 if (attr) {
                     if (/radio|checkbox|select/.test(elem.type)) {
@@ -2543,11 +2534,13 @@
                 }
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
-                var form = elem.form
-                if (form && form.msValidate) {
-                    form.msValidate(elem)
+                if (data.evaluator && data.args) {
+                    var form = elem.form
+                    if (form && form.msValidate) {
+                        form.msValidate(elem)
+                    }
+                    modelBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
-                modelBinding[elem.tagName](elem, data.evaluator, vm, data)
             }
         },
         "each": function(data, vmodels) {
@@ -2745,7 +2738,7 @@
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-    modelBinding.INPUT = function(element, fn, scope, data) {
+    modelBinding.INPUT = function(element, evaluator, data) {
         var fixType = data.param
         var type = element.type,
                 removeFn,
@@ -2762,12 +2755,12 @@
         //当value变化时改变model的值
         var updateModel = function() {
             if ($elem.data("duplex-observe") !== false) {
-                fn(scope, valueAccessor())
+                evaluator(valueAccessor())
             }
         }
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var curValue = fn(scope)
+            var curValue = evaluator()
             if (curValue !== element.value) {
                 element.value = curValue + ""
             }
@@ -2775,15 +2768,15 @@
         if (type === "radio") {
             data.handler = function() {
                 //IE6是通过defaultChecked来实现打勾效果
-                element.defaultChecked = (element.checked = fixType === "text" ? fn(scope) === element.value : !!fn(scope))
+                element.defaultChecked = (element.checked = fixType === "text" ? evaluator() === element.value : !!evaluator())
             }
             updateModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     if (fixType === "text") {
-                        fn(scope, element.value)
+                        evaluator(element.value)
                     } else {
                         var val = !element.defaultChecked
-                        fn(scope, val)
+                        evaluator(val)
                         element.checked = val
                     }
                 }
@@ -2796,11 +2789,11 @@
             updateModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
-                    avalon.Array[method](fn(scope), element.value)
+                    avalon.Array[method](evaluator(), element.value)
                 }
             }
             data.handler = function() {
-                var array = [].concat(fn(scope)) //强制转换为数组
+                var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
             removeFn = $elem.bind("click", updateModel) //IE6-8
@@ -2852,19 +2845,19 @@
 
         registerSubscriber(data)
     }
-    modelBinding.SELECT = function(element, fn, scope, data, oldValue) {
+    modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
         function updateModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var curValue = $elem.val() //字符串或字符串数组
                 if (curValue + "" !== oldValue) {
-                    fn(scope, curValue)
+                    evaluator(curValue)
                     oldValue = curValue + ""
                 }
             }
         }
         data.handler = function() {
-            var curValue = fn(scope)
+            var curValue = evaluator()
             curValue = curValue && curValue.$model || curValue
             curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
             if (curValue + "" !== oldValue) {
