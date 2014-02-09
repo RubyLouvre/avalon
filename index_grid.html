@@ -15,7 +15,7 @@
             .ms-grid-pageLinks a.selected { background: black; color: White; }
 
         </style>
-        <script src="avalon.js" type="text/javascript"></script>
+        <script src="avalon096.js" type="text/javascript"></script>
 
 
 
@@ -24,7 +24,7 @@
 
 
             var grid = avalon.define("grid", function(scope) {
-                scope.$skipArray = ["items"]
+             //   scope.$skipArray = ["items"]
                 scope.items = [
                     {name: "Well-Travelled Kitten", sales: 352, price: 75.95},
                     {name: "Speedy Coyote", sales: 89, price: 190.00},
@@ -40,7 +40,8 @@
                 scope.pages = [];//装着所有页码,以零开始
                 scope.getShowItems = function() {
                     var i = scope.pageIndex, c = scope.pageCount;
-                    var array = scope.items.slice(i * c, (i + 1) * c)
+                    var array = scope.items.$model.slice(i * c, (i + 1) * c)
+
                     scope.showItems = avalon.mix(true, [], array)
                 }
                 scope.addItem = function() {

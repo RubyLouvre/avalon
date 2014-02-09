@@ -22,6 +22,8 @@
             setTimeout(function() {
                 //动态更新原select中的数据
                 model.options.push("eee", "fff", "ggg")
+                avalon.vmodels.second.select(1)//动态改变选项
+                avalon.vmodels.second.select(2)
             }, 3000)
             require("avalon.select", function() {
                 avalon.scan()

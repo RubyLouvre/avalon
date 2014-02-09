@@ -77,7 +77,11 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
                     return
                 m = d.getMonth();
                 var y = d.getFullYear();
+                try{
                 vm.currentYear = y;
+                }catch(e){
+                    alert(vm.currentYear)
+                }
                 vm.currentMonth = m
             }
             vm.showDate = function(date) {
@@ -147,10 +151,12 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
             vm.$watch("numberOfMonths", getGroups)
             getGroups(vm.numberOfMonths)
             vm.getWeekNumberOfYear = function(date) {
-                var time,
-                        checkDate = new Date(date.time);
-                checkDate.setDate(checkDate.getDate() + 4 - (checkDate.getDay() || 7));
-                time = checkDate.getTime();
+              if(!date)
+                  return
+                var  checkDate = new Date(date.time);
+                checkDate.setDate(checkDate.getDate() + 4 - (checkDate.getDay() || 7))
+                var time = checkDate.getTime();
+                
                 checkDate.setMonth(0); // Compare with Jan 1
                 checkDate.setDate(1);
                 return Math.floor(Math.round((time - checkDate) / 86400000) / 7) + 1;
@@ -248,7 +254,6 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
             $element.bind("focus", function() {
                 model.toggle = true
             })
-
             //element.stopScan = false
             datepickerEl = avalon.parseHTML(tmpl).firstChild
             document.body.appendChild(datepickerEl)

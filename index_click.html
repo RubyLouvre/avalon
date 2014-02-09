@@ -8,19 +8,20 @@
         <script>
             avalon.define("test", function(vm) {
                 vm.aaa = function() {
-                    console.log(1)
+                    alert(1)
                 }
                 vm.bbb = function() {
-                    console.log(2)
+                    alert(2)
                 }
                 vm.ccc = function() {
-                    console.log(3)
+                    alert(3)
                 }
             })
         </script>
     </head>
     <body>
         <div ms-controller="test">
+            <p>测试同一个元素绑定多个相同类型的事件</p>
             <p ms-click-1="bbb" ms-click="aaa"  ms-click-2="ccc">xxx</p>
         </div>
     </body>

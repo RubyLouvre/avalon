@@ -28,7 +28,15 @@
             model.checkboxModel.$watch("length", function() {
                 model.checkboxText = model.checkboxModel.join(",")
             })
+            var dynamic = avalon.define("dynamic", function(vm) {
+                vm.langtext = ""
+                vm.array = ["aaa", "bbb", "ccc"]
+                vm.lang = []
+            })
 
+            dynamic.lang.$watch("length", function() {
+                dynamic.langtext = dynamic.lang.join(",")
+            })
 
         </script>
         <style>
@@ -117,5 +125,12 @@
             </p>
             <P>{{sex}}                   {{langtext}}</P>
         </div>
+        <fieldset ms-controller="dynamic">
+            <div  ms-each="array">
+                <div><input type="checkbox" ms-duplex="lang" ms-value="{{el}}">{{el}}</div>
+            </div>
+            <div>{{langtext}}</div>
+        </fieldset>
+
     </body>
 </html>

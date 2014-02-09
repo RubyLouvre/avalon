@@ -1,6 +1,9 @@
 
 <h1>Avalon</h1>
 <p>迷你简单易用的MVVM框架</p>
+<p>前端做久了就会发现HTML(DOM)才是所有前端的真正精髓汇聚地。不管JS和CSS都是为DOM服务的。但是DOM遍布荆棘与陷阱，因此才出现像jQuery那样专门为它填坑的库，
+当下的前端开发就是一边填坑一边写业务中进行。avalon的诞生改变了这一切，让我们摆脱DOM的掣肘，专注于需求本身，将可变的数据与操作数据的方法封装成模型。
+在更高的层次上组织代码，提高软件的可维护性，可扩展性和可重用性。</p>
 <hr>
 <ul>
     <li>avalon.js 兼容IE6，及标准浏览器</li>
@@ -21,12 +24,17 @@
     <li>让DOM操作的代码近乎绝迹</li>
     <li>使用类似CSS的重叠覆盖机制，让各个ViewModel分区交替地渲染页面</li>
     <li>节点移除时，智能卸载对应的视图刷新函数，节约内存</li>
-    <li>操作数据即操作DOM，对ViewModel的操作都会同步到View与Model去。</li>
+    <li><strong>操作数据即操作DOM</strong>，对ViewModel的操作都会同步到View与Model去。</li>
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
+<div><img src="https://raw2.github.com/RubyLouvre/avalon/master/ecosphere.jpg" width="400" height="640"></div>
 <p>相关学习教程:<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→<a href="http://rubylouvre.github.io/mvvm/">官网</a>→
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
+<h3>运行github中的示例</h3>
+<p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
+<p><img src="https://raw2.github.com/RubyLouvre/avalon/master/example.jpg"/></p>
 
 <p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
 

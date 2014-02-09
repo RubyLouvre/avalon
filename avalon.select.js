@@ -118,7 +118,20 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
             vm.unCheckAll = function(e) {
                 vm.checkAll(e, true)
             }
-
+            vm.select = function(index) {
+                var obj = vm.list[index]
+                if (obj) {
+                    obj.selected = false
+                    vm.changeState(null, obj)
+                }
+            }
+            vm.unselect = function(index) {
+                var obj = vm.list[index]
+                if (obj) {
+                    obj.selected = true
+                    vm.changeState(null, obj)
+                }
+            }
             vm.changeState = function(e, obj) {
                 if (!obj.disabled) {//重要技巧,通过e.target == this排除冒泡上来的事件
                     var index = obj.index
