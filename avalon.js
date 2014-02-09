@@ -1930,34 +1930,37 @@
                 assigns.push.apply(assigns, addAssign(vars, scopes[i], name))
             }
         }
+        //---------------args----------------
+        if (data.filters) {
+            args.push(avalon.filters)
+        }
+        data.args = args
+        //---------------cache----------------
         var fn = cacheExpr[exprId]//直接从缓存，免得重复生成
         if (fn) {
             data.evaluator = fn
-            if (data.filters) {
-                args.push(avalon.filters)
-            }
-            data.args = args
             return
         }
         var prefix = assigns.join(", ")
         if (prefix) {
             prefix = "var " + prefix
         }
+        //----------------duplex----------------
         if (four === "duplex") {
             var _body = "'use strict';\nreturn function(vvv){\n\t" +
                     prefix +
                     ";\n\tif(!arguments.length){\n\t\treturn " +
                     code +
-                    "\n\t}\n\t" + (code.indexOf(".") === -1 ? names[0]+"."+code : code)+
-                     "= vvv;\n} "
+                    "\n\t}\n\t" + (code.indexOf(".") === -1 ? names[0] + "." + code : code) +
+                    "= vvv;\n} "
             try {
                 fn = Function.apply(Function, names.concat(_body))
                 data.evaluator = cacheExpr(exprId, fn)
-                data.args = args
             } catch (e) {
             }
             return
         }
+        //------------------on----------------
         if (data.type === "on") {
             if (code.indexOf(".bind(") === -1) {
                 code = code.replace("(", ".call(this,")
@@ -1968,6 +1971,7 @@
                 names.push(four)
             }
         }
+        //---------------filter----------------
         if (data.filters) {
             code = "\nvar ret" + expose + " = " + code
             var textBuffer = [],
@@ -1988,7 +1992,6 @@
             code = textBuffer.join("")
             code += "\nreturn ret" + expose
             names.push("filters" + expose)
-            args.push(avalon.filters)
         } else {
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
         }
@@ -1998,16 +2001,13 @@
             var footer = code.slice(lastIndex)
             code = header + "\nif(avalon.openComputedCollect) return ;" + footer
         }
+        //---------------other----------------
         try {
             fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
-        } catch (e) {
-        }
-        try {
             if (data.type !== "on") {
                 fn.apply(fn, args)
             }
             data.evaluator = cacheExpr(exprId, fn)
-            data.args = args
         } catch (e) {
         } finally {
             vars = textBuffer = names = null //释放内存
