@@ -2147,8 +2147,10 @@
         "if": function(data, vmodels) {
             var elem = data.element
             elem.removeAttribute(data.name)
-            data.placehoder = DOC.createComment("ms-if")
-            data.msInDocument = data.vmodels = vmodels
+            if (!data.placehoder) {
+                data.msInDocument = data.placehoder = DOC.createComment("ms-if")
+            }
+            data.vmodels = vmodels
             scanAttr(elem, vmodels)
             parseExprProxy(data.value, vmodels, data)
         },

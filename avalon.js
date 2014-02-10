@@ -2403,7 +2403,7 @@
                     try {
                         placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
-                        avalon.log("ms-if errer" + e.message)
+                        avalon.log("ms-if errer " + e.message)
                     }
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
@@ -2631,8 +2631,10 @@
         "if": function(data, vmodels) {
             var elem = data.element
             elem.removeAttribute(data.name)
-            data.placehoder = DOC.createComment("ms-if")
-            data.msInDocument = data.vmodels = vmodels
+            if (!data.placehoder) {
+               data.msInDocument = data.placehoder = DOC.createComment("ms-if")
+            }
+            data.vmodels = vmodels
             scanAttr(elem, vmodels)
             parseExprProxy(data.value, vmodels, data)
         },
