@@ -77,6 +77,7 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
                 }
             }
             vm.pages = getPages(vm)
+            vm.getPages = getPages
         })
         avalon.nextTick(function() {
             element.innerHTML = tmpl

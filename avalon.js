@@ -2362,7 +2362,7 @@
                     spans = null
                     break
             }
-            iteratorCallback(data, method)
+            iteratorCallback.call(data, arguments)
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
@@ -3171,14 +3171,14 @@
         parent.textContent = ""
     }
 
-    function iteratorCallback(data, method) {
-        var callback = getBindingCallback(data.callbackElement, data.callbackName, data.vmodels)
-        var parent = data.parent
-        checkScan(parent, function() {
-            if (callback) {
-                callback.call(parent, method)
-            }
-        })
+    function iteratorCallback() {
+        var callback = getBindingCallback(this.callbackElement, this.callbackName, this.vmodels)
+        if (callback) {
+            var parent = this.parent, args = arguments
+            checkScan(parent, function() {
+                callback.apply(parent, args)
+            })
+        }
     }
     //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
 
