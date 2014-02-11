@@ -1655,7 +1655,8 @@
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.fixMsIfFlicker{ display: none!important }</style>')
-    var getBindingCallback = function(callback, vmodels) {
+    var getBindingCallback = function(elem, name, vmodels) {
+        var callback = elem.getAttribute(name)
         if (callback) {
             for (var i = 0, vm; vm = vmodels[i++]; ) {
                 if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
@@ -1685,8 +1686,8 @@
                 }
             } else if (method === "include" && val) {
                 var vmodels = data.vmodels
-                var rendered = getBindingCallback(elem.getAttribute("data-include-rendered"), vmodels)
-                var loaded = getBindingCallback(elem.getAttribute("data-include-loaded"), vmodels)
+                var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
+                var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
 
                 function scanTemplate(text) {
                     if (loaded) {
@@ -1855,8 +1856,7 @@
                 case "append":
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
-                    var dataElement = data.endRepeat ? data.template.firstChild : data.parent
-                    var callback = getBindingCallback(dataElement.getAttribute("data-with-sorted"), data.vmodels)
+                    var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
                     var keys = []
                     var spans = []
                     for (var key in pos) { //得到所有键名
@@ -2040,13 +2040,9 @@
             var elem = data.element,
                     tagName = elem.tagName
             if (typeof modelBinding[tagName] === "function") {
-                var attr = elem.getAttribute("data-duplex-changed")
-                if (attr) {
-                    if (/radio|checkbox|select/.test(elem.type)) {
-                        log("data-duplex-changed回调只能应用于非radio,checkbox,select等控件中")
-                    } else {
-                        data.changed = getBindingCallback(attr, vmodels)
-                    }
+                var callback = getBindingCallback(elem, "data-duplex-changed", vmodels)
+                if (!/radio|checkbox|select/.test(elem.type)) {
+                    data.changed = callback
                 }
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
@@ -2067,9 +2063,9 @@
             data.getter = function() {
                 return this.evaluator.apply(0, this.args || [])
             }
-            data.parent = elem
             data.handler = bindingExecutors.each
-            data.callbackName = elem.getAttribute("data-" + (type || "each") + "-rendered")
+            data.callbackName = "data-" + (type || "each") + "-rendered"
+            data.callbackElement = data.parent = elem
             var freturn = true
             try {
                 list = data.getter()
@@ -2127,12 +2123,11 @@
                     bindingExecutors.each.call(data, "clear")
                     var endRepeat = data.endRepeat
                     var parent = data.parent
-                    var element = data.template.firstChild
                     parent.insertBefore(data.template, endRepeat || null)
                     if (endRepeat) {
                         parent.removeChild(endRepeat)
                         parent.removeChild(this.startRepeat)
-                        data.element = element
+                        data.element = data.callbackElement
                     }
                 }
                 data.handler("append", list, pool)
@@ -2213,8 +2208,12 @@
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
                 element.removeAttribute("ms-widget")
-                constructor(element, data, vmodels)
+                var widgetVM = constructor(element, data, vmodels)
                 data.evaluator = noop
+                var callback = getBindingCallback(element, "data-widget-defined", vmodels)
+                if (callback) {
+                    callback.call(element, widgetVM)
+                }
             } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
             return true
         }
@@ -2634,7 +2633,7 @@
     }
 
     function iteratorCallback(data, method) {
-        var callback = getBindingCallback(data.callbackName, data.vmodels)
+        var callback = getBindingCallback(data.callbackElement, data.callbackName, data.vmodels)
         var parent = data.parent
         checkScan(parent, function() {
             if (callback) {
