@@ -27,7 +27,14 @@
             }, 3000)
             require("avalon.select", function() {
                 avalon.scan()
-            })
+            })/*
+             avalon.define("second", function(vm){
+                vm.$skipArray = ["opts"]
+                vm.opts = {
+                    onChange: function(){}
+                }
+             })
+             */
         </script>
 
     </head>
