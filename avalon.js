@@ -3918,7 +3918,7 @@
         innerRequire("ready!", fn)
     }
     avalon.config({
-        loader: false
+        loader: true
     })
     var msSelector = "[ms-controller],[ms-important],[ms-widget]"
     avalon.ready(function() {
