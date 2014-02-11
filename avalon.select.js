@@ -172,10 +172,11 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
         selectedIndex: 0,
         checkAllText: "全选",
         unCheckAllText: "全不选",
-        onChange: avalon.noop,
-        onOpen: avalon.noop,
-        onClose: avalon.noop
+        onChange: avalon.noop,//当它的选项发生改变时的回调
+        onOpen: avalon.noop,//下拉框的所有菜单项都显示出来时的回调（点击它）
+        onClose: avalon.noop//下拉框的所有菜单项都隐藏出来时的回调（点击它的X按钮）
     }
     return avalon
 })
+//比较重要的配置项 onOpen, onClose, onChange, list, multiple
 //http://www.erichynds.com/examples/jquery-ui-multiselect-widget/demos/#single
