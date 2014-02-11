@@ -1,8 +1,8 @@
 define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
 
     var styleEl = document.getElementById("avalonStyle")
-    var cssText = ".ui-pagination{ padding:6px 4px; } " +
-            ".ui-pagination a{  padding: 2px 8px;text-decoration: none;text-align:center; }" +
+    var cssText = ".ui-pagination{ padding:6px 4px; overflow:hidden;} " +
+            ".ui-pagination a{  padding: 2px 8px;text-decoration: none;text-align:center; float:left;}" +
             ".ui-pagination a.ui-pagination-ellipsis{padding: 2px 0px;text-decoration: none;text-align:center;}"
     try {
         styleEl.innerHTML += cssText
