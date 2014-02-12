@@ -1698,7 +1698,7 @@
                         if (type == "if" && param == "loop") {
                             binding.priority += 100
                         }
-                        if (type === "widget" || type == "if") {
+                        if (type === "widget") {
                             bindings.push(binding)
                         } else if (vmodels.length) {
                             bindings.push(binding)
@@ -2662,6 +2662,7 @@
                     element = data.element,
                     widget = args[0],
                     vmOptions = {}
+
             if (args[1] === "$") {
                 args[1] = void 0
             }
@@ -2671,6 +2672,7 @@
             data.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
+                vmodels = element.vmodels || vmodels
                 for (var i = 0, v; v = vmodels[i++]; ) {
                     if (VMODELS[v.$id]) { //取得离它最近由用户定义的VM
                         var nearestVM = v
@@ -2695,8 +2697,10 @@
                 var callback = getBindingCallback(element, "data-widget-defined", vmodels)
                 if (callback) {
                     callback.call(element, widgetVM)
-                }
-            } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
+                } 
+            } else if (vmodels.length) {//如果该组件还没有加载，那么保存当前的vmodels
+                element.vmodels = vmodels
+            }
             return true
         }
     }

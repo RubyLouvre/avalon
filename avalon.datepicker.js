@@ -254,7 +254,6 @@ define(["avalon.position", "text!avalon.datepicker.html"], function(avalon, tmpl
             $element.bind("focus", function() {
                 model.toggle = true
             })
-            //element.stopScan = false
             datepickerEl = avalon.parseHTML(tmpl).firstChild
             document.body.appendChild(datepickerEl)
             avalon.scan(datepickerEl, [model].concat(vmodels))

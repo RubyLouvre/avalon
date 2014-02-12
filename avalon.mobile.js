@@ -1311,7 +1311,7 @@
                         if (type == "if" && param == "loop") {
                             binding.priority += 100
                         }
-                        if (type === "widget" || type == "if") {
+                        if (type === "widget") {
                             bindings.push(binding)
                         } else if (vmodels.length) {
                             bindings.push(binding)
@@ -1814,7 +1814,7 @@
                     spans = null
                     break
                 case "del"://将pos后的el个元素删掉(pos, el都是数字)
-                    proxies.splice(pos, el) 
+                    proxies.splice(pos, el)
                     removeFromSanctuary(removeView(locatedNode, group, el))
                     break
                 case "index"://将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -1874,7 +1874,7 @@
                             shimController(data, transation, spans, pool[key])
                         }
                     }
-                    parent.insertBefore(transation, data.endRepeat || null) 
+                    parent.insertBefore(transation, data.endRepeat || null)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
                     }
@@ -1902,7 +1902,7 @@
                     fragment = avalon.parseHTML(val)
                 }
                 var replaceNodes = avalon.slice(fragment.childNodes)
-                elem.insertBefore(fragment, data.replaceNodes[0] || null) 
+                elem.insertBefore(fragment, data.replaceNodes[0] || null)
                 for (var i = 0, node; node = data.replaceNodes[i++]; ) {
                     elem.removeChild(node)
                 }
@@ -2188,6 +2188,7 @@
             data.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
+                vmodels = element.vmodels || vmodels
                 for (var i = 0, v; v = vmodels[i++]; ) {
                     if (VMODELS[v.$id]) { //取得离它最近由用户定义的VM
                         var nearestVM = v
@@ -2213,7 +2214,9 @@
                 if (callback) {
                     callback.call(element, widgetVM)
                 }
-            } //如果碰到此组件还没有加载的情况，将停止扫描它的内部
+            } else if (vmodels.length) {//如果该组件还没有加载，那么保存当前的vmodels
+                element.vmodels = vmodels
+            }
             return true
         }
 

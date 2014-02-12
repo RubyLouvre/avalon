@@ -44,9 +44,11 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         var $element = avalon(element)
         var options = data.paginationOptions
         $element.addClass("ui-pagination ui-widget-header ui-corner-all ui-buttonset ")
+        console.log(options.total)
         var model = avalon.define(data.paginationId, function(vm) {
             avalon.$skipArray = ["perPages", "showPages", "currentIndex", "total", "ellipseText"]//这些属性不被监控
             avalon.mix(vm, options)
+            
             vm.jumpPage = function(event, page) {
                 event.preventDefault()
                 if (page !== vm.currentPage) {
@@ -88,7 +90,7 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
     widget.defaults = {
         perPages: 10, //每页显示多少条目
         showPages: 10, //一共显示多页，从1开始
-        currentPage: 17, //当前被高亮的页面，从1开始
+        currentPage: 1, //当前被高亮的页面，从1开始
         total: 200,
         pages: [], //装载所有要显示的页面，从1开始
         nextText: ">",

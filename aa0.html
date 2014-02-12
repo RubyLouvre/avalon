@@ -3,20 +3,26 @@
     <head>
         <meta charset="utf-8">
         <title></title>
+        <script src="avalon.js"></script>
+       
+        <script src="avalon.require.text.js"></script>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+
+        <script>
+            avalon.define("page", function(vm){
+                vm.$skipArray = ["pagination"]
+                vm.pagination = {
+                    total: 50,
+                    perPages: 20
+                }
+            })
+            require("avalon.pagination", function() {
+                avalon.scan()
+            })
+        </script>
     </head>
     <body ms-controller="page">
 
-        <select>
-            <option id="aaa" > xxx </option>
-            <option id="bbb" value="bbb"> ddd </option>
-        </select>
-        <script>
-            alert(aaa.getAttributeNode("value").nodeValue)
-            alert(aaa.text)
-            alert(aaa.value === aaa.text)
-            alert(bbb.value)
-            alert(bbb.text)
-            alert(bbb.value === bbb.text)
-        </script>
+         <div ms-widget="pagination" style="width:75%"></div>
     </body>
 </html>
