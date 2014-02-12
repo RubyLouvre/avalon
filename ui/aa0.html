@@ -3,9 +3,9 @@
     <head>
         <meta charset="utf-8">
         <title></title>
-        <script src="avalon.js"></script>
+        <script src="../avalon.js"></script>
        
-        <script src="avalon.require.text.js"></script>
+        <script src="../avalon.require.text.js"></script>
         <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 
         <script>
@@ -13,7 +13,9 @@
                 vm.$skipArray = ["pagination"]
                 vm.pagination = {
                     total: 50,
-                    perPages: 20
+                    perPages: 20,
+                    alwaysShowNext: true,
+                    alwaysShowPrev: true
                 }
             })
             require("avalon.pagination", function() {
