@@ -48,7 +48,7 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         var model = avalon.define(data.paginationId, function(vm) {
             avalon.$skipArray = ["perPages", "showPages", "currentIndex", "total", "ellipseText"]//这些属性不被监控
             avalon.mix(vm, options)
-            
+            vm.$skipArray = ["alwaysShowPrev", "alwaysShowNext"]
             vm.jumpPage = function(event, page) {
                 event.preventDefault()
                 if (page !== vm.currentPage) {
@@ -82,6 +82,20 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
             vm.getPages = getPages
         })
         avalon.nextTick(function() {
+            if (model.alwaysShowPrev) {
+                tmpl = tmpl.replace('ms-if="firstPage!==1"', "")
+            }
+            if (model.alwaysShowNext) {
+                var index = 0
+                tmpl = tmpl.replace(/ms-if="lastPage!==maxPage"/g, function(a){
+                    index++
+                    if(index == 3){
+                        return ""
+                    }else{
+                        return a
+                    }
+                })
+            }
             element.innerHTML = tmpl
             avalon.scan(element, [model].concat(vmodels))
         })
@@ -95,10 +109,12 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         pages: [], //装载所有要显示的页面，从1开始
         nextText: ">",
         prevText: "<",
-        ellipseText:"…",
+        ellipseText: "…",
         firstPage: 0, //当前可显示的最小页码，不能小于1
         lastPage: 0, //当前可显示的最大页码，不能大于maxPage
         maxPage: 0, //通过Math.ceil(vm.total / vm.perPages)求得
+        alwaysShowNext: false,//总是显示向后按钮
+        alwaysShowPrev: false,//总是显示向前按钮
         getHref: function(page) {
             return "?page=" + page
         },
