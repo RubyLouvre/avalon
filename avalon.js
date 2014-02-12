@@ -352,10 +352,10 @@
             node.onreadystatechange = function() {
                 drainQueue() //在interactive阶段就触发
                 node.onreadystatechange = null
-                root.removeChild(node)
+                head.removeChild(node)
                 node = null
-            }
-            root.appendChild(node)
+            }//fix IE6https://github.com/RubyLouvre/avalon/issues/269
+            head.inertBefore(node, head.firstChild)
         }
     } else {
         avalon.nextTick = function(callback) {
