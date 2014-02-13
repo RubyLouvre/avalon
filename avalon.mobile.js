@@ -3467,11 +3467,10 @@
     }
 
     if (DOC.readyState === "complete") {
-        fireReady() //如果在domReady之外加载
+        setTimeout(fireReady) //如果在domReady之外加载
     } else {
-        DOC.addEventListener("DOMContentLoaded", function() {
-            fireReady()
-        })
+        DOC.addEventListener("DOMContentLoaded",fireReady)
+        window.addEventListener("load", fireReady)
     }
     avalon.ready = function(fn) {
         innerRequire("ready!", fn)

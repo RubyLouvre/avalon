@@ -2697,7 +2697,7 @@
                 var callback = getBindingCallback(element, "data-widget-defined", vmodels)
                 if (callback) {
                     callback.call(element, widgetVM)
-                } 
+                }
             } else if (vmodels.length) {//如果该组件还没有加载，那么保存当前的vmodels
                 element.vmodels = vmodels
             }
@@ -3900,17 +3900,17 @@
     }
 
     if (DOC.readyState === "complete") {
-        fireReady() //如果在domReady之外加载
+        setTimeout(fireReady) //如果在domReady之外加载
     } else if (W3C) {
-        DOC.addEventListener(ready, function() {
-            fireReady()
-        })
+        DOC.addEventListener(ready, fireReady)
+        window.addEventListener("load", fireReady)
     } else {
         DOC.attachEvent("onreadystatechange", function() {
             if (DOC.readyState === "complete") {
                 fireReady()
             }
         })
+        window.attachEvent("onload", fireReady)
         if (root.doScroll) {
             doScrollCheck()
         }
