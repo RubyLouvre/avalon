@@ -16,11 +16,9 @@
                     {url: '#124', text: 'menu 124', actived: false}
                 ];
                 vm.bool = false
-                vm.click = function() {
-                    alert(this.innerHTML)
-                }
+   
                 vm.toggle = function() {
-                    vm.bool = true;
+                    vm.bool = !vm.bool
                     model.items[1].actived = !model.items[1].actived
                 }
             });

@@ -13,18 +13,20 @@
             <a class="ui-datepicker-next ui-corner-all"  ms-click="updateMonth(1)"  ms-attr-title="nextText" ms-if="group.number===numberOfMonths -1">
                 <span class="ui-icon ui-icon-circle-triangle-e">next</span></a>
             <div class="ui-datepicker-title">
-                <select  ms-each-el="monthNamesShort" ms-duplex="currentMonth" ms-if="changeMonth">
-                    <option  ms-if="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth + group.number === $index">{{el}}</option>
+                <select  ms-each-el="monthNames" ms-duplex="currentMonth" ms-if="changeMonth">
+                    <option  ms-visible="showMonth($index)"  ms-value="{{$index}}" ms-selected="currentMonth + group.number === $index">{{el}}</option>
                 </select>
                 <select  ms-each-el="years" ms-duplex="currentYear" ms-if="changeYear">
-                    <option ms-if="showYear(el)" ms-value="el" ms-selected="currentYear === el">{{el}}年</option>
+                    <option ms-visible="showYear(el)" ms-value="el" >{{el + yearSuffix}}</option>
                 </select>
                 {{title}}</div>
         </div>
         <table class="ui-datepicker-calendar">
+            <!---设置星期--->
             <thead>
                 <tr>
-                    <th ms-if="showWeek" class="ui-datepicker-week-col">{{weekHeader}}</th>  <th ms-repeat="dayNamesMin" ms-class-ui-datepicker-week-end="$first || $last"><span ms-attr-title="el">{{el}}</span></th>
+                    <th ms-if="showWeek" class="ui-datepicker-week-col">{{weekHeader}}</th>  
+                    <th ms-repeat="dayNames" ms-class-ui-datepicker-week-end="$first || $last"><span ms-attr-title="dayNameTitles[$index]">{{el}}</span></th>
                 </tr> 
             </thead>
             <tbody  ms-each-week="WEEKMAP[group.number]" >

@@ -261,8 +261,8 @@ define(["avalon"], function(avalon) {
     }
     if (window.VBArray && !("msUserSelect" in document.documentElement.style)) {
         var _ieSelectBack;//fix IE6789
-        function returnFalse() {
-            return false;
+        function returnFalse(event) {
+            event.returnValue = false
         }
         fixUserSelect = function() {
             _ieSelectBack = body.onselectstart;
@@ -368,8 +368,8 @@ define(["avalon"], function(avalon) {
                 data.containment = [
                     $offset.left,
                     $offset.top,
-                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft - data.$element.width()),
-                    Math.floor($offset.top + elem.offsetHeight - data.marginTop - data.$element.height())
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft ),//- data.$element.width()
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop )//- data.$element.height()
                 ]
 
             }
@@ -379,7 +379,7 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /*
- ms-draggable="VMID?" , VMID为一个VM的ID,可选
+ ms-draggable="ID?,opt?" , ID为一个VM的ID,可选,没有为离它最近的VM；opt为VM的一个对象属性，可选
  下面这些全部可用data-drag-*进行配置
  drag 为VM中一个方法名
  stop 为VM中一个方法名

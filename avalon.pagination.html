@@ -1,0 +1,8 @@
+
+<a ms-if="firstPage!==1" ms-title="getTitle('prev')" ms-click="jumpPage($event,'prev')" ms-hover="ui-state-hover" class="ui-state-default ui-corner-left">{{prevText}}</a>
+<a ms-if="firstPage!==1" ms-title="getTitle('first')" ms-click="jumpPage($event,'first')" ms-hover="ui-state-hover" class="ui-state-default">{{1}}</a>
+<a ms-if="firstPage!==1" class='ui-pagination-ellipsis'>{{ellipseText}}</a>
+<a ms-repeat="pages" ms-href="getHref(el)"ms-title="getTitle(el)" ms-click="jumpPage($event,el)" ms-class-ui-state-active="el == currentPage" ms-hover="ui-state-hover" class="ui-state-default" >{{el}}</a>
+<a ms-if="lastPage!==maxPage" class='ui-pagination-ellipsis'>{{ellipseText}}</a>
+<a ms-if="lastPage!==maxPage" ms-title="getTitle('last')" ms-click="jumpPage($event,'last')"  ms-hover="ui-state-hover" class="ui-state-default">{{maxPage}}</a>
+<a ms-if="lastPage!==maxPage" ms-title="getTitle('next')" ms-click="jumpPage($event,'next')" ms-hover="ui-state-hover" class="ui-state-default ui-corner-right">{{nextText}}</a>

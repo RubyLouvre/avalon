@@ -20,18 +20,14 @@
             var model = avalon.define("test", function(vm) {
                 vm.a = true
             })
-            setTimeout(function() {
-                model.a = false
-            }, 2000)
-            setTimeout(function() {
-                model.a = true
-            }, 4000)
 
 
         </script>
         <h3>ms-visible</h3>
         <div ms-controller="test">
+            <p>点我隐藏或显示下面的方块<input ms-duplex="a"  type="radio"></p>
             <div class="rect" ms-visible="a" style="border:1px solid red; display: none;text-align: center">visible</div>
+            
         </div>
 
 

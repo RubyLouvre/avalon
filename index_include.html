@@ -12,6 +12,13 @@
                 vm.name = "司徒正美"
                 vm.password = '12345678'
                 vm.array = [1, 2, 3, 4, 5, 6, 7]
+                vm.add = function(e) {
+                    if (this.value && e.which == 13) {//this为input元素
+                        var a = this.value
+                        vm.array.push(a)
+                        this.value = "";
+                    }
+                }
             })
             avalon.define("yyy", function(vm) {
             })
@@ -19,17 +26,17 @@
     </head>
     <body>
         <h3 style='text-align: center'>ms-include</h3>
-<!--        <ul>
-            <li>ms-include="id"</li>
-            <li>ms-include-src="url"</li>
-        </ul>-->
+        <!--        <ul>
+                    <li>ms-include="id"</li>
+                    <li>ms-include-src="url"</li>
+                </ul>-->
         <div ms-controller="xxx">
             <select ms-duplex="url">
                 <option>Template1</option>
                 <option>Template2</option>
                 <option>Template3</option>
             </select>
-            <div ms-include-src="index09include{{url}}.html"></div>
+            <div ms-include-src="index_include{{url}}.html"></div>
         </div>
         <script id='inline' type='avalon'>
             <div>这是内联的

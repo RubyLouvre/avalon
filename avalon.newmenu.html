@@ -1,0 +1,333 @@
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>jQuery UI Dialog - Default functionality</title>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/start/jquery-ui.css">
+        <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        <script src="avalon.js"></script>
+        <script>
+            $(function() {
+                $("#dialog").dialog();
+            });
+        </script>
+        <style>
+            #menu{
+
+                width:700px;
+
+            }
+            .ui-mainmenu{
+                float: left;
+                list-style: none;
+                margin:0px;
+                padding:0px;
+                width:100%;
+            }
+            .ui-mainmenu-item{
+                display:inline-block;
+                padding:0px 20px;
+                position: relative;
+            }
+            .ui-submenu-item{
+                display:block;
+                padding:0px 20px;
+                position: relative;
+            }
+            .ui-mainmenu-item a{
+                display: block;
+            }
+            .ui-menu-text{
+
+                font-weight: normal;
+            }
+            .ui-submenu-item .ui-menu-text{
+                color:#000;
+            }
+            .icon-span{
+                float:left;
+                position: absolute;
+                right:0px;
+                top:15px;
+            }
+            .ui-mainmenu-item a, .ui-submenu-item a{
+                padding-top:10px;
+                padding-bottom: 10px;
+            }
+            .ui-mainmenu-item a,  .ui-mainmenu-item a span, .ui-submenu-item a, .ui-submenu-item a span {
+                display: block;
+                text-decoration:none;
+            }
+            .ui-mainmenu-item .position-span{
+                position: relative;
+                display: block;
+                height: 1px;
+                width:1px;
+            }
+
+            .ui-submenu-item .position-span{
+                display:inline!important;
+                position: absolute;
+                top:0px;
+                right:0px;
+            }
+            .ui-menu-hide-son-slider li .ui-submenu-slider{
+                visibility: hidden;
+                width:0px;
+            }
+            .ui-mainmenu-slider{
+                position:absolute;
+                padding-top:2px;
+                left:0px;
+                top: -2px;
+                height:0px;
+                visibility: hidden;
+                overflow: hidden;
+            }
+            .ui-submenu-slider{
+                position:absolute;
+                padding-top:2px;
+                left:-2px;
+                top: 0px;
+                width:0px;
+                visibility: hidden;
+                overflow: hidden;
+            }
+            .ui-menu-slider ul{
+                position: absolute;
+                z-index:1000;
+                top:-10px;
+                display: block;
+                padding:2px;
+                margin:0px;
+            }
+
+
+        </style>
+
+        <script>
+
+            function fix(array) {
+                for (var i = 0, el; el = array[i]; i++) {
+                    if (typeof el === "string") {
+                        array[i] = {
+                            content: el
+                        }
+                        el = array[i]
+                    }
+                    if (typeof el.href !== "string") {
+                        el.href = "#"
+                    }
+                    el.animate = false
+                    el.elem = {}
+                    el.$skipArray = ["elem", "animate", "href"]
+                    if (typeof el.content !== "string") {
+                        el.content = "&nbsp;"
+                    }
+                    if (avalon.type(el.submenu) !== "array") {
+                        el.submenu = []
+                    } else {
+                        fix(el.submenu)
+                    }
+
+                }
+                return array
+            }
+            var model = avalon.define("menu", function(vm) {
+                vm.array = fix([{content: "aaaa", submenu:
+                                [
+                                    {content: "aaaaaaa", submenu: [{content: "dddddddddddd", submenu: ["qqqqq", "ppppp"]}, "eeeeeeeeeeee", "ffffffffff"]},
+                                    {content: "bbbbbbbbbbbb", submenu: ["11111111111", "2222222222", "33dd3333"]},
+                                    {content: "cccccccccccc", submenu: ["vvvvvvvv", "oooooooooo", "fffffffff"]}
+                                ]},
+                    {content: "bbbb", submenu: [{content: "b1", submenu: []}, {content: "b2", submenu: []}]},
+                    {content: "ccc", submenu: ["eddd"]}, "dddd"])
+                vm.showMain = function(scope, array) {
+                    if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
+                        model.hideMain(array.lastScope, 100)
+                    }
+                    if (!scope.animate) {
+                        scope.animate = true
+                        array.lastScope = scope
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            var w = slider._width + 8
+                            slider.style.width = w + "0px"
+                            slider.style.height = "0px"
+                            slider.style.visibility = "visible"
+                            avalon(slider).addClass("ui-menu-hide-son-slider")
+                            var submenu = document.getElementById("submenu-" + scope.$id)
+                            submenu.style.left = "0px"
+                            $(slider).animate({height: h}, 500, function() {
+                                scope.animate = false
+                                slider.style.overflow = "visible"
+                                var icomElem = document.getElementById("icon-" + scope.$id)
+                                if (icomElem)
+                                    avalon(icomElem).removeClass("ui-icon-triangle-1-s").addClass("ui-icon-triangle-1-n")
+                            })
+                            $(submenu).animate({top: 0}, 500)
+                        }
+                    }
+                }
+                vm.hideMain = function(scope, time) {
+                    time = time || 250
+                    if (!scope.animate || time !== 250) {
+                        scope.animate = true
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            slider.style.overflow = "hidden"
+                            $(slider).animate({height: 0}, 250, function() {
+                                scope.animate = false
+                                slider.style.visibility = "hidden"
+                                var icomElem = document.getElementById("icon-" + scope.$id)
+                                avalon(slider).addClass("ui-menu-hide-son-slider")
+                                if (icomElem)
+                                    avalon(icomElem).removeClass("ui-icon-triangle-1-n").addClass("ui-icon-triangle-1-s")
+                            })
+                            $(document.getElementById("submenu-" + scope.$id)).animate({top: -1 * h}, 250)
+                        }
+                    }
+                }
+
+                vm.showSubmenu = function(scope, array) {
+                    if (array.lastScope && array.lastScope !== scope && array.lastScope.animate) {
+                        model.hideSubmenu(array.lastScope, 100)
+                    }
+                    if (!scope.animate) {
+                        scope.animate = true
+                        array.lastScope = scope
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var h = slider._height + 8
+                            var w = slider._width + 8
+                            slider.style.width = "0px"
+                            slider.style.height = h + "px"
+                            slider.style.visibility = "visible"
+                            $(slider).parents(".ui-menu-hide-son-slider").removeClass("ui-menu-hide-son-slider")
+                            avalon(slider).addClass("ui-menu-hide-son-slider")
+                            var submenu = document.getElementById("submenu-" + scope.$id)
+                            submenu.style.top = "0px"
+                            $(slider).animate({width: w}, 500, function() {
+                                scope.animate = false
+                                slider.style.overflow = "visible"
+
+                            })
+                            $(document.getElementById("submenu-" + scope.$id)).animate({left: 0}, 500)
+                        }
+                    }
+                }
+                vm.hideSubmenu = function(scope, time) {
+                    time = time || 250
+                    if (!scope.animate || time !== 250) {
+                        scope.animate = true
+                        var slider = document.getElementById("ui-menu-slider-" + scope.$id)
+                        if (slider) {
+                            var w = slider._width + 8
+                            slider.style.overflow = "hidden"
+                            $(slider).animate({width: 0}, 250, function() {
+                                scope.animate = false
+                                slider.style.visibility = "hidden"
+
+                            })
+                            $(document.getElementById("submenu-" + scope.$id)).animate({left: -1 * w}, 250)
+                        }
+                    }
+                }
+                vm.renderSubmenu = function() {
+                    var height = this.offsetHeight;
+                    var width = this.offsetWidth;
+                    this.style.top = -1 * height + "px"
+                    this.style.left = -1 * width + "px"
+                    this.style.width = width + "px"
+                    this.style.height = height + "px"
+                    this.parentNode._width = width
+                    this.parentNode._height = height
+
+                }
+                vm.processTemplate = function(text) {
+
+                    var REPLACE = avalon(this).data("name")
+                    var SUBSTITUTE = "avalon" + Math.random().toString(36).substring(2, 15)
+                    var ret = text.replace(/PARENTITEM/g, REPLACE).replace(/SONITEM/g, SUBSTITUTE)
+                    return ret
+
+                }
+
+            })
+        </script>
+    </head>
+    <body>
+
+        <div id="dialog" title="Basic dialog">
+            <p>This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>
+        </div>
+        <noscript id="submenutmpl">
+        <ul class="ui-submenu ui-corner-all  ui-widget-content" 
+            ms-attr-id="submenu-{{PARENTITEM.$id}}" 
+            ms-each-SONITEM="PARENTITEM.submenu" 
+            data-each-rendered="renderSubmenu"  >
+            <li class="ui-submenu-item  ui-corner-all"  ms-hover='ui-state-hover'   ms-mouseenter="showSubmenu(SONITEM, PARENTITEM.submenu)" ms-mouseleave="hideSubmenu(SONITEM)" ms-data-vm="SONITEM">
+                <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix" >
+                    <table>
+                        <tr>
+                            <td class="ui-menu-text">
+                                {{SONITEM.content}}
+                            </td>
+                            <td>
+                                <span ms-if='SONITEM.submenu.length' class=" ui-icon ui-icon-triangle-1-e">
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+
+                </a>
+                <span class="position-span">
+                    <div ms-if="SONITEM.submenu.length" 
+                         ms-attr-id="ui-menu-slider-{{SONITEM.$id}}"
+                         class="ui-menu-slider ui-submenu-slider" ms-include="'submenutmpl'" ms-data-name="'SONITEM'" data-include-loaded="processTemplate">
+                    </div>
+                </span>
+            </li>
+        </ul>    
+
+
+        </noscript>
+        <div  ms-controller="menu" id="menu" class="ui-widget ui-helper-clearfix ">
+            <ul class="ui-widget-header ui-mainmenu ui-corner-all" ms-each="array"  >
+                <li class="ui-mainmenu-item" ms-mouseenter="showMain(el,array)" ms-mouseleave="hideMain(el)" ms-data-vm="el">
+                    <a href="javascript:void(0)" tabindex="-1" class="ui-helper-clearfix" >
+                        <table>
+                            <tr>
+                                <td class="ui-menu-text">
+                                    {{el.content}}
+                                </td>  <td>
+                                    <span ms-if='el.submenu.length' class="ui-icon ui-icon-triangle-1-s" ms-attr-id="icon-{{el.$id}}">
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+
+
+                    </a>
+                    <span class="position-span">
+                        <div ms-if="el.submenu.length"
+                             ms-attr-id="ui-menu-slider-{{el.$id}}"
+                             class="ui-menu-slider ui-mainmenu-slider" ms-include="'submenutmpl'" ms-data-name="'el'" data-include-loaded="processTemplate">
+
+                        </div>
+                    </span>
+
+                    <!--                    -->
+                </li>
+
+            </ul>
+
+        </div>
+
+        如何在avalon中选取元素，由于avalon没有选择器引擎，我们可以使用一个取巧的方法，在绑定时，为目标元素设置ms-attr-id="xxxx{{el.$id}}"，然后你可以使用getElementById迅速定位它了。
+    </body>
+</html>

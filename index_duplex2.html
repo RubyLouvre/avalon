@@ -1,0 +1,27 @@
+ 
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <script src="avalon.js"></script>
+        <script>
+            var model = avalon.define('test', function(vm) {
+                vm.aaa = {
+                    xxx: "444",
+                    yyy: "555"
+                }
+                vm.bbb = "yyy"
+                vm.textModel = "text";
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <input ms-duplex="aaa['xxx']">
+        <input ms-duplex="aaa[bbb]">
+        <input ms-duplex="textModel" ms-data-observe="radioModel"/>
+        <p>{{textModel}}</p>
+        <p>{{aaa.xxx}}</p>
+        <p>{{aaa.yyy}}</p>
+    </body>
+</html>
