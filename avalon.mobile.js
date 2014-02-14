@@ -2322,6 +2322,19 @@
             event = event.value
             var eventType = event === "change" ? event : "input"
             element.addEventListener(eventType, updateModel)
+            if (eventType === "input" && element.__defineSetter__) {
+                element.__defineSetter__("value", function(newValue) {
+                    var node = this.attributes.value
+                    if (!node || newValue !== node.value) {
+                        this.setAttribute("value", newValue)
+                        avalon.fire(this, "input")
+                    }
+                })
+                element.__defineGetter__("value", function() {
+                    var node = this.attributes.value
+                    return node ? node.value : ""
+                })
+            }
             data.rollback = function() {
                 element.removeEventListener(eventType, updateModel)
             }
@@ -3469,7 +3482,7 @@
     if (DOC.readyState === "complete") {
         setTimeout(fireReady) //如果在domReady之外加载
     } else {
-        DOC.addEventListener("DOMContentLoaded",fireReady)
+        DOC.addEventListener("DOMContentLoaded", fireReady)
         window.addEventListener("load", fireReady)
     }
     avalon.ready = function(fn) {

@@ -2814,6 +2814,23 @@
                     data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
+                    // 支持IE11,chrome,firefox（IE6-8使用onpropertychange, IE9开始由于弱化了onpropertychange，需要用轮询）
+                    // 新的MutationObserver帮不上忙
+                    if (element.__defineSetter__) {
+                        element.__defineSetter__("value", function(newValue) {
+                            var node = this.attributes.value
+                            if (!node || newValue !== node.value) {
+                                this.setAttribute("value", newValue)
+                                var event = DOC.createEvent("Event")
+                                event.initEvent("input", true, true)
+                                this.dispatchEvent(event)
+                            }
+                        })
+                        element.__defineGetter__("value", function() {
+                            var node = this.attributes.value
+                            return node ? node.value : ""
+                        })
+                    }
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
