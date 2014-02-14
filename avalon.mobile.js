@@ -2322,17 +2322,21 @@
             event = event.value
             var eventType = event === "change" ? event : "input"
             element.addEventListener(eventType, updateModel)
-            if (eventType === "input" && element.__defineSetter__) {
-                element.__defineSetter__("value", function(newValue) {
-                    var node = this.attributes.value
-                    if (!node || newValue !== node.value) {
-                        this.setAttribute("value", newValue)
-                        avalon.fire(this, "input")
-                    }
-                })
-                element.__defineGetter__("value", function() {
-                    var node = this.attributes.value
-                    return node ? node.value : ""
+            if (eventType === "input") {//IE6-11, chrome, firefox, opera(不支持window下的safari)
+                Object.defineProperty(element, "value", {
+                    set: function(newValue) {
+                        var node = this.attributes.value
+                        if (!node || newValue !== node.value) {
+                            this.setAttribute("value", newValue)
+                            avalon.fire(this, "input")
+                        }
+                    },
+                    get: function() {
+                        var node = this.attributes.value
+                        return node ? node.value : ""
+                    },
+                    enumerable: true,
+                    configurable: true
                 })
             }
             data.rollback = function() {

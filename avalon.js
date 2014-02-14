@@ -2814,22 +2814,17 @@
                     data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
-                    // 支持IE11,chrome,firefox（IE6-8使用onpropertychange, IE9开始由于弱化了onpropertychange，需要用轮询）
-                    // 新的MutationObserver帮不上忙
-                    if (element.__defineSetter__) {
-                        element.__defineSetter__("value", function(newValue) {
-                            var node = this.attributes.value
-                            if (!node || newValue !== node.value) {
-                                this.setAttribute("value", newValue)
-                                var event = DOC.createEvent("Event")
-                                event.initEvent("input", true, true)
-                                this.dispatchEvent(event)
-                            }
+                    //IE6-11, chrome, firefox, opera(不支持window下的safari)
+                    if (Object.defineProperty) {
+                        Object.defineProperty(element, "value", {
+                            set: InputSetter,
+                            get: InputGetter,
+                            enumerable: true,
+                            configurable: true
                         })
-                        element.__defineGetter__("value", function() {
-                            var node = this.attributes.value
-                            return node ? node.value : ""
-                        })
+                    } else if (element.__defineSetter__) {
+                        element.__defineSetter__("value", InputSetter)
+                        element.__defineGetter__("value", InputGetter)
                     }
                 } else {
                     removeFn = function(e) {
@@ -2864,6 +2859,19 @@
         }
 
         registerSubscriber(data)
+    }
+    function InputSetter(newValue) {
+        var node = this.attributes.value
+        if (!node || newValue !== node.value) {
+            this.setAttribute("value", newValue)
+            var event = DOC.createEvent("Event")
+            event.initEvent("input", true, true)
+            this.dispatchEvent(event)
+        }
+    }
+    function InputGetter() {
+        var node = this.attributes.value
+        return node ? node.value : ""
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
