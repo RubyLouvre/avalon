@@ -2323,21 +2323,20 @@
             var eventType = event === "change" ? event : "input"
             element.addEventListener(eventType, updateModel)
             if (eventType === "input") {//IE6-11, chrome, firefox, opera(不支持window下的safari)
-                Object.defineProperty(element, "value", {
-                    set: function(newValue) {
-                        var node = this.attributes.value
-                        if (!node || newValue !== node.value) {
-                            this.setAttribute("value", newValue)
-                            avalon.fire(this, "input")
-                        }
-                    },
-                    get: function() {
-                        var node = this.attributes.value
-                        return node ? node.value : ""
-                    },
-                    enumerable: true,
-                    configurable: true
-                })
+//                Object.defineProperty(element, "value", {
+//                    set: function(newValue) {
+//                        var node = this.attributes.value
+//                        if (!node || newValue !== node.value) {
+//                            this.setAttribute("value", newValue)
+//                            avalon.fire(this, "input")
+//                        }
+//                    },
+//                    get: function() {
+//                        return this.getAttribute("value")
+//                    },
+//                    enumerable: true,
+//                    configurable: true
+//                })
             }
             data.rollback = function() {
                 element.removeEventListener(eventType, updateModel)

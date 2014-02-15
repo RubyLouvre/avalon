@@ -2787,17 +2787,18 @@
                         element.removeEventListener("input", updateModel)
                     }
                     //IE6-11, chrome, firefox, opera(不支持window下的safari)
-                    if (Object.defineProperty) {
-                        Object.defineProperty(element, "value", {
-                            set: InputSetter,
-                            get: InputGetter,
-                            enumerable: true,
-                            configurable: true
-                        })
-                    } else if (element.__defineSetter__) {
-                        element.__defineSetter__("value", InputSetter)
-                        element.__defineGetter__("value", InputGetter)
-                    }
+//                    if (Object.defineProperty) {
+//                        element.oldset = Object.getOwnPropertyDescriptor(element, "value").set
+//                        Object.defineProperty(element, "value", {
+//                            set: InputSetter,
+//                            get: InputGetter,
+//                            enumerable: true,
+//                            configurable: true
+//                        })
+//                    } else if (element.__defineSetter__) {
+//                        element.__defineSetter__("value", InputSetter)
+//                        element.__defineGetter__("value", InputGetter)
+//                    }
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
@@ -2832,6 +2833,7 @@
 
         registerSubscriber(data)
     }
+
     function InputSetter(newValue) {
         var node = this.attributes.value
         if (!node || newValue !== node.value) {
@@ -2842,8 +2844,7 @@
         }
     }
     function InputGetter() {
-        var node = this.attributes.value
-        return node ? node.value : ""
+        return  this.getAttribute("value")
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
