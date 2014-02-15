@@ -329,39 +329,11 @@
         }
         return false
     }
-    //视浏览器情况采用最快的异步回调
-    if (window.setImmediate) { //IE10-11
-        avalon.nextTick = setImmediate.bind(window)
-    } else if (window.VBArray) { //IE6-10下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
-        var handlerQueue = []
-
-        function drainQueue() {
-            var fn = handlerQueue.shift()
-            if (fn) {
-                fn()
-                if (handlerQueue.length) {
-                    avalon.nextTick()
-                }
-            }
-        }
-        avalon.nextTick = function(callback) {
-            if (typeof callback === "function") {
-                handlerQueue.push(callback)
-            }
-            var node = DOC.createElement("script")
-            node.onreadystatechange = function() {
-                drainQueue() //在interactive阶段就触发
-                node.onreadystatechange = null
-                head.removeChild(node)
-                node = null
-            }//fix IE6https://github.com/RubyLouvre/avalon/issues/269
-            head.inertBefore(node, head.firstChild)
-        }
-    } else {
-        avalon.nextTick = function(callback) {
-            setTimeout(callback, 0)
-        }
+    //视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)
+    avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
+        setTimeout(callback, 0)//IE10-11 or W3C
     }
+
     /*********************************************************************
      *                           modelFactory                             *
      **********************************************************************/
@@ -3949,6 +3921,32 @@
     })
     var msSelector = "[ms-controller],[ms-important],[ms-widget]"
     avalon.ready(function() {
+        //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
+        if (window.VBArray && !window.setImmediate) {
+            var handlerQueue = []
+            function drainQueue() {
+                var fn = handlerQueue.shift()
+                if (fn) {
+                    fn()
+                    if (handlerQueue.length) {
+                        avalon.nextTick()
+                    }
+                }
+            }
+            avalon.nextTick = function(callback) {
+                if (typeof callback === "function") {
+                    handlerQueue.push(callback)
+                }
+                var node = DOC.createElement("script")
+                node.onreadystatechange = function() {
+                    drainQueue() //在interactive阶段就触发
+                    node.onreadystatechange = null
+                    head.removeChild(node)
+                    node = null
+                }
+                head.appendChild(node)
+            }
+        }
         if (W3C && DOC.querySelectorAll) {
             var elems = DOC.querySelectorAll(msSelector),
                     nodes = []

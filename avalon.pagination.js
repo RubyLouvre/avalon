@@ -44,7 +44,6 @@ define(["avalon", "text!avalon.pagination.html"], function(avalon, tmpl) {
         var $element = avalon(element)
         var options = data.paginationOptions
         $element.addClass("ui-pagination ui-widget-header ui-corner-all ui-buttonset ")
-        console.log(options.total)
         var model = avalon.define(data.paginationId, function(vm) {
             avalon.$skipArray = ["perPages", "showPages", "currentIndex", "total", "ellipseText"]//这些属性不被监控
             avalon.mix(vm, options)
