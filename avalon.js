@@ -2788,7 +2788,7 @@
                     }
                     //IE6-11, chrome, firefox, opera(不支持window下的safari)
 //                    if (Object.defineProperty) {
-//                        element.oldset = Object.getOwnPropertyDescriptor(element, "value").set
+//                        element.set = Object.getOwnPropertyDescriptor(element.constructor.prototype, "value").set
 //                        Object.defineProperty(element, "value", {
 //                            set: InputSetter,
 //                            get: InputGetter,
