@@ -1590,7 +1590,6 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             avalon(elem).removeClass(node.name)
-            console.log(elem.className)
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
