@@ -2432,7 +2432,8 @@
         },
         "visible": function(val, elem, data) {
             elem.style.display = val ? data.display : "none"
-        }
+        },
+        "widget": noop
     }
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
@@ -2801,7 +2802,7 @@
                     }
                 }
 
-                if (DOC.documentMode === 9) { //fuck IE9
+                if (DOC.documentMode === 9) { // IE9 无法在切剪中同步VM
                     var selectionchange = function(e) {
                         if (e.type === "focus") {
                             DOC.addEventListener("selectionchange", updateModel)
@@ -3939,7 +3940,6 @@
     avalon.config({
         loader: true
     })
-    var msSelector = "[ms-controller],[ms-important],[ms-widget]"
     avalon.ready(function() {
         //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
         if (window.VBArray && !window.setImmediate) {
@@ -3967,24 +3967,7 @@
                 head.appendChild(node)
             }
         }
-        if (W3C && DOC.querySelectorAll) {
-            var elems = DOC.querySelectorAll(msSelector),
-                    nodes = []
-            for (var i = 0, elem; elem = elems[i++]; ) {
-                if (!elem.__root__) {
-                    var array = elem.querySelectorAll(msSelector)
-                    for (var j = 0, el; el = array[j++]; ) {
-                        el.__root__ = true
-                    }
-                    nodes.push(elem)
-                }
-            }
-            for (var i = 0, elem; elem = nodes[i++]; ) {
-                avalon.scan(elem)
-            }
-        } else {
-            avalon.scan(DOC.body)
-        }
+        avalon.scan(DOC.body)
     })
 })(document)
 /**
