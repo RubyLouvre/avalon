@@ -628,7 +628,7 @@
             return match.charAt(1).toUpperCase()
         })
     }
-    var rparse = /^(?:null|false|true|NaN|\{.*\}|\[.*\])$/
+
     var rnospaces = /\S+/g
 
     avalon.fn.mix({
@@ -789,16 +789,11 @@
             }
         }
     }
-
     function parseData(val) {
-        var _eval = false
-        if (rparse.test(val) || +val + "" === val) {
-            _eval = true
-        }
         try {
-            return _eval ? eval("0," + val) : val
+            return JSON.parse(val)
         } catch (e) {
-            return val
+            return val in window ? window[val] : val
         }
     }
     avalon.each({
