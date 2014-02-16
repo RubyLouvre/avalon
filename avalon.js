@@ -2730,6 +2730,7 @@
         }
         //当value变化时改变model的值
         var updateModel = function() {
+            element.oldValue = element.vlaue
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(valueAccessor())
             }
@@ -2819,15 +2820,31 @@
                 }
             }
         }
-
+        if (!hackValueSetter) {//chrome, opera, safari
+            element.oldValue = element.value
+            checkElements.push(element)
+        }
         registerSubscriber(data)
     }
+    var checkElements = []
+    setInterval(function() {
+        for (var n = checkElements.length - 1; n >= 0; n--) {
+            var el = checkElements[n]
+            if (el.parentNode) {
+                if (el.oldValue == el.value) {
+                    el.oldValue = el.value
+                    avalon.fire(el, "input")
+                } else {
+                    checkElements.splice(n, 1)
+                }
+            }
+        }
+    }, 16)
     //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
-    //https://www.w3.org/html/ig/zh/wiki/WebIDL/zh-hans#es-attributes
-    //http://code.google.com/p/chromium/issues/detail?id=43394
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
     //IE9-11, firefox3+
-    if (window.HTMLInputElement2) {
+    var hackValueSetter = true
+    if (window.HTMLInputElement) {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
             var oldValue = this.getAttribute("value")
@@ -2839,18 +2856,14 @@
                 this.dispatchEvent(event)
             }
         }
-        if (Object.getOwnPropertyDescriptor) {
-            try {
-                oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
-                Object.defineProperty(inputProto, "value", {
-                    set: newSetter
-                })
-            } catch (e) {
-            }
-        } else if (inputProto.__lookupSetter__) {
-            oldSetter = inputProto.__lookupSetter__("value")
-            inputProto.__defineSetter__('value', newSetter);
+        try {
+            oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+            Object.defineProperty(inputProto, "value", {
+                set: newSetter
+            })
+        } catch (e) {
         }
+        hackValueSetter = !!oldSetter
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)

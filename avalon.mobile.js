@@ -2271,6 +2271,7 @@
         }
         //当value变化时改变model的值
         var updateModel = function() {
+            element.oldValue = element.vlaue
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(valueAccessor())
             }
@@ -2327,8 +2328,48 @@
                 element.removeEventListener(eventType, updateModel)
             }
         }
-
+        if (!hackValueSetter) {//chrome, opera, safari
+            element.oldValue = element.value
+            checkElements.push(element)
+        }
         registerSubscriber(data)
+    }
+    var checkElements = []
+    setInterval(function() {
+        for (var n = checkElements.length - 1; n >= 0; n--) {
+            var el = checkElements[n]
+            if (el.parentNode) {
+                if (el.oldValue == el.value) {
+                    el.oldValue = el.value
+                    avalon.fire(el, "input")
+                } else {
+                    checkElements.splice(n, 1)
+                }
+            }
+        }
+    }, 16)
+    //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
+    //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+    //IE9-11, firefox3+
+    var hackValueSetter = true
+    if (window.HTMLInputElement) {
+        var inputProto = HTMLInputElement.prototype, oldSetter
+        function newSetter(newValue) {
+            var oldValue = this.getAttribute("value")
+            if (newValue !== oldValue) {
+                this.setAttribute("value", newValue)
+                oldSetter.call(this, newValue)
+                avalon.fire(this, "input")
+            }
+        }
+        try {
+            oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+            Object.defineProperty(inputProto, "value", {
+                set: newSetter
+            })
+        } catch (e) {
+        }
+        hackValueSetter = !!oldSetter
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
