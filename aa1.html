@@ -5,18 +5,18 @@
         <title>司徒正美 通过JS修改属性时触发DOM回调</title>    
         <script src="avalon.js"></script>
         <script>
-            console.log = function(str) {
-                avalon.ready(function() {
-                    var div = document.createElement("pre");
-                    div.className = "mass_sys_log";
-                    div.innerHTML = str + ""; //确保为字符串
-                    document.body.appendChild(div);
-                });
-            }
+//            console.log = function(str) {
+//                avalon.ready(function() {
+//                    var div = document.createElement("pre");
+//                    div.className = "mass_sys_log";
+//                    div.innerHTML = str + ""; //确保为字符串
+//                    document.body.appendChild(div);
+//                });
+//            }
             var model = avalon.define("xxx", function(vm) {
                 vm.ddd = "aaa"
                 vm.$watch("ddd", function(v) {
-                   console.log(v)
+                    console.log(v)
                 })
             })
             //支持IE11,chrome,firefox（IE6-8使用onpropertychange, IE9开始由于弱化了onpropertychange，需要用轮询）,新出的MutationObserver帮不上忙
@@ -26,6 +26,21 @@
 
 
             setTimeout(function() {
+                console.log(Object.getOwnPropertyDescriptor(aaa.attributes.value, "value"))
+                console.log(Object.getOwnPropertyDescriptor(aaa.attributes.value, "nodeValue"))
+                console.log(aaa.__proto__.__proto__.hasOwnProperty("value"))
+                console.log(aaa.attributes.value)
+//     var inputProto = HTMLInputElement.prototype, oldSetter
+//        function newSetter(newValue) {
+//            var oldValue = this.getAttribute("value")
+//            if (newValue !== oldValue) {
+//                this.setAttribute("value", newValue)
+//                oldSetter.call(this, newValue)
+//                var event = DOC.createEvent("Event")
+//                event.initEvent("input", true, true)
+//                this.dispatchEvent(event)
+//            }
+//        })
                 aaa.value = "值改变了"
                 console.log(model.ddd)
             }, 3000)
@@ -33,6 +48,6 @@
         </script>
     </head>  
     <body ms-controller="xxx">  
-        <input type="text"  ms-duplex="ddd" id="aaa"/>
+        <input type="text"  ms-duplex="ddd" id="aaa" onchange="alert(1)" value="xx"/>
     </body>  
 </html> 

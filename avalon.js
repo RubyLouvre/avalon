@@ -2787,21 +2787,7 @@
                     data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
-                    element.__defineSetter__("value", function(newValue) {
-                        var node = this.attributes.value
-                        if (!node || newValue !== node.value) {
-                            var event = document.createEvent("Event")
-                            event.initEvent("input", true, true)
-                            this.setAttribute("value", newValue)
-                            if (document.documentElement.contains(this)) {
-                                this.dispatchEvent(event)
-                            }
-                        }
-                    })
-                    element.__defineGetter__("value", function() {
-                        var node = this.attributes.value
-                        return node ? node.value : ""
-                    })
+
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
