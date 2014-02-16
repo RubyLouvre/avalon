@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">  
+    <head>  
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>司徒正美 通过JS修改属性时触发DOM回调</title>    
+        <script src="avalon.js"></script>
+        <script>
+            console.log = function(str) {
+                avalon.ready(function() {
+                    var div = document.createElement("pre");
+                    div.className = "mass_sys_log";
+                    div.innerHTML = str + ""; //确保为字符串
+                    document.body.appendChild(div);
+                });
+            }
+            var model = avalon.define("xxx", function(vm) {
+                vm.ddd = "aaa"
+                vm.$watch("ddd", function(v) {
+                   console.log(v)
+                })
+            })
+            //支持IE11,chrome,firefox（IE6-8使用onpropertychange, IE9开始由于弱化了onpropertychange，需要用轮询）,新出的MutationObserver帮不上忙
+            //修改Element.prototype, HTMLElement.prototype,HTMLInputElement.prototype都无效，必须直接修改元素实例
+            //可能这只能对不存在的属性，想修改固有属性只能在实例上操作
+            //http://www.cnblogs.com/rubylouvre/archive/2012/05/28/2520721.html
+
+
+            setTimeout(function() {
+                aaa.value = "值改变了"
+                console.log(model.ddd)
+            }, 3000)
+
+        </script>
+    </head>  
+    <body ms-controller="xxx">  
+        <input type="text"  ms-duplex="ddd" id="aaa"/>
+    </body>  
+</html> 

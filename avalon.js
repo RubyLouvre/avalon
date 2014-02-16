@@ -2787,19 +2787,21 @@
                     data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
-                    //IE6-11, chrome, firefox, opera(不支持window下的safari)
-//                    if (Object.defineProperty) {
-//                        element.set = Object.getOwnPropertyDescriptor(element.constructor.prototype, "value").set
-//                        Object.defineProperty(element, "value", {
-//                            set: InputSetter,
-//                            get: InputGetter,
-//                            enumerable: true,
-//                            configurable: true
-//                        })
-//                    } else if (element.__defineSetter__) {
-//                        element.__defineSetter__("value", InputSetter)
-//                        element.__defineGetter__("value", InputGetter)
-//                    }
+                    element.__defineSetter__("value", function(newValue) {
+                        var node = this.attributes.value
+                        if (!node || newValue !== node.value) {
+                            var event = document.createEvent("Event")
+                            event.initEvent("input", true, true)
+                            this.setAttribute("value", newValue)
+                            if (document.documentElement.contains(this)) {
+                                this.dispatchEvent(event)
+                            }
+                        }
+                    })
+                    element.__defineGetter__("value", function() {
+                        var node = this.attributes.value
+                        return node ? node.value : ""
+                    })
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
@@ -2834,18 +2836,35 @@
 
         registerSubscriber(data)
     }
-
-    function InputSetter(newValue) {
-        var node = this.attributes.value
-        if (!node || newValue !== node.value) {
-            this.setAttribute("value", newValue)
-            var event = DOC.createEvent("Event")
-            event.initEvent("input", true, true)
-            this.dispatchEvent(event)
+    //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
+    //https://www.w3.org/html/ig/zh/wiki/WebIDL/zh-hans#es-attributes
+    //http://code.google.com/p/chromium/issues/detail?id=43394
+    //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+    //IE9-11, firefox3+
+    if (window.HTMLInputElement2) {
+        var inputProto = HTMLInputElement.prototype, oldSetter
+        function newSetter(newValue) {
+            var oldValue = this.getAttribute("value")
+            if (newValue !== oldValue) {
+                this.setAttribute("value", newValue)
+                oldSetter.call(this, newValue)
+                var event = DOC.createEvent("Event")
+                event.initEvent("input", true, true)
+                this.dispatchEvent(event)
+            }
         }
-    }
-    function InputGetter() {
-        return  this.getAttribute("value")
+        if (Object.getOwnPropertyDescriptor) {
+            try {
+                oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+                Object.defineProperty(inputProto, "value", {
+                    set: newSetter
+                })
+            } catch (e) {
+            }
+        } else if (inputProto.__lookupSetter__) {
+            oldSetter = inputProto.__lookupSetter__("value")
+            inputProto.__defineSetter__('value', newSetter);
+        }
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
