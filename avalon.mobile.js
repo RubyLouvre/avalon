@@ -789,12 +789,16 @@
             }
         }
     }
-    function parseData(val) {
+    function parseData(data) {
         try {
-            return JSON.parse(val)
+            data = data === "true" ? true :
+                    data === "false" ? false :
+                    data === "null" ? null :
+                    data === "NaN" ? NaN :
+                    +data + "" === data ? +data : eval("0," + data)
         } catch (e) {
-            return val in window ? window[val] : val
         }
+        return data
     }
     avalon.each({
         scrollLeft: "pageXOffset",
