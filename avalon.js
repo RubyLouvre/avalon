@@ -2833,7 +2833,9 @@
             if (el.parentNode) {
                 if (el.oldValue == el.value) {
                     el.oldValue = el.value
-                    avalon.fire(el, "input")
+                    var event = DOC.createEvent("Event")
+                    event.initEvent("input", true, true)
+                    el.dispatchEvent(event)
                 } else {
                     checkElements.splice(n, 1)
                 }
