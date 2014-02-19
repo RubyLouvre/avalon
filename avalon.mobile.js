@@ -501,7 +501,7 @@
 
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
-        if (valueType === "array") {
+        if (valueType === "array" ) {
             if (!Array.isArray(b)) {
                 return a //fix https://github.com/RubyLouvre/avalon/issues/261
             }
@@ -699,9 +699,9 @@
             var offsetParent, offset,
                     elem = this[0],
                     parentOffset = {
-                top: 0,
-                left: 0
-            };
+                        top: 0,
+                        left: 0
+                    };
             if (!elem) {
                 return
             }
@@ -1200,14 +1200,14 @@
     function checkScan(elem, callback) {
         var innerHTML = NaN,
                 id = setInterval(function() {
-            var currHTML = elem.innerHTML
-            if (currHTML === innerHTML) {
-                clearInterval(id)
-                callback()
-            } else {
-                innerHTML = currHTML
-            }
-        }, 15)
+                    var currHTML = elem.innerHTML
+                    if (currHTML === innerHTML) {
+                        clearInterval(id)
+                        callback()
+                    } else {
+                        innerHTML = currHTML
+                    }
+                }, 15)
     }
 
 
@@ -1826,9 +1826,13 @@
                     }
                     break
                 case "clear":
-                    if (data.startRepeat) {
-                        deleteRange.setStartAfter(data.startRepeat)
-                        deleteRange.setEndBefore(data.endRepeat)
+                    deleteRange.selectNodeContents(parent)
+                    var start = data.startRepeat
+                    if (start) {
+                        if (start.nextSibling  && start.nextSibling !== data.endRepeat) {
+                            deleteRange.setStartAfter(start)
+                            deleteRange.setEndBefore(data.endRepeat)
+                        }
                     } else if (parent.firstChild) { //确保它原来就有东西
                         deleteRange.setStartBefore(parent.firstChild)
                         deleteRange.setEndAfter(parent.lastChild)
@@ -2422,13 +2426,13 @@
 
     "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
             replace(rword, function(name) {
-        bindingHandlers[name] = (function(dataParam) {
-            return function(data) {
-                data.param = dataParam
-                bindingHandlers.on.apply(0, arguments)
-            }
-        })(name)
-    })
+                bindingHandlers[name] = (function(dataParam) {
+                    return function(data) {
+                        data.param = dataParam
+                        bindingHandlers.on.apply(0, arguments)
+                    }
+                })(name)
+            })
     if (!("onmouseenter" in root)) { //chrome 30  终于支持mouseenter
         var oldBind = avalon.bind
         var events = {
@@ -2803,9 +2807,9 @@
                     dec = dec_point || ".",
                     s = "",
                     toFixedFix = function(n, prec) {
-                var k = Math.pow(10, prec)
-                return "" + Math.round(n * k) / k
-            }
+                        var k = Math.pow(10, prec)
+                        return "" + Math.round(n * k) / k
+                    }
             // Fix for IE parseFloat(0.55).toFixed(0) = 0 
             s = (prec ? toFixedFix(n, prec) : "" + Math.round(n)).split('.')
             if (s[0].length > 3) {
