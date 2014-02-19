@@ -2788,7 +2788,6 @@
                     data.rollback = function() {
                         element.removeEventListener("input", updateModel)
                     }
-
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
@@ -2831,7 +2830,7 @@
         for (var n = checkElements.length - 1; n >= 0; n--) {
             var el = checkElements[n]
             if (el.parentNode) {
-                if (el.oldValue == el.value) {
+                if (el.oldValue !== el.value) {
                     el.oldValue = el.value
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
@@ -2845,7 +2844,7 @@
     //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
     //IE9-11, firefox3+
-    var hackValueSetter = true
+    var hackValueSetter
     if (W3C) {//IE8也有HTMLInputElement与 Object.getOwnPropertyDescriptor
         try {
             var inputProto = HTMLInputElement.prototype, oldSetter
@@ -2863,9 +2862,9 @@
             Object.defineProperty(inputProto, "value", {
                 set: newSetter
             })
+            hackValueSetter = true
         } catch (e) {
         }
-        hackValueSetter = !!oldSetter
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)

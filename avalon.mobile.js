@@ -501,7 +501,7 @@
 
     function updateModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
-        if (valueType === "array" ) {
+        if (valueType === "array") {
             if (!Array.isArray(b)) {
                 return a //fix https://github.com/RubyLouvre/avalon/issues/261
             }
@@ -1829,7 +1829,7 @@
                     deleteRange.selectNodeContents(parent)
                     var start = data.startRepeat
                     if (start) {
-                        if (start.nextSibling  && start.nextSibling !== data.endRepeat) {
+                        if (start.nextSibling && start.nextSibling !== data.endRepeat) {
                             deleteRange.setStartAfter(start)
                             deleteRange.setEndBefore(data.endRepeat)
                         }
@@ -2343,7 +2343,7 @@
         for (var n = checkElements.length - 1; n >= 0; n--) {
             var el = checkElements[n]
             if (el.parentNode) {
-                if (el.oldValue == el.value) {
+                if (el.oldValue !== el.value) {
                     el.oldValue = el.value
                     avalon.fire(el, "input")
                 } else {
@@ -2355,8 +2355,8 @@
     //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
     //IE9-11, firefox3+
-    var hackValueSetter = true
-    if (window.HTMLInputElement) {
+    var hackValueSetter
+    try {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
             var oldValue = this.getAttribute("value")
@@ -2366,14 +2366,12 @@
                 avalon.fire(this, "input")
             }
         }
-        try {
-            oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
-            Object.defineProperty(inputProto, "value", {
-                set: newSetter
-            })
-        } catch (e) {
-        }
-        hackValueSetter = !!oldSetter
+        oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        Object.defineProperty(inputProto, "value", {
+            set: newSetter
+        })
+        hackValueSetter = true
+    } catch (e) {
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
