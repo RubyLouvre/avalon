@@ -991,9 +991,9 @@
             var offsetParent, offset,
                     elem = this[0],
                     parentOffset = {
-                top: 0,
-                left: 0
-            }
+                        top: 0,
+                        left: 0
+                    }
             if (!elem) {
                 return
             }
@@ -1558,14 +1558,14 @@
     function checkScan(elem, callback) {
         var innerHTML = NaN,
                 id = setInterval(function() {
-            var currHTML = elem.innerHTML
-            if (currHTML === innerHTML) {
-                clearInterval(id)
-                callback()
-            } else {
-                innerHTML = currHTML
-            }
-        }, interval)
+                    var currHTML = elem.innerHTML
+                    if (currHTML === innerHTML) {
+                        clearInterval(id)
+                        callback()
+                    } else {
+                        innerHTML = currHTML
+                    }
+                }, interval)
     }
 
 
@@ -2846,19 +2846,19 @@
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
     //IE9-11, firefox3+
     var hackValueSetter = true
-    if (window.HTMLInputElement) {
-        var inputProto = HTMLInputElement.prototype, oldSetter
-        function newSetter(newValue) {
-            var oldValue = this.getAttribute("value")
-            if (newValue !== oldValue) {
-                this.setAttribute("value", newValue)
-                oldSetter.call(this, newValue)
-                var event = DOC.createEvent("Event")
-                event.initEvent("input", true, true)
-                this.dispatchEvent(event)
-            }
-        }
+    if (W3C) {//IE8也有HTMLInputElement与 Object.getOwnPropertyDescriptor
         try {
+            var inputProto = HTMLInputElement.prototype, oldSetter
+            function newSetter(newValue) {
+                var oldValue = this.getAttribute("value")
+                if (newValue !== oldValue) {
+                    this.setAttribute("value", newValue)
+                    oldSetter.call(this, newValue)
+                    var event = DOC.createEvent("Event")
+                    event.initEvent("input", true, true)
+                    this.dispatchEvent(event)
+                }
+            }
             oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
             Object.defineProperty(inputProto, "value", {
                 set: newSetter
@@ -2943,11 +2943,11 @@
     }
     "animationend,blur,change,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll".
             replace(rword, function(name) {
-        bindingHandlers[name] = function(data) {
-            data.param = name
-            bindingHandlers.on.apply(0, arguments)
-        }
-    })
+                bindingHandlers[name] = function(data) {
+                    data.param = name
+                    bindingHandlers.on.apply(0, arguments)
+                }
+            })
     if (!("onmouseenter" in root)) {
         var oldBind = avalon.bind
         var events = {
@@ -3321,9 +3321,9 @@
                     dec = dec_point || ".",
                     s = "",
                     toFixedFix = function(n, prec) {
-                var k = Math.pow(10, prec)
-                return "" + Math.round(n * k) / k
-            }
+                        var k = Math.pow(10, prec)
+                        return "" + Math.round(n * k) / k
+                    }
             // Fix for IE parseFloat(0.55).toFixed(0) = 0 
             s = (prec ? toFixedFix(n, prec) : "" + Math.round(n)).split('.')
             if (s[0].length > 3) {
