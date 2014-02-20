@@ -2504,7 +2504,9 @@
         },
         push: function() {
             ap.push.apply(this.$model, arguments)
-            return this._add(arguments) //返回长度
+            var n = this._add(arguments)
+            notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
+            return n
         },
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
