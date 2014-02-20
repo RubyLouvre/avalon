@@ -2819,7 +2819,7 @@
                 }
             }
         }
-        if (!hackValueSetter) {//chrome, opera, safari
+        if (!hackValueSetter && W3C) {//chrome, opera, safari
             element.oldValue = element.value
             checkElements.push(element)
         }
