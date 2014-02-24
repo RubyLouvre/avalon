@@ -2332,30 +2332,34 @@
                 element.removeEventListener(eventType, updateModel)
             }
         }
-        if (!hackValueSetter) {//chrome, opera, safari
-            element.oldValue = element.value
-            checkElements.push(element)
-        }
+        element.oldValue = element.value
+        launch(element)
         registerSubscriber(data)
     }
-    var checkElements = []
-    setInterval(function() {
-        for (var n = checkElements.length - 1; n >= 0; n--) {
-            var el = checkElements[n]
+    var TimerID, ribbon = [], launch = noop
+    function ticker() {
+        for (var n = ribbon.length - 1; n >= 0; n--) {
+            var el = ribbon[n]
             if (el.parentNode) {
                 if (el.oldValue !== el.value) {
                     el.oldValue = el.value
                     avalon.fire(el, "input")
                 } else {
-                    checkElements.splice(n, 1)
+                    ribbon.splice(n, 1)
                 }
             }
         }
-    }, 16)
+        if (!ribbon.length) {
+            clearInterval(TimerID)
+        }
+    }
+    function launchImpl(el) {
+        if (ribbon.push(el) === 1) {
+            TimerID = setInterval(ticker, 30)
+        }
+    }
     //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-    //IE9-11, firefox3+
-    var hackValueSetter
     try {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
@@ -2366,11 +2370,11 @@
                 avalon.fire(this, "input")
             }
         }
-        oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set//屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
-        hackValueSetter = true
+        launch = launchImpl
     } catch (e) {
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
