@@ -1716,6 +1716,9 @@
                 rquote = /^['"]/,
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
         var getAttributes = function(elem) {
+            if (elem.outerHTML.slice(0, 2) == "</") {//处理旧式IE模拟HTML5新元素带来的伪标签
+                return []
+            }
             var str = elem.outerHTML.match(rtag)[0]
             var attributes = [],
                     match,
