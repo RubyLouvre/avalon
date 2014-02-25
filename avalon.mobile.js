@@ -356,8 +356,8 @@
             value: function(name) {
                 return name in vmodel.$model
             },
-            writable: true,
-            enumerable: true,
+            writable: false,
+            enumerable: false,
             configurable: true
         })
         for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
