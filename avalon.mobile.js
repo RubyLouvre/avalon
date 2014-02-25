@@ -352,9 +352,14 @@
         for (var i in Observable) {
             vmodel[i] = Observable[i]
         }
-        vmodel.hasOwnProperty = function(name) {
-            return name in vmodel.$model
-        }
+        Object.defineProperty(vmodel, "hasOwnProperty", {
+            value: function(name) {
+                return name in vmodel.$model
+            },
+            writable: true,
+            enumerable: true,
+            configurable: true
+        })
         for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
             Registry[expose] = fn
             fn()
@@ -1863,7 +1868,7 @@
                     var keys = []
                     var spans = []
                     for (var key in pos) { //得到所有键名
-                        if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                        if (pos.hasOwnProperty(key)) {
                             keys.push(key)
                         }
                     }
@@ -1874,9 +1879,7 @@
                         }
                     }
                     for (var i = 0, key; key = keys[i++]; ) {
-                        if (key !== "hasOwnProperty") {
-                            shimController(data, transation, spans, pool[key])
-                        }
+                        shimController(data, transation, spans, pool[key])
                     }
                     parent.insertBefore(transation, data.endRepeat || null)
                     for (var i = 0, el; el = spans[i++]; ) {
@@ -2118,7 +2121,7 @@
                     withProxyCount++
                     pool = withProxyPool[list.$id] = {}
                     for (var key in list) {
-                        if (list.hasOwnProperty(key) && key !== "hasOwnPropery") {
+                        if (list.hasOwnProperty(key)) {
                             pool[key] = createWithProxy(key, list[key], data.$outer)
                         }
                     }
