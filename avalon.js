@@ -2836,9 +2836,9 @@
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
                     el.dispatchEvent(event)
-                } else {
-                    ribbon.splice(n, 1)
                 }
+            } else {
+                ribbon.splice(n, 1)
             }
         }
         if (!ribbon.length) {

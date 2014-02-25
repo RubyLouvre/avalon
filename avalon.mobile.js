@@ -2347,9 +2347,9 @@
                 if (el.oldValue !== el.value) {
                     el.oldValue = el.value
                     avalon.fire(el, "input")
-                } else {
-                    ribbon.splice(n, 1)
                 }
+            } else {
+                ribbon.splice(n, 1)
             }
         }
         if (!ribbon.length) {
