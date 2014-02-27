@@ -1295,8 +1295,7 @@
         var ret = el.tagName.toLowerCase()
         return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
     }
-    var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g,
-            rhasValue = /\bvalue=/
+    var roption = /^<option(?:\s+\w+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*\s+value[\s=]/i
     var valHooks = {
         "option:get": function(node) {
             //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
@@ -1304,8 +1303,7 @@
                 return node.hasAttribute("value") ? node.value : node.text
             }
             //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
-            return rhasValue.test(node.outerHTML.replace(node.innerHTML, "").replace(rstring, "")) ?
-                    node.value : node.text
+            return roption.test(node.outerHTML) ?  node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,
