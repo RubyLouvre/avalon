@@ -445,7 +445,7 @@
 
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
-        if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
+        if (normalProperties[name] || (val && val.nodeType)) { //如果是指明不用监控的系统属性或元素节点，或放到 $skipArray里面
             return normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
@@ -1296,8 +1296,7 @@
         var ret = el.tagName.toLowerCase()
         return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
     }
-    var rstring = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g,
-            rhasValue = /\bvalue=/
+    var roption = /^<option(?:\s+\w+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*\s+value[\s=]/i
     var valHooks = {
         "option:get": function(node) {
             //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
@@ -1305,8 +1304,7 @@
                 return node.hasAttribute("value") ? node.value : node.text
             }
             //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
-            return rhasValue.test(node.outerHTML.replace(node.innerHTML, "").replace(rstring, "")) ?
-                    node.value : node.text
+            return roption.test(node.outerHTML) ?  node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,
@@ -1651,13 +1649,14 @@
 
     function scanAttr(elem, vmodels) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
-        var bindings = [],
+        var bindings = [], msData = {},
                 match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
+                    msData[attr.name] = attr.value
                     if (typeof bindingHandlers[type] === "function") {
                         var param = match[2] || ""
                         var binding = {
@@ -1668,11 +1667,13 @@
                             value: attr.nodeValue,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
-                        if (type == "if" && param == "loop") {
+
+                        if (type === "if" && param === "loop") {
                             binding.priority += 100
                         }
                         if (type === "widget") {
                             bindings.push(binding)
+                            elem.msData = elem.msData || msData
                         } else if (vmodels.length) {
                             bindings.push(binding)
                         }
@@ -2172,6 +2173,9 @@
                     }
                 }
             } else {
+                if (!W3C && (method === "src" || method === "href")) {
+                    val = val.replace(/&amp;/g, "&")//处理IE67自动转义的问题
+                }
                 elem[method] = val
             }
         },
@@ -2857,8 +2861,8 @@
         try {
             var inputProto = HTMLInputElement.prototype, oldSetter
             function newSetter(newValue) {
-                var oldValue = this.getAttribute("value")
-                if (newValue !== oldValue) {
+                if (newValue !== this.oldValue) {
+                    this.oldValue = newValue
                     this.setAttribute("value", newValue)
                     oldSetter.call(this, newValue)
                     var event = DOC.createEvent("Event")

@@ -398,7 +398,7 @@
 
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
-        if (normalProperties[name]) { //如果是指明不用监控的系统属性，或放到 $skipArray里面
+        if (normalProperties[name] || (val && val.nodeType)) { //如果是指明不用监控的系统属性或元素节点，或放到 $skipArray里面
             return normalProperties[name] = val
         }
         if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
@@ -1296,13 +1296,14 @@
 
     function scanAttr(elem, vmodels) {
         var attributes = elem.attributes
-        var bindings = [],
+        var bindings = [], msData = {},
                 match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
+                    msData[attr.name] = attr.value
                     if (typeof bindingHandlers[type] === "function") {
                         var param = match[2] || ""
                         var binding = {
@@ -1313,11 +1314,12 @@
                             value: attr.nodeValue,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
-                        if (type == "if" && param == "loop") {
+                        if (type === "if" && param === "loop") {
                             binding.priority += 100
                         }
                         if (type === "widget") {
                             bindings.push(binding)
+                            elem.msData = elem.msData || msData
                         } else if (vmodels.length) {
                             bindings.push(binding)
                         }
@@ -2366,8 +2368,8 @@
     try {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
-            var oldValue = this.getAttribute("value")
-            if (newValue !== oldValue) {
+            if (newValue !== this.oldValue) {
+                this.oldValue = newValue
                 this.setAttribute("value", newValue)
                 oldSetter.call(this, newValue)
                 avalon.fire(this, "input")
