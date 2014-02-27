@@ -1668,7 +1668,7 @@
                             value: attr.nodeValue,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
-                        
+
                         if (type === "if" && param === "loop") {
                             binding.priority += 100
                         }
@@ -2174,6 +2174,9 @@
                     }
                 }
             } else {
+                if (!W3C && (method === "src" || method === "href")) {
+                    val = val.replace(/&amp;/g, "&")//处理IE67自动转义的问题
+                }
                 elem[method] = val
             }
         },
