@@ -2862,8 +2862,8 @@
         try {
             var inputProto = HTMLInputElement.prototype, oldSetter
             function newSetter(newValue) {
-                var oldValue = this.getAttribute("value")
-                if (newValue !== oldValue) {
+                if (newValue !== this.oldValue) {
+                    this.oldValue = newValue
                     this.setAttribute("value", newValue)
                     oldSetter.call(this, newValue)
                     var event = DOC.createEvent("Event")
