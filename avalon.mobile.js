@@ -1296,13 +1296,14 @@
 
     function scanAttr(elem, vmodels) {
         var attributes = elem.attributes
-        var bindings = [],
+        var bindings = [], msData = {},
                 match
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
+                    msData[attr.name] = attr.value
                     if (typeof bindingHandlers[type] === "function") {
                         var param = match[2] || ""
                         var binding = {
@@ -1313,11 +1314,12 @@
                             value: attr.nodeValue,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
-                        if (type == "if" && param == "loop") {
+                        if (type === "if" && param === "loop") {
                             binding.priority += 100
                         }
                         if (type === "widget") {
                             bindings.push(binding)
+                            elem.msData = elem.msData || msData
                         } else if (vmodels.length) {
                             bindings.push(binding)
                         }
