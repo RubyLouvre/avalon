@@ -313,8 +313,10 @@
 
     function modelFactory(scope, model) {
         if (Array.isArray(scope)) {
+            var arr = scope.concat()//原数组的作为新生成的监控数组的$model而存在
+            scope.length = 0
             var collection = Collection(scope)
-            collection._add(scope)
+            collection.push.apply(collection, arr)
             return collection
         }
         if (typeof scope.nodeType === "number") {
@@ -2468,7 +2470,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model.concat()
+        array.$model = model
         array.$events = {}
         array._ = modelFactory({
             length: model.length
@@ -2479,7 +2481,6 @@
         for (var i in Observable) {
             array[i] = Observable[i]
         }
-
         avalon.mix(array, CollectionPrototype)
         return array
     }

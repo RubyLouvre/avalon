@@ -359,8 +359,10 @@
 
     function modelFactory(scope, model) {
         if (Array.isArray(scope)) {
+            var arr = scope.concat()//原数组的作为新生成的监控数组的$model而存在
+            scope.length = 0
             var collection = Collection(scope)
-            collection._add(scope)
+            collection.push.apply(collection, arr)
             return collection
         }
         if (typeof scope.nodeType === "number") {
@@ -1303,7 +1305,7 @@
                 return node.hasAttribute("value") ? node.value : node.text
             }
             //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
-            return roption.test(node.outerHTML) ?  node.value : node.text
+            return roption.test(node.outerHTML) ? node.value : node.text
         },
         "select:get": function(node, value) {
             var option, options = node.options,
@@ -2986,7 +2988,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
-        array.$model = model.concat()
+        array.$model = model// model.concat()
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array._ = modelFactory({
             length: model.length
