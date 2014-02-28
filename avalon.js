@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.2 2014.2.20
+ avalon 1.2.2 2014.2.28
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -284,6 +284,25 @@
                 }
             }
         },
+        getWidgetData: function(elem, prefix) {
+            var raw = avalon(elem).data()
+            var result = {}
+            for (var i in raw) {
+                if (i.indexOf(prefix) === 0) {
+                    result[i.replace(prefix, "").replace(/\w/, function(a) {
+                        return a.toLowerCase()
+                    })] = raw[i]
+                }
+            }
+            return result
+        },
+        getVModel: function(prop, vmodels) {//得到当前属性prop所在的VM
+            for (var i = 0, el; el = vmodels[i++]; ) {
+                if (el.hasOwnProperty(prop)) {
+                    return el
+                }
+            }
+        },
         Array: {
             ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
@@ -507,7 +526,7 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
+                            var value = accessor.$vmodel = updateVModel(accessor.$vmodel, newValue, valueType)
                             var fn = rebindings[value.$id]
                             fn && fn()
                             withProxyCount && updateWithProxy(vmodel.$id, name, value)
@@ -553,7 +572,7 @@
         }
     }
 
-    function updateModel(a, b, valueType) {
+    function updateVModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             if (!Array.isArray(b)) {
@@ -689,8 +708,9 @@
      *                           ecma262 v5语法补丁                   *
      **********************************************************************/
     if (!"司徒正美".trim) {
+        var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         String.prototype.trim = function() {
-            return this.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "")
+            return this.replace(rtrim, "")
         }
     }
     for (var i in {
@@ -2670,9 +2690,9 @@
                         args[1] = id
                     }
                 }
-                var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
+                var widgetData = avalon.getWidgetData(element, args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[widget + "Id"] = args[1]
-                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
+                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
                 element.removeAttribute("ms-widget")
                 var widgetVM = constructor(element, data, vmodels)
                 data.evaluator = noop
@@ -2687,17 +2707,7 @@
         }
     }
 
-    function filterData(obj, prefix) {
-        var result = {}
-        for (var i in obj) {
-            if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function(a) {
-                    return a.toLowerCase()
-                })] = obj[i]
-            }
-        }
-        return result
-    }
+
 
 
     //============================ class preperty binding  =======================
@@ -2738,7 +2748,7 @@
             return element.value
         }
         //当value变化时改变model的值
-        var updateModel = function() {
+        var updateVModel = function() {
             element.oldValue = element.vlaue
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(valueAccessor())
@@ -2756,7 +2766,7 @@
                 //IE6是通过defaultChecked来实现打勾效果
                 element.defaultChecked = (element.checked = fixType === "text" ? evaluator() === element.value : !!evaluator())
             }
-            updateModel = function() {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     if (fixType === "text") {
                         evaluator(element.value)
@@ -2767,12 +2777,12 @@
                     }
                 }
             }
-            removeFn = $elem.bind("click", updateModel)
+            removeFn = $elem.bind("click", updateVModel)
             data.rollback = function() {
                 $elem.unbind("click", removeFn)
             }
         } else if (type === "checkbox") {
-            updateModel = function() {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](evaluator(), element.value)
@@ -2782,7 +2792,7 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            removeFn = $elem.bind("click", updateModel) //IE6-8
+            removeFn = $elem.bind("click", updateVModel) //IE6-8
             data.rollback = function() {
                 $elem.unbind("click", removeFn)
             }
@@ -2790,17 +2800,17 @@
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             if (event === "change") {
-                avalon.bind(element, event, updateModel)
+                avalon.bind(element, event, updateVModel)
             } else {
                 if (W3C) { //先执行W3C
-                    element.addEventListener("input", updateModel)
+                    element.addEventListener("input", updateVModel)
                     data.rollback = function() {
-                        element.removeEventListener("input", updateModel)
+                        element.removeEventListener("input", updateVModel)
                     }
                 } else {
                     removeFn = function(e) {
                         if (e.propertyName === "value") {
-                            updateModel()
+                            updateVModel()
                         }
                     }
                     element.attachEvent("onpropertychange", removeFn)
@@ -2812,9 +2822,9 @@
                 if (DOC.documentMode === 9) { // IE9 无法在切剪中同步VM
                     var selectionchange = function(e) {
                         if (e.type === "focus") {
-                            DOC.addEventListener("selectionchange", updateModel)
+                            DOC.addEventListener("selectionchange", updateVModel)
                         } else {
-                            DOC.removeEventListener("selectionchange", updateModel)
+                            DOC.removeEventListener("selectionchange", updateVModel)
                         }
                     }
                     element.addEventListener("focus", selectionchange)
@@ -2881,7 +2891,7 @@
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
-        function updateModel() {
+        function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var curValue = $elem.val() //字符串或字符串数组
                 if (curValue + "" !== oldValue) {
@@ -2899,7 +2909,7 @@
                 oldValue = curValue + ""
             }
         }
-        var removeFn = $elem.bind("change", updateModel)
+        var removeFn = $elem.bind("change", updateVModel)
         data.rollback = function() {
             $elem.unbind("change", removeFn)
         }

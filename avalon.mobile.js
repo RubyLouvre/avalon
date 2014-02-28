@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.2 2014.2.20，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.2.2 2014.2.28，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -237,6 +237,25 @@
                 }
             }
         },
+        getWidgetData: function(elem, prefix) {
+            var raw = avalon(elem).data()
+            var result = {}
+            for (var i in raw) {
+                if (i.indexOf(prefix) === 0) {
+                    result[i.replace(prefix, "").replace(/\w/, function(a) {
+                        return a.toLowerCase()
+                    })] = raw[i]
+                }
+            }
+            return result
+        },
+        getVModel: function(prop, vmodels) {//得到当前属性prop所在的VM
+            for (var i = 0, el; el = vmodels[i++]; ) {
+                if (el.hasOwnProperty(prop)) {
+                    return el
+                }
+            }
+        },
         Array: {
             ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
@@ -460,7 +479,7 @@
                     }
                     if (!isEqual(preValue, newValue)) {
                         if (rchecktype.test(valueType)) {
-                            var value = accessor.$vmodel = updateModel(accessor.$vmodel, newValue, valueType)
+                            var value = accessor.$vmodel = updateVModel(accessor.$vmodel, newValue, valueType)
                             var fn = rebindings[value.$id]
                             fn && fn()
                             withProxyCount && updateWithProxy(vmodel.$id, name, value)
@@ -506,7 +525,7 @@
         }
     }
 
-    function updateModel(a, b, valueType) {
+    function updateVModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             if (!Array.isArray(b)) {
@@ -2216,9 +2235,9 @@
                         args[1] = id
                     }
                 }
-                var elemData = filterData(avalon(element).data(), args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
+                var widgetData = avalon.getWidgetData(element, args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[widget + "Id"] = args[1]
-                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, elemData)
+                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
                 element.removeAttribute("ms-widget")
                 var widgetVM = constructor(element, data, vmodels)
                 data.evaluator = noop
@@ -2281,7 +2300,7 @@
             return element.value
         }
         //当value变化时改变model的值
-        var updateModel = function() {
+        var updateVModel = function() {
             element.oldValue = element.vlaue
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(valueAccessor())
@@ -2300,7 +2319,7 @@
                 //IE6是通过defaultChecked来实现打勾效果
                 element.defaultChecked = (element.checked = fixType === "text" ? evaluator() === element.value : !!evaluator())
             }
-            updateModel = function() {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     if (fixType === "text") {
                         evaluator(element.value)
@@ -2311,12 +2330,12 @@
                     }
                 }
             }
-            element.addEventListener("click", updateModel)
+            element.addEventListener("click", updateVModel)
             data.rollback = function() {
-                element.removeEventListener("click", updateModel)
+                element.removeEventListener("click", updateVModel)
             }
         } else if (type === "checkbox") {
-            updateModel = function() {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     avalon.Array[method](evaluator(), element.value)
@@ -2326,17 +2345,17 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            element.addEventListener("click", updateModel)
+            element.addEventListener("click", updateVModel)
             data.rollback = function() {
-                element.removeEventListener("click", updateModel)
+                element.removeEventListener("click", updateVModel)
             }
         } else {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
             var eventType = event === "change" ? event : "input"
-            element.addEventListener(eventType, updateModel)
+            element.addEventListener(eventType, updateVModel)
             data.rollback = function() {
-                element.removeEventListener(eventType, updateModel)
+                element.removeEventListener(eventType, updateVModel)
             }
         }
         element.oldValue = element.value
@@ -2386,7 +2405,7 @@
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
-        function updateModel() {
+        function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var curValue = $elem.val() //字符串或字符串数组
                 if (curValue + "" !== oldValue) {
@@ -2404,9 +2423,9 @@
                 oldValue = curValue + ""
             }
         }
-        element.addEventListener("change", updateModel)
+        element.addEventListener("change", updateVModel)
         data.rollback = function() {
-            element.removeEventListener("click", updateModel)
+            element.removeEventListener("click", updateVModel)
         }
         var innerHTML = NaN
         var id = setInterval(function() {
