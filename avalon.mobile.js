@@ -2317,12 +2317,15 @@
         if (type === "radio") {
             data.handler = function() {
                 //IE6是通过defaultChecked来实现打勾效果
-                element.defaultChecked = (element.checked = fixType === "text" ? evaluator() === element.value : !!evaluator())
+                element.defaultChecked = (element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator())
             }
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
+                    var value = element.value
                     if (fixType === "text") {
-                        evaluator(element.value)
+                        evaluator(value)
+                    } else if (fixType === "bool") {
+                        evaluator(value === "true")
                     } else {
                         var val = !element.defaultChecked
                         evaluator(val)
