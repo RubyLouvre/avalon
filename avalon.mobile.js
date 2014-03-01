@@ -1348,6 +1348,9 @@
                 }
             }
         }
+        if (msData["ms-checked"] && msData["ms-duplex"]) {
+            avalon.log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        }
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
@@ -2341,7 +2344,12 @@
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
-                    avalon.Array[method](evaluator(), element.value)
+                    var array = evaluator()
+                    if (Array.isArray(array)) {
+                        avalon.Array[method](array, element.value)
+                    } else {
+                        avalon.error("ms-duplex位于checkbox时要求对应一个数组")
+                    }
                 }
             }
             data.handler = function() {

@@ -1705,6 +1705,9 @@
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
+        if(msData["ms-checked"] &&  msData["ms-duplex"]){
+            avalon.log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        }
         var firstBinding = bindings[0] || {}
         switch (firstBinding.type) {
             case "if":
@@ -2263,7 +2266,7 @@
             var group = data.group
             var parent = data.parent
             var proxies = data.proxies
-            if (method == "del" || method == "move") {
+            if (method === "del" || method === "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
             }
             switch (method) {
@@ -2418,6 +2421,7 @@
             var fn = data.evaluator
             var args = data.args
             var vmodels = data.vmodels
+
             if (!data.hasArgs) {
                 callback = function(e) {
                     return fn.apply(0, args).call(this, e)
@@ -2788,7 +2792,12 @@
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
-                    avalon.Array[method](evaluator(), element.value)
+                    var array = evaluator()
+                    if (Array.isArray(array)) {
+                        avalon.Array[method](array, element.value)
+                    } else {
+                        avalon.error("ms-duplex位于checkbox时要求对应一个数组")
+                    }
                 }
             }
             data.handler = function() {
