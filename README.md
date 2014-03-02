@@ -41,31 +41,54 @@
 
 
 ```html
-        <fieldset ms-controller="simple">
-            <legend>例子</legend>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>avalon入门</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" ></script>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.firstName = "司徒"
+                vm.lastName = "正美"
+                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
+                    set: function(val) {//里面必须用this指向scope，不能使用scope
+                        var array = (val || "").split(" ");
+                        this.firstName = array[0] || "";
+                        this.lastName = array[1] || "";
+                    },
+                    get: function() {
+                        return this.firstName + " " + this.lastName;
+                    }
+                }
+                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
+                vm.selected = ["bbb", "ccc"]
+                vm.checkAllbool = vm.arr.length === vm.selected.length
+                vm.checkAll = function() {
+                    if (this.checked) {
+                        vm.selected = vm.arr
+                    } else {
+                        vm.selected.clear()
+                    }
+                }
+            })
+            model.selected.$watch("length", function(n) {
+                model.checkAllbool = n === model.arr.size()
+            })
+        </script> 
+    </head>
+    <body>
+        <div ms-controller="test">
             <p>First name: <input ms-duplex="firstName" /></p>
             <p>Last name: <input ms-duplex="lastName"  /></p>
             <p>Hello,    <input ms-duplex="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
+            <ul>
+                <li><input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/>全选</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected"/>{{el}}</li>
+            </ul>
+        </div>
 
-        </fieldset>
-```
-```javascript
-avalon.ready(function() {
-    avalon.define("simple", function(vm) {
-        vm.firstName = "司徒"
-        vm.lastName = "正美"
-        vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-            set: function(val) {//里面必须用this指向scope，不能使用scope
-                var array = (val || "").split(" ");
-                this.firstName = array[0] || "";
-                this.lastName = array[1] || "";
-            },
-            get: function() {
-                return this.firstName + " " + this.lastName;
-            }
-        }
-    });
-    avalon.scan()
-})
+    </body>
+</html>
 ```
