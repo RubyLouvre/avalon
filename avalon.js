@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.2 2014.2.28
+ avalon 1.2.3 2014.3.4
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2854,7 +2854,7 @@
                 }
             }
         }
-        element.oldValue = element.value || ""
+        element.oldValue = element.value
         launch(element)
         registerSubscriber(data)
     }
