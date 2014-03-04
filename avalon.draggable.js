@@ -29,57 +29,52 @@ define(["avalon"], function(avalon) {
         drag = "touchmove"
         dragstop = "touchend"
     }
-
+    function filterData(obj, prefix) {
+        var result = {}
+        for (var i in obj) {
+            if (i.indexOf(prefix) === 0) {
+                result[  i.replace(prefix, "").replace(/\w/, function(a) {
+                    return a.toLowerCase()
+                }) ] = obj[i]
+            }
+        }
+        return result
+    }
     var draggable = avalon.bindingHandlers.draggable = function(data, vmodels) {
-        var fnName = data.value.trim(), completeCallback, model
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(fnName)) {//根据函数名找到对应的VM的$model
-                if (typeof vm[fnName] === "function") {
-                    completeCallback = vm[fnName]
-                    model = vm.$model
-                    break;
-                }
+        var args = data.value.match(avalon.rword) || [""]
+        var ID = args[0].trim(), opts = args[1], model, vmOptions
+        if (ID && ID != "$") {
+            model = avalon.vmodels[ID]//如果指定了此VM的ID
+            if (!model) {
+                data.remove = false
+                return
             }
         }
-        if (typeof completeCallback !== "function") {
-            throw "此绑定的格式为： ms-draggable-optsName?=fn"
+        if (!model) {//如果使用$或绑定值为空，那么就默认取最近一个VM，没有拉倒
+            model = vmodels.length ? vmodels[0] : null
         }
-        var optsName = data.param, opts
-        if (/\w/.test(optsName)) {//根据ID找到对应的VM的$model
-            if (model && typeof model[optsName] === "object") {
-                opts = model[optsName]
-            } else {
-                for (var i = 0, vm; vm = vmodels[i++]; ) {
-                    var object = vm.$model
-                    if (object && typeof object[optsName] === "object") {
-                        opts = object[optsName]
-                        break;
-                    }
-                }
+        var fnObj = model || {}
+        if (opts && model && typeof model[opts] === "object") {//如果指定了配置对象，并且有VM
+            vmOptions = model[opts]
+            if (vmOptions.$model) {
+                vmOptions = vmOptions.$model
             }
+            fnObj = vmOptions
         }
-
-        opts = opts || model
-
         var element = data.element
         var $element = avalon(element)
-        var options = avalon.mix({}, defaults, opts, $element.data());
-        if (completeCallback) {
-            options.stop = completeCallback
-        }
-
+        var options = avalon.mix({}, defaults, vmOptions || {}, filterData($element.data(), "drag"));
         //修正drag,stop为函数
         "drag,stop,start,beforeStart,beforeStop".replace(avalon.rword, function(name) {
             var method = options[name]
             if (typeof method === "string") {
-                if (typeof opts[method] === "function") {
-                    options[name] = opts[method]
+                if (typeof fnObj[method] === "function") {
+                    options[name] = fnObj[method]
                 } else {
                     options[name] = avalon.noop
                 }
             }
         })
-
         if (options.axis !== "" && !/^(x|y|xy)$/.test(options.axis)) {
             options.axis = "xy"
         }
@@ -103,28 +98,25 @@ define(["avalon"], function(avalon) {
             if (!data.dragX && !data.dragY) {
                 data.started = false
             }
-            fixUserSelect()
-
             //在处理手柄拖动前做些事情
             if (typeof options.beforeStart === "function") {
                 options.beforeStart.call(data.element, e, data)
             }
 
-
-            if (data.handle && model) {// 实现手柄拖动
-                var handle = model[data.handle]
+            if (data.handle && fnObj) {// 实现手柄拖动
+                var handle = fnObj[data.handle]
                 if (typeof handle === "function") {
                     var checked = handle.call(element, e, data)//要求返回一节点
                     if (checked && checked.nodeType === 1) {
                         if (!element.contains(checked)) {
-                            return false
+                            return // 不能返回 false，这会阻止文本被选择
                         }
                     } else {
-                        return false
+                        return
                     }
                 }
             }
-
+            fixUserSelect()
             var position = $element.css("position")
             //如果原元素没有被定位
             if (!/^(?:r|a|f)/.test(position)) {
@@ -143,7 +135,6 @@ define(["avalon"], function(avalon) {
             if (options.ghosting) {
                 var clone = element.cloneNode(true)
                 avalon(clone).css("opacity", .7).width(element.offsetWidth).height(element.offsetHeight)
-                
                 data.clone = clone
                 if (position !== "fixed") {
                     clone.style.position = "absolute"
@@ -151,10 +142,6 @@ define(["avalon"], function(avalon) {
                     clone.style.left = startOffset.left - data.marginLeft + "px"
                 }
                 body.appendChild(clone)
-            }
-            var activeElement = document.activeElement
-            if (activeElement && activeElement !== element) {
-                activeElement.blur()
             }
             var target = avalon(data.clone || data.element)
             //拖动前相对于offsetParent的坐标
@@ -255,7 +242,7 @@ define(["avalon"], function(avalon) {
 
     var cssText = "*{ -webkit-touch-callout: none!important;-webkit-user-select: none!important;-khtml-user-select: none!important;" +
             "-moz-user-select: none!important;-ms-user-select: none!important;user-select: none!important;}"
-    function fixUserSelect() {
+    var fixUserSelect = function() {
         body.appendChild(styleEl)
         //如果不插入DOM树，styleEl.styleSheet为null
         if (typeof styleEl.styleSheet === "object") {
@@ -264,44 +251,46 @@ define(["avalon"], function(avalon) {
             styleEl.appendChild(document.createTextNode(cssText))
         }
     }
-    function restoreUserSelect() {
-        if (!styleEl.styleSheet) {
-            styleEl.innerText = ""
-            try {
-                styleEl.removeChild(styleEl.firstChild)
-            } catch (e) {
-            }
+    var restoreUserSelect = function() {
+        try {
+            styleEl.innerHTML = ""
+        } catch (e) {
+            styleEl.styleSheet.cssText = ""
         }
         body.removeChild(styleEl)
     }
     if (window.VBArray && !("msUserSelect" in document.documentElement.style)) {
         var _ieSelectBack;//fix IE6789
-        function returnFalse() {
-            return false;
+        function returnFalse(event) {
+            event.returnValue = false
         }
-        function fixUserSelect() {
+        fixUserSelect = function() {
             _ieSelectBack = body.onselectstart;
             body.onselectstart = returnFalse;
         }
-        function restoreUserSelect() {
+        restoreUserSelect = function() {
             body.onselectstart = _ieSelectBack;
         }
     }
     //统一处理拖动的事件
+    var lockTime = new Date - 0, minTime = document.querySelector ? 12 : 30
     avalon(document).bind(drag, function(e) {
-        var data = draggable.dragData 
-        if (data.started === true) {
-            //fix touchmove bug;  
-            //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
-            //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
-            e.preventDefault();
-            //使用document.selection.empty()来清除选择，会导致捕获失败 
-            var element = data.clone || data.element
-            setPosition(e, element, data, "X")
-            setPosition(e, element, data, "Y")
-            draggable.plugin.call("drag", e, data)
+        var time = new Date - lockTime
+        if (time > minTime) {//减少调用次数，防止卡死IE6-8
+            lockTime = time
+            var data = draggable.dragData
+            if (data.started === true) {
+                //fix touchmove bug;  
+                //IE 在 img 上拖动时默认不能拖动（不触发 mousemove，mouseup 事件，mouseup 后接着触发 mousemove ...）
+                //防止 html5 draggable 元素的拖放默认行为 (选中文字拖放)
+                e.preventDefault();
+                //使用document.selection.empty()来清除选择，会导致捕获失败 
+                var element = data.clone || data.element
+                setPosition(e, element, data, "X")
+                setPosition(e, element, data, "Y")
+                draggable.plugin.call("drag", e, data)
+            }
         }
-
     })
 
     //统一处理拖动结束的事件
@@ -379,8 +368,8 @@ define(["avalon"], function(avalon) {
                 data.containment = [
                     $offset.left,
                     $offset.top,
-                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft - data.$element.width()),
-                    Math.floor($offset.top + elem.offsetHeight - data.marginTop - data.$element.height())
+                    Math.floor($offset.left + elem.offsetWidth - data.marginLeft ),//- data.$element.width()
+                    Math.floor($offset.top + elem.offsetHeight - data.marginTop )//- data.$element.height()
                 ]
 
             }
@@ -390,8 +379,8 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /*
- ms-draggable-xxx-fn , xxx为一个VM的对象属性, fn为一个函数， fn不能删略，xxx可省
- 下面这些全部可用data-*进行配置
+ ms-draggable="ID?,opt?" , ID为一个VM的ID,可选,没有为离它最近的VM；opt为VM的一个对象属性，可选
+ 下面这些全部可用data-drag-*进行配置
  drag 为VM中一个方法名
  stop 为VM中一个方法名
  start  为VM中一个方法名
@@ -402,17 +391,17 @@ define(["avalon"], function(avalon) {
  containment： 拖动范围，#id值， "window", "document", "parent", "[0, 0, 400, 300]"
  <body ms-controller="xxx">
  <ul  ms-each-el="array">
- <li ms-draggable="complete" >item {{$index}}</li>
+ <li ms-draggable="xxx" >item {{$index}}</li>
  </ul>
  </body>
  avalon.require("avalon.draggable", function() {
  avalon.define("xxx", function(vm) {
  vm.array = avalon.range(0, 10)
- vm.complete = function() {
- console.log("done")
- }
- vm.drag = function(e) {
+ vm.drag = function(e, data) {
  console.log(e.pageX + " : " + e.pageY)
+ }
+ vm.stop = function(e, data) {
+ console.log("done")
  }
  })
  avalon.scan()

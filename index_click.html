@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-with</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.aaa = function() {
+                    alert(1)
+                }
+                vm.bbb = function() {
+                    alert(2)
+                }
+                vm.ccc = function() {
+                    alert(3)
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <p>测试同一个元素绑定多个相同类型的事件</p>
+            <p ms-click-1="bbb" ms-click="aaa"  ms-click-2="ccc">xxx</p>
+        </div>
+    </body>
+</html>

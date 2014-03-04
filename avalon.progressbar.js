@@ -1,25 +1,23 @@
 define(["avalon"], function(avalon) {
-    var defaults = {
-        value: 0
-    }
-    avalon.ui.progressbar = function(element, id, vmodels, opts) {
-        var $element = avalon(element),
-                model, el
-        //处理配置
-        var options = avalon.mix({}, defaults, opts, $element.data())
+
+    var widget = avalon.ui.progressbar = function(element, data, vmodels) {
+        var $element = avalon(element), options = data.progressbarOptions, model, el
         $element.addClass("ui-progressbar ui-widget ui-widget-content ui-corner-all")
-        element.innerHTML = '<div class="ui-progressbar-value ui-widget-header ui-corner-left ui-corner-right" ms-bind-value="updateValue" style="width:' + options.value + '%;"></div>'
+        element.innerHTML = '<div class="ui-progressbar-value ui-widget-header ui-corner-left ui-corner-right" ms-attr-id="\'progressbar' + data.progressbarId + '\'" style="width:' + options.value + '%;"></div>'
         var fragment = document.createDocumentFragment()
         while (el = element.firstChild) {
             fragment.appendChild(el)
         }
-        model = avalon.define(id, function(vm) {
+        model = avalon.define(data.progressbarId, function(vm) {
             vm.value = options.value
-            vm.updateValue = function(v) {
+            vm.$watch("value", function(v) {
                 if (isFinite(v)) {
-                    this.style.width = v + "%"
+                    var el = document.getElementById("progressbar" + model.$id)
+                    if (el) {
+                        el.style.width = v + "%"
+                    }
                 }
-            }
+            })
         })
         avalon.nextTick(function() {
             element.appendChild(fragment)
@@ -27,8 +25,11 @@ define(["avalon"], function(avalon) {
         })
         return model
     }
+    widget.defaults = {
+        value: 0
+    }
     return avalon
 })
 /*
- <div ms-ui="progressbar" data-value="37" style="width:50%"></div>
+ <div ms-widget="progressbar" data-progressbar-value="37" style="width:50%"></div>
  */

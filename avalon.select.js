@@ -1,29 +1,14 @@
 define(["avalon", "css!avalon.select.css"], function(avalon) {
     //判定是否触摸界面
-    var defaults = {
-        minWidth: 225,
-        height: 175,
-        toggle: false,
-        caption: "请选择",
-        selectedIndex: 0,
-        checkAllText: "全选",
-        unCheckAllText: "全不选",
-        onChange: avalon.noop,
-        onOpen: avalon.noop,
-        onClose: avalon.noop
-    }
-
-    avalon.ui["select"] = function(element, id, vmodels, opts) {
-        var $element = avalon(element)
-        var options = avalon.mix({}, defaults, opts, $element.data())
-        var buttonHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all" aria-haspopup="true" >' +
+    var widget = avalon.ui["select"] = function(element, data, vmodels) {
+        var $element = avalon(element), options = data.selectOptions
+        var buttonHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all"  >' +
                 '<span class="ui-icon ui-icon-triangle-2-n-s"></span><span>{{caption}}</span></button>'
         var button = avalon.parseHTML(buttonHTML).firstChild
         button.style.minWidth = options.minWidth + "px"
         button.style.width = Math.max(options.minWidth, element.offsetWidth) + "px"
         button.title = element.title
         $element.addClass("ui-helper-hidden-accessible")
-
 
         var list = [], index = 0, els = [], model
         function getOptions(i, el) {
@@ -50,6 +35,7 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
         }
 
         avalon.each(element.childNodes, getOptions)
+
         var menuHTML = '<div class="ui-multiselect-menu ui-widget ui-widget-content ui-corner-all"'
                 + ' ms-visible="toggle" tabindex="-1">'
                 + '<div class="ui-widget-header ui-corner-all ui-multiselect-header ui-helper-clearfix">'
@@ -62,8 +48,8 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
                 + '<ul class="ui-multiselect-checkboxes ui-helper-reset" ms-css-height="height" ms-each-el="list" >'
                 + '<li ms-class="ui-multiselect-optgroup-label:!el.isOption" >'
                 + '<a href="#" ms-if="!el.isOption" >{{el.text}}</a>'
-                + '<label for="rubylouvre" ms-if="el.isOption" ms-hover="ui-state-hover" ms-class="ui-state-disabled:el.disabled" ms-click="changeState" class="ui-corner-all">'
-                + '<input ms-visible="multiple" ms-disabled="el.disabled"    ms-checked="el.selected" type="checkbox"><span>{{el.text}}</span></label></li>'
+                + '<label for="rubylouvre" ms-if="el.isOption" ms-hover="ui-state-hover" ms-class="ui-state-disabled:el.disabled" ms-click="changeState($event,el)" class="ui-corner-all">'
+                + '<input ms-visible="multiple" ms-disabled="el.disabled"  ms-checked="el.selected" type="checkbox"><span>{{el.text}}</span></label></li>'
                 + '</ul></div>'
         var menu = avalon.parseHTML(menuHTML).firstChild
         menu.style.width = button.style.width
@@ -82,7 +68,7 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
                 model.toggle = false
             }
         })
-        model = avalon.define(id, function(vm) {
+        model = avalon.define(data.selectId, function(vm) {
             avalon.mix(vm, options)
             vm.list = list
             vm.multiple = element.multiple
@@ -95,6 +81,11 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
                 } else {
                     return  element[element.selectedIndex].text
                 }
+            }
+            vm.resetOptions = function() {
+                list = [], els = [], index = 0
+                avalon.each(element.childNodes, getOptions)
+                model.list = list
             }
             vm.caption = getCaption()
             vm.toggleMenu = function() {
@@ -127,9 +118,21 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
             vm.unCheckAll = function(e) {
                 vm.checkAll(e, true)
             }
-
-            vm.changeState = function(e) {
-                var obj = this.$vmodel.el
+            vm.select = function(index) {
+                var obj = vm.list[index]
+                if (obj) {
+                    obj.selected = false
+                    vm.changeState(null, obj)
+                }
+            }
+            vm.unselect = function(index) {
+                var obj = vm.list[index]
+                if (obj) {
+                    obj.selected = true
+                    vm.changeState(null, obj)
+                }
+            }
+            vm.changeState = function(e, obj) {
                 if (!obj.disabled) {//重要技巧,通过e.target == this排除冒泡上来的事件
                     var index = obj.index
                     var option = els[index]
@@ -161,7 +164,19 @@ define(["avalon", "css!avalon.select.css"], function(avalon) {
 
         return model
     }
-
+    widget.defaults = {
+        minWidth: 225,
+        height: 175,
+        toggle: false,
+        caption: "请选择",
+        selectedIndex: 0,
+        checkAllText: "全选",
+        unCheckAllText: "全不选",
+        onChange: avalon.noop,//当它的选项发生改变时的回调
+        onOpen: avalon.noop,//下拉框的所有菜单项都显示出来时的回调（点击它）
+        onClose: avalon.noop//下拉框的所有菜单项都隐藏出来时的回调（点击它的X按钮）
+    }
     return avalon
 })
+//比较重要的配置项 onOpen, onClose, onChange, list, multiple
 //http://www.erichynds.com/examples/jquery-ui-multiselect-widget/demos/#single
