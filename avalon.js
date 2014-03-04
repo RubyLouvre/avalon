@@ -1405,7 +1405,7 @@
                 wrapper = domParser,
                 firstChild, neo
         if (!W3C) { //fix IE
-            html = html.replace(rcreate, "<br class=fixNoscope>$1") //在link style script等标签之前添加一个补丁
+            html = html.replace(rcreate, "<br class=msNoScope>$1") //在link style script等标签之前添加一个补丁
         }
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
         var els = wrapper.getElementsByTagName("script")
@@ -1428,7 +1428,7 @@
         }
         if (!W3C) { //fix IE
             for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
-                if (el.className && el.className === "fixNoscope") {
+                if (el.className && el.className === "msNoScope") {
                     el.parentNode.removeChild(el)
                 }
             }
@@ -2141,7 +2141,6 @@
                 var vmodels = data.vmodels
                 var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
                 var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-
                 function scanTemplate(text) {
                     if (loaded) {
                         text = loaded.apply(elem, [text].concat(vmodels))
@@ -2267,6 +2266,9 @@
             var data = this
             var group = data.group
             var parent = data.parent
+            if (data.startRepeat) {//https://github.com/RubyLouvre/avalon/issues/300
+                parent = data.parent = data.startRepeat.parentNode
+            }
             var proxies = data.proxies
             if (method === "del" || method === "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
@@ -2852,7 +2854,7 @@
                 }
             }
         }
-        element.oldValue = element.value
+        element.oldValue = element.value || ""
         launch(element)
         registerSubscriber(data)
     }
@@ -2862,7 +2864,6 @@
             var el = ribbon[n]
             if (el.parentNode) {
                 if (el.oldValue !== el.value) {
-                    el.oldValue = el.value
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
                     el.dispatchEvent(event)
@@ -2886,10 +2887,8 @@
         try {
             var inputProto = HTMLInputElement.prototype, oldSetter
             function newSetter(newValue) {
+                oldSetter.call(this, newValue)
                 if (newValue !== this.oldValue) {
-                    this.oldValue = newValue
-                    this.setAttribute("value", newValue)
-                    oldSetter.call(this, newValue)
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
                     this.dispatchEvent(event)
@@ -2899,9 +2898,11 @@
             Object.defineProperty(inputProto, "value", {
                 set: newSetter
             })
-            launch = launchImpl
         } catch (e) {
+            launch = launchImpl
         }
+
+
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)

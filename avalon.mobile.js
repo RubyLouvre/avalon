@@ -1822,6 +1822,9 @@
             var data = this
             var group = data.group
             var parent = data.parent
+            if (data.startRepeat) {//https://github.com/RubyLouvre/avalon/issues/300
+                parent = data.parent = data.startRepeat.parentNode
+            }
             var proxies = data.proxies
             if (method == "del" || method == "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
@@ -2258,17 +2261,6 @@
 
     }
 
-    function filterData(obj, prefix) {
-        var result = {}
-        for (var i in obj) {
-            if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function(a) {
-                    return a.toLowerCase()
-                })] = obj[i]
-            }
-        }
-        return result
-    }
     //============================   class preperty binding  =======================
     "hover,active".replace(rword, function(method) {
         bindingHandlers[method] = bindingHandlers["class"]
@@ -2381,7 +2373,6 @@
             var el = ribbon[n]
             if (el.parentNode) {
                 if (el.oldValue !== el.value) {
-                    el.oldValue = el.value
                     avalon.fire(el, "input")
                 }
             } else {
@@ -2402,10 +2393,8 @@
     try {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
+            oldSetter.call(this, newValue)
             if (newValue !== this.oldValue) {
-                this.oldValue = newValue
-                this.setAttribute("value", newValue)
-                oldSetter.call(this, newValue)
                 avalon.fire(this, "input")
             }
         }
@@ -2413,8 +2402,8 @@
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
-        launch = launchImpl
     } catch (e) {
+        launch = launchImpl
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
