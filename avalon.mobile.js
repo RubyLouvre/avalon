@@ -815,13 +815,13 @@
             }
         }
     }
+    var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
     function parseData(data) {
         try {
             data = data === "true" ? true :
                     data === "false" ? false :
                     data === "null" ? null :
-                    data === "NaN" ? NaN :
-                    +data + "" === data ? +data : eval("0," + data)
+                    +data + "" === data ? +data : rbrace.test(data) ? JSON.parse(data) : data
         } catch (e) {
         }
         return data
