@@ -918,14 +918,15 @@
 
     avalon.fn.mix({
         hasClass: function(cls) {
-            var el = this[0] || {}
-            if (el.nodeType === 1) {
-                return !!el.className && (" " + el.className + " ").indexOf(" " + cls + " ") > -1
+            var node = this[0] || {}
+            if (node.nodeType === 1 && node.className) {
+                return (" " + node.className + " ").indexOf(" " + cls + " ") > -1
             }
+            return false
         },
         addClass: function(cls) {
-            var node = this[0]
-            if (cls && typeof cls === "string" && node && node.nodeType === 1) {
+            var node = this[0] || {}
+            if (cls && typeof cls === "string" && node.nodeType === 1) {
                 if (!node.className) {
                     node.className = cls
                 } else {
@@ -941,8 +942,8 @@
             return this
         },
         removeClass: function(cls) {
-            var node = this[0]
-            if (cls && typeof cls > "o" && node && node.nodeType === 1 && node.className) {
+            var node = this[0] || {}
+            if (cls && typeof cls > "o"  && node.nodeType === 1 && node.className) {
                 var classNames = (cls || "").match(rnospaces) || []
                 var cl = classNames.length
                 var set = " " + node.className.match(rnospaces).join(" ") + " "
@@ -1637,7 +1638,7 @@
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3 && rexpr.test(node.nodeValue)) {
+            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
@@ -1646,7 +1647,7 @@
 
     function scanText(textNode, vmodels) {
         var bindings = [],
-                tokens = scanExpr(textNode.nodeValue)
+                tokens = scanExpr(textNode.data)
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1703,7 +1704,7 @@
                             param: param,
                             element: elem,
                             name: match[0],
-                            value: attr.nodeValue,
+                            value: attr.value,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
 
@@ -1777,7 +1778,7 @@
                 var binding = {
                     name: name,
                     specified: true,
-                    nodeValue: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
+                    value: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
                 }
                 attributes.push(binding)
             }
@@ -2472,7 +2473,7 @@
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
             if (data.nodeType === 3) { //绑定在文本节点上
-                data.node.nodeValue = val
+                data.node.data = val
             } else { //绑定在特性节点上
                 if (!elem) {
                     elem = data.element = data.node.parentNode
