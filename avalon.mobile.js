@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.2 2014.2.28，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.2.3 2014.3.4，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -815,13 +815,13 @@
             }
         }
     }
+    var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
     function parseData(data) {
         try {
             data = data === "true" ? true :
                     data === "false" ? false :
                     data === "null" ? null :
-                    data === "NaN" ? NaN :
-                    +data + "" === data ? +data : eval("0," + data)
+                    +data + "" === data ? +data : rbrace.test(data) ? JSON.parse(data) : data
         } catch (e) {
         }
         return data
@@ -1822,6 +1822,9 @@
             var data = this
             var group = data.group
             var parent = data.parent
+            if (data.startRepeat) {//https://github.com/RubyLouvre/avalon/issues/300
+                parent = data.parent = data.startRepeat.parentNode
+            }
             var proxies = data.proxies
             if (method == "del" || method == "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
@@ -2258,17 +2261,6 @@
 
     }
 
-    function filterData(obj, prefix) {
-        var result = {}
-        for (var i in obj) {
-            if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function(a) {
-                    return a.toLowerCase()
-                })] = obj[i]
-            }
-        }
-        return result
-    }
     //============================   class preperty binding  =======================
     "hover,active".replace(rword, function(method) {
         bindingHandlers[method] = bindingHandlers["class"]
@@ -2381,7 +2373,6 @@
             var el = ribbon[n]
             if (el.parentNode) {
                 if (el.oldValue !== el.value) {
-                    el.oldValue = el.value
                     avalon.fire(el, "input")
                 }
             } else {
@@ -2402,10 +2393,8 @@
     try {
         var inputProto = HTMLInputElement.prototype, oldSetter
         function newSetter(newValue) {
+            oldSetter.call(this, newValue)
             if (newValue !== this.oldValue) {
-                this.oldValue = newValue
-                this.setAttribute("value", newValue)
-                oldSetter.call(this, newValue)
                 avalon.fire(this, "input")
             }
         }
@@ -2413,8 +2402,8 @@
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
-        launch = launchImpl
     } catch (e) {
+        launch = launchImpl
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)

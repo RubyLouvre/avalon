@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.2 2014.2.28
+ avalon 1.2.3 2014.3.4
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1075,12 +1075,30 @@
             data = data === "true" ? true :
                     data === "false" ? false :
                     data === "null" ? null :
-                    data === "NaN" ? NaN :
-                    +data + "" === data ? +data : eval("0," + data)
+                    +data + "" === data ? +data : rbrace.test(data) ? parseJSON(data) : data
         } catch (e) {
         }
         return data
     }
+    var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
+            rvalidchars = /^[\],:{}\s]*$/,
+            rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
+            rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
+            rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
+    var parseJSON = window.JSON ? JSON.parse : function(data) {
+        if (typeof data === "string") {
+            data = data.trim();
+            if (data) {
+                if (rvalidchars.test(data.replace(rvalidescape, "@")
+                        .replace(rvalidtokens, "]")
+                        .replace(rvalidbraces, ""))) {
+                    return (new Function("return " + data))();
+                }
+            }
+            avalon.error("Invalid JSON: " + data);
+        }
+    }
+
     //生成avalon.fn.scrollLeft, avalon.fn.scrollTop方法
     avalon.each({
         scrollLeft: "pageXOffset",
@@ -1405,7 +1423,7 @@
                 wrapper = domParser,
                 firstChild, neo
         if (!W3C) { //fix IE
-            html = html.replace(rcreate, "<br class=fixNoscope>$1") //在link style script等标签之前添加一个补丁
+            html = html.replace(rcreate, "<br class=msNoScope>$1") //在link style script等标签之前添加一个补丁
         }
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
         var els = wrapper.getElementsByTagName("script")
@@ -1428,7 +1446,7 @@
         }
         if (!W3C) { //fix IE
             for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
-                if (el.className && el.className === "fixNoscope") {
+                if (el.className && el.className === "msNoScope") {
                     el.parentNode.removeChild(el)
                 }
             }
@@ -1608,7 +1626,7 @@
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            avalon(elem).removeClass(node.name)
+            avalon(elem).removeClass(node.name)//处理IE6
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
@@ -2141,7 +2159,6 @@
                 var vmodels = data.vmodels
                 var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
                 var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-
                 function scanTemplate(text) {
                     if (loaded) {
                         text = loaded.apply(elem, [text].concat(vmodels))
@@ -2267,6 +2284,9 @@
             var data = this
             var group = data.group
             var parent = data.parent
+            if (data.startRepeat) {//https://github.com/RubyLouvre/avalon/issues/300
+                parent = data.parent = data.startRepeat.parentNode
+            }
             var proxies = data.proxies
             if (method === "del" || method === "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
@@ -2862,7 +2882,6 @@
             var el = ribbon[n]
             if (el.parentNode) {
                 if (el.oldValue !== el.value) {
-                    el.oldValue = el.value
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
                     el.dispatchEvent(event)
@@ -2886,10 +2905,8 @@
         try {
             var inputProto = HTMLInputElement.prototype, oldSetter
             function newSetter(newValue) {
+                oldSetter.call(this, newValue)
                 if (newValue !== this.oldValue) {
-                    this.oldValue = newValue
-                    this.setAttribute("value", newValue)
-                    oldSetter.call(this, newValue)
                     var event = DOC.createEvent("Event")
                     event.initEvent("input", true, true)
                     this.dispatchEvent(event)
@@ -2899,9 +2916,11 @@
             Object.defineProperty(inputProto, "value", {
                 set: newSetter
             })
-            launch = launchImpl
         } catch (e) {
+            launch = launchImpl
         }
+
+
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
