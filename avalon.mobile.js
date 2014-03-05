@@ -35,7 +35,7 @@
     /*********************************************************************
      *                 命名空间与工具函数                                 *
      **********************************************************************/
-    avalon = function(el) { //创建jQuery式的无new 实例化结构
+    window.avalon = function(el) { //创建jQuery式的无new 实例化结构
         return new avalon.init(el)
     }
     avalon.init = function(el) {
@@ -1704,7 +1704,19 @@
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
             var method = data.type,
-                    attrName = data.param
+                attrName = data.param
+
+            function scanTemplate(text) {
+                if (loaded) {
+                    text = loaded.apply(elem, [text].concat(vmodels))
+                }
+                avalon.innerHTML(elem, text)
+                scanNodes(elem, vmodels)
+                rendered && checkScan(elem, function() {
+                    rendered.call(elem)
+                })
+            }
+
             if (method === "css") {
                 avalon(elem).css(attrName, val)
             } else if (method === "attr") {
@@ -1722,16 +1734,7 @@
                 var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
                 var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
 
-                function scanTemplate(text) {
-                    if (loaded) {
-                        text = loaded.apply(elem, [text].concat(vmodels))
-                    }
-                    avalon.innerHTML(elem, text)
-                    scanNodes(elem, vmodels)
-                    rendered && checkScan(elem, function() {
-                        rendered.call(elem)
-                    })
-                }
+                
                 if (data.param === "src") {
                     if (includeContents[val]) {
                         scanTemplate(includeContents[val])
@@ -2390,14 +2393,14 @@
     }
     //http://msdn.microsoft.com/en-us/library/dd229916(VS.85).aspx
     //https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-    try {
-        var inputProto = HTMLInputElement.prototype, oldSetter
-        function newSetter(newValue) {
-            oldSetter.call(this, newValue)
-            if (newValue !== this.oldValue) {
-                avalon.fire(this, "input")
-            }
+    function newSetter(newValue) {
+        oldSetter.call(this, newValue)
+        if (newValue !== this.oldValue) {
+            avalon.fire(this, "input")
         }
+    }
+    try {
+        var inputProto = HTMLInputElement.prototype, oldSetter        
         oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set//屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
             set: newSetter
@@ -2826,10 +2829,10 @@
         },
         number: function(number, decimals, dec_point, thousands_sep) {
             //与PHP的number_format完全兼容
-            //number	必需，要格式化的数字
-            //decimals	可选，规定多少个小数位。
-            //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
-            //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+            //number    必需，要格式化的数字
+            //decimals  可选，规定多少个小数位。
+            //dec_point 可选，规定用作小数点的字符串（默认为 . ）。
+            //thousands_sep 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
             // http://kevin.vanzonneveld.net
             number = (number + "").replace(/[^0-9+\-Ee.]/g, "")
             var n = !isFinite(+number) ? 0 : +number,
