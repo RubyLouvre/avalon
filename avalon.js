@@ -333,7 +333,7 @@
     //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
 
     function isArrayLike(obj) {
-        if (obj && typeof obj === "object") {
+        if (obj && typeof obj === "object"&& !avalon.isWindow(obj) ) {
             var n = obj.length
             if (+n === n && !(n % 1) && n >= 0) { //检测length属性是否为非负整数
                 try {

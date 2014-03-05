@@ -11,7 +11,9 @@
     <li>想使用路由器，可以用<a href="https://github.com/RubyLouvre/mmRouter">mmRouter</a>，
 想使用动画，可以用<a href="https://github.com/RubyLouvre/mmAnimate">mmAnimate</a>，
 想使用AJAX，可以用<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>
-</li>
+    </li>
+    <li>avalon的测试比较庞大，放在独立的仓库中——<a href="https://github.com/RubyLouvre/avalon.test">avalon.test</a>
+    </li>
 </ul>
 <h3>优势</h3>
 <ul>
