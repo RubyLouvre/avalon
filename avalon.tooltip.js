@@ -156,5 +156,6 @@ define(["avalon.position"], function(avalon) {
     return avalon
 })
 /*
+ * http://www.cnblogs.com/purediy/p/3545541.html
  <div class="parent" ms-widget="tooltip" title="这是tooltip" data-tooltip-position="br"></div>
  */

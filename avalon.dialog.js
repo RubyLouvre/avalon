@@ -1,30 +1,30 @@
 define(["avalon.button"], function(avalon) {
 
     //判定是否支持css position fixed
-    var supportFixed = true;
+    var supportFixed = true
     new function() {
         var test = document.createElement('div'),
                 control = test.cloneNode(false),
                 fake = false,
                 root = document.body || (function() {
-            fake = true;
+            fake = true
             return document.documentElement.appendChild(document.createElement('body'))
         }())
-        var oldCssText = root.style.cssText;
-        root.style.cssText = 'padding:0;margin:0';
-        test.style.cssText = 'position:fixed;top:42px';
+        var oldCssText = root.style.cssText
+        root.style.cssText = 'padding:0;margin:0'
+        test.style.cssText = 'position:fixed;top:42px'
         root.appendChild(test)
         root.appendChild(control)
-        supportFixed = test.offsetTop !== control.offsetTop;
+        supportFixed = test.offsetTop !== control.offsetTop
         root.removeChild(test)
         root.removeChild(control)
-        root.style.cssText = oldCssText;
+        root.style.cssText = oldCssText
         if (fake) {
             document.documentElement.removeChild(root)
         }
-    };
+    }
     //遮罩层(全部dialog共用)
-    var overlay = avalon.parseHTML('<div class="ui-widget-overlay ui-front">&nbsp;</div>').firstChild;
+    var overlay = avalon.parseHTML('<div class="ui-widget-overlay ui-front">&nbsp;</div>').firstChild
 //判定是否支持css3 transform
     var transforms = {//IE9+ firefox3.5+ chrome4+ safari3.1+ opera10.5+
         "transform": "transform",
@@ -32,19 +32,19 @@ define(["avalon.button"], function(avalon) {
         "-webkit-transform": "webkitTransform",
         "-ms-transform": "msTransform"
     }
-    var cssText = " top:50%!important;left:50%!important;", supportTransform = false;
+    var cssText = " top:50%!important;left:50%!important;", supportTransform = false
     for (var i in transforms) {
         if (transforms[i] in overlay.style) {
-            supportTransform = true;
+            supportTransform = true
             cssText += i + ":translate(-50%, -50%)"
-            break;
+            break
         }
     }
     cssText = "\n.ui-dialog-vertical-center{" + cssText + "}\n.ui-dialog-titlebar {cursor:move;}"
     var widget = avalon.ui.dialog = function(element, data, vmodels) {
         var $element = avalon(element), options = data.dialogOptions, full = false, model
         if (!options.title) {
-            options.title = element.title || "&nbsp;";
+            options.title = element.title || "&nbsp;"
         }
         var dialog = avalon.parseHTML('<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-front" ' +
                 ' tabindex="-1" style="position: absolute;" ' +
@@ -55,9 +55,9 @@ define(["avalon.button"], function(avalon) {
                 '<div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix" >' +
                 '<span class="ui-dialog-title" >{{title|html}}</span>' +
                 '<button ms-widget="button" type="button" data-button-primary="ui-icon-closethick" class="ui-dialog-titlebar-close" data-button-text="false" ms-click="close">close</button></div>' +
-                '</div></div>').firstChild;
+                '</div></div>').firstChild
 
-        var parentNode = options.parent === "parent" ? element.parentNode : document.body;
+        var parentNode = options.parent === "parent" ? element.parentNode : document.body
         $element.addClass("ui-dialog-content ui-widget-content")
         if (supportTransform) {
             var styleEl = document.getElementById("avalonStyle")
@@ -68,20 +68,20 @@ define(["avalon.button"], function(avalon) {
             }
         }
         if (options.height === "auto") {
-            var style = element.style;
-            style.width = style.height = "auto";
-            style.minHeight = element.clientHeight + "px";
+            var style = element.style
+            style.width = style.height = "auto"
+            style.minHeight = element.clientHeight + "px"
         }
         element.removeAttribute("title")
         element.parentNode.removeChild(element)
         model = avalon.define(data.dialogId, function(vm) {
-            vm.toggle = options.toggle;
-            vm.title = options.title;
-            vm.width = options.width;
-            vm.height = options.height;
-            vm.cssCenter = true;
+            vm.toggle = options.toggle
+            vm.title = options.title
+            vm.width = options.width
+            vm.height = options.height
+            vm.cssCenter = true
             vm.close = function() {
-                vm.toggle = false;
+                vm.toggle = false
             }
             vm.handle = function(e) {
                 var el = e.target
@@ -94,7 +94,7 @@ define(["avalon.button"], function(avalon) {
                 }
             }
             vm.beforeStart = function(e, data) {
-                vm.cssCenter = false;
+                vm.cssCenter = false
                 if (supportTransform) {
                     dialog.style.position = "absolute"
                     var target = avalon(dialog)
@@ -149,26 +149,26 @@ define(["avalon.button"], function(avalon) {
                             avalon(dialog).addClass("ui-dialog-vertical-center")
                         }
                     } else if (supportFixed) {
-                        dialog.style.position = "fixed";
-                        var l = (avalon(window).width() - dialog.offsetWidth) / 2;
-                        var t = (avalon(window).height() - dialog.offsetHeight) / 2;
-                        dialog.style.left = l + "px";
-                        dialog.style.top = t + "px";
+                        dialog.style.position = "fixed"
+                        var l = (avalon(window).width() - dialog.offsetWidth) / 2
+                        var t = (avalon(window).height() - dialog.offsetHeight) / 2
+                        dialog.style.left = l + "px"
+                        dialog.style.top = t + "px"
                     } else {//  如果是IE6，不支持fiexed，使用CSS表达式
                         dialog.style.setExpression('top', '( document.body.clientHeight - this.offsetHeight) / 2) + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + "px"')
                         dialog.style.setExpression('left', '( document.body.clientWidth - this.offsetWidth / 2) +  Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + "px"')
                     }
                 } else {//基于父节点的垂直居中
-                    l = (avalon(parentNode).width() - dialog.offsetWidth) / 2;
-                    t = (avalon(parentNode).height() - dialog.offsetHeight) / 2;
-                    dialog.style.left = l + "px";
-                    dialog.style.top = t + "px";
+                    l = (avalon(parentNode).width() - dialog.offsetWidth) / 2
+                    t = (avalon(parentNode).height() - dialog.offsetHeight) / 2
+                    dialog.style.left = l + "px"
+                    dialog.style.top = t + "px"
                 }
             }
             keepFocus()
             if (options.modal) {
                 parentNode.insertBefore(overlay, dialog)
-                overlay.style.display = "block";
+                overlay.style.display = "block"
                 avalon.Array.ensure(overlayInstances, options)
             }
         }
@@ -195,7 +195,7 @@ define(["avalon.button"], function(avalon) {
             })
         })
 
-        return model;
+        return model
     }
 
     widget.defaults = {
@@ -207,8 +207,8 @@ define(["avalon.button"], function(avalon) {
         close: avalon.noop,
         parent: "body",
         modal: false
-    };
-    var overlayInstances = avalon.ui.dialog.overlayInstances = [];
+    }
+    var overlayInstances = avalon.ui.dialog.overlayInstances = []
 
     return avalon
 })
