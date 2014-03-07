@@ -2153,7 +2153,12 @@
                     pool = withProxyPool[list.$id] = {}
                     for (var key in list) {
                         if (list.hasOwnProperty(key)) {
-                            pool[key] = createWithProxy(key, list[key], data.$outer)
+                            (function(k, v) {
+                                pool[k] = createWithProxy(k, v, data.$outer)
+                                pool[k].$watch("$val", function(val) {
+                                    list[k] = val//#303
+                                })
+                            })(key, list[key])
                         }
                     }
                 }
