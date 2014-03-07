@@ -1704,7 +1704,7 @@
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
             var method = data.type,
-                attrName = data.param
+                    attrName = data.param
 
             function scanTemplate(text) {
                 if (loaded) {
@@ -1734,7 +1734,7 @@
                 var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
                 var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
 
-                
+
                 if (data.param === "src") {
                     if (includeContents[val]) {
                         scanTemplate(includeContents[val])
@@ -2081,10 +2081,7 @@
             var elem = data.element,
                     tagName = elem.tagName
             if (typeof modelBinding[tagName] === "function") {
-                var callback = getBindingCallback(elem, "data-duplex-changed", vmodels)
-                if (!/radio|checkbox|select/.test(elem.type)) {
-                    data.changed = callback
-                }
+                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels)
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
                 if (data.evaluator && data.args) {
@@ -2400,7 +2397,7 @@
         }
     }
     try {
-        var inputProto = HTMLInputElement.prototype, oldSetter        
+        var inputProto = HTMLInputElement.prototype, oldSetter
         oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set//屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
             set: newSetter
