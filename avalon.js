@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.3 2014.3.4
+ avalon 1.2.3 2014.3.7
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1628,11 +1628,7 @@
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             avalon(elem).removeClass(node.name)//处理IE6
         }
-        try {
-            scanAttr(elem, vmodels) //扫描特性节点
-        } catch (e) {
-            console.log("scanAttr error")
-        }
+        scanAttr(elem, vmodels) //扫描特性节点
     }
 
     function scanNodes(parent, vmodels) {
@@ -1759,46 +1755,42 @@
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
-    // if (!"1" [0]) {
-    var cacheAttr = createCache(512)
-    var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
-            rquote = /^['"]/,
-            rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
-    var getAttributes = root.hasAttribute ? null : function(elem) {
-        if (elem.outerHTML.slice(0, 2) == "</") {//处理旧式IE模拟HTML5新元素带来的伪标签
-            return []
-        }
-        var str = elem.outerHTML.match(rtag)[0]
-        var attributes = [],
-                match,
-                k, v;
-        if (cacheAttr[str]) {
-            return cacheAttr[str]
-        }
-        while (k = rattrs.exec(str)) {
-            v = k[2]
-            var name = k[1].toLowerCase()
-            match = name.match(rmsAttr)
-            var binding = {
-                name: name,
-                specified: true,
-                value: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
+    if (!"1" [0]) {
+        var cacheAttr = createCache(512)
+        var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
+                rquote = /^['"]/,
+                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
+        var getAttributes = function(elem) {
+            if (elem.outerHTML.slice(0, 2) == "</") {//处理旧式IE模拟HTML5新元素带来的伪标签
+                return []
             }
-            attributes.push(binding)
+            var str = elem.outerHTML.match(rtag)[0]
+            var attributes = [],
+                    match,
+                    k, v;
+            if (cacheAttr[str]) {
+                return cacheAttr[str]
+            }
+            while (k = rattrs.exec(str)) {
+                v = k[2]
+                var name = k[1].toLowerCase()
+                match = name.match(rmsAttr)
+                var binding = {
+                    name: name,
+                    specified: true,
+                    value: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
+                }
+                attributes.push(binding)
+            }
+            return cacheAttr(str, attributes)
         }
-        return cacheAttr(str, attributes)
     }
-    //  }
 
     function executeBindings(bindings, vmodels) {
         for (var i = 0, data; data = bindings[i++]; ) {
             data.vmodels = vmodels
-            try {
-                bindingHandlers[data.type](data, vmodels)
-                console.log(data.type)
-            } catch (e) {
-                console.log("11111111")
-            }
+            bindingHandlers[data.type](data, vmodels)
+
             if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.name)
@@ -2303,26 +2295,22 @@
             }
             switch (method) {
                 case "add"://在pos位置后添加el数组（pos为数字，el为数组）
-                    try {
-                        var arr = el
-                        var last = data.getter().length - 1
-                        var transation = documentFragment.cloneNode(false)
-                        var spans = []
-                        for (var i = 0, n = arr.length; i < n; i++) {
-                            var ii = i + pos
-                            var proxy = createEachProxy(ii, arr[i], data, last)
-                            proxies.splice(ii, 0, proxy)
-                            shimController(data, transation, spans, proxy)
-                        }
-                        locatedNode = getLocatedNode(parent, data, pos)
-                        parent.insertBefore(transation, locatedNode)
-                        for (var i = 0, el; el = spans[i++]; ) {
-                            scanTag(el, data.vmodels)
-                        }
-                        spans = null
-                    } catch (e) {
-                        console.log("add item")
+                    var arr = el
+                    var last = data.getter().length - 1
+                    var transation = documentFragment.cloneNode(false)
+                    var spans = []
+                    for (var i = 0, n = arr.length; i < n; i++) {
+                        var ii = i + pos
+                        var proxy = createEachProxy(ii, arr[i], data, last)
+                        proxies.splice(ii, 0, proxy)
+                        shimController(data, transation, spans, proxy)
                     }
+                    locatedNode = getLocatedNode(parent, data, pos)
+                    parent.insertBefore(transation, locatedNode)
+                    for (var i = 0, el; el = spans[i++]; ) {
+                        scanTag(el, data.vmodels)
+                    }
+                    spans = null
                     break
                 case "del"://将pos后的el个元素删掉(pos, el都是数字)
                     proxies.splice(pos, el) //移除对应的子VM
@@ -2594,7 +2582,6 @@
                     freturn = false
                 }
             } catch (e) {
-                console.log(e)
             }
             var check0 = "$key",
                     check1 = "$val"
