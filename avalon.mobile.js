@@ -2371,7 +2371,7 @@
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
-            if (el.parentNode) {
+            if (avalon.contains(root, el)) {
                 if (el.oldValue !== el.value) {
                     avalon.fire(el, "input")
                 }
