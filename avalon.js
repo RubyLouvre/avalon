@@ -1974,7 +1974,7 @@
                     prefix +
                     ";\n\tif(!arguments.length){\n\t\treturn " +
                     code +
-                    "\n\t}\n\t" + (code.indexOf(".") === -1 ? vars.get : code) +
+                    "\n\t}\n\t" + (!/\w\[.*\]|\w\.\w/.test(code) ? vars.get : code) +
                     "= vvv;\n} "
             try {
                 fn = Function.apply(Function, names.concat(_body))
