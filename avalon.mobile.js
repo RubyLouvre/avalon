@@ -128,7 +128,7 @@
                 a = a > n ? n : a
             }
         } else {
-            a = 0
+            a = end ? n : 0
         }
         return a
     }
