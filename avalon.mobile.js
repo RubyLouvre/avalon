@@ -1824,10 +1824,11 @@
         "each": function(method, pos, el) {
             var data = this
             var group = data.group
-            var parent = data.parent
-            if (data.startRepeat) {//https://github.com/RubyLouvre/avalon/issues/300
-                parent = data.parent = data.startRepeat.parentNode
+            var pp = data.startRepeat && data.startRepeat.parentNode
+            if (pp) {//fix  #300 #307
+                data.parent = pp
             }
+            var parent = data.parent
             var proxies = data.proxies
             if (method == "del" || method == "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
@@ -1846,6 +1847,7 @@
                         shimController(data, transation, spans, proxy)
                     }
                     locatedNode = getLocatedNode(parent, data, pos)
+                    console.log(parent)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
