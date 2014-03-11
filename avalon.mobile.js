@@ -1922,7 +1922,7 @@
                     spans = null
                     break
             }
-            iteratorCallback.call(data, method)
+            iteratorCallback.call(data, arguments)
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
@@ -2716,10 +2716,10 @@
         parent.textContent = ""
     }
 
-    function iteratorCallback() {
+    function iteratorCallback(args) {
         var callback = getBindingCallback(this.callbackElement, this.callbackName, this.vmodels)
         if (callback) {
-            var parent = this.parent, args = arguments
+            var parent = this.parent
             checkScan(parent, function() {
                 callback.apply(parent, args)
             })
