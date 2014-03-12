@@ -1847,7 +1847,6 @@
                         shimController(data, transation, spans, proxy)
                     }
                     locatedNode = getLocatedNode(parent, data, pos)
-                    console.log(parent)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
