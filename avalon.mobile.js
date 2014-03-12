@@ -2798,9 +2798,10 @@
         }
         source[param] = item
         source.$remove = function() {
-            return data.getter().removeAt(source.$index)
+            return data.getter().removeAt(proxy.$index)
         }
-        return modelFactory(source, 0, watchEachOne)
+        var proxy = modelFactory(source, 0, watchEachOne)
+        return proxy
     }
     /*********************************************************************
      *                  文本绑定里默认可用的过滤器                        *
