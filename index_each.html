@@ -7,8 +7,6 @@
         <script src="avalon.js" type="text/javascript"></script>
 
         <script>
-
-
             avalon.define("array", function(vm) {
                 vm.array = ["1", "2", "3", "4"]
                 vm.del = function() {
@@ -74,7 +72,7 @@
         <h3 style="text-align: center">ms-each</h3>
 
         <fieldset ms-controller="array">
-            <legend>例子</legend>
+            <legend>示例一</legend>
             <ul ms-each-el="array">
                 <li >数组的第{{$index+1}}个元素为{{el}}</li>
             </ul>
@@ -91,7 +89,7 @@
             <p>当前数组的长度为<span style="color:red">{{array.size()}}</span>，注意 我们无法修改数组length的固有行为，因此它无法同步视图，需要用size方法。</p>
         </fieldset>
         <fieldset ms-controller="page">
-            <legend>例子</legend>
+            <legend>示例二</legend>
             <p><select ms-each-el="options" ms-duplex="selected">
                     <option>{{el}}</option>
                 </select>
