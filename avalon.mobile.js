@@ -2994,6 +2994,8 @@
             }
             return string
         }
+        var rfixFFDate = /^(\d+)-(\d+)-(\d{4})$/
+        var rfixIEDate = /^(\d+)\s+(\d+),(\d{4})$/
         filters.date = function(date, format) {
             var locate = filters.date.locate,
                     text = "",
@@ -3005,6 +3007,10 @@
                 if (NUMBER_STRING.test(date)) {
                     date = toInt(date)
                 } else {
+                    var trimDate = date.trim()
+                    if (trimDate.match(rfixFFDate) || trimDate.match(rfixIEDate)) {
+                        date = RegExp.$3 + "/" + RegExp.$1 + "/" + RegExp.$2
+                    }
                     date = jsonStringToDate(date)
                 }
                 date = new Date(date)
