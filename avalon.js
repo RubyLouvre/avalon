@@ -1714,6 +1714,18 @@
                         if (type === "widget") {
                             bindings.push(binding)
                             elem.msData = elem.msData || msData
+                        } else if (type === "perfstart") {
+                            elem.setAttribute("perfstart", new Date - 0)
+                        } else if (type === "perfend") {
+                            var els = elem.parentNode.childNodes
+                            for (var k = 0, el; el = els[k++]; ) {
+                                if (el.hasAttribute("perfstart")) {
+                                    var end = new Date - Number(el.getAttribute("perfstart"))
+                                    elem.setAttribute("perfend", end)
+                                    console.log("扫描花了"+end+"ms")
+                                }
+                            }
+
                         } else if (vmodels.length) {
                             bindings.push(binding)
                         }
