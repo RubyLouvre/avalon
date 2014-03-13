@@ -1866,18 +1866,22 @@
                     }
                     break
                 case "clear":
-                    deleteRange.selectNodeContents(parent)
-                    var start = data.startRepeat
-                    if (start) {
-                        if (start.nextSibling && start.nextSibling !== data.endRepeat) {
-                            deleteRange.setStartAfter(start)
-                            deleteRange.setEndBefore(data.endRepeat)
+                    var deleteFragment = documentFragment.cloneNode(false)
+                    if (data.startRepeat) {
+                        while (true) {
+                            var node = data.startRepeat.nextSibling
+                            if (node && node !== data.endRepeat) {
+                                deleteFragment.appendChild(node)
+                            } else {
+                                break
+                            }
                         }
-                    } else if (parent.firstChild) { //确保它原来就有东西
-                        deleteRange.setStartBefore(parent.firstChild)
-                        deleteRange.setEndAfter(parent.lastChild)
+                    } else {
+                        while (parent.firstChild) {
+                            deleteFragment.appendChild(parent.firstChild)
+                        }
                     }
-                    removeFromSanctuary(deleteRange.extractContents())
+                    removeFromSanctuary(deleteFragment)
                     if (proxies)
                         proxies.length = 0
                     break
