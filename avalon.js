@@ -1620,9 +1620,6 @@
             if (!newVmodel) {
                 return
             }
-            if (elem.msLoopData) {
-                delete VMODELS[node.value]
-            }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
@@ -1714,18 +1711,6 @@
                         if (type === "widget") {
                             bindings.push(binding)
                             elem.msData = elem.msData || msData
-                        } else if (type === "perfstart") {
-                            elem.setAttribute("perfstart", new Date - 0)
-                        } else if (type === "perfend") {
-                            var els = elem.parentNode.childNodes
-                            for (var k = 0, el; el = els[k++]; ) {
-                                if (el.hasAttribute("perfstart")) {
-                                    var end = new Date - Number(el.getAttribute("perfstart"))
-                                    elem.setAttribute("perfend", end)
-                                    console.log("扫描花了"+end+"ms")
-                                }
-                            }
-
                         } else if (vmodels.length) {
                             bindings.push(binding)
                         }
@@ -1752,18 +1737,12 @@
                 }
                 break;
         }
-        var data = elem.msLoopData
-        if (data) {
-            elem.msLoopData = void 0
-            if (typeof data.group !== "number") {
-                data.group = elem.childNodes.length
-            }
-            var p = elem.parentNode
-            while (elem.firstChild) {
-                p.insertBefore(elem.firstChild, elem)
-            }
-            p.removeChild(elem)
+
+        if (elem.patchRepeat) {
+            elem.patchRepeat()
+            elem.patchRepeat = null
         }
+
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
@@ -2311,14 +2290,16 @@
                     var arr = el
                     var last = data.getter().length - 1
                     var transation = documentFragment.cloneNode(false)
-                    var spans = []
+                    var spans = [], lastFn = {}
                     for (var i = 0, n = arr.length; i < n; i++) {
                         var ii = i + pos
                         var proxy = createEachProxy(ii, arr[i], data, last)
                         proxies.splice(ii, 0, proxy)
-                        shimController(data, transation, spans, proxy)
+                        lastFn = shimController(data, transation, spans, proxy)
                     }
                     locatedNode = getLocatedNode(parent, data, pos)
+                    lastFn.node = locatedNode
+                    lastFn.parent = parent
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
@@ -2376,8 +2357,7 @@
                     var pool = el
                     var transation = documentFragment.cloneNode(false)
                     var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
-                    var keys = []
-                    var spans = []
+                    var keys = [], spans = [], lastFn = {}
                     for (var key in pos) { //得到所有键名
                         if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
                             keys.push(key)
@@ -2391,10 +2371,12 @@
                     }
                     for (var i = 0, key; key = keys[i++]; ) {
                         if (key !== "hasOwnProperty") {
-                            shimController(data, transation, spans, pool[key])
+                            lastFn = shimController(data, transation, spans, pool[key])
                         }
                     }
-                    parent.insertBefore(transation, data.endRepeat || null)
+                    lastFn.parent = parent
+                    lastFn.node = data.endRepeat || null
+                    parent.insertBefore(transation, lastFn.node)
                     for (var i = 0, el; el = spans[i++]; ) {
                         scanTag(el, data.vmodels)
                     }
@@ -3291,14 +3273,27 @@
 
     function shimController(data, transation, spans, proxy) {
         var tview = data.template.cloneNode(true)
-        avalon.vmodels[proxy.$id] = proxy
+        var id = proxy.$id
+        VMODELS[id] = proxy
         var span = DOC.createElement("msloop")
         span.style.display = "none"
-        span.setAttribute("ms-controller", proxy.$id)
-        span["msLoopData"] = data
+        span.setAttribute("ms-controller", id)
         span.appendChild(tview)
         spans.push(span)
         transation.appendChild(span)
+        function fn() {
+            delete VMODELS[id]
+            span.parentNode.removeChild(span)
+            var n = span.childNodes.length
+            while (span.firstChild) {
+                transation.appendChild(span.firstChild)
+            }
+            if (fn.node !== void 0) {
+                data.group = n
+                fn.parent.insertBefore(transation, fn.node)
+            }
+        }
+        return span.patchRepeat = fn
     }
     // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
