@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js">
+        </script>
+        <script>
+            if (!window.console) {
+                window.console = {}
+                console.log = function() {
+                    avalon.ready(function() {
+                        var div = document.createElement("pre");
+                        div.className = "mass_sys_log";
+                        div.innerHTML = str + ""; //确保为字符串
+                        document.body.appendChild(div);
+                    });
+                }
+            }
+            var model = avalon.define("xxx", function(vm) {
+                vm.str = "7777"
+
+            })
+            setTimeout(function() {
+                aaa.value = "xxxx"
+                avalon.log(model.str)
+            }, 3000)
+        </script>
+    </head>
+    <body>
+        <div ms-controller="xxx">
+            <input id="aaa" ms-duplex="str" >
+        </div>
+    </body>
+</html>

@@ -1,0 +1,44 @@
+<!Doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <script type="text/javascript" src="avalon.mobile.js" ></script>
+
+        <script type="text/javascript">
+            avalon.ready(function() {
+                var ControllerA = avalon.define('ControllerA', function(vm) {
+                    vm.array = [1, 2, 34, 5];
+                    vm.header = [
+//                        {date:5,weekday:true},
+//                        {date:"43",weekday:false},
+//                        {date:"dfasdfa",weekday:true}
+                    ]
+                    vm.test = function(flag) {
+                        return flag;
+                    }
+                    vm.isWeekendDefined = function(val) {
+                        return true;
+                    }
+                });
+
+                window.setTimeout(function() {
+                    ControllerA.header = [{"date": "2014-03-12", "weekday": 3}, {"date": "2014-03-13", "weekday": 4}, {"date": "2014-03-14", "weekday": 5}, {"date": "2014-03-15", "weekday": 6}, {"date": "2014-03-16", "weekday": 0}, {"date": "2014-03-17", "weekday": 1}, {"date": "2014-03-18", "weekday": 2}, {"date": "2014-03-19", "weekday": 3}, {"date": "2014-03-20", "weekday": 4}, {"date": "2014-03-21", "weekday": 5}];
+                }, 5000);
+                avalon.scan();
+            });
+        </script>
+    </head>
+
+    <body ms-controller="ControllerA">
+        <table>
+            <tr>
+                <th><input type="checkbox" class="ui-grid-select"  ms-checked="allCheckedProductIds" ms-change="fnCheckedAll"  /></th>
+                <th>房型/产品名称</th>
+                <th>价格类型</th>
+                <th ms-repeat-el="header"><span ms-class="weekend:isWeekendDefined(el.weekday)">ssss</span>
+                </th>
+                <th>111</th>
+            </tr>
+        </table>
+    </body>
+</html>
