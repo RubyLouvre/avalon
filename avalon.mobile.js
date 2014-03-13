@@ -1689,6 +1689,7 @@
     }
     var includeContents = {}
     var ifSanctuary = DOC.createElement("div")
+    var rwhitespace = /^\s+$/
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
@@ -2134,11 +2135,18 @@
                 data.parent.insertBefore(startRepeat, endRepeat)
                 template.appendChild(elem)
             } else {
-                while (elem.firstChild) {
-                    template.appendChild(elem.firstChild)
+                var node
+                while (node = elem.firstChild) {
+                    if (node.nodeType === 3 && rwhitespace.test(node.data)) {
+                        elem.removeChild(node)
+                    } else {
+                        template.appendChild(node)
+                    }
                 }
             }
             data.template = template
+            node = template.firstChild
+            data.fastRepeat = node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
             if (freturn) {
                 return
             }
@@ -2726,23 +2734,28 @@
     function shimController(data, transation, spans, proxy) {
         var tview = data.template.cloneNode(true)
         var id = proxy.$id
-        VMODELS[id] = proxy
-        var span = DOC.createElement("msloop")
-        span.style.display = "none"
+        var span = tview.firstChild
+        if (!data.fastRepeat) {
+            span = DOC.createElement("msloop")
+            span.style.display = "none"
+            span.appendChild(tview)
+        }
         span.setAttribute("ms-controller", id)
-        span.appendChild(tview)
         spans.push(span)
         transation.appendChild(span)
+        VMODELS[id] = proxy
         function fn() {
             delete VMODELS[id]
-            span.parentNode.removeChild(span)
-            var n = span.childNodes.length
-            while (span.firstChild) {
-                transation.appendChild(span.firstChild)
-            }
-            if (fn.node !== void 0) {
-                data.group = n
-                fn.parent.insertBefore(transation, fn.node)
+            data.group = 1
+            if (!data.fastRepeat) {
+                data.group = span.childNodes.length
+                span.parentNode.removeChild(span)
+                while (span.firstChild) {
+                    transation.appendChild(span.firstChild)
+                }
+                if (fn.node !== void 0) {
+                    fn.parent.insertBefore(transation, fn.node)
+                }
             }
         }
         return span.patchRepeat = fn

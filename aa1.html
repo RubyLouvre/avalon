@@ -1,32 +1,26 @@
-<!Doctype html>
 <html>
     <head>
-        <meta charset="utf-8" />
-        <script type="text/javascript" src="avalon.js" ></script>
-
-        <script type="text/javascript">
-           avalon.define("xxx", function(vm) {
-                vm.object = {"kkk": "vvv", "kkk2": "vvv2", "kkk3": "vvv3"}
-                vm.array = []
-           })
-         window.onload = function(){
-             console.log(String.quote(document.body.innerHTML))
-             avalon.vmodels.xxx.array = [1,2,3,4]
-         }
-        </script>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <script src="avalon.js"></script>
     </head>
+    <div ms-controller="test">
+        <ul ms-each="items">
+            <li  data-repeat-rendered="rendered">{{el}}
+                <div>{{el}}</div>
+            </li>
+        </ul>
+    </div>
+    <script>
+var model = avalon.define('test', function(vm) {
+    vm.items = [];
+    vm.rendered = function(type) {
+        console.log(this, type)
 
-    <body>
-        <div ms-controller="xxx">
-            <ul><li ms-repeat="object">{{$key}}:{{$val}}</li></ul>
-            <ol ms-with="object"> <li>{{$key}}:{{$val}}</li></ol>
-            <table border="1" >
-                <tr>
-                    <td>111</td>
-                    <th ms-repeat="array">{{el}}</th>
-                    <td>222</td>
-                </tr>
-            </table>
-        </div>
-    </body>
+    }
+});
+setTimeout(function() {
+    model.items = [1, 2, 3, 4];
+}, 500)
+    </script>
+</body>
 </html>
