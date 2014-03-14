@@ -28,19 +28,25 @@
                 }
                 var model = avalon.define("linkage", function(vm) {
                     vm.first = ["中国", "日本", "欧美"]
-                    vm.second = map[vm.first[1]]
-                    vm.third = map[vm.second[0]]
+                    vm.second = map[vm.first[1]].concat()
+                    vm.third = map[vm.second[0]].concat()
                     vm.firstSelected = "日本"
-                    vm.secondSelected = ""
-                    vm.thirdSelected = ""
+                    vm.secondSelected = "日本武将"
+                    vm.thirdSelected = "织田信长"
 
                     vm.$watch("firstSelected", function(a) {
-                        vm.second = map[a]
-                        vm.secondSelected = map[a][0]
+                        vm.second = map[a].concat()
+                    //    setTimeout(function() {
+                            vm.secondSelected =  vm.second[0]
+                        
+                     //   })
+
                     })
                     vm.$watch("secondSelected", function(a) {
-                        vm.third = map[a]
-                        vm.thirdSelected = map[a][0]
+                        vm.third = map[a].concat()
+                      //  setTimeout(function() {
+                            vm.thirdSelected = vm.third[0]
+                      //  })
                     })
                 })
                 var m = avalon.define("multi", function(vm) {
@@ -57,12 +63,12 @@
         </script>
     </head>
     <body>
-        <div ms-controller="props">
+<!--        <div ms-controller="props">
             <input  ms-duplex="selected" />
             <select ms-each-option="options" ms-duplex="selected" >
                 <option ms-value="option" >{{option}}</option>
             </select>
-        </div>
+        </div>-->
         <div ms-controller="linkage">
             <select ms-each-el="first" ms-duplex="firstSelected" >
                 <option ms-value="el" >{{el}}</option>
@@ -74,11 +80,11 @@
                 <option ms-value="el" >{{el}}</option>
             </select>
         </div>
-        <div ms-controller="multi">
+<!--        <div ms-controller="multi">
             <select ms-each-el="multi" ms-duplex="selected" multiple="multiple" >
                 <option ms-value="el" >{{el}}</option>
             </select>
             <p>{{select}}</p>
-        </div>
+        </div>-->
     </body>
 </html>
