@@ -1926,12 +1926,11 @@
     var cacheExpr = createCache(256)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
-
+    var rproxy = /(\$proxy\$[a-z]+)\d+$/
     function parseExpr(code, scopes, data, four) {
         var exprId = scopes.map(function(el) {
-            return el.$id
-        }) + code + data.filters + (four || "")
-
+            return el.$id.replace(rproxy, "$1")
+        }) + code + (data.filters || "") + (four || "")
         var vars = getVariables(code),
                 assigns = [],
                 names = [],
@@ -1955,6 +1954,7 @@
         //---------------cache----------------
         var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
         if (fn) {
+            console.log(fn + "")
             data.evaluator = fn
             return
         }
@@ -1971,14 +1971,13 @@
                     "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
                     "= vvv;\n} "
             try {
-                fn = Function.apply(Function, names.concat(_body))
+                fn = Function.apply(noop, names.concat(_body))
                 data.evaluator = cacheExpr(exprId, fn)
             } catch (e) {
             }
             return
-        }
-        //------------------on----------------
-        if (data.type === "on") {
+            //------------------on----------------
+        } else if (data.type === "on") {
             if (code.indexOf(".bind(") === -1) {
                 code = code.replace("(", ".call(this,")
             } else {
@@ -2011,16 +2010,17 @@
             names.push("filters" + expose)
         } else {
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
+            if (data.type === "on") {
+                var lastIndex = code.lastIndexOf("\nreturn")
+                var header = code.slice(0, lastIndex)
+                var footer = code.slice(lastIndex)
+                code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+            }
         }
-        if (data.type === "on") {
-            var lastIndex = code.lastIndexOf("\nreturn")
-            var header = code.slice(0, lastIndex)
-            var footer = code.slice(lastIndex)
-            code = header + "\nif(avalon.openComputedCollect) return ;" + footer
-        }
+
         //---------------other----------------
         try {
-            fn = Function.apply(Function, names.concat("'use strict';\n" + prefix + code))
+            fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
             if (data.type !== "on") {
                 fn.apply(fn, args)
             }
@@ -2058,7 +2058,9 @@
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
-            registerSubscriber(data)
+            setTimeout(function() {
+                registerSubscriber(data)
+            }, 0)
         }
     }
     avalon.parseExprProxy = parseExprProxy
@@ -3361,7 +3363,7 @@
     var watchEachOne = oneObject("$index,$first,$last")
 
     function createWithProxy(key, val, $outer) {
-        return modelFactory({
+        var proxy = modelFactory({
             $key: key,
             $outer: $outer,
             $val: val
@@ -3369,6 +3371,8 @@
             $val: 1,
             $key: 1
         })
+        proxy.$id = "$proxy$with" + (Math.random() + "").slice(2)
+        return proxy
     }
 
     function createEachProxy(index, item, data, last) {
@@ -3385,6 +3389,7 @@
             return data.getter().removeAt(proxy.$index)
         }
         var proxy = modelFactory(source, 0, watchEachOne)
+        proxy.$id = "$proxy$" + data.type + (Math.random() + "").slice(2)
         return proxy
     }
     /*********************************************************************
