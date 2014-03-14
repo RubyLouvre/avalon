@@ -1928,9 +1928,11 @@
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
     function parseExpr(code, scopes, data, four) {
+        var dataType = data.type
+        var filters = dataType == "html" || dataType === "text" ? data.filters : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
-        }) + code + (data.filters || "") + (four || "")
+        }) + code + dataType + filters
         var vars = getVariables(code),
                 assigns = [],
                 names = [],
@@ -1947,48 +1949,20 @@
             }
         }
         //---------------args----------------
-        if (data.filters) {
+        if (filters) {
             args.push(avalon.filters)
         }
         data.args = args
         //---------------cache----------------
         var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
         if (fn) {
-            console.log(fn + "")
-            data.evaluator = fn
-            return
+           return data.evaluator = fn
         }
         var prefix = assigns.join(", ")
         if (prefix) {
             prefix = "var " + prefix
         }
-        //----------------duplex----------------
-        if (four === "duplex") {
-            var _body = "'use strict';\nreturn function(vvv){\n\t" +
-                    prefix +
-                    ";\n\tif(!arguments.length){\n\t\treturn " +
-                    code +
-                    "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
-                    "= vvv;\n} "
-            try {
-                fn = Function.apply(noop, names.concat(_body))
-                data.evaluator = cacheExpr(exprId, fn)
-            } catch (e) {
-            }
-            return
-            //------------------on----------------
-        } else if (data.type === "on") {
-            if (code.indexOf(".bind(") === -1) {
-                code = code.replace("(", ".call(this,")
-            } else {
-                code = code.replace(".bind(", ".call(")
-            }
-            if (four === "$event") {
-                names.push(four)
-            }
-        }
-        //---------------filter----------------
-        if (data.filters) {
+        if (filters) {//文本绑定，双工绑定才有过滤器
             code = "\nvar ret" + expose + " = " + code
             var textBuffer = [],
                     fargs
@@ -2008,17 +1982,32 @@
             code = textBuffer.join("")
             code += "\nreturn ret" + expose
             names.push("filters" + expose)
-        } else {
-            code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
-            if (data.type === "on") {
-                var lastIndex = code.lastIndexOf("\nreturn")
-                var header = code.slice(0, lastIndex)
-                var footer = code.slice(lastIndex)
-                code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+        } else if (dataType === "duplex") {//双工绑定
+            var _body = "'use strict';\nreturn function(vvv){\n\t" +
+                    prefix +
+                    ";\n\tif(!arguments.length){\n\t\treturn " +
+                    code +
+                    "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
+                    "= vvv;\n} "
+            try {
+                fn = Function.apply(noop, names.concat(_body))
+                data.evaluator = cacheExpr(exprId, fn)
+            } catch (e) {
             }
+            return
+        } else if (dataType === "on") {//事件绑定
+            code = code.replace("(", ".call(this,")
+            if (four === "$event") {
+                names.push(four)
+            }
+            code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
+            var lastIndex = code.lastIndexOf("\nreturn")
+            var header = code.slice(0, lastIndex)
+            var footer = code.slice(lastIndex)
+            code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+        } else {//其他绑定
+            code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
         }
-
-        //---------------other----------------
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
             if (data.type !== "on") {
@@ -3369,7 +3358,7 @@
             $val: 1,
             $key: 1
         })
-        proxy.$id = "$proxy$with" + (Math.random() + "").slice(2)
+        proxy.$id = "$proxy$with" + Math.random()
         return proxy
     }
 
@@ -3387,7 +3376,7 @@
             return data.getter().removeAt(proxy.$index)
         }
         var proxy = modelFactory(source, 0, watchEachOne)
-        proxy.$id = "$proxy$" + data.type + (Math.random() + "").slice(2)
+        proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
     /*********************************************************************
