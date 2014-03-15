@@ -1964,6 +1964,12 @@
                         avalon.log("ms-if errer" + e.message)
                     }
                 }
+                if (rbind.test(elem.outerHTML)) {
+                    scanAttr(elem, data.vmodels)
+//                    if (data.param.indexOf("once") >= 0) {
+//                        data.handler = noop
+//                    }
+                }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
                 if (data.msInDocument) {
                     data.msInDocument = false
@@ -2194,7 +2200,6 @@
                 data.msInDocument = data.placehoder = DOC.createComment("ms-if")
             }
             data.vmodels = vmodels
-            scanAttr(elem, vmodels)
             parseExprProxy(data.value, vmodels, data)
         },
         "on": function(data, vmodels) {

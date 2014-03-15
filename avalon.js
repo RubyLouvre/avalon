@@ -819,6 +819,21 @@
             return fixContains(this, b)
         }
     }
+    if (!root.outerHTML && window.HTMLElement) {//firefox 到11时才有outerHTML
+        var rhaveChildren = /^(area|base|basefont|col|frame|hr|img|br|input|isindex|link|meta|param)$/i
+        HTMLElement.prototype.__defineGetter__("outerHTML", function() {
+            var attrs = this.attributes, str = "<" + this.tagName
+            for (var i = 0, attr; attr = attrs[i++]; ) {
+                if (attr.specified) {
+                    str += " " + attr.name + '="' + attr.value + '"'
+                }
+            }
+            if (!rhaveChildren.test(this.tagName)) {
+                return str + " />"
+            }
+            return str + ">" + this.innerHTML + "</" + this.tagName + ">"
+        });
+    }
     /*********************************************************************
      *                           配置模块                                  *
      **********************************************************************/
@@ -1706,7 +1721,7 @@
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
 
-                        if (type === "if" && param === "loop") {
+                        if (type === "if" && param.indexOf("loop") > -1){
                             binding.priority += 100
                         }
                         if (type === "widget") {
@@ -1956,7 +1971,7 @@
         //---------------cache----------------
         var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
         if (fn) {
-           return data.evaluator = fn
+            return data.evaluator = fn
         }
         var prefix = assigns.join(", ")
         if (prefix) {
@@ -2424,7 +2439,14 @@
                         avalon.log("ms-if errer " + e.message)
                     }
                 }
+                if (rbind.test(elem.outerHTML)) {
+                    scanAttr(elem, data.vmodels)
+//                    if (data.param.indexOf("once") >= 0) {
+//                        data.handler = noop
+//                    }
+                }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
+
                 if (data.msInDocument) {
                     data.msInDocument = false
                     elem.parentNode.replaceChild(placehoder, elem)
@@ -2660,8 +2682,8 @@
                 data.msInDocument = data.placehoder = DOC.createComment("ms-if")
             }
             data.vmodels = vmodels
-            scanAttr(elem, vmodels)
             parseExprProxy(data.value, vmodels, data)
+
         },
         "on": function(data, vmodels) {
             var value = data.value,
