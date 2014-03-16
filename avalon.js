@@ -820,18 +820,12 @@
         }
     }
     if (!root.outerHTML && window.HTMLElement) {//firefox 到11时才有outerHTML
-        var rhaveChildren = /^(area|base|basefont|col|frame|hr|img|br|input|isindex|link|meta|param)$/i
         HTMLElement.prototype.__defineGetter__("outerHTML", function() {
-            var attrs = this.attributes, str = "<" + this.tagName
-            for (var i = 0, attr; attr = attrs[i++]; ) {
-                if (attr.specified) {
-                    str += " " + attr.name + '="' + attr.value + '"'
-                }
-            }
-            if (!rhaveChildren.test(this.tagName)) {
-                return str + " />"
-            }
-            return str + ">" + this.innerHTML + "</" + this.tagName + ">"
+            domParser.textContent = ""
+            domParser.appendChild(this)
+            var str = this.innerHTML
+            domParser.textContent = ""
+            return str
         });
     }
     /*********************************************************************
@@ -1721,7 +1715,7 @@
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
 
-                        if (type === "if" && param.indexOf("loop") > -1){
+                        if (type === "if" && param.indexOf("loop") > -1) {
                             binding.priority += 100
                         }
                         if (type === "widget") {
