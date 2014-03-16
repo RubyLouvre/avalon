@@ -1,5 +1,5 @@
 define(["avalon", "css!avalon.select.css"], function(avalon) {
-    //判定是否触摸界面
+    //判定是否触摸了界面
     var widget = avalon.ui["select"] = function(element, data, vmodels) {
         var $element = avalon(element), options = data.selectOptions
         var buttonHTML = '<button type="button" ms-hover="ui-state-hover" ms-active="ui-state-focus"  ms-click="toggleMenu" class="ui-multiselect ui-widget ui-state-default ui-corner-all"  >' +
