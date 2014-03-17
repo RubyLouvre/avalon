@@ -275,6 +275,13 @@
                     return avalon.Array.removeAt(target, index)
                 return false
             }
+        },
+        ,
+        Statistic: {
+            record: function(elem, cost) {
+                avalon.log(elem);
+                avalon.log("扫描花了" + cost + "ms");
+            }
         }
     })
 
@@ -1243,6 +1250,7 @@
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
+        var checkPerf = false
         if (typeof a === "string") {
             return
         } else if (node = b || c) {
@@ -1250,12 +1258,17 @@
             if (!newVmodel) {
                 return
             }
+            checkPerf = !elem.patchRepeat
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
         }
+        var start = new Date
         scanAttr(elem, vmodels) //扫描特性节点
+        if (checkPerf) {
+            avalon.Statistic.record(elem, new Date - start);
+        }
     }
 
     function scanNodes(parent, vmodels) {
