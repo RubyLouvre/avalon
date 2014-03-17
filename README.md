@@ -30,7 +30,7 @@
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
 <div><img src="https://raw2.github.com/RubyLouvre/avalon/master/ecosphere.jpg" width="400" height="640"></div>
-<p>相关学习教程:<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→<a href="http://rubylouvre.github.io/mvvm/">官网</a>→
+<p>相关学习教程: <a href="http://limodou.github.io/avalon-learning/zh_CN/index.html">《avalon-learning 教程》</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→<a href="http://rubylouvre.github.io/mvvm/">官网</a>→
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
 <h3>运行github中的示例</h3>
