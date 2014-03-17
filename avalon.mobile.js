@@ -276,7 +276,6 @@
                 return false
             }
         },
-        ,
         Statistic: {
             record: function(elem, cost) {
                 avalon.log(elem);
