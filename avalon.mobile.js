@@ -1548,7 +1548,8 @@
         //---------------cache----------------
         var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
         if (fn) {
-            return data.evaluator = fn
+            data.evaluator = fn
+            return
         }
         var prefix = assigns.join(", ")
         if (prefix) {
