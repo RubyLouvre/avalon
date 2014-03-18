@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.3 2014.3.14，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.2.4 2014.3.18，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -249,13 +249,6 @@
             }
             return result
         },
-        getVModel: function(prop, vmodels) {//得到当前属性prop所在的VM
-            for (var i = 0, el; el = vmodels[i++]; ) {
-                if (el.hasOwnProperty(prop)) {
-                    return el
-                }
-            }
-        },
         Array: {
             ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
@@ -391,11 +384,14 @@
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
-    function isEqual(x, y) {
-        if (x === y) {
-            return x instanceof Date ? x - 0 === y - 0 : !0
+    var isEqual = Object.is || function(v1, v2) {
+        if (v1 === 0 && v2 === 0) {
+            return 1 / v1 === 1 / v2
+        } else if (v1 !== v1) {
+            return v2 !== v2
+        } else {
+            return v1 === v2;
         }
-        return x !== x && y !== y
     }
 
     function safeFire(a, b, c, d) {
@@ -1196,7 +1192,7 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
-                    log("remove " + fn.name)
+                    log("Debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -1346,7 +1342,7 @@
             }
         }
         if (msData["ms-checked"] && msData["ms-duplex"]) {
-            avalon.log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
         }
         bindings.sort(function(a, b) {
             return a.priority - b.priority
@@ -1608,6 +1604,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
+            log("Debug: parse error " + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -1811,7 +1808,7 @@
             }
             var parent = data.parent
             var proxies = data.proxies
-            if (method == "del" || method == "move") {
+            if (method === "del" || method === "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
             }
             switch (method) {
@@ -1952,7 +1949,7 @@
                     try {
                         placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
-                        avalon.log("ms-if errer" + e.message)
+                        avalon.log("Debug: ms-if " + e.message)
                     }
                 }
                 if (rbind.test(elem.outerHTML)) {
@@ -2052,7 +2049,7 @@
                     rightExpr = text.slice(colonIndex + 1)
                     parseExpr(rightExpr, vmodels, data) //决定是添加还是删除
                     if (!data.evaluator) {
-                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        log("Debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
                     } else {
                         data._evaluator = data.evaluator
@@ -2099,6 +2096,9 @@
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
             data.callbackElement = data.parent = elem
+            if (type !== "repeat") {
+                avalon.log("Warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
+            }
             var freturn = true
             try {
                 list = data.getter()
