@@ -3,25 +3,50 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <script src="avalon.js"></script>
+        <style>
+            input.error{
+                border:1px solid  red;
+            }
+            input:disabled{
+                background:#ddd;
+            }
+            .read:read-write {
+                color: #00882D;
+                font-weight: bold;
+            }
+            .read:read-only {
+                color: #CB000F;
+            }
+        </style>
         <script>
-            var model = avalon.define("simple", function(vm) {
-                vm.background = "red"
-                vm.$watch("background", function(v) {
-                    vm.background = v//将数组转换为字符串
-                });
-            })
+            avalon.define("bool", function(vm) {
+                vm.toggle = true
+                vm.readonly = true
+                vm.array = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"]
+                vm.selectedIndex = 2
+                vm.error = false
+                vm.$watch("selectedIndex", function(n) {
+                    n = parseFloat(n)
+                    if (n >= 0 && n <= 9 && (n % 1 === 0)) {
+                        vm.error = false
+                    } else {
+                        vm.error = true
+                    }
+                })
+            });
         </script>
     </head>
     <body>
-        <div ms-controller="simple">
-            <div style="width:200px; height:50px" ms-css-background="background">
-
+        <div ms-controller="bool">
+            <div>ms-disabled：<input ms-disabled="toggle"></div>
+            <div>ms-enabled：<input ms-enabled="toggle"></div>
+            <div>ms-readonly<input ms-readonly="readonly" class="read"></div>
+            <div>ms-readonly：<input type="radio" ms-duplex="readonly"></div>
+            <div>ms-checked:<input type="radio" ms-duplex="toggle"></div>
+            <div>ms-duplex:<input ms-duplex="selectedIndex" type="number"  ms-class="error:error"><span ms-if="error">请输入非负整数, 0<=n<=9</span></div>
+            <div>
+                ms-selected： <select> <option ms-repeat="array" ms-selected="$index == selectedIndex" >{{el}}</option> </select>
             </div>
-            <select ms-duplex="background">
-                <option value="red">红</option>
-                <option value="yellow">黄</option>
-                <option value="green">绿</option>
-            </select>
         </div>
     </body>
 </html>

@@ -249,13 +249,6 @@
             }
             return result
         },
-        getVModel: function(prop, vmodels) {//得到当前属性prop所在的VM
-            for (var i = 0, el; el = vmodels[i++]; ) {
-                if (el.hasOwnProperty(prop)) {
-                    return el
-                }
-            }
-        },
         Array: {
             ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
@@ -1811,7 +1804,7 @@
             }
             var parent = data.parent
             var proxies = data.proxies
-            if (method == "del" || method == "move") {
+            if (method === "del" || method === "move") {
                 var locatedNode = getLocatedNode(parent, data, pos)
             }
             switch (method) {
@@ -2099,6 +2092,9 @@
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
             data.callbackElement = data.parent = elem
+            if (type !== "repeat") {
+                avalon.log("Warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
+            }
             var freturn = true
             try {
                 list = data.getter()
