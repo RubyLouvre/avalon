@@ -1,63 +1,23 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <script>
+            var d = document.createElement("msloop")
+        </script>
         <script src="avalon.js"></script>
         <script>
-            var model = avalon.define('test', function(vm) {
-                vm.items = [
-                    {name: "panel1"},
-                    {name: "panel2"},
-                    {name: "panel3"},
-                    {name: "panel4"}
-                ];
-                vm.selected = "panel1"
 
-                vm.index = 0
-            })
-            window.onload = function(){
-                console.log(document.body.innerHTML)
-            }
+            var fragment = avalon.parseHTML("<ms:group><div></div><div></div></ms:group>")
+            alert(fragment.firstChild.tagName + "!")
+            alert(fragment.lastChild.tagName)
+            alert(fragment.lastChild === fragment.firstChild)
+            alert(fragment.lastChild.innerHTML)
         </script>
-        <style>
-            body, html{
-                height:100%;
-            }
-            .popup{
-                display:inline-block;
-                zoom:1;
-                vertical-align:middle;
 
-                margin-left: auto;
-                margin-right: auto;
-            }
-            .popup div{
-                width:300px;
-                height:300px;
-                background: #ddcda8;
-            }
-            .popup::after{
-                content:'center';
-                display:inline-block;
-                *display: inline;
-                zoom:1;
-                height:100%;
-                line-height:100%;
-                width:0;
-                overflow:hidden;
-                visibility:hidden;
-                vertical-align:middle;
-            }
-        </style>
     </head>
     <body>
         <div ms-controller="test">
-            <select ms-duplex="selected">
-                <option ms-repeat="items" ms-value="el.name">加载面板{{$index+1}}</option>
-            </select>
-            <div  ms-if-once="selected === 'panel1' " ms-include-src='"panel1.html"' >正在加载面板1</div>
-            <div  ms-if-once="selected === 'panel2' " ms-include-src='"panel2.html"' >正在加载面板2</div>
-            <div  ms-if-once="selected === 'panel3' " ms-include-src='"panel3.html"' >正在加载面板3</div>
-            <div  ms-if-once="selected === 'panel4' " ms-include-src='"panel4.html"' >正在加载面板4</div>
+            
         </div>
         <div class="popup"  attr="dd" ms-ddd="ddd" id="333">
             <div></div>
