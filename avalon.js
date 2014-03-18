@@ -2207,7 +2207,7 @@
                     }
                 }
             } else {
-                if (!W3C && (method === "src" || method === "href")) {
+                if (!root.hasAttribute && typeof val === "string" && (method === "src" || method === "href")) {
                     val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
                 }
                 elem[method] = val
