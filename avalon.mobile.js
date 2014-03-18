@@ -384,11 +384,14 @@
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
-    function isEqual(x, y) {
-        if (x === y) {
-            return x instanceof Date ? x - 0 === y - 0 : !0
+    var isEqual = Object.is || function(v1, v2) {
+        if (v1 === 0 && v2 === 0) {
+            return 1 / v1 === 1 / v2
+        } else if (v1 !== v1) {
+            return v2 !== v2
+        } else {
+            return v1 === v2;
         }
-        return x !== x && y !== y
     }
 
     function safeFire(a, b, c, d) {
@@ -1601,7 +1604,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
-            log("Debug: parse error "+ e.message)
+            log("Debug: parse error " + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }

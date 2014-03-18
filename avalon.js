@@ -429,11 +429,14 @@
 
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
-    function isEqual(x, y) {
-        if (x === y) {
-            return x instanceof Date ? x - 0 === y - 0 : !0
+    var isEqual = Object.is || function(v1, v2) {
+        if (v1 === 0 && v2 === 0) {
+            return 1 / v1 === 1 / v2
+        } else if (v1 !== v1) {
+            return v2 !== v2
+        } else {
+            return v1 === v2;
         }
-        return x !== x && y !== y
     }
 
     function safeFire(a, b, c, d) {
@@ -1958,8 +1961,8 @@
         //---------------cache----------------
         var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
         if (fn) {
-             data.evaluator = fn
-             return
+            data.evaluator = fn
+            return
         }
         var prefix = assigns.join(", ")
         if (prefix) {
@@ -2018,7 +2021,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
-            log("Debug:"+e.message)
+            log("Debug:" + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -2578,7 +2581,7 @@
             }
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
-            if(type !== "repeat"){
+            if (type !== "repeat") {
                 avalon.log("Warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
             data.callbackElement = data.parent = elem
