@@ -3,29 +3,50 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <script src="avalon.js"></script>
+        <style>
+            input.error{
+                border:1px solid  red;
+            }
+            input:disabled{
+                background:#ddd;
+            }
+            .read:read-write {
+                color: #00882D;
+                font-weight: bold;
+            }
+            .read:read-only {
+                color: #CB000F;
+            }
+        </style>
         <script>
-            require("avalon.live", function() {
-                var model = avalon.define("test", function(vm) {
-                    vm.array = [1, 2, 3, 4]
-                    vm.fn = function() {
-                        console.log(this.innerHTML)
+            avalon.define("bool", function(vm) {
+                vm.toggle = true
+                vm.readonly = true
+                vm.array = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"]
+                vm.selectedIndex = 2
+                vm.error = false
+                vm.$watch("selectedIndex", function(n) {
+                    n = parseFloat(n)
+                    if (n >= 0 && n <= 9 && (n % 1 === 0)) {
+                        vm.error = false
+                    } else {
+                        vm.error = true
                     }
-                    vm.aaa = "0000"
-                    vm.bbb = "<b>ddd</b>"
                 })
-                avalon.scan()
-            })
-
+            });
         </script>
     </head>
     <body>
-        <div ms-controller="test">
-            <div>11111111111</div>
-            <div>22222{{aaa}}2222{{bbb|html|uppercase}}</div>
-            <div>33333333333</div>
+        <div ms-controller="bool">
+            <div>ms-disabled：<input ms-disabled="toggle"></div>
+            <div>ms-enabled：<input ms-enabled="toggle"></div>
+            <div>ms-readonly<input ms-readonly="readonly" class="read"></div>
+            <div>ms-readonly：<input type="radio" ms-duplex="readonly"></div>
+            <div>ms-checked:<input type="radio" ms-duplex="toggle"></div>
+            <div>ms-duplex:<input ms-duplex="selectedIndex" type="number"  ms-class="error:error"><span ms-if="error">请输入非负整数, 0<=n<=9</span></div>
+            <div>
+                ms-selected： <select> <option ms-repeat="array" ms-selected="$index == selectedIndex" >{{el}}</option> </select>
+            </div>
         </div>
-    <table ms-controller="test">
-            <tr ms-each="array"><td ms-click="fn">{{el}}</td></tr>
-        </table>
     </body>
 </html>
