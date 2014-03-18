@@ -435,7 +435,7 @@
         } else if (v1 !== v1) {
             return v2 !== v2
         } else {
-            return v1 === v2;
+            return v1 === v2
         }
     }
 
