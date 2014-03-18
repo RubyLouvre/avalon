@@ -4,19 +4,23 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <script src="avalon.js"></script>
         <script>
-            avalon.define("bool", function(vm) {
-                vm.data = {}
+            var model = avalon.define("bool", function(vm) {
+                vm.list = []
+                vm.callback = function(){
+                    console.log([].slice.call(arguments))
+                }
             });
             setTimeout(function() {
-                var el = document.getElementById("aaa")
-                console.log(el.src)
-                console.log(el["ms-src"])
-            }, 500)
+                console.log("===============")
+                model.list = [1,2,3,4]
+            }, 1300)
         </script>
     </head>
     <body>
         <div ms-controller="bool">
-            <img ms-src="data.path" id="aaa"/>
+            <ul>
+                <li ms-repeat="list" data-repeat-rendered="callback">{{el}}</li>
+            </ul>
         </div>
     </body>
 </html>
