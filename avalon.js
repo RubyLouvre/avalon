@@ -1566,7 +1566,7 @@
                     }
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
-                        log("remove " + fn.name)
+                        log("Debug: remove " + fn.name)
                     }
                 }
                 if (typeof fn === "function") {
@@ -1725,7 +1725,7 @@
             return a.priority - b.priority
         })
         if (msData["ms-checked"] && msData["ms-duplex"]) {
-            avalon.log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
         }
         var firstBinding = bindings[0] || {}
         switch (firstBinding.type) {
@@ -2018,6 +2018,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
+            log("Debug:"+e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -2424,7 +2425,7 @@
                     try {
                         placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
-                        avalon.log("ms-if errer " + e.message)
+                        avalon.log("Debug: ms-if  " + e.message)
                     }
                 }
                 if (rbind.test(elem.outerHTML)) {
@@ -2535,7 +2536,7 @@
                     rightExpr = text.slice(colonIndex + 1)
                     parseExpr(rightExpr, vmodels, data) //决定是添加还是删除
                     if (!data.evaluator) {
-                        log("'" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        log("Debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
                     } else {
                         data._evaluator = data.evaluator
