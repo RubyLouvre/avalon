@@ -4,28 +4,24 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <script src="avalon.js"></script>
         <script>
-            require("avalon.live", function() {
-                var model = avalon.define("test", function(vm) {
-                    vm.array = [1, 2, 3, 4]
-                    vm.fn = function() {
-                        console.log(this.innerHTML)
-                    }
-                    vm.aaa = "0000"
-                    vm.bbb = "<b>ddd</b>"
-                })
-                avalon.scan()
+            var model = avalon.define("simple", function(vm) {
+                vm.background = "red"
+                vm.$watch("background", function(v) {
+                    vm.background = v//将数组转换为字符串
+                });
             })
-
         </script>
     </head>
     <body>
-        <div ms-controller="test">
-            <div>11111111111</div>
-            <div>22222{{aaa}}2222{{bbb|html|uppercase}}</div>
-            <div>33333333333</div>
+        <div ms-controller="simple">
+            <div style="width:200px; height:50px" ms-css-background="background">
+
+            </div>
+            <select ms-duplex="background">
+                <option value="red">红</option>
+                <option value="yellow">黄</option>
+                <option value="green">绿</option>
+            </select>
         </div>
-    <table ms-controller="test">
-            <tr ms-each="array"><td ms-click="fn">{{el}}</td></tr>
-        </table>
     </body>
 </html>
