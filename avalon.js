@@ -508,7 +508,6 @@
                     return newValue
                 }
             }
-            accessor[subscribers] = [] //订阅者数组
             computedProperties.push(accessor)
         } else if (rchecktype.test(valueType)) {
             accessor = function(newValue) { //子ViewModel或监控数组
