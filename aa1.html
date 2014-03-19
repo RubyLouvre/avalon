@@ -4,24 +4,45 @@
         <script>
             var d = document.createElement("msloop")
         </script>
-        <script src="avalon.js"></script>
+        <script src="avalon2.js"></script>
         <script>
 
-            var fragment = avalon.parseHTML("<ms:group><div></div><div></div></ms:group>")
-            alert(fragment.firstChild.tagName + "!")
-            alert(fragment.lastChild.tagName)
-            alert(fragment.lastChild === fragment.firstChild)
-            alert(fragment.lastChild.innerHTML)
+
+            var model = avalon.define("xxx", function(vm) {
+                vm.a = "xxx"
+                vm.data = {
+                    ddd: "ttt",
+                    eee: "oooo"
+                }
+                vm.array = []
+                vm.bbb = function(){
+                    return vm.data.ddd +"  "+vm.data.eee
+                }
+                vm.$watch("data", function(a){
+                  //  console.log(a)
+                })
+            })
+            window.onload = function() {
+                var el = document.getElementById("aaa")
+                el.addEventListener("click", function() {
+                    model.data = {
+                        ddd: new Date - 1,
+                        eee: new Date - 2
+                    }
+                    
+                    // model.data.ddd = "9999"
+                })
+            }
+
         </script>
 
     </head>
-    <body>
-        <div ms-controller="test">
-            
-        </div>
-        <div class="popup"  attr="dd" ms-ddd="ddd" id="333">
-            <div></div>
-        </div>
+    <body ms-controller="xxx">
+        <button type="button" id="aaa">ddddddd</button>
+        {{bbb()}}
+        <ul >
+            <li ms-repeat="data">{{$key}}:{{$val}}</li>
+        </ul>
 
     </body>
 </html>
