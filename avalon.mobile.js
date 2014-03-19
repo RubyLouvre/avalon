@@ -1970,6 +1970,7 @@
             var fn = data.evaluator
             var args = data.args
             var vmodels = data.vmodels
+            var callback
             if (!data.hasArgs) {
                 callback = function(e) {
                     return fn.apply(0, args).call(this, e)
