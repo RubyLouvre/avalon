@@ -481,7 +481,7 @@
                         preValue = value
                 if (arguments.length) {
                     if (stopRepeatAssign) {
-                        return //阻止重复赋值
+                        return
                     }
                     if (typeof setter === "function") {
                         var backup = vmodel.$events[name]
@@ -489,12 +489,12 @@
                         setter.call(vmodel, newValue)
                         vmodel.$events[name] = backup
                     }
-                    if (!isEqual(oldArgs, newValue)) { //只检测用户的传参是否与上次是否一致
+                    if (!isEqual(oldArgs, newValue)) {
                         oldArgs = newValue
-                        newValue = model[name] = getter.call(vmodel)
-                        withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
+                        newValue = model[name] = getter.call(vmodel)//同步$model
+                        withProxyCount && updateWithProxy(vmodel.$id, name, newValue)//同步循环绑定中的代理VM
                         notifySubscribers(accessor) //通知顶层改变
-                        safeFire(vmodel, name, newValue, preValue)
+                        safeFire(vmodel, name, newValue, preValue)//触发$watch回调
                     }
                 } else {
                     if (avalon.openComputedCollect) { // 收集视图刷新函数
@@ -510,54 +510,49 @@
             }
             accessor[subscribers] = [] //订阅者数组
             computedProperties.push(accessor)
-        } else {
-            accessor = function(newValue) { //创建监控属性或数组，自变量，由用户触发其改变
-                var vmodel = watchProperties.vmodel
-                var preValue = model[name],
-                        simpleType
+        } else if (rchecktype.test(valueType)) {
+            accessor = function(newValue) { //子ViewModel或监控数组
+                var realAccessor = accessor.$vmodel, preValue = realAccessor.$model
                 if (arguments.length) {
                     if (stopRepeatAssign) {
-                        return //阻止重复赋值
+                        return
                     }
-                    //   console.log("in.....")
                     if (!isEqual(preValue, newValue)) {
-                        if (rchecktype.test(valueType)) {
-                            console.log("1 " + accessor[subscribers].length)
-                            newValue = accessor.$vmodel = updateVModel(accessor.$vmodel, newValue, valueType)
-                            console.log("2 " + accessor[subscribers].length)
-                            var fn = rebindings[newValue.$id]
-                            fn && fn()
-                            model[name] = newValue.$model
-                            safeFire(vmodel, name, model[name], preValue)
-                           //  accessor[subscribers] = newValue[subscribers]
- console.log("3 " + accessor[subscribers].length)
-                        } else { //如果是其他数据类型
-
-                            model[name] = newValue //更新$model中的值
-                            simpleType = true
-                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
-                        }
-                        // withProxyCount && updateWithProxy(vmodel.$id, name, newValue)
+                        newValue = accessor.$vmodel = updateVModel(realAccessor, newValue, valueType)
+                        var fn = rebindings[newValue.$id]
+                        fn && fn()//更新视图
+                        var parent = watchProperties.vmodel
+                        // withProxyCount && updateWithProxy(parent.$id, name, newValue)//同步循环绑定中的代理VM
+                        model[name] = newValue.$model//同步$model
+                        notifySubscribers(realAccessor)   //通知顶层改变
+                        safeFire(parent, name, model[name], preValue)   //触发$watch回调
+                    }
+                } else {
+                    collectSubscribers(realAccessor) //收集视图函数
+                    return realAccessor
+                }
+            }
+            accessor.$vmodel = val.$model ? val : modelFactory(val, val)
+            model[name] = accessor.$vmodel.$model
+        } else {
+            accessor = function(newValue) { //简单的数据类型
+                var preValue = model[name]
+                if (arguments.length) {
+                    if (!isEqual(preValue, newValue)) {
+                        model[name] = newValue //同步$model
+                        var vmodel = watchProperties.vmodel
+                        withProxyCount && updateWithProxy(vmodel.$id, name, newValue)//同步循环绑定中的代理VM
                         notifySubscribers(accessor) //通知顶层改变
-                        if (simpleType) {
-                            safeFire(vmodel, name, newValue, preValue)
-                        }
+                        safeFire(vmodel, name, newValue, preValue)//触发$watch回调
                     }
                 } else {
                     collectSubscribers(accessor) //收集视图函数
-                    return accessor.$vmodel || preValue
+                    return preValue
                 }
             }
-            accessor[subscribers] = [] //订阅者数组
-            if (rchecktype.test(valueType)) {
-                var complexValue = val.$model ? val : modelFactory(val, val)
-                accessor.$vmodel = complexValue
-                //   accessor[subscribers] = complexValue[subscribers]
-                model[name] = complexValue.$model
-            } else {
-                model[name] = val
-            }
+            model[name] = val
         }
+        accessor[subscribers] = [] //订阅者数组
         accessingProperties[name] = accessor
     }
     //with绑定生成的代理对象储存池
@@ -592,14 +587,13 @@
                 data.rollback && data.rollback() //还原 ms-with ms-on
             })
             var ret = modelFactory(b)
-            rebindings[ret.$id] = function(callback, data) {
+            rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
                         if (el.type) { //重新绑定
-                        //  avalon.nextTick(function() {
+                            avalon.nextTick(function() {
                                 bindingHandlers[el.type](el, el.vmodels)
-                              
-                         //   })
+                            })
                         }
                     })(data)
                 }
@@ -1562,7 +1556,6 @@
 
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
-        console.log(list)
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
