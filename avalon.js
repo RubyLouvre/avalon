@@ -2303,8 +2303,8 @@
                         lastFn.node = locatedNode
                         lastFn.parent = parent
                         parent.insertBefore(transation, locatedNode)
-                        for (var i = 0, el; el = spans[i++]; ) {
-                            scanTag(el, data.vmodels)
+                        for (var i = 0, node; node = spans[i++]; ) {
+                            scanTag(node, data.vmodels)
                         }
                         spans = null
                         break
