@@ -2,27 +2,36 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-with</title>
+        <title>ms-on</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
         <script>
-            avalon.define("test", function(vm) {
-                vm.aaa = function() {
-                    alert(1)
+            var count = 0
+            avalon.define("multi-click", function(vm) {
+                vm.str1 = ""
+                vm.str2 = ""
+                vm.str3 = ""
+                vm.click0 = function() {
+                    vm.str1 = "xxxxxxxxx" + (count++)
                 }
-                vm.bbb = function() {
-                    alert(2)
+                vm.click1 = function() {
+                    vm.str2 = "xxxxxxxxx" + (count++)
                 }
-                vm.ccc = function() {
-                    alert(3)
+                vm.click2 = function() {
+                    vm.str3 = "xxxxxxxxx" + (count++)
                 }
             })
         </script>
     </head>
     <body>
-        <div ms-controller="test">
-            <p>测试同一个元素绑定多个相同类型的事件</p>
-            <p ms-click-1="bbb" ms-click="aaa"  ms-click-2="ccc">xxx</p>
-        </div>
+        <fieldset>
+            <legend>一个元素绑定多个同种事件的回调</legend>
+            <div ms-controller="multi-click">
+                <div ms-click="click0" ms-click-1="click1" ms-click-2="click2" >请点我</div>
+                <div>{{str1}}</div>
+                <div>{{str2}}</div>
+                <div>{{str3}}</div>
+            </div>
+        </fieldset>
     </body>
 </html>
