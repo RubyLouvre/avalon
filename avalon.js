@@ -2558,7 +2558,7 @@
             var elem = data.element,
                     tagName = elem.tagName
             if (typeof modelBinding[tagName] === "function") {
-                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels)
+                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
                 if (data.evaluator && data.args) {
@@ -2787,23 +2787,20 @@
             type = "radio"
         }
 
-        var valueAccessor = data.changed ? function() {
-            return data.changed.call(element, element.value)
-        } : function() {
-            return element.value
-        }
+        var callback = data.changed || noop
         //当value变化时改变model的值
         var updateVModel = function() {
-            element.oldValue = element.value
+            var val = element.oldValue = element.value
             if ($elem.data("duplex-observe") !== false) {
-                evaluator(valueAccessor())
+                evaluator(val)
+                callback.call(element, val)
             }
         }
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var curValue = evaluator()
-            if (curValue !== element.value) {
-                element.value = curValue + ""
+            var val = evaluator()
+            if (val !== element.value) {
+                element.value = val + ""
             }
         }
         if (type === "radio") {
@@ -2813,16 +2810,18 @@
             }
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    var value = element.value
+                    var val = element.value
                     if (fixType === "text") {
-                        evaluator(value)
+                        evaluator(val)
                     } else if (fixType === "bool") {
-                        evaluator(value === "true")
+                        val = val === "true"
+                        evaluator(val)
                     } else {
-                        var val = !element.defaultChecked
+                        val = !element.defaultChecked
                         evaluator(val)
                         element.checked = val
                     }
+                    callback.call(element, val)
                 }
             }
             removeFn = $elem.bind("click", updateVModel)
@@ -2839,6 +2838,7 @@
                     } else {
                         avalon.error("ms-duplex位于checkbox时要求对应一个数组")
                     }
+                    callback.call(element, array)
                 }
             }
             data.handler = function() {
@@ -2946,14 +2946,14 @@
     }
     modelBinding.SELECT = function(element, evaluator, data, oldValue) {
         var $elem = avalon(element)
-
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
-                var curValue = $elem.val() //字符串或字符串数组
-                if (curValue + "" !== oldValue) {
-                    evaluator(curValue)
-                    oldValue = curValue + ""
+                var val = $elem.val() //字符串或字符串数组
+                if (val + "" !== oldValue) {
+                    evaluator(val)
+                    oldValue = val + ""
                 }
+                data.changed.call(element, val)
             }
         }
         data.handler = function() {
