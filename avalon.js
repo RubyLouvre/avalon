@@ -2274,119 +2274,120 @@
             }
         },
         "each": function(method, pos, el) {
-            var data = this
-            var group = data.group
-            var pp = data.startRepeat && data.startRepeat.parentNode
-            if (pp) { //fix  #300 #307
-                data.parent = pp
-            }
-            var parent = data.parent
-            var proxies = data.proxies
-            if (method === "del" || method === "move") {
-                var locatedNode = getLocatedNode(parent, data, pos)
-            }
-            switch (method) {
-                case "add": //在pos位置后添加el数组（pos为数字，el为数组）
-                    var arr = el
-                    var last = data.getter().length - 1
-                    var transation = documentFragment.cloneNode(false)
-                    var spans = [],
-                            lastFn = {}
-                    for (var i = 0, n = arr.length; i < n; i++) {
-                        var ii = i + pos
-                        var proxy = createEachProxy(ii, arr[i], data, last)
-                        proxies.splice(ii, 0, proxy)
-                        lastFn = shimController(data, transation, spans, proxy)
-                    }
-                    locatedNode = getLocatedNode(parent, data, pos)
-                    lastFn.node = locatedNode
-                    lastFn.parent = parent
-                    parent.insertBefore(transation, locatedNode)
-                    for (var i = 0, el; el = spans[i++]; ) {
-                        scanTag(el, data.vmodels)
-                    }
-                    spans = null
-                    break
-                case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                    proxies.splice(pos, el) //移除对应的子VM
-                    removeFromSanctuary(removeView(locatedNode, group, el))
-                    break
-                case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
-                    var last = proxies.length - 1
-                    for (; el = proxies[pos]; pos++) {
-                        el.$index = pos
-                        el.$first = pos === 0
-                        el.$last = pos === last
-                    }
-                    break
-                case "clear":
-                    var deleteFragment = documentFragment.cloneNode(false)
-                    if (data.startRepeat) {
-                        while (true) {
-                            var node = data.startRepeat.nextSibling
-                            if (node && node !== data.endRepeat) {
-                                deleteFragment.appendChild(node)
-                            } else {
-                                break
+            if (method) {
+                var data = this
+                var group = data.group
+                var pp = data.startRepeat && data.startRepeat.parentNode
+                if (pp) { //fix  #300 #307
+                    data.parent = pp
+                }
+                var parent = data.parent
+                var proxies = data.proxies
+                if (method === "del" || method === "move") {
+                    var locatedNode = getLocatedNode(parent, data, pos)
+                }
+                switch (method) {
+                    case "add": //在pos位置后添加el数组（pos为数字，el为数组）
+                        var arr = el
+                        var last = data.getter().length - 1
+                        var transation = documentFragment.cloneNode(false)
+                        var spans = [],
+                                lastFn = {}
+                        for (var i = 0, n = arr.length; i < n; i++) {
+                            var ii = i + pos
+                            var proxy = createEachProxy(ii, arr[i], data, last)
+                            proxies.splice(ii, 0, proxy)
+                            lastFn = shimController(data, transation, spans, proxy)
+                        }
+                        locatedNode = getLocatedNode(parent, data, pos)
+                        lastFn.node = locatedNode
+                        lastFn.parent = parent
+                        parent.insertBefore(transation, locatedNode)
+                        for (var i = 0, el; el = spans[i++]; ) {
+                            scanTag(el, data.vmodels)
+                        }
+                        spans = null
+                        break
+                    case "del": //将pos后的el个元素删掉(pos, el都是数字)
+                        proxies.splice(pos, el) //移除对应的子VM
+                        removeFromSanctuary(removeView(locatedNode, group, el))
+                        break
+                    case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
+                        var last = proxies.length - 1
+                        for (; el = proxies[pos]; pos++) {
+                            el.$index = pos
+                            el.$first = pos === 0
+                            el.$last = pos === last
+                        }
+                        break
+                    case "clear":
+                        var deleteFragment = documentFragment.cloneNode(false)
+                        if (data.startRepeat) {
+                            while (true) {
+                                var node = data.startRepeat.nextSibling
+                                if (node && node !== data.endRepeat) {
+                                    deleteFragment.appendChild(node)
+                                } else {
+                                    break
+                                }
+                            }
+                        } else {
+                            while (parent.firstChild) {
+                                deleteFragment.appendChild(parent.firstChild)
                             }
                         }
-                    } else {
-                        while (parent.firstChild) {
-                            deleteFragment.appendChild(parent.firstChild)
-                        }
-                    }
-                    removeFromSanctuary(deleteFragment)
-                    if (proxies)
+                        removeFromSanctuary(deleteFragment)
                         proxies.length = 0
-                    break
-                case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-                    var t = proxies.splice(pos, 1)[0]
-                    if (t) {
-                        proxies.splice(el, 0, t)
-                        var moveNode = removeView(locatedNode, group)
-                        locatedNode = getLocatedNode(parent, data, el)
-                        parent.insertBefore(moveNode, locatedNode)
-                    }
-                    break
-                case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
-                    var proxy = proxies[pos]
-                    if (proxy) {
-                        proxy[proxy.$itemName] = el
-                    }
-                    break
-                case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
-                    var pool = el
-                    var transation = documentFragment.cloneNode(false)
-                    var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
-                    var keys = [],
-                            spans = [],
-                            lastFn = {}
-                    for (var key in pos) { //得到所有键名
-                        if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                            keys.push(key)
+                        break
+                    case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
+                        var t = proxies.splice(pos, 1)[0]
+                        if (t) {
+                            proxies.splice(el, 0, t)
+                            var moveNode = removeView(locatedNode, group)
+                            locatedNode = getLocatedNode(parent, data, el)
+                            parent.insertBefore(moveNode, locatedNode)
                         }
-                    }
-                    if (callback) { //如果有回调，则让它们排序
-                        var keys2 = callback.call(parent, keys)
-                        if (keys2 && Array.isArray(keys2) && keys2.length) {
-                            keys = keys2
+                        break
+                    case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
+                        var proxy = proxies[pos]
+                        if (proxy) {
+                            proxy[proxy.$itemName] = el
                         }
-                    }
-                    for (var i = 0, key; key = keys[i++]; ) {
-                        if (key !== "hasOwnProperty") {
-                            lastFn = shimController(data, transation, spans, pool[key])
+                        break
+                    case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
+                        var pool = el
+                        var transation = documentFragment.cloneNode(false)
+                        var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
+                        var keys = [],
+                                spans = [],
+                                lastFn = {}
+                        for (var key in pos) { //得到所有键名
+                            if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                                keys.push(key)
+                            }
                         }
-                    }
-                    lastFn.parent = parent
-                    lastFn.node = data.endRepeat || null
-                    parent.insertBefore(transation, lastFn.node)
-                    for (var i = 0, el; el = spans[i++]; ) {
-                        scanTag(el, data.vmodels)
-                    }
-                    spans = null
-                    break
+                        if (callback) { //如果有回调，则让它们排序
+                            var keys2 = callback.call(parent, keys)
+                            if (keys2 && Array.isArray(keys2) && keys2.length) {
+                                keys = keys2
+                            }
+                        }
+                        for (var i = 0, key; key = keys[i++]; ) {
+                            if (key !== "hasOwnProperty") {
+                                lastFn = shimController(data, transation, spans, pool[key])
+                            }
+                        }
+                        lastFn.parent = parent
+                        lastFn.node = data.endRepeat || null
+                        parent.insertBefore(transation, lastFn.node)
+                        for (var i = 0, el; el = spans[i++]; ) {
+                            scanTag(el, data.vmodels)
+                        }
+                        spans = null
+                        break
+                }
+                iteratorCallback.call(data, arguments)
             }
-            iteratorCallback.call(data, arguments)
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
@@ -2446,11 +2447,10 @@
                 }
             }
         },
-        "on": function(val, elem, data) {
+        "on": function(callback, elem, data) {
             var fn = data.evaluator
             var args = data.args
             var vmodels = data.vmodels
-            var callback     
             if (!data.hasArgs) {
                 callback = function(e) {
                     return fn.apply(0, args).call(this, e)
@@ -2626,6 +2626,7 @@
                     }
                 }
             }
+            data.proxies = []
             data.template = template
             node = template.firstChild
             data.fastRepeat = node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
@@ -2662,7 +2663,6 @@
                 }
                 data.handler("append", list, pool)
             } else {
-                data.proxies = []
                 data.handler("add", 0, list)
             }
         },
