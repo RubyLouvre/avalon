@@ -3242,7 +3242,7 @@
                 setTimeout(function() {
                     head.removeChild(node)
                 })
-                log("加载 " + id + " 失败" + onError + " " + (!modules[id].state))
+                log("Debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
                 return true
             }
@@ -3316,7 +3316,7 @@
                 if (callback) {
                     callback()
                 }
-                log("已成功加载 " + url)
+                log("Debug: 已成功加载 " + url)
             }
 
             node.onerror = function() {
@@ -3324,7 +3324,7 @@
             }
             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
             head.appendChild(node) //chrome下第二个参数不能为null
-            log("正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+            log("Debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
         }
 
         innerRequire = avalon.require = function(list, factory, parent) {
@@ -3380,12 +3380,6 @@
 
             if (typeof id === "string") {
                 var _id = args.shift()
-            }
-            if (typeof args[0] === "boolean") { //用于文件合并, 在标准浏览器中跳过补丁模块
-                if (args[0]) {
-                    return
-                }
-                args.shift()
             }
             if (typeof args[0] === "function") {
                 args.unshift([])
@@ -3485,13 +3479,13 @@
                     }
 
                     function isPrimaryTouch(event) { //是否纯净的触摸事件，非mousemove等模拟的事件，也不是手势事件
-                        return (event.pointerType == "touch" ||
-                                event.pointerType == event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
+                        return (event.pointerType === "touch" ||
+                                event.pointerType === event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
                     }
 
                     function isPointerEventType(e, type) { //是否最新发布的PointerEvent
-                        return (e.type == "pointer" + type ||
-                                e.type.toLowerCase() == "mspointer" + type)
+                        return (e.type === "pointer" + type ||
+                                e.type.toLowerCase() === "mspointer" + type)
                     }
 
                     DOC.addEventListener(touchNames[0], function(e) {
