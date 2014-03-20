@@ -2779,15 +2779,15 @@
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     modelBinding.INPUT = function(element, evaluator, data) {
-        var fixType = data.param
-        var type = element.type,
-                removeFn,
-                $elem = avalon(element)
+        var fixType = data.param,
+                type = element.type,
+                callback = data.changed,
+                $elem = avalon(element),
+                removeFn
+
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
         }
-
-        var callback = data.changed || noop
         //当value变化时改变model的值
         var updateVModel = function() {
             var val = element.oldValue = element.value
