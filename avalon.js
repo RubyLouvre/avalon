@@ -857,7 +857,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("alias已经被废弃，请使用paths, shim配置项")
+            log("Warning: alias方法已废弃，请用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -3207,7 +3207,7 @@
             return this
         },
         set: function(index, val) {
-            if (index >= 0 && index < this.length) {
+            if ( index >= 0 ) {
                 var valueType = getType(val)
                 if (val && val.$model) {
                     val = val.$model
