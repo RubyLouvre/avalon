@@ -584,7 +584,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("Warning: alias方法已废弃")
+            log("Warning: alias方法已废弃，请用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -596,6 +596,7 @@
                             if (currValue.src) {
                                 kernel.paths[c] = currValue.src
                                 delete currValue.src
+                            }
                             kernel.shim[c] = currValue
                             break;
                     }
