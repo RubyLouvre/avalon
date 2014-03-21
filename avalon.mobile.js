@@ -584,7 +584,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("alias方法已经被废弃")
+            log("Warning: alias方法已废弃")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -596,7 +596,6 @@
                             if (currValue.src) {
                                 kernel.paths[c] = currValue.src
                                 delete currValue.src
-                            }
                             kernel.shim[c] = currValue
                             break;
                     }
@@ -2625,7 +2624,7 @@
             return this
         },
         set: function(index, val) {
-            if (index >= 0 && index < this.length) {
+            if (index >= 0) {
                 var valueType = getType(val)
                 if (val && val.$model) {
                     val = val.$model
