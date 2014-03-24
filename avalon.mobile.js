@@ -2300,7 +2300,7 @@
 
         //当value变化时改变model的值
         var updateVModel = function() {
-            var val = element.oldValue = element.vlaue
+            var val = element.oldValue = element.value
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(val)
                 callback.call(element, val)
