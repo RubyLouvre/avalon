@@ -297,10 +297,10 @@
      *                           modelFactory                              *
      **********************************************************************/
     var VMODELS = avalon.vmodels = {}
-    var rargs = /^function\s*[^\(]*\(\s*([^\)]*)\)/m
-    function getScopeName(str) {
-        return str.match(rargs)[1].match(/\w+/)[0]
-    }
+//    var rargs = /^function\s*[^\(]*\(\s*([^\)]*)\)/m
+//    function getScopeName(str) {
+//        return str.match(rargs)[1].match(/\w+/)[0]
+//    }
     avalon.define = function(id, factory) {
         if (typeof id !== "string") {
             avalon.error("必须指定ID")
@@ -311,9 +311,9 @@
         var scope = {
             $watch: noop
         }
-        var name = getScopeName(factory)
+     //   var name = getScopeName(factory)
         factory(scope) //得到所有定义
-        var model = modelFactory(scope, name) //偷天换日，将scope换为model
+        var model = modelFactory(scope) //偷天换日，将scope换为model
         model.$id = id
         return VMODELS[id] = model
     }
@@ -357,30 +357,31 @@
             vmodel[i] = Observable[i]
         }
         hideProperties(vmodel, skipProperties)
-        for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
-            Registry[expose] = fn
+        for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值  
             fn()
-            collectSubscribers(fn)
-            delete Registry[expose]
+            putComputeToObservable(fn)
         }
         return vmodel
     }
-    /**
-     * 
-var reg = new RegExp("\\b"+"name"+"\\.(\\w+)","g")
-var name = "name.rrr+name.ggg/name.eee.eee3"
-name.match(reg)
-     * https://github.com/ecomfe/etpl/blob/master/src/main.js
-     * http://weblog.bocoup.com/javascript-object-observe/
-     */
-    function getDeps(str, name, watchProperties){
-        str.replace(
-                    /\[['"]?([^'"]+)['"]?\]/g,
-                    function ( match, name ) {
-                        return '.' + name;
-                    }
-                ).match( new RegExp(""))
-        
+
+
+    function putComputeToObservable(fn, watchProperties) {
+        var props = fn.toString().replace(rbracketstr, function(match, name) {
+            return '.' + name;
+        })
+                .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
+                .match(/this\.[$a-z][\w$]*/g) || []
+        var uniq = {}
+        props.forEach(function(name) {
+            name = name.splice(5)
+            if (!uniq[name]) {
+                uniq[name] = 1
+                if (watchProperties[name]) {
+                    avalon.Array.ensure(watchProperties[name], fn)
+                }
+            }
+        })
+
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events," + subscribers).match(rword)
 
@@ -421,7 +422,7 @@ name.match(reg)
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             val.enumerable = val.configurable = true
             Object.defineProperty(vmodel, name, val)
-            computedProperties.push( val.get )
+            computedProperties.push(val.get)
         } else if (rchecktype.test(valueType)) {
             vmodel[name] = modelFactroy(val)
             watchProperties[name] = []
@@ -1359,31 +1360,37 @@ name.match(reg)
     /*********************************************************************
      *                          编译模块                                   *
      **********************************************************************/
-    var keywords =
-            // 关键字
-            "break,case,catch,continue,debugger,default,delete,do,else,false" + ",finally,for,function,if,in,instanceof,new,null,return,switch,this" + ",throw,true,try,typeof,var,void,while,with"
 
-            // 保留字
-            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends" + ",final,float,goto,implements,import,int,interface,long,native" + ",package,private,protected,public,short,static,super,synchronized" + ",throws,transient,volatile"
-
-            // ECMA 5 - use strict
-            + ",arguments,let,yield"
-
-            + ",undefined"
-    var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
-    var rsplit = /[^\w$]+/g
-    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var rnumber = /\b\d[^,]*/g
-    var rcomma = /^,+|,+$/g
-    var getVariables = function(code) {
-        code = code
-                .replace(rrexpstr, "")
-                .replace(rsplit, ",")
-                .replace(rkeywords, "")
-                .replace(rnumber, "")
-                .replace(rcomma, "")
-
-        return code ? code.split(/,+/) : []
+    var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
+    var rbracketstr = /\[['"]?([^'"]+)['"]?\]/g //https://github.com/ecomfe/etpl/blob/master/src/main.js
+    var rspareblanks = /\s*(\.|'|")\s*/g
+    var rvariable = /\b[a-z$][\w$]*/
+    var cacheVars = createCache(512)
+    function getVariables(code) {
+        code = code + " "
+        if (cacheVars[code]) {
+            return cacheVars[code]
+        }
+        var expr = code
+                .replace(rcomments, "")//移除所有注释
+                .replace(rbracketstr, function(_, name) {//将aaa["xxx"]转换为aaa.xxx
+                    return '.' + name;
+                })
+                .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
+        var vars = [], tmpl, unique = {}
+        while (expr) {
+            var match = expr.match(rvariable)
+            if (match) {
+                expr = RegExp.rightContext
+                tmpl = RegExp.leftContext
+                match = match[0]
+                if (tmpl !== "." && tmpl !== '"' && tmpl !== "'" && !unique[match]) {
+                    unique[match] = 1
+                    vars.push(match)
+                }
+            }
+        }
+        return cacheVars(code, vars)
     }
     //添加赋值语句
 
@@ -1403,18 +1410,11 @@ name.match(reg)
 
     }
 
-    function uniqArray(arr, vm) {
-        var length = arr.length
-        if (length <= 1) {
-            return arr
-        } else if (length === 2) {
-            return arr[0] !== arr[1] ? arr : [arr[0]]
-        }
+    function uniqVMList(arr) {
         var uniq = {}
         return arr.filter(function(el) {
-            var key = vm ? el && el.$id : el
-            if (!uniq[key]) {
-                uniq[key] = 1
+            if (!uniq[el.$id]) {
+                uniq[el.$id] = 1
                 return true
             }
             return false
@@ -1451,7 +1451,7 @@ name.match(reg)
                 args = [],
                 prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
-        vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
+        scopes = uniqVMList(scopes)
         for (var i = 0, sn = scopes.length; i < sn; i++) {
             if (vars.length) {
                 var name = "vm" + expose + "_" + i
