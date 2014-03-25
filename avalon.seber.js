@@ -1,5 +1,8 @@
 /* 
  * 这是avalon的第三版，使用最激进大胆的新API构进，以期这先行研究让avalon领先于世界！
+ * 之前的avalon是在动态执行时收集依赖,而次世代avalon是通过静态编译获取依赖关系
+ * 之前的avalon通过劫持内部set,get函数实现对视图的同步，VM与M是分开的，次世代avalon是直接在原对象上修改，
+ 通过Object.observe监听用户行为进行视图同步
  * 2014.3.13
  */
 
@@ -311,7 +314,7 @@
         var scope = {
             $watch: noop
         }
-     //   var name = getScopeName(factory)
+        //   var name = getScopeName(factory)
         factory(scope) //得到所有定义
         var model = modelFactory(scope) //偷天换日，将scope换为model
         model.$id = id
@@ -421,8 +424,23 @@
         }
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             val.enumerable = val.configurable = true
+            var userGet = val.get
+            var userSet = val.set || noop
+            val.set = function(newValue) {
+                var oldValue = userGet()
+                userSet.call(this, newValue)
+                newValue = userGet()
+                if (oldValue !== newValue) {
+                    Object.getNotifier(this).notify({
+                        type: "update",
+                        object: this,
+                        name: "c",
+                        oldValue: oldValue
+                    })
+                }
+            }
             Object.defineProperty(vmodel, name, val)
-            computedProperties.push(val.get)
+            computedProperties.push(userGet)
         } else if (rchecktype.test(valueType)) {
             vmodel[name] = modelFactroy(val)
             watchProperties[name] = []
