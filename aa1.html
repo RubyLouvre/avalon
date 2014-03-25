@@ -1,51 +1,29 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon.js"></script>
+        <script src="avalon_newparser.js"></script>
         <script>
-
-            var obj = {a: 1, b: 2};
-            Object.defineProperty(obj, "c", {
-                get: function() {
-                    console.log("dddddddddddd")
-                    return obj.a + " " + obj.b
-                },
-                set: function(v) {
-                    var arr = v.split(" ")
-                    obj.a = arr[0]
-                    obj.b = arr[1]
-                },
-                enumerable: true,
-                configurable: true
-            }); //修改属性设定
-            var rargs = /^function\s*[^\(]*\(\s*([^\)]*)\)/m
-            function getVMName(str) {
-                return str.match(rargs)[1].match(/\w+/)[0]
-            }
-            var aaa = function(id, fn) {
-                var name = getVMName(fn+"")
-            }
-            aaa("xx", function(vm, ddd) {
-            })
-            var handler = {
-                get: function(target, name) {
-                    console.log(name)
-                    return target[name]
+            avalon.define("xxx", function(vm) {
+                vm.array = [1, 2, 3, 4, 5]
+                vm.bbb = "ddd"
+                vm.object = {
+                    xx: "dddddd",
+                    yyL: "PPPpp"
                 }
-            }
-            var proxy = new Proxy(obj, handler)
-
-            var cc = proxy.c
-            console.log(cc)
-
+            })
 
 
         </script>
 
     </head>
-    <body >
-
-
+    <body ms-controller="xxx">
+        {{bbb}}
+        <ul >
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
+        <ul>
+            <li ms-repeat="object">{{$key}}</li>
+        </ul>
 
     </body>
 </html>
