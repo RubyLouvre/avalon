@@ -507,26 +507,6 @@
         return (target + "").replace(rregexp, "\\$&")
     }
     var plugins = {
-        alias: function(val) {
-            log("Warning: alias方法已废弃，请用paths, shim配置项")
-            for (var c in val) {
-                if (ohasOwn.call(val, c)) {
-                    var currValue = val[c]
-                    switch (getType(currValue)) {
-                        case "string":
-                            kernel.paths[c] = currValue
-                            break;
-                        case "object":
-                            if (currValue.src) {
-                                kernel.paths[c] = currValue.src
-                                delete currValue.src
-                            }
-                            kernel.shim[c] = currValue
-                            break;
-                    }
-                }
-            }
-        },
         loader: function(bool) {
             if (bool) {
                 window.define = innerRequire.define
@@ -2405,27 +2385,7 @@
                     }
                 })(name)
             })
-    if (!("onmouseenter" in root)) { //chrome 30  终于支持mouseenter
-        var oldBind = avalon.bind
-        var events = {
-            mouseenter: "mouseover",
-            mouseleave: "mouseout"
-        }
-        avalon.bind = function(elem, type, fn) {
-            if (events[type]) {
-                return oldBind(elem, events[type], function(e) {
-                    var t = e.relatedTarget
-                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
-                        delete e.type
-                        e.type = type
-                        return fn.call(elem, e)
-                    }
-                })
-            } else {
-                return oldBind(elem, type, fn)
-            }
-        }
-    }
+
     /*********************************************************************
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
@@ -3138,12 +3098,6 @@
                 stack = stack[0] === "(" ? stack.slice(1, -1) : stack.replace(/\s/, "") //去掉换行符
                 return stack.replace(/(:\d+)?:\d+$/i, "") //去掉行号与或许存在的出错字符起始位置
             }
-            var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
-            for (var i = nodes.length, node; node = nodes[--i]; ) {
-                if ((base || node.className === subscribers) && node.readyState === "interactive") {
-                    return node.className = node.src
-                }
-            }
         }
 
         function checkCycle(deps, nick) {
@@ -3373,135 +3327,7 @@
         innerRequire.config = kernel
         innerRequire.checkDeps = checkDeps
     }
-    /*********************************************************************
-     *                           Touch  Event                           *
-     **********************************************************************/
 
-    if ("ontouchstart" in window) {
-        void
-
-                function() {
-                    var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
-                            now, firstTouch, _isPointerType, delta, deltaX = 0,
-                            deltaY = 0,
-                            touchNames = []
-
-                    function swipeDirection(x1, x2, y1, y2) {
-                        return Math.abs(x1 - x2) >=
-                                Math.abs(y1 - y2) ? (x1 - x2 > 0 ? "left" : "right") : (y1 - y2 > 0 ? "up" : "down")
-                    }
-
-                    function longTap() {
-                        if (touchProxy.last) {
-                            touchProxy.fire("hold")
-                            touchProxy = {}
-                        }
-                    }
-
-                    function cancelHold() {
-                        clearTimeout(holdTimeout)
-                    }
-
-                    function cancelAll() {
-                        clearTimeout(touchTimeout)
-                        clearTimeout(tapTimeout)
-                        clearTimeout(swipeTimeout)
-                        clearTimeout(holdTimeout)
-                        touchProxy = {}
-                    }
-
-                    if (window.navigator.pointerEnabled) { //IE11 与 W3C
-                        touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
-                    } else if (window.navigator.msPointerEnabled) { //IE9-10
-                        touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
-                    } else {
-                        touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
-                    }
-
-                    function isPrimaryTouch(event) { //是否纯净的触摸事件，非mousemove等模拟的事件，也不是手势事件
-                        return (event.pointerType === "touch" ||
-                                event.pointerType === event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
-                    }
-
-                    function isPointerEventType(e, type) { //是否最新发布的PointerEvent
-                        return (e.type === "pointer" + type ||
-                                e.type.toLowerCase() === "mspointer" + type)
-                    }
-
-                    DOC.addEventListener(touchNames[0], function(e) {
-                        if ((_isPointerType = isPointerEventType(e, "down")) && !isPrimaryTouch(e))
-                            return
-                        firstTouch = _isPointerType ? e : e.touches[0]
-                        if (e.touches && e.touches.length === 1 && touchProxy.x2) {
-                            touchProxy.x2 = touchProxy.y2 = void 0
-                        }
-                        now = Date.now()
-                        delta = now - (touchProxy.last || now)
-                        var el = firstTouch.target
-                        touchProxy.el = "tagName" in el ? el : el.parentNode
-                        clearTimeout(touchTimeout)
-                        touchProxy.x1 = firstTouch.pageX
-                        touchProxy.y1 = firstTouch.pageY
-                        touchProxy.fire = function(name) {
-                            avalon.fire(this.el, name)
-                        }
-                        if (delta > 0 && delta <= 250) { //双击
-                            touchProxy.isDoubleTap = true
-                        }
-                        touchProxy.last = now
-                        holdTimeout = setTimeout(longTap, 750)
-                    })
-                    DOC.addEventListener(touchNames[1], function(e) {
-                        if ((_isPointerType = isPointerEventType(e, "move")) && !isPrimaryTouch(e))
-                            return
-                        firstTouch = _isPointerType ? e : e.touches[0]
-                        cancelHold()
-                        touchProxy.x2 = firstTouch.pageX
-                        touchProxy.y2 = firstTouch.pageY
-                        deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
-                        deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
-                    })
-
-                    DOC.addEventListener(touchNames[2], function(e) {
-                        if ((_isPointerType = isPointerEventType(e, "up")) && !isPrimaryTouch(e))
-                            return
-                        cancelHold()
-                        // swipe
-                        if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
-                                (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
-                            //如果是滑动，根据最初与最后的位置判定其滑动方向
-                            swipeTimeout = setTimeout(function() {
-                                touchProxy.fire("swipe")
-                                touchProxy.fire("swipe" + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
-                                touchProxy = {}
-                            }, 0)
-                            // normal tap 
-                        } else if ("last" in touchProxy) {
-                            if (deltaX < 30 && deltaY < 30) { //如果移动的距离太小
-                                tapTimeout = setTimeout(function() {
-                                    touchProxy.fire("tap")
-                                    if (touchProxy.isDoubleTap) {
-                                        touchProxy.fire('doubletap')
-                                        touchProxy = {}
-                                    } else {
-                                        touchTimeout = setTimeout(function() {
-                                            touchProxy.fire('singletap')
-                                            touchProxy = {}
-                                        }, 250)
-                                    }
-                                }, 0)
-                            } else {
-                                touchProxy = {}
-                            }
-                        }
-                        deltaX = deltaY = 0
-                    })
-
-                    DOC.addEventListener(touchNames[3], cancelAll)
-                }()
-        //http://quojs.tapquo.com/ http://code.baidu.com/
-        //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
-    }
     /*********************************************************************
      *                    DOMReady                                         *
      **********************************************************************/
