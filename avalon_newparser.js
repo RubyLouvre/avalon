@@ -1875,7 +1875,7 @@
         }
         var match = code
                 .replace(rcomments, "")//移除所有注释
-                .replace(rbracketstr, '')//将aaa["xxx"]转换为aaa.xxx
+                .replace(rbracketstr, "")//将aaa["xxx"]转换为aaa 去掉子属性
                 .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
                 .match(rvariable) || []
         var vars = [], unique = {}
