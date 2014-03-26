@@ -11,12 +11,14 @@
                     yyL: "PPPpp"
                 }
             })
-
+window.onload = function(){
+    console.log(document.body.getAttribute("ms-if"))
+}
 
         </script>
 
     </head>
-    <body ms-controller="xxx">
+    <body ms-controller="x2xx" ms-if="aaa[bbb],ccc['eee\'abc']">
         {{bbb}}
         <ul >
             <li ms-repeat="array">{{el}}</li>
@@ -24,6 +26,10 @@
         <ul>
             <li ms-repeat="object">{{$key}}</li>
         </ul>
+16:54:32
+Stark 2014/3/26 16:54:32
+	<script>var t = "aaa[bbb],ccc['eee\'abc']";</script>
+	<a href="#" onclick="alert([t, this.getAttribute('t')].join('\n')); return false;" t="aaa[bbb],ccc['eee\'abc']">test</a>
 
     </body>
 </html>

@@ -1234,7 +1234,7 @@
         var bindings = [],
                 msData = {},
                 match
-        for (var i = 0, attr; attr = attributes[i++]; ) { 
+        for (var i = 0, attr; attr = attributes[i++]; ) {
             if (match = attr.name.match(rmsAttr)) {
                 //如果是以指定前缀命名的
                 var type = match[1]
@@ -1358,30 +1358,26 @@
      **********************************************************************/
 
     var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
-    var rbracketstr = /\[(['"])[^'"]+\1\]/g 
+    var rbracketstr = /\[(['"])[^'"]+\1\]/g
     var rspareblanks = /\s*(\.|'|")\s*/g
-    var rvariable = /\b[a-z$][\w$]*/
+    var rvariable = /"(?:[^"\\]|\\[\s\S])*"|'(?:[^'\\]|\\[\s\S])*'|\.?[a-z_$]\w*/ig
+    var rexclude = /^['".]/
     var cacheVars = createCache(512)
     function getVariables(code) {
         code = code + " "
         if (cacheVars[code]) {
             return cacheVars[code]
         }
-        var expr = code
+        var match = code
                 .replace(rcomments, "")//移除所有注释
-                .replace(rbracketstr,'')//将aaa["xxx"]转换为aaa.xxx
+                .replace(rbracketstr, '')//将aaa["xxx"]转换为aaa.xxx
                 .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
-        var vars = [], tmpl, unique = {}
-        while (expr) {
-            var match = expr.match(rvariable)
-            if (match) {
-                expr = RegExp.rightContext
-                tmpl = RegExp.leftContext
-                match = match[0]
-                if (tmpl !== "." && tmpl !== '"' && tmpl !== "'" && !unique[match]) {
-                    unique[match] = 1
-                    vars.push(match)
-                }
+                .match(rvariable) || []
+        var vars = [], unique = {}
+        for (var i = 0; i < match.length; ++i) {
+            var variable = match[i]
+            if (!rexclude.test(variable) && !unique[variable]) {
+                unique[variable] = vars.push(variable)
             }
         }
         return cacheVars(code, vars)
