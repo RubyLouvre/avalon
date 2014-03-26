@@ -1853,9 +1853,16 @@
     /*********************************************************************
      *                          编译模块                                  *
      **********************************************************************/
+/**
 
+求一个正则,用于匹配一个变量(以$或字母或下划线开头),这个变量前面不能是. ' "
+如 "aaa, bbb, ccc.ddd"==> ["aaa","bbb","ccc"]
+"aaa[bbb],ccc['eee']" ==> ["aaa","bbb","ccc"]
+'aaa[bbb],ccc["eee"]' ==> ["aaa","bbb","ccc"]
+"aaa+bbb+$eee+333"    ==>  ["aaa", "bbb", "$eee"]                               
+ */
     var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
-    var rbracketstr = /\[['"]?([^'"]+)['"]?\]/g //https://github.com/ecomfe/etpl/blob/master/src/main.js
+    var rbracketstr = /\[(['"])[^'"]+\1\]/g 
     var rspareblanks = /\s*(\.|'|")\s*/g
     var rvariable = /(\b|\$)[a-z_][\w\$]*/i
     var cacheVars = createCache(512)
@@ -1866,9 +1873,7 @@
         }
         var expr = code
                 .replace(rcomments, "")//移除所有注释
-                .replace(rbracketstr, function(_, name) {//将aaa["xxx"]转换为aaa.xxx
-                    return '.' + name;
-                })
+                .replace(rbracketstr,  '')//将aaa["xxx"]转换为aaa
                 .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
         var vars = [], tmpl, unique = {}
         while (expr) {

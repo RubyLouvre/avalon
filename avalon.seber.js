@@ -1358,7 +1358,7 @@
      **********************************************************************/
 
     var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
-    var rbracketstr = /\[['"]?([^'"]+)['"]?\]/g //https://github.com/ecomfe/etpl/blob/master/src/main.js
+    var rbracketstr = /\[(['"])[^'"]+\1\]/g 
     var rspareblanks = /\s*(\.|'|")\s*/g
     var rvariable = /\b[a-z$][\w$]*/
     var cacheVars = createCache(512)
@@ -1369,9 +1369,7 @@
         }
         var expr = code
                 .replace(rcomments, "")//移除所有注释
-                .replace(rbracketstr, function(_, name) {//将aaa["xxx"]转换为aaa.xxx
-                    return '.' + name;
-                })
+                .replace(rbracketstr,'')//将aaa["xxx"]转换为aaa.xxx
                 .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
         var vars = [], tmpl, unique = {}
         while (expr) {
