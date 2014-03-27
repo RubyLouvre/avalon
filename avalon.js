@@ -851,7 +851,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("alias已经被废弃，请使用paths, shim配置项")
+            log("Warning: alias方法已废弃，请用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -3195,7 +3195,7 @@
             return this
         },
         set: function(index, val) {
-            if (index >= 0 && index < this.length) {
+            if ( index >= 0 ) {
                 var valueType = getType(val)
                 if (val && val.$model) {
                     val = val.$model
@@ -3820,7 +3820,7 @@
                     head.removeChild(node)
                     node = null // 处理旧式IE下的循环引用问题
                 })
-                log("加载 " + id + " 失败" + onError + " " + (!modules[id].state))
+                log("Debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
                 return true
             }
@@ -3896,7 +3896,7 @@
                         callback()
                     }
                     if (checkFail(node, false, !W3C)) {
-                        log("已成功加载 " + url)
+                        log("Debug: 已成功加载 " + url)
                     }
                 }
             }
@@ -3905,7 +3905,7 @@
             }
             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
             head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-            log("正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+            log("Debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
         }
 
         innerRequire = avalon.require = function(list, factory, parent) {
@@ -3960,12 +3960,6 @@
 
             if (typeof id === "string") {
                 var _id = args.shift()
-            }
-            if (typeof args[0] === "boolean") { //用于文件合并, 在标准浏览器中跳过补丁模块
-                if (args[0]) {
-                    return
-                }
-                args.shift()
             }
             if (typeof args[0] === "function") {
                 args.unshift([])

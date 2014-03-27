@@ -1,44 +1,35 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon2.js"></script>
+        <script src="avalon_newparser.js"></script>
         <script>
-
-
-            var model = avalon.define("xxx", function(vm) {
-                vm.a = "xxx"
-                vm.data = {
-                    ddd: "ttt",
-                    eee: "oooo"
-                }
-                vm.array = [Math.random()]
-                vm.bbb = function() {
-                    return vm.data.ddd + "  " + vm.data.eee
+            avalon.define("xxx", function(vm) {
+                vm.array = [1, 2, 3, 4, 5]
+                vm.bbb = "ddd"
+                vm.object = {
+                    xx: "dddddd",
+                    yyL: "PPPpp"
                 }
             })
-            window.onload = function() {
-                var el = document.getElementById("aaa")
-                el.addEventListener("click", function() {
-                    model.data = {
-                        ddd: new Date - 1,
-                        eee: new Date - 2
-                    }
-                    model.array = [Math.random(), Math.random(), Math.random(), Math.random()]
-                })
-            }
+window.onload = function(){
+    console.log(document.body.getAttribute("ms-if"))
+}
 
         </script>
 
     </head>
-    <body ms-controller="xxx">
-        <button type="button" id="aaa">ddddddd</button>
-        {{bbb()}}
+    <body ms-controller="x2xx" ms-if="aaa[bbb],ccc['eee\'abc']">
+        {{bbb}}
         <ul >
-            <li ms-repeat="data">{{$key}}:{{$val}}</li>
-        </ul>
-        <ol>
             <li ms-repeat="array">{{el}}</li>
-        </ol>
+        </ul>
+        <ul>
+            <li ms-repeat="object">{{$key}}</li>
+        </ul>
+16:54:32
+Stark 2014/3/26 16:54:32
+	<script>var t = "aaa[bbb],ccc['eee\'abc']";</script>
+	<a href="#" onclick="alert([t, this.getAttribute('t')].join('\n')); return false;" t="aaa[bbb],ccc['eee\'abc']">test</a>
 
     </body>
 </html>
