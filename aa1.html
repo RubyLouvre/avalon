@@ -1,35 +1,28 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon_newparser.js"></script>
+        <script src="avalon.js"></script>
+        <script src="avalon.require.text.js"></script>
+        <link rel="stylesheet" href="ui/datepicker/jquery-ui-1.10.1.css">
         <script>
-            avalon.define("xxx", function(vm) {
-                vm.array = [1, 2, 3, 4, 5]
-                vm.bbb = "ddd"
-                vm.object = {
-                    xx: "dddddd",
-                    yyL: "PPPpp"
-                }
+            require(["avalon.datepicker, ready!"], function() {
+                avalon.define("parent", function(vm) {
+                    vm.$date = {
+                        dateFormat: "yyyy--MM--dd"
+                    }
+                    vm.array = [1, 2, 3, 4]
+                })
+                avalon.scan()
             })
-window.onload = function(){
-    console.log(document.body.getAttribute("ms-if"))
-}
 
         </script>
 
     </head>
-    <body ms-controller="x2xx" ms-if="aaa[bbb],ccc['eee\'abc']">
-        {{bbb}}
-        <ul >
-            <li ms-repeat="array">{{el}}</li>
-        </ul>
+    <body ms-controller="parent" >
+
         <ul>
-            <li ms-repeat="object">{{$key}}</li>
+            <li ms-repeat="array"><input ms-widget="datepicker,$,$date"></li>
         </ul>
-16:54:32
-Stark 2014/3/26 16:54:32
-	<script>var t = "aaa[bbb],ccc['eee\'abc']";</script>
-	<a href="#" onclick="alert([t, this.getAttribute('t')].join('\n')); return false;" t="aaa[bbb],ccc['eee\'abc']">test</a>
 
     </body>
 </html>
