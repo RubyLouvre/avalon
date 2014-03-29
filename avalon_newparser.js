@@ -1713,11 +1713,11 @@
                         if (type === "if" && param.indexOf("loop") > -1) {
                             binding.priority += 100
                         }
-                        if (type === "widget") {
+                        if (vmodels.length) {
                             bindings.push(binding)
-                            elem.msData = elem.msData || msData
-                        } else if (vmodels.length) {
-                            bindings.push(binding)
+                            if (type === "widget") {
+                                elem.msData = elem.msData || msData
+                            }
                         }
                     }
                 }
@@ -1853,15 +1853,15 @@
     /*********************************************************************
      *                          编译模块                                  *
      **********************************************************************/
-/**
-
-求一个正则,用于匹配一个变量(以$或字母或下划线开头),这个变量前面不能是. ' "
-如 "aaa, bbb, ccc.ddd"==> ["aaa","bbb","ccc"]
-"aaa[bbb],ccc['eee']" ==> ["aaa","bbb","ccc"]
-'aaa[bbb],ccc["eee"]' ==> ["aaa","bbb","ccc"]
-"aaa+bbb+$eee+333"    ==>  ["aaa", "bbb", "$eee"]    
- "aaa[bbb],ccc['eee\\'abc']" ==> ["aaa","bbb","ccc"]
- */
+    /**
+     
+     求一个正则,用于匹配一个变量(以$或字母或下划线开头),这个变量前面不能是. ' "
+     如 "aaa, bbb, ccc.ddd"==> ["aaa","bbb","ccc"]
+     "aaa[bbb],ccc['eee']" ==> ["aaa","bbb","ccc"]
+     'aaa[bbb],ccc["eee"]' ==> ["aaa","bbb","ccc"]
+     "aaa+bbb+$eee+333"    ==>  ["aaa", "bbb", "$eee"]    
+     "aaa[bbb],ccc['eee\\'abc']" ==> ["aaa","bbb","ccc"]
+     */
     var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
     var rbracketstr = /\[(['"])[^'"]+\1\]/g
     var rspareblanks = /\s*(\.|'|")\s*/g
@@ -2729,7 +2729,7 @@
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
                 vmodels = element.vmodels || vmodels
                 for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (VMODELS[v.$id]) { //取得离它最近由用户定义的VM
+                    if (!/^\$proxy\$[a-z]+0\.\d+$/.test(v.$id)) { //过滤代理VM #337
                         var nearestVM = v
                         break
                     }
@@ -3202,7 +3202,7 @@
             return this
         },
         set: function(index, val) {
-            if ( index >= 0 ) {
+            if (index >= 0) {
                 var valueType = getType(val)
                 if (val && val.$model) {
                     val = val.$model

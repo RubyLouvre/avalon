@@ -2,27 +2,21 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
         <script src="avalon.js"></script>
-        <script src="avalon.require.text.js"></script>
-        <link rel="stylesheet" href="ui/datepicker/jquery-ui-1.10.1.css">
-        <script>
-            require(["avalon.datepicker, ready!"], function() {
-                avalon.define("parent", function(vm) {
-                    vm.$date = {
-                        dateFormat: "yyyy--MM--dd"
-                    }
-                    vm.array = [1, 2, 3, 4]
-                })
-                avalon.scan()
-            })
-
-        </script>
-
+        <style>
+            .item{border:1px solid #ccc;padding:4px;margin-top:10px;height:40px;}
+        </style>
     </head>
-    <body ms-controller="parent" >
-
-        <ul>
-            <li ms-repeat="array"><input ms-widget="datepicker,$,$date"></li>
-        </ul>
-
+    <body>
+        <div ms-controller="test">
+            <div class="item"  ms-each="array">{{el}} {{$last}}
+                <div class="actions" ms-click="$remove">remove</div>
+            </div>
+        </div>
+        <script>
+        var model = avalon.define('test', function(vm) {
+            vm.array = [1, 2, 3, 4,5,6,7];
+          
+        });
+        </script>
     </body>
 </html>

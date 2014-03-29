@@ -1713,11 +1713,11 @@
                         if (type === "if" && param.indexOf("loop") > -1) {
                             binding.priority += 100
                         }
-                        if (type === "widget") {
+                        if (vmodels.length) {
                             bindings.push(binding)
-                            elem.msData = elem.msData || msData
-                        } else if (vmodels.length) {
-                            bindings.push(binding)
+                            if (type === "widget") {
+                                elem.msData = elem.msData || msData
+                            }
                         }
                     }
                 }
@@ -2433,12 +2433,8 @@
                 }
                 if (rbind.test(elem.outerHTML)) {
                     scanAttr(elem, data.vmodels)
-//                    if (data.param.indexOf("once") >= 0) {
-//                        data.handler = noop
-//                    }
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
-
                 if (data.msInDocument) {
                     data.msInDocument = false
                     elem.parentNode.replaceChild(placehoder, elem)

@@ -1330,11 +1330,11 @@
                         if (type === "if" && param === "loop") {
                             binding.priority += 100
                         }
-                        if (type === "widget") {
+                        if (vmodels.length) {
                             bindings.push(binding)
-                            elem.msData = elem.msData || msData
-                        } else if (vmodels.length) {
-                            bindings.push(binding)
+                            if (type === "widget") {
+                                elem.msData = elem.msData || msData
+                            }
                         }
                     }
                 }
@@ -3583,7 +3583,7 @@
     avalon.config({
         loader: true
     })
-    var msSelector = "[ms-controller],[ms-important],[ms-widget]"
+    var msSelector = "[ms-controller],[ms-important]"
     avalon.ready(function() {
         var elems = DOC.querySelectorAll(msSelector),
                 nodes = []

@@ -1252,11 +1252,11 @@
                     if (type === "if" && param === "loop") {
                         binding.priority += 100
                     }
-                    if (type === "widget") {
+                    if (vmodels.length) {
                         bindings.push(binding)
-                        elem.msData = elem.msData || msData
-                    } else if (vmodels.length) {
-                        bindings.push(binding)
+                        if (type === "widget") {
+                            elem.msData = elem.msData || msData
+                        }
                     }
                 }
             }
@@ -2151,7 +2151,7 @@
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
                 vmodels = element.vmodels || vmodels
                 for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (VMODELS[v.$id]) { //取得离它最近由用户定义的VM
+                    if (!/^\$proxy\$[a-z]+0\.\d+$/.test(v.$id)) { //过滤代理VM #337
                         var nearestVM = v
                         break
                     }
@@ -3358,7 +3358,7 @@
     avalon.config({
         loader: true
     })
-    var msSelector = "[ms-controller],[ms-important],[ms-widget]"
+    var msSelector = "[ms-controller],[ms-important]"
     avalon.ready(function() {
         var elems = DOC.querySelectorAll(msSelector),
                 nodes = []
