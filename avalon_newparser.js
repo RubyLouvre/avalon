@@ -314,12 +314,6 @@
                     return avalon.Array.removeAt(target, index)
                 return false
             }
-        },
-        Statistic: {
-            record: function(elem, cost) {
-                avalon.log(elem);
-                avalon.log("扫描花了" + cost + "ms");
-            }
         }
     })
 
@@ -467,10 +461,10 @@
 
     function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
-        if (normalProperties[name] || (val && val.nodeType)) { //如果是元素节点或在全局的skipProperties里或在当前的$skipArray里
+        if (normalProperties[name] || (val && val.nodeType)) { //如果是指明不用监控的系统属性或元素节点，或放到 $skipArray里面
             return normalProperties[name] = val
         }
-        if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchProperties里
+        if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchMore里面的
             return normalProperties[name] = val
         }
         var valueType = getType(val)
@@ -1623,7 +1617,6 @@
         var a = elem.getAttribute(prefix + "skip")
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
-        var checkPerf = false
         if (typeof a === "string") {
             return
         } else if (node = b || c) {
@@ -1631,17 +1624,12 @@
             if (!newVmodel) {
                 return
             }
-            checkPerf = !elem.patchRepeat
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             avalon(elem).removeClass(node.name) //处理IE6
         }
-        var start = new Date
         scanAttr(elem, vmodels) //扫描特性节点
-        if (checkPerf) {
-            avalon.Statistic.record(elem, new Date - start);
-        }
     }
 
     function scanNodes(parent, vmodels) {
@@ -1865,33 +1853,40 @@
     /*********************************************************************
      *                          编译模块                                  *
      **********************************************************************/
-
-    var keywords =
-            // 关键字
-            "break,case,catch,continue,debugger,default,delete,do,else,false" + ",finally,for,function,if,in,instanceof,new,null,return,switch,this" + ",throw,true,try,typeof,var,void,while,with"
-            // 保留字
-            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends" + ",final,float,goto,implements,import,int,interface,long,native" + ",package,private,protected,public,short,static,super,synchronized" + ",throws,transient,volatile"
-
-            // ECMA 5 - use strict
-            + ",arguments,let,yield"
-
-            + ",undefined"
-    var rrexpstr = /\/\*(?:.|\n)*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|'[^']*'|"[^"]*"|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
-    var rsplit = /[^\w$]+/g
-    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var rnumber = /\b\d[^,]*/g
-    var rcomma = /^,+|,+$/g
-    var getVariables = function(code) {
-        code = code
-                .replace(rrexpstr, "")
-                .replace(rsplit, ",")
-                .replace(rkeywords, "")
-                .replace(rnumber, "")
-                .replace(rcomma, "")
-
-        return code ? code.split(/,+/) : []
+    /**
+     
+     求一个正则,用于匹配一个变量(以$或字母或下划线开头),这个变量前面不能是. ' "
+     如 "aaa, bbb, ccc.ddd"==> ["aaa","bbb","ccc"]
+     "aaa[bbb],ccc['eee']" ==> ["aaa","bbb","ccc"]
+     'aaa[bbb],ccc["eee"]' ==> ["aaa","bbb","ccc"]
+     "aaa+bbb+$eee+333"    ==>  ["aaa", "bbb", "$eee"]    
+     "aaa[bbb],ccc['eee\\'abc']" ==> ["aaa","bbb","ccc"]
+     */
+    var rcomments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg  // form http://jsperf.com/remove-comments
+    var rbracketstr = /\[(['"])[^'"]+\1\]/g
+    var rspareblanks = /\s*(\.|'|")\s*/g
+    var rvariable = /"(?:[^"\\]|\\[\s\S])*"|'(?:[^'\\]|\\[\s\S])*'|\.?[a-z_$]\w*/ig
+    var rexclude = /^['".]/
+    var cacheVars = createCache(512)
+    function getVariables(code) {
+        code = code + " "
+        if (cacheVars[code]) {
+            return cacheVars[code]
+        }
+        var match = code
+                .replace(rcomments, "")//移除所有注释
+                .replace(rbracketstr, "")//将aaa["xxx"]转换为aaa 去掉子属性
+                .replace(rspareblanks, "$1")//将"' aaa .  bbb'"转换为"'aaa.ddd'"
+                .match(rvariable) || []
+        var vars = [], unique = {}
+        for (var i = 0; i < match.length; ++i) {
+            var variable = match[i]
+            if (!rexclude.test(variable) && !unique[variable]) {
+                unique[variable] = vars.push(variable)
+            }
+        }
+        return cacheVars(code, vars)
     }
-
     //添加赋值语句
 
     function addAssign(vars, scope, name, duplex) {
@@ -1949,13 +1944,13 @@
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
-        var vars = getVariables(code),
+        var vars = getVariables(code).concat(),
                 assigns = [],
                 names = [],
                 args = [],
                 prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
-        vars = uniqArray(vars), scopes = uniqArray(scopes, 1)
+        scopes = uniqArray(scopes, 1)
         for (var i = 0, sn = scopes.length; i < sn; i++) {
             if (vars.length) {
                 var name = "vm" + expose + "_" + i
@@ -2034,7 +2029,7 @@
         } catch (e) {
             log("Debug:" + e.message)
         } finally {
-            vars = textBuffer = names = null //释放内存
+            code = vars = textBuffer = names = null //释放内存
         }
     }
 
@@ -2445,8 +2440,12 @@
                 }
                 if (rbind.test(elem.outerHTML)) {
                     scanAttr(elem, data.vmodels)
+//                    if (data.param.indexOf("once") >= 0) {
+//                        data.handler = noop
+//                    }
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
+
                 if (data.msInDocument) {
                     data.msInDocument = false
                     elem.parentNode.replaceChild(placehoder, elem)
@@ -3203,7 +3202,7 @@
             return this
         },
         set: function(index, val) {
-            if ( index >= 0 ) {
+            if (index >= 0) {
                 var valueType = getType(val)
                 if (val && val.$model) {
                     val = val.$model
@@ -3717,6 +3716,7 @@
             if (!modules[id]) { //如果之前没有加载过
                 modules[id] = {
                     id: id,
+                    parent: parent,
                     exports: {}
                 }
                 if (shim) { //shim机制

@@ -1,23 +1,22 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon2.js"></script>
-        <script>
-
-
-            var model = avalon.define("xxx", function(vm) {
-                vm.aaa = function() {
-                    console.log(new Date - 0)
-                }
-            })
-
-        </script>
-
+        <script src="avalon.js"></script>
+        <style>
+            .item{border:1px solid #ccc;padding:4px;margin-top:10px;height:40px;}
+        </style>
     </head>
-    <body ms-controller="xxx">
-        <button type="button" id="aaa" ms-click="aaa">ddddddd</button>
-
-
-
+    <body>
+        <div ms-controller="test">
+            <div class="item"  ms-each="array">{{el}} {{$last}}
+                <div class="actions" ms-click="$remove">remove</div>
+            </div>
+        </div>
+        <script>
+        var model = avalon.define('test', function(vm) {
+            vm.array = [1, 2, 3, 4,5,6,7];
+          
+        });
+        </script>
     </body>
 </html>
