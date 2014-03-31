@@ -2262,7 +2262,11 @@
                         delete VMODELS[vmodel.$id]
                     }
                     if (supportMutationEvents) {
-                        element.addEventListener("DOMNodeRemoved", offTree)
+                        element.addEventListener("DOMNodeRemoved", function(e) {
+                            if (e.target === this) {
+                                offTree()
+                            }
+                        })
                     } else {
                         element.offTree = offTree
                         launchImpl(element)
