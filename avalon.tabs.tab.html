@@ -1,8 +1,9 @@
 <ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header"
     ms-class-ui-corner-bottom="bottom" 
     ms-class-ui-corner-all="!bottom" 
-    ms-each-tab="tabs">
+    >
     <li class="ui-state-default" 
+        ms-repeat-tab="tabs"
         ms-class-0="ui-corner-top:!bottom"
         ms-class-1="ui-corner-bottom:bottom"
         ms-class-2="ui-tabs-active:active == $index"
@@ -14,7 +15,7 @@
         <span  class="ui-icon ui-icon-close"
                style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"
                ms-visible="tab.removable && !tab.disabled"
-               ms-click="remove">
+               ms-click="remove($event, $index)">
         </span>
     </li>
 </ul>
