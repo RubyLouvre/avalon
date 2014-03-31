@@ -1301,7 +1301,8 @@
     var rmsAttr = /ms-(\w+)-?(.*)/
     var priorityMap = {
         "if": 10,
-        "repeat": 100,
+        "repeat": 90,
+        "widget": 110,
         "each": 1400,
         "with": 1500,
         "duplex": 2000
@@ -1350,6 +1351,7 @@
         switch (firstBinding.type) {
             case "if":
             case "repeat":
+            case "widget":
                 executeBindings([firstBinding], vmodels)
                 break
             default:
@@ -1953,9 +1955,6 @@
                 }
                 if (rbind.test(elem.outerHTML)) {
                     scanAttr(elem, data.vmodels)
-//                    if (data.param.indexOf("once") >= 0) {
-//                        data.handler = noop
-//                    }
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
                 if (data.msInDocument) {
@@ -2252,19 +2251,30 @@
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
                 element.removeAttribute("ms-widget")
-                var widgetVM = constructor(element, data, vmodels)
+                var vmodel = constructor(element, data, vmodels)
                 data.evaluator = noop
-                var callback = getBindingCallback(element, "data-widget-defined", vmodels)
-                if (callback) {
-                    callback.call(element, widgetVM)
+                if (vmodel.hasOwnProperty("$init")) {
+                    vmodel.$init()
+                }
+                if (vmodel.hasOwnProperty("$remove")) {
+                    var offTree = function() {
+                        vmodel.$remove()
+                        delete VMODELS[vmodel.$id]
+                    }
+                    if (supportMutationEvents) {
+                        element.addEventListener("DOMNodeRemoved", offTree)
+                    } else {
+                        element.offTree = offTree
+                        launchImpl(element)
+                    }
                 }
             } else if (vmodels.length) {//如果该组件还没有加载，那么保存当前的vmodels
                 element.vmodels = vmodels
             }
-            return true
         }
 
     }
+    var supportMutationEvents = DOC.implementation.hasFeature("MutationEvents", "2.0")
 
     //============================   class preperty binding  =======================
     "hover,active".replace(rword, function(method) {
@@ -2370,18 +2380,25 @@
             }
         }
         element.oldValue = element.value
+        element.onTree = onTree
         launch(element)
         registerSubscriber(data)
     }
     var TimerID, ribbon = [], launch = noop
+
+    function onTree() {
+        if (this.oldValue !== this.value) {
+            avalon.fire(this, "input")
+        }
+    }
+
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
             if (avalon.contains(root, el)) {
-                if (el.oldValue !== el.value) {
-                    avalon.fire(el, "input")
-                }
+                el.onTree && el.onTree()
             } else {
+                el.offTree && el.offTree()
                 ribbon.splice(n, 1)
             }
         }
