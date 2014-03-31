@@ -1,22 +1,15 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon.js"></script>
-        <style>
-            .item{border:1px solid #ccc;padding:4px;margin-top:10px;height:40px;}
-        </style>
     </head>
-    <body>
-        <div ms-controller="test">
-            <div class="item"  ms-each="array">{{el}} {{$last}}
-                <div class="actions" ms-click="$remove">remove</div>
-            </div>
-        </div>
+    <body ms-text='bbb["a\aa"]'>
+
         <script>
-        var model = avalon.define('test', function(vm) {
-            vm.array = [1, 2, 3, 4,5,6,7];
-          
-        });
+            var str = document.body.getAttribute("ms-text")
+            console.log(str)
+            var rbracketstr = /\[(['"])[^'"]+\1\]/g
+            var rvariable = /"(?:[^"\\]|\\[\s\S])*"|'(?:[^'\\]|\\[\s\S])*'|\.?[a-z_$]\w*/ig
+            console.log(str.replace(rbracketstr, "").match(rvariable))
         </script>
     </body>
 </html>

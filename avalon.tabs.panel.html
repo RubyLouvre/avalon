@@ -1,14 +1,13 @@
-<div ms-each-panel="tabpanels" >
-    <div  class="ui-tabs-panel ui-widget-content"
-          ms-if="panel.contentType == 'content' && active == $index"
-          ms-class="ui-corner-bottom:!bottom"
-          ms-visible="active == $index && !(collapsed && collapsible)" >
-        {{panel.content | html}}
-    </div>
-    <div class="ui-tabs-panel ui-widget-content"
-         ms-if="panel.contentType == 'include' && active == $index"
-         ms-class="ui-corner-bottom:!bottom"
-         ms-visible="active == $index && !(collapsed && collapsible)"
-         ms-include-src="panel.content" >
-    </div>
+<div  class="ui-tabs-panel ui-widget-content"
+      ms-repeat-panel="tabpanels"
+      ms-class="ui-corner-bottom:!bottom"
+      ms-visible="active == $index && !(collapsed && collapsible)" >
+    {{panel.content |html }}
+</div>&nbsp;
+<div  class="ui-tabs-panel ui-widget-content"
+      ms-repeat-panel="tabpanels"
+      ms-class="ui-corner-bottom:!bottom"
+      ms-visible="active == $index && !(collapsed && collapsible)"
+      ms-include-src="panel.content" >
+    >
 </div>

@@ -43,8 +43,9 @@ define(["avalon", "text!avalon.tabs.tab.html", "text!avalon.tabs.panel.html"], f
                         var collapse = options.event !== 'click' ? ' ms-click="collapse($event,$index)"' : ''
                         // 设置动态模板
                         var tablist = tabHTML.replace("MS_OPTION_EVENT", vmodel.event)
-
-                        var panels = panelHTML
+                        //决定是重复利用已有的元素，还是通过ms-include-src引入新内部
+                        var contentType = options.contentType === "content" ? 0 : 1
+                        var panels = panelHTML.split("&nbsp;")[contentType]
                         //jquery ui的.ui-helper-clearfix 类不支持对IE6清除浮动，这时需要fix一下
                         if (!avalon.ui.fixUiHelperClearfix && typeof styleEl.style.maxHeight == "undefined") {
                             styleEl.styleSheet.cssText += ".ui-helper-clearfix {_zoom:1;}"
@@ -59,7 +60,7 @@ define(["avalon", "text!avalon.tabs.tab.html", "text!avalon.tabs.panel.html"], f
                 }
             }
             vm.$remove = function() {
-             //   element.innerHTML = element.textContent = ""
+                 element.innerHTML = element.textContent = ""
             }
             vm.activate = function(e, index) {
                 e.preventDefault()
@@ -159,8 +160,8 @@ define(["avalon", "text!avalon.tabs.tab.html", "text!avalon.tabs.panel.html"], f
         collapsible: false,
         bottom: false, //按钮位于上方还是上方
         removable: false, //按钮的左上角是否出现X，用于移除按钮与对应面板
-        activate: avalon.noop// 切换面板后触发的回调
-       
+        activate: avalon.noop, // 切换面板后触发的回调
+        contentType: "content"
     }
     return avalon
 })

@@ -6,22 +6,33 @@
         <script>
             var model = avalon.define("bool", function(vm) {
                 vm.list = []
-                vm.callback = function(){
+                vm.callback = function() {
                     console.log([].slice.call(arguments))
                 }
+                vm.array = [
+                    [ "<span>dddddddd</span>", "<span>eeee</span>"], 
+                    [ "<span>dddddddd</span>", "<span>eeee</span>"], 
+                [ "<span>dddddddd</span>", "<span>eeee</span>"]
+            ]
             });
             setTimeout(function() {
                 console.log("===============")
-                model.list = [1,2,3,4]
+                model.list = [1, 2, 3, 4]
             }, 1300)
-             setTimeout(function() {
+            setTimeout(function() {
                 console.log("===============")
-                model.list = [5,6,7,8,9,10]
+                model.list = [5, 6, 7, 8, 9, 10]
             }, 2300)
         </script>
     </head>
     <body>
+
         <div ms-controller="bool">
+            <table border='1' width='100%'>
+                <tr ms-repeat='array'>
+                    <td ms-repeat-elem='el'>{{elem|html}}</td>
+                </tr>
+            </table>
             <ul>
                 <li ms-repeat="list" data-repeat-rendered="callback">{{el}}</li>
             </ul>
