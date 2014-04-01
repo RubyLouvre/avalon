@@ -12,10 +12,6 @@
         ms-MS_OPTION_EVENT="activate($event,$index)" 
         ms-hover="ui-state-hover:!tab.disabled"> 
         <a href="#">{{tab.title | html}}</a>
-        <span  class="ui-icon ui-icon-close"
-               style="float: left; margin: 0.4em 0.2em 0 0; cursor: pointer;"
-               ms-visible="tab.removable && !tab.disabled"
-               ms-click="remove($event, $index)">
-        </span>
+       MS_OPTION_REMOVABLE
     </li>
 </ul>
