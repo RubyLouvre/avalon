@@ -3187,6 +3187,54 @@
         }
         plugins.css.ext = ".css"
         plugins.js.ext = ".js"
+
+        plugins.text = function(url) {
+            var xhr = new XMLHttpRequest
+            var id = url.replace(/[?#].*/, "")
+            modules[id] = {}
+            xhr.onload = function() {
+                modules[id].state = 2
+                modules[id].exports = xhr.responseText
+                innerRequire.checkDeps()
+            }
+            xhr.onerror = function() {
+                avalon.error(url + " 对应资源不存在或没有开启 CORS")
+            }
+            xhr.open("GET", url, true)
+            xhr.withCredentials = true
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+            xhr.send()
+            return id
+        }
+        //http://www.html5rocks.com/zh/tutorials/webcomponents/imports/
+        if ('import' in DOC.createElement("link")) {
+            plugins.text = function(url) {
+                var id = url.replace(/[?#].*/, "")
+                modules[id] = {}
+                var link = DOC.createElement("link")
+                link.rel = 'import'
+                link.href = url
+                link.onload = function() {
+                    modules[id].state = 2
+                    var content = this.import
+                    if (content) {
+                        modules[id].exports = content.documentElement.outerHTML
+                        avalon.require.checkDeps()
+                    } 
+                    onerror(0, content)
+                }
+                function onerror(a, b) {
+                    b && avalon.error(url + "对应资源不存在或没有开启 CORS")
+                    setTimeout(function() {
+                        head.removeChild(link)
+                    })
+                }
+                link.onerror = onerror
+                head.appendChild(link)
+                return id
+            }
+        }
+
         var cur = getCurrentScript(true)
         if (!cur) { //处理window safari的Error没有stack的问题
             cur = avalon.slice(document.scripts).pop().src
