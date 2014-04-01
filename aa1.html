@@ -1,15 +1,20 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <script src="avalon.js"></script>
     </head>
     <body ms-text='bbb["a\aa"]'>
 
         <script>
-            var str = document.body.getAttribute("ms-text")
-            console.log(str)
-            var rbracketstr = /\[(['"])[^'"]+\1\]/g
-            var rvariable = /"(?:[^"\\]|\\[\s\S])*"|'(?:[^'\\]|\\[\s\S])*'|\.?[a-z_$]\w*/ig
-            console.log(str.replace(rbracketstr, "").match(rvariable))
+            window.onload = function() {
+                var div = document.createElement("div")
+                var id = "ms" + (new Date - 0)
+                var str = "<span></span><script id=XXXX>avalon.XXXX = 'XXXX'<\/script>".replace(/XXXX/g, id)
+             
+                document.body.appendChild(div)
+                avalon.innerHTML(div, str)
+                alert(avalon[id])
+            }
         </script>
     </body>
 </html>

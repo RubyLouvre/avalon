@@ -1100,11 +1100,11 @@
         return fragment
     }
     avalon.innerHTML = function(node, html) {
-        if (rnest.test(html) && /<script/i.test(html)) {
+        if (!/<script/i.test(html) && !rnest.test(html)) {
+            node.innerHTML = html
+        } else {
             var a = this.parseHTML(html)
             this.clearHTML(node).appendChild(a)
-        } else {
-            node.innerHTML = html
         }
     }
     /*********************************************************************
