@@ -140,7 +140,7 @@ define(["avalon", "text!avalon.tabs.tab.html", "text!avalon.tabs.panel.html"], f
     avalon.ui.tabs.defaults = {
         collapsed: false,
         active: 0, //默认打开第几个面板
-        event: "click", //切换面板的事件，移过(mouseover)还是点击(click)
+        event: "click", //切换面板的事件，移过(mouseenter)还是点击(click)
         collapsible: false, //当切换面板的事件为click时，
         //如果对处于激活状态的按钮再点击，将会它失去激活并且对应的面板会收起来
         //再次点击它时，它还原，并且对应面板重新出现
