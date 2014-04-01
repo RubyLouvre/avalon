@@ -4086,7 +4086,7 @@
         innerRequire("ready!", fn)
     }
     avalon.config({
-        loader: true
+        loader: false
     })
     avalon.ready(function() {
         //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
