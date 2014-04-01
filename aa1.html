@@ -1,20 +1,36 @@
-<html>
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
     <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon.js"></script>
+        <meta charset="utf-8">
+        <meta name ="viewport" content ="initial-scale=1, maximum-scale=1, minimum-scale=1" />
+        <title>ms-if后于ms-src执行</title>
     </head>
-    <body ms-text='bbb["a\aa"]'>
-
-        <script>
-            window.onload = function() {
-                var div = document.createElement("div")
-                var id = "ms" + (new Date - 0)
-                var str = "<span></span><script id=XXXX>avalon.XXXX = 'XXXX'<\/script>".replace(/XXXX/g, id)
-             
-                document.body.appendChild(div)
-                avalon.innerHTML(div, str)
-                alert(avalon[id])
-            }
-        </script>
+    <body ms-controller="common-controller">
+        <div ms-each-el="test">
+            <div ms-if="$index==0">
+                <img ms-src="{{el.b_jpg}}" class="img-resp" />
+            </div>
+            <div ms-if="$index>0">
+                {{el.b_name}}
+                <div>
+                </div>
+                <script src="avalon.js"></script>
+                <script src="jquery.js"></script>
+                <script>
+avalon.ready(function() {
+    $.ajax({
+        url: 'http://crapi.4gshu.com:8096/4GReadAPP/recommend/homeboy/10/qidian/'
+    })
+            .done(function(resp) {
+                console.log(resp.man_top[0].books);
+                avalon.define('common-controller', function(vm) {
+                    vm.test = resp.man_top[0].books;
+                });
+                avalon.scan();
+            });
+});
+                </script>
+            </div>
+        </div>
     </body>
 </html>
