@@ -1074,7 +1074,7 @@
             html = html + ""
         }
         html = html.replace(rxhtml, "<$1></$2>").trim()
-        if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/.test(html)) {
+        if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/i.test(html)) {
             var range = DOC.createRange()
             range.selectNodeContents(root)
             return range.createContextualFragment(html)
@@ -1106,7 +1106,7 @@
         return fragment
     }
     avalon.innerHTML = function(node, html) {
-        if (rnest.test(html)) {
+        if (rnest.test(html) && /<script/i.test(html)) {
             var a = this.parseHTML(html)
             this.clearHTML(node).appendChild(a)
         } else {
@@ -2274,7 +2274,11 @@
                         delete VMODELS[vmodel.$id]
                     }
                     if (supportMutationEvents) {
-                        element.addEventListener("DOMNodeRemoved", offTree)
+                        element.addEventListener("DOMNodeRemoved", function(e) {
+                            if (e.target === this) {
+                                offTree()
+                            }
+                        })
                     } else {
                         element.offTree = offTree
                         launchImpl(element)
