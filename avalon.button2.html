@@ -7,16 +7,15 @@
         <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
         <script src="avalon.js"></script>
         <script>
-            require(["avalon.button2"], function(){
-                avalon.define("default", function(vm){
-                    vm.xx = "ddd"
-                })
+            require(["avalon.button2"], function() {
+                avalon.define("default", avalon.noop)
+                avalon.define("icon", avalon.noop)
                 avalon.scan()
             })
         </script>
     </head>
     <body>
-        <div ms-controller="default">
+        <fieldset ms-controller="default"><legend>default</legend>
 
             <button ms-widget="button">button元素</button>
 
@@ -24,6 +23,15 @@
 
             <a href="#" ms-widget="button">a元素</a>
 
-        </div>
+        </fieldset>
+        <fieldset ms-controller="icon"><legend>icon</legend>
+
+            <button ms-widget="button" data-button-icon-primary="ui-icon-locked" data-button-text="false">只有图标</button>
+            <button ms-widget="button" data-button-icon-primary="ui-icon-info">图标在左边</button>
+            <button ms-widget="button" data-button-icon-secondary="ui-icon-comment">图标在右边</button>
+            <button ms-widget="button" data-button-icon-primary="ui-icon-seek-prev" data-button-icon-secondary="ui-icon-seek-next">图标在两边</button>
+            <button ms-widget="button" data-button-icon-primary="ui-icon-gear" data-button-icon-secondary="ui-icon-home" data-button-text="false">图标在两边并且没有文字</button>
+
+        </fieldset>
     </body>
 </html>

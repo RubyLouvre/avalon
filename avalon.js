@@ -2689,9 +2689,8 @@
             } else {
                 four = void 0
             }
-            data.type = "on"
             data.hasArgs = four
-            data.handlerName = "on"
+            data.handlerName =  data.type =  "on"
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {

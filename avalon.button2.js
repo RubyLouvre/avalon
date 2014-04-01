@@ -1,17 +1,17 @@
 define(["avalon"], function(avalon) {
-    var lastActive,
-            baseClasses = "ui-button ui-widget ui-state-default ui-corner-all",
-            typeClasses = "ui-button-icons-only ui-button-icon-only ui-button-text-icons ui-button-text-icon-primary ui-button-text-icon-secondary ui-button-text-only"
+    var lastActive
+    var baseClasses = "ui-button ui-widget ui-state-default ui-corner-all"
+    var typeClasses = "ui-button-icons-only ui-button-icon-only ui-button-text-icons ui-button-text-icon-primary ui-button-text-icon-secondary ui-button-text-only"
     var widget = avalon.ui.button = function(element, data, vmodels) {
-        var $element = avalon(element), title = element.title,
-                html = element.innerHTML, model, el, checkbox;
-        var options = data.buttonOptions //valon.mix({}, defaults, opts, $element.data())
-        console.log("11111111111111111")
+
+        var options = data.buttonOptions
+
+
 
         var vmodel = avalon.define(data.buttonId, function(vm) {
-            
+
             avalon.mix(vm, options)
-            vm.$skipArray= [ "text", "label","icons"]
+            vm.$skipArray = ["text", "hasTitle", "icons"]
             vm.buttonElement = element
             vm.$init = function() {
                 if (typeof options.disabled !== "boolean") {
@@ -21,17 +21,17 @@ define(["avalon"], function(avalon) {
                 }
                 vm.$determineButtonType()
                 var buttonElement = vm.buttonElement
-                console.log(buttonElement)
-                vm.$hasTitle = !!buttonElement.getAttribute("title");
-                var toggleButton = vm.$type === "checkbox" || vm.$type === "radio"
-                options.activeClass = !toggleButton ? "ui-state-active" : "";
+
+                vm.hasTitle = !!buttonElement.getAttribute("title")
+                var toggleButton = vm.$type === "oheckbox" || vm.$type === "radio"
+                options.activeClass = !toggleButton ? "ui-state-active" : ""
 
                 buttonElement.setAttribute("ms-hover", "ui-state-hover")
                 buttonElement.setAttribute("ms-mouseenter", "$mouseenter")
                 buttonElement.setAttribute("ms-mouseleave", "$mouseleave")
                 buttonElement.setAttribute("ms-click", "$click")
-                if (options.label === null) {
-                    options.label = vm.$type === "input" ? buttonElement.value : buttonElement.innerHTML
+                if (!vm.label) {
+                    vm.label = vm.$type === "input" ? buttonElement.value : buttonElement.innerHTML
                 }
 
                 var $button = avalon(buttonElement).addClass(baseClasses)
@@ -79,41 +79,37 @@ define(["avalon"], function(avalon) {
                 }
 
                 var buttonElement = avalon(vm.buttonElement).removeClass(typeClasses)[0]
-                var span = document.createElement("span")
-                span.className = "ui-button-text"
-                span.innerHTML = options.label
-                vm.buttonElement.innerHTML = ""
-                buttonElement.appendChild(span)
-                var buttonText = span.innerHTML
-                var icons = options.icons
-                var multipleIcons = icons.primary && icons.secondary
+
+                var buttonText = '<span class="ui-button-text">{{label | html}}</span>'
+                var iconPrimary = vm.iconPrimary
+                var iconSecondary = vm.iconSecondary
+                var multipleIcons = iconPrimary && iconSecondary
                 var buttonClasses = []
-                if (icons.primary || icons.secondary) {
+                if (iconPrimary || iconSecondary) {
                     if (options.text) {
-                        buttonClasses.push("ui-button-text-icon" + (multipleIcons ? "s" : (icons.primary ? "-primary" : "-secondary")));
+                        buttonClasses.push("ui-button-text-icon" + (multipleIcons ? "s" : (iconPrimary ? "-primary" : "-secondary")))
                     }
 
-                    if (icons.primary) {
-                        var icon = avalon.parseHTML("<span class='ui-button-icon-primary ui-icon " + icons.primary + "'></span>")
-                        buttonElement.insertBefore(icon, buttonElement.firstChild);
+                    if (iconPrimary) {
+                        buttonText = "<span class='ui-button-icon-primary ui-icon " + iconPrimary + "'></span>" + buttonText
                     }
 
-                    if (icons.secondary) {
-                        var icon = avalon.parseHTML("<span class='ui-button-icon-secondary ui-icon " + icons.secondary + "'></span>")
-                        buttonElement.appendChild(icon);
+                    if (iconSecondary) {
+                        buttonText += "<span class='ui-button-icon-secondary ui-icon " + iconSecondary + "'></span>"
                     }
 
-                    if (!this.options.text) {
-                        buttonClasses.push(multipleIcons ? "ui-button-icons-only" : "ui-button-icon-only");
-
-                        if (!this.hasTitle) {
-                            buttonElement.title = buttonText.trim()
+                    if (!vm.text) {
+                        buttonClasses.push(multipleIcons ? "ui-button-icons-only" : "ui-button-icon-only")
+                        if (!vm.hasTitle) {
+                            buttonElement.title = vm.label.trim()
                         }
                     }
                 } else {
-                    buttonClasses.push("ui-button-text-only");
+                    buttonClasses.push("ui-button-text-only")
                 }
-                avalon(buttonElement).addClass(buttonClasses.join(" "));
+                //  console.log(buttonText)
+                buttonElement.innerHTML = buttonText
+                avalon(buttonElement).addClass(buttonClasses.join(" "))
             }
 
             vm.$determineButtonType = function() {
@@ -134,7 +130,7 @@ define(["avalon"], function(avalon) {
                             }
                             avalon(element).addClass("ui-helper-hidden-accessible")
                             if (element.checked) {
-                                avalon(vmodel.buttonElement).addClass("ui-state-active");
+                                avalon(vmodel.buttonElement).addClass("ui-state-active")
                             }
                             break
                         default:
@@ -152,13 +148,11 @@ define(["avalon"], function(avalon) {
 
     widget.defaults = {
         $type: "",
-        $hasTitle: false,
+        hasTitle: false,
         text: true,
-        label: null,
-        icons: {
-            primary: null,
-            secondary: null
-        }
+        label: "",
+        iconPrimary: null,
+        iconSecondary: null
     }
 
 
@@ -177,15 +171,15 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /**
- data-primary="ui-icon-gear" 用于指定左边的ICON
- data-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
+ data-button-primary="ui-icon-gear" 用于指定左边的ICON
+ data-button-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
  
- data-corner-class="false" 不添加ui-corner-all圆角类名
- data-corner-class="conrer" 添加你指定的这个conrer圆角类名
+ data-button-corner-class="false" 不添加ui-corner-all圆角类名
+ data-button-corner-class="conrer" 添加你指定的这个conrer圆角类名
  不写data-corner-class 添加ui-corner-all圆角类名
  
  button, a, span等标签，取其innerHTML作为UI内容，否则需要取其title
  
- data-text = false 决定其内部是否只显示图标
+ data-button-text = false 决定其内部是否只显示图标
  * 
  */
