@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
+        <script src="avalon.js"></script>
+        <script>
+            require(["avalon.button2"], function(){
+                avalon.define("default", function(vm){
+                    vm.xx = "ddd"
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="default">
+
+            <button ms-widget="button">button元素</button>
+
+            <input ms-widget="button" type="submit" value="input元素">
+
+            <a href="#" ms-widget="button">a元素</a>
+
+        </div>
+    </body>
+</html>
