@@ -1,36 +1,31 @@
-<!DOCTYPE html>
-<html lang="zh-cmn-Hans">
+
+<!doctype html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
-        <meta name ="viewport" content ="initial-scale=1, maximum-scale=1, minimum-scale=1" />
-        <title>ms-if后于ms-src执行</title>
-    </head>
-    <body ms-controller="common-controller">
-        <div ms-each-el="test">
-            <div ms-if="$index==0">
-                <img ms-src="{{el.b_jpg}}" class="img-resp" />
-            </div>
-            <div ms-if="$index>0">
-                {{el.b_name}}
-                <div>
-                </div>
-                <script src="avalon.js"></script>
-                <script src="jquery.js"></script>
-                <script>
-avalon.ready(function() {
-    $.ajax({
-        url: 'http://crapi.4gshu.com:8096/4GReadAPP/recommend/homeboy/10/qidian/'
-    })
-            .done(function(resp) {
-                console.log(resp.man_top[0].books);
-                avalon.define('common-controller', function(vm) {
-                    vm.test = resp.man_top[0].books;
-                });
-                avalon.scan();
+        <title>jQuery UI Button - Default functionality</title>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+        <script src="//code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+        <link rel="stylesheet" href="/resources/demos/style.css">
+        <script>
+            $(function() {
+                $("input[type=submit], a, button")
+                        .button()
+                        .click(function(event) {
+                            event.preventDefault();
+                        });
             });
-});
-                </script>
-            </div>
-        </div>
+        </script>
+    </head>
+    <body>
+
+        <button>A button element</button>
+
+        <input type="submit" value="A submit button">
+
+        <a href="#">An anchor</a>
+
+
     </body>
 </html>
