@@ -73,27 +73,9 @@ define(["avalon"], function(avalon) {
                                 stop(event)
                                 $button.removeClass("ui-state-active")
                             })
-                            .bind("keydown", function(event) {
-                                stop(event)
-                                if (event.which === 8 || event.which === 13) {
-                                    $button.addClass("ui-state-active");
-                                }
-                            })
-                            .bind("keyup", function() {
-                                $button.removeClass("ui-state-active");
-                            })
                             .bind("blur", function() {
                                 $button.removeClass("ui-state-active");
                             })
-
-                    if (buttonElement.tagName === "A") {
-                        $button.bind("keyup", function(event) {
-                            if (event.which === 8) {
-                                // TODO pass through original event correctly (just as 2nd argument doesn't work)
-                                this.click();
-                            }
-                        });
-                    }
                 }
                 if (!vm.label) {
                     vm.label = vm.$type === "input" ? buttonElement.value : buttonElement.innerHTML
@@ -293,8 +275,8 @@ define(["avalon"], function(avalon) {
     return avalon
 })
 /**
- data-button-primary="ui-icon-gear" 用于指定左边的ICON
- data-button-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
+ data-button-icon-primary="ui-icon-gear" 用于指定左边的ICON
+ data-button-icon-secondary="ui-icon-triangle-1-s" 用于指定右边的ICON
  
  data-button-corner-class="false" 不添加ui-corner-all圆角类名
  data-button-corner-class="conrer" 添加你指定的这个conrer圆角类名
@@ -304,5 +286,9 @@ define(["avalon"], function(avalon) {
  button, a, span[data-button]等标签，取其innerHTML作为UI内容，否则需要取其title
  
  data-button-text = false 决定其内部是否只显示图标
- * 
+ 
+ data-button-label="xxx" 指定内容
+      
+click 回凋，this为生成的按钮，第一个传参为事件对象， 第二个为控件VM
+        
  */
