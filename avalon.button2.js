@@ -6,11 +6,14 @@ define(["avalon"], function(avalon) {
 
         var options = data.buttonOptions
 
-
+        if (element.type === "radio") {
+            options.radio = {}
+        }
 
         var vmodel = avalon.define(data.buttonId, function(vm) {
 
             avalon.mix(vm, options)
+            // vm.$radioId = ("radio" + Math.random()).replace("0.","")
             vm.$skipArray = ["text", "hasTitle", "icons"]
             vm.buttonElement = element
             vm.$init = function() {
@@ -23,13 +26,38 @@ define(["avalon"], function(avalon) {
                 var buttonElement = vm.buttonElement
 
                 vm.hasTitle = !!buttonElement.getAttribute("title")
-                var toggleButton = vm.$type === "oheckbox" || vm.$type === "radio"
+                var vmType = vm.$type
+                var toggleButton = vmType === "checkbox" || vmType === "radio"
                 options.activeClass = !toggleButton ? "ui-state-active" : ""
+                if (toggleButton) {
+                    avalon(element).bind("change", function() {
+                        if (vmType === "radio") {
+                            if (this.checked) {
+                                vmodel.radio.active = data.buttonId
+                                console.log(vmodel.radio.active)
+                            }
+                        } else if (vmType === "checkbox") {
+                            avalon(vmodel.buttonElement).toggleClass("ui-state-active", this.checked)
+                        }
+                    })
+                }
 
                 buttonElement.setAttribute("ms-hover", "ui-state-hover")
                 buttonElement.setAttribute("ms-mouseenter", "$mouseenter")
+
                 buttonElement.setAttribute("ms-mouseleave", "$mouseleave")
                 buttonElement.setAttribute("ms-click", "$click")
+
+                if (vmType === "checkbox") {
+                    avalon(buttonElement).bind("click", function() {
+                        if (options.disabled) {
+                            return false;
+                        }
+                    })
+                } else if (vmType === "radio") {
+                    buttonElement.setAttribute("ms-class-3", "ui-state-active:radio.active == '" + data.buttonId + "'")
+                    console.log("ui-state-active:radio.active == '" + data.buttonId + "'")
+                }
                 if (!vm.label) {
                     vm.label = vm.$type === "input" ? buttonElement.value : buttonElement.innerHTML
                 }
@@ -44,23 +72,26 @@ define(["avalon"], function(avalon) {
                     $button.removeClass("ui-state-focus")
                 })
                 vm.$resetButton()
+
                 avalon.scan(buttonElement, [vmodel].concat(vmodels))
 
+
             }
+
             vm.$mouseenter = function() {
                 if (options.disabled) {
                     return
                 }
-                if (this === lastActive) {
-                    avalon(this).addClass("ui-state-active")
-                }
+//                if (this === lastActive) {
+//                    avalon(this).addClass("ui-state-active")
+//                }
             }
 
             vm.$mouseleave = function() {
                 if (options.disabled) {
                     return
                 }
-                avalon(this).removeClass(options.activeClass)
+                //    avalon(this).removeClass(options.activeClass)
             }
 
             vm.$click = function(event) {
@@ -127,6 +158,23 @@ define(["avalon"], function(avalon) {
                                 if (!vmodel.buttonElement) {
                                     vmodel.buttonElement = findButtonElement(ancestor.parentNode, id)
                                 }
+                            }
+                            if (elementType === "radio") {
+                                var form = element.form || document.body
+                                var id = form.getAttribute("data-radio-id")
+                                if (!id) {
+                                    id = (new Date - 0) + ""
+                                    form.setAttribute("data-radio-id", id)
+                                }
+                                var radioGroupId = "proxy" + id + element.name
+                                if (!avalon.vmodels[radioGroupId]) {
+                                    console.log("0000000000000000000000000")
+                                    avalon.define(radioGroupId, function(vm) {
+                                        vm.active = ""
+                                    })
+                                }
+                                vmodel.radio = avalon.vmodels[radioGroupId]
+
                             }
                             avalon(element).addClass("ui-helper-hidden-accessible")
                             if (element.checked) {
