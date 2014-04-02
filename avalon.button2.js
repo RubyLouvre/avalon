@@ -170,17 +170,17 @@ define(["avalon"], function(avalon) {
                     }
 
                     if (iconPrimary) {
-                        buttonText = "<span class='ui-button-icon-primary ui-icon " + iconPrimary + "'></span>" + buttonText
+                        buttonText = "<span class='ui-button-icon-primary ui-icon' ms-class='{{iconPrimary}}'></span>" + buttonText
                     }
 
                     if (iconSecondary) {
-                        buttonText += "<span class='ui-button-icon-secondary ui-icon " + iconSecondary + "'></span>"
+                        buttonText += "<span class='ui-button-icon-secondary ui-icon' ms-class='{{iconSecondary}}'></span>"
                     }
 
                     if (!vm.text) {
                         buttonClasses.push(multipleIcons ? "ui-button-icons-only" : "ui-button-icon-only")
                         if (!vm.hasTitle) {
-                            buttonElement.title = vm.label.trim()
+                            buttonElement.setAttribute("ms-title", "label")
                         }
                     }
                 } else {
@@ -298,9 +298,10 @@ define(["avalon"], function(avalon) {
  
  data-button-corner-class="false" 不添加ui-corner-all圆角类名
  data-button-corner-class="conrer" 添加你指定的这个conrer圆角类名
- 不写data-corner-class 添加ui-corner-all圆角类名
  
- button, a, span等标签，取其innerHTML作为UI内容，否则需要取其title
+ 不写data-button-corner-class 添加ui-corner-all圆角类名
+ 
+ button, a, span[data-button]等标签，取其innerHTML作为UI内容，否则需要取其title
  
  data-button-text = false 决定其内部是否只显示图标
  * 
