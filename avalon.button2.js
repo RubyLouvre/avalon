@@ -1,6 +1,6 @@
 define(["avalon"], function(avalon) {
     var lastActive
-    var baseClasses = "ui-button ui-widget ui-state-default ui-corner-all"
+    var baseClasses = "ui-button ui-widget ui-state-default"
     var typeClasses = "ui-button-icons-only ui-button-icon-only ui-button-text-icons ui-button-text-icon-primary ui-button-text-icon-secondary ui-button-text-only"
     var widget = avalon.ui.button = function(element, data, vmodels) {
 
@@ -9,7 +9,12 @@ define(["avalon"], function(avalon) {
         if (element.type === "radio") {
             options.$radio = {}
         }
-
+        function stop(event) {
+            if (options.disabled) {
+                event.preventDefault()
+                event.stopImmediatePropagation()
+            }
+        }
         var vmodel = avalon.define(data.buttonId, function(vm) {
 
             avalon.mix(vm, options)
@@ -28,7 +33,14 @@ define(["avalon"], function(avalon) {
                 vm.hasTitle = !!buttonElement.getAttribute("title")
                 var vmType = vm.$type
                 var toggleButton = vmType === "checkbox" || vmType === "radio"
-                var $button = avalon(buttonElement)
+                //如果使用了buttonset
+                options.baseClasses = baseClasses
+                if (typeof options.cornerClass === "string") {
+                    options.baseClasses += (" " + options.cornerClass)
+                } else if (options.cornerClass !== false) {
+                    options.baseClasses += " ui-corner-all"
+                }
+                var $button = avalon(buttonElement).addClass(options.baseClasses)
                 options.activeClass = !toggleButton ? "ui-state-active" : ""
                 if (toggleButton) {
                     avalon(element).bind("change", function() {
@@ -54,15 +66,15 @@ define(["avalon"], function(avalon) {
                 } else if (vmType === "button" || vmType === "input") {
                     $button
                             .bind("mousedown", function(event) {
-                                vmodel.$click(event)
+                                stop(event)
                                 $button.addClass("ui-state-active")
                             })
                             .bind("mouseup", function(event) {
-                                vmodel.$click(event)
+                                stop(event)
                                 $button.removeClass("ui-state-active")
                             })
                             .bind("keydown", function(event) {
-                                vmodel.$click(event)
+                                stop(event)
                                 if (event.which === 8 || event.which === 13) {
                                     $button.addClass("ui-state-active");
                                 }
@@ -75,7 +87,7 @@ define(["avalon"], function(avalon) {
                             })
 
                     if (buttonElement.tagName === "A") {
-                        $button.bind("keyup",function(event) {
+                        $button.bind("keyup", function(event) {
                             if (event.which === 8) {
                                 // TODO pass through original event correctly (just as 2nd argument doesn't work)
                                 this.click();
@@ -87,22 +99,32 @@ define(["avalon"], function(avalon) {
                     vm.label = vm.$type === "input" ? buttonElement.value : buttonElement.innerHTML
                 }
 
-                var $button = avalon(buttonElement).addClass(baseClasses)
+                $button
+                        .bind("focus", function() {
+                            $button.removeClass("ui-state-focus");
+                        })
+                        .bind("blur", function() {
+                            $button.removeClass("ui-state-focus");
+                        })
 
-                options.focusCallback = avalon.bind(buttonElement, "focus", function() {
-                    $button.addClass("ui-state-focus")
-                })
-
-                options.blurCallback = avalon.bind(buttonElement, "blur", function() {
-                    $button.removeClass("ui-state-focus")
-                })
                 vm.$resetButton()
 
                 avalon.scan(buttonElement, [vmodel].concat(vmodels))
 
-
             }
+            vm.$remove = function() {
+                avalon(element)
+                        .removeClass("ui-helper-hidden-accessible")
+                var button = vm.buttonElement
+                avalon(button)
+                        .removeClass(options.baseClasses + " ui-state-active " + typeClasses)
 
+                button.innerHTML = vm.label
+
+                if (!vm.hasTitle) {
+                    button.title = ""
+                }
+            }
             vm.$mouseenter = function() {
                 if (options.disabled) {
                     return
@@ -117,12 +139,13 @@ define(["avalon"], function(avalon) {
                     return
                 }
                 avalon(this).removeClass(options.activeClass)
+
             }
 
             vm.$click = function(event) {
-                if (options.disabled) {
-                    event.preventDefault()
-                    event.stopImmediatePropagation()
+                stop(event)
+                if (typeof options.click === "function") {
+                    options.click.call(vmodels.buttonElement, event, vmodel)
                 }
             }
             //改变按钮的外观
@@ -223,8 +246,8 @@ define(["avalon"], function(avalon) {
         hasTitle: false,
         text: true,
         label: "",
-        iconPrimary: null,
-        iconSecondary: null
+        iconPrimary: "",
+        iconSecondary: ""
     }
 
 
@@ -238,7 +261,34 @@ define(["avalon"], function(avalon) {
         return  null
     }
 
-
+    avalon.ui.buttonset = function(element, data, vmodels) {
+        return {
+            $init: function() {
+                avalon(element).addClass("ui-buttonset")
+                var children = element.childNodes, buttons = []
+                for (var i = 0, el; el = children[i++]; ) {
+                    if (el.nodeType === 1 && (/^(button|input|a)$/i.test(el.tagName) || el.getAttribute("data-button"))) {
+                        el.setAttribute("data-button-corner-class", "false")
+                        buttons.push(el)
+                    }
+                }
+                var n = buttons.length
+                if (n) {
+                    buttons[0].setAttribute("data-button-corner-class", "ui-corner-left")
+                    buttons[n - 1].setAttribute("data-button-corner-class", "ui-corner-right")
+                }
+                data.buttons = buttons
+                avalon.scan(element, vmodels)
+            },
+            $remove: function(el) {
+                avalon(element).removeClass("ui-buttonset")
+                while (el = data.buttons.pop()) {
+                    el.removeAttribute("data-button-corner-class")
+                }
+                delete data.buttons
+            }
+        }
+    }
 
     return avalon
 })

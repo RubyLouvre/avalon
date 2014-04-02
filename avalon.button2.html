@@ -4,19 +4,44 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"/>
         <script src="avalon.js"></script>
+        <style>
+            body {
+                font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+                font-size: 62.5%;
+            }
+            #toolbar {
+                padding: 4px;
+                display: inline-block;
+            }
+            /* support: IE7 */
+            *+html #toolbar {
+                display: inline;
+            }
+        </style>
         <script>
             require(["avalon.button2"], function() {
                 avalon.define("default", avalon.noop)
                 avalon.define("icon", avalon.noop)
                 avalon.define("checkbox", avalon.noop)
                 avalon.define("radio", avalon.noop)
+                avalon.define("toolbar", function(vm){
+                    vm.$opts = {
+                        click: function(e, vmodel){
+                            console.log(vmodel.label)
+                            if(vmodel.label === "play"){
+                                console.log("sssssssssss")
+                            }
+                        }
+                    }
+                })
                 avalon.scan()
             })
         </script>
     </head>
     <body>
+
         <fieldset ms-controller="default"><legend>default</legend>
 
             <button ms-widget="button">button元素</button>
@@ -38,19 +63,37 @@
             <style>
                 #format { margin-top: 2em; }
             </style>
-            <div id="format">
+            <div id="format" ms-widget="buttonset">
                 <input type="checkbox" id="check1" ms-widget="button"><label for="check1">B</label>
                 <input type="checkbox" id="check2" ms-widget="button"><label for="check2">I</label>
                 <input type="checkbox" id="check3" ms-widget="button"><label for="check3">U</label>
             </div>
         </fieldset>
+
         <fieldset ms-controller="radio"><legend>radio</legend>
 
-            <div id="radio">
+            <div id="radio" ms-widget="buttonset">
                 <input type="radio" id="radio1" name="radio" ms-widget="button,radio1"><label for="radio1">Choice 1</label>
                 <input type="radio" id="radio2" name="radio" ms-widget="button,radio2" checked="checked"><label for="radio2">Choice 2</label>
                 <input type="radio" id="radio3" name="radio" ms-widget="button,radio3"><label for="radio3">Choice 3</label>
             </div>
         </fieldset>
+
+        <div id="toolbar" class="ui-widget-header ui-corner-all" ms-controller="toolbar">
+            <button id="beginning" ms-widget="button" data-button-icon-primary="ui-icon-seek-start" data-button-text="false">go to beginning</button>
+            <button id="rewind" ms-widget="button" data-button-icon-primary="ui-icon-seek-prev" data-button-text="false">rewind</button>
+            <button id="play" ms-widget="button,$,$opts" data-button-icon-primary="ui-icon-play" data-button-text="false">play</button>
+            <button id="stop" ms-widget="button" data-button-icon-primary="ui-icon-stop" data-button-text="false">stop</button>
+            <button id="forward" ms-widget="button" data-button-icon-primary="ui-icon-seek-next" data-button-text="false">fast forward</button>
+            <button id="end" ms-widget="button" data-button-icon-primary="ui-icon-seek-end" data-button-text="false">go to end</button>
+
+            <input type="checkbox" id="shuffle" ms-widget="button"><label for="shuffle">Shuffle</label>
+
+            <span id="repeat" ms-widget="buttonset">
+                <input type="radio" ms-widget="button" id="repeat0" name="repeat" checked="checked"><label for="repeat0">No Repeat</label>
+                <input type="radio" ms-widget="button"id="repeat1" name="repeat"><label for="repeat1">Once</label>
+                <input type="radio" ms-widget="button" id="repeatall" name="repeat"><label for="repeatall">All</label>
+            </span>
+        </div>
     </body>
 </html>
