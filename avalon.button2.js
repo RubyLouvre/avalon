@@ -1,3 +1,4 @@
+//avalon 1.2.5 2014.4.2
 define(["avalon"], function(avalon) {
     var lastActive
     var baseClasses = "ui-button ui-widget ui-state-default"

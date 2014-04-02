@@ -1,4 +1,4 @@
-//2014.4.1 avalon1.2.4
+//avalon 1.2.5 2014.4.2
 define(["avalon",
     "text!avalon.tabs.tab.html",
     "text!avalon.tabs.panel.html",
