@@ -1746,7 +1746,7 @@
         switch (firstBinding.type) {
             case "if":
             case "repeat":
-            case "widget":
+            //case "widget":
                 executeBindings([firstBinding], vmodels)
                 break
             default:
