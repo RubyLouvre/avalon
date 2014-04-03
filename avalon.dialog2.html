@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"/>
+        <script src="avalon.js"></script>
+        <style>
+            body {
+                font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+                font-size: 62.5%;
+            }
+            #toolbar {
+                padding: 4px;
+                display: inline-block;
+            }
+            /* support: IE7 */
+            *+html #toolbar {
+                display: inline;
+            }
+        </style>
+        <script>
+            require(["avalon.dialog2"], function() {
+                avalon.define("default", avalon.noop)
+                avalon.define("icon", avalon.noop)
+                avalon.define("checkbox", avalon.noop)
+                avalon.define("radio", avalon.noop)
+                avalon.define("toolbar", function(vm) {
+                    vm.$play = {
+                        click: function(e, vmodel) {
+                            if (vmodel.label === "play") {
+                                vmodel.iconPrimary = "ui-icon-pause"
+                                vmodel.label = "pause"
+                            } else {
+                                vmodel.iconPrimary = "ui-icon-play"
+                                vmodel.label = "play"
+                            }
+                        }
+                    }
+                    vm.$stop = {
+                        click: function() {
+                            var vmodel = avalon.vmodels.play || {}
+                            vmodel.iconPrimary = "ui-icon-play"
+                            vmodel.label = "play"
+                        }
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+
+        <fieldset ms-controller="default"><legend>default</legend>
+
+            <div id="dialog" title="Basic dialog" ms-widget="dialog, dialog1">
+                <p>This is an animated dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>
+            </div>
+
+            <button id="opener" ms-click="click">Open Dialog</button>
+        </fieldset>
+    </body>
+</html>
