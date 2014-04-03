@@ -3,28 +3,43 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>jQuery UI Button - Default functionality</title>
-        <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
-        <script src="//code.jquery.com/jquery-1.9.1.js"></script>
-        <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-        <link rel="stylesheet" href="/resources/demos/style.css">
+        <title>DOMNodeRemoved test</title>
+
         <script>
-            $(function() {
-                $("input[type=submit], a, button")
-                        .button()
-                        .click(function(event) {
-                            event.preventDefault();
-                        });
-            });
+            window.onload = function() {
+                var aaa = document.getElementById("aaa")
+                var bbb = document.getElementById("bbb")
+                var xxx = false
+                if (xxx) {
+                    aaa.addEventListener("DOMNodeRemoved", function(e) {
+                        if (e.target === this) {
+                            console.log("DOMNodeRemoved")
+                        }
+                    })
+                    setTimeout(function() {
+                        document.body.removeChild(aaa)
+                        ///   bbb.appendChild(aaa)
+                    }, 3000)
+                } else {
+                    aaa.addEventListener("DOMNodeRemovedFromDocument", function(e) {//ff24不可用
+                        if (e.target === this) {
+                            console.log("DOMNodeRemovedFromDocument")
+                        }
+                    })
+                    setTimeout(function() {
+                     //   document.body.removeChild(aaa)
+                          bbb.appendChild(aaa)
+                    }, 3000)
+                }
+
+
+            }
         </script>
     </head>
     <body>
 
-        <button>A button element</button>
-
-        <input type="submit" value="A submit button">
-
-        <a href="#">An anchor</a>
+        <div id="bbb" style="border:1px solid  red;padding: 5px;"></div>
+        <div id="aaa" style="border:1px solid  green; width: 200px;height:200px;background: #2AAA24;"></div>
 
 
     </body>

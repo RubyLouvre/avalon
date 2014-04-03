@@ -2690,7 +2690,7 @@
                 four = void 0
             }
             data.hasArgs = four
-            data.handlerName =  data.type =  "on"
+            data.handlerName = data.type = "on"
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {
@@ -2739,6 +2739,7 @@
                 element.removeAttribute("ms-widget")
                 var vmodel = constructor(element, data, vmodels)
                 data.evaluator = noop
+                element.msData["ms-widget-id"] = vmodel.$id
                 if (vmodel.hasOwnProperty("$init")) {
                     vmodel.$init()
                 }
@@ -2750,7 +2751,7 @@
                     element = data.element//允许在constructor里面进行调包
                     if (supportMutationEvents) {
                         element.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this) {
+                            if (e.target === this && !this.msRetain) {
                                 offTree()
                             }
                         })
@@ -2925,7 +2926,7 @@
             var el = ribbon[n]
             if (avalon.contains(root, el)) {
                 el.onTree && el.onTree()
-            } else {
+            } else if (!el.msRetain) {
                 el.offTree && el.offTree()
                 ribbon.splice(n, 1)
             }
@@ -3783,7 +3784,7 @@
             xhr.send()
             return id
         }
-     
+
 
         var cur = getCurrentScript(true)
         if (!cur) { //处理window safari的Error没有stack的问题

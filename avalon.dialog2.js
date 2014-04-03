@@ -86,7 +86,9 @@ define(["avalon.button"], function(avalon) {
             vm.$init = function() {
                 avalon.ready(function() {
                     parentNode.appendChild(dialog)
+                    element.msRetain = true //防止被offtree
                     dialog.appendChild(element)
+                    element.msRetain = false
                     full = /body|html/i.test(dialog.offsetParent.tagName)
                     if (full) {
                         dialog.firstChild.setAttribute("data-drag-containment", "window")//这是给ms-draggable组件用的
@@ -147,27 +149,7 @@ define(["avalon.button"], function(avalon) {
                 }
             })
         })
-        function keepFocus() {
-            function checkFocus() {
-                var activeElement = document.activeElement,
-                        isActive = dialog === activeElement || dialog.contains(activeElement)
-                if (!isActive) {
-                    if (dialog.querySelectorAll) {
-                        var hasFocus = dialog.querySelectorAll("[autofocus]")
-                        if (!hasFocus.length) {
-                            hasFocus = dialog.querySelectorAll("[tabindex]")
-                        }
-                        if (!hasFocus.length) {
-                            hasFocus = [dialog]
-                        }
-                        hasFocus[0].focus()
-                    }
-                }
-            }
-
-            checkFocus()
-            avalon.nextTick(checkFocus)
-        }
+   
 
         function resetCenter() {
             if (model.cssCenter) {
@@ -207,17 +189,38 @@ define(["avalon.button"], function(avalon) {
     }
 
     widget.defaults = {
-        toggle: false,
+        toggle: false, //显示或隐藏弹出层
         width: 300,
-        minHeight: 150,
         height: "auto",
+        minHeight: 150,
         minWidth: 150,
         close: avalon.noop,
         parent: "body",
         modal: false
     }
-    var overlayInstances = avalon.ui.dialog.overlayInstances = []
+    var overlayInstances = widget.overlayInstances = []
+    //============================================
+     function keepFocus() {
+            function checkFocus() {
+                var activeElement = document.activeElement,
+                        isActive = dialog === activeElement || dialog.contains(activeElement)
+                if (!isActive) {
+                    if (dialog.querySelectorAll) {
+                        var hasFocus = dialog.querySelectorAll("[autofocus]")
+                        if (!hasFocus.length) {
+                            hasFocus = dialog.querySelectorAll("[tabindex]")
+                        }
+                        if (!hasFocus.length) {
+                            hasFocus = [dialog]
+                        }
+                        hasFocus[0].focus()
+                    }
+                }
+            }
 
+            checkFocus()
+            avalon.nextTick(checkFocus)
+        }
     return avalon
 })
 

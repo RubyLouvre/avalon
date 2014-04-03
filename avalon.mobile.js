@@ -2252,6 +2252,7 @@
                 element.removeAttribute("ms-widget")
                 var vmodel = constructor(element, data, vmodels)
                 data.evaluator = noop
+                element.msData["ms-widget-id"] = vmodel.$id
                 if (vmodel.hasOwnProperty("$init")) {
                     vmodel.$init()
                 }
@@ -2262,7 +2263,7 @@
                     }
                     if (supportMutationEvents) {
                         element.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this) {
+                            if (e.target === this && !this.msRetain) {
                                 offTree()
                             }
                         })
@@ -2400,7 +2401,7 @@
             var el = ribbon[n]
             if (avalon.contains(root, el)) {
                 el.onTree && el.onTree()
-            } else {
+            } else if (!el.msRetain) {
                 el.offTree && el.offTree()
                 ribbon.splice(n, 1)
             }
@@ -3219,7 +3220,7 @@
                     if (content) {
                         modules[id].exports = content.documentElement.outerHTML
                         avalon.require.checkDeps()
-                    } 
+                    }
                     onerror(0, content)
                 }
                 function onerror(a, b) {
