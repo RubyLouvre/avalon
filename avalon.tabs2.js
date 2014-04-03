@@ -1,11 +1,11 @@
-//2014.4.1 avalon1.2.4
+//avalon 1.2.5 2014.4.2
 define(["avalon",
     "text!avalon.tabs.tab.html",
     "text!avalon.tabs.panel.html",
     "text!avalon.tabs.close.html"],
         function(avalon, tabHTML, panelHTML, closeHTML) {
             var styleEl = document.getElementById("avalonStyle")
-            avalon.ui.tabs = function(element, data, vmodels) {
+          var widget =  avalon.ui.tabs = function(element, data, vmodels) {
                 var el, tabsParent, tabs = [], tabpanels = [], options = data.tabsOptions
 
                 // 清空它内部所有节点，并收集其内容，构建成tabs与tabpanels两个数组
@@ -144,7 +144,7 @@ define(["avalon",
                 })
                 return vmodel
             }
-            avalon.ui.tabs.defaults = {
+            widget.defaults = {
                 collapsed: false,
                 active: 0, //默认打开第几个面板
                 event: "click", //切换面板的事件，移过(mouseenter)还是点击(click)

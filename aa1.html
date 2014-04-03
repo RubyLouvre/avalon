@@ -1,36 +1,46 @@
-<!DOCTYPE html>
-<html lang="zh-cmn-Hans">
+
+<!doctype html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
-        <meta name ="viewport" content ="initial-scale=1, maximum-scale=1, minimum-scale=1" />
-        <title>ms-if后于ms-src执行</title>
+        <title>DOMNodeRemoved test</title>
+
+        <script>
+            window.onload = function() {
+                var aaa = document.getElementById("aaa")
+                var bbb = document.getElementById("bbb")
+                var xxx = false
+                if (xxx) {
+                    aaa.addEventListener("DOMNodeRemoved", function(e) {
+                        if (e.target === this) {
+                            console.log("DOMNodeRemoved")
+                        }
+                    })
+                    setTimeout(function() {
+                        document.body.removeChild(aaa)
+                        ///   bbb.appendChild(aaa)
+                    }, 3000)
+                } else {
+                    aaa.addEventListener("DOMNodeRemovedFromDocument", function(e) {//ff24不可用
+                        if (e.target === this) {
+                            console.log("DOMNodeRemovedFromDocument")
+                        }
+                    })
+                    setTimeout(function() {
+                     //   document.body.removeChild(aaa)
+                          bbb.appendChild(aaa)
+                    }, 3000)
+                }
+
+
+            }
+        </script>
     </head>
-    <body ms-controller="common-controller">
-        <div ms-each-el="test">
-            <div ms-if="$index==0">
-                <img ms-src="{{el.b_jpg}}" class="img-resp" />
-            </div>
-            <div ms-if="$index>0">
-                {{el.b_name}}
-                <div>
-                </div>
-                <script src="avalon.js"></script>
-                <script src="jquery.js"></script>
-                <script>
-avalon.ready(function() {
-    $.ajax({
-        url: 'http://crapi.4gshu.com:8096/4GReadAPP/recommend/homeboy/10/qidian/'
-    })
-            .done(function(resp) {
-                console.log(resp.man_top[0].books);
-                avalon.define('common-controller', function(vm) {
-                    vm.test = resp.man_top[0].books;
-                });
-                avalon.scan();
-            });
-});
-                </script>
-            </div>
-        </div>
+    <body>
+
+        <div id="bbb" style="border:1px solid  red;padding: 5px;"></div>
+        <div id="aaa" style="border:1px solid  green; width: 200px;height:200px;background: #2AAA24;"></div>
+
+
     </body>
 </html>

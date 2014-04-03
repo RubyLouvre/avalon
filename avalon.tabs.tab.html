@@ -9,9 +9,10 @@
         ms-class-2="ui-tabs-active:active == $index"
         ms-class-3="ui-state-active:active == $index && !tab.disabled"
         ms-class-4="ui-state-disabled:tab.disabled"
+        ms-hover="ui-state-hover:!tab.disabled"
         ms-MS_OPTION_EVENT="activate($event,$index)" 
-        ms-hover="ui-state-hover:!tab.disabled"> 
+        > 
         <a href="#">{{tab.title | html}}</a>
-       MS_OPTION_REMOVABLE
+        MS_OPTION_REMOVABLE
     </li>
 </ul>

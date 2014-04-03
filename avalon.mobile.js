@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.4 2014.3.18，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.2.5 2014.4.2，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2215,9 +2215,8 @@
             } else {
                 four = void 0
             }
-            data.type = "on"
             data.hasArgs = four
-            data.handlerName = "on"
+            data.handlerName = data.type = "on"
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {
@@ -2265,17 +2264,19 @@
                 element.removeAttribute("ms-widget")
                 var vmodel = constructor(element, data, vmodels)
                 data.evaluator = noop
+                element.msData["ms-widget-id"] = vmodel.$id
                 if (vmodel.hasOwnProperty("$init")) {
                     vmodel.$init()
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
                     var offTree = function() {
                         vmodel.$remove()
+                        element.msData = {}
                         delete VMODELS[vmodel.$id]
                     }
                     if (supportMutationEvents) {
                         element.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this) {
+                            if (e.target === this && !this.msRetain) {
                                 offTree()
                             }
                         })
@@ -2413,7 +2414,7 @@
             var el = ribbon[n]
             if (avalon.contains(root, el)) {
                 el.onTree && el.onTree()
-            } else {
+            } else if (!el.msRetain) {
                 el.offTree && el.offTree()
                 ribbon.splice(n, 1)
             }
@@ -3232,7 +3233,7 @@
                     if (content) {
                         modules[id].exports = content.documentElement.outerHTML
                         avalon.require.checkDeps()
-                    } 
+                    }
                     onerror(0, content)
                 }
                 function onerror(a, b) {
