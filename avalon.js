@@ -2746,9 +2746,9 @@
                 if (vmodel.hasOwnProperty("$remove")) {
                     var offTree = function() {
                         vmodel.$remove()
+                        element.msData = {}
                         delete VMODELS[vmodel.$id]
                     }
-                    element = data.element//允许在constructor里面进行调包
                     if (supportMutationEvents) {
                         element.addEventListener("DOMNodeRemoved", function(e) {
                             if (e.target === this && !this.msRetain) {

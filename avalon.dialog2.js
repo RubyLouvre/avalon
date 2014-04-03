@@ -108,7 +108,10 @@ define(["avalon.button"], function(avalon) {
                     })
                 })
             }
-
+           vm.$remove = function(){
+                parentNode.removeChild(dialog)
+                dialog.innerHTML = dialog.
+           }
 
             vm.close = function() {
                 vm.toggle = false

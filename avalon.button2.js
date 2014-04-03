@@ -169,7 +169,7 @@ define(["avalon"], function(avalon) {
                 } else {
                     buttonClasses.push("ui-button-text-only")
                 }
-                //  console.log(buttonText)
+
                 buttonElement.innerHTML = buttonText
                 avalon(buttonElement).addClass(buttonClasses.join(" "))
             }
@@ -227,7 +227,7 @@ define(["avalon"], function(avalon) {
     widget.defaults = {
         $type: "",
         hasTitle: false,
-        text: true,
+        text: true,//决定是否使用 ui-button-icons-only ui-button-icon-only ui-button-text-only
         label: "",
         iconPrimary: "",
         iconSecondary: ""

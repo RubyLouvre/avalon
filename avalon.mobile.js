@@ -2259,6 +2259,7 @@
                 if (vmodel.hasOwnProperty("$remove")) {
                     var offTree = function() {
                         vmodel.$remove()
+                        element.msData = {}
                         delete VMODELS[vmodel.$id]
                     }
                     if (supportMutationEvents) {
