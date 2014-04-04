@@ -350,12 +350,9 @@
      *                           modelFactory                             *
      **********************************************************************/
     var VMODELS = avalon.vmodels = {}
-    avalon.define = function(name, factory) {
-        if (typeof name !== "string") {
-            avalon.error("必须指定ID")
-        }
-        if (typeof factory !== "function") {
-            avalon.error("factory必须是函数")
+    avalon.define = function(id, factory) {
+        if (VMODELS[id]) {
+            avalon.error(id+" 已经存在于avalon.vmodels中")
         }
         var scope = {
             $watch: noop
@@ -365,8 +362,8 @@
         stopRepeatAssign = true
         factory(model)
         stopRepeatAssign = false
-        model.$id = name
-        return VMODELS[name] = model
+        model.$id = id
+        return VMODELS[id] = model
     }
 
     function modelFactory(scope, model) {
