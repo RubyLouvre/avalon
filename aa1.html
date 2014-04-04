@@ -1,46 +1,49 @@
-
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="p-index">
     <head>
-        <meta charset="utf-8">
-        <title>DOMNodeRemoved test</title>
+        <meta charset="utf-8" />
+        <title>推荐：弹层水平垂直居中解决方案之一</title>
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="author" content="" />
+        <style>
+            html,body{_height:100%;margin:0;padding:0;}
+            .bg{text-align:center;}
+            .g-popup{position:fixed;_position:absolute;width:100%;height:98%;text-align:center;border:1px solid red;z-index:20;opacity: 0.5;}
 
-        <script>
-            window.onload = function() {
-                var aaa = document.getElementById("aaa")
-                var bbb = document.getElementById("bbb")
-                var xxx = false
-                if (xxx) {
-                    aaa.addEventListener("DOMNodeRemoved", function(e) {
-                        if (e.target === this) {
-                            console.log("DOMNodeRemoved")
-                        }
-                    })
-                    setTimeout(function() {
-                        document.body.removeChild(aaa)
-                        ///   bbb.appendChild(aaa)
-                    }, 3000)
-                } else {
-                    aaa.addEventListener("DOMNodeRemovedFromDocument", function(e) {//ff24不可用
-                        if (e.target === this) {
-                            console.log("DOMNodeRemovedFromDocument")
-                        }
-                    })
-                    setTimeout(function() {
-                     //   document.body.removeChild(aaa)
-                          bbb.appendChild(aaa)
-                    }, 3000)
-                }
-
-
-            }
-        </script>
+            /* popup */
+            .g-popup-inner{pointer-events: auto;overflow:hidden;border-radius:5px;border:1px solid #aaa;box-shadow:0 0 10px rgba(0,0,0,.3);background:#fff;font-size:0;text-align:left;}
+            .g-popup-inner,.g-popup .after,.g-popup:after{display:inline-block;*display:inline;*zoom:1;font:14px/1.7 arial,simsun;vertical-align:middle;}
+            .g-popup .after,.g-popup:after{width:0;height:100%;}
+            .g-popup:after{content:"\0020";}
+            .g-popup .hd{padding:0 10px;border-bottom:1px solid #aaa;}
+            .g-popup .hd .title{margin:0;padding:5px 0;font-size:14px;}
+            .g-popup .bd{padding:0 10px 10px;}
+            .g-popup .bd p{margin:10px 0 0;}
+            .g-popup .ft{padding-bottom:5px;text-align:center;}
+        </style>
     </head>
     <body>
+        <div class="m-demo g-popup">
+            <div class="g-popup-inner">
+                <div class="hd">
+                    <h2 class="title">简单的弹层</h2>
+                </div>
+                <div class="bd">
+                    <p>大段的未知文本啥的大段的未知文本啥的</p>
+                    <p>大段的未知文本啥的大段的未知文本啥的</p>
+                    <p>大段的未知文本啥的大段的未知文本啥的</p>
+                </div>
+                <div class="ft">
+                    <a href="?">确定</a>
+                </div>
+            </div>
+            <span class="after"><!-- 该死的IE6/7 --></span>
+        </div>
 
-        <div id="bbb" style="border:1px solid  red;padding: 5px;"></div>
-        <div id="aaa" style="border:1px solid  green; width: 200px;height:200px;background: #2AAA24;"></div>
-
-
+        <div class="bg">
+            <input type="sss" style="position: relative;top:-100px;">
+            <img src="page.png" alt="" />
+        </div>
     </body>
 </html>
