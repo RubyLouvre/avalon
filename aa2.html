@@ -1,59 +1,24 @@
 <!DOCTYPE html>
-<html class="p-index">
+<html>
     <head>
-        <meta charset="utf-8" />
-        <title>推荐：弹层水平垂直居中解决方案之一</title>
-        <meta name="description" content="" />
-        <meta name="keywords" content="" />
-        <meta name="author" content="" />
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
         <script src="avalon.js">
 
         </script>
-        <style>
-            html,body{_height:100%;margin:0;padding:0;}
-            #aaa{
-                background: red;
-                width:180px;
-                height:180px;
-                padding:2px;
-                border:5px solid green;
-
-            }
-            #bbb{
-                width:220px;
-                height:220px;
-                position: absolute;/*或fixed, relative*/
-                top:0px;
-                left:0px;
-                border:1px solid black;
-                filter:alpha(opacity=50);/*透明或半透明 ，IE9还可以用opacity， 还可以用progid:DXImageTransform.Microsoft.gradient*/
-
-                pointer-events: none;
-            }
-
-        </style>
         <script>
             avalon.define("test", function(vm) {
-                vm.click = function() {
-                    alert(this.id)
-                }
+                vm.array = [1,2,3]
+                vm.aaa = "-10px"
             })
         </script>
-
+        
     </head>
     <body>
-        <div ms-controller="test" style="position: relative;padding:50px;">
-
-            <div id="aaa" ms-click="click">
-                <p>这是底层的DIV</P>
-                <p>点击它上面的文本或图片或表单控件或元素边框会发生穿透</p>
-                <input>
+        <div ms-controller="test" >
+            <div ms-repeat="array" ms-css-margin-top="aaa" style="width:200px;height:30px;border:1px solid red;">
             </div>
-
-            <div id="bbb">这是绝对定位的DIV，浮在div#aaa的上方
-
-            </div>
-
         </div>
     </body>
 </html>
