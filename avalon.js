@@ -352,7 +352,7 @@
     var VMODELS = avalon.vmodels = {}
     avalon.define = function(id, factory) {
         if (VMODELS[id]) {
-            avalon.error(id+" 已经存在于avalon.vmodels中")
+            avalon.error(id + " 已经存在于avalon.vmodels中")
         }
         var scope = {
             $watch: noop
@@ -2020,7 +2020,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
-            log("Debug:" + e.message)
+            log("Debug: parse error," + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -2034,6 +2034,7 @@
                 var tmpl = {}
                 return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
             })
+
             data.evaluator = function() {
                 var ret = ""
                 for (var i = 0, el; el = array[i++]; ) {
@@ -2054,6 +2055,10 @@
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
             registerSubscriber(data)
+        } else {
+            if (data.nodeType === 3) {
+                data.node.data = openTag + data.value + closeTag
+            }
         }
     }
     avalon.parseExprProxy = parseExprProxy
