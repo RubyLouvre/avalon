@@ -352,7 +352,7 @@
     var VMODELS = avalon.vmodels = {}
     avalon.define = function(id, factory) {
         if (VMODELS[id]) {
-            avalon.error(id + " 已经存在于avalon.vmodels中")
+            log("warning: "+id + " 已经存在于avalon.vmodels中")
         }
         var scope = {
             $watch: noop
@@ -849,7 +849,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("Warning: alias方法已废弃，请用paths, shim配置项")
+            log("warning: alias方法已废弃，请用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -1566,7 +1566,7 @@
                     }
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
-                        log("Debug: remove " + fn.name)
+                        log("debug: remove " + fn.name)
                     }
                 }
                 if (typeof fn === "function") {
@@ -2020,7 +2020,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
-            log("Debug: parse error," + e.message)
+            log("debug: parse error," + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -2433,7 +2433,7 @@
                     try {
                         placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
-                        avalon.log("Debug: ms-if  " + e.message)
+                        avalon.log("debug: ms-if  " + e.message)
                     }
                 }
                 if (rbind.test(elem.outerHTML)) {
@@ -2539,7 +2539,7 @@
                     rightExpr = text.slice(colonIndex + 1)
                     parseExpr(rightExpr, vmodels, data) //决定是添加还是删除
                     if (!data.evaluator) {
-                        log("Debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        log("debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
                     } else {
                         data._evaluator = data.evaluator
@@ -2582,7 +2582,7 @@
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
             if (type !== "repeat") {
-                avalon.log("Warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
+                avalon.log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
             data.callbackElement = data.parent = elem
             var freturn = true
@@ -3869,7 +3869,7 @@
                     head.removeChild(node)
                     node = null // 处理旧式IE下的循环引用问题
                 })
-                log("Debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
+                log("debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
                 return true
             }
@@ -3945,7 +3945,7 @@
                         callback()
                     }
                     if (checkFail(node, false, !W3C)) {
-                        log("Debug: 已成功加载 " + url)
+                        log("debug: 已成功加载 " + url)
                     }
                 }
             }
@@ -3954,7 +3954,7 @@
             }
             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
             head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-            log("Debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+            log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
         }
 
         innerRequire = avalon.require = function(list, factory, parent) {
