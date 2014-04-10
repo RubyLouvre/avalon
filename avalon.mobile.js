@@ -2252,7 +2252,7 @@
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
                 element.removeAttribute("ms-widget")
-                var vmodel = constructor(element, data, vmodels)//防止组件不返回VM
+                var vmodel = constructor(element, data, vmodels) || {}//防止组件不返回VM
                 data.evaluator = noop
                 element.msData["ms-widget-id"] = vmodel.$id
                 if (vmodel.hasOwnProperty("$init")) {
