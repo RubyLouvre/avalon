@@ -1,219 +1,24 @@
-
-
-<!doctype html>
+<!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-        <title>Avalon by RubyLouvre</title>
-        <link rel="stylesheet" href="stylesheets/styles.css">
-        <script src="javascripts/avalon.js"></script>
-        <script src="javascripts/common.js"></script>
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js">
+
+        </script>
         <script>
-            var model = avalon.define("test", function(vm) {
-                vm.firstName = "司徒"
-                vm.lastName = "正美"
-                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    set: function(val) {//里面必须用this指向scope，不能使用scope
-                        var array = (val || "").split(" ");
-                        this.firstName = array[0] || "";
-                        this.lastName = array[1] || "";
-                    },
-                    get: function() {
-                        return this.firstName + " " + this.lastName;
-                    }
-                }
-                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
-                vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = vm.arr.length === vm.selected.length
-                vm.checkAll = function() {
-                    if (this.checked) {
-                        vm.selected = vm.arr
-                    } else {
-                        vm.selected.clear()
-                    }
-                }
+            avalon.define("test", function(vm) {
+                vm.array = [1,2,3]
+                vm.aaa = "-10px"
             })
-            model.selected.$watch("length", function(n) {
-                model.checkAllbool = n === model.arr.size()
-            })
-            var performance = avalon.define("performance", function(false) {
-                vm.lock = false
-            })
-            avalon.bind(window, "load", function() {
-                setTimeout(function() {
-                    performance.lock = true
-                })
-            })
-        </script> 
+        </script>
+        
     </head>
     <body>
-        <div id="header">
-            <h1 class="logo">Avalon:<small style="font-weight: normal">迷你简单易用的MVVM框架</small></h1>
+        <div ms-controller="test" >
+            <div ms-repeat="array" ms-css-margin-top="aaa" style="width:200px;height:30px;border:1px solid red;">
+            </div>
         </div>
-        <div class="wrapper" style="position: relative">
-            <div id="title" style="overflow:hidden">
-                <span class="credits left">Project maintained by <a href="http://www.cnblogs.com/rubylouvre/">司徒正美</a></span>
-                <span class="credits right">新浪微博 <a href="http://weibo.com/jslouvre">jslouvre</a></span>
-                <span class="credits right">fork me on <a href="https://github.com/RubyLouvre/avalon">GitHub</a></span>
-                <span class="credits right">QQ: <b>79641290</b>(注明来学习avalon)</span>
-            </div>
-            <ul  style="position:absolute;top:20px;left:0px;color:greenyellow;">
-                <li>无任何依赖，体积少，自带加载器，压缩后不到50K！</li>
-                <li>能将jQuery写的业务代码再减少50%体积！</li>
-                <li>爽快的编程体验，不再纠结于DOM操作！</li>
-                <li>符合国情，兼容IE6与移动端！</li>
-                <li>完善的自动化测试！</li>
-                <li>UI库一应俱全！</li>
-                <li><a href="avalon.seo.html">SEO策略</a>！</li>
-            </ul>
-            <ul  style="position:absolute;top:190px;left:0px;">
-                <!--                <li><a href="avalon.datepicker.html">日期选择器</a></li>-->
-                <li><a href="avalon.todos.html">todos示例</a></li>
-                <li><a href="avalon.touch.html">触摸事件</a></li>
-                <li><a href="avalon.wunderlist.html">wunderlist示例</a></li>
-                <li><a href="avalon.router.html">avalon路由系统</a></li>
-                <li><a href="avalon.triangle.html">动态生成三角形</a></li>
-                <li><a href="avalon.tabs.html">切换卡示例</a></li>
-                <li><a href="avalon.grid.html">grid组件</a></li>
-            </ul>
-            <div style="margin-left:80px;margin-top:15px; text-align:center; position: relative;z-index:20;" ms-controller="performance" ms-if="lock">
-                <img style="margin-left:auto;margin-right:auto;border: 0px none;" usemap="#bindingmap" src="http://images.cnblogs.com/cnblogs_com/rubylouvre/495346/o_bindings.png" width="525" height="537"/>
-                <map name="bindingmap" id="bindingmap">
-                    <area shape="circle" coords="260,39,37" href="avalon.text.html" alt="ms-text,ms-html,{{prop}},{{prop|html}}" title="ms-text,ms-html,{{prop}},{{prop|html}}">
-                    <area shape="circle" coords="165,62,37" href="avalon.duplex.html" alt="ms-duplex" title="ms-duplex">
-                    <area shape="circle" coords="86,124,37" href="avalon.skip.html" alt="ms-skip" title="ms-skip">
-                    <area shape="circle" coords="39,214,37" href="avalon.important.html" alt="ms-controller,ms-important" title="ms-controller,ms-important">
-                    <area shape="circle" coords="41,314,37" href="avalon.widget.html" alt="ms-widget" title="ms-widget">
-                    <area shape="circle" coords="86,407,37" href="avalon.data.html" alt="ms-data" title="ms-data">
-                    <area shape="circle" coords="165,470,37" href="avalon.animate.html" alt="ms-animationend" title="ms-animationend">
-                    <area shape="circle" coords="260,492,37" href="avalon.include.html" alt="ms-include" title="ms-include">
-                    <area shape="circle" coords="360,62,37" href="avalon.class.html" alt="ms-css,ms-class" title="ms-css,ms-class">
-                    <area shape="circle" coords="434,124,37" href="avalon.attributes.html" alt="ms-attr,ms-checked,ms-href" title="ms-attr,ms-checked,ms-href">
-                    <area shape="circle" coords="480,214,37" href="avalon.on.html" alt="ms-on,ms-click,ms-mousedown" title="ms-attr,ms-checked,ms-href">
-                    <area shape="circle" coords="486,314,37" href="avalon.visible.html" alt="ms-visible" title="ms-visible">
-                    <area shape="circle" coords="436,407,37" href="avalon.each.html" alt="ms-repeat,ms-each,ms-with" title="ms-repeat,ms-each,ms-with">
-                    <area shape="circle" coords="360,469,37" href="avalon.if.html" alt="ms-if" title="ms-if">
-                    <area shape="circle" coords="262,263,62" href="avalon.bindings.html" alt="bindings" title="bindings">
-
-                </map>
-            </div>
-            <div  style="text-align:center;">
-                <span style="position: relative;display: inline-block;margin-left:auto;margin-right:auto;" ms-controller="performance" ms-if="lock">
-                    <img src="images/layers.png" style="border: 0px none;"  usemap="#layermap"/>
-                    <a href="avalon.bindings.html" title="bindings"><img src="images/bindings2.png" style="position:absolute;top:25px;left:205px;"/></a>
-                    <img src="images/types.png" style="position:absolute;top:150px;left:170px;" usemap="#typemap"/>
-                    <a href="avalon.model.html" title="model"><img src="images/model.png" style="position:absolute;top:280px;left:221px;"/></a>
-                    <map name="layermap" id="layermap">
-                        <area shape="rect" coords="20,20,100,70" href="avalon.view.html" alt="view" title="view" />
-                        <area shape="rect" coords="20,165,150,215" href="avalon.viewmodel.html" alt="viewmodel" title="viewmodel" />
-                        <area shape="rect" coords="20,290,130,340" href="avalon.model.html" alt="model" title="model" />
-                    </map>
-                    <map name="typemap" id="typemap">
-                        <area shape="rect" coords="0,0,100,35" href="avalon.observable.html" alt="observable" title="observable" />
-                        <area shape="rect" coords="105,0,210,35" href="avalon.compute.html" alt="compute" title="compute" />
-                        <area shape="rect" coords="220,0,330,35" href="avalon.collection.html" alt="collection" title="collection" />
-                        <area shape="rect" coords="0,40,90,75" href="avalon.function.html" alt="function" title="function" />
-                        <area shape="rect" coords="100,40,210,75" href="avalon.unobservable.html" alt="unobservable" title="unobservable" />
-                        <area shape="rect" coords="220,40,325,75" href="avalon.watch.html" alt="$watch" title="$watch" />
-                    </map>
-                </span>
-            </div>
-
-
-            <p>点击上面图示的文档，跳转到详细页面，更多介绍见<a href="avalon.api.html">这里</a>。</p>
-            <hr/>
-            <div ms-skip>
-                <div>avalon.js的下载地址：<a href="https://raw.github.com/RubyLouvre/avalon/master/avalon.js">https://raw.github.com/RubyLouvre/avalon/master/avalon.js</a></div>
-                <pre class="brush:html;gutter:false;toolbar:false">
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;title&gt;avalon入门&lt;/title&gt;
-        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
-        &lt;script src="avalon.js" &gt;&lt;/script&gt;
-        &lt;script&gt;
-            var model = avalon.define("test", function(vm) {
-                vm.firstName = "司徒"
-                vm.lastName = "正美"
-                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    set: function(val) {//里面必须用this指向scope，不能使用scope
-                        var array = (val || "").split(" ");
-                        this.firstName = array[0] || "";
-                        this.lastName = array[1] || "";
-                    },
-                    get: function() {
-                        return this.firstName + " " + this.lastName;
-                    }
-                }
-                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
-                vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = vm.arr.length === vm.selected.length
-                vm.checkAll = function() {
-                    if (this.checked) {
-                        vm.selected = vm.arr
-                    } else {
-                        vm.selected.clear()
-                    }
-                }
-            })
-            model.selected.$watch("length", function(n) {
-                model.checkAllbool = n === model.arr.size()
-            })
-        &lt;/script&gt; 
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;div ms-controller="test"&gt;
-            &lt;p&gt;First name: &lt;input ms-duplex="firstName" /&gt;&lt;/p&gt;
-            &lt;p&gt;Last name: &lt;input ms-duplex="lastName"  /&gt;&lt;/p&gt;
-            &lt;p&gt;Hello,    &lt;input ms-duplex="fullName"&gt;&lt;/p&gt;
-            &lt;div&gt;{{firstName +" | "+ lastName }}&lt;/div&gt;
-            &lt;ul&gt;
-                &lt;li&gt;&lt;input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/&gt;全选&lt;/li&gt;
-                &lt;li ms-repeat="arr" &gt;&lt;input type="checkbox" ms-value="el" ms-duplex="selected"/&gt;{{el}}&lt;/li&gt;
-            &lt;/ul&gt;
-        &lt;/div&gt;
-
-    &lt;/body&gt;
-&lt;/html&gt;
-                </pre>   
-            </div>
-
-
-            <fieldset><legend>示例</legend>
-                <div ms-controller="test">
-                    <p>First name: <input ms-duplex="firstName" /></p>
-                    <p>Last name: <input ms-duplex="lastName"  /></p>
-                    <p>Hello,    <input ms-duplex="fullName"></p>
-                    <div>{{firstName +" | "+ lastName }}</div>
-                    <ul>
-                        <li><input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/>全选</li>
-                        <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected"/>{{el}}</li>
-                    </ul>
-                </div>
-            </fieldset>
-            <h3>谁在使用Avalon</h3>
-            <center>
-                <a href="http://wuxian.baidu.com/"><img title="百度无线" src="images/logo/wuxian.baidu.jpg"></a>
-                <a href="javascript:void 0"><img title="百度大市场部（无外链）"src="images/logo/market.baidu.jpg"></a>
-                <a href="http://www.sohu.com/"><img src="images/logo/sohulogo.png"></a>
-                <a href="http://www.qunar.com/"><img src="images/logo/qunar.jpg"></a>
-                <a href="https://vip.wps.cn/"><img src="images/logo/wps.jpg"></a>
-                <a href="http://www.cloudary.com.cn/"><img src="images/logo/sdl_logo.png"></a>
-                <a href="http://www.ronglian.com/"><img src="images/logo/ronglian.png"></a>
-                <a href="http://www.bianfeng.com/"><img src="images/logo/bianfeng.png"></a>
-                <a href="http://www.xiaojukeji.com/website/index.html"><img src="images/logo/xiaojukeji.png"></a>
-                <a href="http://www.ustack.com/"><img src="images/logo/ustack.png"></a>
-                <a href="https://note.wiz.cn/"><img src="images/logo/wiz.png" style="width:70px;height:70px;"></a>
-                <a href="http://crmdemo.vcb.cn/loginview.aspx?ReturnUrl=/default.aspx"><img src="images/logo/vcb.jpg" style="width:70px;height:70px;"></a>
-                <a href="http://www.newwwedu.com/"><img src="images/logo/newwwedu.png" style="width:170px;height:70px;"></a>
-                <a href="http://www.ccssoft.com.cn/"><img src="images/logo/ccssoft.gif" ></a>
-
-
-            </center>
-
-        </div>
-
     </body>
 </html>

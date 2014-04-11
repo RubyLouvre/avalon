@@ -1,46 +1,24 @@
-
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
     <head>
-        <meta charset="utf-8">
-        <title>DOMNodeRemoved test</title>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js">
 
-        <script>
-            window.onload = function() {
-                var aaa = document.getElementById("aaa")
-                var bbb = document.getElementById("bbb")
-                var xxx = false
-                if (xxx) {
-                    aaa.addEventListener("DOMNodeRemoved", function(e) {
-                        if (e.target === this) {
-                            console.log("DOMNodeRemoved")
-                        }
-                    })
-                    setTimeout(function() {
-                        document.body.removeChild(aaa)
-                        ///   bbb.appendChild(aaa)
-                    }, 3000)
-                } else {
-                    aaa.addEventListener("DOMNodeRemovedFromDocument", function(e) {//ff24不可用
-                        if (e.target === this) {
-                            console.log("DOMNodeRemovedFromDocument")
-                        }
-                    })
-                    setTimeout(function() {
-                     //   document.body.removeChild(aaa)
-                          bbb.appendChild(aaa)
-                    }, 3000)
-                }
-
-
-            }
         </script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.name = "名字"
+                vm.answer = "短笛"
+            })
+        </script>
+
     </head>
     <body>
-
-        <div id="bbb" style="border:1px solid  red;padding: 5px;"></div>
-        <div id="aaa" style="border:1px solid  green; width: 200px;height:200px;background: #2AAA24;"></div>
-
-
+        <div ms-controller="test">我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}
+        </div>
+        <p ms-controller="test" ms-text="name"></p>
+        <p ms-controller="test" ms-text="no"></p>
     </body>
 </html>

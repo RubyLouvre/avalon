@@ -184,6 +184,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
+        version: 1.25,
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
@@ -355,12 +356,9 @@
      *                           modelFactory                             *
      **********************************************************************/
     var VMODELS = avalon.vmodels = {}
-    avalon.define = function(name, factory) {
-        if (typeof name !== "string") {
-            avalon.error("必须指定ID")
-        }
-        if (typeof factory !== "function") {
-            avalon.error("factory必须是函数")
+    avalon.define = function(id, factory) {
+        if (VMODELS[id]) {
+            log("warning: "+id + " 已经存在于avalon.vmodels中")
         }
         var scope = {
             $watch: noop
@@ -370,8 +368,8 @@
         stopRepeatAssign = true
         factory(model)
         stopRepeatAssign = false
-        model.$id = name
-        return VMODELS[name] = model
+        model.$id = id
+        return VMODELS[id] = model
     }
 
     function modelFactory(scope, model) {
@@ -857,7 +855,7 @@
     }
     var plugins = {
         alias: function(val) {
-            log("Warning: alias方法已废弃，请用paths, shim配置项")
+            log("warning: alias方法已废弃，请用paths, shim配置项")
             for (var c in val) {
                 if (ohasOwn.call(val, c)) {
                     var currValue = val[c]
@@ -1574,7 +1572,7 @@
                     }
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
-                        log("Debug: remove " + fn.name)
+                        log("debug: remove " + fn.name)
                     }
                 }
                 if (typeof fn === "function") {
@@ -2034,7 +2032,7 @@
             }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
-            log("Debug:" + e.message)
+            log("debug: parse error," + e.message)
         } finally {
             vars = textBuffer = names = null //释放内存
         }
@@ -2048,6 +2046,7 @@
                 var tmpl = {}
                 return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
             })
+
             data.evaluator = function() {
                 var ret = ""
                 for (var i = 0, el; el = array[i++]; ) {
@@ -2068,6 +2067,10 @@
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
             registerSubscriber(data)
+        } else {
+            if (data.nodeType === 3) {
+                data.node.data = openTag + data.value + closeTag
+            }
         }
     }
     avalon.parseExprProxy = parseExprProxy
@@ -2442,7 +2445,7 @@
                     try {
                         placehoder.parentNode.replaceChild(elem, placehoder)
                     } catch (e) {
-                        avalon.log("Debug: ms-if  " + e.message)
+                        log("debug: ms-if  " + e.message)
                     }
                 }
                 if (rbind.test(elem.outerHTML)) {
@@ -2548,7 +2551,7 @@
                     rightExpr = text.slice(colonIndex + 1)
                     parseExpr(rightExpr, vmodels, data) //决定是添加还是删除
                     if (!data.evaluator) {
-                        log("Debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
+                        log("debug: ms-class '" + (rightExpr || "").trim() + "' 不存在于VM中")
                         return false
                     } else {
                         data._evaluator = data.evaluator
@@ -2591,7 +2594,7 @@
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
             if (type !== "repeat") {
-                avalon.log("Warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
+                log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
             data.callbackElement = data.parent = elem
             var freturn = true
@@ -2749,7 +2752,7 @@
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
                 element.removeAttribute("ms-widget")
-                var vmodel = constructor(element, data, vmodels)
+                var vmodel = constructor(element, data, vmodels) || {}//防止组件不返回VM
                 data.evaluator = noop
                 element.msData["ms-widget-id"] = vmodel.$id
                 if (vmodel.hasOwnProperty("$init")) {
@@ -3878,7 +3881,7 @@
                     head.removeChild(node)
                     node = null // 处理旧式IE下的循环引用问题
                 })
-                log("Debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
+                log("debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
                 return true
             }
@@ -3954,7 +3957,7 @@
                         callback()
                     }
                     if (checkFail(node, false, !W3C)) {
-                        log("Debug: 已成功加载 " + url)
+                        log("debug: 已成功加载 " + url)
                     }
                 }
             }
@@ -3963,7 +3966,7 @@
             }
             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
             head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-            log("Debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+            log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
         }
 
         innerRequire = avalon.require = function(list, factory, parent) {
