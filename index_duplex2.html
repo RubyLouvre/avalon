@@ -12,16 +12,16 @@
                     yyy: "555"
                 }
                 vm.bbb = "yyy"
-                vm.textModel = "text";
+                vm.zzz = "text";
             })
         </script>
     </head>
     <body ms-controller="test">
         <input ms-duplex="aaa['xxx']">
         <input ms-duplex="aaa[bbb]">
-        <input ms-duplex="textModel" ms-data-observe="radioModel"/>
-        <p>{{textModel}}</p>
+        <input ms-duplex="zzz" ms-data-duplex-observe="zzz"/>
         <p>{{aaa.xxx}}</p>
         <p>{{aaa.yyy}}</p>
+        <p>{{zzz}}</p>
     </body>
 </html>

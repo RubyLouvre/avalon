@@ -8,7 +8,7 @@
         <script>
             avalon.ready(function() {
 
-                avalon.define("props", function(vm) {
+                avalon.define("fruit", function(vm) {
                     vm.options = ["苹果", "香蕉", "桃子", "雪梨", "葡萄", "哈蜜瓜", "橙子", "火龙果", "荔技", "黄皮"];
                     vm.selected = "桃子"
                 });
@@ -26,21 +26,31 @@
                     "三大魔幻小说": ["冰与火之歌", "时光之轮", "荆刺与白骨之王国"],
                     "七大奇迹": ["埃及胡夫金字塔", "奥林匹亚宙斯巨像", "阿尔忒弥斯月神殿", "摩索拉斯陵墓", "亚历山大港灯塔", "巴比伦空中花园", "罗德岛太阳神巨像"]
                 }
+
+                avalon.define("images", function(vm) {
+                    vm.images = [{src: "ecosphere.jpg", title: "sss"}, {src: "images.png", title: "xxx"}]
+                })
                 var model = avalon.define("linkage", function(vm) {
                     vm.first = ["中国", "日本", "欧美"]
-                    vm.second = map[vm.first[1]]
-                    vm.third = map[vm.second[0]]
+                    vm.second = map[vm.first[1]].concat()
+                    vm.third = map[vm.second[0]].concat()
                     vm.firstSelected = "日本"
-                    vm.secondSelected = ""
-                    vm.thirdSelected = ""
+                    vm.secondSelected = "日本武将"
+                    vm.thirdSelected = "织田信长"
 
                     vm.$watch("firstSelected", function(a) {
-                        vm.second = map[a]
-                        vm.secondSelected = map[a][0]
+                        vm.second = map[a].concat()
+                        //    setTimeout(function() {
+                        vm.secondSelected = vm.second[0]
+
+                        //   })
+
                     })
                     vm.$watch("secondSelected", function(a) {
-                        vm.third = map[a]
-                        vm.thirdSelected = map[a][0]
+                        vm.third = map[a].concat()
+                        //  setTimeout(function() {
+                        vm.thirdSelected = vm.third[0]
+                        //  })
                     })
                 })
                 var m = avalon.define("multi", function(vm) {
@@ -57,11 +67,17 @@
         </script>
     </head>
     <body>
-        <div ms-controller="props">
+        <div ms-controller="fruit">
             <input  ms-duplex="selected" />
             <select ms-each-option="options" ms-duplex="selected" >
                 <option ms-value="option" >{{option}}</option>
             </select>
+        </div>
+        <div ms-controller="images">
+            <div ms-repeat="images" style="display: inline-block;"><img ms-src="el.src" ms-title="el.title" style="width:200px;height:200px;"/></div>
+        </div>
+        <div ms-controller="images">
+            <div ms-repeat="images" style="display: inline-block;border:1px solid green"><img ms-src="{{el.src}}" ms-title="el.title" style="width:200px;height:200px;"/></div>
         </div>
         <div ms-controller="linkage">
             <select ms-each-el="first" ms-duplex="firstSelected" >

@@ -6,7 +6,6 @@
         <script src="avalon.js" type="text/javascript"></script>
         <script>
             var model = avalon.define("model", function(vm) {
-
                 vm.textModel = "text";
                 vm.passwordModel = "password"
                 vm.radioModel = true;
@@ -66,7 +65,7 @@
     <body >
         <div ms-controller="model">
             <h3 style="text-align: center">ms-duplex</h3>
-            <input ms-duplex="textModel" ms-data-observe="radioModel"/>
+            <input ms-duplex="textModel" ms-data-duplex-observe="radioModel"/>
             <input ms-duplex="passwordModel" type="password"/>
 
             <input type="radio" ms-duplex="radioModel"> <input type="checkbox" ms-duplex-radio="checkRadio">
@@ -82,11 +81,14 @@
             <input ms-duplex-text="sex" type="radio" value="2"/>
             <input ms-duplex-text="sex" type="radio" value="3"/>
             {{sex}}
-            <p>text, password, textarea要求对应的VM属性为字符串，select、checkbox为字符串数组，radio为布尔，我们可以通过ms-duplex-radio让checkbox对应一个布尔，ms-duplex-text让radio对应一个字符串 </p>
+            <p>text, password, textarea要求对应的VM属性为字符串，
+                select、checkbox为字符串数组，radio为布尔，
+                我们可以通过ms-duplex-radio让checkbox对应一个布尔，
+                ms-duplex-text让radio对应一个字符串 </p>
             <div class="parent">
                 <div ms-visible="radioModel" class="visible">
                     <div>ms-visible这个区域是受到radioModel控制</div>
-                    <div>data-observe为{{radioModel}}</div>
+                    <div>data-duplex-observe为{{radioModel}}</div>
                 </div>
                 <div ms-if="checkRadio" class="if">
                     <div> ms-if这个区域是受到checkRadio控制</div>

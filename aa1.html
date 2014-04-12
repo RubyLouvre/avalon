@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js">
+
+        </script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.name = "名字"
+                vm.answer = "短笛"
+            })
+        </script>
+
+    </head>
+    <body>
+        <div ms-controller="test">我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}
+        </div>
+        <p ms-controller="test" ms-text="name"></p>
+        <p ms-controller="test" ms-text="no"></p>
+    </body>
+</html>
