@@ -4,21 +4,27 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.js">
+        <script src="avalon.mobile.js">
 
         </script>
         <script>
             avalon.define("test", function(vm) {
-                vm.name = "名字"
-                vm.answer = "短笛"
+               vm.aaa = 'bbb'
+               vm.$watch("aaa", function(a){
+                   console.log(a+" first ")
+               })
+               vm.change = function(){
+                   console.log(vm.aaa+" second ")
+               }
             })
         </script>
 
     </head>
     <body>
-        <div ms-controller="test">我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}
-        </div>
-        <p ms-controller="test" ms-text="name"></p>
-        <p ms-controller="test" ms-text="no"></p>
+        <select ms-controller="test" ms-duplex="aaa" ms-change="change">
+            <option>aaa</option>
+            <option>bbb</option>
+            <option>ccc</option>
+        </select>
     </body>
 </html>
