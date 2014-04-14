@@ -8,21 +8,44 @@
 
         </script>
         <script>
-            avalon.define("test", function(vm) {
-                vm.xxx = "bbb"
-                vm.change = function(){
-                    console.log(vm.xxx)
+            if (!window.console) {
+                window.console = {}
+                console.log = function(str) {
+                    avalon.ready(function() {
+                        var div = document.createElement("pre");
+                        div.className = "mass_sys_log";
+                        div.innerHTML = str + ""; //确保为字符串
+                        document.body.appendChild(div);
+                    });
                 }
 
+            }
+            avalon.define("test", function(vm) {
+                vm.xxx = "bbb"
+                vm.change = function() {
+                    console.log(vm.xxx + "  =====")
+                }
+                vm.change1 = function() {
+                    console.log(vm.array + "  =====")
+                }
+                vm.yyy = "bbb"
+                vm.click = function() {
+                    console.log(vm.yyy + "  -----")
+                }
+                vm.array = []
             })
         </script>
 
     </head>
-    <body<<<<<<< HEAD
+    <body>
         <p ms-controller="test">
             <input ms-duplex-text="xxx" type="radio" ms-change="change" value="aaa">aaa
             <input ms-duplex-text="xxx" type="radio" ms-change="change" value="bbb">bbb
             <input ms-duplex-text="xxx" type="radio" ms-change="change" value="ccc">ccc
+            <input ms-duplex="yyy" type="radio" ms-click="click" >ddd<br/>
+            <input ms-duplex="array" type="checkbox" ms-change="change1" value="aaa">aaa
+            <input ms-duplex="array" type="checkbox" ms-change="change1" value="bbb">bbb
+            <input ms-duplex="array" type="checkbox" ms-change="change1" value="ccc">ccc
         </p>
     </body>
 </html>

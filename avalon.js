@@ -2794,6 +2794,7 @@
         bindingHandlers[name] = bindingHandlers.attr
     })
     //============================= model binding =======================
+   
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
@@ -2816,6 +2817,7 @@
                 callback.call(element, val)
             }
         }
+        
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
@@ -2865,9 +2867,10 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            removeFn = $elem.bind("click", updateVModel) //IE6-8
+            var eventType = W3C ? "change" : "click"
+            removeFn = $elem.bind(eventType, updateVModel) //IE6-8
             data.rollback = function() {
-                $elem.unbind("click", removeFn)
+                $elem.unbind(eventType, removeFn)
             }
         } else {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
