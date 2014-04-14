@@ -2800,7 +2800,8 @@
                 type = element.type,
                 callback = data.changed,
                 $elem = avalon(element),
-                removeFn
+                removeFn,
+                eventArr
 
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
@@ -2878,14 +2879,25 @@
                         element.removeEventListener("input", updateVModel)
                     }
                 } else {
+
+                    eventArr = ["keydown","paste","cut","change"]
+
                     removeFn = function(e) {
-                        if (e.propertyName === "value") {
+                        var key = typeof e !== "object" ? e.keyCode : e
+                        if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40)) return
+                        avalon.nextTick(function(){
                             updateVModel()
-                        }
+                        })
                     }
-                    element.attachEvent("onpropertychange", removeFn)
+
+                    avalon.each(eventArr ,function( i, name ){
+                        element.attachEvent( "on"+ name, removeFn)
+                    })
+                    
                     data.rollback = function() {
-                        element.detachEvent("onpropertychange", removeFn)
+                        avalon.each( eventArr, function(i,name){
+                            element.detachEvent( "on"+ name, removeFn)
+                        })
                     }
                 }
 
