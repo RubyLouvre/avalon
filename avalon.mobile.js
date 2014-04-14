@@ -2357,9 +2357,10 @@
                     callback.call(element, val)
                 }
             }
-            element.addEventListener("click", updateVModel)
+            var eventType = fixType ? "change" : "mousedown"
+            element.addEventListener(eventType, updateVModel)
             data.rollback = function() {
-                element.removeEventListener("click", updateVModel)
+                element.removeEventListener(eventType, updateVModel)
             }
         } else if (type === "checkbox") {
             updateVModel = function() {

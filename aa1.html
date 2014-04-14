@@ -4,9 +4,12 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.mobile.js">
+        <script src="avalon.js">
 
         </script>
+<!--        <script src="jquery.js">
+
+        </script>-->
         <script>
             if (!window.console) {
                 window.console = {}
@@ -34,18 +37,35 @@
                 }
                 vm.array = []
             })
+
+//            $(function() {
+//                $("#hhh input").click(function() {
+//                    console.log("click")
+//                }).change(function() {
+//                    console.log("change")
+//                }).mousedown(function() {
+//                    console.log("mousedown")
+//                })
+//            })
         </script>
 
     </head>
     <body>
         <p ms-controller="test">
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="aaa">aaa
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="bbb">bbb
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="ccc">ccc
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="aaa" name="xxx">aaa
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="bbb" name="xxx">bbb
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="ccc" name="xxx">ccc
             <input ms-duplex="yyy" type="radio" ms-click="click" >ddd<br/>
             <input ms-duplex="array" type="checkbox" ms-change="change1" value="aaa">aaa
             <input ms-duplex="array" type="checkbox" ms-change="change1" value="bbb">bbb
             <input ms-duplex="array" type="checkbox" ms-change="change1" value="ccc">ccc
+
+        </p>
+        <p id="hhh">
+            <input type="radio" value="aaa" name="ccc">aaa
+            <input type="radio" value="bbb"name="ccc" >bbb
+            <input type="radio" value="ccc"name="ccc">bbb
+
         </p>
     </body>
 </html>

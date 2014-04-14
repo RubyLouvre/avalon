@@ -2794,7 +2794,7 @@
         bindingHandlers[name] = bindingHandlers.attr
     })
     //============================= model binding =======================
-   
+
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
@@ -2817,7 +2817,7 @@
                 callback.call(element, val)
             }
         }
-        
+
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
@@ -2846,9 +2846,10 @@
                     callback.call(element, val)
                 }
             }
-            removeFn = $elem.bind("click", updateVModel)
+            var eventType = fixType ? "click" : "mousedown"
+            removeFn = $elem.bind(eventType, updateVModel)
             data.rollback = function() {
-                $elem.unbind("click", removeFn)
+                $elem.unbind(eventType, removeFn)
             }
         } else if (type === "checkbox") {
             updateVModel = function() {
