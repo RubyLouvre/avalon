@@ -9,16 +9,19 @@
         </script>
         <script>
             avalon.define("test", function(vm) {
-                vm.name = "名字"
-                vm.answer = "短笛"
+                vm.xxx = "bbb"
+                vm.change = function(){
+                    console.log(vm.xxx)
+                }
             })
         </script>
 
     </head>
     <body>
-        <div ms-controller="test">我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}
-        </div>
-        <p ms-controller="test" ms-text="name"></p>
-        <p ms-controller="test" ms-text="no"></p>
+        <p ms-controller="test">
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="aaa">aaa
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="bbb">bbb
+            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="ccc">ccc
+        </p>
     </body>
 </html>
