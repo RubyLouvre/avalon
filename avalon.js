@@ -2880,7 +2880,7 @@
             if (event === "change") {
                 avalon.bind(element, event, updateVModel)
             } else {
-                if (W3C) { //先执行W3C
+                if (W3C && DOC.documentMode !== 9) { //IE10+, W3C
                     element.addEventListener("input", updateVModel)
                     data.rollback = function() {
                         element.removeEventListener("input", updateVModel)

@@ -4,23 +4,28 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-<!--        <script src="avalon.js">
-
-        </script>-->
+        <!--        <script src="avalon.js">
+        
+                </script>-->
         <!--        <script src="jquery.js">
         
                 </script>-->
         <script>
-            window.onload = function() {
-                if (document.body.attachEvent) {
-                
-                    var bbb = document.getElementById("bbb")
-                    var aaa = document.getElementById("aaa")
-                    aaa.attachEvent("onselectionchange", function() {
-                        bbb.innerText = aaa.value
-                    })
-                }
+            'use strict';
+            function asyncFunction() {
+
+                return new Promise(function(resolve, reject) {
+                    setTimeout(function() {
+                       reject('Async Hello world');
+                    }, 16);
+                });
             }
+
+            asyncFunction().then(function(value) {
+                console.log(value);    // => 'Async Hello world'
+            }).catch(function(error) {
+                console.log(error+"!");
+            })
         </script>
 
     </head>
