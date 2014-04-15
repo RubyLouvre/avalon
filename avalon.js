@@ -2804,8 +2804,8 @@
                 type = element.type,
                 callback = data.changed,
                 $elem = avalon(element),
-                removeFn,
-                eventArr
+                removeFn
+
 
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
@@ -2887,44 +2887,26 @@
                     }
                 } else {
 
-                    eventArr = ["keydown","paste","cut","change"]
+                    var eventArr = ["keyup", "paste", "cut", "change"]
 
                     removeFn = function(e) {
-                        var key = typeof e !== "object" ? e.keyCode : e
-                        if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40)) return
-                        avalon.nextTick(function(){
-                            updateVModel()
-                        })
+                        var key = e.keyCode
+                        if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
+                            return
+                        updateVModel()
                     }
 
-                    avalon.each(eventArr ,function( i, name ){
-                        element.attachEvent( "on"+ name, removeFn)
+                    avalon.each(eventArr, function(i, name) {
+                        element.attachEvent("on" + name, removeFn)
                     })
-                    
+
                     data.rollback = function() {
-                        avalon.each( eventArr, function(i,name){
-                            element.detachEvent( "on"+ name, removeFn)
+                        avalon.each(eventArr, function(i, name) {
+                            element.detachEvent("on" + name, removeFn)
                         })
                     }
                 }
 
-                if (DOC.documentMode === 9) { // IE9 无法在切剪中同步VM
-                    var selectionchange = function(e) {
-                        if (e.type === "focus") {
-                            DOC.addEventListener("selectionchange", updateVModel)
-                        } else {
-                            DOC.removeEventListener("selectionchange", updateVModel)
-                        }
-                    }
-                    element.addEventListener("focus", selectionchange)
-                    element.addEventListener("blur", selectionchange)
-                    var rollback = data.rollback
-                    data.rollback = function() {
-                        rollback()
-                        element.removeEventListener("focus", selectionchange)
-                        element.removeEventListener("blur", selectionchange)
-                    }
-                }
             }
         }
         element.oldValue = element.value
