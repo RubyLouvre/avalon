@@ -2883,7 +2883,7 @@
                     eventArr = ["keydown","paste","cut","change"]
 
                     removeFn = function(e) {
-                        var key = typeof e !== "object" ? e.keyCode : e
+                        var key = e.keyCode
                         if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40)) return
                         avalon.nextTick(function(){
                             updateVModel()
