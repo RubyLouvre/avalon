@@ -4,68 +4,32 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.js">
-
-        </script>
-<!--        <script src="jquery.js">
+<!--        <script src="avalon.js">
 
         </script>-->
+        <!--        <script src="jquery.js">
+        
+                </script>-->
         <script>
-            if (!window.console) {
-                window.console = {}
-                console.log = function(str) {
-                    avalon.ready(function() {
-                        var div = document.createElement("pre");
-                        div.className = "mass_sys_log";
-                        div.innerHTML = str + ""; //确保为字符串
-                        document.body.appendChild(div);
-                    });
+            window.onload = function() {
+                if (document.body.attachEvent) {
+                
+                    var bbb = document.getElementById("bbb")
+                    var aaa = document.getElementById("aaa")
+                    aaa.attachEvent("onselectionchange", function() {
+                        bbb.innerText = aaa.value
+                    })
                 }
-
             }
-            avalon.define("test", function(vm) {
-                vm.xxx = "bbb"
-                vm.change = function() {
-                    console.log(vm.xxx + "  =====")
-                }
-                vm.change1 = function() {
-                    console.log(vm.array + "  =====")
-                }
-                vm.yyy = "bbb"
-                vm.click = function() {
-                    console.log(vm.yyy + "  -----")
-                }
-                vm.array = []
-            })
-
-//            $(function() {
-//                $("#hhh input").click(function() {
-//                    console.log("click")
-//                }).change(function() {
-//                    console.log("change")
-//                }).mousedown(function() {
-//                    console.log("mousedown")
-//                })
-//            })
         </script>
 
     </head>
     <body>
         <p ms-controller="test">
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="aaa" name="xxx">aaa
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="bbb" name="xxx">bbb
-            <input ms-duplex-text="xxx" type="radio" ms-change="change" value="ccc" name="xxx">ccc
-            <input ms-duplex="yyy" type="radio" ms-click="click" >ddd<br/>
-            <input ms-duplex="array" type="checkbox" ms-change="change1" value="aaa">aaa
-            <input ms-duplex="array" type="checkbox" ms-change="change1" value="bbb">bbb
-            <input ms-duplex="array" type="checkbox" ms-change="change1" value="ccc">ccc
+            <input id="aaa">
 
         </p>
-        <p id="hhh">
-            <input type="radio" value="aaa" name="ccc">aaa
-            <input type="radio" value="bbb"name="ccc" >bbb
-            <input type="radio" value="ccc"name="ccc">bbb
+        <p id="bbb"></p>
 
-        </p>
     </body>
 </html>
