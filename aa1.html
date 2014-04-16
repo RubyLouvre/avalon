@@ -4,37 +4,25 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <!--        <script src="avalon.js">
+                <script src="avalon.js">
         
-                </script>-->
+                </script>
         <!--        <script src="jquery.js">
         
                 </script>-->
         <script>
-            'use strict';
-            function asyncFunction() {
-
-                return new Promise(function(resolve, reject) {
-                    setTimeout(function() {
-                       reject('Async Hello world');
-                    }, 16);
-                });
-            }
-
-            asyncFunction().then(function(value) {
-                console.log(value);    // => 'Async Hello world'
-            }).catch(function(error) {
-                console.log(error+"!");
+            avalon.define("test", function(vm){
+                vm.array = [2,3,4,5]
             })
+
         </script>
 
     </head>
     <body>
-        <p ms-controller="test">
-            <input id="aaa">
+        <ul ms-controller="test">
+            <li ms-repeat="array">{{$index}}---{{$last}}<button type="button" ms-click="$remove">移除</button></li>
+        </ul>
 
-        </p>
-        <p id="bbb"></p>
 
     </body>
 </html>
