@@ -3160,7 +3160,7 @@
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index", a)
+                    notifySubscribers(this, "index", a-1)
                 }
             }
             if (arguments.length > 2) {
@@ -3177,13 +3177,10 @@
             return this._.length
         },
         remove: function(el) { //移除第一个等于给定值的元素
-            var index = this.indexOf(el)
-            if (index >= 0) {
-                return this.removeAt(index)
-            }
+            return this.removeAt(this.indexOf(el))
         },
         removeAt: function(index) { //移除指定索引上的元素
-            this.splice(index, 1)
+            return this.splice(index, 1)
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
@@ -4028,7 +4025,7 @@
                 } catch (e) {
                 }
                 if (isCycle) {
-                    avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入"+d+"模块")
+                    avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
                 }
                 delete factory.delay //释放内存
                 innerRequire.apply(null, args) //0,1,2 --> 1,2,0
