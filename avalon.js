@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.5 2014.4.2
+ avalon 1.2.5 2014.4.15
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -358,7 +358,7 @@
     var VMODELS = avalon.vmodels = {}
     avalon.define = function(id, factory) {
         if (VMODELS[id]) {
-            log("warning: "+id + " 已经存在于avalon.vmodels中")
+            log("warning: " + id + " 已经存在于avalon.vmodels中")
         }
         var scope = {
             $watch: noop
@@ -1696,9 +1696,10 @@
         "widget": 110,
         "each": 1400,
         "with": 1500,
-        "duplex": 2000
+        "duplex": 2000,
+        "on": 3000
     }
-
+    var ons = oneObject("animationend,blur,change,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll")
     function scanAttr(elem, vmodels) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
         var bindings = [],
@@ -1709,9 +1710,13 @@
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
+                    var param = match[2] || ""
                     msData[attr.name] = attr.value
+                    if (ons[type]) {
+                        param = type
+                        type = "on"
+                    }
                     if (typeof bindingHandlers[type] === "function") {
-                        var param = match[2] || ""
                         var binding = {
                             type: type,
                             param: param,
@@ -1720,7 +1725,6 @@
                             value: attr.value,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
-
                         if (type === "if" && param.indexOf("loop") > -1) {
                             binding.priority += 100
                         }
@@ -2705,7 +2709,6 @@
                 four = void 0
             }
             data.hasArgs = four
-            data.handlerName = data.type = "on"
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {
@@ -2803,6 +2806,7 @@
         bindingHandlers[name] = bindingHandlers.attr
     })
     //============================= model binding =======================
+
     //将模型中的字段与input, textarea的value值关联在一起
     var modelBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
@@ -2813,6 +2817,7 @@
                 callback = data.changed,
                 $elem = avalon(element),
                 removeFn
+
 
         if (type === "checkbox" && fixType === "radio") {
             type = "radio"
@@ -2825,6 +2830,7 @@
                 callback.call(element, val)
             }
         }
+
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
@@ -2853,9 +2859,10 @@
                     callback.call(element, val)
                 }
             }
-            removeFn = $elem.bind("click", updateVModel)
+            var eventType = fixType ? "click" : "mousedown"
+            removeFn = $elem.bind(eventType, updateVModel)
             data.rollback = function() {
-                $elem.unbind("click", removeFn)
+                $elem.unbind(eventType, removeFn)
             }
         } else if (type === "checkbox") {
             updateVModel = function() {
@@ -2874,9 +2881,10 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            removeFn = $elem.bind("click", updateVModel) //IE6-8
+            var eventType = W3C ? "change" : "click"
+            removeFn = $elem.bind(eventType, updateVModel) //IE6-8
             data.rollback = function() {
-                $elem.unbind("click", removeFn)
+                $elem.unbind(eventType, removeFn)
             }
         } else {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
@@ -2884,40 +2892,33 @@
             if (event === "change") {
                 avalon.bind(element, event, updateVModel)
             } else {
-                if (W3C) { //先执行W3C
+                if (W3C && DOC.documentMode !== 9) { //IE10+, W3C
                     element.addEventListener("input", updateVModel)
                     data.rollback = function() {
                         element.removeEventListener("input", updateVModel)
                     }
                 } else {
+
+                    var eventArr = ["keyup", "paste", "cut", "change"]
+
                     removeFn = function(e) {
-                        if (e.propertyName === "value") {
-                            updateVModel()
-                        }
+                        var key = e.keyCode
+                        if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
+                            return
+                        updateVModel()
                     }
-                    element.attachEvent("onpropertychange", removeFn)
+
+                    avalon.each(eventArr, function(i, name) {
+                        element.attachEvent("on" + name, removeFn)
+                    })
+
                     data.rollback = function() {
-                        element.detachEvent("onpropertychange", removeFn)
+                        avalon.each(eventArr, function(i, name) {
+                            element.detachEvent("on" + name, removeFn)
+                        })
                     }
                 }
 
-                if (DOC.documentMode === 9) { // IE9 无法在切剪中同步VM
-                    var selectionchange = function(e) {
-                        if (e.type === "focus") {
-                            DOC.addEventListener("selectionchange", updateVModel)
-                        } else {
-                            DOC.removeEventListener("selectionchange", updateVModel)
-                        }
-                    }
-                    element.addEventListener("focus", selectionchange)
-                    element.addEventListener("blur", selectionchange)
-                    var rollback = data.rollback
-                    data.rollback = function() {
-                        rollback()
-                        element.removeEventListener("focus", selectionchange)
-                        element.removeEventListener("blur", selectionchange)
-                    }
-                }
             }
         }
         element.oldValue = element.value
@@ -3054,13 +3055,7 @@
         }
         return ret
     }
-    "animationend,blur,change,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll".
-            replace(rword, function(name) {
-                bindingHandlers[name] = function(data) {
-                    data.param = name
-                    bindingHandlers.on.apply(0, arguments)
-                }
-            })
+
     var oldBind = avalon.bind
     if (!("onmouseenter" in root)) { //fix firefox, chrome
         var events = {

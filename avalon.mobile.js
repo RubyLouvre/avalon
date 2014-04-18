@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.5 2014.4.2，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.2.5 2014.4.15，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1315,8 +1315,11 @@
         "widget": 110,
         "each": 1400,
         "with": 1500,
-        "duplex": 2000
+        "duplex": 2000,
+        "on": 3000
     }
+
+    var ons = oneObject("dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend")
 
     function scanAttr(elem, vmodels) {
         var attributes = elem.attributes
@@ -1327,9 +1330,13 @@
                 if (match = attr.name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
+                    var param = match[2] || ""
                     msData[attr.name] = attr.value
+                    if (ons[type]) {
+                        param = type
+                        type = "on"
+                    }
                     if (typeof bindingHandlers[type] === "function") {
-                        var param = match[2] || ""
                         var binding = {
                             type: type,
                             param: param,
@@ -2218,7 +2225,6 @@
                 four = void 0
             }
             data.hasArgs = four
-            data.handlerName = data.type = "on"
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {
@@ -2345,8 +2351,7 @@
         }
         if (type === "radio") {
             data.handler = function() {
-                //IE6是通过defaultChecked来实现打勾效果
-                element.defaultChecked = (element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator())
+                element.oldChecked = element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator()
             }
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -2357,16 +2362,17 @@
                         val = val === "true"
                         evaluator(val)
                     } else {
-                        val = !element.defaultChecked
+                        val = !element.oldChecked
                         evaluator(val)
                         element.checked = val
                     }
                     callback.call(element, val)
                 }
             }
-            element.addEventListener("click", updateVModel)
+            var eventType = fixType ? "change" : "mousedown"
+            element.addEventListener(eventType, updateVModel)
             data.rollback = function() {
-                element.removeEventListener("click", updateVModel)
+                element.removeEventListener(eventType, updateVModel)
             }
         } else if (type === "checkbox") {
             updateVModel = function() {
@@ -2385,9 +2391,9 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            element.addEventListener("click", updateVModel)
+            element.addEventListener("change", updateVModel)
             data.rollback = function() {
-                element.removeEventListener("click", updateVModel)
+                element.removeEventListener("change", updateVModel)
             }
         } else {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
@@ -2497,15 +2503,6 @@
         }
     }
 
-    "dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend".
-            replace(rword, function(name) {
-                bindingHandlers[name] = (function(dataParam) {
-                    return function(data) {
-                        data.param = dataParam
-                        bindingHandlers.on.apply(0, arguments)
-                    }
-                })(name)
-            })
     if (!("onmouseenter" in root)) { //chrome 30  终于支持mouseenter
         var oldBind = avalon.bind
         var events = {

@@ -4,21 +4,25 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.js">
-
-        </script>
+                <script src="avalon.js">
+        
+                </script>
+        <!--        <script src="jquery.js">
+        
+                </script>-->
         <script>
-            avalon.define("test", function(vm) {
-                vm.name = "名字"
-                vm.answer = "短笛"
+            avalon.define("test", function(vm){
+                vm.array = [2,3,4,5]
             })
+
         </script>
 
     </head>
     <body>
-        <div ms-controller="test">我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}
-        </div>
-        <p ms-controller="test" ms-text="name"></p>
-        <p ms-controller="test" ms-text="no"></p>
+        <ul ms-controller="test">
+            <li ms-repeat="array">{{$index}}---{{$last}}<button type="button" ms-click="$remove">移除</button></li>
+        </ul>
+
+
     </body>
 </html>
