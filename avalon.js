@@ -11,7 +11,7 @@
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
     var subscribers = "$" + expose
-    var window = this || (0, eval)('this')
+    var window = this || (0, eval)('this')//http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -1342,7 +1342,7 @@
         "option:get": function(node) {
             //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
             if (node.hasAttribute) {
-                return node.hasAttribute("value") ? node.value : node.text
+                return node.hasAttribute("value") ? node.value : node.text.trim()
             }
             //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
             return roption.test(node.outerHTML) ? node.value : node.text
