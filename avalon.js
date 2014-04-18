@@ -3160,7 +3160,7 @@
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index", a-1)
+                    notifySubscribers(this, "index", 0)
                 }
             }
             if (arguments.length > 2) {
