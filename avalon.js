@@ -11,7 +11,7 @@
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
     var subscribers = "$" + expose
-    var window = this || (0, eval)('this')
+    var window = this || (0, eval)('this')//http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -184,7 +184,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.25,
+        version: 1.26,
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
@@ -1342,7 +1342,7 @@
         "option:get": function(node) {
             //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
             if (node.hasAttribute) {
-                return node.hasAttribute("value") ? node.value : node.text
+                return node.hasAttribute("value") ? node.value : node.text.trim()
             }
             //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
             return roption.test(node.outerHTML) ? node.value : node.text
@@ -3160,7 +3160,7 @@
             if (removed.length) {
                 ret = this._del(a, removed.length)
                 if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index", a)
+                    notifySubscribers(this, "index", 0)
                 }
             }
             if (arguments.length > 2) {
@@ -3177,13 +3177,10 @@
             return this._.length
         },
         remove: function(el) { //移除第一个等于给定值的元素
-            var index = this.indexOf(el)
-            if (index >= 0) {
-                return this.removeAt(index)
-            }
+            return this.removeAt(this.indexOf(el))
         },
         removeAt: function(index) { //移除指定索引上的元素
-            this.splice(index, 1)
+            return this.splice(index, 1)
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
@@ -4028,7 +4025,7 @@
                 } catch (e) {
                 }
                 if (isCycle) {
-                    avalon.error(d + "模块与之前的某些模块存在循环依赖")
+                    avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
                 }
                 delete factory.delay //释放内存
                 innerRequire.apply(null, args) //0,1,2 --> 1,2,0

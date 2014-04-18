@@ -3,81 +3,21 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <script src="avalon.js" type="text/javascript"></script>
-        <script src="jquery">
 
-        </script>
     </head>
     <body>
+    <body ms-controller="Test">
+        <h1>{{aaa}}</h1>
+        <ul ms-if="array" ms-each-item="array">
+            <li ms-click="$remove" ms-if="$index % 2 == 0">{{ item }} --- {{index}}<>
+        </ul>
+        <script type="text/javascript">
 
-        <script>
-            var pagedData = {"fID": 51777,
-                "Number": "2014031751771",
-                "cName": "测试222222222222",
-                "tel": ["123213", "sdfdssfdss", "rrrrrr", "44444444", "99999999"],
-                "State": "成都悦好医学美容医院 未处理<br/>华西整形 未处理",
-                "fTime": "2014-03-17 11:17:03",
-                "ProjectsName": "双眼皮修复"}
-
-            function pagingFactory(data, n) {
-                var array = []
-                for (var i = 0; i < n; i++) {
-                    var obj = {}
-                    array.push(avalon.mix(true, obj, data))
-                }
-                return array
-            }
-            var bigData = pagingFactory(pagedData, 1000)
-            var model = avalon.define("followlist", function(vm) {
-                vm.items = bigData.splice(0, 100)
-            })
-
-           var id  = setInterval(function() {
-                var arr = bigData.splice(0, 100)
-                arr = arr.filter(function(el) {
-                    return el !== void 0
-                })
-                model.items.push.apply(model.items, arr)
-                if (!bigData.length) {
-                   clearInterval(id)
-                }
-            }, 400)
-
+avalon.define('Test', function(vm) {
+    vm.aaa = "array不存在啊"
+});
 
         </script>
+    </body>
 
-    </div>
-    <table ms-controller="followlist" style="width:90%" border="1">
-        <tr class="head">
-            <td>派单号
-            </td>
-            <td>客户名称
-            </td>
-            <td>客户电话
-            </td>
-            <td>派单状态
-            </td>
-            <td>派单时间
-            </td>
-            <td>派单项目
-            </td>
-        </tr>
-        <tr title="点击查看详情" ms-repeat-d="items" >
-            <td>{{$index}}:{{d.Number}}
-            </td>
-            <td>{{d.cName}}
-            </td>
-            <td>
-                <strong ms-repeat-elem="d.tel">{{elem}}</strong><wbr/>
-            </td>
-            <td>{{d.State|html}}
-            </td>
-            <td>{{d.fTime}}
-            </td>
-            <td>{{d.ProjectsName}}
-            </td>
-        </tr>
-    </table>
-
-</div>
-</body>
 </html>
