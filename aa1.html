@@ -1,28 +1,49 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>@提示组件</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-                <script src="avalon.js">
-        
-                </script>
-        <!--        <script src="jquery.js">
-        
-                </script>-->
+
+        <script src="jquery.js">
+
+        </script>
         <script>
-            avalon.define("test", function(vm){
-                vm.array = [2,3,4,5]
+function addWbr(array){
+    var ret = []
+    for(var i = 0, n = array.length; i < n; i++){
+        var str = array[i]
+        ret.push(str)
+        if(str!=" "){
+            ret.push("<wbr>")
+        }
+    }
+    return ret.join("")
+}
+            $(function() {
+                var div
+                $("textarea").on("input", function() {
+                    var self = $(this)
+                    if (/@/.test(this.value)) {
+                        if (!div) {
+                            console.log(addWbr(self.val().split("")))
+                            div = $("<div/>").appendTo("body").css({
+                                width: self.width(),
+                                height: self.height(),
+                                border: "1px  solid  red"
+                            }).html(addWbr(self.val().split("")))
+                        }
+                    }
+                })
             })
+
 
         </script>
 
     </head>
     <body>
-        <ul ms-controller="test">
-            <li ms-repeat="array">{{$first}}---{{$last}}<button type="button" ms-click="$remove">移除</button></li>
-        </ul>
-
-
+        <textarea>
+            
+        </textarea>
     </body>
 </html>
