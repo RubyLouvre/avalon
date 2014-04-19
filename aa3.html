@@ -1,23 +1,36 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-        <script src="avalon.js" type="text/javascript"></script>
+<!doctype html>
+<html lang="zh-CN">
 
-    </head>
-    <body>
-    <body ms-controller="Test">
-        <h1>{{aaa}}</h1>
-        <ul ms-if="array" ms-each-item="array">
-            <li ms-click="$remove" ms-if="$index % 2 == 0">{{ item }} --- {{index}}<>
-        </ul>
-        <script type="text/javascript">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+  <script src="avalon.js"></script>
+<script>
+    window.onload = function(){
+        console.log(document.getElementById("aaa").innerHTML)
+         console.log(document.getElementById("aaa").textContent)
+    }
+</script>
+</head>
 
-avalon.define('Test', function(vm) {
-    vm.aaa = "array不存在啊"
-});
-
-        </script>
-    </body>
-
+<body>
+    <div ms-controller="test"  id="aaa">
+        <button ms-click="f1">测试1</button>
+        <span ms-class="w">
+            <% w %>
+        </span>
+        <span ms-class="num<%w%>"></span>
+    </div>
+    <script>
+    avalon.config({
+        interpolate: ["<%", "%>"]
+    });
+    avalon.define('test', function(vm) {
+        vm.w = 100;
+        vm.f1 = function() {
+            vm.w = Math.random().toFixed(2);
+        };
+    });
+    </script>
+</body>
 </html>

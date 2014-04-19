@@ -1361,7 +1361,7 @@
                 break
             default:
                 executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML)) {
+                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML+(elem.textContent || elem.innerText)) ) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
                 break;
