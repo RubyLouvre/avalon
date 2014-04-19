@@ -885,7 +885,6 @@
                         c = escapeRegExp(closeTag)
                 rexpr = new RegExp(o + "(.*?)" + c)
                 rexprg = new RegExp(o + "(.*?)" + c, "g")
-                console.log(rexprg)
                 rbind = new RegExp(o + ".*?" + c + "|\\sms-")
             }
         }
