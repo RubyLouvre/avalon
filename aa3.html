@@ -1,36 +1,26 @@
 <!doctype html>
 <html lang="zh-CN">
 
-<head>
-    <meta charset="UTF-8">
-    <title>Document</title>
-  <script src="avalon.js"></script>
-<script>
-    window.onload = function(){
-        console.log(document.getElementById("aaa").innerHTML)
-         console.log(document.getElementById("aaa").textContent)
-    }
-</script>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <title>Document</title>
+        <script src="avalon.js"></script>
+       <script>
 
-<body>
-    <div ms-controller="test"  id="aaa">
-        <button ms-click="f1">测试1</button>
-        <span ms-class="w">
-            <% w %>
-        </span>
-        <span ms-class="num<%w%>"></span>
-    </div>
-    <script>
-    avalon.config({
-        interpolate: ["<%", "%>"]
-    });
-    avalon.define('test', function(vm) {
-        vm.w = 100;
-        vm.f1 = function() {
-            vm.w = Math.random().toFixed(2);
-        };
-    });
-    </script>
-</body>
+            avalon.config({
+                interpolate: ["<%", "%>"]
+            });
+            avalon.define('test', function(vm) {
+                vm.w = 100;
+            });
+        </script>
+
+    </head>
+
+    <body>
+        <div ms-controller="test"  id="aaa">
+                <% w %>
+        </div>
+
+    </body>
 </html>

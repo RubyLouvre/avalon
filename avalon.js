@@ -1630,23 +1630,39 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels) {
+    var scanNodes = W3C ? function scanNodes(parent, vmodels) {
         var node = parent.firstChild
-
         while (node) {
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3 && rexpr.test(node.nodeValue)) {
-                scanText(node, vmodels) //扫描文本节点
+            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
+                scanText(node, node.data, vmodels) //扫描文本节点
+            }
+            node = nextNode
+        }
+    } : function(parent, vmodels) {
+        var node = parent.firstChild
+        while (node) {
+            var nextNode = node.nextSibling
+            if (node.nodeType === 1) {
+                scanTag(node, vmodels) //扫描元素节点
+            } else if (node.nodeType === 3) {
+                if (rexpr.test(node.dara)) {
+                    scanText(node, node.dara, vmodels) //扫描文本节点
+                }
+            } else if (node.nodeType === 8) {
+                if (rexpr.test(node.innerHTML)) {
+                    scanText(node, node.innerHTML, vmodels) //扫描文本节点
+                }
             }
             node = nextNode
         }
     }
 
-    function scanText(textNode, vmodels) {
+    function scanText(textNode, text, vmodels) {
         var bindings = [],
-                tokens = scanExpr(textNode.nodeValue)
+                tokens = scanExpr(text)
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1741,7 +1757,7 @@
                 break
             default:
                 executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] &&  rbind.test(elem.innerHTML+(elem.textContent || elem.innerText)) ) {
+                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanNodes(elem, vmodels) //扫描子孙元素
                 }
                 break;
@@ -1802,7 +1818,9 @@
 
     var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
             r11a = /\|\|/g,
-            r11b = /U2hvcnRDaXJjdWl0/g
+            r11b = /U2hvcnRDaXJjdWl0/g,
+            rlt = /&lt;/g,
+            rgt = /&gt;/g
 
     function scanExpr(str) {
         var tokens = [],
