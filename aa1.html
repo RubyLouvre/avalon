@@ -5,21 +5,21 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
 
-        <script src="jquery.js">
+        <script src="jquery.js" type="aaa">
 
         </script>
-        <script>
-function addWbr(array){
-    var ret = []
-    for(var i = 0, n = array.length; i < n; i++){
-        var str = array[i]
-        ret.push(str)
-        if(str!=" "){
-            ret.push("<wbr>")
-        }
-    }
-    return ret.join("")
-}
+        <script type="aa">
+            function addWbr(array) {
+                var ret = []
+                for (var i = 0, n = array.length; i < n; i++) {
+                    var str = array[i]
+                    ret.push(str)
+                    if (str != " ") {
+                        ret.push("<wbr>")
+                    }
+                }
+                return ret.join("")
+            }
             $(function() {
                 var div
                 $("textarea").on("input", function() {
@@ -35,15 +35,21 @@ function addWbr(array){
                         }
                     }
                 })
+                console.log($("form")[0].length)
             })
 
 
         </script>
 
     </head>
-    <body>
-        <textarea>
+    <body><!--xxxxxxx-->
+        <!--[if gt IE 10]>这里面的内部可能在IE10-中显示出来，其他浏览器则还属于注释的一部分<![endif]-->
+        <form id="aa">
+            <textarea>
             
-        </textarea>
+            </textarea>
+            <input>
+        </form>
+
     </body>
 </html>
