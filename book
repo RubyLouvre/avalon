@@ -28,3 +28,6 @@ CSS文件动态加载（续）—— 残酷的真相
 http://www.cnblogs.com/chyingp/archive/2013/03/03/how-to-judge-if-stylesheet-loaded-successfully.html
 
 http://www.cnblogs.com/chyingp/p/requirejs-almond-introduction.html
+
+es6 的实现
+https://github.com/medikoo/plain-promise/blob/master/index.js
