@@ -2866,6 +2866,7 @@
                     .replace(/</g, "&lt;")
                     .replace(/>/g, "&gt;")
                     .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;")//IE下不支持&apos;(单引号)转义
         },
         currency: function(number, symbol) {
             symbol = symbol || "￥"
