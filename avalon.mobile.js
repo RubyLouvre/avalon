@@ -2079,7 +2079,7 @@
         "duplex": function(data, vmodels) {
             var elem = data.element,
                     tagName = elem.tagName
-            if (typeof modelBinding[tagName] === "function") {
+            if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data, "duplex")
@@ -2088,7 +2088,15 @@
                     if (form && form.msValidate) {
                         form.msValidate(elem)
                     }
-                    modelBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
+                    data.bound = function(type, callback) {
+                        elem.addEventListener(type, callback)
+                        var old = data.rollback
+                        data.rollback = function() {
+                            elem.removeEventListener(type, callback)
+                            old && old()
+                        }
+                    }
+                    duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
             }
         },
@@ -2309,20 +2317,27 @@
     })
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
-    var modelBinding = bindingHandlers.duplex
+    var duplexBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-    modelBinding.INPUT = function(element, evaluator, data) {
+    duplexBinding.INPUT = function(element, evaluator, data) {
         var fixType = data.param,
                 type = element.type,
                 callback = data.changed,
+                bound = data.bound,
                 $elem = avalon(element)
-        if (type === "checkbox" && fixType === "radio") {
-            type = "radio"
-        }
 
+        var composing = false
+        function compositionStart() {
+            composing = true
+        }
+        function compositionEnd() {
+            composing = false
+        }
         //当value变化时改变model的值
         var updateVModel = function() {
+            if (composing)
+                return
             var val = element.oldValue = element.value
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(val)
@@ -2336,6 +2351,9 @@
             if (curValue !== element.value) {
                 element.value = curValue
             }
+        }
+        if (type === "checkbox" && fixType === "radio") {
+            type = "radio"
         }
         if (type === "radio") {
             data.handler = function() {
@@ -2357,11 +2375,7 @@
                     callback.call(element, val)
                 }
             }
-            var eventType = fixType ? "change" : "mousedown"
-            element.addEventListener(eventType, updateVModel)
-            data.rollback = function() {
-                element.removeEventListener(eventType, updateVModel)
-            }
+            bound(fixType ? "change" : "mousedown", updateVModel)
         } else if (type === "checkbox") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -2379,17 +2393,16 @@
                 var array = [].concat(evaluator()) //强制转换为数组
                 element.checked = array.indexOf(element.value) >= 0
             }
-            element.addEventListener("change", updateVModel)
-            data.rollback = function() {
-                element.removeEventListener("change", updateVModel)
-            }
+            bound("change", updateVModel)
         } else {
             var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
             event = event.value
-            var eventType = event === "change" ? event : "input"
-            element.addEventListener(eventType, updateVModel)
-            data.rollback = function() {
-                element.removeEventListener(eventType, updateVModel)
+            if (event === "change") {
+                bound("change", updateVModel)
+            } else {
+                bound("input", updateVModel)
+                bound("compositionstart", compositionStart)
+                bound("compositionend", compositionEnd)
             }
         }
         element.oldValue = element.value
@@ -2441,7 +2454,7 @@
     } catch (e) {
         launch = launchImpl
     }
-    modelBinding.SELECT = function(element, evaluator, data) {
+    duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
@@ -2462,10 +2475,7 @@
                 element.oldValue = curValue + ""
             }
         }
-        element.addEventListener("change", updateVModel)
-        data.rollback = function() {
-            element.removeEventListener("click", updateVModel)
-        }
+        data.bound("change", updateVModel)
         var innerHTML = NaN
         var id = setInterval(function() {
             var currHTML = element.innerHTML
@@ -2478,7 +2488,7 @@
             }
         }, 20)
     }
-    modelBinding.TEXTAREA = modelBinding.INPUT
+    duplexBinding.TEXTAREA = duplexBinding.INPUT
     //========================= event binding ====================
     var eventName = {
         AnimationEvent: 'animationend',
