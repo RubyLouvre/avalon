@@ -6,19 +6,52 @@
         <meta name="viewport" content="width=device-width">
 
         <script src="avalon.js"></script>
-
+        <script src="mmdeferred.js"></script>
         <script>
+            function checkRule(b, dd) {
+                if (b) {
+                    dd.resolve(true)
+                } else {
+                    dd.reject("error")
+                }
+            }
 
-            avalon.define("test", function(vm) {
-                vm.toggle = true
+            function aaa() {
+                var d = Deferred();
+                setTimeout(function() {
+                    d.resolve(1000)
+                }, 1000)
+                return d.promise
+            }
+            var promise = aaa().then(function(e) {
+                var dd = Deferred();
+                checkRule(1, dd)
+                console.log("会经过这里")
+                return dd.promise
+            }).then(function(e) {
+                var dd = Deferred();
+                console.log("也会经过这里")
+                checkRule(0, dd)
+                return dd.promise
             })
+//分开
+           promise = promise.otherwise(function(e) {
+                console.log("最后到达这里 " + e)
+            })
+            
+            promise.then(function(e) {
+                var dd = Deferred();
+                console.log("这里不会执行")
+                checkRule(1, dd)
+                return dd.promise
+            })
+
 
         </script>
 
     </head>
-    <body ms-controller="test">
+    <body>
 
-        <input type="radio" ms-duplex="toggle"/>
-        <div ms-visible="toggle">ddddddddd</div>
+
     </body>
 </html>

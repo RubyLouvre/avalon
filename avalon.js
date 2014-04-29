@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.5 2014.4.15
+ avalon 1.2.6 2014.4.29
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2976,14 +2976,14 @@
             launch = launchImpl
         }
     }
-    modelBinding.SELECT = function(element, evaluator, data, oldValue) {
+    modelBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
-                if (val + "" !== oldValue) {
+                if (val + "" !== element.oldValue) {
                     evaluator(val)
-                    oldValue = val + ""
+                    element.oldValue = val + ""
                 }
                 data.changed.call(element, val)
             }
@@ -2992,9 +2992,9 @@
             var curValue = evaluator()
             curValue = curValue && curValue.$model || curValue
             curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
-            if (curValue + "" !== oldValue) {
+            if (curValue + "" !== element.oldValue) {
                 $elem.val(curValue)
-                oldValue = curValue + ""
+                element.oldValue = curValue + ""
             }
         }
         var removeFn = $elem.bind("change", updateVModel)
