@@ -7,16 +7,26 @@
 
         <script src="avalon.js"></script>
         <script>
-          
+
+            avalon.ui.test = function(element, data, vmodels){
+               return {
+                   $id: "ccccccc",
+                   $init: function(){
+                       avalon.scan(element, vmodels)
+                   }
+               }
+            }
+
              avalon.define("test", function(vm){
-                 vm.aaa = "111"
+                 vm.aaa = [{id:"111"},{id:'222'}]
              })
 
         </script>
 
     </head>
     <body ms-controller="test">
-        <input ms-duplex="aaa">
-
+    <div ms-each-item='aaa'>
+        <span ms-widget='test' ms-text="item.id"></span>
+    </div>
     </body>
 </html>
