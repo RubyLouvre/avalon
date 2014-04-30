@@ -1,5 +1,5 @@
 /*==================================================
- Copyright 20013-2014 司徒正美、 UnitedStack and other contributors
+ Copyright 20013-2014 司徒正美 and other contributors
  http://www.cnblogs.com/rubylouvre/
  https://github.com/RubyLouvre
  http://weibo.com/jslouvre/
