@@ -1,35 +1,32 @@
+<!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-        <script src="avalon_newparser.js"></script>
+        <title>input</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+
+        <script src="avalon.js"></script>
         <script>
-            avalon.define("xxx", function(vm) {
-                vm.array = [1, 2, 3, 4, 5]
-                vm.bbb = "ddd"
-                vm.object = {
-                    xx: "dddddd",
-                    yyL: "PPPpp"
-                }
-            })
-window.onload = function(){
-    console.log(document.body.getAttribute("ms-if"))
-}
+
+            avalon.ui.test = function(element, data, vmodels){
+               return {
+                   $id: "ccccccc",
+                   $init: function(){
+                       avalon.scan(element, vmodels)
+                   }
+               }
+            }
+
+             avalon.define("test", function(vm){
+                 vm.aaa = [{id:"111"},{id:'222'}]
+             })
 
         </script>
 
     </head>
-    <body ms-controller="x2xx" ms-if="aaa[bbb],ccc['eee\'abc']">
-        {{bbb}}
-        <ul >
-            <li ms-repeat="array">{{el}}</li>
-        </ul>
-        <ul>
-            <li ms-repeat="object">{{$key}}</li>
-        </ul>
-16:54:32
-Stark 2014/3/26 16:54:32
-	<script>var t = "aaa[bbb],ccc['eee\'abc']";</script>
-	<a href="#" onclick="alert([t, this.getAttribute('t')].join('\n')); return false;" t="aaa[bbb],ccc['eee\'abc']">test</a>
-
+    <body ms-controller="test">
+    <div ms-each-item='aaa'>
+        <span ms-widget='test' ms-text="item.id"></span>
+    </div>
     </body>
 </html>

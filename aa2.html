@@ -1,30 +1,22 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
-        <script>
-            var model = avalon.define("bool", function(vm) {
-                vm.list = []
-                vm.callback = function(){
-                    console.log([].slice.call(arguments))
-                }
-            });
-            setTimeout(function() {
-                console.log("===============")
-                model.list = [1,2,3,4]
-            }, 1300)
-             setTimeout(function() {
-                console.log("===============")
-                model.list = [5,6,7,8,9,10]
-            }, 2300)
-        </script>
+
     </head>
-    <body>
-        <div ms-controller="bool">
-            <ul>
-                <li ms-repeat="list" data-repeat-rendered="callback">{{el}}</li>
-            </ul>
-        </div>
-    </body>
+    <body ms-controller="Test">
+        <h1>{{aaa}}</h1>
+        <ul>
+            <li ms-repeat="array" ms-if-loop="el">{{ el }}</li>
+            <li>它总在最后</li>
+        </ul>
+        <script type="text/javascript">
+       avalon.define('Test', function(vm) {
+           vm.array = ["aaa", "bbb", null, "ccc"]
+       });
+        </script>
+    </body> 
 </html>
