@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-with</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <style>
+            .red{
+                color:red;
+            }
+            .green{
+                color:greenyellow;
+            }
+        </style>
+        <script >
+
+            var model = avalon.define('test', function(vm) {
+                vm.first = {
+                    a: 1,
+                    b: 1,
+                    c: 1,
+                    d: 1
+                }
+            });
+            setTimeout(function() {
+                console.log("测试修改")
+                model.first = {
+                    a: 3,
+                    b: 3,
+                    c: 3,
+                    d: 3
+                }
+            }, 1000)
+            setTimeout(function() {
+                console.log("测试移除")
+                model.first = {
+                    a: 3,
+                    b: 3
+                }
+            }, 2000)
+            setTimeout(function() {
+                console.log("测试添加")
+                model.first = {
+                    a: 3,
+                    b: 3,
+                    f: 4,
+                    g: 4
+                }
+            }, 3000)
+            setTimeout(function() {
+                console.log("测试排序")
+                model.first = {
+                    g: 4,
+                    f: 4,
+                    b: 3,
+                    a: 3
+                }
+            }, 4000)
+        </script>
+
+    </head>
+    <body >
+
+        <div ms-controller="test"  ms-with="first">
+            <h1>{{$key}}-------------------{{$val}}</h1>
+        </div>
+
+    </body>
+</html>
