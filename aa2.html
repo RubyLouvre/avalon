@@ -4,29 +4,19 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script>
-          window.onload = function(){
-              var $ = function(id){
-                  return document.getElementById(id)
-              }
-              var el =   $("test")
+        <script src="avalon.js"></script>
 
-              el.attachEvent("onpropertychange", function(){
-                  $("show").innerHTML = el.value
-              });
-              
-              $("update").onclick = function(){
-                  el.value = "1111"
-              }
-          }
-        </script>
-        
     </head>
-    <body>
-        <input id="test"/>
-        <p id="show"></p>
-        <p>
-            <button id="update" type="button">手动改value</button>
-        </p>
-    </body>
+    <body ms-controller="Test">
+        <h1>{{aaa}}</h1>
+        <ul>
+            <li ms-repeat="array" ms-if-loop="el">{{ el }}</li>
+            <li>它总在最后</li>
+        </ul>
+        <script type="text/javascript">
+       avalon.define('Test', function(vm) {
+           vm.array = ["aaa", "bbb", null, "ccc"]
+       });
+        </script>
+    </body> 
 </html>

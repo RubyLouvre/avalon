@@ -1,55 +1,32 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>@提示组件</title>
+        <title>input</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
 
-        <script src="jquery.js" type="aaa">
+        <script src="avalon.js"></script>
+        <script>
 
-        </script>
-        <script type="aa">
-            function addWbr(array) {
-                var ret = []
-                for (var i = 0, n = array.length; i < n; i++) {
-                    var str = array[i]
-                    ret.push(str)
-                    if (str != " ") {
-                        ret.push("<wbr>")
-                    }
-                }
-                return ret.join("")
+            avalon.ui.test = function(element, data, vmodels){
+               return {
+                   $id: "ccccccc",
+                   $init: function(){
+                       avalon.scan(element, vmodels)
+                   }
+               }
             }
-            $(function() {
-                var div
-                $("textarea").on("input", function() {
-                    var self = $(this)
-                    if (/@/.test(this.value)) {
-                        if (!div) {
-                            console.log(addWbr(self.val().split("")))
-                            div = $("<div/>").appendTo("body").css({
-                                width: self.width(),
-                                height: self.height(),
-                                border: "1px  solid  red"
-                            }).html(addWbr(self.val().split("")))
-                        }
-                    }
-                })
-                console.log($("form")[0].length)
-            })
 
+             avalon.define("test", function(vm){
+                 vm.aaa = [{id:"111"},{id:'222'}]
+             })
 
         </script>
 
     </head>
-    <body><!--xxxxxxx-->
-        <!--[if gt IE 10]>这里面的内部可能在IE10-中显示出来，其他浏览器则还属于注释的一部分<![endif]-->
-        <form id="aa">
-            <textarea>
-            
-            </textarea>
-            <input>
-        </form>
-
+    <body ms-controller="test">
+    <div ms-each-item='aaa'>
+        <span ms-widget='test' ms-text="item.id"></span>
+    </div>
     </body>
 </html>

@@ -1,26 +1,29 @@
-<!doctype html>
-<html lang="zh-CN">
-
+<!DOCTYPE HTML>
+<html>
     <head>
         <meta charset="UTF-8">
-        <title>Document</title>
-        <script src="avalon.js"></script>
-       <script>
-
-            avalon.config({
-                interpolate: ["<%", "%>"]
-            });
-            avalon.define('test', function(vm) {
-                vm.w = 100;
-            });
-        </script>
-
+        <title>测试用例</title>
+        <script src="avalon.mobile.js"></script>        
     </head>
+    <body ms-controller="xxx">
+        <button ms-click="f1">点击测试</button>
+        <input type="text" ms-value="x">
+        <select ms-duplex="x">
+            <option ms-repeat-el="arr" ms-value="el">{{el}}</option>
+        </select>
+        <select ms-duplex="x">
+            <option ms-value="1">1</option>
+            <option ms-value="2">2</option>
+        </select>
 
-    <body>
-        <div ms-controller="test"  id="aaa">
-                <% w %>
-        </div>
-
+        <script>
+    var model = avalon.define("xxx", function(vm) {
+        vm.f1 = function() {
+            vm.arr = [1, 2, 3]
+        }
+        vm.x = 2
+        vm.arr = [1, 2]
+    })
+        </script>
     </body>
 </html>
