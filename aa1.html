@@ -22,9 +22,14 @@
              })
 
         </script>
+        <style>
+            .ms-controller{
+                background: red;
+            }
+        </style>
 
     </head>
-    <body ms-controller="test">
+    <body ms-controller="test" class="ms-controller">
     <div ms-each-item='aaa'>
         <span ms-widget='test' ms-text="item.id"></span>
     </div>
