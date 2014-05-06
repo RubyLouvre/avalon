@@ -6,17 +6,31 @@
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
 
-    </head>
-    <body ms-controller="Test">
-        <h1>{{aaa}}</h1>
-        <ul>
-            <li ms-repeat="array" ms-if-loop="el">{{ el }}</li>
-            <li>它总在最后</li>
-        </ul>
-        <script type="text/javascript">
-       avalon.define('Test', function(vm) {
-           vm.array = ["aaa", "bbb", null, "ccc"]
-       });
+        <script>
+            var i = 4;
+            var model = avalon.define("array", function(vm) {
+                vm.array = ["1", "2", "3", "4"]
+            })
+            //在avalon.define外面绑定$watch回调
+            model.array.$watch("length", function(a) {
+                if (model.array.size() > 10) {
+                    model.array.shift();
+                }
+            })
+
+            setInterval(function() {
+                i++;
+                model.array.push(i + "");
+            }, 500);
         </script>
+    </head>
+    <body>
+        <fieldset class="id2013716" ms-controller="array">
+            <legend>例子</legend>
+            <ul ms-each="array">
+                <li >数组的第{{$index+1}}个元素为{{el}}</li>
+            </ul>
+            <p>size: <b style="color:red">{{array.size()}}</b></p>
+        </fieldset>
     </body> 
 </html>

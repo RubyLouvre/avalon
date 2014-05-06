@@ -1614,11 +1614,11 @@
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
         var a = elem.getAttribute(prefix + "skip")
         //#360 在旧式IE中 Object标签在引入Flash等资源时,可能出现没有getAttributeNode,innerHTML的情形
-        if(elem.getAttributeNode){
+        if(!elem.getAttributeNode){
             return log("warning "+elem.tagName +" no getAttributeNode method")
         }
         var b = elem.getAttributeNode(prefix + "important")
-        var c = elem.getAttributeNode(prefix + "controllern")
+        var c = elem.getAttributeNode(prefix + "controller")
         if (typeof a === "string") {
             return
         } else if (node = b || c) {
