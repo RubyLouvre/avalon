@@ -1609,26 +1609,24 @@
     }
 
 
-    function scanTag(elem, vmodels, node) {
+    function scanTag(elem, vmodels, tmpl) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
         var a = elem.getAttribute(prefix + "skip")
-        if(!W3C && elem.tagName === "OBJECT" ){
-            elem.getAttributeNode = elem.getAttributeNode || noop//#360
-        }
-        var b = elem.getAttributeNode(prefix + "important")
-        var c = elem.getAttributeNode(prefix + "controller")
+        var b = elem.getAttribute(prefix + "important")//#360
+        var c = elem.getAttribute(prefix + "controller")
         if (typeof a === "string") {
             return
-        } else if (node = b || c) {
-            var newVmodel = VMODELS[node.value]
+        } else if (tmpl = b || c) {
+            var newVmodel = VMODELS[tmpl]
             if (!newVmodel) {
                 return
             }
             //ms-important不包含父VM，ms-controller相反
-            vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            avalon(elem).removeClass(node.name) //处理IE6
+            vmodels = b ? [newVmodel] : [newVmodel].concat(vmodels)
+            tmpl = b ? prefix + "important" : prefix + "controller"
+            elem.removeAttribute(tmpl) //removeAttributeNode不会刷新[ms-controller]样式规则
+            avalon(elem).removeClass(tmpl) //处理IE6
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
