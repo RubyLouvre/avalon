@@ -1613,7 +1613,8 @@
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
         var a = elem.getAttribute(prefix + "skip")
-        var b = elem.getAttribute(prefix + "important")//#360
+        var b = elem.getAttribute(prefix + "important")//#360 在旧式IE中 Object标签在引入Flash等资源时
+        //有时会出现只存在getAttribute方法不存在getAttributeNode方法的情形
         var c = elem.getAttribute(prefix + "controller")
         if (typeof a === "string") {
             return
