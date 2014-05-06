@@ -1844,7 +1844,13 @@
                         spans = null
                         break
                     case "del"://将pos后的el个元素删掉(pos, el都是数字)
-                        proxies.splice(pos, el)
+                        var pp = proxies.splice(pos, el)
+                        for (var i = 0, p; p = pp[i++]; ) {
+                            var ac = p["$accessors"]
+                            for (var i in ac) {
+                                ac[i][subscribers] = []
+                            }
+                        }
                         removeFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index"://将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）

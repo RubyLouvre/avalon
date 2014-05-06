@@ -1614,8 +1614,8 @@
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
         var a = elem.getAttribute(prefix + "skip")
         //#360 在旧式IE中 Object标签在引入Flash等资源时,可能出现没有getAttributeNode,innerHTML的情形
-        if(!elem.getAttributeNode){
-            return log("warning "+elem.tagName +" no getAttributeNode method")
+        if (!elem.getAttributeNode) {
+            return log("warning " + elem.tagName + " no getAttributeNode method")
         }
         var b = elem.getAttributeNode(prefix + "important")
         var c = elem.getAttributeNode(prefix + "controller")
@@ -1629,7 +1629,7 @@
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            elem.classList.remove(node.name)
+            avalon(elem).removeClass(node.name)
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
@@ -2329,7 +2329,13 @@
                         spans = null
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                        proxies.splice(pos, el) //移除对应的子VM
+                        var pp = proxies.splice(pos, el) //移除对应的子VM
+                        for (var i = 0, p; p = pp[i++]; ) {
+                            var ac = p["$accessors"]
+                            for (var i in ac) {
+                                ac[i][subscribers] = []
+                            }
+                        }
                         removeFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -3328,7 +3334,7 @@
                 }
             }
         }
-        parent.textContent = ""
+        parent.innerHTML = parent.textContent = ""
     }
 
     function iteratorCallback(args) {
