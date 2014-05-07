@@ -2105,14 +2105,15 @@
                     elem = data.element,
                     list
             parseExpr(data.value, vmodels, data)
-            data.getter = function() {
-                return this.evaluator.apply(0, this.args || [])
+            if (type !== "repeat") {
+                log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
+            data.$outer = {}
             data.handler = bindingExecutors.each
             data.callbackName = "data-" + (type || "each") + "-rendered"
             data.callbackElement = data.parent = elem
-            if (type !== "repeat") {
-                log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
+            data.getter = function() {
+                return this.evaluator.apply(0, this.args || [])
             }
             var freturn = true
             try {
@@ -2134,7 +2135,6 @@
                     break
                 }
             }
-            data.$outer = data.$outer || {}
             var template = documentFragment.cloneNode(false)
             if (type === "repeat") {
                 var startRepeat = DOC.createComment("ms-repeat-start")
@@ -2172,7 +2172,7 @@
                     for (var key in list) {
                         if (list.hasOwnProperty(key)) {
                             (function(k, v) {
-                                pool[k] = createWithProxy(k, v, data.$outer)
+                                pool[k] = createWithProxy(k, v, {})
                                 pool[k].$watch("$val", function(val) {
                                     list[k] = val//#303
                                 })
@@ -2768,6 +2768,7 @@
         span.setAttribute("ms-controller", id)
         spans.push(span)
         transation.appendChild(span)
+        proxy.$outer = data.$outer
         VMODELS[id] = proxy
         function fn() {
             delete VMODELS[id]

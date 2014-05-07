@@ -3,27 +3,30 @@
     <head>
         <meta charset="UTF-8">
         <title>测试用例</title>
-        <script src="avalon.mobile.js"></script>        
+        <script src="avalon.js"></script>        
     </head>
-    <body ms-controller="xxx">
-        <button ms-click="f1">点击测试</button>
-        <input type="text" ms-value="x">
-        <select ms-duplex="x">
-            <option ms-repeat-el="arr" ms-value="el">{{el}}</option>
-        </select>
-        <select ms-duplex="x">
-            <option ms-value="1">1</option>
-            <option ms-value="2">2</option>
-        </select>
-
+    <body >
         <script>
-    var model = avalon.define("xxx", function(vm) {
-        vm.f1 = function() {
-            vm.arr = [1, 2, 3]
-        }
-        vm.x = 2
-        vm.arr = [1, 2]
-    })
+            var m = avalon.define('main', function(vm) {
+                vm.moneys = {
+                    A: 1,
+                    B: 2,
+                    C: 3,
+                    D: 4,
+                    E: 5,
+                    F: 6
+                }
+                vm.test = {
+                    A: 10,
+                    B: 20
+                }
+            });
         </script>
+        <div ms-controller="main">
+            <li ms-repeat="moneys">
+                <input type="radio" ms-value="$val">{{$val}}元
+                <h4 ms-repeat="test"> {{$outer.$key}} </h4>
+            </li>
+        </div>
     </body>
 </html>
