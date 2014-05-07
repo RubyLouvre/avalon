@@ -25,7 +25,7 @@
         <div ms-controller="main">
             <li ms-repeat="moneys">
                 <input type="radio" ms-value="$val">{{$val}}元
-                <h4 ms-repeat="test"> {{$outer.$key}} </h4>
+                <h4 ms-repeat="test"> {{$outer.$key}} {{$val}} </h4>
             </li>
         </div>
     </body>

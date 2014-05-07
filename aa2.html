@@ -21,17 +21,26 @@
             setInterval(function() {
                 i++;
                 model.array.push(i + "");
-           //     console.log(model.array._)
+                //     console.log(model.array._)
             }, 500);
+            function aaa() {
+                alert(1)
+            }
+            window.onload = function() {
+                document.getElementById("aaa").addEventListener("focus", function(e) {
+                    alert(e.target)
+                })
+            }
         </script>
     </head>
     <body>
-        <fieldset class="id2013716" ms-controller="array">
-            <legend>例子</legend>
-            <ul ms-each="array">
-                <li >数组的第{{$index+1}}个元素为{{el}}</li>
-            </ul>
-            <p>size: <b style="color:red">{{array.size()}}</b></p>
-        </fieldset>
+        <div id="aaa"  tabindex="-1" style="width:100px;height:100px;border:1px solid red"></div>
+        <!--        <fieldset class="id2013716" ms-controller="array">
+                    <legend>例子</legend>
+                    <ul ms-each="array">
+                        <li >数组的第{{$index+1}}个元素为{{el}}</li>
+                    </ul>
+                    <p>size: <b style="color:red">{{array.size()}}</b></p>
+                </fieldset>-->
     </body> 
 </html>
