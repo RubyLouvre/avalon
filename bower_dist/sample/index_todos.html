@@ -1,0 +1,213 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>todos</title>
+        <style>
+            #app{
+                background:#dfdfdf;
+                width:580px;
+                color:#000;
+                margin-bottom: 1em;
+                -margin-bottom:2em;
+            }
+            #app h1{
+                font-size: 34px;
+               	font-weight: bold;
+                text-align: center;
+                padding: 10px 0 0 0;
+                margin: 0px;
+                color:#000;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            }
+            #app .new-todo {
+                text-align: left;
+                width:500px;
+                font-size: 24px;
+                height:30px;
+                line-height: 30px;
+            }
+            #app .left{
+                padding-left: 2em;
+            }
+            #app .todo-list {
+                margin: 10px 0;
+                padding: 0;
+                list-style: none;
+            }
+            #app .todo-list li {
+                padding: 18px 20px 18px 0;
+                position: relative;
+                width: 480px;
+                font-size: 24px;
+                height: 30px;
+                line-height: 30px;
+                text-align: left;
+                background:#f5f5f5;
+                border-bottom: 1px solid #dfdfdf;
+            }
+            #app .todo-list .destroy {
+                position: absolute;
+                right: 5px;
+                top: 20px;
+                text-align: center;
+                text-decoration: none;
+                cursor: pointer;
+                width: 30px;
+                height: 30px;
+                color:#000;
+            }
+            #app .editing{
+                position:absolute;
+                top: 0;
+                width: 480px;
+                height: 30px;
+                font-size: 25px;
+                padding: 13px 15px 15px 0px;
+                margin: 0;
+            }
+            #app .todo-list li a{
+                display: none;
+            }
+            #app .todo-list li.hover a{
+                display: block;
+            }
+            #app .todo-list li.done label{
+                text-decoration: line-through;
+            }
+            #app .todo-list li label {
+                width:444px;
+            }
+            #app #footer{
+                width: 540px;
+                overflow: hidden;
+                color: #fff;
+                background: #4d6366;
+                border-top: 1px solid #ededed;
+                padding-left: 2em;
+                line-height: 40px;
+                margin-bottom:-20px;
+                -webkit-border-radius: 0 0 5px 5px;
+                -moz-border-radius: 0 0 5px 5px;
+                -ms-border-radius: 0 0 5px 5px;
+                -o-border-radius: 0 0 5px 5px;
+                border-radius: 0 0 5px 5px;
+            }
+            #app  #clear-completed {
+                float: right;
+                line-height: 20px;
+                text-decoration: none;
+                background: rgba(0, 0, 0, 0.1);
+                color: #000;
+                font-size: 11px;
+                margin-top: 8px;
+                margin-bottom: 8px;
+                padding: 0 10px 1px;
+                cursor: pointer;
+                -webkit-border-radius: 12px;
+                -moz-border-radius: 12px;
+                -ms-border-radius: 12px;
+                -o-border-radius: 12px;
+                border-radius: 12px;
+                -webkit-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
+                -moz-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
+                -ms-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
+                -o-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
+                box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
+            }
+        </style>
+        <script src="avalon.js" type="text/javascript"></script>
+
+
+        <script type="text/javascript">
+
+            avalon.define("todos", function(a) {
+                a.posts = [{text: "aaa", done: false, edit: false}, {text: "bbb", done: false, edit: false}];
+
+                function getLeft() {
+                    return a.posts.filter(function(post) {
+                        return !post.done;
+                    }).length;
+                }
+                a.left = getLeft();
+
+                a.newIt = function(e) {
+                    if (e.which === 13 && this.value) {
+                        a.posts.push({
+                            text: this.value,
+                            done: false,
+                            edit: false
+                        });
+                        this.value = "";
+                        a.left = getLeft();
+                    }
+                };
+                
+                a.checkIt = function() {
+                    this.$vmodel.post.done = this.checked;
+                    a.left = getLeft();
+                };
+                a.removeIt = function() {
+                    this.$vmodel.$remove();
+                    a.left = getLeft();
+                };
+                a.removeThem = function() {
+                    a.posts.removeAll(function(post) {
+                        return post.done;
+                    });
+                    a.left = getLeft();
+                };
+                a.checkall = false
+                a.$watch("checkall", function(done) {
+                    var len = a.posts.length;
+                    a.posts.forEach(function(post) {
+                        post.done = done;
+                        if (done) {
+                            len--;
+                        }
+                    });
+                    a.left = len;
+                })
+
+                a.editIt = function() {//让那条评论可编辑
+                    a.posts.forEach(function(post) {
+                        post.edit = false;
+                    });
+                    this.$vmodel.post.edit = true;
+                };
+                a.updateIt = function() {
+                    var post = this.$vmodel.post;
+                    post.text = this.value;
+                    post.edit = false;
+                };
+            });
+
+        </script>
+    </head>
+    <body >
+        <div id="app" ms-controller="todos">
+            <h1>todos</h1>
+            <div class="left">
+                <input class="new-todo" placeholder="What needs to be done?" autofocus ms-keypress="newIt">
+            </div>
+            <div class="left" ms-visible="posts.size()" >
+                <input id="toggle-all" type="checkbox" ms-duplex-radio="checkall">
+                <label for="toggle-all">Mark all as complete</label>
+                <ul class="todo-list" ms-each-post="posts">
+                    <li  ms-class-done="post.done" ms-hover="hover" >
+                        <div ms-visible="!post.edit" ms-dblclick="editIt">
+                            <input type="checkbox"  ms-checked="post.done" ms-click="checkIt" width="10px"  />
+                            <label>{{post.text}}</label>
+                            <a href="###" ms-click="removeIt" class="destroy">●</a>
+                        </div>
+                        <input class="editing" ms-visible="post.edit" ms-value="post.text" ms-blur="updateIt" />
+                    </li>
+                </ul>
+            </div>
+            <div ms-visible="posts.size()" id="footer">
+                <a href="###" id="clear-completed"  ms-click="removeThem" ms-visible="posts.size() - left">Clear completed</a>
+                <div id="todo-count"> <b> {{left}}</b> {{left <= 1 ? "item" : "items"}} left </div>
+            </div>
+        </div>
+    </body>
+</html>
