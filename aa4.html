@@ -8,22 +8,22 @@
 
         </script>
         <script>
-            avalon.define("xxx", function(vm) {
-                vm.xxx = "xxx"
-                vm.click = function(){
+            avalon.define("test", function(vm) {
+                vm.xxx = "5555"
+                vm.click = function() {
                     vm.xxx = "yyy"
                 }
             })
-            
-            
+
+
         </script>
     </head>
     <body>
-       
-            <ul ms-controller="xxx">
-                <button ms-class="{{xxx}}" ms-click="click">click</button>
-            </ul>
-        
+
+        <ul ms-controller="test">{{xxx}}
+            <button ms-class="{{xxx}}" ms-click="click">click</button>
+        </ul>
+
 
     </body>
 </html>
