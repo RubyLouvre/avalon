@@ -3253,6 +3253,7 @@
                     target.clear().push.apply(target, val)
                 } else if (target !== val) {
                     this[index] = val
+                    this.$model[index] = val
                     notifySubscribers(this, "set", index, val)
                 }
             }
