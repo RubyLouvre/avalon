@@ -1,5 +1,2 @@
-.gitignore
 .idea/
 /nbproject/private/
-external
-display
