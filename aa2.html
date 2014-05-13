@@ -5,42 +5,88 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
+        <style>
+            .wrapper {
 
+                overflow-y: scroll;
+                border: 1px solid green;
+                height: 210px;
+            }
+            table{
+                border:1px solid red;
+                border-collapse: collapse;
+                position: absolute;
+            }
+            tr{
+                height: 20px;   
+            }
+            td{
+                border:1px solid  red;
+            }
+        </style>
         <script>
-            var i = 4;
-            var model = avalon.define("array", function(vm) {
-                vm.array = ["1", "2", "3", "4"]
+            var array = avalon.range(1, 100)
+            var startIndex = 0
+            var endIndex = 10
+            var vmodel = avalon.define("grid", function(vm) {
+                vm.data = array
+                vm.top = 0
+                vm.$skipArray = "data"
+                vm._data = array.slice(startIndex, endIndex)
             })
-            //在avalon.define外面绑定$watch回调
-            model.array.$watch("length", function(a) {
-                if (model.array.size() > 10) {
-                    model.array.shift();
-                }
-            })
+            avalon.ready(function() {
+                var wrapper = document.getElementById("wrapper")
+                var table = document.getElementById("table")
+                var tableHeight = table.offsetHeight
+                var trHeight = Math.ceil(tableHeight / vmodel._data.size())
+                console.log(trHeight * 10)
 
-            setInterval(function() {
-                i++;
-                model.array.push(i + "");
-                //     console.log(model.array._)
-            }, 500);
-            function aaa() {
-                alert(1)
-            }
-            window.onload = function() {
-                document.getElementById("aaa").addEventListener("focus", function(e) {
-                    alert(e.target)
+                var prev = 0
+                avalon.bind(wrapper, "scroll", function(e) {
+                    var cur = wrapper.scrollTop
+                    console.log(cur)
+
+
+
+                    vmodel.top = cur
+
+                    if (cur > prev) {
+                        if (endIndex + 1 < vmodel.data.length) {
+
+                            vmodel._data.shift()
+                            startIndex++
+                            endIndex++
+                            vmodel._data.push(vmodel.data[endIndex])
+                        }
+                    } else {
+                        if (startIndex - 1 >= 0) {
+                            startIndex--
+                            endIndex--
+                            vmodel._data.unshift(vmodel.data[startIndex])
+                            vmodel._data.pop()
+                        }
+                    }
+
+                    prev = cur
+
                 })
-            }
+            })
         </script>
+
     </head>
     <body>
-        <div id="aaa"  tabindex="-1" style="width:100px;height:100px;border:1px solid red"></div>
-        <!--        <fieldset class="id2013716" ms-controller="array">
-                    <legend>例子</legend>
-                    <ul ms-each="array">
-                        <li >数组的第{{$index+1}}个元素为{{el}}</li>
-                    </ul>
-                    <p>size: <b style="color:red">{{array.size()}}</b></p>
-                </fieldset>-->
+        <div ms-controller="grid">
+            <div class="wrapper" id="wrapper">
+                <div style="position: relative;height: 2000px">
+
+
+                    <table ms-css-top="top" id="table">
+                        <tbody>
+                            <tr ms-repeat="_data"><td>1111111</td><td>{{el}}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </body> 
 </html>
