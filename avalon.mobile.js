@@ -959,32 +959,24 @@
 
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
-        var node = this[0]
-        var doc = node && node.ownerDocument
-        var pos = {
-            left: 0,
-            top: 0
+        var node = this[0],
+                doc = node && node.ownerDocument,
+                win = doc.defaultView,
+                root = doc.documentElement,
+                box = {
+                    left: 0,
+                    top: 0
+                }
+        if (!doc || !root.contains(node)) {
+            return box
         }
-        if (!doc) {
-            return pos
+        if (typeof node.getBoundingClientRect !== "undefined") {
+            box = node.getBoundingClientRect()
         }
-        //http://hkom.blog1.fc2.com/?mode=m&no=750 body的偏移量是不包含margin的
-        //我们可以通过getBoundingClientRect来获得元素相对于client的rect.
-        //http://msdn.microsoft.com/en-us/library/ms536433.aspx
-        var box = node.getBoundingClientRect(),
-                //chrome1+, firefox3+, ie4+, opera(yes) safari4+    
-                win = doc.defaultView || doc.parentWindow,
-                root = (navigator.vendor || doc.compatMode === "BackCompat") ? doc.body : doc.documentElement,
-                clientTop = root.clientTop >> 0,
-                clientLeft = root.clientLeft >> 0,
-                scrollTop = win.pageYOffset || root.scrollTop,
-                scrollLeft = win.pageXOffset || root.scrollLeft
-        // 把滚动距离加到left,top中去。
-        // IE一些版本中会自动为HTML元素加上2px的border，我们需要去掉它
-        // http://msdn.microsoft.com/en-us/library/ms533564(VS.85).aspx
-        pos.top = box.top + scrollTop - clientTop
-        pos.left = box.left + scrollLeft - clientLeft
-        return pos
+        return {
+            top:  box.top + win.pageYOffset - root.clientTop,
+            left: box.left + win.pageXOffset - root.clientLeft
+        }
     }
     //=============================val相关=======================
 
