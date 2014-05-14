@@ -768,7 +768,7 @@
                         return i
                 return -1
             },
-            //定位引操作，同上，不过是从后遍历。
+            //定位操作，同上，不过是从后遍历。
             lastIndexOf: function(item, index) {
                 var n = this.length,
                         i = index == null ? n - 1 : index

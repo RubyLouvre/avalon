@@ -34,6 +34,7 @@
                 vm.$skipArray = "data"
                 vm._data = array.slice(startIndex, endIndex)
             })
+            var trHeight = 20
             avalon.ready(function() {
                 var wrapper = document.getElementById("wrapper")
                 var table = document.getElementById("table")
@@ -41,33 +42,38 @@
                 var trHeight = Math.ceil(tableHeight / vmodel._data.size())
                 console.log(trHeight * 10)
 
-                var prev = 0
+                var prevScrollTop = 0
+                var lastRenderedScrollTop = 0
                 avalon.bind(wrapper, "scroll", function(e) {
-                    var cur = wrapper.scrollTop
-                    console.log(cur)
-
-
-
-                    vmodel.top = cur
-
-                    if (cur > prev) {
-                        if (endIndex + 1 < vmodel.data.length) {
-
-                            vmodel._data.shift()
-                            startIndex++
-                            endIndex++
-                            vmodel._data.push(vmodel.data[endIndex])
+                    var scrollTop = wrapper.scrollTop
+                    var scrollDir = scrollTop > prevScrollTop ? "down" : "up"
+                    prevScrollTop = scrollTop
+                 
+                    if (Math.abs(lastRenderedScrollTop - scrollTop) > trHeight) {
+                        lastRenderedScrollTop = scrollTop
+                           vmodel.top = scrollTop
+                        if (scrollDir === "down") {
+                            //console.log("11111111111111")
+                            if (endIndex + 1 < vmodel.data.length) {
+                                vmodel._data.shift()
+                                startIndex++
+                                
+                                endIndex++
+                                vmodel._data.push(vmodel.data[endIndex])
+                            }
+                        } else {
+                            console.log(startIndex)
+                            if (startIndex - 1 >= 0) {
+                                startIndex--
+                                endIndex--
+                                 vmodel._data.pop()
+                                vmodel._data.unshift(vmodel.data[startIndex])
+                               
+                            }
                         }
-                    } else {
-                        if (startIndex - 1 >= 0) {
-                            startIndex--
-                            endIndex--
-                            vmodel._data.unshift(vmodel.data[startIndex])
-                            vmodel._data.pop()
-                        }
+
                     }
 
-                    prev = cur
 
                 })
             })
