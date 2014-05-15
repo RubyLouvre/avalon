@@ -11,6 +11,10 @@
                 border: 1px solid green;
                 height: 210px;
             }
+            .wrapperInner{
+                position: relative;
+                height: 2378px
+            }
             table{
                 border:1px solid blueviolet;
                 border-collapse: collapse;
@@ -23,10 +27,11 @@
             td{
                 border:1px solid  blueviolet;
             }
+
         </style>
         <script>
-            var array = avalon.range(0, 47)
-          
+            var array = avalon.range(0, 100)
+
             var startIndex = 0
             var endIndex = 10
             var vmodel = avalon.define("grid", function(vm) {
@@ -35,51 +40,65 @@
                 vm.$skipArray = "data"
                 vm._data = array.slice(startIndex, endIndex)
             })
-
-
             avalon.ready(function() {
+                var wrapperInner = document.getElementById("wrapperInner")
                 var wrapper = document.getElementById("wrapper")
                 var table = document.getElementById("table")
 
-                //   console.log(vmodel.data[98])//23
-                wrapper.style.height = trHeight * (vmodel.data.length + 100) + "px"
                 var tableHeight = table.offsetHeight
                 var trHeight = Math.ceil(tableHeight / vmodel._data.size())
-             
-
+                wrapperInner.style.height = trHeight * (vmodel.data.length + 2) + "px"
                 var prevScrollTop = 0
                 var lastRenderedScrollTop = 0
-                avalon.bind(wrapper, "scroll", function(e) {
+                var timeID
+                var reRenderTbody = function(e) {
                     var scrollTop = wrapper.scrollTop
                     var scrollDir = scrollTop > prevScrollTop ? "down" : "up"
                     prevScrollTop = scrollTop
-
-                    if (Math.abs(lastRenderedScrollTop - scrollTop) >= trHeight) {
-                        //     console.log(Math.abs(lastRenderedScrollTop - scrollTop) + "!!!!!!!!!")
+                    var distance = Math.abs(lastRenderedScrollTop - scrollTop)
+                    if (distance >= trHeight) {
+                        var linage = distance / trHeight
+                        var integer = Math.floor(linage)//取得整数部分
+                        var decimal = linage - integer//取得小数部分
+                        if (decimal > 0.55) {//四舍五入
+                            integer += 1 //要添加或删除的行数
+                        }
+                        var length = vmodel.data.length, count = 0
                         if (scrollDir === "down") {
-                            //console.log("11111111111111")
-                            if (endIndex + 1 <= vmodel.data.length) {
+                            console.log("下拉 " + integer + "行")
+                            while (endIndex < length) {
+                                endIndex += 1
+                                startIndex += 1
+                                count += 1
+                                var el = vmodel.data[endIndex]
+                                vmodel._data.push(el)
                                 vmodel._data.shift()
-                                startIndex++
-                                endIndex++
-                                //  console.log(endIndex)
-                                vmodel._data.push(vmodel.data[endIndex])
+                                if (count === integer) {
+                                    break
+                                }
                             }
                         } else {
-                            //  console.log(startIndex)
-                            if (startIndex - 1 >= 0) {
-                                startIndex--
-                                endIndex--
+                            console.log("上移 " + integer + "行")
+                            while (startIndex >= 0) {
+                                endIndex -= 1
+                                startIndex -= 1
+                                count += 1
+                                var el = vmodel.data[startIndex]
+                                vmodel._data.unshift(el)
                                 vmodel._data.pop()
-                                vmodel._data.unshift(vmodel.data[startIndex])
-
+                                if (count === integer) {
+                                    break
+                                }
                             }
                         }
-                        lastRenderedScrollTop = wrapper.scrollTop = startIndex * trHeight
-                        vmodel.top = startIndex * trHeight
+                        lastRenderedScrollTop = wrapper.scrollTop = vmodel.top = startIndex * trHeight
                     }
-
-
+                }
+                avalon.bind(wrapper, "scroll", function(e) {
+                    clearTimeout(timeID)
+                    timeID = setTimeout(function() {
+                        reRenderTbody(e)
+                    }, 0)
                 })
 
 
@@ -90,7 +109,7 @@
     <body>
         <div ms-controller="grid">
             <div class="wrapper" id="wrapper">
-                <div style="position: relative;height: 2378px">
+                <div class="wrapperInner" id="wrapperInner">
                     <table ms-css-top="top" id="table">
                         <tbody>
                             <tr ms-repeat="_data"><td>表格1</td><td>第{{el}}行</td><td>表格3</td></tr>
