@@ -1793,6 +1793,7 @@
                     specified: true,
                     value: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
                 }
+                binding.value = binding.value.replace(/&amp;/g,"&")
                 attributes.push(binding)
             }
             return cacheAttr(str, attributes)

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>by 司徒正美</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
@@ -65,7 +65,7 @@
                         }
                         var length = vmodel.data.length, count = 0
                         if (scrollDir === "down") {
-                            console.log("下拉 " + integer + "行")
+                            //    console.log("下拉 " + integer + "行")
                             while (endIndex < length) {
                                 endIndex += 1
                                 startIndex += 1
@@ -78,7 +78,7 @@
                                 }
                             }
                         } else {
-                            console.log("上移 " + integer + "行")
+                            //  console.log("上移 " + integer + "行")
                             while (startIndex >= 0) {
                                 endIndex -= 1
                                 startIndex -= 1
@@ -112,7 +112,7 @@
                 <div class="wrapperInner" id="wrapperInner">
                     <table ms-css-top="top" id="table">
                         <tbody>
-                            <tr ms-repeat="_data"><td>表格1</td><td>第{{el}}行</td><td>表格3</td></tr>
+                            <tr ms-repeat="_data"><td width="30%">表格1</td><td width="30%">第{{el}}行</td><td>表格3</td></tr>
                         </tbody>
                     </table>
                 </div>
