@@ -37,9 +37,10 @@
             var vmodel = avalon.define("grid", function(vm) {
                 vm.data = array
                 vm.top = 0
-                vm.$skipArray = "data"
+                vm.$skipArray = ["data"]
                 vm._data = array.slice(startIndex, endIndex)
             })
+            alert(vmodel.hasOwnProperty("data"))
             avalon.ready(function() {
                 var wrapperInner = document.getElementById("wrapperInner")
                 var wrapper = document.getElementById("wrapper")

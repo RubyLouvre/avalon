@@ -974,7 +974,7 @@
             box = node.getBoundingClientRect()
         }
         return {
-            top:  box.top + win.pageYOffset - root.clientTop,
+            top: box.top + win.pageYOffset - root.clientTop,
             left: box.left + win.pageXOffset - root.clientLeft
         }
     }
@@ -2225,29 +2225,25 @@
             parseExprProxy(data.value, vmodels, data)
         },
         "widget": function(data, vmodels) {
-            var args = data.value.match(rword),
-                    element = data.element,
-                    widget = args[0],
-                    vmOptions = {}
-            if (args[1] === "$") {
-                args[1] = void 0
-            }
-            if (!args[1]) {
+            var args = data.value.match(rword)
+            var element = data.element
+            var widget = args[0]
+            if (args[1] === "$" || !args[1]) {
                 args[1] = widget + setTimeout("1")
             }
             data.value = args.join(",")
             var constructor = avalon.ui[widget]
             if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
                 vmodels = element.vmodels || vmodels
+                var optName = args[2] || widget //尝试获得配置项的名字，没有则取widget的名字
                 for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (!/^\$proxy\$[a-z]+0\.\d+$/.test(v.$id)) { //过滤代理VM #337
+                    if (v.hasOwnProperty(optName) && typeof v[optName] === "object") {
                         var nearestVM = v
                         break
                     }
                 }
-                var optName = args[2] || widget //尝试获得配置项的名字，没有则取widget的名字
-                if (nearestVM && typeof nearestVM[optName] === "object") {
-                    vmOptions = nearestVM[optName]
+                if (nearestVM) {
+                    var vmOptions = nearestVM[optName]
                     vmOptions = vmOptions.$model || vmOptions
                     var id = vmOptions[widget + "Id"]
                     if (typeof id === "string") {
@@ -2256,7 +2252,7 @@
                 }
                 var widgetData = avalon.getWidgetData(element, args[0]) //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
                 data[widget + "Id"] = args[1]
-                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions, widgetData)
+                data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 element.removeAttribute("ms-widget")
                 var vmodel = constructor(element, data, vmodels) || {}//防止组件不返回VM
                 data.evaluator = noop
