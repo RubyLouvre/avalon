@@ -7,7 +7,7 @@
         <script src="avalon.js"></script>
         <style>
             .wrapper {
-                overflow-y: scroll;
+                overflow: scroll;
                 border: 1px solid green;
                 height: 210px;
                 position: relative;
@@ -40,7 +40,20 @@
                 vm.$skipArray = ["data"]
                 vm._data = array.slice(startIndex, endIndex)
             })
-            alert(vmodel.hasOwnProperty("data"))
+
+            var requestAnimationFrame = window.requestAnimationFrame ||
+                    window.webkitRequestAnimationFrame ||
+                    window.mozRequestAnimationFrame ||
+                    function(callback) {
+                        return window.setTimeout(callback, 1000 / 60);
+                    }
+            var cancelAnimationFrame = window.cancelAnimationFrame ||
+                    window.webkitCancelRequestAnimationFrame ||
+                    window.mozCancelAnimationFrame ||
+                    function(id) {
+                        clearTimeout(id)
+                    }
+
             avalon.ready(function() {
                 var wrapperInner = document.getElementById("wrapperInner")
                 var wrapper = document.getElementById("wrapper")
@@ -51,8 +64,8 @@
                 wrapperInner.style.height = trHeight * (vmodel.data.length + 2) + "px"
                 var prevScrollTop = 0
                 var lastRenderedScrollTop = 0
-                var timeID
-                var reRenderTbody = function(e) {
+                var requestID
+                var reRenderTbody = function() {
                     var scrollTop = wrapper.scrollTop
                     var scrollDir = scrollTop > prevScrollTop ? "down" : "up"
                     prevScrollTop = scrollTop
@@ -96,13 +109,10 @@
                     }
                 }
                 avalon.bind(wrapper, "scroll", function(e) {
-                    clearTimeout(timeID)
-                    timeID = setTimeout(function() {
-                        reRenderTbody(e)
-                    }, 0)
-                    
+                    vmodel.top = wrapper.scrollTop
+                    cancelAnimationFrame(requestID)
+                    requestID = requestAnimationFrame(reRenderTbody)
                 })
-
 
             })
         </script>
