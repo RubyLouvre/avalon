@@ -10,9 +10,9 @@
                 overflow-y: scroll;
                 border: 1px solid green;
                 height: 210px;
+                position: relative;
             }
             .wrapperInner{
-                position: relative;
                 height: 2378px
             }
             table{
@@ -30,7 +30,7 @@
 
         </style>
         <script>
-            var array = avalon.range(0, 100)
+            var array = avalon.range(0, 700)
 
             var startIndex = 0
             var endIndex = 10
@@ -99,6 +99,7 @@
                     timeID = setTimeout(function() {
                         reRenderTbody(e)
                     }, 0)
+                    
                 })
 
 

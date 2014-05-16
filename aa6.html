@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>测试用例 by 司徒正美</title>
+    </head>
+    <body >
+        <div id="wrapper">
+            <div id="child"></div>
+        </div>
+        <br/>
+        <label><input type="checkbox" id="toggle" checked/> Overflow</label>
+
+        <style>
+            #wrapper {
+                width: 300px;
+                height: 300px;
+                background: blue;
+                overflow: hidden;
+            }
+
+            #child {
+                width: 200px;
+                height: 200px;
+
+                background: yellow;
+            }
+        </style>
+
+        <script>
+            var wrapper = document.getElementById("wrapper"),
+                    child = document.getElementById("child"),
+                    toggle = document.getElementById("toggle");
+
+            wrapper.addEventListener("overflowchanged", function(event) {
+                var overflow = event.verticalOverflow || event.horizontalOverflow
+                var type = overflow ? "overflow" : "underflow"
+                delete event.type
+                event.type = type
+                console.log(event)
+            }, false);
+
+
+            toggle.addEventListener("change", function(event) {
+                if (event.target.checked) {
+                    child.style.width = "400px";
+                    child.style.height = "400px";
+                } else {
+                    child.style.width = "200px";
+                    child.style.height = "200px";
+                }
+
+            }, false);
+        </script>
+    </body>
+</html>
