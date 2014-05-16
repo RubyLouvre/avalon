@@ -2565,12 +2565,6 @@
             notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
             return n
         },
-        append: function(array) {
-            if (!Array.isArray(array)) {
-                throw "参数必须是一个数组"
-            }
-            return  this.push.apply(this, array)
-        },
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
