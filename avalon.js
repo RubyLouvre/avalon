@@ -1772,7 +1772,8 @@
         var cacheAttr = createCache(512)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
-                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i
+                rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
+                ramp = /&amp;/g
         var getAttributes = function(elem) {
             if (elem.outerHTML.slice(0, 2) === "</") { //处理旧式IE模拟HTML5新元素带来的伪标签
                 return []
@@ -1786,14 +1787,16 @@
             }
             while (k = rattrs.exec(str)) {
                 v = k[2]
+                if(v){
+                    v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp,"&")
+                }
                 var name = k[1].toLowerCase()
                 match = name.match(rmsAttr)
                 var binding = {
                     name: name,
                     specified: true,
-                    value: v ? rquote.test(v) ? v.slice(1, -1) : v : ""
+                    value: v || ""
                 }
-                binding.value = binding.value.replace(/&amp;/g,"&")
                 attributes.push(binding)
             }
             return cacheAttr(str, attributes)
