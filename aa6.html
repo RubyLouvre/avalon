@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html>
+<html data-aaa="bbb" data-bbb="111">
     <head>
         <meta charset="UTF-8">
         <title>测试用例 by 司徒正美</title>
@@ -28,29 +28,19 @@
         </style>
 
         <script>
-            var wrapper = document.getElementById("wrapper"),
-                    child = document.getElementById("child"),
-                    toggle = document.getElementById("toggle");
-
-            wrapper.addEventListener("overflowchanged", function(event) {
-                var overflow = event.verticalOverflow || event.horizontalOverflow
-                var type = overflow ? "overflow" : "underflow"
-                delete event.type
-                event.type = type
-                console.log(event)
-            }, false);
-
-
-            toggle.addEventListener("change", function(event) {
-                if (event.target.checked) {
-                    child.style.width = "400px";
-                    child.style.height = "400px";
-                } else {
-                    child.style.width = "200px";
-                    child.style.height = "200px";
+            Array.prototype.forEach = function(fn){
+                var n = this.length;
+                for(var i = 0; i < n ; i++){
+                    fn(this[i])
                 }
-
-            }, false);
+            }
+           window.onload = function(){
+               var str = ""
+               Array.prototype.forEach.call(document.documentElement.attributes, function(el){
+                   str += "1"
+                   document.title = str
+               })
+           }
         </script>
     </body>
 </html>
