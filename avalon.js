@@ -1217,38 +1217,35 @@
                     op = alpha ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
-        //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
-        "Width,Height".replace(rword, function(name) {
-            var method = name.toLowerCase()
-            cssHooks[method + ":get"] = function(node, which, override) {
-                var boxSizing = cssHooks["@:get"](node, "boxSizing") || "content-box"
-                if (typeof override === "string") {
-                    boxSizing = override
-                }
-                which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
-                switch (boxSizing) {
-                    case "content-box":
-                        return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
-                                avalon.css(node, "padding" + which[1], true)
-                    case "padding-box":
-                        return node["client" + name]
-                    case "border-box":
-                        return node["offset" + name]
-                    case "margin-box":
-                        return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
-                                avalon.css(node, "margin" + which[1], true)
-                }
-            }
-            avalon.fn["inner" + name] = function(node) {
-                return cssHooks[method + ":get"](node, void 0, "padding-box")
-            }
-            avalon.fn["inner" + name] = function(node, hasMargin) {
-                return cssHooks[method + ":get"](node, void 0, hasMargin === true ? "border-box" : "margin-box")
-            }
-        })
     }
-
-
+    "Width,Height".replace(rword, function(name) {
+        var method = name.toLowerCase()
+        cssHooks[method + ":get"] = function(node, which, override) {
+            var boxSizing = "content-box"
+            if (typeof override === "string") {
+                boxSizing = override
+            }
+            which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
+            switch (boxSizing) {
+                case "content-box":
+                    return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
+                            avalon.css(node, "padding" + which[1], true)
+                case "padding-box":
+                    return node["client" + name]
+                case "border-box":
+                    return node["offset" + name]
+                case "margin-box":
+                    return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
+                            avalon.css(node, "margin" + which[1], true)
+            }
+        }
+        avalon.fn["inner" + name] = function() {
+            return cssHooks[method + ":get"](this[0], void 0, "padding-box")
+        }
+        avalon.fn["outer" + name] = function(node, hasMargin) {
+            return cssHooks[method + ":get"](this[0], void 0, hasMargin === true ? "border-box" : "margin-box")
+        }
+    })
     "top,left".replace(rword, function(name) {
         cssHooks[name + ":get"] = function(node) {
             var computed = cssHooks["@:get"](node, name)
@@ -1256,6 +1253,7 @@
                     avalon(node).position()[name] + "px"
         }
     })
+
     var cssShow = {
         position: "absolute",
         visibility: "hidden",
