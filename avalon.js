@@ -324,7 +324,6 @@
     }
 
     //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
-
     function isArrayLike(obj) {
         if (obj && typeof obj === "object" && !avalon.isWindow(obj)) {
             var n = obj.length
@@ -984,10 +983,8 @@
                     var val = this.attr(name)
                     return parseData(val)
                 case 0:
-                    var attrs = this[0].attributes,
-                            ret = {}
-                    for (var i = 0, n = attrs.length; i < n; i++) {
-                        var attr = attrs[i]
+                    var ret = {}
+                    ap.forEach.call(this[0].attributes, function(attr) {
                         if (attr) {
                             name = attr.name
                             if (!name.indexOf("data-")) {
@@ -995,7 +992,7 @@
                                 ret[name] = parseData(attr.value)
                             }
                         }
-                    }
+                    })
                     return ret
             }
         },

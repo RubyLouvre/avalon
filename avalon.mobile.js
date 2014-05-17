@@ -283,7 +283,7 @@
         if (obj && typeof obj === "object") {
             var n = obj.length,
                     str = serialize.call(obj)
-            if (/Array|NodeList|Arguments|CSSRuleList/.test(str)) {
+            if (/(Array|List|Collection|Map|Arguments)\]$/.test(str)) {
                 return true
             } else if (str === "[object Object]" && (+n === n && !(n % 1) && n >= 0)) {
                 return true //由于ecma262v5能修改对象属性的enumerable，因此不能用propertyIsEnumerable来判定了
@@ -291,6 +291,7 @@
         }
         return false
     }
+    avalon.isArrayLike = isArrayLike
     //视浏览器情况采用最快的异步回调
     avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
         setTimeout(callback, 0)
@@ -687,10 +688,8 @@
                     var val = this.attr(name)
                     return parseData(val)
                 case 0:
-                    var attrs = this[0].attributes,
-                            ret = {}
-                    for (var i = 0, n = attrs.length; i < n; i++) {
-                        var attr = attrs[i]
+                    var ret = {}
+                    ap.forEach.call(this[0].attributes, function(attr) {
                         if (attr) {
                             name = attr.name
                             if (!name.indexOf("data-")) {
@@ -698,7 +697,7 @@
                                 ret[name] = parseData(attr.value)
                             }
                         }
-                    }
+                    })
                     return ret
             }
         },
