@@ -689,11 +689,14 @@
                 case 0:
                     var attrs = this[0].attributes,
                             ret = {}
-                    for (var i = 0, attr; attr = attrs[i++]; ) {
-                        name = attr.name
-                        if (!name.indexOf("data-")) {
-                            name = camelize(name.slice(5))
-                            ret[name] = parseData(attr.value)
+                    for (var i = 0, n = attrs.length; i < n; i++) {
+                        var attr = attrs[i]
+                        if (attr) {
+                            name = attr.name
+                            if (!name.indexOf("data-")) {
+                                name = camelize(name.slice(5))
+                                ret[name] = parseData(attr.value)
+                            }
                         }
                     }
                     return ret
@@ -923,10 +926,29 @@
                 clientProp = "client" + name,
                 scrollProp = "scroll" + name,
                 offsetProp = "offset" + name
-        cssHooks[method + "::get"] = function(node) {
+        cssHooks[method + ":get"] = function(node, which, override) {
+            var boxSizing = "content-box"
+            if (typeof override === "string") {
+                boxSizing = override
+            }
+            which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
+            switch (boxSizing) {
+                case "content-box":
+                    return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
+                            avalon.css(node, "padding" + which[1], true)
+                case "padding-box":
+                    return node["client" + name]
+                case "border-box":
+                    return node["offset" + name]
+                case "margin-box":
+                    return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
+                            avalon.css(node, "margin" + which[1], true)
+            }
+        }
+        cssHooks[method + "&get"] = function(node) {
             var hidden = [];
             showHidden(node, hidden);
-            var val = avalon.css(node, method, true)
+            var val = cssHooks[method + ":get"](node)
             for (var i = 0, obj; obj = hidden[i++]; ) {
                 node = obj.node
                 for (var n in obj) {
@@ -951,12 +973,17 @@
                     //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
                     return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
-                return cssHooks[method + "::get"](node)
+                return cssHooks[method + "&get"](node)
             } else {
                 return this.css(method, value)
             }
         }
-
+        avalon.fn["inner" + name] = function() {
+            return cssHooks[method + ":get"](this[0], void 0, "padding-box")
+        }
+        avalon.fn["outer" + name] = function(includeMargin) {
+            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "border-box" : "margin-box")
+        }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
         var node = this[0],

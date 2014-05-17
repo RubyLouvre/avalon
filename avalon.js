@@ -986,11 +986,14 @@
                 case 0:
                     var attrs = this[0].attributes,
                             ret = {}
-                    for (var i = 0, attr; attr = attrs[i++]; ) {
-                        name = attr.name
-                        if (!name.indexOf("data-")) {
-                            name = camelize(name.slice(5))
-                            ret[name] = parseData(attr.value)
+                    for (var i = 0, n = attrs.length; i < n; i++) {
+                        var attr = attrs[i]
+                        if (attr) {
+                            name = attr.name
+                            if (!name.indexOf("data-")) {
+                                name = camelize(name.slice(5))
+                                ret[name] = parseData(attr.value)
+                            }
                         }
                     }
                     return ret
@@ -1218,34 +1221,7 @@
             return (op / 100) + "" //确保返回的是字符串
         }
     }
-    "Width,Height".replace(rword, function(name) {
-        var method = name.toLowerCase()
-        cssHooks[method + ":get"] = function(node, which, override) {
-            var boxSizing = "content-box"
-            if (typeof override === "string") {
-                boxSizing = override
-            }
-            which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
-            switch (boxSizing) {
-                case "content-box":
-                    return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
-                            avalon.css(node, "padding" + which[1], true)
-                case "padding-box":
-                    return node["client" + name]
-                case "border-box":
-                    return node["offset" + name]
-                case "margin-box":
-                    return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
-                            avalon.css(node, "margin" + which[1], true)
-            }
-        }
-        avalon.fn["inner" + name] = function() {
-            return cssHooks[method + ":get"](this[0], void 0, "padding-box")
-        }
-        avalon.fn["outer" + name] = function(node, hasMargin) {
-            return cssHooks[method + ":get"](this[0], void 0, hasMargin === true ? "border-box" : "margin-box")
-        }
-    })
+
     "top,left".replace(rword, function(name) {
         cssHooks[name + ":get"] = function(node) {
             var computed = cssHooks["@:get"](node, name)
@@ -1286,6 +1262,25 @@
                 clientProp = "client" + name,
                 scrollProp = "scroll" + name,
                 offsetProp = "offset" + name
+        cssHooks[method + ":get"] = function(node, which, override) {
+            var boxSizing = "content-box"
+            if (typeof override === "string") {
+                boxSizing = override
+            }
+            which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
+            switch (boxSizing) {
+                case "content-box":
+                    return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
+                            avalon.css(node, "padding" + which[1], true)
+                case "padding-box":
+                    return node["client" + name]
+                case "border-box":
+                    return node["offset" + name]
+                case "margin-box":
+                    return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
+                            avalon.css(node, "margin" + which[1], true)
+            }
+        }
         cssHooks[method + "&get"] = function(node) {
             var hidden = [];
             showHidden(node, hidden);
@@ -1318,7 +1313,12 @@
                 return this.css(method, value)
             }
         }
-
+        avalon.fn["inner" + name] = function() {
+            return cssHooks[method + ":get"](this[0], void 0, "padding-box")
+        }
+        avalon.fn["outer" + name] = function(includeMargin) {
+            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "border-box" : "margin-box")
+        }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
         var node = this[0],
