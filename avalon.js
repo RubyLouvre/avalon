@@ -1218,16 +1218,36 @@
             return (op / 100) + "" //确保返回的是字符串
         }
         //旧式IE无法通过currentStyle取得没有定义在样式表中的width, height值
-        "width,height".replace(rword, function(name) {
-            cssHooks[name + ":get"] = function(node) {
-                if (name === "width") {
-                    return node.clientWidth - avalon.css(node, "paddingLeft", true) - avalon.css(node, "paddingRight", true)
-                } else {
-                    return node.clientHeight - avalon.css(node, "paddingTop", true) - avalon.css(node, "paddingBottom", true)
+        "Width,Height".replace(rword, function(name) {
+            var method = name.toLowerCase()
+            cssHooks[method + ":get"] = function(node, which, override) {
+                var boxSizing = cssHooks["@:get"](node, "boxSizing") || "content-box"
+                if (typeof override === "string") {
+                    boxSizing = override
                 }
+                which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
+                switch (boxSizing) {
+                    case "content-box":
+                        return node["client" + name] - avalon.css(node, "padding" + which[0], true) -
+                                avalon.css(node, "padding" + which[1], true)
+                    case "padding-box":
+                        return node["client" + name]
+                    case "border-box":
+                        return node["offset" + name]
+                    case "margin-box":
+                        return node["offset" + name] + avalon.css(node, "margin" + which[0], true) +
+                                avalon.css(node, "margin" + which[1], true)
+                }
+            }
+            avalon.fn["inner" + name] = function(node) {
+                return cssHooks[method + ":get"](node, void 0, "padding-box")
+            }
+            avalon.fn["inner" + name] = function(node, hasMargin) {
+                return cssHooks[method + ":get"](node, void 0, hasMargin === true ? "border-box" : "margin-box")
             }
         })
     }
+
 
     "top,left".replace(rword, function(name) {
         cssHooks[name + ":get"] = function(node) {
@@ -1268,10 +1288,10 @@
                 clientProp = "client" + name,
                 scrollProp = "scroll" + name,
                 offsetProp = "offset" + name
-        cssHooks[method + "::get"] = function(node) {
+        cssHooks[method + "&get"] = function(node) {
             var hidden = [];
             showHidden(node, hidden);
-            var val = avalon.css(node, method, true)
+            var val = cssHooks[method + ":get"](node)
             for (var i = 0, obj; obj = hidden[i++]; ) {
                 node = obj.node
                 for (var n in obj) {
@@ -1282,7 +1302,7 @@
             }
             return val;
         }
-        avalon.fn[method] = function(value) {
+        avalon.fn[method] = function(value) {//会忽视其display
             var node = this[0]
             if (arguments.length === 0) {
                 if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
@@ -1295,7 +1315,7 @@
                     //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
                     return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
-                return cssHooks[method + "::get"](node)
+                return cssHooks[method + "&get"](node)
             } else {
                 return this.css(method, value)
             }
