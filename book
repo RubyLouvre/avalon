@@ -1,6 +1,8 @@
 语言层面\"包\"是个非常非常重要的功能，非常非常重要，而这是前端代码组织得没有规则，
 不同人不同风格的组织方式，不同js框架和相应组件各自为阵的根本原因。requirejs的出现是有划时代意义的。
 
+7天打造前端性能监控系统
+http://fex.baidu.com/blog/2014/05/build-performance-monitor-in-7-days/
 
 火不火的我不关心，什么东西称手用什么。比如流行的backbone,less,requirejs,nodejs,coffee script,
 没有一个我觉得有需求可以帮上忙的。除了requires,是因为我有更好的解决方案而放弃使用，
