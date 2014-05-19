@@ -1157,7 +1157,7 @@
     }
     if (window.getComputedStyle) {
         cssHooks["@:get"] = function(node, name) {
-            var ret, styles = window.getComputedStyle(node, null)
+            var ret, styles = getComputedStyle(node, null)
             if (styles) {
                 ret = name === "filter" ? styles.getPropertyValue(name) : styles[name]
                 if (ret === "") {
@@ -2115,8 +2115,8 @@
         if (!cacheDisplay[nodeName]) {
             var node = DOC.createElement(nodeName)
             root.appendChild(node)
-            if (window.getComputedStyle) {
-                val = window.getComputedStyle(node, null).display
+            if (W3C) {
+                val = getComputedStyle(node, null).display
             } else {
                 val = node.currentStyle.display
             }
@@ -2127,8 +2127,7 @@
     }
     avalon.parseDisplay = parseDisplay
     var supportDisplay = (function(td) {
-        return window.getComputedStyle ?
-                window.getComputedStyle(td, null).display === "table-cell" : true
+        return W3C ? getComputedStyle(td, null).display === "table-cell" : true
     })(DOC.createElement("td"))
     var domParser = DOC.createElement("div")
     domParser.setAttribute("className", "t")
