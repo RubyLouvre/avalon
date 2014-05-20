@@ -706,7 +706,7 @@
                 }
             }
             buffer.push("End Class")
-            var code = buffer.join("\r\n")
+            var code = buffer.join("\r\n"),
             realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
             if (realClassName == className) {
                 window.parseVB([
