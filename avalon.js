@@ -384,7 +384,7 @@
         var watchProperties = arguments[2] || {} //强制要监听的属性
         var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
-            if( typeof scope[name] !== "string"){
+            if( typeof name !== "string"){
                 log("warning:$skipArray["+ name+"] must be a string")
             }
             delete scope[name]
