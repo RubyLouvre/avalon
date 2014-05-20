@@ -871,7 +871,7 @@
     }
 
     cssHooks["@:get"] = function(node, name) {
-        var ret, styles = window.getComputedStyle(node, null)
+        var ret, styles = getComputedStyle(node, null)
         if (styles) {
             ret = styles.getPropertyValue(name)
             if (ret === "") {
@@ -902,7 +902,7 @@
     function showHidden(node, array) {
         //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
         if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
-            var styles = window.getComputedStyle(node, null)
+            var styles = getComputedStyle(node, null)
             if (rdisplayswap.test(styles["display"])) {
                 var obj = {
                     node: node
@@ -1682,7 +1682,7 @@
         if (!cacheDisplay[nodeName]) {
             var node = DOC.createElement(nodeName)
             root.appendChild(node)
-            val = window.getComputedStyle(node, null).display
+            val = getComputedStyle(node, null).display
             root.removeChild(node)
             cacheDisplay[nodeName] = val
         }
@@ -1690,8 +1690,7 @@
     }
     avalon.parseDisplay = parseDisplay
     var supportDisplay = (function(td) {
-        return window.getComputedStyle ?
-                window.getComputedStyle(td, null).display == "table-cell" : true
+        return  getComputedStyle(td, null).display == "table-cell" 
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.avalonHide{ display: none!important }</style>')
