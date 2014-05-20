@@ -640,6 +640,24 @@
         window.execScript([
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
+            "End Function",
+            "Dim VBClassBodies",
+            "Set VBClassBodies=CreateObject(\"Scripting.Dictionary\")",
+            "Function findOrDefineVBClass(name,body)",
+            "\tDim found",
+            "\tfound=\"\"",
+            "\tFor Each key in VBClassBodies",
+            "\t\tIf body=VBClassBodies.Item(key) Then",
+            "\t\t\tfound=key",
+            "\t\t\tExit For",
+            "\t\tEnd If",
+            "\tnext",
+            "\tIf found=\"\" Then",
+            "\t\tparseVB(\"Class \" + name + body)",
+            "\t\tVBClassBodies.Add name, body",
+            "\t\tfound=name",
+            "\tEnd If",
+            "\tfindOrDefineVBClass=found",
             "End Function"
         ].join("\n"), "VBScript")
 
@@ -654,9 +672,9 @@
         defineProperties = function(name, accessingProperties, normalProperties) {
             var className = "VBClass" + setTimeout("1"),
                     buffer = []
+
             buffer.push(
-                    "Class " + className,
-                    "\tPrivate [__data__], [__proxy__]",
+                    "\r\n\tPrivate [__data__], [__proxy__]",
                     "\tPublic Default Function [__const__](d, p)",
                     "\t\tSet [__data__] = d: set [__proxy__] = p",
                     "\t\tSet [__const__] = Me", //链式调用
@@ -687,15 +705,20 @@
                             "\tEnd Property")
                 }
             }
-            buffer.push("End Class") //类定义完毕
-            buffer.push(
-                    "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
-                    "\tDim o",
-                    "\tSet o = (New " + className + ")(a, b)",
-                    "\tSet " + className + "Factory = o",
-                    "End Function")
-            window.parseVB(buffer.join("\r\n")) //先创建一个VB类工厂
-            return window[className + "Factory"](accessingProperties, VBMediator) //得到其产品
+            buffer.push("End Class")
+            var code = buffer.join("\r\n")
+            realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
+            if (realClassName == className) {
+                window.parseVB([
+                        "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
+                        "\tDim o",
+                        "\tSet o = (New " + className + ")(a, b)",
+                        "\tSet " + className + "Factory = o",
+                        "End Function"
+                        ].join("\r\n"))
+            }
+            var ret = window[realClassName + "Factory"](accessingProperties, VBMediator) //得到其产品
+            return ret //得到其产品
         }
     }
     /*********************************************************************
