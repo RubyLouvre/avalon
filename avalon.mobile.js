@@ -2427,8 +2427,8 @@
     }
     var TimerID, ribbon = [], launch = noop
 
-    function onTree() {
-        if (this.oldValue !== this.value) {
+    function onTree() {//disabled状态下改动不触发inout事件
+        if (!this.disabled && this.oldValue !== this.value) {
             avalon.fire(this, "input")
         }
     }

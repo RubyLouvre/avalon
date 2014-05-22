@@ -384,8 +384,8 @@
         var watchProperties = arguments[2] || {} //强制要监听的属性
         var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
-            if( typeof name !== "string"){
-                log("warning:$skipArray["+ name+"] must be a string")
+            if (typeof name !== "string") {
+                log("warning:$skipArray[" + name + "] must be a string")
             }
             delete scope[name]
             normalProperties[name] = true
@@ -707,15 +707,15 @@
             }
             buffer.push("End Class")
             var code = buffer.join("\r\n"),
-            realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
+                    realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
             if (realClassName == className) {
                 window.parseVB([
-                        "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
-                        "\tDim o",
-                        "\tSet o = (New " + className + ")(a, b)",
-                        "\tSet " + className + "Factory = o",
-                        "End Function"
-                        ].join("\r\n"))
+                    "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
+                    "\tDim o",
+                    "\tSet o = (New " + className + ")(a, b)",
+                    "\tSet " + className + "Factory = o",
+                    "End Function"
+                ].join("\r\n"))
             }
             var ret = window[realClassName + "Factory"](accessingProperties, VBMediator) //得到其产品
             return ret //得到其产品
@@ -2990,8 +2990,8 @@
     var TimerID, ribbon = [],
             launch = noop
 
-    function onTree() {
-        if (this.oldValue !== this.value) {
+    function onTree() {//disabled状态下改动不触发inout事件
+        if (!this.disabled && this.oldValue !== this.value) {
             var event = DOC.createEvent("Event")
             event.initEvent("input", true, true)
             this.dispatchEvent(event)
