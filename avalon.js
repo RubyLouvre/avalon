@@ -3079,8 +3079,8 @@
     //============================= event binding =======================
 
     var eventName = {
-        AnimationEvent: 'animationend',
-        WebKitAnimationEvent: 'webkitAnimationEnd'
+        AnimationEvent: "animationend",
+        WebKitAnimationEvent: "webkitAnimationEnd"
     }
     for (var name in eventName) {
         if (/object|function/.test(typeof window[name])) {
