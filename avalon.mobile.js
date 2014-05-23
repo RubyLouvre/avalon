@@ -1177,7 +1177,7 @@
      *                         依赖收集与触发                             *
      **********************************************************************/
 
-    function registerSubscriber(data) {
+    function registerSubscriber(data, val) {
         Registry[expose] = data //暴光此函数,方便collectSubscribers收集
         avalon.openComputedCollect = true
         var fn = data.evaluator
@@ -1185,7 +1185,13 @@
             if (data.type === "duplex") {
                 data.handler()
             } else {
-                data.handler(fn.apply(0, data.args), data.element, data)
+                try {
+                    val = fn.apply(0, data.args)
+                } catch (e) {
+                    data.evaluator = noop
+                    log("error:evaluator of [" + data.value + "] throws error")
+                }
+                 data.handler(val, data.element, data)
             }
         } else { //如果是计算属性的accessor
             data()
@@ -1608,6 +1614,7 @@
                 fn = Function.apply(noop, names.concat(_body))
                 data.evaluator = cacheExpr(exprId, fn)
             } catch (e) {
+                log("debug: parse error," + e.message)
             }
             return
         } else if (dataType === "on") {//事件绑定
@@ -1625,9 +1632,6 @@
         }
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-            if (data.type !== "on") {
-                fn.apply(fn, args)
-            }
             data.evaluator = cacheExpr(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
@@ -1690,7 +1694,7 @@
     }
     avalon.parseDisplay = parseDisplay
     var supportDisplay = (function(td) {
-        return  getComputedStyle(td, null).display == "table-cell" 
+        return  getComputedStyle(td, null).display == "table-cell"
     })(DOC.createElement("td"))
     var rdash = /\(([^)]*)\)/
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.avalonHide{ display: none!important }</style>')
