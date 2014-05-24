@@ -2190,7 +2190,6 @@
                     parent.removeChild(this.startRepeat)
                     data.element = data.callbackElement
                 }
-                data.element.setAttribute(data.name, data.value)
             }
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
