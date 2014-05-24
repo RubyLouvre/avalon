@@ -250,6 +250,7 @@
             }
             return result
         },
+        parseJSON: JSON.parse,
         Array: {
             ensure: function(target, item) {
                 //只有当前数组不存在此元素时只添加它
@@ -535,15 +536,13 @@
                 withProxyCount--
                 delete withProxyPool[a.$id]
             }
-            iterators.forEach(function(data) {
-                data.rollback && data.rollback()
-            })
             var ret = modelFactory(b)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
                         if (el.type) {
                             avalon.nextTick(function() {
+                                el.rollback && el.rollback()
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
                         }
@@ -1191,7 +1190,7 @@
                     data.evaluator = noop
                     log("error:evaluator of [" + data.value + "] throws error")
                 }
-                 data.handler(val, data.element, data)
+                data.handler(val, data.element, data)
             }
         } else { //如果是计算属性的accessor
             data()
@@ -2181,9 +2180,29 @@
             }
             data.template = template
             data.proxies = []
+            data.rollback = function() {
+                bindingExecutors.each.call(data, "clear")
+                var endRepeat = data.endRepeat
+                var parent = data.parent
+                parent.insertBefore(data.template, endRepeat || null)
+                if (endRepeat) {
+                    parent.removeChild(endRepeat)
+                    parent.removeChild(this.startRepeat)
+                    data.element = data.callbackElement
+                }
+                data.element.setAttribute(data.name, data.value)
+            }
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
             if (freturn) {
+                var arr = data.value.split(".") || []
+                if (arr.length > 1) {
+                    arr.pop()
+                    var v = vmodels[0], n = arr[0]
+                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
+                        v[n][subscribers].push(data)
+                    }
+                }
                 return
             }
             list[subscribers] && list[subscribers].push(data)
@@ -2203,19 +2222,9 @@
                         }
                     }
                 }
-                data.rollback = function() {
-                    bindingExecutors.each.call(data, "clear")
-                    var endRepeat = data.endRepeat
-                    var parent = data.parent
-                    parent.insertBefore(data.template, endRepeat || null)
-                    if (endRepeat) {
-                        parent.removeChild(endRepeat)
-                        parent.removeChild(this.startRepeat)
-                        data.element = data.callbackElement
-                    }
-                }
                 data.handler("append", list, pool)
             } else {
+                delete data.rollback
                 data.handler("add", 0, list)
             }
         },

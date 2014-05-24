@@ -582,15 +582,13 @@
                 withProxyCount--
                 delete withProxyPool[a.$id]
             }
-            iterators.forEach(function(data) {
-                data.rollback && data.rollback() //还原 ms-with ms-on
-            })
             var ret = modelFactory(b)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
                         if (el.type) { //重新绑定
                             avalon.nextTick(function() {
+                                el.rollback && el.rollback() //还原 ms-with ms-on
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
                         }
@@ -2673,6 +2671,7 @@
                 }
             } catch (e) {
             }
+
             var check0 = "$key",
                     check1 = "$val"
             if (Array.isArray(list)) {
@@ -2708,9 +2707,29 @@
             }
             data.proxies = []
             data.template = template
+            data.rollback = function() {
+                bindingExecutors.each.call(data, "clear")
+                var endRepeat = data.endRepeat
+                var parent = data.parent
+                parent.insertBefore(data.template, endRepeat || null)
+                if (endRepeat) {
+                    parent.removeChild(endRepeat)
+                    parent.removeChild(data.startRepeat)
+                    data.element = data.callbackElement
+                }
+                data.element.setAttribute(data.name, data.value)
+            }
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
             if (freturn) {
+                var arr = data.value.split(".") || []
+                if (arr.length > 1) {
+                    arr.pop()
+                    var v = vmodels[0], n = arr[0]
+                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
+                        v[n][subscribers].push(data)
+                    }
+                }
                 return
             }
             list[subscribers] && list[subscribers].push(data)
@@ -2730,19 +2749,9 @@
                         }
                     }
                 }
-                data.rollback = function() {
-                    bindingExecutors.each.call(data, "clear")
-                    var endRepeat = data.endRepeat
-                    var parent = data.parent
-                    parent.insertBefore(data.template, endRepeat || null)
-                    if (endRepeat) {
-                        parent.removeChild(endRepeat)
-                        parent.removeChild(data.startRepeat)
-                        data.element = data.callbackElement
-                    }
-                }
                 data.handler("append", list, pool)
             } else {
+                delete data.rollback
                 data.handler("add", 0, list)
             }
         },
