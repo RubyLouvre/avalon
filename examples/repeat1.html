@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js">
+
+        </script>
+        <script>
+            var vmodel = avalon.define("test", function(vm) {
+                vm.first = {
+                    array: ["aaa", "bbb", "ccc", "ddd"],
+                    text: "初次赋值"
+                }
+
+            })
+            setTimeout(function() {
+                vmodel.first = {
+                    array: ["@@@", "###", "$$$", "%%%"],
+                    text: "<span style='color:red;'>再次赋值</span>"
+                }
+            }, 3000)
+        </script>
+    </head>
+    <body ms-controller="test">
+        <p>如果要循环的数组是位于一个对象上，然后对这个数组进行重新赋值</p>
+        <p>{{first.text|html}}</p>
+        <ul>
+            <li ms-repeat="first.array">{{el}}</li>
+        </ul>
+    </body>
+</html>
