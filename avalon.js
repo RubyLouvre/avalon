@@ -2658,7 +2658,6 @@
             try {
                 list = data.getter()
                 var xtype = getType(list)
-                data.loopObject = xtype === "object"
                 if (xtype == "object" || xtype == "array") {
                     freturn = false
                 }
