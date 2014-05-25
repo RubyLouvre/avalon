@@ -10,7 +10,7 @@
         <script >
             var model = avalon.define("test", function(vm) {
 
-                vm.double = [[1, 2], [4, 5], [7, 8]]
+                vm.double_ = [[1, 2], [4, 5], [7, 8]]
                 vm.single = ["aaaa", "bbb", "cccc"]
 
 
@@ -54,7 +54,7 @@
             </table>
             <h3>这是双重循环，原数组是一个二维数组</h3>
             <table>
-                <tr ms-repeat-elem="double">
+                <tr ms-repeat-elem="double_">
                     <td ms-repeat="elem">{{el}}</td>
                 </tr>
             </table>

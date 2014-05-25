@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-with</title>
+        <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="../avalon.js"></script>
         <style>
             .red{
                 color:red;
@@ -21,9 +21,10 @@
                     c: 1,
                     d: 1
                 }
+                vm.text = ""
             });
             setTimeout(function() {
-                console.log("测试修改")
+                model.text = "修改"
                 model.first = {
                     a: 3,
                     b: 3,
@@ -32,14 +33,14 @@
                 }
             }, 1000)
             setTimeout(function() {
-                console.log("测试移除")
+                model.text = "移除"
                 model.first = {
                     a: 3,
                     b: 3
                 }
             }, 2000)
             setTimeout(function() {
-                console.log("测试添加")
+                model.text = "添加"
                 model.first = {
                     a: 3,
                     b: 3,
@@ -48,7 +49,7 @@
                 }
             }, 3000)
             setTimeout(function() {
-                console.log("测试排序")
+                model.text = "排序"
                 model.first = {
                     g: 4,
                     f: 4,
@@ -59,10 +60,11 @@
         </script>
 
     </head>
-    <body >
-
-        <div ms-controller="test"  ms-with="first">
-            <h1>{{$key}}-------------------{{$val}}</h1>
+    <body ms-controller="test" >
+        <p>演示对象循环的对象被整个替换掉的效果</p>
+        <p>{{text}}实验</p>
+        <div>
+            <p ms-repeat="first">{{$key}}---------------{{$val}}</p>
         </div>
 
     </body>

@@ -24,6 +24,7 @@
                     {checked: false, text: "4444"},
                     {checked: false, text: "5555"}
                 ]
+                 vm.array3 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
                 vm.right = []
                 vm.addToRight = function() {
                     var array = []
@@ -54,6 +55,8 @@
                     model.left.push.apply(model.left, array)
 
                 }
+               
+
             })
 
         </script>
@@ -72,8 +75,8 @@
         </ul>
         <h3>$outer的使用</h3>
         <table border="1">
-            <tr ms-repeat="array3">
-                <td ms-repeat-elem="el">{{elem}}<b>它位于第{{$outer.$index}}行</b></td>
+            <tr ms-repeat-el="array3">
+                <td ms-repeat-elem="el">{{elem}}  它位于第<b style="color:orchid">{{$outer.$index}}</b>行</td>
             </tr>
         </table>
     </body>
