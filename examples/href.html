@@ -8,7 +8,7 @@
         <script>
 
 
-            avalon.define("xxx", function(vm) {
+            avalon.define("test", function(vm) {
                 vm.url = {
                     hostname: "aaa",
                     pathname: "bbbb"
@@ -24,7 +24,7 @@
     </head>
     <body>
         <h3 style="text-align: center">ms-href</h3>
-        <fieldset ms-controller="xxx">
+        <fieldset ms-controller="test">
             <legend>例子</legend>
             <p><a ms-href="{{url.hostname}}/{{url.pathname}}.html">link1</a></p>
             <p><a ms-href="#{{menu.$id}}">link2</a></p>
