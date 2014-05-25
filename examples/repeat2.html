@@ -10,14 +10,7 @@
         <script>
             var vmodel = avalon.define("test", function(vm) {
                 vm.first = {
-                    array: ["aaa", "bbb", "ccc", "ddd"],
-                    text: "初次赋值",
-                    object: {
-                        banana: "香蕉",
-                        apple: "苹果",
-                        peach: "桃子",
-                        pear: "雪梨"
-                    }
+                   
                 }
 
             })
@@ -36,7 +29,7 @@
         </script>
     </head>
     <body ms-controller="test">
-        <p>要循环的数组位于一个对象上，然后对这个数组进行重新赋值</p>
+        <p>最初只是一个空对象，然后整个被重写</p>
         <fieldset>
             <legend>ms-repeat</legend>
             <table width="100%">

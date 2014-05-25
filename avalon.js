@@ -2649,40 +2649,25 @@
             }
         },
         "each": function(data, vmodels) {
-            var type = data.type,
-                    elem = data.element,
-                    list
+            var type = data.type, list
             parseExpr(data.value, vmodels, data)
             if (type !== "repeat") {
                 log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
-            data.$outer = {}
-            data.handler = bindingExecutors.each
-            data.callbackName = "data-" + (type || "each") + "-rendered"
-            data.callbackElement = data.parent = elem
+            var elem = data.callbackElement = data.parent = data.element//用于判定当前元素是否位于DOM树
             data.getter = function() {
                 return this.evaluator.apply(0, this.args || [])
             }
+            data.proxies = []
             var freturn = true
             try {
                 list = data.getter()
-                if (rchecktype.test(getType(list))) {
+                var xtype = getType(list)
+                data.loopObject = xtype === "object"
+                if (xtype == "object" || xtype == "array") {
                     freturn = false
                 }
             } catch (e) {
-            }
-
-            var check0 = "$key",
-                    check1 = "$val"
-            if (Array.isArray(list)) {
-                check0 = "$first"
-                check1 = "$last"
-            }
-            for (var i = 0, p; p = vmodels[i++]; ) {
-                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
-                    data.$outer = p
-                    break
-                }
             }
             var template = documentFragment.cloneNode(false)
             if (type === "repeat") {
@@ -2705,7 +2690,6 @@
                     }
                 }
             }
-            data.proxies = []
             data.template = template
             data.rollback = function() {
                 bindingExecutors.each.call(data, "clear")
@@ -2718,19 +2702,37 @@
                     data.element = data.callbackElement
                 }
             }
-            node = template.firstChild
-            data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
-            if (freturn) {
-                var arr = data.value.split(".") || []
-                if (arr.length > 1) {
-                    arr.pop()
-                    var v = vmodels[0], n = arr[0]
+            var arr = data.value.split(".") || []
+            if (arr.length > 1) {
+                arr.pop()
+                var n = arr[0]
+                for (var i = 0, v; v = vmodels[i++]; ) {
                     if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
                         v[n][subscribers].push(data)
+                        break
                     }
                 }
+            }
+            if (freturn) {
                 return
             }
+            data.callbackName = "data-" + (type || "each") + "-rendered"
+            data.handler = bindingExecutors.each
+            data.$outer = {}
+            var check0 = "$key",
+                    check1 = "$val"
+            if (Array.isArray(list)) {
+                check0 = "$first"
+                check1 = "$last"
+            }
+            for (var i = 0, p; p = vmodels[i++]; ) {
+                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                    data.$outer = p
+                    break
+                }
+            }
+            node = template.firstChild
+            data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
             list[subscribers] && list[subscribers].push(data)
             if (!Array.isArray(list) && type !== "each") {
                 var pool = withProxyPool[list.$id]
@@ -2750,7 +2752,6 @@
                 }
                 data.handler("append", list, pool)
             } else {
-                delete data.rollback
                 data.handler("add", 0, list)
             }
         },

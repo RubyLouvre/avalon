@@ -2123,20 +2123,16 @@
             }
         },
         "each": function(data, vmodels) {
-            var type = data.type,
-                    elem = data.element,
-                    list
+            var type = data.type, list
             parseExpr(data.value, vmodels, data)
             if (type !== "repeat") {
                 log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
-            data.$outer = {}
-            data.handler = bindingExecutors.each
-            data.callbackName = "data-" + (type || "each") + "-rendered"
-            data.callbackElement = data.parent = elem
+            var elem = data.callbackElement = data.parent = data.element//用于判定当前元素是否位于DOM树
             data.getter = function() {
                 return this.evaluator.apply(0, this.args || [])
             }
+            data.proxies = []
             var freturn = true
             try {
                 list = data.getter()
@@ -2144,18 +2140,6 @@
                     freturn = false
                 }
             } catch (e) {
-            }
-            var check0 = "$key",
-                    check1 = "$val"
-            if (Array.isArray(list)) {
-                check0 = "$first"
-                check1 = "$last"
-            }
-            for (var i = 0, p; p = vmodels[i++]; ) {
-                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
-                    data.$outer = p
-                    break
-                }
             }
             var template = documentFragment.cloneNode(false)
             if (type === "repeat") {
@@ -2179,7 +2163,6 @@
                 }
             }
             data.template = template
-            data.proxies = []
             data.rollback = function() {
                 bindingExecutors.each.call(data, "clear")
                 var endRepeat = data.endRepeat
@@ -2187,23 +2170,41 @@
                 parent.insertBefore(data.template, endRepeat || null)
                 if (endRepeat) {
                     parent.removeChild(endRepeat)
-                    parent.removeChild(this.startRepeat)
+                    parent.removeChild(data.startRepeat)
                     data.element = data.callbackElement
+                }
+            }
+            var arr = data.value.split(".") || []
+            if (arr.length > 1) {
+                arr.pop()
+                var n = arr[0]
+                for (var i = 0, v; v = vmodels[i++]; ) {
+                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
+                        v[n][subscribers].push(data)
+                        break
+                    }
+                }
+            }
+            if (freturn) {
+                return
+            }
+            data.callbackName = "data-" + (type || "each") + "-rendered"
+            data.handler = bindingExecutors.each
+            data.$outer = {}
+            var check0 = "$key",
+                    check1 = "$val"
+            if (Array.isArray(list)) {
+                check0 = "$first"
+                check1 = "$last"
+            }
+            for (var i = 0, p; p = vmodels[i++]; ) {
+                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                    data.$outer = p
+                    break
                 }
             }
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
-            if (freturn) {
-                var arr = data.value.split(".") || []
-                if (arr.length > 1) {
-                    arr.pop()
-                    var v = vmodels[0], n = arr[0]
-                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
-                        v[n][subscribers].push(data)
-                    }
-                }
-                return
-            }
             list[subscribers] && list[subscribers].push(data)
             if (!Array.isArray(list) && type !== "each") {
                 var pool = withProxyPool[list.$id]
@@ -2211,11 +2212,11 @@
                     withProxyCount++
                     pool = withProxyPool[list.$id] = {}
                     for (var key in list) {
-                        if (list.hasOwnProperty(key)) {
+                        if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
                             (function(k, v) {
                                 pool[k] = createWithProxy(k, v, {})
                                 pool[k].$watch("$val", function(val) {
-                                    list[k] = val//#303
+                                    list[k] = val //#303
                                 })
                             })(key, list[key])
                         }
@@ -2223,7 +2224,6 @@
                 }
                 data.handler("append", list, pool)
             } else {
-                delete data.rollback
                 data.handler("add", 0, list)
             }
         },
