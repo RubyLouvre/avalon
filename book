@@ -1,5 +1,10 @@
 语言层面\"包\"是个非常非常重要的功能，非常非常重要，而这是前端代码组织得没有规则，
 不同人不同风格的组织方式，不同js框架和相应组件各自为阵的根本原因。requirejs的出现是有划时代意义的。
+/* 
+【PowerfulJS 使用JS下载较大的文件】他使我们做到了：监控文件的下载进度和速度、控制文件下载的行为（暂时or停止）。原理也是很简单的，
+使用Ajax来请求文件，并可以用事件来监测下载了多少，一共有多少需要下载，算出下载的速度，然后再用文件保存方法将其保存下来就可以了
+http://www.alloyteam.com/2014/01/powerfuljs-2-to-download-large-files-using-js/
+ */
 
 7天打造前端性能监控系统
 http://fex.baidu.com/blog/2014/05/build-performance-monitor-in-7-days/
