@@ -5,13 +5,13 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.2.6 2014.4.29
+ avalon 1.3 2014.5.25
  ==================================================*/
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var expose = new Date - 0
     var subscribers = "$" + expose
-    var window = this || (0, eval)('this')//http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
+    var window = this || (0, eval)("this")//http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -184,7 +184,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.26,
+        version: 1.3,
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
@@ -521,7 +521,6 @@
                         var fn = rebindings[newValue.$id]
                         fn && fn()//更新视图
                         var parent = watchProperties.vmodel
-                        // withProxyCount && updateWithProxy(parent.$id, name, newValue)//同步循环绑定中的代理VM
                         model[name] = newValue.$model//同步$model
                         notifySubscribers(realAccessor)   //通知顶层改变
                         safeFire(parent, name, model[name], preValue)   //触发$watch回调
@@ -1579,12 +1578,14 @@
                 data.handler()
             } else {
                 try {
-                    val = fn.apply(0, data.args)
+                    data.handler(fn.apply(0, data.args), data.element, data)
                 } catch (e) {
-                    data.evaluator = noop
-                    log("error:evaluator of [" + data.value + "] throws error")
+                   delete  data.evaluator
+                    if (data.nodeType === 3) {
+                        data.handler(openTag + data.value + closeTag, data.element, data)
+                    }
+                    log("error:evaluator of [" + data.value + "] throws error!")
                 }
-                data.handler(val, data.element, data)
             }
         } else { //如果是计算属性的accessor
             data()
@@ -1852,7 +1853,6 @@
         for (var i = 0, data; data = bindings[i++]; ) {
             data.vmodels = vmodels
             bindingHandlers[data.type](data, vmodels)
-
             if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.name)
@@ -2100,7 +2100,6 @@
                 var tmpl = {}
                 return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
             })
-
             data.evaluator = function() {
                 var ret = ""
                 for (var i = 0, el; el = array[i++]; ) {
@@ -2121,10 +2120,6 @@
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
             registerSubscriber(data)
-        } else {
-            if (data.nodeType === 3) {
-                data.node.data = openTag + data.value + closeTag
-            }
         }
     }
     avalon.parseExprProxy = parseExprProxy

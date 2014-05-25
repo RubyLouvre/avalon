@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.2.6 2014.4.29，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.3 2014.5.25，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -1185,12 +1185,14 @@
                 data.handler()
             } else {
                 try {
-                    val = fn.apply(0, data.args)
+                    data.handler(fn.apply(0, data.args), data.element, data)
                 } catch (e) {
-                    data.evaluator = noop
-                    log("error:evaluator of [" + data.value + "] throws error")
+                    delete data.evaluator
+                    if (data.nodeType === 3) {
+                        data.handler(openTag + data.value + closeTag, data.element, data)
+                    }
+                    log("error:evaluator of [" + data.value + "] throws error!")
                 }
-                data.handler(val, data.element, data)
             }
         } else { //如果是计算属性的accessor
             data()
@@ -1666,10 +1668,6 @@
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
             registerSubscriber(data)
-        } else {
-            if (data.nodeType === 3) {
-                data.node.data = openTag + data.value + closeTag
-            }
         }
     }
     avalon.parseExprProxy = parseExprProxy
