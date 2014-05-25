@@ -1189,7 +1189,7 @@
                 } catch (e) {
                     delete data.evaluator
                     if (data.nodeType === 3) {
-                        data.handler(openTag + data.value + closeTag, data.element, data)
+                        data.node.data = openTag + data.value + closeTag
                     }
                     log("error:evaluator of [" + data.value + "] throws error!")
                 }

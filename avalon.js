@@ -1580,9 +1580,9 @@
                 try {
                     data.handler(fn.apply(0, data.args), data.element, data)
                 } catch (e) {
-                   delete  data.evaluator
+                    delete  data.evaluator
                     if (data.nodeType === 3) {
-                        data.handler(openTag + data.value + closeTag, data.element, data)
+                        data.node.data = openTag + data.value + closeTag
                     }
                     log("error:evaluator of [" + data.value + "] throws error!")
                 }
