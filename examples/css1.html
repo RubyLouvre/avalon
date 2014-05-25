@@ -3,9 +3,9 @@
     <head>
         <title>ms-css</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="../avalon.js"></script>
         <script>
-            avalon.define("box", function(vm) {
+            avalon.define("test", function(vm) {
                 vm.w = 100;
                 vm.h = 100;
                 vm.click = function() {
@@ -18,7 +18,7 @@
     <body>
         <h3 style='text-align: center'>ms-css</h3>
 
-        <div ms-controller="box">
+        <div ms-controller="test">
             <div style=" background: #a9ea00;" ms-css-width="w" ms-css-height="h"  ms-click="click"></div>
             <p>{{ w }} x {{ h }}</p>
             <p>W: <input type="text" ms-duplex="w" data-duplex-event="change"/></p>

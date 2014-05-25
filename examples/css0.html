@@ -3,10 +3,9 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="../avalon.js"></script>
         <script>
-            var model = avalon.define("xxx", function(vm) {
-
+            var model = avalon.define("test", function(vm) {
                 vm.percent = 0
             })
             var a = true
@@ -44,7 +43,7 @@
             }
         </style>
     </head>
-    <body ms-controller="xxx">
+    <body ms-controller="test">
         <div class="slider" style="background:red;">
             <div class="hander" ms-css-left="{{percent}}%" >{{percent}}</div>
             <div style="background: greenyellow;height:20px" ms-css-width="{{percent}}%"></div>

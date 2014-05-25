@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js">
+
+        </script>
+        <script>
+            avalon.define("index", function(vm) {
+
+            })
+        </script>
+        <style>
+            a{
+                text-decoration:none;
+            }
+        </style>
+    </head>
+    <body ms-controller="index">
+        <ul>
+            <li><a ms-href="class.html">ms-class</a></li>
+            <li><a ms-href="css0.html">ms-css 0</a></li>
+            <li><a ms-href="css1.html">ms-csss 1</a></li>
+            <li><a ms-href="on.html">ms-on</a></li>
+            <li ms-repeat="avalon.range(0, 13)"><a ms-href="repeat{{el}}.html">ms-repeat {{el}}</a></li>
+        </ul>
+    </body>
+</html>
