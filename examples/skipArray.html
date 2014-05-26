@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>$skipArray</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.aaa = "xxx"
+                vm.$aaa = "xxx"
+                vm.bbb = "xxx"
+                vm.$skipArray = ["bbb"]
+            })
+        </script>
+    </head>
+    <body>
+        <p>$skipArray中的属性或以$开头的属性</p>
+        <div ms-controller="test">
+            <div><input ms-duplex="aaa">{{aaa}}</div>
+            <div><input ms-duplex="$aaa">{{$aaa}}</div>
+            <div><input ms-duplex="bbb">{{bbb}}</div>
+        </div>
+    </body>
+</html>
