@@ -890,6 +890,9 @@
                 }
             }
         },
+        debug: function(open) {
+            avalon.log = open ? log : noop
+        },
         loader: function(bool) {
             if (bool) {
                 window.define = innerRequire.define

@@ -610,6 +610,9 @@
                 window.require = otherRequire
             }
         },
+        debug: function(open){
+            avalon.log = open ? log: noop
+        },
         interpolate: function(array) {
             if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
                 openTag = array[0]
