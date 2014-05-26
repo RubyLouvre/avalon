@@ -1,8 +1,10 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>todos</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
         <style>
             #app{
                 background:#dfdfdf;
@@ -117,9 +119,7 @@
             }
         </style>
         <script src="../avalon.js" ></script>
-
-
-        <script >
+        <script>
 
             avalon.define("todos", function(a) {
                 a.posts = [{text: "aaa", done: false, edit: false}, {text: "bbb", done: false, edit: false}];
@@ -142,7 +142,7 @@
                         a.left = getLeft();
                     }
                 };
-                
+
                 a.checkIt = function() {
                     this.$vmodel.post.done = this.checked;
                     a.left = getLeft();

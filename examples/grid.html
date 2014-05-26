@@ -1,9 +1,10 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <title>grid</title>
-         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>表格</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
         <style>
             .ms-grid { margin-bottom: 1em; width: 25em; border: 1px solid silver; }
             .ms-grid th { text-align:left; background: black; color:White; }
@@ -15,7 +16,6 @@
             .ms-grid-pageLinks a.selected { background: black; color: White; }
 
         </style>
-        <script src="../avalon.js" ></script>
         <script type="text/javascript">
 
             var grid = avalon.define("grid", function(scope) {

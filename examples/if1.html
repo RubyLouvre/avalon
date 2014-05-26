@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
         <title>ms-if</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-        <script src="../avalon.js"></script>
-
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
         <script>
             var vmodel = avalon.define('test', function(vm) {
                 vm.object = {}
@@ -18,11 +17,6 @@
             setTimeout(function() {
                 vmodel.object = {}
             }, 5000)
-
-            avalon.scan()
-
-           
-            
 
         </script>
     </head>
