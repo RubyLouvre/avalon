@@ -1601,6 +1601,7 @@
                     }
                     if (remove) { //如果它没有在DOM树
                         list.splice(i, 1)
+                        fn.element = fn.node = fn.parent = null
                         log("debug: remove " + fn.name)
                     }
                 }
@@ -3369,24 +3370,13 @@
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
             if (comment.nodeValue == "ms-if") {
-                var msIfEl = comment.elem
-                if (msIfEl.parentNode) {
-                    msIfEl.parentNode.removeChild(msIfEl)
-                }
+                domParser.appendChild(comment.elem)
             }
         }
-        if (parent.textContent) {
-            parent.textContent = ""
-        } else {
-            while (comment = parent.firstChild) {
-                if (comment.nodeType === 1) {
-                    comment.innerHTML = ""
-                } else if (comment.nodeType === 3) {
-                    comment.data = ""
-                }
-                parent.removeChild(comment)
-            }
+        while (comment = parent.firstChild) {
+            domParser.appendChild(comment)
         }
+        domParser.innerHTML = ""
     }
 
     function iteratorCallback(args) {

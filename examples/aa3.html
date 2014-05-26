@@ -5,16 +5,38 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <script src="../avalon.js"></script>
+        <style>
+            .id2013716 {
+                width: 200px;
+                float:left;
+            }
+        </style>
         <script>
-
-            var model = avalon.define('xxx', function(vm) {
-                vm.name = "名字"
-                vm.answer = "短笛"
+            var i = 4;
+            var model = avalon.define("array", function(vm) {
+                vm.array = ["1", "2", "3", "4"]
+            })
+            //在avalon.define外面绑定$watch回调
+            model.array.$watch("length", function(a) {
+                if (model.array.size() > 10) {
+                    model.array.shift();
+                }
             })
 
+            setInterval(function() {
+                i++;
+                model.array.push(i + "");
+            }, 500);
         </script>
     </head>
-    <body ms-controller="xxx">
-        <div style="color:orangered">{{name}}</div>
+    <body>
+        <fieldset class="id2013716" ms-controller="array">
+            <legend>例子</legend>
+            <ul ms-each="array">
+                <li >数组的第{{$index+1}}个元素为{{el}}</li>
+            </ul>
+            <p>size: <b style="color:red">{{array.size()}}</b></p>
+        </fieldset>
     </body>
+
 </html>
