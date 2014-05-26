@@ -1497,9 +1497,7 @@
         this.clearHTML(node).appendChild(a)
     }
     avalon.clearHTML = function(node) {
-        while (node.firstChild) {
-            node.removeChild(node.firstChild)
-        }
+        removeFromSanctuary(node)
         return node
     }
     /*********************************************************************
@@ -2379,22 +2377,20 @@
                         }
                         break
                     case "clear":
-                        var deleteFragment = documentFragment.cloneNode(false)
+                        var criminal = documentFragment.cloneNode(false)
                         if (data.startRepeat) {
                             while (true) {
                                 var node = data.startRepeat.nextSibling
                                 if (node && node !== data.endRepeat) {
-                                    deleteFragment.appendChild(node)
+                                    criminal.appendChild(node)
                                 } else {
                                     break
                                 }
                             }
                         } else {
-                            while (parent.firstChild) {
-                                deleteFragment.appendChild(parent.firstChild)
-                            }
+                            criminal = parent
                         }
-                        removeFromSanctuary(deleteFragment)
+                        removeFromSanctuary(criminal)
                         proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)

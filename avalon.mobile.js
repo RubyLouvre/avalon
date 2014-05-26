@@ -1058,7 +1058,7 @@
     }
 
     avalon.clearHTML = function(node) {
-        node.textContent = "" //它能在IE10+,firefox, chrome中迅速清空元素节点，文档碎片的孩子
+        removeFromSanctuary(node)
         return node
     }
     var script = DOC.createElement("script")
@@ -1200,6 +1200,7 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
+                    fn.element = fn.parent = fn.node = null
                     log("debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
@@ -1869,22 +1870,20 @@
                         }
                         break
                     case "clear":
-                        var deleteFragment = documentFragment.cloneNode(false)
+                        var criminal = documentFragment.cloneNode(false)
                         if (data.startRepeat) {
                             while (true) {
                                 var node = data.startRepeat.nextSibling
                                 if (node && node !== data.endRepeat) {
-                                    deleteFragment.appendChild(node)
+                                    criminal.appendChild(node)
                                 } else {
                                     break
                                 }
                             }
                         } else {
-                            while (parent.firstChild) {
-                                deleteFragment.appendChild(parent.firstChild)
-                            }
+                            criminal = parent
                         }
-                        removeFromSanctuary(deleteFragment)
+                        removeFromSanctuary(criminal)
                         proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
@@ -2765,18 +2764,18 @@
     var deleteRange = DOC.createRange()
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
-
+    var cinerator = DOC.createElement("div")
     function removeFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
             if (comment.nodeValue == "ms-if") {
-                var msIfEl = comment.elem
-                if (msIfEl.parentNode) {
-                    msIfEl.parentNode.removeChild(msIfEl)
-                }
+                cinerator.appendChild(comment.elem)
             }
         }
-        parent.textContent = ""
+        while (comment = parent.firstChild) {
+            cinerator.appendChild(comment)
+        }
+        cinerator.innerHTML = ""
     }
 
     function iteratorCallback(args) {
