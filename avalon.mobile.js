@@ -1472,7 +1472,7 @@
     var rcomma = /^,+|,+$/g
     var cacheVars = createCache(512)
     var getVariables = function(code) {
-        code = "?" + code.trim()
+        code = "," + code.trim()
         if (cacheVars[code]) {
             return cacheVars[code]
         }
