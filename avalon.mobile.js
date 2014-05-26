@@ -610,8 +610,13 @@
                 window.require = otherRequire
             }
         },
-        debug: function(open){
-            avalon.log = open ? log: noop
+        debug: function(open) {
+            if (window.console) {
+                if (!console._log) {
+                    console._log = console.log
+                }
+                console.log = open ? console._log : noop
+            }
         },
         interpolate: function(array) {
             if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {

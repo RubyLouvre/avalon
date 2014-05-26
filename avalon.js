@@ -891,7 +891,12 @@
             }
         },
         debug: function(open) {
-            avalon.log = open ? log : noop
+            if (window.console) {
+                if (!console._log) {
+                    console._log = console.log
+                }
+                console.log = open ? console._log : noop
+            }
         },
         loader: function(bool) {
             if (bool) {
