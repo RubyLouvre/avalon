@@ -5,12 +5,18 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="../avalon.js"></script>
         <script>
-            avalon.define("test", function(vm) {
+            var model = avalon.define("test", function(vm) {
                 vm.aaa = "xxx"
                 vm.$aaa = "xxx"
                 vm.bbb = "xxx"
-                vm.$skipArray = ["bbb"]
+                vm.$skipArray = ["bbb", "array"]
+                vm.array = ["111", "222", "333"]
+                vm.list = ["111", "222", "333"]
             })
+            setTimeout(function() {
+                model.array.push(222)
+                model.list.push(222)
+            }, 3000)
         </script>
     </head>
     <body>
@@ -19,6 +25,12 @@
             <div><input ms-duplex="aaa">{{aaa}}</div>
             <div><input ms-duplex="$aaa">{{$aaa}}</div>
             <div><input ms-duplex="bbb">{{bbb}}</div>
+            <ol>
+                <li ms-repeat="array">{{el}}</li>
+            </ol>
+            <ul>
+                <li ms-repeat="list">{{el}}</li>
+            </ul>
         </div>
     </body>
 </html>
