@@ -1058,7 +1058,7 @@
     }
 
     avalon.clearHTML = function(node) {
-        removeFromSanctuary(node)
+        expelFromSanctuary(node)
         return node
     }
     var script = DOC.createElement("script")
@@ -1859,7 +1859,7 @@
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         proxies.splice(pos, el)
-                        removeFromSanctuary(removeView(locatedNode, group, el))
+                        expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
@@ -1883,7 +1883,7 @@
                         } else {
                             criminal = parent
                         }
-                        removeFromSanctuary(criminal)
+                        expelFromSanctuary(criminal)
                         proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
@@ -2765,7 +2765,7 @@
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
     var cinerator = DOC.createElement("div")
-    function removeFromSanctuary(parent) {
+    function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
             if (comment.nodeValue == "ms-if") {

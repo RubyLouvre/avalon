@@ -838,10 +838,10 @@
     }
     if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
         HTMLElement.prototype.__defineGetter__("outerHTML", function() {
-            domParser.textContent = ""
-            domParser.appendChild(this)
+            cinerator.textContent = ""
+            cinerator.appendChild(this)
             var str = this.innerHTML
-            domParser.textContent = ""
+            cinerator.textContent = ""
             return str
         });
     }
@@ -1449,7 +1449,7 @@
                 //取得其标签名
                 wrap = tagHooks[tag] || tagHooks._default,
                 fragment = documentFragment.cloneNode(false),
-                wrapper = domParser,
+                wrapper = cinerator,
                 firstChild, neo
         if (!W3C) { //fix IE
             html = html.replace(rcreate, "<br class=msNoScope>$1") //在link style script等标签之前添加一个补丁
@@ -1497,7 +1497,7 @@
         this.clearHTML(node).appendChild(a)
     }
     avalon.clearHTML = function(node) {
-        removeFromSanctuary(node)
+        expelFromSanctuary(node)
         return node
     }
     /*********************************************************************
@@ -2140,9 +2140,9 @@
     var supportDisplay = (function(td) {
         return W3C ? getComputedStyle(td, null).display === "table-cell" : true
     })(DOC.createElement("td"))
-    var domParser = DOC.createElement("div")
-    domParser.setAttribute("className", "t")
-    var fuckIEAttr = domParser.className === "t"
+    var cinerator = DOC.createElement("div")
+    cinerator.setAttribute("className", "t")
+    var fuckIEAttr = cinerator.className === "t"
     var propMap = {
         "class": "className",
         "for": "htmlFor"
@@ -2366,7 +2366,7 @@
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         proxies.splice(pos, el)
-                        removeFromSanctuary(removeView(locatedNode, group, el))
+                        expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
@@ -2390,7 +2390,7 @@
                         } else {
                             criminal = parent
                         }
-                        removeFromSanctuary(criminal)
+                        expelFromSanctuary(criminal)
                         proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
@@ -3362,17 +3362,17 @@
     }
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
 
-    function removeFromSanctuary(parent) {
+    function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
             if (comment.nodeValue == "ms-if") {
-                domParser.appendChild(comment.elem)
+                cinerator.appendChild(comment.elem)
             }
         }
         while (comment = parent.firstChild) {
-            domParser.appendChild(comment)
+            cinerator.appendChild(comment)
         }
-        domParser.innerHTML = ""
+        cinerator.innerHTML = ""
     }
 
     function iteratorCallback(args) {
