@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js"></script>
+        <script>
+            window.onload = function() {
+                var model = avalon.define('parseExprProxy', function(vm) {
+                    vm.name = "名字"
+                    vm.answer = "短笛"
+                })
+                var body = document.body
+                var div = document.createElement("div")
+                div.innerHTML = "<div >我的{{name}}叫{{answer}},他的{{name}}叫{{no}},{{10*10}}" +
+                        "</div><span  ms-text=\"name\"></span><span  ms-text=\"no\">没改</span>"
+                body.appendChild(div)
+                avalon.scan(div, model)
+
+                setTimeout(function() {
+                    var test = div.getElementsByTagName("div")[0]
+                    var pp = div.getElementsByTagName("span")
+                    console.log(test.innerHTML)
+                    console.log(test.innerHTML === "我的名字叫短笛,他的名字叫{{no}},100")
+                    console.log(pp[0].getAttribute("ms-text"))
+                    console.log(pp[1].getAttribute("ms-text"))
+                 //   body.removeChild(div)
+
+                }, 100)
+            }
+        </script>
+    </head>
+    <body>
+        <div>TODO write content</div>
+    </body>
+</html>

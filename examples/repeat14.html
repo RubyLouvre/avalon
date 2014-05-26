@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            var count = 0;
+            avalon.define('test', function(vm) {
+                vm.list = {
+                    a: 'a',
+                    b: 'b',
+                    c: 'c'
+                };
+                vm.getIndex = function() {
+                    return count++;
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <div  ms-controller="test">
+            <h3>演示如何在对象绑定里输出索引值</h3>
+            <div ms-repeat="list">{{getIndex()}}&nbsp;{{$val}}</div>
+        </div>
+
+    </body>
+</html>
