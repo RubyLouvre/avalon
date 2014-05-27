@@ -1597,15 +1597,14 @@
                     } else {
                         remove = !avalon.contains(root, el)
                     }
-                    if (remove) { //如果它没有在DOM树
-                        list.splice(i, 1)
-                        for (var key in fn) {
-                            fn[key] = null
-                        }
-                        log("debug: remove " + fn.name)
-                    }
                 }
-                if (typeof fn === "function") {
+                if (remove) { //如果它没有在DOM树
+                    list.splice(i, 1)
+                    log("debug: remove " + fn.name)
+                    for(var key in fn){
+                        fn[key] = null
+                    }
+                } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法

@@ -1199,10 +1199,10 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
+                    log("debug: remove " + fn.name)
                     for (var key in fn) {
                         fn[key] = null
                     }
-                    log("debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
