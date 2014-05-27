@@ -476,7 +476,6 @@
                         var fn = rebindings[newValue.$id]
                         fn && fn() //更新视图
                         var parent = watchProperties.vmodel
-                        // withProxyCount && updateWithProxy(parent.$id, name, newValue)//同步循环绑定中的代理VM
                         model[name] = newValue.$model //同步$model
                         notifySubscribers(realAccessor) //通知顶层改变
                         safeFire(parent, name, model[name], preValue) //触发$watch回调
@@ -1200,7 +1199,9 @@
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
-                    fn.element = fn.parent = fn.node = null
+                    for (var key in fn) {
+                        fn[key] = null
+                    }
                     log("debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
@@ -1831,6 +1832,7 @@
                 }
                 var parent = data.parent
                 var proxies = data.proxies
+                var transation = documentFragment//.cloneNode(false)//???
                 if (method === "del" || method === "move") {
                     var locatedNode = getLocatedNode(parent, data, pos)
                 }
@@ -1839,7 +1841,6 @@
                         //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var last = data.getter().length - 1
-                        var transation = documentFragment.cloneNode(false)
                         var spans = [],
                                 lastFn = {}
                         for (var i = 0, n = arr.length; i < n; i++) {
@@ -1870,29 +1871,28 @@
                         }
                         break
                     case "clear":
-                        var criminal = documentFragment.cloneNode(false)
                         if (data.startRepeat) {
                             while (true) {
                                 var node = data.startRepeat.nextSibling
                                 if (node && node !== data.endRepeat) {
-                                    criminal.appendChild(node)
+                                    transation.appendChild(node)
                                 } else {
                                     break
                                 }
                             }
                         } else {
-                            criminal = parent
+                            transation = parent
                         }
-                        expelFromSanctuary(criminal)
+                        expelFromSanctuary(transation)
                         proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                         var t = proxies.splice(pos, 1)[0]
                         if (t) {
                             proxies.splice(el, 0, t)
-                            var moveNode = removeView(locatedNode, group)
+                            transation = removeView(locatedNode, group)
                             locatedNode = getLocatedNode(parent, data, el)
-                            parent.insertBefore(moveNode, locatedNode)
+                            parent.insertBefore(transation, locatedNode)
                         }
                         break
                     case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
@@ -1903,7 +1903,6 @@
                         break
                     case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                         var pool = el
-                        var transation = documentFragment.cloneNode(false)
                         var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
                         var keys = [],
                                 spans = [],
@@ -2652,7 +2651,7 @@
             return this.removeAt(this.indexOf(el))
         },
         removeAt: function(index) { //移除指定索引上的元素
-            return this.splice(index, 1)
+            return index >= 0 ? this.splice(index, 1) : []
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
@@ -2843,7 +2842,7 @@
 
     function removeView(node, group, n) {
         var length = group * (n || 1)
-        var view = documentFragment.cloneNode(false)
+        var view = documentFragment//.cloneNode(false)//???
         while (--length >= 0) {
             var nextSibling = node.nextSibling
             view.appendChild(node)
