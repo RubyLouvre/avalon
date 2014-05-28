@@ -23,10 +23,13 @@
                 }
             })
 
-            setInterval(function() {
+            var id = setInterval(function() {
                 i++;
+                if(i ===1000){
+                    clearInterval(id)
+                }
                 model.array.push(i + "");
-            }, 500);
+            }, 60);
         </script>
     </head>
     <body>

@@ -662,10 +662,12 @@
 
         function VBMediator(accessingProperties, name, value) {
             var accessor = accessingProperties[name]
-            if (arguments.length === 3) {
-                accessor(value)
-            } else {
-                return accessor()
+            if (typeof accessor == "function") {
+                if (arguments.length === 3) {
+                    accessor(value)
+                } else {
+                    return accessor()
+                }
             }
         }
         defineProperties = function(name, accessingProperties, normalProperties) {
@@ -901,6 +903,7 @@
     kernel.plugins['interpolate'](["{{", "}}"])
     kernel.paths = {}
     kernel.shim = {}
+    kernel.poolSize = 100
     avalon.config = kernel
 
     /*********************************************************************
@@ -1601,9 +1604,6 @@
                 if (remove) { //如果它没有在DOM树
                     list.splice(i, 1)
                     log("debug: remove " + fn.name)
-                    for(var key in fn){
-                        fn[key] = null
-                    }
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -2352,7 +2352,7 @@
                         var lastFn = {}
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
-                            var proxy = createEachProxy(ii, arr[i], data, last)
+                            var proxy = getEachProxy(ii, arr[i], data, last)
                             proxies.splice(ii, 0, proxy)
                             lastFn = shimController(data, transation, spans, proxy)
                         }
@@ -2366,7 +2366,10 @@
                         spans = null
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                        proxies.splice(pos, el)
+                        var removed = proxies.splice(pos, el)
+                        for (var i = 0, proxy; proxy = removed[i++]; ) {
+                            setEachProxy(proxy)
+                        }
                         expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -3465,7 +3468,35 @@
         proxy.$id = "$proxy$with" + Math.random()
         return proxy
     }
-
+    var pond = []
+    function getEachProxy(index, item, data, last) {
+        var param = data.param || "el"
+        for (var i = 0, n = pond.length; i < n; i++) {
+            var proxy = pond[i]
+            if (proxy.hasOwnProperty(param)) {
+                proxy.$remove = function() {
+                    return data.getter().removeAt(proxy.$index)
+                }
+                proxy.$index = index
+                proxy.$outer = data.$outer
+                proxy[param] = item
+                proxy.$first = index === 0
+                proxy.$last = last
+                pond.splice(i, 1)
+                return proxy
+            }
+        }
+        return createEachProxy(index, item, data, last)
+    }
+    function setEachProxy(proxy) {
+        var obj = proxy.$accessors
+        obj.$index[subscribers].length = 0
+        obj.$last[subscribers].length = 0
+        obj[proxy.$itemName][subscribers].length = 0
+        if (pond.unshift(proxy) > kernel.poolSize) {
+            pond.pop()
+        }
+    }
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
         var source = {
