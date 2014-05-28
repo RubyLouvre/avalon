@@ -578,7 +578,7 @@
             a.push.apply(a, bb)
             return a
         } else {
-            var iterators = a[subscribers]
+            var iterators = a[subscribers] || []
             if (withProxyPool[a.$id]) {
                 withProxyCount--
                 delete withProxyPool[a.$id]
