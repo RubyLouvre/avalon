@@ -1859,7 +1859,7 @@
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
                         for (var i = 0, proxy; proxy = removed[i++]; ) {
-                            setEachProxy(proxy)
+                            recycleEachProxy(proxy)
                         }
                         expelFromSanctuary(removeView(locatedNode, group, el))
                         break
@@ -2869,52 +2869,50 @@
         proxy.$id = "$proxy$with" + Math.random()
         return proxy
     }
-    var pond = []
+    var eachPool = []
     function getEachProxy(index, item, data, last) {
-        var param = data.param || "el"
-        for (var i = 0, n = pond.length; i < n; i++) {
-            var proxy = pond[i]
-            if (proxy.hasOwnProperty(param)) {
-                proxy.$remove = function() {
-                    return data.getter().removeAt(proxy.$index)
-                }
-                proxy.$index = index
-                proxy.$outer = data.$outer
-                proxy[param] = item
-                proxy.$first = index === 0
-                proxy.$last = last
-                pond.splice(i, 1)
-                return proxy
+        var param = data.param || "el", proxy
+        for (var i = 0, n = eachPool.length; i < n; i++) {
+            var temp = eachPool[i]
+            if (temp.hasOwnProperty(param)) {
+                eachPool.splice(i, 1)
+                proxy = temp
+                break
             }
         }
-        return createEachProxy(index, item, data, last)
-    }
-    function setEachProxy(proxy) {
-        var obj = proxy.$accessors
-        obj.$index[subscribers].length = 0
-        obj.$last[subscribers].length = 0
-        obj[proxy.$itemName][subscribers].length = 0
-        if (pond.unshift(proxy) > kernel.poolSize) {
-            pond.pop()
+        if (!proxy) {
+            var source = {
+                $index: 0,
+                $first: 0,
+                $last: 0,
+                $outer: {},
+                $itemName: param,
+                $remove: noop
+            }
+            source[param] = item
+            proxy = modelFactory(source, 0, watchEachOne)
         }
-    }
-    function createEachProxy(index, item, data, last) {
-        var param = data.param || "el"
-        var source = {
-            $index: index,
-            $itemName: param,
-            $outer: data.$outer,
-            $first: index === 0,
-            $last: index === last
-        }
-        source[param] = item
-        source.$remove = function() {
+        proxy.$index = index
+        proxy.$first = index === 0
+        proxy.$last = index === last
+        proxy.$outer = data.$outer
+        proxy[param] = item
+        proxy.$id = "$proxy$" + data.type + Math.random()
+        proxy.$remove = function() {
             return data.getter().removeAt(proxy.$index)
         }
-        var proxy = modelFactory(source, 0, watchEachOne)
-        proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
+    function recycleEachProxy(proxy) {
+        var obj = proxy.$accessors;
+        ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {
+            obj[prop][subscribers].length = 0
+        })
+        if (eachPool.unshift(proxy) > kernel.poolSize) {
+            eachPool.pop()
+        }
+    }
+
     /*********************************************************************
      *                  文本绑定里默认可用的过滤器                        *
      **********************************************************************/
