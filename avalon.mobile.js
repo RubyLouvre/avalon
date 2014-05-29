@@ -610,7 +610,7 @@
     kernel.plugins['interpolate'](["{{", "}}"])
     kernel.paths = {}
     kernel.shim = {}
-    kernel.poolSize = 100
+    kernel.maxRepeatSize = 100
     avalon.config = kernel
 
     /*********************************************************************
@@ -2913,7 +2913,7 @@
         ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
-        if (eachPool.unshift(proxy) > kernel.poolSize) {
+        if (eachPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachPool.pop()
         }
     }
