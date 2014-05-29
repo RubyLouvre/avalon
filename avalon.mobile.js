@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.3 2014.5.25，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.3 2014.5.29，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
@@ -2854,6 +2854,8 @@
         }
         return view
     }
+
+
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
     var watchEachOne = oneObject("$index,$first,$last")
 
@@ -2873,34 +2875,37 @@
     function getEachProxy(index, item, data, last) {
         var param = data.param || "el", proxy
         for (var i = 0, n = eachPool.length; i < n; i++) {
-            var temp = eachPool[i]
-            if (temp.hasOwnProperty(param)) {
+            var proxy = eachPool[i]
+            if (proxy.hasOwnProperty(param)) {
+                proxy.$remove = function() {
+                    return data.getter().removeAt(proxy.$index)
+                }
+                proxy.$index = index
+                proxy.$outer = data.$outer
+                proxy[param] = item
+                proxy.$first = index === 0
+                proxy.$last = last
                 eachPool.splice(i, 1)
-                proxy = temp
-                break
+                return proxy
             }
         }
-        if (!proxy) {
-            var source = {
-                $index: 0,
-                $first: 0,
-                $last: 0,
-                $outer: {},
-                $itemName: param,
-                $remove: noop
-            }
-            source[param] = item
-            proxy = modelFactory(source, 0, watchEachOne)
+        return createEachProxy(index, item, data, last)
+    }
+    function createEachProxy(index, item, data, last) {
+        var param = data.param || "el"
+        var source = {
+            $index: index,
+            $itemName: param,
+            $outer: data.$outer,
+            $first: index === 0,
+            $last: index === last
         }
-        proxy.$index = index
-        proxy.$first = index === 0
-        proxy.$last = index === last
-        proxy.$outer = data.$outer
-        proxy[param] = item
-        proxy.$id = "$proxy$" + data.type + Math.random()
-        proxy.$remove = function() {
+        source[param] = item
+        source.$remove = function() {
             return data.getter().removeAt(proxy.$index)
         }
+        var proxy = modelFactory(source, 0, watchEachOne)
+        proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
     function recycleEachProxy(proxy) {
