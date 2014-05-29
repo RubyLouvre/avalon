@@ -1841,6 +1841,7 @@
                         var last = data.getter().length - 1
                         var spans = [],
                                 lastFn = {}
+                        transation = transation.cloneNode(false)
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
                             var proxy = getEachProxy(ii, arr[i], data, last)

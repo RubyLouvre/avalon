@@ -1,45 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
         <script src="../avalon.js"></script>
-        <style>
-            .id2013716 {
-                width: 200px;
-                float:left;
-            }
-        </style>
         <script>
-            var i = 4;
-            var model = avalon.define("array", function(vm) {
-                vm.array = ["1", "2", "3", "4"]
-            })
-            //在avalon.define外面绑定$watch回调
-            model.array.$watch("length", function(a) {
-                if (model.array.size() > 10) {
-                    model.array.shift();
+           
+            var model = avalon.define("test", function(vm) {
+                vm.data = {list: [1, 2, 3, 4, 5, 6, 7]}
+                vm.change = function() {
+                    model.data.list = [6, 7, 8, 9]
                 }
             })
 
-            var id = setInterval(function() {
-                i++;
-                if(i ===1000){
-                    clearInterval(id)
-                }
-                model.array.push(i + "");
-            }, 60);
         </script>
     </head>
     <body>
-        <fieldset class="id2013716" ms-controller="array">
-            <legend>例子</legend>
-            <ul ms-each="array">
-                <li >数组的第{{$index+1}}个元素为{{el}}</li>
+        <div  ms-controller="test">
+            <ul  ms-each-el="data.list">
+                <li ms-if="$index ==  0">Name: {{el}}</li>
+                <li ms-if="$index !==  0" style="color:green">Name: {{el}}</li>
             </ul>
-            <p>size: <b style="color:red">{{array.size()}}</b></p>
-        </fieldset>
+            <button ms-click="change">Change Name</button>
+        </div>
     </body>
-
 </html>
