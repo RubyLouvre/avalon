@@ -1570,7 +1570,7 @@
                     if (data.nodeType === 3) {
                         data.node.data = openTag + data.value + closeTag
                     }
-                    log("error:evaluator of [" + data.value + "] throws error!")
+                    log("warning:evaluator of [" + data.value + "] throws error!")
                 }
             }
         } else { //如果是计算属性的accessor
@@ -1675,22 +1675,16 @@
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
                 scanTag(node, vmodels)
-            } else if (node.nodeType === 3) {
-                if (rexpr.test(node.data)) {
-                    scanText(node, node.data, vmodels)
-                }
-            } else if (node.nodeType === 8) { //在IE6-8里，如果插值表达式的界定符为<% %>，那么对应位置会变成
-                if (rexpr.test(node.innerHTML)) { //一个注释节点，见#346
-                    scanText(node, node.innerHTML, vmodels)
-                }
+            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
+                scanText(node, vmodels)
             }
             node = nextNode
         }
     }
 
-    function scanText(textNode, text, vmodels) {
+    function scanText(textNode, vmodels) {
         var bindings = [],
-                tokens = scanExpr(text)
+                tokens = scanExpr(textNode.data)
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点

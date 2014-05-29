@@ -1175,7 +1175,7 @@
                     if (data.nodeType === 3) {
                         data.node.data = openTag + data.value + closeTag
                     }
-                    log("error:evaluator of [" + data.value + "] throws error!")
+                    log("warning:evaluator of [" + data.value + "] throws error!")
                 }
             }
         } else { //如果是计算属性的accessor
