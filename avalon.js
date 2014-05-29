@@ -384,6 +384,13 @@
         var computedProperties = [] //计算属性
         var watchProperties = arguments[2] || {} //强制要监听的属性
         var skipArray = scope.$skipArray //要忽略监控的属性
+        var deleteArray = scope.$deleteArray //要强制删除的属性（不扫描）
+        if (Array.isArray(deleteArray)) {
+            // 添加到全局的skipProperties中去
+            for (var i = 0, name; name = deleteArray[i++]; ) {
+                avalon.Array.ensure(skipProperties, name)
+            }
+        }
         for (var i = 0, name; name = skipProperties[i++]; ) {
             if (typeof name !== "string") {
                 log("warning:$skipArray[" + name + "] must be a string")
