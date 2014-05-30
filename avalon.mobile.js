@@ -1831,6 +1831,8 @@
                 var parent = data.parent
                 var proxies = data.proxies
                 var transation = documentFragment//.cloneNode(false)//???
+                var spans = []
+                var lastFn = {}
                 if (method === "del" || method === "move") {
                     var locatedNode = getLocatedNode(parent, data, pos)
                 }
@@ -1839,8 +1841,6 @@
                         //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var last = data.getter().length - 1
-                        var spans = [],
-                                lastFn = {}
                         transation = transation.cloneNode(false)
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
@@ -1906,9 +1906,8 @@
                     case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                         var pool = el
                         var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
-                        var keys = [],
-                                spans = [],
-                                lastFn = {}
+                        var keys = []
+                        transation = transation.cloneNode(false)
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key)) {
                                 keys.push(key)

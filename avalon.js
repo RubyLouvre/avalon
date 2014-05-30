@@ -2412,6 +2412,7 @@
                         var keys = []
                         var spans = []
                         var lastFn = {}
+                        transation = transation.cloneNode(false)
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
                                 keys.push(key)
@@ -2868,6 +2869,7 @@
 
         var composing = false
 
+
         function compositionStart() {
             composing = true
         }
@@ -2978,10 +2980,14 @@
 
             }
         }
-        element.oldValue = element.value
+
         element.onTree = onTree
         launch(element)
+        element.oldValue = element.value
         registerSubscriber(data)
+        if (launch !== launchImpl) {
+            data.changed.call(element, element.value)
+        }
     }
     var TimerID, ribbon = [],
             launch = noop
@@ -3067,6 +3073,7 @@
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
                 registerSubscriber(data)
+                data.changed.call(element, evaluator())
             } else {
                 innerHTML = currHTML
             }
