@@ -3067,6 +3067,7 @@
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
                 registerSubscriber(data)
+                data.changed.call(element, evaluator())
             } else {
                 innerHTML = currHTML
             }
@@ -4193,13 +4194,13 @@
             doScrollCheck()
         }
     }
-
-    avalon.ready = function(fn) {
-        innerRequire("ready!", fn)
-    }
     avalon.config({
         loader: true
     })
+    avalon.ready = function(fn) {
+        innerRequire("ready!", fn)
+    }
+
     avalon.ready(function() {
         //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
         if (window.VBArray && !window.setImmediate) {
