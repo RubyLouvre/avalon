@@ -1,26 +1,51 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-css</title>
+        <title>interpolate</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../avalon.js" ></script>
+        <script src="../avalon.js"></script>
         <script>
-            avalon.define("test", function(vm) {
-                vm.first = {
-                    aaa: 111
-                }
-            })
+            avalon.config({
+                interpolate: ["<%", "%>"]
+            });
+            var Main = avalon.define('Act', function(vm) {
+                vm.aaa = "rrrrrrrrr"
+                vm.questList = [{
+                        award: '100chip',
+                        img: ''
+                    }, {
+                        award: '200chip',
+                        img: ''
+                    }, {
+                        award: '',
+                        img: ''
+                    }, {
+                        award: '',
+                        img: ''
+                    }, {
+                        award: '500chip',
+                        img: ''
+                    }];
+            });
         </script>
+        <style>
+            span {
+                background: #eee;
+                width: 80px;
+            }
+        </style>
     </head>
-    <body>
-        <h3 style='text-align: center'>ms-css</h3>
 
-        <div ms-controller="test">
-
-            <p><input ms-duplex="first.aaa" /></p>
-            {{first.aaa}}
-        </div>
+    <body ms-controller="Act">
+        <p><%aaa%></p>
+        <ul >
+            <li ms-repeat-el="questList">
+                 <span ms-if="el.award != ''">
+                     <%el.award%>
+                 </span>  
+            </li>
+        </ul>
 
     </body>
 </html>

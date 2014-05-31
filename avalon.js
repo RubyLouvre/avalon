@@ -1674,9 +1674,9 @@
         while (node) {
             var nextNode = node.nextSibling
             if (node.nodeType === 1) {
-                scanTag(node, vmodels)
+                scanTag(node, vmodels) //扫描元素节点
             } else if (node.nodeType === 3 && rexpr.test(node.data)) {
-                scanText(node, vmodels)
+                scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
         }
@@ -2483,7 +2483,7 @@
                         log("debug: ms-if  " + e.message)
                     }
                 }
-                if (rbind.test(elem.outerHTML)) {
+                if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
@@ -3208,7 +3208,7 @@
             notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
             return n
         },
-        pushArray: function(array){
+        pushArray: function(array) {
             return this.push.apply(this, array)
         },
         unshift: function() {
