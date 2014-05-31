@@ -2607,6 +2607,9 @@
             notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
             return n
         },
+        pushArray: function(array) {
+            return this.push.apply(this, array)
+        },
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
