@@ -895,7 +895,7 @@
                 }
                 if (/^<[^<>]{3},[^<>]{2}>$/.test(array)) {
                     kernel.commentInterpolate = true
-                }else if (/[<>]/.test(array)) {
+                } else if (/[<>]/.test(array)) {
                     if (DOC.documentMode === 9) {//IE9
                         avalon.error("IE9不支持用<或>做定界符", TypeError)
                     } else if (!/^<[^<>]+,[^<>]+>$/.test(array)) {
@@ -1886,7 +1886,7 @@
         }
         return value
     }
-    
+
     function scanExpr(str) {
         var tokens = [],
                 value, start = 0,
@@ -2560,7 +2560,11 @@
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
             if (data.nodeType === 3) { //绑定在文本节点上
-                data.node.data = val
+                if (kernel.commentInterpolate) {
+                    elem.replaceChild(DOC.createComment(val), data.node)
+                } else {
+                    data.node.data = val
+                }
             } else { //绑定在特性节点上
                 if (!elem) {
                     elem = data.element = data.node.parentNode

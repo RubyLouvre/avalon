@@ -2049,7 +2049,11 @@
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
             if (data.nodeType === 3) { //绑定在文本节点上
-                data.node.data = val
+                if (kernel.commentInterpolate) {
+                    elem.replaceChild(DOC.createComment(val), data.node)
+                } else {
+                    data.node.data = val
+                }
             } else { //绑定在特性节点上
                 if (!elem) {
                     elem = data.element = data.node.parentNode
