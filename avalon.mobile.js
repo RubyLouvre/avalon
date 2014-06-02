@@ -594,9 +594,15 @@
             window.require = builtin ? innerRequire : otherRequire
         },
         interpolate: function(array) {
-            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
+            if (Array.isArray(array) && array[0] && array[1]) {
                 openTag = array[0]
                 closeTag = array[1]
+                if (openTag === closeTag) {
+                    throw "openTag!==closeTag"
+                }
+                if (/[<>]/.test(array) && !/^<[^<>]+,[^<>]+>$/.test(array)) {
+                    avalon.error("定界符如果包含<或>，请保证openTag以<开头，closeTag以>结束", TypeError)
+                }
                 var o = escapeRegExp(openTag),
                         c = escapeRegExp(closeTag)
                 rexpr = new RegExp(o + "(.*?)" + c)
@@ -1266,9 +1272,10 @@
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
-            if (node.nodeType === 1) {
+            var nodeType = node.nodeType
+            if (nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
+            } else if (nodeType === 3 && rexpr.test(node.data)) {
                 scanText(node, vmodels) //扫描文本节点
             }
             node = nextNode
