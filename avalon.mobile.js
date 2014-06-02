@@ -597,10 +597,9 @@
             if (Array.isArray(array) && array[0] && array[1]) {
                 openTag = array[0]
                 closeTag = array[1]
-                if (openTag === closeTag) {
-                    throw "openTag!==closeTag"
-                }
-                if (/[<>]/.test(array) && !/^<[^<>]+,[^<>]+>$/.test(array)) {
+                if (/^<[^<>]{3},[^<>]{2}>$/.test(array)) {
+                    kernel.commentInterpolate = true
+                } else if (/[<>]/.test(array) && !/^<[^<>]+,[^<>]+>$/.test(array)) {
                     avalon.error("定界符如果包含<或>，请保证openTag以<开头，closeTag以>结束", TypeError)
                 }
                 var o = escapeRegExp(openTag),
@@ -1277,14 +1276,29 @@
                 scanTag(node, vmodels) //扫描元素节点
             } else if (nodeType === 3 && rexpr.test(node.data)) {
                 scanText(node, vmodels) //扫描文本节点
+            } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+                scanText(node, vmodels) //扫描注释节点
             }
             node = nextNode
         }
     }
 
     function scanText(textNode, vmodels) {
-        var bindings = [],
-                tokens = scanExpr(textNode.data)
+        var bindings = []
+        if (textNode.nodeType === 8) {
+            var leach = []
+            var value = trimFilter(textNode.nodeValue, leach)
+            var token = {
+                expr: true,
+                value: value
+            }
+            if (leach.length) {
+                token.filters = leach
+            }
+            var tokens = [token]
+        } else {
+            tokens = scanExpr(textNode.data)
+        }
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1310,7 +1324,8 @@
                 documentFragment.appendChild(node)
             }
             textNode.parentNode.replaceChild(documentFragment, textNode)
-            executeBindings(bindings, vmodels)
+            if (bindings.length)
+                executeBindings(bindings, vmodels)
         }
     }
 
@@ -1405,7 +1420,20 @@
 
     var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
             r11a = /\|\|/g,
-            r11b = /U2hvcnRDaXJjdWl0/g
+            r11b = /U2hvcnRDaXJjdWl0/g,
+            rlt = /&lt;/g,
+            rgt = /&gt;/g
+    function trimFilter(value, leach) {
+        if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+            value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+            value = value.replace(rfilters, function(c, d, e) {
+                leach.push(d + (e || ""))
+                return ""
+            })
+            value = value.replace(r11b, "||") //还原短路与
+        }
+        return value
+    }
 
     function scanExpr(str) {
         var tokens = [],
@@ -1432,14 +1460,7 @@
             value = str.slice(start, stop)
             if (value) { //处理{{ }}插值表达式
                 var leach = []
-                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                    value = value.replace(rfilters, function(c, d, e) {
-                        leach.push(d + (e || ""))
-                        return ""
-                    })
-                    value = value.replace(r11b, "||") //还原短路与
-                }
+                value = trimFilter(value, leach)
                 tokens.push({
                     value: value,
                     expr: true,
@@ -1837,7 +1858,7 @@
                 }
                 var parent = data.parent
                 var proxies = data.proxies
-                var transation = documentFragment//.cloneNode(false)//???
+                var transation = documentFragment //.cloneNode(false)//???
                 var spans = []
                 var lastFn = {}
                 if (method === "del" || method === "move") {
@@ -2775,6 +2796,7 @@
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
     var cinerator = DOC.createElement("div")
+
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
@@ -2853,7 +2875,7 @@
 
     function removeView(node, group, n) {
         var length = group * (n || 1)
-        var view = documentFragment//.cloneNode(false)//???
+        var view = documentFragment //.cloneNode(false)//???
         while (--length >= 0) {
             var nextSibling = node.nextSibling
             view.appendChild(node)
@@ -2882,8 +2904,10 @@
         return proxy
     }
     var eachPool = []
+
     function getEachProxy(index, item, data, last) {
-        var param = data.param || "el", proxy
+        var param = data.param || "el",
+                proxy
         for (var i = 0, n = eachPool.length; i < n; i++) {
             var proxy = eachPool[i]
             if (proxy.hasOwnProperty(param)) {
@@ -2901,6 +2925,7 @@
         }
         return createEachProxy(index, item, data, last)
     }
+
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
         var source = {
@@ -2918,6 +2943,7 @@
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
+
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors;
         ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {

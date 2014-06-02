@@ -893,16 +893,12 @@
                 if (openTag === closeTag) {
                     avalon.error("openTag!==closeTag", TypeError)
                 }
-                if (/[<>]/.test(array)) {
+                if (/^<[^<>]{3},[^<>]{2}>$/.test(array)) {
+                    kernel.commentInterpolate = true
+                }else if (/[<>]/.test(array)) {
                     if (DOC.documentMode === 9) {//IE9
-                        avalon.error("IE9不支持用<或>做定界符",TypeError)
-                    } else if (!+"\v1") {//IE6-8
-                        if (/^<[^<>]{3},[^<>]{2}>$/.test(array)) {
-                            kernel.commentInterpolate = true
-                        } else {
-                            avalon.error("IE6-8的定界符如果包含<或>，请保证openTag以<开头，长度为4，closeTag以>结束，长度为3", TypeError)
-                        }
-                    } else if (!/^<[^<>]+,[^<>]+>$/.test(array)) {//其他浏览器
+                        avalon.error("IE9不支持用<或>做定界符", TypeError)
+                    } else if (!/^<[^<>]+,[^<>]+>$/.test(array)) {
                         avalon.error("定界符如果包含<或>，请保证openTag以<开头，closeTag以>结束", TypeError)
                     }
                 }
@@ -1694,16 +1690,29 @@
                 scanTag(node, vmodels) //扫描元素节点
             } else if (nodeType === 3 && rexpr.test(node.data)) {
                 scanText(node, vmodels) //扫描文本节点
-            }else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-                scanText(node, vmodels) //扫描文本节点
+            } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+                scanText(node, vmodels) //扫描注释节点
             }
             node = nextNode
         }
     }
 
     function scanText(textNode, vmodels) {
-        var bindings = [],
-                tokens = scanExpr(textNode.nodeValue)
+        var bindings = []
+        if (textNode.nodeType === 8) {
+            var leach = []
+            var value = trimFilter(textNode.nodeValue, leach)
+            var token = {
+                expr: true,
+                value: value
+            }
+            if (leach.length) {
+                token.filters = leach
+            }
+            var tokens = [token]
+        } else {
+            tokens = scanExpr(textNode.data)
+        }
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1866,7 +1875,18 @@
             r11b = /U2hvcnRDaXJjdWl0/g,
             rlt = /&lt;/g,
             rgt = /&gt;/g
-
+    function trimFilter(value, leach) {
+        if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+            value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+            value = value.replace(rfilters, function(c, d, e) {
+                leach.push(d + (e || ""))
+                return ""
+            })
+            value = value.replace(r11b, "||") //还原短路与
+        }
+        return value
+    }
+    
     function scanExpr(str) {
         var tokens = [],
                 value, start = 0,
@@ -1891,14 +1911,7 @@
             value = str.slice(start, stop)
             if (value) { //处理{{ }}插值表达式
                 var leach = []
-                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                    value = value.replace(rfilters, function(c, d, e) {
-                        leach.push(d + (e || ""))
-                        return ""
-                    })
-                    value = value.replace(r11b, "||") //还原短路与
-                }
+                value = trimFilter(value, leach)
                 tokens.push({
                     value: value,
                     expr: true,

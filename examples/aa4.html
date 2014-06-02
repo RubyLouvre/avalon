@@ -4,13 +4,13 @@
         <title>interpolate</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../avalon.js"></script>
+        <script src="../avalon.mobile.js"></script>
         <script>
             avalon.config({
-                interpolate: ["<%", "%>"]
+                interpolate: ["<!--", "-->"]
             });
             var Main = avalon.define('Act', function(vm) {
-                vm.aaa = "rrrrrrrrr"
+                vm.aaa = "33333"
                 vm.questList = [{
                         award: '100chip',
                         img: ''
@@ -38,11 +38,11 @@
     </head>
 
     <body ms-controller="Act">
-        <p><%aaa%></p>
+        <p><!--aaa--></p>
         <ul >
             <li ms-repeat-el="questList">
-                 <span ms-if="el.award != ''">
-                     <%el.award%>
+                 <span ms-if="el.award">
+                     <!--el.award|uppercase-->
                  </span>  
             </li>
         </ul>
