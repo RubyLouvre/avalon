@@ -8,7 +8,7 @@
         <script>
     
                     avalon.config({
-                    interpolate: ["<%", "%>"]
+                    interpolate: ["<!--", "-->"]
                     });
                     var Main = avalon.define('Act', function(vm) {
                     vm.aaa = "33333"
@@ -39,11 +39,11 @@
     </head>
 
     <body ms-controller="Act">
-        <p><%aaa%></p>
+        <p><!--aaa--></p>
 <ul >
     <li ms-repeat-el="questList">
         <span ms-if="el.award">
-            <%el.award|uppercase%>
+            <!--el.award|uppercase-->
         </span>  
     </li>
 </ul>
