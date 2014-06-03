@@ -10,10 +10,9 @@
                 vm.first = {
                    
                 }
-
             })
             setTimeout(function() {
-                vmodel.first = {
+                var a =   {
                     array: ["@@@", "###", "$$$", "%%%"],
                     text: "<span style='color:red;'>再次赋值</span>",
                     object: {
@@ -23,6 +22,7 @@
                         orange: "橙子"
                     }
                 }
+                vmodel.first = a
             }, 3000)
         </script>
     </head>
