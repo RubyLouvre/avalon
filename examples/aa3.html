@@ -2,22 +2,52 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <script src="../avalon.js"></script>
-        <script>
-           
-            var model = avalon.define("test", function(vm) {
-                vm.data = {list: [1, 2, 3, 4, 5, 6, 7]}
-            })
-
-        </script>
+        <script type="text/javascript" src="../avalon.js"></script>
     </head>
     <body>
-        <div  ms-controller="test">
-            <ul  ms-each-el="data.list">
-                <li ms-if="$index ==  0">Name: {{el}}</li>
-                <li ms-if="$index !==  0" style="color:green">Name: {{el}}</li>
-            </ul>
-            <button ms-click="change">Change Name</button>
+        <div class="page-content" ms-controller="recipeInfo">
+
+
+            <input style="width:400px;" ms-duplex="ajaxData.aaa" placeholder="请填写食谱名称">
+
+
+            <input class="form-control"  style="width:400px;" id="bbb" 
+                   type="text" ms-duplex="ajaxData.bbb" data-duplex-changed="changeBBB" >
+
+            <select ms-duplex="select" data-duplex-changed="change">
+                <option>aaa</option>
+                <option>bbb</option>
+                <option>ccc</option>
+            </select>
+
+
+            <input value="动态赋值" type="button" ms-click="click"/>
+            <hr style="border:1px solid red;">
+
+
+
+
         </div>
+
+
+
+
+        <script type="text/javascript">
+            var vmodel = avalon.define("recipeInfo", function(vm) {
+                vm.ajaxData = {"aaa": "xxx", "bbb": "yyy"};
+                vm.changeBBB = function(aa, bb) {
+                    console.log("inputchange " + this.value );
+                    vmodel.ajaxData.aaa = aa
+                }
+                vm.select = "bbb"
+                vm.change = function(a){
+                    console.log("selectchange "+a)
+                }
+                vm.click = function(e) {
+                    //赋值方式
+                    document.getElementById('bbb').value = new Date - 0
+                }
+            });
+        </script>     
     </body>
 </html>

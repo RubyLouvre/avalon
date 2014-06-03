@@ -594,15 +594,26 @@
             window.require = builtin ? innerRequire : otherRequire
         },
         interpolate: function(array) {
-            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
-                openTag = array[0]
-                closeTag = array[1]
-                var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
-                rexpr = new RegExp(o + "(.*?)" + c)
-                rexprg = new RegExp(o + "(.*?)" + c, "g")
-                rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+            openTag = array[0]
+            closeTag = array[1]
+            if (openTag === closeTag) {
+                avalon.error("openTag!==closeTag", SyntaxError)
+            } else if (array + "" === "<!--,-->") {
+                kernel.commentInterpolate = true
+            } else {
+                var test = openTag + "test" + closeTag
+                var cinerator = DOC.createElement("div")
+                cinerator.innerHTML = test
+                if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") !== 0) {
+                    avalon.error("此定界符不合法", SyntaxError)
+                }
+                cinerator.innerHTML = ""
             }
+            var o = escapeRegExp(openTag),
+                    c = escapeRegExp(closeTag)
+            rexpr = new RegExp(o + "(.*?)" + c)
+            rexprg = new RegExp(o + "(.*?)" + c, "g")
+            rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
 
@@ -1173,7 +1184,11 @@
                 } catch (e) {
                     delete data.evaluator
                     if (data.nodeType === 3) {
-                        data.node.data = openTag + data.value + closeTag
+                        if (kernel.commentInterpolate) {
+                            data.element.replaceChild(DOC.createComment(data.value), data.node)
+                        } else {
+                            data.node.data = openTag + data.value + closeTag
+                        }
                     }
                     log("warning:evaluator of [" + data.value + "] throws error!")
                 }
@@ -1266,18 +1281,34 @@
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
-            if (node.nodeType === 1) {
+            var nodeType = node.nodeType
+            if (nodeType === 1) {
                 scanTag(node, vmodels) //扫描元素节点
-            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
+            } else if (nodeType === 3 && rexpr.test(node.data)) {
                 scanText(node, vmodels) //扫描文本节点
+            } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+                scanText(node, vmodels) //扫描注释节点
             }
             node = nextNode
         }
     }
 
     function scanText(textNode, vmodels) {
-        var bindings = [],
-                tokens = scanExpr(textNode.data)
+        var bindings = []
+        if (textNode.nodeType === 8) {
+            var leach = []
+            var value = trimFilter(textNode.nodeValue, leach)
+            var token = {
+                expr: true,
+                value: value
+            }
+            if (leach.length) {
+                token.filters = leach
+            }
+            var tokens = [token]
+        } else {
+            tokens = scanExpr(textNode.data)
+        }
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1303,7 +1334,8 @@
                 documentFragment.appendChild(node)
             }
             textNode.parentNode.replaceChild(documentFragment, textNode)
-            executeBindings(bindings, vmodels)
+            if (bindings.length)
+                executeBindings(bindings, vmodels)
         }
     }
 
@@ -1398,7 +1430,20 @@
 
     var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
             r11a = /\|\|/g,
-            r11b = /U2hvcnRDaXJjdWl0/g
+            r11b = /U2hvcnRDaXJjdWl0/g,
+            rlt = /&lt;/g,
+            rgt = /&gt;/g
+    function trimFilter(value, leach) {
+        if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+            value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+            value = value.replace(rfilters, function(c, d, e) {
+                leach.push(d + (e || ""))
+                return ""
+            })
+            value = value.replace(r11b, "||") //还原短路与
+        }
+        return value
+    }
 
     function scanExpr(str) {
         var tokens = [],
@@ -1425,14 +1470,7 @@
             value = str.slice(start, stop)
             if (value) { //处理{{ }}插值表达式
                 var leach = []
-                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                    value = value.replace(rfilters, function(c, d, e) {
-                        leach.push(d + (e || ""))
-                        return ""
-                    })
-                    value = value.replace(r11b, "||") //还原短路与
-                }
+                value = trimFilter(value, leach)
                 tokens.push({
                     value: value,
                     expr: true,
@@ -1830,7 +1868,9 @@
                 }
                 var parent = data.parent
                 var proxies = data.proxies
-                var transation = documentFragment//.cloneNode(false)//???
+                var transation = documentFragment //.cloneNode(false)//???
+                var spans = []
+                var lastFn = {}
                 if (method === "del" || method === "move") {
                     var locatedNode = getLocatedNode(parent, data, pos)
                 }
@@ -1839,8 +1879,6 @@
                         //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var last = data.getter().length - 1
-                        var spans = [],
-                                lastFn = {}
                         transation = transation.cloneNode(false)
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
@@ -1906,9 +1944,8 @@
                     case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                         var pool = el
                         var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
-                        var keys = [],
-                                spans = [],
-                                lastFn = {}
+                        var keys = []
+                        transation = transation.cloneNode(false)
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key)) {
                                 keys.push(key)
@@ -1977,7 +2014,7 @@
                         log("debug: ms-if " + e.message)
                     }
                 }
-                if (rbind.test(elem.outerHTML)) {
+                if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
@@ -2769,6 +2806,7 @@
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
     var cinerator = DOC.createElement("div")
+
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
@@ -2847,7 +2885,7 @@
 
     function removeView(node, group, n) {
         var length = group * (n || 1)
-        var view = documentFragment//.cloneNode(false)//???
+        var view = documentFragment //.cloneNode(false)//???
         while (--length >= 0) {
             var nextSibling = node.nextSibling
             view.appendChild(node)
@@ -2876,8 +2914,10 @@
         return proxy
     }
     var eachPool = []
+
     function getEachProxy(index, item, data, last) {
-        var param = data.param || "el", proxy
+        var param = data.param || "el",
+                proxy
         for (var i = 0, n = eachPool.length; i < n; i++) {
             var proxy = eachPool[i]
             if (proxy.hasOwnProperty(param)) {
@@ -2895,6 +2935,7 @@
         }
         return createEachProxy(index, item, data, last)
     }
+
     function createEachProxy(index, item, data, last) {
         var param = data.param || "el"
         var source = {
@@ -2912,6 +2953,7 @@
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
+
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors;
         ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {

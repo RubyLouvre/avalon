@@ -887,15 +887,26 @@
             window.require = builtin ? innerRequire : otherRequire
         },
         interpolate: function(array) {
-            if (Array.isArray(array) && array[0] && array[1] && array[0] !== array[1]) {
-                openTag = array[0]
-                closeTag = array[1]
-                var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
-                rexpr = new RegExp(o + "(.*?)" + c)
-                rexprg = new RegExp(o + "(.*?)" + c, "g")
-                rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+            openTag = array[0]
+            closeTag = array[1]
+            if (openTag === closeTag) {
+                throw new SyntaxError("openTag!==closeTag")
+            } else if (array + "" === "<!--,-->") {
+                kernel.commentInterpolate = true
+            } else {
+                var test = openTag + "test" + closeTag
+                var cinerator = DOC.createElement("div")
+                cinerator.innerHTML = test
+                if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") !== 0) {
+                    throw new SyntaxError("此定界符不合法")
+                }
+                cinerator.innerHTML = ""
             }
+            var o = escapeRegExp(openTag),
+                    c = escapeRegExp(closeTag)
+            rexpr = new RegExp(o + "(.*?)" + c)
+            rexprg = new RegExp(o + "(.*?)" + c, "g")
+            rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
 
@@ -1568,7 +1579,11 @@
                 } catch (e) {
                     delete data.evaluator
                     if (data.nodeType === 3) {
-                        data.node.data = openTag + data.value + closeTag
+                        if (kernel.commentInterpolate) {
+                            data.element.replaceChild(DOC.createComment(data.value), data.node)
+                        } else {
+                            data.node.data = openTag + data.value + closeTag
+                        }
                     }
                     log("warning:evaluator of [" + data.value + "] throws error!")
                 }
@@ -1673,18 +1688,34 @@
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
-            if (node.nodeType === 1) {
-                scanTag(node, vmodels)
-            } else if (node.nodeType === 3 && rexpr.test(node.data)) {
-                scanText(node, vmodels)
+            var nodeType = node.nodeType
+            if (nodeType === 1) {
+                scanTag(node, vmodels) //扫描元素节点
+            } else if (nodeType === 3 && rexpr.test(node.data)) {
+                scanText(node, vmodels) //扫描文本节点
+            } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+                scanText(node, vmodels) //扫描注释节点
             }
             node = nextNode
         }
     }
 
     function scanText(textNode, vmodels) {
-        var bindings = [],
-                tokens = scanExpr(textNode.data)
+        var bindings = []
+        if (textNode.nodeType === 8) {
+            var leach = []
+            var value = trimFilter(textNode.nodeValue, leach)
+            var token = {
+                expr: true,
+                value: value
+            }
+            if (leach.length) {
+                token.filters = leach
+            }
+            var tokens = [token]
+        } else {
+            tokens = scanExpr(textNode.data)
+        }
         if (tokens.length) {
             for (var i = 0, token; token = tokens[i++]; ) {
                 var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
@@ -1847,6 +1878,17 @@
             r11b = /U2hvcnRDaXJjdWl0/g,
             rlt = /&lt;/g,
             rgt = /&gt;/g
+    function trimFilter(value, leach) {
+        if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
+            value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+            value = value.replace(rfilters, function(c, d, e) {
+                leach.push(d + (e || ""))
+                return ""
+            })
+            value = value.replace(r11b, "||") //还原短路与
+        }
+        return value
+    }
 
     function scanExpr(str) {
         var tokens = [],
@@ -1872,14 +1914,7 @@
             value = str.slice(start, stop)
             if (value) { //处理{{ }}插值表达式
                 var leach = []
-                if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-                    value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-                    value = value.replace(rfilters, function(c, d, e) {
-                        leach.push(d + (e || ""))
-                        return ""
-                    })
-                    value = value.replace(r11b, "||") //还原短路与
-                }
+                value = trimFilter(value, leach)
                 tokens.push({
                     value: value,
                     expr: true,
@@ -2412,6 +2447,7 @@
                         var keys = []
                         var spans = []
                         var lastFn = {}
+                        transation = transation.cloneNode(false)
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
                                 keys.push(key)
@@ -2482,7 +2518,7 @@
                         log("debug: ms-if  " + e.message)
                     }
                 }
-                if (rbind.test(elem.outerHTML)) {
+                if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
@@ -2868,6 +2904,7 @@
 
         var composing = false
 
+
         function compositionStart() {
             composing = true
         }
@@ -2978,10 +3015,14 @@
 
             }
         }
-        element.oldValue = element.value
+
         element.onTree = onTree
         launch(element)
+        element.oldValue = element.value
         registerSubscriber(data)
+        if (launch !== launchImpl) {
+            data.changed.call(element, element.value)
+        }
     }
     var TimerID, ribbon = [],
             launch = noop
@@ -3202,7 +3243,7 @@
             notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
             return n
         },
-        pushArray: function(array){
+        pushArray: function(array) {
             return this.push.apply(this, array)
         },
         unshift: function() {
