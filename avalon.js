@@ -887,27 +887,26 @@
             window.require = builtin ? innerRequire : otherRequire
         },
         interpolate: function(array) {
-            if (Array.isArray(array) && array[0] && array[1]) {
-                openTag = array[0]
-                closeTag = array[1]
-                if (openTag === closeTag) {
-                    avalon.error("openTag!==closeTag", TypeError)
+            openTag = array[0]
+            closeTag = array[1]
+            if (openTag === closeTag) {
+                throw new SyntaxError("openTag!==closeTag")
+            } else if (array + "" === "<!--,-->") {
+                kernel.commentInterpolate = true
+            } else {
+                var test = openTag + "test" + closeTag
+                var cinerator = DOC.createElement("div")
+                cinerator.innerHTML = test
+                if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") !== 0) {
+                    throw new SyntaxError("此定界符不合法")
                 }
-                if (/^<[^<>]{3},[^<>]{2}>$/.test(array)) {
-                    kernel.commentInterpolate = true
-                } else if (/[<>]/.test(array)) {
-                    if (DOC.documentMode === 9) {//IE9
-                        avalon.error("IE9不支持用<或>做定界符", TypeError)
-                    } else if (!/^<[^<>]+,[^<>]+>$/.test(array)) {
-                        avalon.error("定界符如果包含<或>，请保证openTag以<开头，closeTag以>结束", TypeError)
-                    }
-                }
-                var o = escapeRegExp(openTag),
-                        c = escapeRegExp(closeTag)
-                rexpr = new RegExp(o + "(.*?)" + c)
-                rexprg = new RegExp(o + "(.*?)" + c, "g")
-                rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+                cinerator.innerHTML = ""
             }
+            var o = escapeRegExp(openTag),
+                    c = escapeRegExp(closeTag)
+            rexpr = new RegExp(o + "(.*?)" + c)
+            rexprg = new RegExp(o + "(.*?)" + c, "g")
+            rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
 
