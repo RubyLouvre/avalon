@@ -979,15 +979,17 @@
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
-        var node = this[0],
-                doc = node && node.ownerDocument,
-                win = doc.defaultView,
+        var node = this[0], box = {
+            left: 0,
+            top: 0
+        }
+        if (!node || node.nodeType !== 1 || !node.ownerDocument) {
+            return box
+        }
+        var doc = node.ownerDocument,
                 root = doc.documentElement,
-                box = {
-                    left: 0,
-                    top: 0
-                }
-        if (!doc || !root.contains(node)) {
+                win = doc.defaultView
+        if (!root.contains(node)) {
             return box
         }
         if (typeof node.getBoundingClientRect !== "undefined") {

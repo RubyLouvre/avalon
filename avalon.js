@@ -1340,16 +1340,18 @@
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
-        var node = this[0],
-                doc = node && node.ownerDocument,
-                win = doc.defaultView || doc.parentWindow,
+        var node = this[0], box = {
+            left: 0,
+            top: 0
+        }
+        if (!node || node.nodeType !== 1 || !node.ownerDocument) {
+            return box
+        }
+        var doc = node.ownerDocument,
                 body = doc.body,
                 root = doc.documentElement,
-                box = {
-                    left: 0,
-                    top: 0
-                }
-        if (!doc || !avalon.contains(root, node)) {
+                win = doc.defaultView || doc.parentWindow
+        if (!avalon.contains(root, node)) {
             return box
         }
         //http://hkom.blog1.fc2.com/?mode=m&no=750 body的偏移量是不包含margin的
@@ -3055,7 +3057,7 @@
             TimerID = setInterval(ticker, 30)
         }
     }
-    
+
     function newSetter(newValue) {
         oldSetter.call(this, newValue)
         if (newValue !== this.oldValue) {
