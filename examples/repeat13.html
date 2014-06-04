@@ -1,0 +1,112 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            var vmodel = avalon.define("cascade", function(vm) {
+                // 省市区测试数据
+                var provinceList = [
+                    {"name": "安徽省", "id": 6},
+                    {"name": "广东省", "id": 5}
+                ];
+                var cityList = {
+                    5: [{name: "广州市", id: 500}, {name: "深圳市", id: 512}],
+                    6: [{name: "合肥市", id: 601}, {name: "芜湖市", id: 609}]
+                };
+                var districtList = {
+                    500: ["从化市", "荔湾区", "越秀区", "海珠区", "天河区", "白云区", "花都区", "黄埔区", "萝岗区", "南沙区", "番禺区", "增城市"],
+                    512: ["罗湖区", "福田区", "南山区", "宝安区", "龙岗区", "盐田区"],
+                    601: ["瑶海区", "庐阳区", "蜀山区", "包河区", "长丰县", "肥东县", "肥西县"],
+                    609: ["镜湖区", "弋江区", "鸠江区", "三山区", "芜湖县", "繁昌县", "南陵县"]
+                };
+                // 三个简单的下拉切换方法，主要用来修改市区数组的绑定和对应的文本
+                vm.change1 = function() {
+                    var index = this.options[this.selectedIndex].value;
+                    // 当索引是-1的时候，说明是请选择，需要对市区数组和文本进行空置
+                    if (index == -1) {
+                        vm.cities = [];
+                        vm.districts = [];
+                        vm.province = vm.city = vm.district = "";
+                    }
+                    // 筛选对应的市数据
+                    else {
+                        vm.province = this.options[this.selectedIndex].text;
+                        vm.cities = cityList[index];
+                        vm.districts = [];
+                    }
+                };
+
+                vm.change2 = function() {
+                    var index = this.options[this.selectedIndex].value;
+                    if (index == -1) {
+                        vm.districts = [];
+                        vm.city = vm.district = "";
+                    }
+                    else {
+                        vm.city = this.options[this.selectedIndex].text;
+                        vm.district = "";
+                        vm.districts = districtList[index];
+                    }
+                };
+
+                vm.change3 = function() {
+                    var index = this.options[this.selectedIndex].value;
+                    if (index == -1) {
+                        vm.district = "";
+                    }
+                    else {
+                        vm.district = this.options[this.selectedIndex].text;
+                    }
+                };
+                // 用于下拉框绑定的数据
+                vm.provinces = provinceList;
+                vm.cities = [];
+                vm.districts = [];
+                // 省市区选择的文本
+                vm.province = "";
+                vm.city = "";
+                vm.district = "";
+                // 输出
+                vm.render = function() {
+                    return vm.province + (vm.city == "" ? "" : " - " + vm.city) + (vm.district == "" ? "" : " - " + vm.district);
+                };
+            });
+        </script>
+    </head>
+    <body ms-controller="cascade">
+        <div>{{ render() }}&nbsp;</div>
+        <div>
+            <select ms-change="change1" class="input-xlarge">
+                <option value="-1">请选择</option>
+                <option ms-repeat="provinces" ms-value="el.id"> {{ el.name }} </option>
+            </select>
+            <select ms-change="change2" class="input-xlarge" ms-visible="province!=''">
+                <option value="-1">请选择</option>
+                <option ms-repeat="cities" ms-value="el.id"> {{ el.name }} </option>
+            </select> 
+            <select ms-change="change3" class="input-xlarge" ms-visible="city!=''">
+                <option value="-1">请选择</option>
+                <option ms-repeat="districts" ms-value="el"> {{ el }} </option>
+            </select>  
+        </div>
+        <hr>
+        <div>{{ province + ( city == "" ? "" : " | " + city ) + ( district == "" ? "" : " | " + district ) }}&nbsp;</div>
+        <div>
+            <select ms-change="change1" class="input-xlarge">
+                <option value="-1">请选择</option>
+                <option ms-repeat="provinces" ms-value="el.id"> {{ el.name }} </option>
+            </select>
+            <select ms-change="change2" class="input-xlarge">
+                <option value="-1">请选择</option>
+                <option ms-repeat="cities" ms-value="el.id"> {{ el.name }} </option>
+            </select> 
+            <select ms-change="change3" class="input-xlarge">
+                <option value="-1">请选择</option>
+                <option ms-repeat="districts" ms-value="el"> {{ el }} </option>
+            </select>  
+        </div>
+    </body> 
+</html>

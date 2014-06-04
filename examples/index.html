@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js">
+
+        </script>
+        <script>
+            avalon.define("index", function(vm) {
+
+            })
+        </script>
+        <style>
+            a{
+                text-decoration:none;
+            }
+        </style>
+    </head>
+    <body ms-controller="index">
+        <ul>
+            <li ms-repeat="avalon.range(1, 5)"><a ms-href="duplex{{el}}.html">ms-duplex {{el}}</a></li>
+            <li ms-repeat="avalon.range(0, 4)"><a ms-href="if{{el}}.html">ms-if {{el}}</a></li>
+            <li><a href="class.html">ms-class</a></li>
+            <li><a href="css0.html">ms-css-* 0</a></li>
+            <li><a href="css1.html">ms-css-* 1</a></li>
+            <li><a href="on0.html">ms-on-* 0</a></li>
+            <li><a href="on1.html">ms-on-* 1</a></li>
+            <li><a href="on2.html">ms-on-* 2</a></li>
+            <li><a href="live.html">ms-live-* </a></li>
+            <li><a href="href.html">ms-href</a></li>
+            <li><a href="visible.html">ms-visible</a></li>
+            <li><a href="include.html">ms-include </a></li>
+            <li ms-repeat="avalon.range(0, 15)"><a ms-href="repeat{{el}}.html">ms-repeat {{el}}</a></li>
+            <li><a href="skipArray.html">skipArray </a></li>
+            <li><a href="todos.html">todos 示例</a></li>
+            <li><a href="grid.html">grid 示例</a></li>
+            <li><a href="tree.html">tree 示例</a></li>
+        </ul>
+    </body>
+</html>
