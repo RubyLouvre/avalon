@@ -983,7 +983,7 @@
             left: 0,
             top: 0
         }
-        if (!node || node.nodeType !== 1 || !node.ownerDocument) {
+        if (!node || !node.tagName || !node.ownerDocument) {
             return box
         }
         var doc = node.ownerDocument,
