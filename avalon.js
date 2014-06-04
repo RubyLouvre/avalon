@@ -1336,7 +1336,7 @@
             return cssHooks[method + ":get"](this[0], void 0, "padding-box")
         }
         avalon.fn["outer" + name] = function(includeMargin) {
-            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "margin-box": "border-box" )
+            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "margin-box" : "border-box")
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
@@ -3510,47 +3510,38 @@
     var eachPool = []
     function getEachProxy(index, item, data, last) {
         var param = data.param || "el", proxy
-        for (var i = 0, n = eachPool.length; i < n; i++) {
-            var proxy = eachPool[i]
-            if (proxy.hasOwnProperty(param)) {
-                proxy.$remove = function() {
-                    return data.getter().removeAt(proxy.$index)
-                }
-                proxy.$index = index
-                proxy.$outer = data.$outer
-                proxy[param] = item.$model ? item.$model: item;
-                proxy.$first = index === 0
-                proxy.$last = last
-                eachPool.splice(i, 1)
-                return proxy
-            }
-        }
-        return createEachProxy(index, item, data, last)
-    }
-    function createEachProxy(index, item, data, last) {
-        var param = data.param || "el"
         var source = {
-            $index: index,
+            $remove: function() {
+                return data.getter().removeAt(proxy.$index)
+            },
             $itemName: param,
+            $index: index,
             $outer: data.$outer,
             $first: index === 0,
             $last: index === last
         }
-        source[param] = item
-        source.$remove = function() {
-            return data.getter().removeAt(proxy.$index)
+        source[param] = item.$model ? item.$model : item
+        for (var i = 0, n = eachPool.length; i < n; i++) {
+            var proxy = eachPool[i]
+            if (proxy.hasOwnProperty(param)) {
+                for (var i in source) {
+                    proxy[i] = source[i]
+                }
+                eachPool.splice(i, 1)
+                return proxy
+            }
         }
-        var proxy = modelFactory(source, 0, watchEachOne)
+        proxy = modelFactory(source, 0, watchEachOne)
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
     function recycleEachProxy(proxy) {
-        var obj = proxy.$accessors;
-        ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {
+        var obj = proxy.$accessors, name = proxy.$itemName;
+        ["$index", "$last", "$first", name].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
-        if(proxy[proxy.$itemName][subscribers]) {
-            proxy[proxy.$itemName][subscribers].length = 0;
+        if (proxy[name][subscribers]) {
+            proxy[name][subscribers].length = 0;
         }
         if (eachPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachPool.pop()
