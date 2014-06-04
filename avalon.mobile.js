@@ -992,7 +992,7 @@
         if (!root.contains(node)) {
             return box
         }
-        if (typeof node.getBoundingClientRect !== "undefined") {
+        if (node.getBoundingClientRect !== void 0) {
             box = node.getBoundingClientRect()
         }
         return {
