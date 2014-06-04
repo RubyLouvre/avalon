@@ -3518,7 +3518,7 @@
                 }
                 proxy.$index = index
                 proxy.$outer = data.$outer
-                proxy[param] = item
+                proxy[param] = item.$model ? item.$model: item;
                 proxy.$first = index === 0
                 proxy.$last = last
                 eachPool.splice(i, 1)
@@ -3549,6 +3549,9 @@
         ["$index", "$last", "$first", proxy.$itemName].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
+        if(proxy[proxy.$itemName][subscribers]) {
+            proxy[proxy.$itemName][subscribers].length = 0;
+        }
         if (eachPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachPool.pop()
         }
