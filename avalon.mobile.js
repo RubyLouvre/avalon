@@ -2919,7 +2919,7 @@
         proxy.$id = "$proxy$with" + Math.random()
         return proxy
     }
-    var eachPool = []
+    var eachProxyPool = []
     function getEachProxy(index, item, data, last) {
         var param = data.param || "el", proxy
         var source = {
@@ -2933,13 +2933,13 @@
             $last: index === last
         }
         source[param] = item
-        for (var i = 0, n = eachPool.length; i < n; i++) {
-            var proxy = eachPool[i]
+        for (var i = 0, n = eachProxyPool.length; i < n; i++) {
+            var proxy = eachProxyPool[i]
             if (proxy.hasOwnProperty(param)) {
                 for (var i in source) {
                     proxy[i] = source[i]
                 }
-                eachPool.splice(i, 1)
+                eachProxyPool.splice(i, 1)
                 return proxy
             }
         }
@@ -2959,8 +2959,8 @@
         if (proxy[name][subscribers]) {
             proxy[name][subscribers].length = 0;
         }
-        if (eachPool.unshift(proxy) > kernel.maxRepeatSize) {
-            eachPool.pop()
+        if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
+            eachProxyPool.pop()
         }
     }
     /*********************************************************************
