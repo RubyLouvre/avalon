@@ -975,7 +975,7 @@
             return cssHooks[method + ":get"](this[0], void 0, "padding-box")
         }
         avalon.fn["outer" + name] = function(includeMargin) {
-            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "margin-box": "border-box")
+            return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? "margin-box" : "border-box")
         }
     })
     avalon.fn.offset = function() { //取得距离页面左右角的坐标
@@ -2932,7 +2932,7 @@
             $first: index === 0,
             $last: index === last
         }
-        source[param] = item.$model ? item.$model : item
+        source[param] = item
         for (var i = 0, n = eachPool.length; i < n; i++) {
             var proxy = eachPool[i]
             if (proxy.hasOwnProperty(param)) {
@@ -2943,13 +2943,17 @@
                 return proxy
             }
         }
+        var type = avalon.type(item)
+        if (type === "object" || type === "function") {
+            source.$skipArray = [param]
+        }
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
-        ["$index", "$last", "$first", name].forEach(function(prop) {
+        ["$index", "$last", "$first"].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
         if (proxy[name][subscribers]) {

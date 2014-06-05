@@ -3520,7 +3520,7 @@
             $first: index === 0,
             $last: index === last
         }
-        source[param] = item.$model ? item.$model : item
+        source[param] = item
         for (var i = 0, n = eachPool.length; i < n; i++) {
             var proxy = eachPool[i]
             if (proxy.hasOwnProperty(param)) {
@@ -3531,13 +3531,17 @@
                 return proxy
             }
         }
+        var type = avalon.type(item)
+        if (type === "object" || type === "function") {
+            source.$skipArray = [param]
+        }
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
-        ["$index", "$last", "$first", name].forEach(function(prop) {
+        ["$index", "$last", "$first"].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
         if (proxy[name][subscribers]) {

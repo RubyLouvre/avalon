@@ -1,53 +1,59 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <script type="text/javascript" src="../avalon.js"></script>
+        <title>by 司徒正美</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.mobile.js"></script>
     </head>
-    <body>
-        <div class="page-content" ms-controller="recipeInfo">
+    <body class="ms-controller" 
+          ms-controller="test">
+        <ul>
+            <li ms-repeat="arr">
+                <input ms-duplex="el.a">{{el.a}}
+                <button ms-click="$remove"> delete </button>
+            </li>
+        </ul>
+        <pre>
+          console.log( avalon.vmodels.test )
+        </pre>
+        <button ms-click="add" type="button">add</button>
+        <button ms-click="show" type="button">show</button>
+        <button ms-click="update" type="button">update</button>
+        <script>
+var demoVM = avalon.define("test", function(vm) {
+
+    vm.arr = [{
+            a: 1
+        }, {
+            a: 2
+        }, {
+            a: 3
+        }]
+    vm.show = function() {
+        var sign =  avalon.subscribers
+        console.log(demoVM.arr[0].$id)
+        console.log(demoVM.arr[1].$id)
+        console.log(demoVM.arr[2].$id)
+        console.log(demoVM.arr)
+     
+        var proxies = demoVM.arr[sign][0].proxies
+        console.log(proxies[0].el)
+        console.log(proxies[1].el.$id)
+        console.log(proxies[2].el.$id)
+    }
+    vm.update = function() {
+        demoVM.arr[2].a =  Math.random().toString(32).substr(4,10)
+    }
 
 
-            <input style="width:400px;" ms-duplex="ajaxData.aaa" placeholder="请填写食谱名称">
+    vm.add = function() {
+        demoVM.arr.push({
+            a: Math.random()
+        });
+    };
+});
 
+        </script>
 
-            <input class="form-control"  style="width:400px;" id="bbb" 
-                   type="text" ms-duplex="ajaxData.bbb" data-duplex-changed="changeBBB" >
-
-            <select ms-duplex="select" data-duplex-changed="change">
-                <option>aaa</option>
-                <option>bbb</option>
-                <option>ccc</option>
-            </select>
-
-
-            <input value="动态赋值" type="button" ms-click="click"/>
-            <hr style="border:1px solid red;">
-
-
-
-
-        </div>
-
-
-
-
-        <script type="text/javascript">
-            var vmodel = avalon.define("recipeInfo", function(vm) {
-                vm.ajaxData = {"aaa": "xxx", "bbb": "yyy"};
-                vm.changeBBB = function(aa, bb) {
-                    console.log("inputchange " + this.value );
-                    vmodel.ajaxData.aaa = aa
-                }
-                vm.select = "bbb"
-                vm.change = function(a){
-                    console.log("selectchange "+a)
-                }
-                vm.click = function(e) {
-                    //赋值方式
-                    document.getElementById('bbb').value = new Date - 0
-                }
-            });
-        </script>     
     </body>
 </html>
