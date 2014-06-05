@@ -10,7 +10,7 @@
                 ajax: function(url, data, callback){
                     setTimeout(function(){
                         callback(data)
-                    }, 1000)
+                    }, 600)
                 }
             }
            var vmodel = avalon.define("test", function(vm){
@@ -18,7 +18,8 @@
                     name: "orign"
                 }
                 vm.click = function(){
-                    $.ajax("url",{name: "test"}, function(data){
+                    $.ajax("url",{name: Math.random().toString(32).substr(4,10)}, function(data){
+                        
                         vmodel.current.name = data.name
                     })
                 }
