@@ -1861,7 +1861,7 @@
                 elem[propName] = !!val
             }
         },
-        "each": function(method, pos, el) {
+        "repeat": function(method, pos, el) {
             if (method) {
                 var data = this
                 var group = data.group
@@ -2197,7 +2197,7 @@
             }
             data.template = template
             data.rollback = function() {
-                bindingExecutors.each.call(data, "clear")
+                bindingExecutors.repeat.call(data, "clear")
                 var endRepeat = data.endRepeat
                 var parent = data.parent
                 parent.insertBefore(data.template, endRepeat || null)
@@ -2222,7 +2222,7 @@
                 return
             }
             data.callbackName = "data-" + type + "-rendered"
-            data.handler = bindingExecutors.each
+            data.handler = bindingExecutors.repeat
             data.$outer = {}
             var check0 = "$key",
                     check1 = "$val"
