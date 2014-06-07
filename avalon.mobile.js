@@ -2,7 +2,7 @@
 // avalon.mobile 1.3.1 2014.6.3，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
-    var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
+    var prefix = "ms-"
     var expose = Date.now()
     var subscribers = "$" + expose
     var window = this || (0, eval)('this')
@@ -10,21 +10,22 @@
     var otherDefine = window.define
     var stopRepeatAssign = false
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
-    var class2type = {}
+    var rcomplextype = /^(?:object|array)$/
+    var rwindow = /^\[object (Window|DOMWindow|global)\]$/
     var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
-    var prefix = "ms-"
-    var root = DOC.documentElement
     var serialize = oproto.toString
     var ap = Array.prototype
     var aslice = ap.slice
+    var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var head = DOC.head //HEAD元素
-    var documentFragment = DOC.createDocumentFragment()
+    var root = DOC.documentElement
+    var hyperspace = DOC.createDocumentFragment()
+    var cinerator = DOC.createElement("div")
+    var class2type = {}
     "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
-    var rchecktype = /^(?:object|array)$/
-    var rwindow = /^\[object (Window|DOMWindow|global)\]$/
 
     function noop() {
     }
@@ -463,7 +464,7 @@
                 }
             }
             computedProperties.push(accessor)
-        } else if (rchecktype.test(valueType)) {
+        } else if (rcomplextype.test(valueType)) {
             accessor = function(newValue) { //子ViewModel或监控数组
                 var realAccessor = accessor.$vmodel,
                         preValue = realAccessor.$model
@@ -1085,7 +1086,7 @@
             range.selectNodeContents(root)
             return range.createContextualFragment(html)
         }
-        var fragment = documentFragment.cloneNode(false)
+        var fragment = hyperspace.cloneNode(false)
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
         if (!(tag in tagHooks)) {
             tag = "*"
@@ -1333,9 +1334,9 @@
                     }
                     bindings.push(binding) //收集带有插值表达式的文本
                 }
-                documentFragment.appendChild(node)
+                hyperspace.appendChild(node)
             }
-            textNode.parentNode.replaceChild(documentFragment, textNode)
+            textNode.parentNode.replaceChild(hyperspace, textNode)
             if (bindings.length)
                 executeBindings(bindings, vmodels)
         }
@@ -1860,7 +1861,7 @@
                 elem[propName] = !!val
             }
         },
-        "each": function(method, pos, el) {
+        "repeat": function(method, pos, el) {
             if (method) {
                 var data = this
                 var group = data.group
@@ -1870,7 +1871,7 @@
                 }
                 var parent = data.parent
                 var proxies = data.proxies
-                var transation = documentFragment //.cloneNode(false)//???
+                var transation = hyperspace.cloneNode(false)
                 var spans = []
                 var lastFn = {}
                 if (method === "del" || method === "move") {
@@ -1881,7 +1882,6 @@
                         //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var last = data.getter().length - 1
-                        transation = transation.cloneNode(false)
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
                             var proxy = getEachProxy(ii, arr[i], data, last)
@@ -1947,7 +1947,6 @@
                         var pool = el
                         var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
                         var keys = []
-                        transation = transation.cloneNode(false)
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key)) {
                                 keys.push(key)
@@ -1985,7 +1984,7 @@
                     fragment = val
                 } else if (val.nodeType === 1 || val.item) {
                     nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
-                    fragment = documentFragment.cloneNode(true)
+                    fragment = hyperspace.cloneNode(true)
                     while (nodes[0]) {
                         fragment.appendChild(nodes[0])
                     }
@@ -2170,12 +2169,12 @@
             var freturn = true
             try {
                 list = data.getter()
-                if (rchecktype.test(getType(list))) {
+                if (rcomplextype.test(getType(list))) {
                     freturn = false
                 }
             } catch (e) {
             }
-            var template = documentFragment.cloneNode(false)
+            var template = hyperspace.cloneNode(false)
             if (type === "repeat") {
                 var startRepeat = DOC.createComment("ms-repeat-start")
                 var endRepeat = DOC.createComment("ms-repeat-end")
@@ -2198,7 +2197,7 @@
             }
             data.template = template
             data.rollback = function() {
-                bindingExecutors.each.call(data, "clear")
+                bindingExecutors.repeat.call(data, "clear")
                 var endRepeat = data.endRepeat
                 var parent = data.parent
                 parent.insertBefore(data.template, endRepeat || null)
@@ -2223,7 +2222,7 @@
                 return
             }
             data.callbackName = "data-" + type + "-rendered"
-            data.handler = bindingExecutors.each
+            data.handler = bindingExecutors.repeat
             data.$outer = {}
             var check0 = "$key",
                     check1 = "$val"
@@ -2781,7 +2780,7 @@
 
     function convert(val) {
         var type = getType(val)
-        if (rchecktype.test(type)) {
+        if (rcomplextype.test(type)) {
             val = val.$id ? val : modelFactory(val, val)
         }
         return val
@@ -2811,7 +2810,6 @@
     var deleteRange = DOC.createRange()
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
-    var cinerator = DOC.createElement("div")
 
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
@@ -2891,7 +2889,7 @@
 
     function removeView(node, group, n) {
         var length = group * (n || 1)
-        var view = documentFragment //.cloneNode(false)//???
+        var view = hyperspace //.cloneNode(false)//???
         while (--length >= 0) {
             var nextSibling = node.nextSibling
             view.appendChild(node)
