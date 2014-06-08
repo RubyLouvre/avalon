@@ -902,7 +902,6 @@
                 kernel.commentInterpolate = true
             } else {
                 var test = openTag + "test" + closeTag
-                var cinerator = DOC.createElement("div")
                 cinerator.innerHTML = test
                 if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") >= 0) {
                     throw new SyntaxError("此定界符不合法")
