@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-mouseenter, ms-mouseleave</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.fn1 = function(e) {
+                    console.log(e)
+                    console.log(this)
+
+                }
+                vm.fn2 = function(e) {
+                    console.log(e)
+                    console.log(this)
+                }
+            })
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <div ms-mouseenter="fn1" ms-mouseleave="fn2" style="background: red;width:200px;height: 200px;padding:20px;">
+            <div style="background: blue;width:160px;height: 160px;margin:20px;"></div>
+        </div>
+    </body>
+</html>

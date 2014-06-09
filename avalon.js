@@ -154,7 +154,6 @@
         }
         return target
     }
-    var eventMap = avalon.eventMap = {}
 
     function resetNumber(a, n, end) { //用于模拟slice, splice的效果
         if ((a === +a) && !(a % 1)) { //如果是整数
@@ -231,22 +230,39 @@
             return result
         },
         //绑定事件
+        eventHooks: {},
         bind: function(el, type, fn, phase) {
+            var hooks = avalon.eventHooks
+            var hook = hooks[type]
+            if (typeof hook === "object") {
+                type = hook.type
+                if (hook.deel) {
+                    fn = hook.deel(el, fn)
+                }
+            }
             var callback = W3C ? fn : function(e) {
                 return fn.call(el, fixEvent(e))
             }
             if (W3C) {
-                el.addEventListener(eventMap[type] || type, callback, !!phase)
+                el.addEventListener(type, callback, !!phase)
             } else {
                 el.attachEvent("on" + type, callback)
             }
             return callback
         },
         //卸载事件
-        unbind: W3C ? function(el, type, fn, phase) {
-            el.removeEventListener(eventMap[type] || type, fn || noop, !!phase)
-        } : function(el, type, fn) {
-            el.detachEvent("on" + type, fn || noop)
+        unbind: function(el, type, fn, phase) {
+            var hooks = avalon.eventHooks
+            var hook = hooks[type]
+            var callback = fn || noop
+            if (typeof hook === "object") {
+                type = hook.type
+            }
+            if (W3C) {
+                el.removeEventListener(type, callback, !!phase)
+            } else {
+                el.detachEvent("on" + type, callback)
+            }
         },
         //读写删除元素节点的样式
         css: function(node, name, value) {
@@ -323,6 +339,7 @@
             }
         }
     })
+
     //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
     function generateID() {
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -1764,7 +1781,7 @@
         "duplex": 2000,
         "on": 3000
     }
-    var ons = oneObject("animationend,blur,change,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll")
+    var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll")
 
     function scanAttr(elem, vmodels) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
@@ -3118,17 +3135,6 @@
     duplexBinding.TEXTAREA = duplexBinding.INPUT
     //============================= event binding =======================
 
-    var eventName = {
-        AnimationEvent: "animationend",
-        WebKitAnimationEvent: "webkitAnimationEnd"
-    }
-    for (var name in eventName) {
-        if (/object|function/.test(typeof window[name])) {
-            eventMap.animationend = eventName[name]
-            break
-        }
-    }
-
     function fixEvent(event) {
         var ret = {}
         for (var i in event) {
@@ -3154,41 +3160,54 @@
         return ret
     }
 
-    var oldBind = avalon.bind
-    if (!("onmouseenter" in root)) { //fix firefox, chrome
-        var events = {
+    var eventHooks = avalon.eventHooks
+    //针对firefox, chrome修正mouseenter, mouseleave
+    if (!("onmouseenter" in root)) {
+        avalon.each({
             mouseenter: "mouseover",
             mouseleave: "mouseout"
-        }
-        avalon.bind = function(elem, type, fn) {
-            if (events[type]) {
-                return oldBind(elem, events[type], function(e) {
-                    var t = e.relatedTarget
-                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
-                        delete e.type
-                        e.type = type
-                        return fn.call(elem, e)
+        }, function(origType, fixType) {
+            eventHooks[origType] = {
+                type: fixType,
+                deel: function(elem, fn) {
+                    return function(e) {
+                        var t = e.relatedTarget
+                        if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
+                            delete e.type
+                            e.type = origType
+                            return fn.call(elem, e)
+                        }
                     }
-                })
-            } else {
-                return oldBind(elem, type, fn)
+                }
+            }
+        })
+    }
+    //针对IE9+, w3c修正animationend
+    avalon.each({
+        AnimationEvent: "animationend",
+        WebKitAnimationEvent: "webkitAnimationEnd"
+    }, function(construct, fixType) {
+        if (window[construct] && !eventHooks.animationend) {
+            eventHooks.animationend = {
+                type: fixType
             }
         }
-    }
-    if (!("oninput" in document.createElement("input"))) { //fix IE6-8
-        avalon.bind = function(elem, type, fn) {
-            if (type === "input") {
-                return oldBind(elem, "propertychange", function(e) {
+    })
+    //针对IE6-8修正input
+    if (!("oninput" in document.createElement("input"))) {
+        eventHooks.input = {
+            type: "propertychange",
+            deel: function(elem, fn) {
+                return function(e) {
                     if (e.propertyName === "value") {
                         e.type = "input"
                         return fn.call(elem, e)
                     }
-                })
-            } else {
-                return oldBind(elem, type, fn)
+                }
             }
         }
     }
+  
     /*********************************************************************
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
