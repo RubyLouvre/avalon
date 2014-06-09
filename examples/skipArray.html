@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>$skipArray</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.aaa = "xxx"
+                vm.$aaa = "xxx"
+                vm.bbb = "xxx"
+                vm.$skipArray = ["bbb", "array"]
+                vm.array = ["111", "222", "333"]
+                vm.list = ["111", "222", "333"]
+            })
+            setTimeout(function() {
+                model.array.push(222)
+                model.list.push(222)
+            }, 3000)
+        </script>
+    </head>
+    <body>
+        <p>$skipArray中的属性或以$开头的属性</p>
+        <div ms-controller="test">
+            <div><input ms-duplex="aaa">{{aaa}}</div>
+            <div><input ms-duplex="$aaa">{{$aaa}}</div>
+            <div><input ms-duplex="bbb">{{bbb}}</div>
+            <ol>
+                <li ms-repeat="array">{{el}}</li>
+            </ol>
+            <ul>
+                <li ms-repeat="list">{{el}}</li>
+            </ul>
+        </div>
+    </body>
+</html>

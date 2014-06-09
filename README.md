@@ -29,14 +29,14 @@
     <li><strong>操作数据即操作DOM</strong>，对ViewModel的操作都会同步到View与Model去。</li>
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
-<div><img src="https://raw2.github.com/RubyLouvre/avalon/master/ecosphere.jpg" width="400" height="640"></div>
+<div><img src="https://raw2.github.com/RubyLouvre/avalon/master/examples/images/ecosphere.jpg" width="400" height="640"></div>
 <p>相关学习教程: <a href="http://limodou.github.io/avalon-learning/zh_CN/index.html">《avalon-learning 教程》</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→<a href="http://rubylouvre.github.io/mvvm/">官网</a>→
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
 <h3>运行github中的示例</h3>
 <p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
-<p><img src="https://raw.github.com/RubyLouvre/avalon/master/example.jpg"/></p>
+<p><img src="https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg"/></p>
 <h3>JS文件的压缩</h3>
 ```
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js

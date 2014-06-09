@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.checked = true
+                vm.obj = {
+                    a: 1,
+                    b: 2,
+                    c: 3
+                }
+            })
+
+        </script>
+
+    </head>
+    <body ms-controller="test">
+        <h3>演示通过ms-duplex修改对象循环时产生的$val变量</h3>
+        <div >
+            <p ms-repeat="obj">{{$key}} -- {{$val}} <input ms-duplex="$val"></p>
+        </div>
+    </body>
+</html>

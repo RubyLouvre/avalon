@@ -54,6 +54,7 @@ define(["avalon"], function(avalon) {
     var liveMap = avalon.bindingHandlers.live = function(data, vmodels) {
         var type = data.param
         var elem = data.element
+        data.type = "on"
         var live = "noFix"
         if (!DOC.createEvent) {
             if (/focus|blur/.test(type)) {

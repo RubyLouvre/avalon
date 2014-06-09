@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>测试同步到$model</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.mobile.js" ></script>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.rows = {name: 'a', age: 45}
+                vm.text = "OO"
+                vm.arr = [{name: "55"}]
+                vm.log = function() {
+                    if (window.console) {
+                        var value = model.$model
+                        console.log(value)
+                        document.getElementById("show").value = JSON.stringify(value, 4, "\t")
+                    }
+                }
+            });
+
+        </script>
+    </head>
+    <body>
+        <h3>测试同步到$model</h3>
+        <fieldset ms-controller="test">
+            <table border="1" width="80%">
+                <tr ms-repeat-row='rows'>
+                    <td>
+                        {{$key}}: {{$val}} <input ms-duplex="$val">
+                    </td>
+                </tr>
+            </table>
+            <ul>
+                <li ms-repeat="arr">{{el.name}}<input ms-duplex="el.name"></li>
+            </ul>
+            <p>text: <input ms-duplex="text"/></p>
+            <p>
+                <button ms-click="log">打印出来</button>
+            </p>
+            <textarea id="show" style="width:60%;height:300px;"></textarea>
+        </fieldset>
+    </body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            if (!Date.now) {
+                Date.now = function() {
+                    return new Date - 0;
+                }
+            }
+            avalon.define('test', function(scope) {
+                scope.selected = "name"
+                scope.options = ["name", "size", "date"]
+                scope.trend = 1
+                scope.data = [
+                    {name: "aaa", size: 213, date: Date.now() + 20},
+                    {name: "bbb", size: 4576, date: new Date - 4},
+                    {name: "ccc", size: 563, date: new Date - 7},
+                    {name: "eee", size: 3713, date: 9 + Date.now()},
+                    {name: "555", size: 389, date: Date.now() - 20}
+                ];
+                scope.$watch("selected", function(v) {
+                    var t = parseFloat(scope.trend)
+                    scope.data.sort(function(a, b) {
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
+                    })
+                })
+                scope.$watch("trend", function(t) {
+                    var v = scope.selected, t = parseFloat(t)
+                    scope.data.sort(function(a, b) {
+                        var ret = a[v] > b[v] ? 1 : -1
+                        return t * ret
+                    })
+                })
+            });
+
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div style="color:red">
+            <p>本例子用于显示如何做一个简单的表格排序</p>
+            <p>ms-repeat="array"相当于ms-repeat-el="array" </p>
+        </div>
+        <p>
+            <select ms-duplex="selected">
+                <option  ms-repeat="options">{{el}}</option>
+            </select>
+            <select ms-duplex="trend">
+                <option value="1">up</option>
+                <option value="-1">down</option>
+            </select>
+        </p>
+        <table width="500px" border="1">
+            <tbody >
+                <tr ms-repeat="data">
+                    <td>{{el.name}}</td> <td>{{el.size}}</td> <td>{{el.date}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>

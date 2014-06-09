@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-duplex</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            var model = avalon.define('test', function(vm) {
+                vm.text = "xxx"
+                vm.textcb = ""
+                vm.textchange = function(a) {
+                    vm.textcb = a
+                }
+                vm.radio = "radio"
+                vm.radiocb = ""
+                vm.radiochange = function(a) {
+                    vm.radiocb = a
+                }
+                vm.select = "2222"
+                vm.selectcb = ""
+                vm.selectchange = function(a) {
+                    vm.selectcb = a
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h3>data-duplex-changed回调</h3>
+        <div><input ms-duplex="text" data-duplex-changed="textchange">{{textcb}}</div>
+        <div><input ms-duplex="radio" type="radio" data-duplex-changed="radiochange">{{radiocb}}</div>
+        <div>
+            <select ms-duplex="select" data-duplex-changed="selectchange">
+                <option>1111</option>
+                <option>2222</option>
+                <option>3333</option>
+                <option>4444</option>
+            </select>
+            {{selectcb}}</div>
+    </body>
+</html>

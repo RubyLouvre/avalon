@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>ms-repeat</title>
+        <script src="../avalon.js"></script>
+        <style>
+            ul{
+                display:inline-block;
+                float:left;
+                margin:20px;
+                width:300px;
+                height:300px;
+                border:1px solid #ccc;
+                list-style: none;
+            }
+        </style>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.left = [
+                    {checked: false, text: "1111"},
+                    {checked: false, text: "2222"},
+                    {checked: false, text: "3333"},
+                    {checked: false, text: "4444"},
+                    {checked: false, text: "5555"}
+                ]
+                 vm.array3 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+                vm.right = []
+                vm.addToRight = function() {
+                    var array = []
+                    model.left.forEach(function(el) {
+                        if (el.checked) {
+                            var model = avalon.mix({}, el.$model)
+                            model.checked = false
+                            array.push(model)
+                        }
+                    })
+                    model.left.removeAll(function(el) {
+                        return el.checked
+                    })
+                    model.right.push.apply(model.right, array)
+                }
+                vm.addToLeft = function() {
+                    var array = []
+                    model.right.forEach(function(el) {
+                        if (el.checked) {
+                            var model = avalon.mix({}, el.$model)
+                            model.checked = false
+                            array.push(model)
+                        }
+                    })
+                    model.right.removeAll(function(el) {
+                        return el.checked
+                    })
+                    model.left.push.apply(model.left, array)
+
+                }
+               
+
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h3>两个数组间的元素移动</h3>
+        <p><button type="button" ms-click="addToRight">--></button>
+            <button type="button" ms-click="addToLeft"><--</button>
+        </p>
+        <hr/>
+        <ul>
+            <li ms-repeat="left"><input ms-duplex-radio="el.checked" type="checkbox">{{el.text}}</li>
+        </ul>
+        <ul>
+            <li ms-repeat="right"><input ms-duplex-radio="el.checked" type="checkbox">{{el.text}}</li>
+        </ul>
+        <h3>$outer的使用</h3>
+        <table border="1">
+            <tr ms-repeat-el="array3">
+                <td ms-repeat-elem="el">{{elem}}  它位于第<b style="color:orchid">{{$outer.$index}}</b>行</td>
+            </tr>
+        </table>
+    </body>
+</html>

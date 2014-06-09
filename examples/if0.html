@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> ms-if </title>
+        <meta charset="utf-8"/>
+        <script src="../avalon.js"></script>
+        <script>
+
+        </script>
+    </head>
+    <body>
+        <script>
+
+            var a = avalon.define("aaa", function(vm) {
+                vm.ifList = {
+                    level: 2
+                }
+            });
+            setTimeout(function() {
+                a.ifList.level = 0
+            }, 3000)
+            setTimeout(function() {
+                a.ifList.level = 1
+            }, 5000)
+        </script>
+        <div ms-controller="aaa">
+            <div ms-if="ifList.level" >{{ifList.level}}</div>
+        </div>
+    </body>
+</html>

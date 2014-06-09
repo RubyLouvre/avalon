@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-class</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <style>
+            .width500{
+                width:500px;
+            }
+            .height200{
+                height: 200px
+            }
+            .bgRed{
+                background:red;
+            }
+            .ui-corner-bottom{
+                width:500px;
+                height:20px;
+                background: blue;
+                border-bottom-right-radius:10px;
+                border-bottom-left-radius:10px;
+            }
+            .ui-corner-all{
+                width:500px;
+                height:20px;
+                background: pink;
+                border-radius:10px;
+            }
+            .aaa{
+                background: black;
+            }
+            .hover{
+                background: whitesmoke;
+                border:1px solid #FF77F1;
+                color:#000!important;
+            }
+            .bbb{
+                color:white;
+            }
+            .ccc{
+                width:500px;
+                height:40px;
+            }
+        </style>
+        <script type="text/javascript">
+            var model = avalon.define("test", function(vm) {
+                vm.w = 500
+                vm.h = 200
+                vm.bottom = true
+                vm.toggleBottom = function() {
+                    vm.bottom = !vm.bottom
+                }
+                vm.num = "00"
+                vm.className = "点我"
+                vm.changeClassName = function() {
+                    vm.num = (100 * Math.random()).toFixed(0);
+                    vm.className = this.className
+                };
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h3 style="text-align: center">ms-class</h3>
+        <div ms-class-ui-corner-bottom="bottom" 
+             ms-class-ui-corner-all="!bottom" ms-click='toggleBottom' >点我切换类名</div>
+        <div ms-class="aaa bbb ccc" ms-hover='hover'>添加多个类名，并且移上去会有hover效果</div>
+        <div ms-class="bgRed width{{w}} height{{h}}" ms-css-height="h">类名通过插值表达式生成{{w}} * {{h}}
+            <p><input data-duplex-event="change" ms-duplex="h"></div>
+        <p><button type='button' ms-class="test{{num}}" ms-click="changeClassName">{{className}}</button></p>
+    </body>
+</html>
