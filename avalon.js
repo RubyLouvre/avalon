@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.1 2014.6.3
+ avalon 1.3.1 2014.6.9
  ==================================================*/
 (function(DOC) {
     var prefix = "ms-"
