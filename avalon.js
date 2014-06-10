@@ -3584,6 +3584,18 @@
     /*********************************************************************
      *                  文本绑定里默认可用的过滤器                          *
      **********************************************************************/
+
+    var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
+    var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+    var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
+    var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
+    var rnoalphanumeric = /([^\#-~| |!])/g;
+    var toStaticHTML = window.toStaticHTML || function(str) {
+        return str.replace(rscripts, "").replace(ropen, function(a, b) {
+            return a.replace(ron, " ").replace(/\s+/g, " ")
+        })
+    }
+
     var filters = avalon.filters = {
         uppercase: function(str) {
             return str.toUpperCase()
@@ -3598,14 +3610,21 @@
             return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
         },
         camelize: camelize,
+        antixss: toStaticHTML,
         escape: function(html) {
             //将字符串经过 html 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
-            return String(html)
-                    .replace(/&(?!\w+;)/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, "&#39;") //IE下不支持&apos;(单引号)转义
+            return String(html).
+                    replace(/&/g, '&amp;').
+                    replace(rsurrogate, function(value) {
+                        var hi = value.charCodeAt(0)
+                        var low = value.charCodeAt(1)
+                        return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
+                    }).
+                    replace(rnoalphanumeric, function(value) {
+                        return '&#' + value.charCodeAt(0) + ';'
+                    }).
+                    replace(/</g, '&lt;').
+                    replace(/>/g, '&gt;')
         },
         currency: function(number, symbol) {
             symbol = symbol || "￥"

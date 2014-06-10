@@ -7,22 +7,15 @@
         <script src="../avalon.js"></script>
         <script>
             avalon.define("test", function(vm) {
-                vm.text = ""
-                vm.fn1 = function(e) {
-                    vm.text = e.wheelDelta + "  " + e.type
-
-                }
+                vm.aaa = "<img onclick=333 src=http://tp2.sinaimg.cn/1823438905/180/40054009869/1/><p onclick='aaa' onclick2=\"ddd\" title=eee onpress=eee>onclick=eee<span onmouseup='ddd'>ddd</span></p><script>alert(1)<\/script>"
             })
-           
+
+
+
         </script>
     </head>
 
     <body ms-controller="test">
         <div>{{aaa|antixss|html}}</div>
-        <div ms-on-mousewheel="fn1" id="aaa" style="background: red;width:200px;height: 200px;">
-            {{text}}
-        </div>
-
-
     </body>
 </html>
