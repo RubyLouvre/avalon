@@ -2196,12 +2196,20 @@
         return W3C ? getComputedStyle(td, null).display === "table-cell" : true
     })(DOC.createElement("td"))
 
-    cinerator.setAttribute("className", "t")
-    var fuckIEAttr = cinerator.className === "t"
-    var propMap = {
+    var propMap = {//属性名映射
+        "accept-charset": "acceptCharset",
+        "char": "ch",
+        "charoff": "chOff",
         "class": "className",
-        "for": "htmlFor"
+        "for": "htmlFor",
+        "http-equiv": "httpEquiv"
     }
+    var anomaly = "accessKey,allowTransparency,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan,contentEditable," 
+            + "dateTime,defaultChecked,defaultSelected,defaultValue,frameBorder,isMap,longDesc,maxLength,marginWidth,marginHeight,"
+            + "noHref,noResize,noShade,readOnly,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
+    anomaly.replace(rword, function(name) {
+        propMap[name.toLowerCase()] = name
+    })
     var rdash = /\(([^)]*)\)/
     var cssText = "<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
     head.insertBefore(avalon.parseHTML(cssText), head.firstChild) //避免IE6 base标签BUG
@@ -2244,10 +2252,10 @@
                 // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
                 // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
                 var toRemove = (val === false) || (val === null) || (val === void 0)
-                if (toRemove)
+                if (toRemove) {
                     elem.removeAttribute(attrName)
-                if (fuckIEAttr && attrName in propMap) {
-                    attrName = propMap[attrName]
+                } else if (!W3C) {
+                    attrName = propMap[attrName] || attrName
                     if (toRemove) {
                         elem.removeAttribute(attrName)
                     } else {
