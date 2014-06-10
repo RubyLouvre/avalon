@@ -3216,10 +3216,10 @@
         }
     }
     if (document.onmousewheel === void 0) {
-        /* IE6-11 chrome wheelDetla 下 -120 上 120
+        /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
          firefox DOMMouseScroll detail 下3 上-3
          firefox wheel detlaY 下3 上-3
-         IE9-11 wheel deltaY 下40 
+         IE9-11 wheel deltaY 下40 上-40
          chrome wheel deltaY 下100 上-100 */
         eventHooks.mousewheel = {
             type: "DOMMouseScroll",
