@@ -3610,7 +3610,7 @@
             return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
         },
         camelize: camelize,
-        antixss: toStaticHTML,
+        sanitize: toStaticHTML,
         escape: function(html) {
             //将字符串经过 html 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
             return String(html).
