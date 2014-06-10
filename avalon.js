@@ -53,9 +53,9 @@
         this[0] = this.element = el
     }
     avalon.fn = avalon.prototype = avalon.init.prototype
-    //率先添加三个判定类型的方法
 
-    function getType(obj) { //取得类型
+    /*取得目标的类型*/
+    function getType(obj) {
         if (obj == null) {
             return String(obj)
         }
@@ -80,7 +80,7 @@
     if (isWindow(window)) {
         avalon.isWindow = isWindow
     }
-    //判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例。
+    /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
     avalon.isPlainObject = function(obj) {
         if (getType(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
             return false
@@ -198,11 +198,11 @@
             return ret
         },
         noop: noop,
-        //如果不用Error对象封装一下，str在控制台下可能会乱码
+        /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
         error: function(str, e) {
             throw new (e || Error)(str)
         },
-        //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
+        /*将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象*/
         oneObject: oneObject,
         /* avalon.range(10)
          => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -229,8 +229,8 @@
             }
             return result
         },
-        //绑定事件
         eventHooks: {},
+        /*绑定事件*/
         bind: function(el, type, fn, phase) {
             var hooks = avalon.eventHooks
             var hook = hooks[type]
@@ -250,7 +250,7 @@
             }
             return callback
         },
-        //卸载事件
+        /*卸载事件*/
         unbind: function(el, type, fn, phase) {
             var hooks = avalon.eventHooks
             var hook = hooks[type]
@@ -264,7 +264,7 @@
                 el.detachEvent("on" + type, callback)
             }
         },
-        //读写删除元素节点的样式
+        /*读写删除元素节点的样式*/
         css: function(node, name, value) {
             if (node instanceof avalon) {
                 node = node[0]
@@ -288,7 +288,7 @@
                 fn(node, name, value)
             }
         },
-        //遍历数组与对象,回调的第一个参数为索引或键名,第二个或元素或键值
+        /*遍历数组与对象,回调的第一个参数为索引或键名,第二个或元素或键值*/
         each: function(obj, fn) {
             if (obj) { //排除null, undefined
                 var i = 0
@@ -319,18 +319,18 @@
             return result
         },
         Array: {
-            //只有当前数组不存在此元素时只添加它
+            /*只有当前数组不存在此元素时只添加它*/
             ensure: function(target, item) {
                 if (target.indexOf(item) === -1) {
                     target.push(item)
                 }
                 return target
             },
-            //移除数组中指定位置的元素，返回布尔表示成功与否
+            /*移除数组中指定位置的元素，返回布尔表示成功与否*/
             removeAt: function(target, index) {
                 return !!target.splice(index, 1).length
             },
-            //移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否
+            /*移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否*/
             remove: function(target, item) {
                 var index = target.indexOf(item)
                 if (~index)
@@ -345,7 +345,7 @@
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     }
 
-    //只让节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象通过
+    /*判定类数组,如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 
     function isArrayLike(obj) {
         if (obj && typeof obj === "object" && !avalon.isWindow(obj)) {
@@ -363,7 +363,7 @@
         }
         return false
     }
-    //视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)
+    /*视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)*/
     avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
         setTimeout(callback, 0) //IE10-11 or W3C
     }
@@ -3207,7 +3207,28 @@
             }
         }
     }
-  
+    if (document.onmousewheel === void 0) {
+        /* IE6-11 chrome wheelDetla 下 -120 上 120
+         firefox DOMMouseScroll detail 下3 上-3
+         firefox wheel detlaY 下3 上-3
+         IE9-11 wheel deltaY 下40 
+         chrome wheel deltaY 下100 上-100 */
+        eventHooks.mousewheel = {
+            type: "DOMMouseScroll",
+            deel: function(elem, fn) {
+                return function(e) {
+                    e.wheelDelta = e.detail > 0 ? -120 : 120
+                    if (Object.defineProperty) {
+                        Object.defineProperty(e, "type", {
+                            value: "mousewheel"
+                        })
+                    }
+                    fn.call(elem, e)
+                }
+            }
+        }
+    }
+
     /*********************************************************************
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/

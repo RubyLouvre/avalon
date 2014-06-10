@@ -1357,7 +1357,7 @@
         "on": 3000
     }
 
-    var ons = oneObject("dblclick,mouseout,click,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend")
+    var ons = oneObject("dblclick,mouseout,click,input,mouseover,mouseenter,mouseleave,mousemove,mousedown,mouseup,keypress,keydown,keyup,blur,focus,change,animationend")
 
     function scanAttr(elem, vmodels) {
         var attributes = elem.attributes
