@@ -3613,7 +3613,7 @@
             return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
         },
         camelize: camelize,
-        sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
+        sanitize: function(str) {
             return str.replace(rscripts, "").replace(ropen, function(a, b) {
                 return a.replace(ron, " ").replace(/\s+/g, " ")
             })
