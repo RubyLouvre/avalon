@@ -2959,12 +2959,8 @@
     var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
     var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
-    var rnoalphanumeric = /([^\#-~| |!])/g;
-    var toStaticHTML = window.toStaticHTML || function(str) {
-        return str.replace(rscripts, "").replace(ropen, function(a, b) {
-            return a.replace(ron, " ").replace(/\s+/g, " ")
-        })
-    }
+    var rnoalphanumeric = /([^\#-~| |!])/g
+
     var filters = avalon.filters = {
         uppercase: function(str) {
             return str.toUpperCase()
@@ -2978,7 +2974,11 @@
             truncation = truncation === void(0) ? "..." : truncation
             return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
         },
-        sanitize: toStaticHTML,
+        sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
+            return str.replace(rscripts, "").replace(ropen, function(a, b) {
+                return a.replace(ron, " ").replace(/\s+/g, " ")
+            })
+        },
         camelize: camelize,
         escape: function(html) {
             //将字符串经过 html 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 

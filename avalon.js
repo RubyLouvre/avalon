@@ -2204,7 +2204,7 @@
         "for": "htmlFor",
         "http-equiv": "httpEquiv"
     }
-    var anomaly = "accessKey,allowTransparency,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan,contentEditable," 
+    var anomaly = "accessKey,allowTransparency,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan,contentEditable,"
             + "dateTime,defaultChecked,defaultSelected,defaultValue,frameBorder,isMap,longDesc,maxLength,marginWidth,marginHeight,"
             + "noHref,noResize,noShade,readOnly,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
     anomaly.replace(rword, function(name) {
@@ -3598,11 +3598,6 @@
     var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
-    var toStaticHTML = window.toStaticHTML || function(str) {
-        return str.replace(rscripts, "").replace(ropen, function(a, b) {
-            return a.replace(ron, " ").replace(/\s+/g, " ")
-        })
-    }
 
     var filters = avalon.filters = {
         uppercase: function(str) {
@@ -3618,7 +3613,11 @@
             return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
         },
         camelize: camelize,
-        sanitize: toStaticHTML,
+        sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
+            return str.replace(rscripts, "").replace(ropen, function(a, b) {
+                return a.replace(ron, " ").replace(/\s+/g, " ")
+            })
+        },
         escape: function(html) {
             //将字符串经过 html 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
             return String(html).
