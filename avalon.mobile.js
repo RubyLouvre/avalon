@@ -1606,6 +1606,9 @@
                 assigns.push.apply(assigns, addAssign(vars, scopes[i], name, four))
             }
         }
+        if (!assigns.length && four === "duplex") {
+            return
+        }
         //---------------args----------------
         if (filters) {
             args.push(avalon.filters)

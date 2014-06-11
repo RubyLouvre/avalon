@@ -1199,8 +1199,8 @@
     }
     if (window.getComputedStyle) {
         cssHooks["@:get"] = function(node, name) {
-            if(!node || !node.style){
-                throw new Error("getComputedStyle要求传入一个节点 "+node)
+            if (!node || !node.style) {
+                throw new Error("getComputedStyle要求传入一个节点 " + node)
             }
             var ret, styles = getComputedStyle(node, null)
             if (styles) {
@@ -2068,6 +2068,9 @@
                 args.push(scopes[i])
                 assigns.push.apply(assigns, addAssign(vars, scopes[i], name, four))
             }
+        }
+        if (!assigns.length && four === "duplex") {
+            return
         }
         //---------------args----------------
         if (filters) {
