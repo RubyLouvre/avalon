@@ -872,6 +872,9 @@
     }
 
     cssHooks["@:get"] = function(node, name) {
+        if (!node || !node.style) {
+            throw new Error("getComputedStyle要求传入一个节点 " + node)
+        }
         var ret, styles = getComputedStyle(node, null)
         if (styles) {
             ret = styles.getPropertyValue(name)
