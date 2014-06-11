@@ -2975,10 +2975,12 @@
      *                  文本绑定里默认可用的过滤器                        *
      **********************************************************************/
     var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
+    var raimg = /^<(a|img)\s/i
     var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
     var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
+    var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
-    var rnoalphanumeric = /([^\#-~| |!])/g
+    var rnoalphanumeric = /([^\#-~| |!])/g;
 
     var filters = avalon.filters = {
         uppercase: function(str) {
@@ -2995,7 +2997,10 @@
         },
         sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
             return str.replace(rscripts, "").replace(ropen, function(a, b) {
-                return a.replace(ron, " ").replace(/\s+/g, " ")
+                if (raimg.test(a)) {
+                    a = a.replace(rjavascripturl, "")//移除javascript伪协议
+                }
+                return a.replace(ron, " ").replace(/\s+/g, " ")//移除onXXX事件
             })
         },
         camelize: camelize,
