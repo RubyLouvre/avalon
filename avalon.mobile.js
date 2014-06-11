@@ -209,7 +209,7 @@
             el.removeEventListener(type, fn || noop, !!phase)
         },
         fire: function(el, name) {
-            var event = DOC.createEvent("Event")
+            var event = DOC.createEvent("Events")
             event.initEvent(name, true, true)
             el.dispatchEvent(event)
         },
@@ -2066,11 +2066,14 @@
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
+            var node = data.node
             if (data.nodeType === 3) { //绑定在文本节点上
-                data.node.data = val
+                if (node && node.parentNode) {//IE对游离于DOM树外的节点赋值会报错
+                    node.data = val
+                }
             } else { //绑定在特性节点上
                 if (!elem) {
-                    elem = data.element = data.node.parentNode
+                    elem = data.element = node.parentNode
                 }
                 elem.textContent = val
             }
