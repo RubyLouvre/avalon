@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.3.1 2014.6.9，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.3.1 2014.6.12，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -31,8 +31,8 @@
     }
 
     function log(a) {
-        if (window.console && avalon.config.debug) {
-            console.log(W3C ? a : a + "")
+        if (avalon.config.debug) {
+            console.log(a)
         }
     }
 
@@ -2063,8 +2063,9 @@
             val = val == null ? "" : val //不在页面上显示undefined null
             var node = data.node
             if (data.nodeType === 3) { //绑定在文本节点上
-                if (node && node.parentNode) {//IE对游离于DOM树外的节点赋值会报错
+                try {//IE对游离于DOM树外的节点赋值会报错
                     node.data = val
+                } catch (e) {
                 }
             } else { //绑定在特性节点上
                 if (!elem) {

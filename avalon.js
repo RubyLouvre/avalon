@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.1 2014.6.9
+ avalon 1.3.1 2014.6.12
  ==================================================*/
 (function(DOC) {
     var prefix = "ms-"
@@ -2593,9 +2593,9 @@
             val = val == null ? "" : val //不在页面上显示undefined null
             var node = data.node
             if (data.nodeType === 3) { //绑定在文本节点上
-                if (node && node.parentNode) {//IE对游离于DOM树外的节点赋值会报错
+                try{//IE对游离于DOM树外的节点赋值会报错
                     node.data = val
-                }
+                }catch(e){}
             } else { //绑定在特性节点上
                 if (!elem) {
                     elem = data.element = node.parentNode
