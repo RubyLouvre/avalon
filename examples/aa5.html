@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.mobile.js" ></script>
+        <script>
+            function getTrs(n) {
+                var array = []
+                for (var i = 0; i < n; i++) {
+                    array.push({name: "dddd", age: 'cddd', sex: "男"})
+                }
+                return array
+            }
+            avalon.define("test", function(vm) {
+                vm.trs = getTrs(100)
+                vm.top = 0
+                vm.scroll = function(){
+                    
+                    vm.top = this.scrollTop
+    
+                }
+            })
+        </script>
+        <style>
+            .grid {
+                width:700px;
+                height: 500px;
+                border: 1px solid red;
+            }
+            .grid-headbody-wrapper{
+                width:700px;
+                height: 470px;
+                border: 1px solid blue;
+                overflow: auto;
+                position: relative;
+            }
+            .grid-head{
+                position: absolute;
+                width:900px;
+                border: 1px solid blue;
+                border-collapse: collapse;
+            }      
+            .grid-head th{
+                border: 1px solid blue;
+                height: 30px;
+                background: white;
+            }
+            .grid-body{
+                margin-top: 35px;
+                width:900px;
+                height: 900px;
+                border: 1px solid blue;
+                border-collapse: collapse;
+            }
+            .grid-body td{
+                border: 1px solid blue;
+                height: 30px;
+            }
+        </style>
+    </head>
+    <body ms-controller="test">
+        <div class="grid">
+            <div class="grid-headbody-wrapper" ms-on-scroll="scroll">
+                <table class="grid-head" ms-css-top="top">
+                    <tr>
+                        <th width="30%">名字</th> <th width="30%">年龄</th> <th>性别</th>
+                    </tr>
+                </table>
+                <table class="grid-body">
+                    <tr ms-repeat="trs">
+                        <td width="30%">{{el.name}}</td> <td width="30%">{{el.age}}</td> <td>{{el.sex}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                分页栏
+            </div>
+        </div>
+    </body>
+</html>
