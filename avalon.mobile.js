@@ -1575,7 +1575,7 @@
         }
         return cache;
     }
-    var cacheExpr = createCache(256)
+    var cacheExprs = createCache(256)
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -1610,7 +1610,7 @@
         }
         data.args = args
         //---------------cache----------------
-        var fn = cacheExpr[exprId] //直接从缓存，免得重复生成
+        var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
         if (fn) {
             data.evaluator = fn
             return
@@ -1648,7 +1648,7 @@
                     "= vvv;\n} "
             try {
                 fn = Function.apply(noop, names.concat(_body))
-                data.evaluator = cacheExpr(exprId, fn)
+                data.evaluator = cacheExprs(exprId, fn)
             } catch (e) {
                 log("debug: parse error," + e.message)
             }
@@ -1668,7 +1668,7 @@
         }
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-            data.evaluator = cacheExpr(exprId, fn)
+            data.evaluator = cacheExprs(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
@@ -1740,7 +1740,7 @@
             }
         }
     }
-    var includeContents = avalon.templateCaches = {}
+    var cacheTmpls = avalon.templateCache = {}
     var ifSanctuary = DOC.createElement("div")
     var rwhitespace = /^\s+$/
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
@@ -1778,14 +1778,14 @@
                 var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
 
                 if (data.param === "src") {
-                    if (includeContents[val]) {
-                        scanTemplate(includeContents[val])
+                    if (cacheTmpls[val]) {
+                        scanTemplate(cacheTmpls[val])
                     } else {
                         var xhr = new window.XMLHttpRequest
                         xhr.onload = function() {
                             var s = xhr.status
                             if (s >= 200 && s < 300 || s === 304) {
-                                scanTemplate(includeContents[val] = xhr.responseText)
+                                scanTemplate(cacheTmpls[val] = xhr.responseText)
                             }
                         }
                         xhr.open("GET", val, true)
