@@ -1740,7 +1740,7 @@
             }
         }
     }
-    var includeContents = {}
+    var includeContents = avalon.templateCaches = {}
     var ifSanctuary = DOC.createElement("div")
     var rwhitespace = /^\s+$/
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）

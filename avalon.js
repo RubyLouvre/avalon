@@ -37,7 +37,7 @@
 
     function noop() {
     }
-    
+
     function log(a) {
         if (window.console && avalon.config.debug) {
             console.log(W3C ? a : a + "")
@@ -2229,7 +2229,7 @@
             }
         }
     }
-    var includeContents = {}
+    var includeContents = avalon.templateCaches = {}
     var ifSanctuary = DOC.createElement("div")
     ifSanctuary.innerHTML = "a"
     try {
@@ -2593,9 +2593,10 @@
             val = val == null ? "" : val //不在页面上显示undefined null
             var node = data.node
             if (data.nodeType === 3) { //绑定在文本节点上
-                try{//IE对游离于DOM树外的节点赋值会报错
+                try {//IE对游离于DOM树外的节点赋值会报错
                     node.data = val
-                }catch(e){}
+                } catch (e) {
+                }
             } else { //绑定在特性节点上
                 if (!elem) {
                     elem = data.element = node.parentNode
