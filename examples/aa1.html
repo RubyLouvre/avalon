@@ -13,7 +13,13 @@
             <input ms-duplex="tmplName"/>
 
         </div>
+        <div ms-controller="box2">
+            <div ms-include-src="name">
 
+            </div>
+            <input ms-duplex="name"/>
+
+        </div>
         <script>
 
 avalon.define("box", function(vm) {
@@ -23,6 +29,16 @@ avalon.define("box", function(vm) {
         c: "eddddddddddd"
     }
     vm.tmplName = "a"
+})
+avalon.mix(avalon.templateCaches,
+        {
+            a: "dddddddddd",
+            b: "dddddddddd323",
+            c: "eddddddddddd"
+        })
+
+avalon.define("box2", function(vm) {
+    vm.name = "a"
 })
 
         </script>
