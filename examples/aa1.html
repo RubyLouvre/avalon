@@ -8,9 +8,9 @@
     <body>
         <div ms-controller="box">
             <div>
-                {{$maps[tmplName] | name}}
+                {{$maps[name] | html}}
             </div>
-            <input ms-duplex="tmplName"/>
+            <input ms-duplex="name"/>
 
         </div>
         <div ms-controller="box2">
@@ -24,17 +24,18 @@
 
 avalon.define("box", function(vm) {
     vm.$maps = {
-        a: "dddddddddd",
-        b: "dddddddddd323",
-        c: "eddddddddddd"
+        a: "dddd<b>{{name}}</b>dddddd",
+        b: "2222222222",
+        c: "<em>333333</em>"
     }
-    vm.tmplName = "a"
+    vm.name = "a"
 })
+
 avalon.mix(avalon.templateCaches,
         {
-            a: "dddddddddd",
-            b: "dddddddddd323",
-            c: "eddddddddddd"
+            a: "dddd<b>{{name}}</b>dddddd",
+            b: "2222222222",
+            c: "<em>333333</em>"
         })
 
 avalon.define("box2", function(vm) {
