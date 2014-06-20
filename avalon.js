@@ -755,12 +755,12 @@
             return this.replace(rtrim, "")
         }
     }
-
+    function outerHTML() {
+        return new XMLSerializer().serializeToString(this)
+    }
     if (DOC.documentMode > 8 && window.SVGElement) {
         Object.defineProperty(SVGElement.prototype, "outerHTML", {
-            get: function() {
-                return new XMLSerializer().serializeToString(this)
-            }
+            get: outerHTML
         })
         Object.defineProperty(SVGElement.prototype, "innerHTML", {
             get: function() {
@@ -770,6 +770,9 @@
                 return  s.replace(ropen, "").replace(rclose, "")
             }
         })
+    }
+    if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
+        HTMLElement.prototype.__defineGetter__("outerHTML",outerHTML);
     }
     var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
 
@@ -880,15 +883,7 @@
             return fixContains(this, b)
         }
     }
-    if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
-        HTMLElement.prototype.__defineGetter__("outerHTML", function() {
-            cinerator.textContent = ""
-            cinerator.appendChild(this)
-            var str = this.innerHTML
-            cinerator.textContent = ""
-            return str
-        });
-    }
+
     /*********************************************************************
      *                           配置模块                                  *
      **********************************************************************/
