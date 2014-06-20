@@ -755,6 +755,22 @@
             return this.replace(rtrim, "")
         }
     }
+
+    if (DOC.documentMode > 8 && window.SVGElement) {
+        Object.defineProperty(SVGElement.prototype, "outerHTML", {
+            get: function() {
+                return new XMLSerializer().serializeToString(this)
+            }
+        })
+        Object.defineProperty(SVGElement.prototype, "innerHTML", {
+            get: function() {
+                var s = this.outerHTML
+                var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
+                var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
+                return  s.replace(ropen, "").replace(rclose, "")
+            }
+        })
+    }
     var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
 
     for (var i in {

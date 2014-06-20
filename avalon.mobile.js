@@ -631,6 +631,22 @@
     /*********************************************************************
      *                           DOM API的高级封装                        *
      **********************************************************************/
+
+    if (DOC.documentMode > 8 && window.SVGElement) {
+        Object.defineProperty(SVGElement.prototype, "outerHTML", {
+            get: function() {
+                return new XMLSerializer().serializeToString(this)
+            }
+        })
+        Object.defineProperty(SVGElement.prototype, "innerHTML", {
+            get: function() {
+                var s = this.outerHTML
+                var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
+                var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
+                return  s.replace(ropen, "").replace(rclose, "")
+            }
+        })
+    }
     /*转换为连字符线风格*/
     function hyphen(target) {
         return target.replace(/([a-z\d])([A-Z]+)/g, "$1-$2").toLowerCase()
