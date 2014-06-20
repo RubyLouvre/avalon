@@ -11,7 +11,7 @@
                 {{$maps[name] | html}}
             </div>
             <input ms-duplex="name"/>
-
+            <em>{{oo.xx}}</em> <em>{{oo}}</em>
         </div>
         <div ms-controller="box2">
             <div ms-include-src="name">
@@ -27,6 +27,9 @@ avalon.define("box", function(vm) {
         a: "dddd<b>{{name}}</b>dddddd",
         b: "2222222222",
         c: "<em>333333</em>"
+    }
+    vm.oo = {
+        xx: "ddddddd"
     }
     vm.name = "a"
 })
