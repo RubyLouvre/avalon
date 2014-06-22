@@ -632,7 +632,8 @@
      *                           DOM API的高级封装                        *
      **********************************************************************/
 
-    if (DOC.documentMode > 8 && window.SVGElement) {
+    if (window.SVGElement && !("innerHTML" in
+            document.createElementNS("'http://www.w3.org/2000/svg", "svg"))) {
         Object.defineProperty(SVGElement.prototype, "outerHTML", {
             get: function() {
                 return new XMLSerializer().serializeToString(this)

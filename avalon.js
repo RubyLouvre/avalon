@@ -758,7 +758,8 @@
     function outerHTML() {
         return new XMLSerializer().serializeToString(this)
     }
-    if (DOC.documentMode > 8 && window.SVGElement) {
+    if (window.SVGElement && !("innerHTML" in
+            document.createElementNS("'http://www.w3.org/2000/svg", "svg"))) {
         Object.defineProperty(SVGElement.prototype, "outerHTML", {
             get: outerHTML
         })
@@ -772,7 +773,7 @@
         })
     }
     if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
-        HTMLElement.prototype.__defineGetter__("outerHTML",outerHTML);
+        HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
     }
     var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
 
