@@ -950,7 +950,7 @@
      *                      DOM API的高级封装                           *
      **********************************************************************/
 
-    function hyphen(target) {
+    function hyphenize(target) {
         //转换为连字符线风格
         return target.replace(/([a-z\d])([A-Z]+)/g, "$1-$2").toLowerCase()
     }
@@ -1025,7 +1025,7 @@
             }
         },
         data: function(name, value) {
-            name = "data-" + hyphen(name || "")
+            name = "data-" + hyphenize(name || "")
             switch (arguments.length) {
                 case 2:
                     this.attr(name, value)
@@ -1048,7 +1048,7 @@
             }
         },
         removeData: function(name) {
-            name = "data-" + hyphen(name)
+            name = "data-" + hyphenize(name)
             this[0].removeAttribute(name)
             return this
         },
