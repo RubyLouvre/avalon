@@ -3,24 +3,46 @@
     <head>
         <title></title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
+        <script src="../avalon.js"></script>
     </head>
     <body>
         <div ms-controller="box">
-            <div style=" background: #a9ea00;" ms-css-width="w" ms-css-height="h"  ms-click="click"></div>
-            <p>{{ w }} x {{ h }}</p>
-            <p>W: <input type="text" ms-duplex="w" data-duplex-event="change"/></p>
-            <p>H: <input type="text" ms-duplex="h" /></p>
+            <div>
+                {{$maps[name] | html}}
+            </div>
+            <input ms-duplex="name"/>
+            <em>{{oo.xx}}</em> <em>{{oo}}</em>
         </div>
+        <div ms-controller="box2">
+            <div ms-include-src="name">
 
+            </div>
+            <input ms-duplex="name"/>
+
+        </div>
         <script>
+
 avalon.define("box", function(vm) {
-    vm.w = 100;
-    vm.h = 100;
-    vm.click = function() {
-        vm.w = parseFloat(vm.w) + 10;
-        vm.h = parseFloat(vm.h) + 10;
+    vm.$maps = {
+        a: "dddd<b>{{name}}</b>dddddd",
+        b: "2222222222",
+        c: "<em>333333</em>"
     }
+    vm.oo = {
+        xx: "ddddddd"
+    }
+    vm.name = "a"
+})
+
+avalon.mix(avalon.templateCache,
+        {
+            a: "dddd<b>{{name}}</b>dddddd",
+            b: "2222222222",
+            c: "<em>333333</em>"
+        })
+
+avalon.define("box2", function(vm) {
+    vm.name = "a"
 })
 
         </script>

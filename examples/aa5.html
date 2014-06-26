@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script src="../avalon.js"></script>
+        <style>
+            em:before{
+                content:'before content   ';
+            }
+            .red{
+                background: red;
+            }
+            .blue{
+                background: blue;
+            }
+            .green{
+                background: green;
+            }
+        </style>
+    </head>
+    <body ms-controller="test">
+        <div class="wrap" >
+            <em>{{val}}</em>
+        </div>
+        <ul ms-class="{{name}}">
+            <li ms-repeat="array" ms-click="switchFn(el)">{{el}}</li>
+        </ul>
+        <script>
+var c = 0;
+var v = avalon.define('test', function(vm) {
+    vm.val = "";
+    vm.name = "red"
+    vm.array = ["red", "green", "blue"]
+    vm.switchFn = function(el){
+        console.log(el)
+       vm.name = el 
+    }
+});
+setTimeout(function() {
+    v.val = '123';
+}, 2000)
+
+        </script>
+    </body>
+</html>

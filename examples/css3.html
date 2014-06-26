@@ -7,8 +7,6 @@
         <script>
             avalon.define("test", function(vm) {
                 vm.o = 0.5
-                //vm.bg = "#F3F\9\0"
-                vm.bg = "#F3F"
             })
         </script>
         <style>
@@ -35,7 +33,7 @@
         <h3>在旧式IE下，如果父元素是定位元素,但没有设置它的top, left, z-index，那么为它设置透明时,
             它的所有被定位的后代都没有透明</h3>
 
-        <div class="outer" ms-css-opacity="o" ms-css-background-color="bg" >
+        <div class="outer" ms-css-opacity="o">
             <div class="inner"></div>
         </div>
 
