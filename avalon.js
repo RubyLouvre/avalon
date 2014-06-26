@@ -758,10 +758,44 @@
     function outerHTML() {
         return new XMLSerializer().serializeToString(this)
     }
+    function enumerateNode(node, targetNode) {
+        if(node && node.childNodes) {
+            var nodes = node.childNodes
+            for(var i = 0, len = nodes.length; i < len; i++) {
+                var cnode = nodes[i]
+                if(cnode.tagName) {
+                    var ele = document.createElementNS("http://www.w3.org/2000/svg", cnode.tagName.toLowerCase()),
+                    attrs = cnode.attributes
+                    // copy attrs
+                    avalon.each(attrs, function(key, value) {
+                        ele.setAttribute(value.name, value.value)
+                    })
+                    // 递归处理子节点
+                    enumerateNode(cnode, ele)
+                    targetNode.appendChild(ele)
+                }
+            }
+        }
+    }
     if (window.SVGElement && !("innerHTML" in
             document.createElementNS("'http://www.w3.org/2000/svg", "svg"))) {
         Object.defineProperty(SVGElement.prototype, "outerHTML", {
-            get: outerHTML
+            get: outerHTML,
+            set: function(html) {
+                var tagName = this.tagName.toLowerCase(),
+                    par = this.parentNode,
+                    frag = avalon.parseHTML(html)
+                // 操作的svg，直接插入
+                if(tagName === "svg") {
+                    par.insertBefore(frag, this)
+                // svg节点的子节点类似
+                } else {
+                    var newFrag = document.createDocumentFragment()
+                    enumerateNode(frag, newFrag)
+                    par.insertBefore(newFrag, this)
+                }
+                par.removeChild(this)
+            }
         })
         Object.defineProperty(SVGElement.prototype, "innerHTML", {
             get: function() {
@@ -769,6 +803,14 @@
                 var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
                 var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
                 return  s.replace(ropen, "").replace(rclose, "")
+            },
+            set: function(html) {
+                while(this.firstChild) {
+                    this.removeChild(this.firstChild)
+                }
+                var frag = document.createDocumentFragment()
+                enumerateNode(avalon.parseHTML(html), frag)
+                this.appendChild(frag)
             }
         })
     }
