@@ -242,7 +242,7 @@
                     fn = hook.deel(el, fn)
                 }
             }
-            var callback = function (){
+            var callback = function (e){
                 var ex = e || fixEvent(window.event);
                 var ret = fn.call(el, ex);
                 if (ret === false) {
