@@ -3,12 +3,16 @@
     <head>
         <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="../avalon.js"></script>
+        <script src="../avalon.mobile.js"></script>
         <script>
             avalon.define("test", function(vm) {
                 vm.o = 0.5
                 //vm.bg = "#F3F\9\0"
                 vm.bg = "#F3F"
+                vm.fnfalse = function() {
+                    alert(11111)
+                    return false
+                }
             })
         </script>
         <style>
@@ -38,6 +42,9 @@
         <div class="outer" ms-css-opacity="o" ms-css-background-color="bg" >
             <div class="inner"></div>
         </div>
-
+        <div style="height:250px;">
+            
+        </div>
+        <p><a href="https://github.com/RubyLouvre/avalon" ms-click="fnfalse" >dddd</a></p>
     </body>
 </html>

@@ -242,14 +242,8 @@
                     fn = hook.deel(el, fn)
                 }
             }
-            var callback = function (e){
-                var ex = e || fixEvent(window.event);
-                var ret = fn.call(el, ex);
-                if (ret === false) {
-                    ex.preventDefault();
-                    ex.stopPropagation();
-                }
-                return ret;
+            var callback = W3C ? fn : function(e) {
+                fn.call(el, fixEvent(e));
             }
             if (W3C) {
                 el.addEventListener(type, callback, !!phase)
@@ -765,13 +759,13 @@
         return new XMLSerializer().serializeToString(this)
     }
     function enumerateNode(node, targetNode) {
-        if(node && node.childNodes) {
+        if (node && node.childNodes) {
             var nodes = node.childNodes
-            for(var i = 0, len = nodes.length; i < len; i++) {
+            for (var i = 0, len = nodes.length; i < len; i++) {
                 var cnode = nodes[i]
-                if(cnode.tagName) {
+                if (cnode.tagName) {
                     var ele = document.createElementNS("http://www.w3.org/2000/svg", cnode.tagName.toLowerCase()),
-                    attrs = cnode.attributes
+                            attrs = cnode.attributes
                     // copy attrs
                     avalon.each(attrs, function(key, value) {
                         ele.setAttribute(value.name, value.value)
@@ -789,12 +783,12 @@
             get: outerHTML,
             set: function(html) {
                 var tagName = this.tagName.toLowerCase(),
-                    par = this.parentNode,
-                    frag = avalon.parseHTML(html)
+                        par = this.parentNode,
+                        frag = avalon.parseHTML(html)
                 // 操作的svg，直接插入
-                if(tagName === "svg") {
+                if (tagName === "svg") {
                     par.insertBefore(frag, this)
-                // svg节点的子节点类似
+                    // svg节点的子节点类似
                 } else {
                     var newFrag = document.createDocumentFragment()
                     enumerateNode(frag, newFrag)
@@ -811,7 +805,7 @@
                 return  s.replace(ropen, "").replace(rclose, "")
             },
             set: function(html) {
-                while(this.firstChild) {
+                while (this.firstChild) {
                     this.removeChild(this.firstChild)
                 }
                 var frag = document.createDocumentFragment()
