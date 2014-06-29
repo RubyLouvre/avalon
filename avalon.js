@@ -242,8 +242,14 @@
                     fn = hook.deel(el, fn)
                 }
             }
-            var callback = W3C ? fn : function(e) {
-                return fn.call(el, fixEvent(e))
+            var callback = function (e){
+                var ex = e || fixEvent(window.event);
+                var ret = fn.call(el, ex);
+                if (ret === false) {
+                    ex.preventDefault();
+                    ex.stopPropagation();
+                }
+                return ret;
             }
             if (W3C) {
                 el.addEventListener(type, callback, !!phase)
@@ -1832,7 +1838,7 @@
         "duplex": 2000,
         "on": 3000
     }
-    var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll")
+    var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll,submit")
 
     function scanAttr(elem, vmodels) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
