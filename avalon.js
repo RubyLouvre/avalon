@@ -779,38 +779,40 @@
     }
     if (window.SVGElement && !("innerHTML" in
             document.createElementNS("'http://www.w3.org/2000/svg", "svg"))) {
-        Object.defineProperty(SVGElement.prototype, "outerHTML", {
-            get: outerHTML,
-            set: function(html) {
-                var tagName = this.tagName.toLowerCase(),
-                        par = this.parentNode,
-                        frag = avalon.parseHTML(html)
-                // 操作的svg，直接插入
-                if (tagName === "svg") {
-                    par.insertBefore(frag, this)
-                    // svg节点的子节点类似
-                } else {
-                    var newFrag = document.createDocumentFragment()
-                    enumerateNode(frag, newFrag)
-                    par.insertBefore(newFrag, this)
+        Object.defineProperties(SVGElement.prototype, {
+            "outerHTML": {//IE9-11不支持SVG元素的innerHTML,outerHTML属性
+                get: outerHTML,
+                set: function(html) {
+                    var tagName = this.tagName.toLowerCase(),
+                            par = this.parentNode,
+                            frag = avalon.parseHTML(html)
+                    // 操作的svg，直接插入
+                    if (tagName === "svg") {
+                        par.insertBefore(frag, this)
+                        // svg节点的子节点类似
+                    } else {
+                        var newFrag = document.createDocumentFragment()
+                        enumerateNode(frag, newFrag)
+                        par.insertBefore(newFrag, this)
+                    }
+                    par.removeChild(this)
                 }
-                par.removeChild(this)
-            }
-        })
-        Object.defineProperty(SVGElement.prototype, "innerHTML", {
-            get: function() {
-                var s = this.outerHTML
-                var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
-                var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                return  s.replace(ropen, "").replace(rclose, "")
             },
-            set: function(html) {
-                while (this.firstChild) {
-                    this.removeChild(this.firstChild)
+            "innerHTML": {
+                get: function() {
+                    var s = this.outerHTML
+                    var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
+                    var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
+                    return  s.replace(ropen, "").replace(rclose, "")
+                },
+                set: function(html) {
+                    while (this.firstChild) {
+                        this.removeChild(this.firstChild)
+                    }
+                    var frag = document.createDocumentFragment()
+                    enumerateNode(avalon.parseHTML(html), frag)
+                    this.appendChild(frag)
                 }
-                var frag = document.createDocumentFragment()
-                enumerateNode(avalon.parseHTML(html), frag)
-                this.appendChild(frag)
             }
         })
     }
