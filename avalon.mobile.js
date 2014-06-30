@@ -634,12 +634,13 @@
     function outerHTML() {
         return new XMLSerializer().serializeToString(this)
     }
+    var svgns = "http://www.w3.org/2000/svg"
     function enumerateNode(node, targetNode) {
         if (node && node.childNodes) {
             var nodes = node.childNodes
             for (var i = 0, el; el = nodes[i++]; ) {
                 if (el.tagName) {
-                    var svg = document.createElementNS("http://www.w3.org/2000/svg",
+                    var svg = document.createElementNS(svgns,
                             el.tagName.toLowerCase())
                     // copy attrs
                     ap.forEach.call(el.attributes, function(attr) {
@@ -653,7 +654,7 @@
         }
     }
     if (window.SVGElement && !("innerHTML" in
-            document.createElementNS("'http://www.w3.org/2000/svg", "svg"))) {
+            document.createElementNS(svgns, "svg"))) {
         Object.defineProperties(SVGElement.prototype, {
             "outerHTML": {//IE9-11不支持SVG元素的innerHTML,outerHTML属性
                 get: outerHTML,
