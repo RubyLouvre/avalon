@@ -637,18 +637,17 @@
     function enumerateNode(node, targetNode) {
         if (node && node.childNodes) {
             var nodes = node.childNodes
-            for (var i = 0, len = nodes.length; i < len; i++) {
-                var cnode = nodes[i]
-                if (cnode.tagName) {
-                    var ele = document.createElementNS("http://www.w3.org/2000/svg", cnode.tagName.toLowerCase()),
-                            attrs = cnode.attributes
+            for (var i = 0, el; el = nodes[i++]; ) {
+                if (el.tagName) {
+                    var svg = document.createElementNS("http://www.w3.org/2000/svg",
+                            el.tagName.toLowerCase())
                     // copy attrs
-                    avalon.each(attrs, function(key, value) {
-                        ele.setAttribute(value.name, value.value)
+                    ap.forEach.call(el.attributes, function(attr) {
+                        svg.setAttribute(attr.name, attr.value)
                     })
                     // 递归处理子节点
-                    enumerateNode(cnode, ele)
-                    targetNode.appendChild(ele)
+                    enumerateNode(el, svg)
+                    targetNode.appendChild(svg)
                 }
             }
         }
@@ -682,12 +681,9 @@
                     return  s.replace(ropen, "").replace(rclose, "")
                 },
                 set: function(html) {
-                    while (this.firstChild) {
-                        this.removeChild(this.firstChild)
-                    }
-                    var frag = document.createDocumentFragment()
-                    enumerateNode(avalon.parseHTML(html), frag)
-                    this.appendChild(frag)
+                    avalon.clearHTML(this)
+                    var frag = avalon.parseHTML(html)
+                    enumerateNode(frag, this)
                 }
             }
         })
