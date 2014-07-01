@@ -3061,7 +3061,7 @@
         sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
             return str.replace(rscripts, "").replace(ropen, function(a, b) {
                 if (raimg.test(a)) {
-                    a = a.replace(rjavascripturl, "")//移除javascript伪协议
+                    a = a.replace(rjavascripturl, " $1=''")//移除javascript伪协议//移除javascript伪协议
                 }
                 return a.replace(ron, " ").replace(/\s+/g, " ")//移除onXXX事件
             })
