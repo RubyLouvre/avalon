@@ -25,11 +25,13 @@ C211 300 186 274 156 274"\
 style="fill:white;stroke:red;stroke-width:2"/>'
         
         var c = '<ellipse cx="240" cy="100" rx="220" ry="30" style="fill:purple"/>\
-<ellipse cx="220" cy="70" rx="190" ry="20" style="fill:lime"/>\
-<ellipse cx="210" cy="45" rx="170" ry="15"style="fill:yellow"/>'
+                 <ellipse cx="220" cy="70" rx="190" ry="20" style="fill:lime"/>\
+                 <ellipse cx="210" cy="45" rx="170" ry="15"style="fill:yellow"/>'
 
 
-                document.querySelector("svg").innerHTML =  c
+                document.querySelector("svg").innerHTML =  a
+                
+                alert(document.querySelector("svg").innerHTML)
                        
             })
         </script>
@@ -37,11 +39,8 @@ style="fill:white;stroke:red;stroke-width:2"/>'
     <body ms-controller="test">
 
 
-        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
-        "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-
-    <svg width="100%" height="100%" version="1.1"
-         xmlns="http://www.w3.org/2000/svg">
+    <svg width="100%" height="100%" 
+         xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" version="1.2" >
 
  
     </svg>

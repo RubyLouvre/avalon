@@ -634,7 +634,6 @@
     function outerHTML() {
         return new XMLSerializer().serializeToString(this)
     }
-    var svgns = "http://www.w3.org/2000/svg"
     function enumerateNode(node, targetNode) {
         if (node && node.childNodes) {
             var nodes = node.childNodes
@@ -653,10 +652,13 @@
             }
         }
     }
-    if (window.SVGElement && !("innerHTML" in
-            document.createElementNS(svgns, "svg"))) {
+    var svgns = "http://www.w3.org/2000/svg"
+    var svg = document.createElementNS(svgns, "svg")
+    svg.innerHTML = '<rect width="300" height="100"/>'
+    var supportSVGHTML = svg.firstChild && svg.firstChild.tagName === "svg"
+    if (window.SVGElement && !supportSVGHTML) {
         Object.defineProperties(SVGElement.prototype, {
-            "outerHTML": {//IE9-11不支持SVG元素的innerHTML,outerHTML属性
+            "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                 get: outerHTML,
                 set: function(html) {
                     var tagName = this.tagName.toLowerCase(),
