@@ -3356,9 +3356,9 @@
         },
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
-            var ret = this._add(arguments, 0) //返回长度
+            this._add(arguments, 0) 
             notifySubscribers(this, "index", arguments.length)
-            return ret
+            return this.$model.length //IE67的unshift不会返回长度
         },
         shift: function() {
             var el = this.$model.shift()
