@@ -777,7 +777,7 @@
         }
     }
     var svgns = "http://www.w3.org/2000/svg"
-    if (window.SVGElement && !supportSVGHTML) {
+    if (window.SVGElement) {
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<rect width="300" height="100"/>'
         if (!(svg.firstChild && svg.firstChild.tagName === "svg")) {
