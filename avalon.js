@@ -4167,7 +4167,7 @@
                         ret = ret.replace(rdeuce, "")
                     }
                 } else if (tmp === "/") {
-                    ret = parent + url //相对于兄弟路径
+                    ret = url //相对于根路径
                 } else {
                     avalon.error("不符合模块标识规则: " + url)
                 }
