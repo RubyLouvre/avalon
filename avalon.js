@@ -1628,9 +1628,11 @@
             return this
         },
         $fire: function(type) {
-            var bubbling = false
-            if (type.match(/^global:(\w+)$/)) {
-                type = bubbling = RegExp.$1
+            var bubbling = false, broadcast = false
+            if (type.match(/^bubble:(\w+)$/)) {
+                bubbling = type = RegExp.$1
+            } else if (type.match(/^capture:(\w+)$/)) {
+                broadcast = type = RegExp.$1
             }
             var events = this.$events
             var callbacks = events[type] || []
@@ -1642,21 +1644,36 @@
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
             }
+            var element = events.element
 
-            if (bubbling && events.element) {
+            if (element) {
                 var detail = [type].concat(args)
-                if (W3C) {
-                    W3CFire(events.element, "dataavailable", detail)
-                } else {
-                    var event = document.createEventObject()
-                    event.detail = detail
-                    events.element.fireEvent("ondataavailable", event)
+                if (bubbling) {
+                    if (W3C) {
+                        W3CFire(element, "dataavailable", detail)
+                    } else {
+                        var event = document.createEventObject()
+                        event.detail = detail
+                        element.fireEvent("ondataavailable", event)
+                    }
+                } else if (broadcast) {
+                    var alls = []
+                    for (var i in avalon.vmodels) {
+                        var v = avalon.vmodels[i]
+                        if (v && v.$events && v.$events.element) {
+                            var node = v.$events.element;
+                            if (avalon.contains(element, node) && element != node) {
+                                alls.push(v)
+                            }
+                        }
+                    }
+                    alls.forEach(function(v) {
+                        v.$fire.apply(v, detail)
+                    })
                 }
             }
         }
-
     }
-
     /*********************************************************************
      *                           依赖收集与触发                                *
      **********************************************************************/
@@ -3685,7 +3702,6 @@
     var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
-
     var filters = avalon.filters = {
         uppercase: function(str) {
             return str.toUpperCase()
