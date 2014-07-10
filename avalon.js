@@ -1645,7 +1645,6 @@
                 callback.apply(this, arguments)
             }
             var element = events.element
-
             if (element) {
                 var detail = [type].concat(args)
                 if (bubbling) {
