@@ -1628,8 +1628,13 @@
             return this
         },
         $fire: function(type) {
-            var callbacks = this.$events[type] || []
-            var all = this.$events.$all || []
+            var bubbling = false
+            if (type.match(/^global:(\w+)$/)) {
+                type = bubbling = RegExp.$1
+            }
+            var events = this.$events
+            var callbacks = events[type] || []
+            var all = events.$all || []
             var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
@@ -1637,7 +1642,19 @@
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
             }
+
+            if (bubbling && events.element) {
+                var detail = [type].concat(args)
+                if (W3C) {
+                    W3CFire(events.element, "dataavailable", detail)
+                } else {
+                    var event = document.createEventObject()
+                    event.detail = detail
+                    events.element.fireEvent("ondataavailable", event)
+                }
+            }
         }
+
     }
 
     /*********************************************************************
@@ -1757,6 +1774,12 @@
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
+            newVmodel.$events.element = elem
+            avalon.bind(elem, "dataavailable", function(e) {
+                if (typeof e.detail === "object" && elem !== e.target) {
+                    newVmodel.$fire.apply(newVmodel, e.detail)
+                }
+            })
             avalon(elem).removeClass(node.name)
         }
         scanAttr(elem, vmodels) //扫描特性节点
@@ -3116,12 +3139,17 @@
     }
     var TimerID, ribbon = [],
             launch = noop
-
+    function W3CFire(el, name, detail) {
+        var event = DOC.createEvent("Events")
+        event.initEvent(name, true, true)
+        if (detail) {
+            event.detail = detail
+        }
+        el.dispatchEvent(event)
+    }
     function onTree() { //disabled状态下改动不触发inout事件
         if (!this.disabled && this.oldValue !== this.value) {
-            var event = DOC.createEvent("Event")
-            event.initEvent("input", true, true)
-            this.dispatchEvent(event)
+            W3CFire(this, "input")
         }
     }
 
@@ -3148,9 +3176,7 @@
     function newSetter(newValue) {
         oldSetter.call(this, newValue)
         if (newValue !== this.oldValue) {
-            var event = DOC.createEvent("Events")
-            event.initEvent("input", true, true)
-            this.dispatchEvent(event)
+            W3CFire(this, "input")
         }
     }
     if (Object.getOwnPropertyNames) { //屏蔽IE8

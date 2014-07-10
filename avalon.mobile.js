@@ -211,11 +211,6 @@
             }
             el.removeEventListener(type, fn || noop, !!phase)
         },
-        fire: function(el, name) {
-            var event = DOC.createEvent("Events")
-            event.initEvent(name, true, true)
-            el.dispatchEvent(event)
-        },
         css: function(node, name, value) {
             if (node instanceof avalon) {
                 node = node[0]
@@ -1221,14 +1216,22 @@
             return this
         },
         $fire: function(type) {
-            var callbacks = this.$events[type] || [] //防止影响原数组
-            var all = this.$events.$all || []
+            var bubbling = false
+            if (type.match(/^global:(\w+)$/)) {
+                type = bubbling = RegExp.$1
+            }
+            var events = this.$events
+            var callbacks = events[type] || []
+            var all = events.$all || []
             var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
             }
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
+            }
+            if (bubbling && events.element) {
+                W3CFire(events.element, "dataavailable", [type].concat(args))
             }
         }
     }
@@ -1338,6 +1341,12 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
+            newVmodel.$events.element = elem
+            elem.addEventListener("dataavailable", function(e) {
+                if (typeof e.detail === "object" && elem !== e.target) {
+                    newVmodel.$fire.apply(newVmodel, e.detail)
+                }
+            })
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
@@ -2548,9 +2557,17 @@
     var TimerID, ribbon = [],
             launch = noop
 
+    function W3CFire(el, name, detail) {
+        var event = DOC.createEvent("Events")
+        event.initEvent(name, true, true)
+        if (detail) {
+            event.detail = detail
+        }
+        el.dispatchEvent(event)
+    }
     function onTree() { //disabled状态下改动不触发inout事件
         if (!this.disabled && this.oldValue !== this.value) {
-            avalon.fire(this, "input")
+            W3CFire(this, "input")
         }
     }
 
@@ -2578,7 +2595,7 @@
     function newSetter(newValue) {
         oldSetter.call(this, newValue)
         if (newValue !== this.oldValue) {
-            avalon.fire(this, "input")
+            W3CFire(this, "input")
         }
     }
     try {
@@ -3784,7 +3801,7 @@
                 touchProxy.x1 = firstTouch.pageX
                 touchProxy.y1 = firstTouch.pageY
                 touchProxy.fire = function(name) {
-                    avalon.fire(this.el, name)
+                    W3CFire(this.el, name)
                 }
                 if (delta > 0 && delta <= 250) { //双击
                     touchProxy.isDoubleTap = true
