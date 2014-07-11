@@ -1629,9 +1629,9 @@
         },
         $fire: function(type) {
             var bubbling = false, broadcast = false
-            if (type.match(/^bubble:(\w+)$/)) {
+            if (type.match(/^bubble!(\w+)$/)) {
                 bubbling = type = RegExp.$1
-            } else if (type.match(/^capture:(\w+)$/)) {
+            } else if (type.match(/^capture!(\w+)$/)) {
                 broadcast = type = RegExp.$1
             }
             var events = this.$events
