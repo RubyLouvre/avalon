@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script src="../avalon.js"></script>
+        <style>
+            .red{
+                background: red;
+            }
+            .blue{
+                background: blue;
+            }
+            .green{
+                background: green;
+            }
+        </style>
+        <script>
+
+            avalon.define('test', function(vm) {
+                vm.name = "red"
+                vm.array = ["red", "green", "blue"]
+                vm.switchFn = function(el) {
+                    vm.name = el
+                }
+            });
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <ul ms-class="{{name}}">
+            <li ms-repeat="array" ms-click="switchFn(el)">{{el}}</li>
+        </ul>
+
+    </body>
+</html>

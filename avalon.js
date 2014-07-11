@@ -1628,8 +1628,15 @@
             return this
         },
         $fire: function(type) {
-            var callbacks = this.$events[type] || []
-            var all = this.$events.$all || []
+            var bubbling = false, broadcast = false
+            if (type.match(/^bubble!(\w+)$/)) {
+                bubbling = type = RegExp.$1
+            } else if (type.match(/^capture!(\w+)$/)) {
+                broadcast = type = RegExp.$1
+            }
+            var events = this.$events
+            var callbacks = events[type] || []
+            var all = events.$all || []
             var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 callback.apply(this, args)
@@ -1637,9 +1644,35 @@
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
             }
+            var element = events.element
+            if (element) {
+                var detail = [type].concat(args)
+                if (bubbling) {
+                    if (W3C) {
+                        W3CFire(element, "dataavailable", detail)
+                    } else {
+                        var event = document.createEventObject()
+                        event.detail = detail
+                        element.fireEvent("ondataavailable", event)
+                    }
+                } else if (broadcast) {
+                    var alls = []
+                    for (var i in avalon.vmodels) {
+                        var v = avalon.vmodels[i]
+                        if (v && v.$events && v.$events.element) {
+                            var node = v.$events.element;
+                            if (avalon.contains(element, node) && element != node) {
+                                alls.push(v)
+                            }
+                        }
+                    }
+                    alls.forEach(function(v) {
+                        v.$fire.apply(v, detail)
+                    })
+                }
+            }
         }
     }
-
     /*********************************************************************
      *                           依赖收集与触发                                *
      **********************************************************************/
@@ -1757,6 +1790,12 @@
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
+            newVmodel.$events.element = elem
+            avalon.bind(elem, "dataavailable", function(e) {
+                if (typeof e.detail === "object" && elem !== e.target) {
+                    newVmodel.$fire.apply(newVmodel, e.detail)
+                }
+            })
             avalon(elem).removeClass(node.name)
         }
         scanAttr(elem, vmodels) //扫描特性节点
@@ -1910,10 +1949,11 @@
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
                 ramp = /&amp;/g
         var getAttributes = function(elem) {
-            if (elem.outerHTML.slice(0, 2) === "</") { //处理旧式IE模拟HTML5新元素带来的伪标签
+            var html = elem.outerHTML
+            if (html.slice(0, 2) === "</" || !html.trim()) { //处理旧式IE模拟HTML5新元素带来的伪标签或outerHTML为空的情况
                 return []
             }
-            var str = elem.outerHTML.match(rtag)[0]
+            var str = html.match(rtag)[0]
             var attributes = [],
                     match,
                     k, v;
@@ -3116,12 +3156,17 @@
     }
     var TimerID, ribbon = [],
             launch = noop
-
+    function W3CFire(el, name, detail) {
+        var event = DOC.createEvent("Events")
+        event.initEvent(name, true, true)
+        if (detail) {
+            event.detail = detail
+        }
+        el.dispatchEvent(event)
+    }
     function onTree() { //disabled状态下改动不触发inout事件
         if (!this.disabled && this.oldValue !== this.value) {
-            var event = DOC.createEvent("Event")
-            event.initEvent("input", true, true)
-            this.dispatchEvent(event)
+            W3CFire(this, "input")
         }
     }
 
@@ -3148,9 +3193,7 @@
     function newSetter(newValue) {
         oldSetter.call(this, newValue)
         if (newValue !== this.oldValue) {
-            var event = DOC.createEvent("Events")
-            event.initEvent("input", true, true)
-            this.dispatchEvent(event)
+            W3CFire(this, "input")
         }
     }
     if (Object.getOwnPropertyNames) { //屏蔽IE8
@@ -3659,7 +3702,6 @@
     var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
-
     var filters = avalon.filters = {
         uppercase: function(str) {
             return str.toUpperCase()
