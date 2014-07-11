@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.3.1 2014.6.12，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.3.2 2014.7.11，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -2796,19 +2796,21 @@
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
             a = resetNumber(a, this.length)
             var removed = _splice.apply(this.$model, arguments),
-                    ret = []
+                    ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
                 ret = this._del(a, removed.length)
-                if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index", 0)
-                }
+                change = true
             }
             if (arguments.length > 2) {
                 this._add(aslice.call(arguments, 2), a)
+                change = true
             }
             this._stopFireLength = false
             this._.length = this.length
+            if (change) {
+                notifySubscribers(this, "index", 0)
+            }
             return ret //返回被移除的元素
         },
         contains: function(el) { //判定是否包含
