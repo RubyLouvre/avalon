@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.1 2014.6.12
+ avalon 1.3.2 2014.7.11
  ==================================================*/
 (function(DOC) {
     var prefix = "ms-"
@@ -1964,10 +1964,11 @@
         //依次输出<SECTION>, </SECTION>
 
         var getAttributes = function(elem) {
-            if (elem.outerHTML.slice(0, 2) === "</") { //处理旧式IE模拟HTML5新元素带来的伪标签
+            var html = elem.outerHTML
+            if (html.slice(0, 2) === "</" || !html.trim()) { //处理旧式IE模拟HTML5新元素带来的伪标签或outerHTML为空的情况
                 return []
             }
-            var str = elem.outerHTML.match(rtag)[0]
+            var str = html.match(rtag)[0]
             var attributes = [],
                     match,
                     k, v;
@@ -3433,19 +3434,21 @@
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
             a = resetNumber(a, this.length)
             var removed = _splice.apply(this.$model, arguments),
-                    ret = []
+                    ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
                 ret = this._del(a, removed.length)
-                if (arguments.length <= 2) { //如果没有执行添加操作，需要手动resetIndex
-                    notifySubscribers(this, "index", 0)
-                }
+                change = true
             }
             if (arguments.length > 2) {
                 this._add(aslice.call(arguments, 2), a)
+                change = true
             }
             this._stopFireLength = false
             this._.length = this.length
+            if (change) {
+                notifySubscribers(this, "index", 0)
+            }
             return ret //返回被移除的元素
         },
         contains: function(el) { //判定是否包含
