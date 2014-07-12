@@ -95,8 +95,8 @@
                         <th>Handle</th>
                     </tr>
                 </thead>
-                <tbody ms-each-row="showItems">
-                    <tr >
+                <tbody >
+                    <tr ms-repeat-row="showItems">
                         <td>{{row.name}}</td>
                         <td>{{row.sales | number}}</td>
                         <td>${{row.price }}</td>
@@ -106,8 +106,8 @@
             </table>
             <div class="ms-grid-pageLinks">
                 <span>Page:</span>
-                <span ms-each-page="pages">
-                    <a ms-href="#{{page}}" ms-click="jumpPage"  ms-class-selected="$index==pageIndex"   >{{page+1}}</a>
+                <span >
+                    <a ms-repeat-page="pages" ms-href="#{{page}}" ms-click="jumpPage"  ms-class-selected="$index==pageIndex"   >{{page+1}}</a>
                 </span>
             </div>
             <button ms-click='addItem'>

@@ -3,57 +3,24 @@
     <head>
         <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="../avalon.mobile.js"></script>
+        <script src="../avalon.js"></script>
     </head>
-    <body class="ms-controller" 
-          ms-controller="test">
-        <ul>
-            <li ms-repeat="arr">
-                <input ms-duplex="el.a">{{el.a}}
-                <button ms-click="$remove"> delete </button>
-            </li>
-        </ul>
-        <pre>
-          console.log( avalon.vmodels.test )
-        </pre>
-        <button ms-click="add" type="button">add</button>
-        <button ms-click="show" type="button">show</button>
-        <button ms-click="update" type="button">update</button>
+    <body>
+        <div ms-controller="test">
+            <input ms-repeat="arr"  type="radio" name="sss"ms-click="fn($index)">
+        </div>
+
         <script>
-var demoVM = avalon.define("test", function(vm) {
 
-    vm.arr = [{
-            a: 1
-        }, {
-            a: 2
-        }, {
-            a: 3
-        }]
-    vm.show = function() {
-        var sign =  avalon.subscribers
-        console.log(demoVM.arr[0].$id)
-        console.log(demoVM.arr[1].$id)
-        console.log(demoVM.arr[2].$id)
-        console.log(demoVM.arr)
-     
-        var proxies = demoVM.arr[sign][0].proxies
-        console.log(proxies[0].el)
-        console.log(proxies[1].el.$id)
-        console.log(proxies[2].el.$id)
-    }
-    vm.update = function() {
-        demoVM.arr[2].a =  Math.random().toString(32).substr(4,10)
-    }
-
-
-    vm.add = function() {
-        demoVM.arr.push({
-            a: Math.random()
-        });
-    };
-});
+            var model = avalon.define('test', function(vm) {
+                vm.arr = [0, 1, 2]
+                vm.fn = function(a) {
+                    var arr = [false, false, false]
+                    arr[a] = true
+                    console.log(arr)
+                }
+            });
 
         </script>
-
     </body>
 </html>
