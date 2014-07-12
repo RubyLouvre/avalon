@@ -498,12 +498,12 @@
         if (valueType === "function") {
             return normalProperties[name] = val
         }
-        //loopModel一共产生三种
+        //总共产生三种accessor
         var accessor, oldArgs
-        //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             var setter = val.set,
                     getter = val.get
+            //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
             accessor = function(newValue) {
                 var vmodel = watchProperties.vmodel
                 var value = model[name],
@@ -538,8 +538,8 @@
                 }
             }
             computedProperties.push(accessor)
-            //第2种对应子ViewModel或监控数组 
         } else if (rcomplexType.test(valueType)) {
+            //第2种对应子ViewModel或监控数组 
             accessor = function(newValue) {
                 var realAccessor = accessor.$vmodel,
                         preValue = realAccessor.$model
@@ -1954,6 +1954,7 @@
                 rquote = /^['"]/,
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
                 ramp = /&amp;/g
+        //IE6-8解析HTML5新标签，会将它分解两个元素节点与一个文本节点
         //<body><section>ddd</section></body>
         //        window.onload = function() {
         //            var body = document.body
@@ -1962,10 +1963,10 @@
         //            }
         //        }
         //依次输出<SECTION>, </SECTION>
-
         var getAttributes = function(elem) {
             var html = elem.outerHTML
-            if (html.slice(0, 2) === "</" || !html.trim()) { //处理旧式IE模拟HTML5新元素带来的伪标签或outerHTML为空的情况
+            //处理IE6-8解析HTML5新标签的情况，及<br>等半闭合标签outerHTML为空的情况
+            if (html.slice(0, 2) === "</" || !html.trim()) {
                 return []
             }
             var str = html.match(rtag)[0]
