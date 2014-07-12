@@ -316,6 +316,7 @@
     /*********************************************************************
      *                           modelFactory                              *
      **********************************************************************/
+    //avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
     var VMODELS = avalon.vmodels = {}
     avalon.define = function(id, factory) {
         if (VMODELS[id]) {
@@ -422,7 +423,7 @@
         }
         return descriptors
     }
-//循环生成访问器属性需要的setter, getter函数（这里统称为accessor）
+    //循环生成访问器属性需要的setter, getter函数（这里统称为accessor）
     function accessorFactory(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
         // 如果是元素节点 或者 在全局的skipProperties里 或者在当前的$skipArray里
@@ -501,7 +502,7 @@
             accessor.$vmodel = val.$model ? val : modelFactory(val, val)
             model[name] = accessor.$vmodel.$model
         } else {
-            //第三种对应简单的数据类型，自变量，监控属性
+            //第3种对应简单的数据类型，自变量，监控属性
             accessor = function(newValue) {
                 var preValue = model[name]
                 if (arguments.length) {

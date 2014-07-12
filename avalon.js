@@ -564,7 +564,7 @@
             accessor.$vmodel = val.$model ? val : modelFactory(val, val)
             model[name] = accessor.$vmodel.$model
         } else {
-            //第三种对应简单的数据类型，自变量，监控属性
+            //第3种对应简单的数据类型，自变量，监控属性
             accessor = function(newValue) {
                 var preValue = model[name]
                 if (arguments.length) {
