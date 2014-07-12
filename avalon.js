@@ -101,6 +101,7 @@
             return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
     }
+    //与jQuery.extend方法，可用于浅拷贝，深拷贝
     avalon.mix = avalon.fn.mix = function() {
         var options, name, src, copy, copyIsArray, clone,
                 target = arguments[0] || {},
@@ -373,7 +374,8 @@
     /*********************************************************************
      *                           modelFactory                             *
      **********************************************************************/
-    var VMODELS = avalon.vmodels = {}
+    //avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
+    var VMODELS = avalon.vmodels = {}//所有vmodel都储存在这里
     avalon.define = function(id, factory) {
         if (VMODELS[id]) {
             log("warning: " + id + " 已经存在于avalon.vmodels中")
@@ -421,7 +423,7 @@
             }
         }
         for (var i in scope) {
-            loopModel(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
+            accessorFactory(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
         }
         vmodel = defineProperties(vmodel, descriptorFactory(accessingProperties), normalProperties) //生成一个空的ViewModel
         for (var name in normalProperties) {
@@ -451,9 +453,9 @@
         }
         return vmodel
     }
-
+    //一些不需要被监听的属性
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
-
+    //比较两个值是否相等
     var isEqual = Object.is || function(v1, v2) {
         if (v1 === 0 && v2 === 0) {
             return 1 / v1 === 1 / v2
@@ -483,24 +485,26 @@
     } : function(a) {
         return a
     }
-
-    function loopModel(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
+//循环生成访问器属性需要的setter, getter函数（这里统称为accessor）
+    function accessorFactory(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
-        if (normalProperties[name] || (val && val.nodeType)) { //如果是元素节点或在全局的skipProperties里或在当前的$skipArray里
+        // 如果是元素节点 或者 在全局的skipProperties里 或者在当前的$skipArray里
+        // 或者是以$开头并又不在watchPropertie里，这些属性是不会产生accessor
+        if (normalProperties[name] || (val && val.nodeType) || (name.charAt(0) === "$" && !watchProperties[name])) {
             return normalProperties[name] = val
         }
-        if (name.charAt(0) === "$" && !watchProperties[name]) { //如果是$开头，并且不在watchProperties里
-            return normalProperties[name] = val
-        }
+        // 此外， 函数也不会产生accessor
         var valueType = getType(val)
-        if (valueType === "function") { //如果是函数，也不用监控
+        if (valueType === "function") {
             return normalProperties[name] = val
         }
+        //loopModel一共产生三种
         var accessor, oldArgs
+        //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
         if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
             var setter = val.set,
                     getter = val.get
-            accessor = function(newValue) { //创建计算属性，因变量，基本上由其他监控属性触发其改变
+            accessor = function(newValue) {
                 var vmodel = watchProperties.vmodel
                 var value = model[name],
                         preValue = value
@@ -534,8 +538,9 @@
                 }
             }
             computedProperties.push(accessor)
+            //第2种对应子ViewModel或监控数组 
         } else if (rcomplexType.test(valueType)) {
-            accessor = function(newValue) { //子ViewModel或监控数组
+            accessor = function(newValue) {
                 var realAccessor = accessor.$vmodel,
                         preValue = realAccessor.$model
                 if (arguments.length) {
@@ -559,7 +564,8 @@
             accessor.$vmodel = val.$model ? val : modelFactory(val, val)
             model[name] = accessor.$vmodel.$model
         } else {
-            accessor = function(newValue) { //简单的数据类型
+            //第三种对应简单的数据类型，自变量，监控属性
+            accessor = function(newValue) {
                 var preValue = model[name]
                 if (arguments.length) {
                     if (!isEqual(preValue, newValue)) {
@@ -579,7 +585,7 @@
         accessor[subscribers] = [] //订阅者数组
         accessingProperties[name] = accessor
     }
-    //with绑定生成的代理对象储存池
+    //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
     var withProxyCount = 0
     var rebindings = {}
@@ -590,7 +596,7 @@
             pool[name].$val = val
         }
     }
-
+    //应用于第2种accessor
     function updateVModel(a, b, valueType) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
@@ -1948,6 +1954,15 @@
                 rquote = /^['"]/,
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
                 ramp = /&amp;/g
+        //<body><section>ddd</section></body>
+        //        window.onload = function() {
+        //            var body = document.body
+        //            for (var i = 0, el; el = body.children[i++]; ) {
+        //                console.log(el.outerHTML)
+        //            }
+        //        }
+        //依次输出<SECTION>, </SECTION>
+
         var getAttributes = function(elem) {
             if (elem.outerHTML.slice(0, 2) === "</") { //处理旧式IE模拟HTML5新元素带来的伪标签
                 return []
