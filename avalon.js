@@ -789,6 +789,8 @@
         if (!(svg.firstChild && svg.firstChild.tagName === "svg")) {
             Object.defineProperties(SVGElement.prototype, {
                 "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
+                    enumerable: true,
+                    configurable: true,
                     get: outerHTML,
                     set: function(html) {
                         var tagName = this.tagName.toLowerCase(),
@@ -807,6 +809,8 @@
                     }
                 },
                 "innerHTML": {
+                    enumerable: true,
+                    configurable: true,
                     get: function() {
                         var s = this.outerHTML
                         var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
@@ -3758,7 +3762,7 @@
                     replace(/>/g, '&gt;')
         },
         currency: function(number, symbol) {
-            symbol = symbol || "\uFFE5" 
+            symbol = symbol || "\uFFE5"
             return symbol + avalon.filters.number(number)
         },
         number: function(number, decimals, dec_point, thousands_sep) {

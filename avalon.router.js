@@ -188,7 +188,7 @@ define(["avalon"], function(avalon) {
             this._hasPushState = !!(this.options.pushState && this.history && this.history.pushState);
             this.fragment = this.getFragment();
 
-  
+
 
             // Normalize root to always include a leading and trailing slash.
             this.root = ('/' + this.root + '/').replace(rootStripper, '/');
@@ -210,9 +210,9 @@ define(["avalon"], function(avalon) {
             // Depending on whether we're using pushState or hashes, and whether
             // 'onhashchange' is supported, determine how we check the URL state.
             if (this._hasPushState) {
-               this._checkUrl = avalon.bind(window, 'popstate', this.checkUrl);
+                this._checkUrl = avalon.bind(window, 'popstate', this.checkUrl);
             } else if (this._wantsHashChange && this._hasHashChange && !this.iframe) {
-              this._checkUrl =  avalon.bind(window,'hashchange', this.checkUrl);
+                this._checkUrl = avalon.bind(window, 'hashchange', this.checkUrl);
             } else if (this._wantsHashChange) {
                 this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
             }
@@ -242,13 +242,13 @@ define(["avalon"], function(avalon) {
         // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
         // but possibly useful for unit testing Routers.
         stop: function() {
-   
+
 
             // Remove window listeners.
             if (this._hasPushState) {
                 avalon.unbind(window, 'popstate', this._checkUrl);
             } else if (this._wantsHashChange && this._hasHashChange && !this.iframe) {
-                avalon.unbind(window,'hashchange', this._checkUrl);
+                avalon.unbind(window, 'hashchange', this._checkUrl);
             }
 
             // Clean up the iframe if necessary.
@@ -262,13 +262,12 @@ define(["avalon"], function(avalon) {
                 clearInterval(this._checkUrlInterval);
             History.started = false;
         },
-        // Add a route to be tested when the fragment changes. Routes added later
-        // may override previous routes.
+
+        //用于添加路则规则及对应的回调
         route: function(route, callback) {
             this.handlers.unshift({route: route, callback: callback});
         },
-        // Checks the current URL to see if it has changed, and if it has,
-        // calls `loadUrl`, normalizing across the hidden iframe.
+        //比较前后的路径或hash是否发生改变,如果发生改变则调用navigate与loadUrl方法
         checkUrl: function(e) {
             var current = this.getFragment();
             if (current === this.fragment && this.iframe) {
@@ -291,7 +290,7 @@ define(["avalon"], function(avalon) {
                     return true;
                 }
             });
-    },
+        },
 //    规则中的*（星号）会在Router内部被转换为表达式(.*?)，表示零个或多个任意字符，
 //    与:（冒号）规则相比，*（星号）没有/（斜线）分隔的限制，就像我们在上面的例子中定义的*error规则一样。
 //　　Router中的*（星号）规则在被转换为正则表达式后使用非贪婪模式，因此你可以使用例如这样的组合规则
@@ -315,7 +314,7 @@ define(["avalon"], function(avalon) {
 
             // Strip the hash and decode for matching.
             fragment = decodeURI(fragment.replace(pathStripper, ''));
-
+            //fragment就是路由可变动的部分,被decodeURI过的
             if (this.fragment === fragment)
                 return;
             this.fragment = fragment;
@@ -324,7 +323,8 @@ define(["avalon"], function(avalon) {
             if (fragment === '' && url !== '/')
                 url = url.slice(0, -1);
 
-            // If pushState is available, we use it to set the fragment as a real URL.
+            //如果支持pushState,那么就使用replaceState,pushState,API
+            //注意replace是不会产生历史
             if (this._hasPushState) {
                 this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
 
