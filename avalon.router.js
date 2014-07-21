@@ -15,103 +15,6 @@ define(["avalon"], function(avalon) {
     var supportHashChange = !!('onhashchange' in window && (!window.VBArray || !oldIE))
 
 
-    var lastBrowserUrl = location.href,
-            baseElement = avalon(document.getElementsByTagName('base')[0]),
-            newLocation = null;
-
-    var Router = {}
-    Router.url = function(url, replace) {
-        // Android Browser BFCache causes location, history reference to become stale.
-        if (location !== window.location)
-            location = window.location;
-        if (history !== window.history)
-            history = window.history;
-
-        // setter
-        if (url) {
-            if (lastBrowserUrl == url)
-                return;
-            lastBrowserUrl = url;
-            if (supportPushState) {
-                if (replace)
-                    history.replaceState(null, '', url);
-                else {
-                    history.pushState(null, '', url);
-                    // Crazy Opera Bug: http://my.opera.com/community/forums/topic.dml?id=1185462
-                    baseElement.attr('href', baseElement.attr('href'));
-                }
-            } else {
-                newLocation = url;
-                if (replace) {
-                    location.replace(url);
-                } else {
-                    location.href = url;
-                }
-            }
-            return this;
-            // getter
-        } else {
-            // - newLocation is a workaround for an IE7-9 issue with location.replace and location.href
-            //   methods not updating location.href synchronously.
-            // - the replacement is a workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=407172
-            return newLocation || location.href.replace(/%27/g, "'");
-        }
-    };
-
-    var urlChangeListeners = [],
-            urlChangeInit = false;
-
-    function fireUrlChange() {
-        newLocation = null;
-        if (lastBrowserUrl == Router.url())
-            return;
-
-        lastBrowserUrl = Router.url();
-        forEach(urlChangeListeners, function(listener) {
-            listener(Router.url());
-        });
-    }
-    var pollFns = [],
-            pollTimeout;
-
-    function startPoller(interval) {
-        (function check() {
-            forEach(pollFns, function(pollFn) {
-                pollFn();
-            });
-            pollTimeout = setTimeout(check, interval);
-        })();
-    }
-    Router.addPollFn = function(fn) {
-        if (pollTimeout === void 0)
-            startPoller(100);
-        pollFns.push(fn);
-        return fn;
-    }
-    Router.onUrlChange = function(callback) {
-        // TODO(vojta): refactor to use node's syntax for events
-        if (!urlChangeInit) {
-            // We listen on both (hashchange/popstate) when available, as some browsers (e.g. Opera)
-            // don't fire popstate when user change the address bar and don't fire hashchange when url
-            // changed by push/replaceState
-
-            // html5 history api - popstate event
-            if (supportPushState)
-                avalon(window).on('popstate', fireUrlChange);
-            // hashchange event
-            if (supportHashChange)
-                avalon(window).on('hashchange', fireUrlChange);
-            // polling
-            else
-                Router.addPollFn(fireUrlChange);
-
-            urlChangeInit = true;
-        }
-
-        urlChangeListeners.push(callback);
-        return callback;
-    };
-
 
     var History = Backbone.History = function() {
         this.handlers = [];
@@ -183,9 +86,9 @@ define(["avalon"], function(avalon) {
             this.options = avalon.mix({root: '/'}, this.options, options);
             this.root = this.options.root;
             this._wantsHashChange = this.options.hashChange !== false;
-            this._hasHashChange = 'onhashchange' in window;
-            this._wantsPushState = !!this.options.pushState;
-            this._hasPushState = !!(this.options.pushState && this.history && this.history.pushState);
+            this._hasHashChange = supportHashChange
+            this._wantsPushState = !!this.options.pushState
+            this._hasPushState = !!(this.options.pushState && supportPushState);
             this.fragment = this.getFragment();
 
 
@@ -239,24 +142,19 @@ define(["avalon"], function(avalon) {
             if (!this.options.silent)
                 return this.loadUrl();
         },
-        // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
-        // but possibly useful for unit testing Routers.
+
         stop: function() {
-
-
-            // Remove window listeners.
+            //移除之前绑定的popstate/hashchange事件
             if (this._hasPushState) {
                 avalon.unbind(window, 'popstate', this._checkUrl);
             } else if (this._wantsHashChange && this._hasHashChange && !this.iframe) {
                 avalon.unbind(window, 'hashchange', this._checkUrl);
             }
-
-            // Clean up the iframe if necessary.
+            // 移除之前动态插入的iframe
             if (this.iframe) {
                 document.body.removeChild(this.iframe.frameElement);
                 this.iframe = null;
             }
-
             // 中断轮询
             if (this._checkUrlInterval)
                 clearInterval(this._checkUrlInterval);
@@ -295,15 +193,7 @@ define(["avalon"], function(avalon) {
 //    与:（冒号）规则相比，*（星号）没有/（斜线）分隔的限制，就像我们在上面的例子中定义的*error规则一样。
 //　　Router中的*（星号）规则在被转换为正则表达式后使用非贪婪模式，因此你可以使用例如这样的组合规则
 //  ：*type/:id，它能匹配#hot/1023，同时会将hot和1023作为参数传递给Action方法。
-
-
-        // Save a fragment into the hash history, or replace the URL state if the
-        // 'replace' option is passed. You are responsible for properly URL-encoding
-        // the fragment in advance.
-        //
-        // The options object can contain `trigger: true` if you wish to have the
-        // route callback be fired (not usually desirable), or `replace: true`, if
-        // you wish to modify the current URL without adding an entry to the history.
+        //此方法用于修改地址栏的可变部分（IE67还负责产生新历史）
         navigate: function(fragment, options) {
             if (!History.started)
                 return false;
@@ -312,7 +202,6 @@ define(["avalon"], function(avalon) {
 
             var url = this.root + (fragment = this.getFragment(fragment || ''));
 
-            // Strip the hash and decode for matching.
             fragment = decodeURI(fragment.replace(pathStripper, ''));
             //fragment就是路由可变动的部分,被decodeURI过的
             if (this.fragment === fragment)
@@ -326,31 +215,25 @@ define(["avalon"], function(avalon) {
             //如果支持pushState,那么就使用replaceState,pushState,API
             //注意replace是不会产生历史
             if (this._hasPushState) {
-                this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
-
-                // If hash changes haven't been explicitly disabled, update the hash
-                // fragment to store history.
+                this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url)
             } else if (this._wantsHashChange) {
-                this._updateHash(this.location, fragment, options.replace);
+                //更新当前页面的地址栏的hash值
+                this._updateHash(this.location, fragment, options.replace)
                 if (this.iframe && (fragment !== this.getHash(this.iframe))) {
-                    // Opening and closing the iframe tricks IE7 and earlier to push a
-                    // history entry on hash-tag change.  When replace is true, we don't
-                    // want this.
+                    //在IE67下需要通过创建或关闭一个iframe来产生历史
                     if (!options.replace)
-                        this.iframe.document.open().close();
-                    this._updateHash(this.iframe.location, fragment, options.replace);
+                        this.iframe.document.open().close()
+                    //更新iframe的地址栏的hash值
+                    this._updateHash(this.iframe.location, fragment, options.replace)
                 }
-
-                // If you've told us that you explicitly don't want fallback hashchange-
-                // based history, then `navigate` becomes a page refresh.
             } else {
-                return this.location.assign(url);
+                //直接刷新页面
+                return this.location.assign(url)
             }
             if (options.trigger)
-                return this.loadUrl(fragment);
+                return this.loadUrl(fragment)
         },
-        // Update the hash location, either replacing the current entry, or adding
-        // a new one to the browser history.
+        //更新hash
         _updateHash: function(location, fragment, replace) {
             if (replace) {
                 var href = location.href.replace(/(javascript:|#).*$/, '');
