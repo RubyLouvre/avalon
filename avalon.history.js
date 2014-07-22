@@ -8,7 +8,7 @@ define(["avalon"], function(avalon) {
     }
     var defaults = {
         basepath: '/',
-        html5Mode: true,
+        html5Mode: false,
         hashPrefix: "!",
         interval: 50, //IE6-7,使用轮询，这是其时间时隔
         fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
@@ -78,7 +78,7 @@ define(["avalon"], function(avalon) {
             //IE9支持window.Node, window.HTMLElement, IE10不支持条件注释
 
             this.supportPushState = !!(window.history.pushState)
-            this.supportHashChange = !!('onhashchange' in window && (!window.VBArray || !oldIE))
+            this.supportHashChange = false// !!('onhashchange' in window && (!window.VBArray || !oldIE))
             //确保html5Mode属性存在,并且是一个布尔
             this.html5Mode = !!this.options.html5Mode
             //监听模式
@@ -94,8 +94,7 @@ define(["avalon"], function(avalon) {
                 this.monitorMode = "iframepoll"
             }
             this.prefix = "#" + this.options.hashPrefix + "/"
-            avalon.log(this.monitorMode)
-            ////确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
+            //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
             this.basepath = ('/' + this.options.basepath + '/').replace(rthimSlant, '/')
             this.fragment = this.getFragment()
 
@@ -146,10 +145,11 @@ define(["avalon"], function(avalon) {
                         that.location.hash = that.prefix + iframeHash
                         hash = iframeHash
                     }
+
                 } else if (pageHash !== that.fragment) {
                     hash = pageHash
                 }
-                if (hash) {
+                if (hash !== void 0) {
                     that.fragment = hash
                     that.fireRouteChange(hash)
                 }
@@ -196,13 +196,12 @@ define(["avalon"], function(avalon) {
             History.started = false
         },
         setLocation: function(hash) {
-            var prefix = "#" + this.options.hashPrefix + "/"
             if (this.monitorMode === "popstate") {
                 var path = this.rootpath + hash
                 history.pushState({path: path}, document.title, path)
                 this._fireLocationChange()
             } else {
-                this.location.hash = prefix + hash
+                this.location.hash = this.prefix + hash
             }
         }
     }
