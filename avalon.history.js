@@ -1,5 +1,5 @@
 define(["avalon"], function(avalon) {
-       avalon.bindingHandlers.view = function(data, vmodels) {
+    avalon.bindingHandlers.view = function(data, vmodels) {
         var first = vmodels[0]
         data.element.innerHTML = "&nbsp;"
         first.$watch("routeChangeStart", function(fragment) {
@@ -8,7 +8,7 @@ define(["avalon"], function(avalon) {
     }
     var defaults = {
         basepath: '/',
-        html5Mode: false,
+        html5Mode: true,
         hashPrefix: "!",
         interval: 50, //IE6-7,使用轮询，这是其时间时隔
         fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
@@ -66,8 +66,8 @@ define(["avalon"], function(avalon) {
                 path = path.slice(root.length)
             return path.slice(1)
         },
-        navigate: function() {
-            avalon.log("navigate method")
+        _getAbsolutePath: function(a) {
+            return !a.hasAttribute ? a.getAttribute("href", 4) : a.href
         },
         start: function(options) {
             if (History.started)
@@ -78,7 +78,7 @@ define(["avalon"], function(avalon) {
             //IE9支持window.Node, window.HTMLElement, IE10不支持条件注释
 
             this.supportPushState = !!(window.history.pushState)
-            this.supportHashChange = false// !!('onhashchange' in window && (!window.VBArray || !oldIE))
+            this.supportHashChange = !!('onhashchange' in window && (!window.VBArray || !oldIE))
             //确保html5Mode属性存在,并且是一个布尔
             this.html5Mode = !!this.options.html5Mode
             //监听模式
@@ -100,7 +100,7 @@ define(["avalon"], function(avalon) {
             this.fragment = this.getFragment()
 
             anchorElement.href = this.basepath
-            this.rootpath = History.getAbsolutePath(anchorElement)
+            this.rootpath = this._getAbsolutePath(anchorElement)
             var that = this
 
 
@@ -122,7 +122,7 @@ define(["avalon"], function(avalon) {
                     idoc.write(html)
                     idoc.close()
                 })
-                var startedWithHash = !!History.getHash(location.href)
+
             }
 
             // 支持popstate 就监听popstate
@@ -237,9 +237,6 @@ define(["avalon"], function(avalon) {
         return false
     }
 
-    History.getAbsolutePath = function(a) {
-        return !a.hasAttribute ? a.getAttribute("href", 4) : a.href
-    }
     //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
     proxy = avalon.history = new History
     var rurl = /^([\w\d]+):\/\/([\w\d\-_]+(?:\.[\w\d\-_]+)*)/
@@ -267,7 +264,6 @@ define(["avalon"], function(avalon) {
             }
             if (hash !== void 0) {
                 event.preventDefault()
-                avalon.log("hash " + hash)
                 proxy.setLocation(hash)
                 return false
             }
