@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>路由器的相关测试</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js">
+
+        </script>
+        <script>
+            require(["ready!","avalon.history"], function() {
+                avalon.log  = function(str){
+                  var div =  document.createElement("div")
+                  div.innerHTML = str
+                  document.body.appendChild(div)
+                }
+                avalon.history.start({basepath: "/avalon/"})
+                avalon.define("test", function(vm) {
+                    vm.hash = function(a, e) {
+                        location.hash = a
+                        e.preventDefault()
+                    }
+                })
+                avalon.scan()
+            })
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <div ms-view></div>
+            <ul>
+                <li><a href="#/aaa">1111</li>
+                <li><a href="#/bbb">2222</li>
+                <li><a href="#/ccc">3333</li>
+            </ul>
+        </div>
+
+    </body>
+</html>
