@@ -6,22 +6,15 @@ define(["avalon"], function(avalon) {
             data.element.innerHTML = fragment || new Date - 0
         })
     }
-    var defaults = {
-        basepath: '/',
-        html5Mode: false,
-        hashPrefix: "!",
-        interval: 50, //IE6-7,使用轮询，这是其时间时隔
-        fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
-    }
-    var History = avalon.History = function() {
-        this.location2hash = {}
-        this.location = location
-    }
 
-    var rthimSlant = /^\/+|\/+$/g  // 去最左右两边的斜线
+
     var rleftSlant = /^\//         //最左的斜线
     var routeStripper = /^[#\/]|\s+$/g
     var anchorElement = document.createElement('a')
+
+    var History = avalon.History = function() {
+        this.location = location
+    }
 
     History.started = false
     History.IEVersion = (function() {
@@ -29,6 +22,21 @@ define(["avalon"], function(avalon) {
         return mode ? mode : window.XMLHttpRequest ? 7 : 6
     })()
 
+    History.defaults = {
+        basepath: '/',
+        html5Mode: false,
+        hashPrefix: "!",
+        interval: 50, //IE6-7,使用轮询，这是其时间时隔
+        fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
+    }
+    //判定A标签的target属性是否指向自身
+    //thanks https://github.com/quirkey/sammy/blob/master/lib/sammy.js#L219
+    History.targetIsThisWindow = function(targetWindow) {
+        if (!targetWindow || targetWindow === window.name || targetWindow === '_self' || (targetWindow === 'top' && window == window.top)) {
+            return true
+        }
+        return false
+    }
     var oldIE = window.VBArray && History.IEVersion <= 7
     History.prototype = {
         constructor: History,
@@ -51,16 +59,17 @@ define(["avalon"], function(avalon) {
             // 又比如 http://www.cnblogs.com/rubylouvre/#!/home/q={%22thedate%22:%2220121010~20121010%22}
             // firefox 15 => #!/home/q={"thedate":"20121010~20121010"}
             // 其他浏览器 => #!/home/q={%22thedate%22:%2220121010~20121010%22}
-
             var path = (window || this).location.href
-            path = path.slice(path.indexOf("#"))
+            return this._getHash(path.slice(path.indexOf("#")))
+        },
+        _getHash: function(path) {
             if (path.indexOf(this.prefix) === 0) {
-                return path.slice(this.prefix.length)
+                return decodeURIComponent(path.slice(this.prefix.length))
             }
             return ""
         },
         getPath: function() {
-            var path = decodeURI(this.location.pathname + this.location.search)
+            var path = decodeURIComponent(this.location.pathname + this.location.search)
             var root = this.basepath.slice(0, -1)
             if (!path.indexOf(root))
                 path = path.slice(root.length)
@@ -73,12 +82,12 @@ define(["avalon"], function(avalon) {
             if (History.started)
                 throw new Error("avalon.history has already been started")
             History.started = true
-            this.options = avalon.mix({}, defaults, options)
+            this.options = avalon.mix({}, History.defaults, options)
             //IE6不支持maxHeight, IE7支持XMLHttpRequest, IE8支持window.Element，querySelector, 
             //IE9支持window.Node, window.HTMLElement, IE10不支持条件注释
 
             this.supportPushState = !!(window.history.pushState)
-            this.supportHashChange = false// !!('onhashchange' in window && (!window.VBArray || !oldIE))
+            this.supportHashChange = !!('onhashchange' in window && (!window.VBArray || !oldIE))
             //确保html5Mode属性存在,并且是一个布尔
             this.html5Mode = !!this.options.html5Mode
             //监听模式
@@ -95,7 +104,7 @@ define(["avalon"], function(avalon) {
             }
             this.prefix = "#" + this.options.hashPrefix + "/"
             //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
-            this.basepath = ('/' + this.options.basepath + '/').replace(rthimSlant, '/')
+            this.basepath = ("/" + this.options.basepath + "/").replace( /^\/+|\/+$/g,"/")  // 去最左右两边的斜线
             this.fragment = this.getFragment()
 
             anchorElement.href = this.basepath
@@ -107,6 +116,7 @@ define(["avalon"], function(avalon) {
             if (this.options.domain) {
                 html = html.replace("<body>", "<script>document.domain =" + this.options.domain + "</script><body>")
             }
+            this.iframeHTML = html
             if (this.monitorMode === "iframepoll") {
                 //IE6,7在hash改变时不会产生历史，需要用一个iframe来共享历史
                 avalon.ready(function() {
@@ -116,9 +126,9 @@ define(["avalon"], function(avalon) {
                     iframe.tabIndex = -1
                     document.body.appendChild(iframe)
                     that.iframe = iframe.contentWindow
-                    var idoc = proxy.iframe.document
+                    var idoc = that.iframe.document
                     idoc.open()
-                    idoc.write(html)
+                    idoc.write(that.iframeHTML)
                     idoc.close()
                 })
 
@@ -137,7 +147,10 @@ define(["avalon"], function(avalon) {
                     var iframeHash = that.getHash(iframe)
                     //与当前页面hash不等于之前的页面hash，这主要是用户通过点击链接引发的
                     if (pageHash !== that.fragment) {
-                        iframe.document.open().close()
+                        var idoc = iframe.document
+                        idoc.open()
+                        idoc.write(that.iframeHTML)
+                        idoc.close()
                         iframe.location.hash = that.prefix + pageHash
                         hash = pageHash
                         //如果是后退按钮触发hash不一致
@@ -205,39 +218,10 @@ define(["avalon"], function(avalon) {
             }
         }
     }
-
-    //得到页面第一个符合条件的A标签
-    function getFirstAnchor(list) {
-        for (var i = 0, el; el = list[i++]; ) {
-            if (el.nodeName === "A") {
-                return el
-            }
-        }
-    }
-
-    function scrollToAnchorId(hash, el) {
-        hash = hash.replace(rleftSlant, "").replace(/#.*/, '')
-        hash = decodeURIComponent(hash)
-        if ((el = document.getElementById(hash))) {
-            el.scrollIntoView()
-        } else if ((el = getFirstAnchor(document.getElementsByName(hash)))) {
-            el.scrollIntoView()
-        } else {
-            window.scrollTo(0, 0)
-        }
-    }
-
-    //判定A标签的target属性是否指向自身
-    //thanks https://github.com/quirkey/sammy/blob/master/lib/sammy.js#L219
-    History.targetIsThisWindow = function targetIsThisWindow(targetWindow) {
-        if (!targetWindow || targetWindow === window.name || targetWindow === '_self' || (targetWindow === 'top' && window == window.top)) {
-            return true
-        }
-        return false
-    }
+    avalon.history = new History
 
     //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
-    proxy = avalon.history = new History
+
     var rurl = /^([\w\d]+):\/\/([\w\d\-_]+(?:\.[\w\d\-_]+)*)/
     //当用户点击页面的链接时，如果链接是指向当前网站并且以"#/"或"#!/"开头，那么触发setLocation方法
     avalon.bind(document, "click", function(event) {
@@ -257,18 +241,36 @@ define(["avalon"], function(avalon) {
             hostname = (fullHref.match(rurl) || ["", "", ""])[2]//小心javascript:void(0)
         }
         if (hostname === window.location.hostname && History.targetIsThisWindow(target.target)) {
-            var path = target.getAttribute("href", 2), prefix = proxy.prefix, hash
-            if (path.indexOf(prefix) === 0) {
-                hash = path.slice(prefix.length)
-            }
-            if (hash !== void 0) {
+            var path = target.getAttribute("href", 2)
+            var hash = avalon.history._getHash(path)
+            if (hash !== "") {
                 event.preventDefault()
-                proxy.setLocation(hash)
+                avalon.history.setLocation(hash)
                 return false
             }
         }
 
     })
+
+    //得到页面第一个符合条件的A标签
+    function getFirstAnchor(list) {
+        for (var i = 0, el; el = list[i++]; ) {
+            if (el.nodeName === "A") {
+                return el
+            }
+        }
+    }
+
+    function scrollToAnchorId(hash, el) {
+        if ((el = document.getElementById(hash))) {
+            el.scrollIntoView()
+        } else if ((el = getFirstAnchor(document.getElementsByName(hash)))) {
+            el.scrollIntoView()
+        } else {
+            window.scrollTo(0, 0)
+        }
+    }
+
 
     return avalon
 })
