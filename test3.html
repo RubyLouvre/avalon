@@ -9,11 +9,11 @@
 
         </script>
         <script>
-            require(["ready!","avalon.history"], function() {
-                avalon.log  = function(str){
-                  var div =  document.createElement("div")
-                  div.innerHTML = str
-                  document.body.appendChild(div)
+            require(["ready!", "avalon.history"], function() {
+                avalon.log = function(str) {
+                    var div = document.createElement("div")
+                    div.innerHTML = str
+                    document.body.appendChild(div)
                 }
                 avalon.history.start({basepath: "/avalon/"})
                 avalon.define("test", function(vm) {
@@ -25,6 +25,7 @@
                 avalon.scan()
             })
         </script>
+
     </head>
     <body>
         <div ms-controller="test">
@@ -34,6 +35,12 @@
                 <li><a href="#!/bbb">2222</li>
                 <li><a href="#!/ccc">3333</li>
             </ul>
+ 
+            <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 
+            <a href="data:text/html;base64, PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==">chrome</a>
+            <a href="java	script:alert('XSS');">IE67chrome</a>
+            <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
+            <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
         </div>
 
     </body>

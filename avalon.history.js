@@ -63,8 +63,11 @@ define(["avalon"], function(avalon) {
             return this._getHash(path.slice(path.indexOf("#")))
         },
         _getHash: function(path) {
-            if (path.indexOf(this.prefix) === 0) {
-                return decodeURIComponent(path.slice(this.prefix.length))
+            if (path.indexOf("#/") === 0) {
+                return decodeURIComponent(path.slice(2))
+            }
+            if (path.indexOf("#!/") === 0) {
+                return decodeURIComponent(path.slice(3))
             }
             return ""
         },
@@ -104,7 +107,7 @@ define(["avalon"], function(avalon) {
             }
             this.prefix = "#" + this.options.hashPrefix + "/"
             //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
-            this.basepath = ("/" + this.options.basepath + "/").replace( /^\/+|\/+$/g,"/")  // 去最左右两边的斜线
+            this.basepath = ("/" + this.options.basepath + "/").replace(/^\/+|\/+$/g, "/")  // 去最左右两边的斜线
             this.fragment = this.getFragment()
 
             anchorElement.href = this.basepath
@@ -196,7 +199,14 @@ define(["avalon"], function(avalon) {
 
         },
         fireRouteChange: function(hash) {
-            avalon.log(hash + "  change!!!!!!!!!!")
+            var  vms = avalon.vmodels
+            for(var i in vms){
+                var v = vms[i]
+                if(v && v.$events && v.$events.routeChangeStart){
+                    v.$fire("routeChangeStart", hash)
+                    break;
+                }
+            }
             if (this.options.fireAnchor) {
                 scrollToAnchorId(hash)
             }
@@ -208,7 +218,7 @@ define(["avalon"], function(avalon) {
             clearInterval(this.checkUrl)
             History.started = false
         },
-        setLocation: function(hash) {
+        _updateLocation: function(hash) {
             if (this.monitorMode === "popstate") {
                 var path = this.rootpath + hash
                 history.pushState({path: path}, document.title, path)
@@ -223,7 +233,7 @@ define(["avalon"], function(avalon) {
     //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
 
     var rurl = /^([\w\d]+):\/\/([\w\d\-_]+(?:\.[\w\d\-_]+)*)/
-    //当用户点击页面的链接时，如果链接是指向当前网站并且以"#/"或"#!/"开头，那么触发setLocation方法
+    //当用户点击页面的链接时，如果链接是指向当前网站并且以"#/"或"#!/"开头，那么触发_updateLocation方法
     avalon.bind(document, "click", function(event) {
         var defaultPrevented = "defaultPrevented" in event ? event['defaultPrevented'] : event.returnValue === false
         if (defaultPrevented || event.ctrlKey || event.metaKey || event.which === 2)
@@ -245,7 +255,7 @@ define(["avalon"], function(avalon) {
             var hash = avalon.history._getHash(path)
             if (hash !== "") {
                 event.preventDefault()
-                avalon.history.setLocation(hash)
+                avalon.history._updateLocation(hash)
                 return false
             }
         }
