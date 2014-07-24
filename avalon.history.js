@@ -176,17 +176,21 @@ define(["avalon"], function(avalon) {
             // 支持popstate 就监听popstate
             // 支持hashchange 就监听hashchange(IE8,IE9,FF3)
             // 否则的话只能每隔一段时间进行检测了(IE6, IE7)
-            if (this.monitorMode === "popstate") {
-                this.checkUrl = avalon.bind(window, 'popstate', checkUrl)
-                this._fireLocationChange = checkUrl
-            } else if (this.monitorMode === "hashchange") {
-                this.checkUrl = avalon.bind(window, 'hashchange', checkUrl)
-            } else {
-                this.checkUrl = setInterval(checkUrl, this.options.interval)
+            switch (this.monitorMode) {
+                case "popstate":
+                    this.checkUrl = avalon.bind(window, 'popstate', checkUrl)
+                    this._fireLocationChange = checkUrl
+                    break
+                case  "hashchange":
+                    this.checkUrl = avalon.bind(window, 'hashchange', checkUrl)
+                    break;
+                case  "iframepoll":
+                    this.checkUrl = setInterval(checkUrl, this.options.interval)
+                    break;
             }
-
+            //根据当前的location立即进入不同的路由回调
             if (this.html5Mode) {
-                this.fireRouteChange(this.getPath())
+                this.fireRouteChange(this.getPath() || "/")
             } else {
                 if (this.rootpath === location.href.replace(/\/$/, "")) {
                     return this.fireRouteChange("/")
@@ -199,10 +203,10 @@ define(["avalon"], function(avalon) {
 
         },
         fireRouteChange: function(hash) {
-            var  vms = avalon.vmodels
-            for(var i in vms){
+            var vms = avalon.vmodels
+            for (var i in vms) {
                 var v = vms[i]
-                if(v && v.$events && v.$events.routeChangeStart){
+                if (v && v.$events && v.$events.routeChangeStart) {
                     v.$fire("routeChangeStart", hash)
                     break;
                 }
