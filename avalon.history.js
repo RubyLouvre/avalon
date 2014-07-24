@@ -1,15 +1,13 @@
 define(["avalon"], function(avalon) {
+    var views = {}
     avalon.bindingHandlers.view = function(data, vmodels) {
-        var first = vmodels[0]
-        data.element.innerHTML = "&nbsp;"
-        first.$watch("routeChangeStart", function(fragment) {
-            data.element.innerHTML = fragment || new Date - 0
-        })
+        var elem = data.element
+        if (avalon.contains(document.body, elem)) {
+            views[data.value] = elem
+        }
+        data.evaluator = avalon.noop
     }
 
-
-    var rleftSlant = /^\//         //最左的斜线
-    var routeStripper = /^[#\/]|\s+$/g
     var anchorElement = document.createElement('a')
 
     var History = avalon.History = function() {
@@ -48,7 +46,7 @@ define(["avalon"], function(avalon) {
                     fragment = this.getHash();
                 }
             }
-            return fragment.replace(routeStripper, "")
+            return fragment.replace(/^[#\/]|\s+$/g, "")
         },
         getHash: function(window) {
             // IE6直接用location.hash取hash，可能会取少一部分内容
@@ -211,6 +209,11 @@ define(["avalon"], function(avalon) {
                     break;
                 }
             }
+            var router = avalon.router
+            if (router && router.navigate) {
+                router.setLatelyPath(hash)
+                router.navigate("/" + hash)
+            }
             if (this.options.fireAnchor) {
                 scrollToAnchorId(hash)
             }
@@ -285,6 +288,254 @@ define(["avalon"], function(avalon) {
         }
     }
 
+    var root, states = {}, $state, queue = {}, abstractKey = 'abstract';
+    root = registerState({
+        name: '',
+        url: '^',
+        views: null,
+        'abstract': true
+    });
+    root.navigable = null;
+    avalon.state = function(name, definition) {
+        /*jshint validthis: true */
+        if (!avalon.isPlainObject(definition)) {
+            definition = {}
+        }
+        definition.name = name;
+        registerState(definition);
+        return this;
+    }
+
+
+    function queueState(parentName, state) {
+        if (!queue[parentName]) {
+            queue[parentName] = [];
+        }
+        queue[parentName].push(state);
+    }
+
+    function registerState(state) {
+        // Wrap a new object around the state so we can store our private details easily.
+        state = avalon.mix(state, {
+            self: state,
+            resolve: state.resolve || {},
+            toString: function() {
+                return this.name;
+            }
+        });
+
+        var name = state.name;
+        if (avalon.type(name) !== "string" || name.indexOf('@') >= 0)
+            throw new Error("State must have a valid name");
+        if (states.hasOwnProperty(name))
+            throw new Error("State '" + name + "'' is already defined");
+
+        // 得到它的父点,如 "aaa.bbb.ccc" --> "aaa.bbb"
+        var parentName = (name.indexOf(".") !== -1) ? name.substring(0, name.lastIndexOf('.'))
+                : (avalon.type(state.parent) == "string") ? state.parent
+                : '';
+
+        //构建一个树
+        if (parentName && !states[parentName]) {
+            return queueState(parentName, state.self);
+        }
+
+//        for (var key in stateBuilder) {
+//            if (isFunction(stateBuilder[key]))
+//                state[key] = stateBuilder[key](state, stateBuilder.$delegates[key]);
+//        }
+//        states[name] = state;
+//
+//        // Register the state in the global state list and with $urlRouter if necessary.
+//        if (!state[abstractKey] && state.url) {
+//            $urlRouterProvider.when(state.url, ['$match', '$stateParams', function($match, $stateParams) {
+//                    if ($state.$current.navigable != state || !equalForKeys($match, $stateParams)) {
+//                        $state.transitionTo(state, $match, {location: false});
+//                    }
+//                }]);
+//        }
+//
+//        // Register any queued children
+//        if (queue[name]) {
+//            for (var i = 0; i < queue[name].length; i++) {
+//                registerState(queue[name][i]);
+//            }
+//        }
+
+        return state;
+    }
+
+
+
+    //================================
+    function Router() {
+        this.routingTable = {};
+    }
+    function parseQuery(path) {
+        var array = path.split("#"), query = {}, tail = array[1];
+        if (tail) {
+            var index = tail.indexOf("?");
+            if (index > 0) {
+                var seg = tail.slice(index + 1).split('&'),
+                        len = seg.length, i = 0, s;
+                for (; i < len; i++) {
+                    if (!seg[i]) {
+                        continue;
+                    }
+                    s = seg[i].split('=');
+                    query[decodeURIComponent(s[0])] = decodeURIComponent(s[1]);
+                }
+            }
+        }
+        return {
+            pathname: array[0],
+            query: query
+        };
+    }
+
+
+    var optionalParam = /\((.*?)\)/g
+    var namedParam = /(\(\?)?:\w+/g
+    var splatParam = /\*\w+/g
+    var escapeRegExp = /[\-{}\[\]+?.,\\\^$|#\s]/g
+    Router.prototype = {
+        error: function(callback) {
+            this.errorback = callback
+        },
+        _pathToRegExp: function(path, params) {
+            path = path.replace(escapeRegExp, '\\$&')
+                    .replace(optionalParam, '(?:$1)?')
+                    .replace(namedParam, function(match, optional) {
+                        params.push(match.slice(1))
+                        return optional ? match : '([^/?]+)'
+                    })
+                    .replace(splatParam, '([^?]*?)');
+            return new RegExp('^' + path + '(?:\\?([\\s\\S]*))?$')
+        },
+        //添加一个路由规则
+        add: function(method, path, callback, subRoute) {
+            var array = this.routingTable[method]
+            if (!array) {
+                array = this.routingTable[method] = []
+            }
+            var regexp = path, params = []
+            if (avalon.type(path) !== "regexp") {
+                regexp = this._pathToRegExp(regexp, params)
+            }
+            array.push({
+                value: callback,
+                regexp: regexp,
+                params: params,
+                subRoute: !!subRoute
+            })
+        },
+        routeWithQuery: function(method, path) {
+            var parsedUrl = parseQuery(path)
+            return this.route(method, parsedUrl.pathname, parsedUrl.query);
+        },
+        _extractParameters: function(route, path, query) {
+            var array = route.regexp.exec(path) || []
+            array = array.slice(1)
+            var args = [], params = {}
+            var n = route.params.length
+            for (var i = 0; i < n; i++) {
+                if (typeof array[i] === "string") {
+                    args[i] = decodeURIComponent(array[i])
+                } else {
+                    args[i] = void 0
+                }
+                args[ route.params[i] || i  ] = args[i]
+            }
+            return {
+                query: query,
+                value: route.value,
+                args: args,
+                params: params,
+                path: path
+            }
+        },
+        route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
+            path = path.trim()
+            var array = this.routingTable[method] || [], ret = [], first = true
+            for (var i = 0, el; el = array[i++]; ) {
+                if (el.regexp.test(path)) {
+                    var obj = this._extractParameters(el, path, query)
+                    if (first) {
+                        ret.push(obj)
+                        first = false
+                    } else if (el.subRoute) {
+                        ret.push(obj)
+                    }
+                }
+            }
+            return ret
+        },
+        getLastPath: function() {
+            return getCookie("msLastPath")
+        },
+        setLastPath: function(path) {
+            setCookie("msLastPath", path)
+        },
+        navigate: function(url) {//传入一个URL，触发预定义的回调
+            var match = this.routeWithQuery("GET", url)
+            if (match.length) {
+                for (var i = 0, el; el = match[i++]; ) {
+                    var fn = el.value;
+                    if (typeof fn === "function") {
+                        fn.apply(el, el.args);
+                    }
+                }
+            } else if (typeof this.errorback === "function") {
+                this.errorback(url)
+            }
+        }
+    };
+    Router.prototype.getLatelyPath = Router.prototype.getLastPath
+    Router.prototype.setLatelyPath = Router.prototype.setLastPath
+    "get,put,delete,post".replace(avalon.rword, function(method) {
+        return  Router.prototype[method] = function(path, fn) {
+            return this.add(method.toUpperCase(), path, fn)
+        }
+    })
+    function supportLocalStorage() {
+        try {
+            return 'localStorage' in window && window['localStorage'] !== null;
+        } catch (e) {
+            return false;
+        }
+    }
+    if (supportLocalStorage()) {
+        Router.prototype.getLatelyPath = function() {
+            return localStorage.getItem("msLastPath")
+        }
+        Router.prototype.setLatelyPath = function(path) {
+            localStorage.setItem("msLastPath", path)
+        }
+    }
+
+    function escapeCookie(value) {
+        return String(value).replace(/[,;"\\=\s%]/g, function(character) {
+            return encodeURIComponent(character);
+        });
+    }
+    function setCookie(key, value) {
+        var date = new Date();//将date设置为10天以后的时间 
+        date.setTime(date.getTime() + 60 * 60 * 24);
+        document.cookie = escapeCookie(key) + '=' + escapeCookie(value) + ";expires=" + date.toGMTString()
+    }
+    function getCookie(name) {
+        var result = {};
+        if (document.cookie !== '') {
+            var cookies = document.cookie.split('; ')
+            for (var i = 0, l = cookies.length; i < l; i++) {
+                var item = cookies[i].split('=');
+                result[decodeURIComponent(item[0])] = decodeURIComponent(item[1]);
+            }
+        }
+        return name ? result[name] : result
+    }
+
+    avalon.router = new Router
 
     return avalon
 })
@@ -306,4 +557,51 @@ define(["avalon"], function(avalon) {
  •响应式 - 瑶姐
  •手势和动画 - 中文
  •ui - 司徒
+ <div ui-view></div> 
+ $stateProvider.state("home", {
+ template: "<h1>HELLO!</h1>"
+ })
+ </pre>
+ 
+ 
+ <pre>
+ $stateProvider.state("home", {
+ views: {
+ "": {
+ template: "<h1>HELLO!</h1>"
+ }
+ }    
+ })
+ </pre>         
+ <div ui-view="main"></div>
+ </pre> 
+ <pre>
+ $stateProvider.state("home", {
+ views: {
+ "main": {
+ template: "<h1>HELLO!</h1>"
+ }
+ }    
+ }) 
+ <pre>
+ <div ui-view></div>
+ <div ui-view="chart"></div> 
+ <div ui-view="data"></div> 
+ </pre>
+ 
+ <pre>
+ $stateProvider.state("home", {
+ views: {
+ "": {
+ template: "<h1>HELLO!</h1>"
+ },
+ "chart": {
+ template: "<chart_thing/>"
+ },
+ "data": {
+ template: "<data_thing/>"
+ }
+ }    
+ })
+ </pre>
  */
