@@ -201,14 +201,6 @@ define(["avalon"], function(avalon) {
 
         },
         fireRouteChange: function(hash) {
-            var vms = avalon.vmodels
-            for (var i in vms) {
-                var v = vms[i]
-                if (v && v.$events && v.$events.routeChangeStart) {
-                    v.$fire("routeChangeStart", hash)
-                    break;
-                }
-            }
             var router = avalon.router
             if (router && router.navigate) {
                 router.setLatelyPath(hash)
