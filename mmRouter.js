@@ -127,7 +127,7 @@ define(["mmHistory"], function() {
                     match.callback.apply(match, match.args)
                 }
                 if (element) {
-                    if (match.templateUrl || match.templateUrl === "") {
+                    if (match.templateUrl ) {
                         url = get(match, "templateUrl")
                         if (match.templates[url]) {
                             match.template = match.templates[url]
