@@ -17,6 +17,9 @@
                         document.body.appendChild(div)
                     }
                 }
+                avalon.router.get("/", {
+                    template: "<div>首页</div>"
+                })
                 avalon.router.get("/aaa/:aaa", {
                     template: "<h1>xxxx</h1>",
                     callback: function(a) {
@@ -54,16 +57,52 @@
         <div ms-controller="test">
             <div ms-view></div>
             <ul>
-                <li><a href="#!/aaa/123">1111</li>
-                <li><a href="#!/bbb">2222</li>
-                <li><a href="#!/ccc">3333</li>
+                <li><a href="#!/aaa/123">1111</a></li>
+                <li><a href="#!/bbb">2222</a></li>
+                <li><a href="#!/ccc">3333</a></li>
             </ul>
 
-            <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 
-            <a href="data:text/html;base64, PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==">chrome</a>
-            <a href="java	script:alert('XSS');">IE67chrome</a>
-            <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
-            <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
+            <table>
+                <table class="table-doc">
+                    <tr>
+                        <th>名字</th><th nowrap >默认值</th><th>说明</th>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="center">配置参数</td>
+                    </tr>
+                    <tr>
+                        <td>view</td><td>""</td> <td>容器的名字, ms-view="name"中的name</td>
+                    </tr>
+                    <tr>  
+                        <td>element</td><td></td> <td>容器元素,即ms-view所定义的元素节点</td> 
+                    </tr>
+                    <tr>   
+                        <td>template</td> <td></td><td>字符串或函数，如果是函数会将入路由的参数与将路由对象作为this,
+                            最后返回容器要添加的HTML模板</td> 
+                    </tr>
+                    <tr>   
+                        <td>templateUrl</td>  <td></td><td>字符串或函数，如果是函数会将入路由的参数与将路由对象作为this，
+                            最后将返回一个URL地址，框架通过它得到template。template会缓存到路由对象上</td> 
+                    </tr>
+                    <tr>   
+                        <td>regexp</td> <td></td> <td>路由规则对应的正则</td> 
+                    </tr>
+                    <tr>   
+                        <td>path</td> <td></td> <td>地址中被配匹的部分</td>  
+                    </tr>
+                    <tr>   
+                        <td>args</td> <td>[]</td><td>抽取路由规则中的参数名对应的实际值放在这里</td> 
+                    </tr>
+                    <tr>   
+                        <td>params</td><td>{}</td> <td>将路由规则中的参数名与对应的实际值 以键值对形式 构成一个对象</td> 
+                    </tr>
+                    <tr>   
+                        <td>callback(params)</td> <td></td><td> 当模板插入后，执行的回调函数，参数为args，值为路由对象</td> 
+                    </tr>
+                    <tr>   
+                        <td>query</td> <td>{}</td><td> 地址栏上的query组成的对象</td> 
+                    </tr>
+                </table>
         </div>
 
     </body>

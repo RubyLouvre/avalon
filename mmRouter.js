@@ -107,19 +107,29 @@ define(["mmHistory"], function() {
             var match = this.routeWithQuery("GET", url)
             if (match) {
                 var element = match.element = avalon.views[match.view]
+                if (!element) {//如果还没有扫描到，需要手动扫描
+                    var all = document.getElementsByTagName("*")
+                    for (var i = 0, node; node = all[i++]; ) {
+                        if (node.getAttribute("ms-view") === match.view) {
+                            match.element = element = node
+                            break
+                        }
+                    }
+                }
+                function get(match, name) {
+                    return typeof match[name] === "function" ? match[name].apply(match, match.args) : match[name]
+                }
                 function callback() {
                     if (match.template) {
-                        avalon.innerHTML(element, match.template)
+                        avalon.innerHTML(element, get(match, "template"))
                     }
                     match.callback.apply(match, match.args)
                 }
                 if (element) {
-                    if (match.template) {
+                    if (match.template || match.template === "") {
                         callback()
-                    } else if (match.templateUrl) {
-                        var request = typeof match.templateUrl === "function" ?
-                                match.templateUrl.call(match, match.args) : match.templateUrl
-                        avalon.require("text!" + request, function(template) {
+                    } else if (match.templateUrl || match.templateUrl === "") {
+                        avalon.require("text!" + get(match, "templateUrl"), function(template) {
                             match.template = template
                             callback()
                         })
@@ -127,11 +137,14 @@ define(["mmHistory"], function() {
                 } else {
                     match.callback.apply(match, match.args)
                 }
+
+
             } else if (typeof this.errorback === "function") {
                 this.errorback(url)
             }
         }
-    };
+    }
+
     Router.prototype.getLatelyPath = Router.prototype.getLastPath
     Router.prototype.setLatelyPath = Router.prototype.setLastPath
     "get,put,delete,post".replace(avalon.rword, function(method) {
