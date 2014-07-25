@@ -1,9 +1,9 @@
 define(["avalon"], function(avalon) {
-    var views = {}
+   avalon.views = {}
     avalon.bindingHandlers.view = function(data, vmodels) {
         var elem = data.element
         if (avalon.contains(document.body, elem)) {
-            views[data.value] = elem
+            avalon.views[data.value] = elem
         }
         data.evaluator = avalon.noop
     }

@@ -59,6 +59,7 @@ define(["mmHistory"], function() {
             } : {}
             obj.regexp = regexp
             obj.params = params
+            obj.view = typeof obj.view === "string" ? obj.view : ""
             array.push(obj)
         },
         routeWithQuery: function(method, path) {
@@ -78,13 +79,12 @@ define(["mmHistory"], function() {
                 }
                 params[ route.params[i] || i  ] = args[i]
             }
-            return {
+            return avalon.mix({}, route, {
                 query: query,
-                callback: route.callback,
                 args: args,
                 params: params,
                 path: path
-            }
+            })
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
@@ -105,6 +105,10 @@ define(["mmHistory"], function() {
         navigate: function(url) {//传入一个URL，触发预定义的回调
             var match = this.routeWithQuery("GET", url)
             if (match) {
+                var element = match.element = avalon.views[match.view]
+                if (match.template && element) {
+                    avalon.innerHTML(element, match.template)
+                }
                 if (typeof match.callback === "function") {
                     match.callback.apply(match, match.args);
                 }

@@ -17,10 +17,12 @@
                         document.body.appendChild(div)
                     }
                 }
-                avalon.router.get("/aaa/:aaa", function(a) {
-                    console.log(this)
-                    avalon.log(this.path + "==================")
-                    //  model.currPath = this.path
+                avalon.router.get("/aaa/:aaa", {
+                    template: "<h1>xxxx</h1>",
+                    callback: function(a) {
+                        console.log(this)
+                        avalon.log(this.path + "==================")
+                    }
                 })
                 avalon.router.get("/bbb", function(a) {
                     avalon.log(this.path + "==================")
