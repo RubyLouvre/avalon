@@ -1,5 +1,5 @@
 //==================================================
-// avalon.mobile 1.3.2 2014.7.11，mobile 注意： 只能用于IE10及高版本的标准浏览器
+// avalon.mobile 1.3.2 2014.7.25，mobile 注意： 只能用于IE10及高版本的标准浏览器
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -2444,7 +2444,9 @@
                     }
                     if (supportMutationEvents) {
                         elem.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this && !this.msRetain) {
+                            if (e.target === this && !this.msRetain &&
+                                    //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
+                                    (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
                                 offTree()
                             }
                         })

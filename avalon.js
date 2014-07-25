@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.2 2014.7.11
+ avalon 1.3.2 2014.7.25
  ==================================================*/
 (function(DOC) {
     var prefix = "ms-"
@@ -3003,7 +3003,9 @@
                     }
                     if (supportMutationEvents) {
                         elem.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this && !this.msRetain) {
+                            if (e.target === this && !this.msRetain &&
+                                    //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
+                                    (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
                                 offTree()
                             }
                         })
