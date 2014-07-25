@@ -21,9 +21,8 @@ define(["mmHistory"], function() {
         return {
             pathname: array[0],
             query: query
-        };
+        }
     }
-
 
     var optionalParam = /\((.*?)\)/g
     var namedParam = /(\(\?)?:\w+/g
@@ -89,13 +88,12 @@ define(["mmHistory"], function() {
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
-            var array = this.routingTable[method] || [], ret = []
+            var array = this.routingTable[method] || []
             for (var i = 0, el; el = array[i++]; ) {
                 if (el.regexp.test(path)) {
                     return this._extractParameters(el, path, query)
                 }
             }
-            return ret
         },
         getLastPath: function() {
             return getCookie("msLastPath")
@@ -137,8 +135,6 @@ define(["mmHistory"], function() {
                 } else {
                     match.callback.apply(match, match.args)
                 }
-
-
             } else if (typeof this.errorback === "function") {
                 this.errorback(url)
             }
@@ -179,15 +175,8 @@ define(["mmHistory"], function() {
         document.cookie = escapeCookie(key) + '=' + escapeCookie(value) + ";expires=" + date.toGMTString()
     }
     function getCookie(name) {
-        var result = {};
-        if (document.cookie !== '') {
-            var cookies = document.cookie.split('; ')
-            for (var i = 0, l = cookies.length; i < l; i++) {
-                var item = cookies[i].split('=')
-                result[decodeURIComponent(item[0])] = decodeURIComponent(item[1]);
-            }
-        }
-        return name ? result[name] : result
+        var m = String(document.cookie).match(new RegExp('(?:^| )' + name + '(?:(?:=([^;]*))|;|$)')) || ["", ""]
+        return decodeURIComponent(m[1])
     }
 
     avalon.router = new Router
