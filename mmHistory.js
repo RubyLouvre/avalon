@@ -1,5 +1,5 @@
 define(["avalon"], function(avalon) {
-   avalon.views = {}
+    avalon.views = {}
     avalon.bindingHandlers.view = function(data, vmodels) {
         var elem = data.element
         if (avalon.contains(document.body, elem)) {
@@ -190,12 +190,11 @@ define(["avalon"], function(avalon) {
             if (this.html5Mode) {
                 this.fireRouteChange(this.getPath() || "/")
             } else {
-                if (this.rootpath === location.href.replace(/\/$/, "")) {
-                    return this.fireRouteChange("/")
-                }
                 var hash = this.getHash()
                 if (hash) {
                     return this.fireRouteChange(hash)
+                } else {
+                    return this.fireRouteChange("/")
                 }
             }
 
@@ -204,7 +203,7 @@ define(["avalon"], function(avalon) {
             var router = avalon.router
             if (router && router.navigate) {
                 router.setLatelyPath(hash)
-                router.navigate("/" + hash)
+                router.navigate(hash == "/" ? hash : "/" + hash)
             }
             if (this.options.fireAnchor) {
                 scrollToAnchorId(hash)
@@ -217,7 +216,7 @@ define(["avalon"], function(avalon) {
             clearInterval(this.checkUrl)
             History.started = false
         },
-        _updateLocation: function(hash) {
+        updateLocation: function(hash) {
             if (this.monitorMode === "popstate") {
                 var path = this.rootpath + hash
                 history.pushState({path: path}, document.title, path)
@@ -232,7 +231,7 @@ define(["avalon"], function(avalon) {
     //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
 
     var rurl = /^([\w\d]+):\/\/([\w\d\-_]+(?:\.[\w\d\-_]+)*)/
-    //当用户点击页面的链接时，如果链接是指向当前网站并且以"#/"或"#!/"开头，那么触发_updateLocation方法
+    //当用户点击页面的链接时，如果链接是指向当前网站并且以"#/"或"#!/"开头，那么触发updateLocation方法
     avalon.bind(document, "click", function(event) {
         var defaultPrevented = "defaultPrevented" in event ? event['defaultPrevented'] : event.returnValue === false
         if (defaultPrevented || event.ctrlKey || event.metaKey || event.which === 2)
@@ -254,7 +253,7 @@ define(["avalon"], function(avalon) {
             var hash = avalon.history._getHash(path)
             if (hash !== "") {
                 event.preventDefault()
-                avalon.history._updateLocation(hash)
+                avalon.history.updateLocation(hash)
                 return false
             }
         }
