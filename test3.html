@@ -24,14 +24,19 @@
                         avalon.log(this.path + "==================")
                     }
                 })
-                avalon.router.get("/bbb", function(a) {
-                    avalon.log(this.path + "==================")
-                    //  model.currPath = this.path
+                avalon.router.get("/bbb", {
+                    template: "<h1>555555</h1>",
+                    callback: function() {
+                        avalon.log(this.path + "==================")
+                    }
                 })
-                avalon.router.get("/ccc", function(a) {
-                    avalon.log(this.path + "==================")
-                    //   model.currPath = this.path
+                avalon.router.get("/ccc", {
+                    templateUrl: "template1.html",
+                    callback: function() {
+                        avalon.log(this.path + "==================")
+                    }
                 })
+
 
                 avalon.history.start({basepath: "/avalon/"})
                 avalon.define("test", function(vm) {

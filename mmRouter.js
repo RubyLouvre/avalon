@@ -59,6 +59,7 @@ define(["mmHistory"], function() {
             } : {}
             obj.regexp = regexp
             obj.params = params
+            obj.callback = obj.callback || avalon.noop
             obj.view = typeof obj.view === "string" ? obj.view : ""
             array.push(obj)
         },
@@ -79,7 +80,7 @@ define(["mmHistory"], function() {
                 }
                 params[ route.params[i] || i  ] = args[i]
             }
-            return avalon.mix({}, route, {
+            return avalon.mix(route, {
                 query: query,
                 args: args,
                 params: params,
@@ -106,11 +107,25 @@ define(["mmHistory"], function() {
             var match = this.routeWithQuery("GET", url)
             if (match) {
                 var element = match.element = avalon.views[match.view]
-                if (match.template && element) {
-                    avalon.innerHTML(element, match.template)
+                function callback() {
+                    if (match.template) {
+                        avalon.innerHTML(element, match.template)
+                    }
+                    match.callback.apply(match, match.args)
                 }
-                if (typeof match.callback === "function") {
-                    match.callback.apply(match, match.args);
+                if (element) {
+                    if (match.template) {
+                        callback()
+                    } else if (match.templateUrl) {
+                        var request = typeof match.templateUrl === "function" ?
+                                match.templateUrl.call(match, match.args) : match.templateUrl
+                        avalon.require("text!" + request, function(template) {
+                            match.template = template
+                            callback()
+                        })
+                    }
+                } else {
+                    match.callback.apply(match, match.args)
                 }
             } else if (typeof this.errorback === "function") {
                 this.errorback(url)
@@ -142,12 +157,12 @@ define(["mmHistory"], function() {
 
     function escapeCookie(value) {
         return String(value).replace(/[,;"\\=\s%]/g, function(character) {
-            return encodeURIComponent(character);
+            return encodeURIComponent(character)
         });
     }
     function setCookie(key, value) {
-        var date = new Date();//将date设置为10天以后的时间 
-        date.setTime(date.getTime() + 60 * 60 * 24);
+        var date = new Date()//将date设置为10天以后的时间 
+        date.setTime(date.getTime() + 60 * 60 * 24)
         document.cookie = escapeCookie(key) + '=' + escapeCookie(value) + ";expires=" + date.toGMTString()
     }
     function getCookie(name) {
@@ -155,7 +170,7 @@ define(["mmHistory"], function() {
         if (document.cookie !== '') {
             var cookies = document.cookie.split('; ')
             for (var i = 0, l = cookies.length; i < l; i++) {
-                var item = cookies[i].split('=');
+                var item = cookies[i].split('=')
                 result[decodeURIComponent(item[0])] = decodeURIComponent(item[1]);
             }
         }
