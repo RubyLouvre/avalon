@@ -44,7 +44,7 @@ define(["mmHistory"], function() {
             return new RegExp('^' + path + '(?:\\?([\\s\\S]*))?$')
         },
         //添加一个路由规则
-        add: function(method, path, callback, subRoute) {
+        add: function(method, path, callback) {
             var array = this.routingTable[method]
             if (!array) {
                 array = this.routingTable[method] = []
@@ -53,12 +53,13 @@ define(["mmHistory"], function() {
             if (avalon.type(path) !== "regexp") {
                 regexp = this._pathToRegExp(regexp, params)
             }
-            array.push({
-                value: callback,
-                regexp: regexp,
-                params: params,
-                subRoute: !!subRoute
-            })
+            var obj = avalon.isPlainObject(callback) ? callback :
+                    avalon.type(callback) === "function" ? {
+                callback: callback
+            } : {}
+            obj.regexp = regexp
+            obj.params = params
+            array.push(obj)
         },
         routeWithQuery: function(method, path) {
             var parsedUrl = parseQuery(path)
@@ -75,11 +76,11 @@ define(["mmHistory"], function() {
                 } else {
                     args[i] = void 0
                 }
-                args[ route.params[i] || i  ] = args[i]
+                params[ route.params[i] || i  ] = args[i]
             }
             return {
                 query: query,
-                value: route.value,
+                callback: route.callback,
                 args: args,
                 params: params,
                 path: path
@@ -87,16 +88,10 @@ define(["mmHistory"], function() {
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
-            var array = this.routingTable[method] || [], ret = [], first = true
+            var array = this.routingTable[method] || [], ret = []
             for (var i = 0, el; el = array[i++]; ) {
                 if (el.regexp.test(path)) {
-                    var obj = this._extractParameters(el, path, query)
-                    if (first) {
-                        ret.push(obj)
-                        first = false
-                    } else if (el.subRoute) {
-                        ret.push(obj)
-                    }
+                    return this._extractParameters(el, path, query)
                 }
             }
             return ret
@@ -109,12 +104,9 @@ define(["mmHistory"], function() {
         },
         navigate: function(url) {//传入一个URL，触发预定义的回调
             var match = this.routeWithQuery("GET", url)
-            if (match.length) {
-                for (var i = 0, el; el = match[i++]; ) {
-                    var fn = el.value;
-                    if (typeof fn === "function") {
-                        fn.apply(el, el.args);
-                    }
+            if (match) {
+                if (typeof match.callback === "function") {
+                    match.callback.apply(match, match.args);
                 }
             } else if (typeof this.errorback === "function") {
                 this.errorback(url)
@@ -167,6 +159,6 @@ define(["mmHistory"], function() {
     }
 
     avalon.router = new Router
-    
+
     return avalon
 })
