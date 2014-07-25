@@ -81,13 +81,12 @@ define(["mmHistory"], function() {
                 }
                 params[ route.names[i] || i  ] = args[i]
             }
-            var a = avalon.mix(route, {
+            return avalon.mix(route, {
                 query: query,
                 args: args,
                 params: params,
                 path: path
             })
-            return a
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
@@ -105,7 +104,7 @@ define(["mmHistory"], function() {
             setCookie("msLastPath", path)
         },
         navigate: function(url) {//传入一个URL，触发预定义的回调
-            // routeWithQuery --> router --> _extractParameters
+            // routeWithQuery --> route --> _extractParameters
             var match = this.routeWithQuery("GET", url)
             if (match) {
                 var element = match.element = avalon.views[match.view]
@@ -129,7 +128,7 @@ define(["mmHistory"], function() {
                 }
                 if (element) {
                     if (match.templateUrl || match.templateUrl === "") {
-                        var url = get(match, "templateUrl")
+                        url = get(match, "templateUrl")
                         if (match.templates[url]) {
                             match.template = match.templates[url]
                             callback()
