@@ -3005,7 +3005,7 @@
                         elem.addEventListener("DOMNodeRemoved", function(e) {
                             if (e.target === this && !this.msRetain &&
                                     //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                    (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
+                                            (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
                                 offTree()
                             }
                         })
@@ -3186,9 +3186,13 @@
         }
         el.dispatchEvent(event)
     }
-    function onTree() { //disabled状态下改动不触发inout事件
+    function onTree() { //disabled状态下改动不触发input事件
         if (!this.disabled && this.oldValue !== this.value) {
-            W3CFire(this, "input")
+            if (W3C) {
+                W3CFire(this, "input")
+            } else {
+                this.fireEvent("onchange")
+            }
         }
     }
 
@@ -3218,17 +3222,17 @@
             W3CFire(this, "input")
         }
     }
-    if (Object.getOwnPropertyNames) { //屏蔽IE8
-        try {
-            var inputProto = HTMLInputElement.prototype
-            var oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
-            Object.defineProperty(inputProto, "value", {
-                set: newSetter
-            })
-        } catch (e) {
-            launch = launchImpl
-        }
+    try {
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto)//故意引发IE6-8等浏览器报错
+        var oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
+        Object.defineProperty(inputProto, "value", {
+            set: newSetter
+        })
+    } catch (e) {
+        launch = launchImpl
     }
+
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
 
