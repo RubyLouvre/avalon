@@ -48,6 +48,22 @@
                 })
                 avalon.scan()
             })
+
+            var adjustIframe = function(id, end) {
+                var iframe = document.getElementById(id), time = 0, end = end || 30, intervalID
+                if (iframe) {
+                    function callback() {
+                        time = time + 1
+                        if (time == end) {
+                            clearInterval(intervalID)
+                        }
+                        var idoc = iframe.contentWindow && iframe.contentWindow.document || iframe.contentDocument;
+                        var iheight = Math.max(idoc.body.scrollHeight, idoc.documentElement.scrollHeight); //取得其高
+                        iframe.style.height = iheight + "px";
+                    }
+                    intervalID = setInterval(callback, 50)
+                }
+            }
         </script>
 
     </head>
