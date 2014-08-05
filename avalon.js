@@ -1182,7 +1182,7 @@
         try {
             data = data === "true" ? true :
                     data === "false" ? false :
-                    data === "null" ? null : +data + "" === data ? +data : rbrace.test(data) ? parseJSON(data) : data
+                    data === "null" ? null : +data + "" === data ? +data : rbrace.test(data) ? avalon.parseJSON(data) : data
         } catch (e) {
         }
         return data
@@ -1192,7 +1192,7 @@
             rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
             rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
             rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
-    var parseJSON = window.JSON ? JSON.parse : function(data) {
+    avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
         if (typeof data === "string") {
             data = data.trim();
             if (data) {
