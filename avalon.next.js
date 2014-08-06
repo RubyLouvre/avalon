@@ -325,7 +325,8 @@
             log("warning: " + id + " 已经存在于avalon.vmodels中")
         }
         var scope = {
-            $watch: noop
+            $events: {},
+            $watch: Observable.$watch
         }
         factory(scope) //得到所有定义
         scope.$id = id
@@ -352,7 +353,8 @@
                 if (name.charAt(0) === "$" && !$watchOne[name]) {
                     return
                 }
-                Observable.$fire.call(host, name, host[name], oldValue)
+
+                host.$fire(name, host[name], oldValue)
                 notifySubscribers(host.$accessors, name)
             }
 
@@ -374,19 +376,32 @@
             scope.$skipArray = []
         }
         scope.$skipArray.opposite = arguments[2] || {}
-        for (var key in scope) {
-            var val = scope.key
+        avalon.each(scope, function(key, val) {
             //优先处理计算属性
-            if (val && typeof val === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+            if (val && (typeof val) === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+                var userGet = val.get
+                var userSet = val.set || noop
                 Object.defineProperty(scope, key, {
                     enumerable: true,
                     configurable: true,
-                    get: val.get,
-                    set: val.set || noop
+                    get: userGet,
+                    set: function(newValue) {
+                        var oldValue = userGet.call(this)
+                        userSet.call(this, newValue)
+                        newValue = userGet()
+                        if (oldValue !== newValue) {
+                            Object.getNotifier(this).notify({
+                                type: "update",
+                                object: this,
+                                name: key,
+                                oldValue: oldValue
+                            })
+                        }
+                    }
                 })
             }
-        }
-        scope.$events = {}
+        })
+        scope.$events = scope.$events || {}
         scope.$id = generateID()
         scope.$accessors = {}
         scope[subscribers] = []
@@ -418,6 +433,9 @@
             }
         })
         Object.observe(scope, observeCallback)
+//        for (var i = 0, a, el; el = computed[i++]; ) {
+//            a = scope[el]
+//        }
         return scope
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
@@ -432,24 +450,7 @@
         }
     }
 
-    function safeFire(a, b, c, d) {
-        if (a.$events) {
-            Observable.$fire.call(a, b, c, d)
-        }
-    }
 
-    function descriptorFactory(obj) {
-        var descriptors = {}
-        for (var i in obj) {
-            descriptors[i] = {
-                get: obj[i],
-                set: obj[i],
-                enumerable: true,
-                configurable: true
-            }
-        }
-        return descriptors
-    }
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
@@ -1220,9 +1221,7 @@
     /*通知依赖于这个访问器的订阅者更新自身*/
     function notifySubscribers(accessor, subscribers) {
         var list = accessor[subscribers]
-        console.log(list)
         if (list && list.length) {
-
             var args = aslice.call(arguments, 2)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element

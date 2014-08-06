@@ -8,20 +8,33 @@
         <script>
             var a = avalon.define("test", function(vm) {
                 vm.aaa = 111111111
-                vm.$watch("aaa", function(){
-                    console.log("=================")
+                vm.lastName = "ddd"
+                vm.firstName = "ddd"
+                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
+                    set: function(val) {//里面必须用this指向scope，不能使用scope
+                        var array = (val || "").split(" ");
+                        this.firstName = array[0] || "";
+                        this.lastName = array[1] || "";
+                    },
+                    get: function() {
+                        return this.firstName + " " + this.lastName;
+                    }
+                }
+
+                vm.$watch("aaa", function() {
+                    avalon.log("=================")
                 })
             })
-       
+  
             setTimeout(function() {
-                console.log("发生变化了 ")
-                a.aaa = 333333
 
+                a.aaa = "新值"
+                a.fullName = "newValue 54545"
             }, 2000)
         </script>
     </head>
     <body ms-controller="test">
-
-        {{aaa}}
+        <div>{{fullName}}</div>
+        {{aaa}} {{lastName}}
     </body>
 </html>
