@@ -2,7 +2,7 @@
 // 这是avalon的第三版，使用最激进大胆的新API构进，以期这先行研究让avalon领先于世界！
 // 之前的avalon是在动态执行时收集依赖,而次世代avalon是通过静态编译获取依赖关系
 // 之前的avalon通过劫持内部set,get函数实现对视图的同步，VM与M是分开的，次世代avalon是直接在原对象上修改，
-// 通过Object.observe监听用户行为进行视图同步
+// 通过Object.observe(chrome36可以直接使用)监听用户行为进行视图同步
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -337,12 +337,11 @@
             if (description.type === "update") {
                 var host = description.object
                 var name = description.name
-                var value = host[name]
                 var oldValue = description.oldValue
-                if (typeof value === "function") {
+                if (typeof oldValue === "function") {
                     return
                 }
-                if (value && value.nodeType) {
+                if (oldValue && oldValue.nodeType) {
                     return
                 }
                 var $skipArray = host.$skipArray
@@ -353,7 +352,8 @@
                 if (name.charAt(0) === "$" && !$watchOne[name]) {
                     return
                 }
-                notifySubscribers(host.$accessors, name) 
+                Observable.$fire.call(host, name, host[name], oldValue)
+                notifySubscribers(host.$accessors, name)
             }
 
         })
@@ -376,6 +376,7 @@
         scope.$skipArray.opposite = arguments[2] || {}
         for (var key in scope) {
             var val = scope.key
+            //优先处理计算属性
             if (val && typeof val === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                 Object.defineProperty(scope, key, {
                     enumerable: true,
@@ -385,33 +386,6 @@
                 })
             }
         }
-        Object.observe(scope, observeCallback)
-
-//        var vmodel = {} //要返回的对象
-//        model = model || {} //放置$model上的属性
-//        var accessingProperties = {} //监控属性
-//        var normalProperties = {} //普通属性
-//        var computedProperties = [] //计算属性
-//        var watchProperties = arguments[2] || {} //强制要监听的属性
-//        var skipArray = scope.$skipArray //要忽略监控的属性
-//        for (var i = 0, name; name = skipProperties[i++]; ) {
-//            delete scope[name]
-//            normalProperties[name] = true
-//        }
-//        if (Array.isArray(skipArray)) {
-//            for (var i = 0, name; name = skipArray[i++]; ) {
-//                normalProperties[name] = true
-//            }
-//        }
-//        for (var i in scope) {
-//            accessorFactory(i, scope[i], model, normalProperties, accessingProperties, computedProperties, watchProperties)
-//        }
-//        vmodel = Object.defineProperties(vmodel, descriptorFactory(accessingProperties)) //生成一个空的ViewModel
-//        for (var name in normalProperties) {
-//            vmodel[name] = normalProperties[name]
-//        }
-//        watchProperties.vmodel = vmodel
-//        vmodel.$model = model
         scope.$events = {}
         scope.$id = generateID()
         scope.$accessors = {}
@@ -419,7 +393,31 @@
         for (var i in Observable) {
             scope[i] = Observable[i]
         }
-
+        Object.defineProperties(scope, {
+            "$model": {
+                enumerable: false,
+                configurable: false,
+                get: function() {
+                    var obj = {}
+                    for (var i in this) {
+                        if (skipProperties.indexOf(i) === -1) {
+                            obj[i] = this[i]
+                        }
+                    }
+                    return obj
+                },
+                set: noop
+            },
+            "hasOwnProperty": {
+                value: function(name) {
+                    return name in scope.$model
+                },
+                writable: false,
+                enumerable: false,
+                configurable: true
+            }
+        })
+        Object.observe(scope, observeCallback)
         return scope
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
@@ -1177,7 +1175,7 @@
 
     function registerSubscriber(data, val) {
         for (var i = 0, el; el = data.deps[i++]; ) {
-      
+
             var scope = el[0]
             var prop = el[1]
             var obj = scope.$accessors
@@ -1222,9 +1220,9 @@
     /*通知依赖于这个访问器的订阅者更新自身*/
     function notifySubscribers(accessor, subscribers) {
         var list = accessor[subscribers]
-          console.log(list)
+        console.log(list)
         if (list && list.length) {
-          
+
             var args = aslice.call(arguments, 2)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
@@ -2988,7 +2986,6 @@
     var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
-
     var filters = avalon.filters = {
         uppercase: function(str) {
             return str.toUpperCase()
