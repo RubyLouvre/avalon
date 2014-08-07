@@ -378,13 +378,12 @@
         scope.$skipArray.opposite = arguments[2] || {}
         avalon.each(scope, function(key, val) {
             if (!isObservable(key, val, scope.$skipArray)) {
-                return
+                return //过滤所有非监控属性
             }
-            //优先处理计算属性
-            if (Array.isArray(val)) {
+            if (Array.isArray(val)) { //将数组转换为监控数组
                 scope[key] = Collection(val)
             } else if (val && (typeof val) === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
-                var userGet = val.get
+                var userGet = val.get // 将计算属性转为真正的访问器属性,并重写set方法
                 var userSet = val.set || noop
                 Object.defineProperty(scope, key, {
                     enumerable: true,
@@ -442,7 +441,6 @@
         return scope
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
-
 
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
