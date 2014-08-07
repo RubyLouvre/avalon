@@ -339,28 +339,28 @@
                 var host = description.object
                 var name = description.name
                 var oldValue = description.oldValue
-                if (typeof oldValue === "function") {
+                if (!isObservable(name, oldValue, host.$skipArray)) {
                     return
                 }
-                if (oldValue && oldValue.nodeType) {
-                    return
-                }
-                var $skipArray = host.$skipArray
-                var $watchOne = $skipArray.opposite
-                if ($skipArray.indexOf(name) !== -1) {
-                    return
-                }
-                if (name.charAt(0) === "$" && !$watchOne[name]) {
-                    return
-                }
-
                 host.$fire(name, host[name], oldValue)
                 notifySubscribers(host.$accessors, name)
             }
 
         })
     }
-
+    function isObservable(name, value, $skipArray) {
+        if (typeof value === "function" || (value && value.nodeType)) {
+            return false
+        }
+        var $watchOne = $skipArray.opposite
+        if ($skipArray.indexOf(name) !== -1) {
+            return false
+        }
+        if (name && name[0] === "$" && !$watchOne[name]) {
+            return false
+        }
+        return true
+    }
     function modelFactory(scope) {
         if (Array.isArray(scope)) {
             var arr = scope.concat() //原数组的作为新生成的监控数组的$model而存在
@@ -377,8 +377,13 @@
         }
         scope.$skipArray.opposite = arguments[2] || {}
         avalon.each(scope, function(key, val) {
+            if (!isObservable(key, val, scope.$skipArray)) {
+                return
+            }
             //优先处理计算属性
-            if (val && (typeof val) === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+            if (Array.isArray(val)) {
+                scope[key] = Collection(val)
+            } else if (val && (typeof val) === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                 var userGet = val.get
                 var userSet = val.set || noop
                 Object.defineProperty(scope, key, {
@@ -416,7 +421,8 @@
                     var obj = {}
                     for (var i in this) {
                         if (skipProperties.indexOf(i) === -1) {
-                            obj[i] = this[i]
+                            var val = this[i]
+                            obj[i] = (Array.isArray(val) && val.$model) ? val.$model : val
                         }
                     }
                     return obj
@@ -1161,16 +1167,28 @@
      *                         依赖收集与触发                             *
      **********************************************************************/
 
-    function registerSubscriber(data, val) {
+    function registerSubscriber(data) {
         for (var i = 0, el; el = data.deps[i++]; ) {
-
             var scope = el[0]
             var prop = el[1]
             var obj = scope.$accessors
             var arr = obj[prop] || (obj[prop] = [])
             avalon.Array.ensure(arr, data)
         }
-        data.handler(data.evaluator.apply(0, data.args), data.element, data)
+        try {
+            data.handler(data.evaluator.apply(0, data.args), data.element, data)
+        } catch (e) {
+            delete data.evaluator
+            delete data.deps
+            if (data.nodeType === 3) {
+                if (kernel.commentInterpolate) {
+                    data.element.replaceChild(DOC.createComment(data.value), data.node)
+                } else {
+                    data.node.data = openTag + data.value + closeTag
+                }
+            }
+            log("warning:evaluator of [" + data.value + "] throws error!")
+        }
 //        Registry[expose] = data //暴光此函数,方便collectSubscribers收集
 //        avalon.openComputedCollect = true
 //        var fn = data.evaluator
@@ -1206,10 +1224,10 @@
         }
     }
     /*通知依赖于这个访问器的订阅者更新自身*/
-    function notifySubscribers(accessor, subscribers) {
-        var list = accessor[subscribers]
+    function notifySubscribers(accessor, name) {
+        var list = Array.isArray(accessor) ? accessor[subscribers] : accessor.$accessors[name]
         if (list && list.length) {
-            var args = aslice.call(arguments, 2)
+            var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
