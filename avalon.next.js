@@ -389,7 +389,7 @@
                         var oldValue = userGet.call(this)
                         userSet.call(this, newValue)
                         newValue = userGet()
-                        if (oldValue !== newValue) {
+                        if (!Object.is(oldValue, newValue)) {
                             Object.getNotifier(this).notify({
                                 type: "update",
                                 object: this,
@@ -433,22 +433,9 @@
             }
         })
         Object.observe(scope, observeCallback)
-//        for (var i = 0, a, el; el = computed[i++]; ) {
-//            a = scope[el]
-//        }
         return scope
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
-
-    var isEqual = Object.is || function(v1, v2) {
-        if (v1 === 0 && v2 === 0) {
-            return 1 / v1 === 1 / v2
-        } else if (v1 !== v1) {
-            return v2 !== v2
-        } else {
-            return v1 === v2;
-        }
-    }
 
 
 
@@ -1723,7 +1710,6 @@
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
-            console.log(data)
             registerSubscriber(data)
         }
     }
