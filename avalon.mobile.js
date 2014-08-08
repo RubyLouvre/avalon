@@ -1896,7 +1896,7 @@
                     //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
                     var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
                     avalon.nextTick(function() {
-                        scanTemplate(el.innerText || el.innerHTML)
+                        scanTemplate(el.value || el.innerText || el.innerHTML)
                     })
                 }
             } else {

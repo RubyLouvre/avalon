@@ -2437,7 +2437,7 @@
                             }
                         }
                         avalon.nextTick(function() {
-                            scanTemplate(el.fixIE78 || el.innerText || el.innerHTML)
+                            scanTemplate(el.fixIE78 || el.value || el.innerText || el.innerHTML)
                         })
                     }
                 }
