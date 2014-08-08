@@ -1048,9 +1048,10 @@
         },
         removeClass: function(cls) {
             var node = this[0] || {}
-            if (cls && typeof cls === "string" && typeof node.className === "string") {
+            if (cls && typeof cls === "string" && typeof node.className === "string" && node.className) {
                 var classNames = (cls || "").match(rnospaces) || []
                 var cl = classNames.length
+                console.log(node.className)
                 var set = " " + node.className.match(rnospaces).join(" ") + " "
                 for (var c = 0; c < cl; c++) {
                     set = set.replace(" " + classNames[c] + " ", " ")
