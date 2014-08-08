@@ -1024,7 +1024,7 @@
             node.classList = {
                 node: node,
                 toString: function() {
-                    var node = this.node
+                    var node = this.node//IE6,7元素节点不存在hasAttribute方法
                     return (node.hasAttribute ? node.getAttribute("class") : node.className).split(/\s+/).join(" ")
                 },
                 contains: function(cls) {
@@ -1034,7 +1034,7 @@
                     var node = this.node
                     if (typeof node.className == "string") {
                         node.className = cls
-                    } else {
+                    } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
                         node.setAttribute("class", cls)
                     }
                 },
