@@ -1021,7 +1021,7 @@
     var rclass = /\s+/g
     function getClasses(node) {
         if (node && node.className) {
-            var classes = node.className
+            var classes = node.className//SVG元素是返回一个SVGAnimatedString对象
             if ("baseVal" in classes) {
                 classes = classes.baseVal
             }
@@ -1032,7 +1032,7 @@
     function setClasses(node, cls) {
         if (node && node.nodeType === 1) {
             if ("baseVal" in node.className) {
-                node.className.baseVal = cls
+                node.setAttribute("class", cls)
             } else {
                 node.className = cls
             }
@@ -1049,11 +1049,11 @@
         },
         addClass: function(cls) {
             var node = this[0]
-            if (node && node.nodeType === 1) {
+            if (cls && node && node.nodeType === 1) {
                 var arr = getClasses(node)
-                cls.replace(/\S+/g, function(a) {
-                    if (arr.indexOf(a) === -1) {
-                        arr.push(a)
+                cls.replace(/\S+/g, function(c) {
+                    if (arr.indexOf(c) === -1) {
+                        arr.push(c)
                     }
                 })
                 setClasses(node, arr.join(" "))
@@ -1062,14 +1062,12 @@
         },
         removeClass: function(cls) {
             var node = this[0], classList = getClasses(node)
-            if (node && classList.length) {
-                var classNames = (cls || "").split(rclass)
-                var cl = classNames.length
+            if (cls && classList.length) {
                 var set = " " + classList.join(" ") + " "
-                for (var c = 0; c < cl; c++) {
-                    set = set.replace(" " + classNames[c] + " ", " ")
-                }
-                setClasses(node, set)
+                cls.replace(/\S+/g, function(c) {
+                    set = set.replace(" " + c + " ", " ")
+                })
+                setClasses(node, set.slice(1, set.length - 1))
             }
             return this
         },
