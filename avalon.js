@@ -1030,7 +1030,7 @@
         return []
     }
     function setClasses(node, cls) {
-        if (node && node.className) {
+        if (node && node.nodeType === 1) {
             if ("baseVal" in node.className) {
                 node.className.baseVal = cls
             } else {
