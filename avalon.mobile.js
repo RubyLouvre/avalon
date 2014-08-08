@@ -709,8 +709,19 @@
         })
     }
 
-    var rnospaces = /\S+/g
-
+    "add,remove".replace(rword, function(method) {
+        avalon.fn[method + "Class"] = function(cls) {
+            var el = this[0]
+            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+                cls.replace(/\S+/g, function(c) {
+                    el.classList[method](c)
+                })
+            }
+            return this
+        }
+    })
+    
     avalon.fn.mix({
         hasClass: function(cls) {
             var el = this[0] || {} //IE10+, chrome8+, firefox3.6+, safari5.1+,opera11.5+支持classList,chrome24+,firefox26+支持classList2.0
@@ -719,7 +730,7 @@
         toggleClass: function(value, stateVal) {
             var state = stateVal,
                     className, i = 0
-            var classNames = value.match(rnospaces) || []
+            var classNames = value.split(/\s+/)
             var isBool = typeof stateVal === "boolean"
             var node = this[0] || {}, classList
             if (classList = node.classList) {
@@ -838,18 +849,7 @@
         }
     })
 
-    "add,remove".replace(rword, function(method) {
-        avalon.fn[method + "Class"] = function(cls) {
-            var el = this[0]
-            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
-            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
-                cls.replace(rnospaces, function(c) {
-                    el.classList[method](c)
-                })
-            }
-            return this
-        }
-    })
+
 
     if (root.dataset) {
         avalon.data = function(name, val) {
@@ -2446,7 +2446,7 @@
                         elem.addEventListener("DOMNodeRemoved", function(e) {
                             if (e.target === this && !this.msRetain &&
                                     //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                    (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
+                                            (window.chrome ? this.tagName === "INPUT" && this.relatedNode.nodeType === 1 : 1)) {
                                 offTree()
                             }
                         })

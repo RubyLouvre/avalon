@@ -1018,63 +1018,60 @@
             return match.charAt(1).toUpperCase()
         })
     }
-    var rclass = /\s+/g
-    function getClasses(node) {
-        if (node && node.className) {
-            var classes = node.className//SVG元素是返回一个SVGAnimatedString对象
-            if ("baseVal" in classes) {
-                classes = classes.baseVal
-            }
-            return classes.split(rclass)
-        }
-        return []
-    }
-    function setClasses(node, cls) {
-        if (node && node.nodeType === 1) {
-            if ("baseVal" in node.className) {
-                node.setAttribute("class", cls)
-            } else {
-                node.className = cls
-            }
-        }
-    }
 
+    function ClassList(node) {
+        if (!("classList" in node)) {
+            node.classList = {
+                node: node,
+                toString: function() {
+                    var node = this.node
+                    return (node.hasAttribute ? node.getAttribute("class") : node.className).split(/\s+/).join(" ")
+                },
+                contains: function(cls) {
+                    return (" " + this + " ").indexOf(" " + cls + " ") > -1
+                },
+                _set: function(cls) {
+                    var node = this.node
+                    if (typeof node.className == "string") {
+                        node.className = cls
+                    } else {
+                        node.setAttribute("class", cls)
+                    }
+                },
+                add: function(cls) {
+                    if (!this.contains(cls)) {
+                        this._set(this + " " + cls)
+                    }
+                },
+                remove: function(cls) {
+                    this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+                }
+            }
+        }
+        return node.classList
+    }
+    
+    "add,remove".replace(rword, function(method) {
+        avalon.fn[method + "Class"] = function(cls) {
+            var el = this[0]
+            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+                cls.replace(/\S+/, function(c) {
+                    ClassList(el)[method](c)
+                })
+            }
+            return this
+        }
+    })
     avalon.fn.mix({
         hasClass: function(cls) {
-            var classList = getClasses(this[0])
-            if (classList.length) {
-                return (" " + classList.join(" ") + " ").indexOf(" " + cls + " ") > -1
-            }
-            return false
-        },
-        addClass: function(cls) {
-            var node = this[0]
-            if (cls && node && node.nodeType === 1) {
-                var arr = getClasses(node)
-                cls.replace(/\S+/g, function(c) {
-                    if (arr.indexOf(c) === -1) {
-                        arr.push(c)
-                    }
-                })
-                setClasses(node, arr.join(" "))
-            }
-            return this
-        },
-        removeClass: function(cls) {
-            var node = this[0], classList = getClasses(node)
-            if (cls && classList.length) {
-                var set = " " + classList.join(" ") + " "
-                cls.replace(/\S+/g, function(c) {
-                    set = set.replace(" " + c + " ", " ")
-                })
-                setClasses(node, set.slice(1, set.length - 1))
-            }
-            return this
+            var el = this[0] || {}
+            return el.nodeType === 1 && ClassList(el).contains(cls)
         },
         toggleClass: function(value, stateVal) {
             var state = stateVal,
                     className, i = 0
-            var classNames = value.split(rclass)
+            var classNames = value.split(/\s+/)
             var isBool = typeof stateVal === "boolean"
             while ((className = classNames[i++])) {
                 state = isBool ? state : !this.hasClass(className)
