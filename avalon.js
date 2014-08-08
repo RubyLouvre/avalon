@@ -1018,51 +1018,65 @@
             return match.charAt(1).toUpperCase()
         })
     }
-
-    var rnospaces = /\S+/g
+    var rclass = /\s+/g
+    function getClasses(node) {
+        if (node && node.className) {
+            var classes = node.className
+            if ("baseVal" in classes) {
+                classes = classes.baseVal
+            }
+            return classes.split(rclass)
+        }
+        return []
+    }
+    function setClasses(node, cls) {
+        if (node && node.className) {
+            if ("baseVal" in node.className) {
+                node.className.baseVal = cls
+            } else {
+                node.className = cls
+            }
+        }
+    }
 
     avalon.fn.mix({
         hasClass: function(cls) {
-            var node = this[0] || {}
-            if (node.nodeType === 1 && node.className) {
-                return (" " + node.className + " ").indexOf(" " + cls + " ") > -1
+            var classList = getClasses(this[0])
+            if (classList.length) {
+                return (" " + classList.join(" ") + " ").indexOf(" " + cls + " ") > -1
             }
             return false
         },
         addClass: function(cls) {
-            var node = this[0] || {}
-            if (cls && typeof cls === "string" && node.nodeType === 1) {
-                if (!node.className) {
-                    node.className = cls
-                } else {
-                    var arr = node.className.match(rnospaces)
-                    cls.replace(rnospaces, function(a) {
-                        if (arr.indexOf(a) === -1) {
-                            arr.push(a)
-                        }
-                    })
-                    node.className = arr.join(" ")
-                }
+            var node = this[0]
+            if (node && node.nodeType === 1) {
+                var arr = getClasses(node)
+                cls.replace(/\S+/g, function(a) {
+                    if (arr.indexOf(a) === -1) {
+                        arr.push(a)
+                    }
+                })
+                setClasses(node, arr.join(" "))
             }
             return this
         },
         removeClass: function(cls) {
-            var node = this[0] || {}
-            if (cls && typeof cls === "string" && typeof node.className === "string" && node.className) {
-                var classNames = (cls || "").match(rnospaces) || []
+            var node = this[0], classList = getClasses(node)
+            if (node && classList.length) {
+                var classNames = (cls || "").split(rclass)
                 var cl = classNames.length
-                var set = " " + node.className.match(rnospaces).join(" ") + " "
+                var set = " " + classList.join(" ") + " "
                 for (var c = 0; c < cl; c++) {
                     set = set.replace(" " + classNames[c] + " ", " ")
                 }
-                node.className = set.slice(1, set.length - 1)
+                setClasses(node, set)
             }
             return this
         },
         toggleClass: function(value, stateVal) {
             var state = stateVal,
                     className, i = 0
-            var classNames = value.match(rnospaces) || []
+            var classNames = value.split(rclass)
             var isBool = typeof stateVal === "boolean"
             while ((className = classNames[i++])) {
                 state = isBool ? state : !this.hasClass(className)
