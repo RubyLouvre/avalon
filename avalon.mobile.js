@@ -721,23 +721,19 @@
             return this
         }
     })
-    
+
     avalon.fn.mix({
         hasClass: function(cls) {
             var el = this[0] || {} //IE10+, chrome8+, firefox3.6+, safari5.1+,opera11.5+支持classList,chrome24+,firefox26+支持classList2.0
             return el.nodeType === 1 && el.classList.contains(cls)
         },
         toggleClass: function(value, stateVal) {
-            var state = stateVal,
-                    className, i = 0
+            var className, i = 0
             var classNames = value.split(/\s+/)
             var isBool = typeof stateVal === "boolean"
-            var node = this[0] || {}, classList
-            if (classList = node.classList) {
-                while ((className = classNames[i++])) {
-                    state = isBool ? state : !classList.contains(className)
-                    classList[state ? "add" : "remove"](className)
-                }
+            while ((className = classNames[i++])) {
+                var state = isBool ? stateVal : !this.hasClass(className)
+                this[state ? "addClass" : "removeClass"](className)
             }
             return this
         },

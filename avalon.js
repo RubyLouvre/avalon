@@ -1018,33 +1018,36 @@
             return match.charAt(1).toUpperCase()
         })
     }
-    function setClass(node, cls) {
-        if (typeof node.className == "string") {
-            node.className = cls
-        } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
-            node.setAttribute("class", cls)
+
+    var ClassListMethods = {
+        toString: function() {
+            var node = this.node//IE6,7元素节点不存在hasAttribute方法
+            return (node.hasAttribute ? node.getAttribute("class") : node.className).split(/\s+/).join(" ")
+        },
+        contains: function(cls) {
+            return (" " + this + " ").indexOf(" " + cls + " ") > -1
+        },
+        add: function(cls) {
+            if (!this.contains(cls)) {
+                this._set(this + " " + cls)
+            }
+        },
+        remove: function(cls) {
+            this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+        },
+        _set: function(node, cls) {
+            if (typeof node.className == "string") {
+                node.className = cls
+            } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
+                node.setAttribute("class", cls)
+            }
         }
     }
     function ClassList(node) {
         if (!("classList" in node)) {
-            node.classList = {
-                node: node,
-                toString: function() {
-                    var node = this.node//IE6,7元素节点不存在hasAttribute方法
-                    return (node.hasAttribute ? node.getAttribute("class") : node.className).split(/\s+/).join(" ")
-                },
-                contains: function(cls) {
-                    return (" " + this + " ").indexOf(" " + cls + " ") > -1
-                },
-                add: function(cls) {
-                    if (!this.contains(cls)) {
-                        setClass(this.node, this + " " + cls)
-                    }
-                },
-                remove: function(cls) {
-                    setClass(this.node, (" " + this + " ").replace(" " + cls + " ", " ").trim())
-                }
-            }
+            avalon.mix(node.classList = {
+                node: node
+            }, ClassListMethods)
         }
         return node.classList
     }
@@ -1067,12 +1070,11 @@
             return el.nodeType === 1 && ClassList(el).contains(cls)
         },
         toggleClass: function(value, stateVal) {
-            var state = stateVal,
-                    className, i = 0
+            var className, i = 0
             var classNames = value.split(/\s+/)
             var isBool = typeof stateVal === "boolean"
             while ((className = classNames[i++])) {
-                state = isBool ? state : !this.hasClass(className)
+                var state = isBool ? stateVal : !this.hasClass(className)
                 this[state ? "addClass" : "removeClass"](className)
             }
             return this

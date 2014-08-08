@@ -28,19 +28,16 @@
                 })
             })
             
-            avalon.require("text!aaa.json", function(a){
-                alert(a)
-            })
-            
-            console.log(a.$model)
+          
             setTimeout(function() {
 
                 a.ddd = "新值"
                 a.fullName = "newValue 54545"
             }, 2000)
+            
         </script>
     </head>
-    <body ms-controller="test">
+    <body ms-controller="test" id="aa">
         <div>{{fullName}}</div>
         <input ms-duplex="ddd"/>
         {{ddd}} {{lastName}}
