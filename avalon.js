@@ -1018,7 +1018,13 @@
             return match.charAt(1).toUpperCase()
         })
     }
-
+    function setClass(node, cls) {
+        if (typeof node.className == "string") {
+            node.className = cls
+        } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
+            node.setAttribute("class", cls)
+        }
+    }
     function ClassList(node) {
         if (!("classList" in node)) {
             node.classList = {
@@ -1030,27 +1036,19 @@
                 contains: function(cls) {
                     return (" " + this + " ").indexOf(" " + cls + " ") > -1
                 },
-                _set: function(cls) {
-                    var node = this.node
-                    if (typeof node.className == "string") {
-                        node.className = cls
-                    } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
-                        node.setAttribute("class", cls)
-                    }
-                },
                 add: function(cls) {
                     if (!this.contains(cls)) {
-                        this._set(this + " " + cls)
+                        setClass(this.node, this + " " + cls)
                     }
                 },
                 remove: function(cls) {
-                    this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+                    setClass(this.node, (" " + this + " ").replace(" " + cls + " ", " ").trim())
                 }
             }
         }
         return node.classList
     }
-    
+
     "add,remove".replace(rword, function(method) {
         avalon.fn[method + "Class"] = function(cls) {
             var el = this[0]
