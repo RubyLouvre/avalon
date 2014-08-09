@@ -1035,7 +1035,8 @@
         remove: function(cls) {
             this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
         },
-        _set: function(node, cls) {
+        _set: function(cls) {
+            var node = this.node
             if (typeof node.className == "string") {
                 node.className = cls
             } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
