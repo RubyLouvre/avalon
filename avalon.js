@@ -77,9 +77,7 @@
     }
     avalon.fn = avalon.prototype = avalon.init.prototype
 
-    /*取得目标的类型*/
-
-    avalon.type = function(obj) {
+    avalon.type = function(obj) {//取得目标的类型
         if (obj == null) {
             return String(obj)
         }
@@ -357,7 +355,6 @@
 
 
     /*判定类数组,如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
-
     function isArrayLike(obj) {
         if (obj && typeof obj === "object" && !avalon.isWindow(obj)) {
             var n = obj.length
@@ -493,7 +490,7 @@
     } : function(a) {
         return a
     }
-//循环生成访问器属性需要的setter, getter函数（这里统称为accessor）
+    //循环生成访问器属性需要的setter, getter函数（这里统称为accessor）
     function accessorFactory(name, val, model, normalProperties, accessingProperties, computedProperties, watchProperties) {
         model[name] = val
         // 如果是元素节点 或者 在全局的skipProperties里 或者在当前的$skipArray里
@@ -770,12 +767,12 @@
         }
     }
     var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
-
     for (var i in {
         toString: 1
     }) {
         enumerables = false
     }
+    
     if (!Object.keys) {
         Object.keys = function(obj) { //ecma262v5 15.2.3.14
             var result = []
