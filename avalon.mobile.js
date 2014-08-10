@@ -35,9 +35,23 @@
             console.log(a)
         }
     }
-
+    function oneObject(array, val) {
+        if (typeof array === "string") {
+            array = array.match(rword) || []
+        }
+        var result = {},
+                value = val !== void 0 ? val : 1
+        for (var i = 0, n = array.length; i < n; i++) {
+            result[array[i]] = value
+        }
+        return result
+    }
+    /*生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript*/
+    function generateID() {
+        return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    }
     /*********************************************************************
-     *                 命名空间与工具函数                                 *
+     *                  avalon的静态方法定义区                                   *
      **********************************************************************/
     window.avalon = function(el) { //创建jQuery式的无new 实例化结构
         return new avalon.init(el)
@@ -48,7 +62,7 @@
     avalon.fn = avalon.prototype = avalon.init.prototype
 
     /*取得目标类型*/
-    function getType(obj) { //
+    avalon.type = function(obj) {
         if (obj == null) {
             return String(obj)
         }
@@ -57,13 +71,12 @@
                 class2type[serialize.call(obj)] || "object" :
                 typeof obj
     }
-    avalon.type = getType
+
     avalon.isWindow = function(obj) {
         return rwindow.test(serialize.call(obj))
     }
 
     /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
-
     avalon.isPlainObject = function(obj) {
         return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
     }
@@ -83,7 +96,7 @@
         }
 
         //确保接受方为一个复杂的数据类型
-        if (typeof target !== "object" && getType(target) !== "function") {
+        if (typeof target !== "object" && avalon.type(target) !== "function") {
             target = {}
         }
 
@@ -123,30 +136,6 @@
         return target
     }
 
-    function resetNumber(a, n, end) { //用于模拟slice, splice的效果
-        if ((a === +a) && !(a % 1)) { //如果是整数
-            if (a < 0) { //范围调整为 [-a, a]
-                a = a * -1 >= n ? 0 : a + n
-            } else {
-                a = a > n ? n : a
-            }
-        } else {
-            a = end ? n : 0
-        }
-        return a
-    }
-
-    function oneObject(array, val) {
-        if (typeof array === "string") {
-            array = array.match(rword) || []
-        }
-        var result = {},
-                value = val !== void 0 ? val : 1
-        for (var i = 0, n = array.length; i < n; i++) {
-            result[array[i]] = value
-        }
-        return result
-    }
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -284,10 +273,7 @@
             }
         }
     })
-    /*生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript*/
-    function generateID() {
-        return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    }
+
 
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     function isArrayLike(obj) {
@@ -307,12 +293,78 @@
     avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
         setTimeout(callback, 0)
     }
+    /*********************************************************************
+     *                           DOM 底层补丁                             *
+     **********************************************************************/
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
         }
     }
-
+    function outerHTML() {
+        return new XMLSerializer().serializeToString(this)
+    }
+    function enumerateNode(node, targetNode) {
+        if (node && node.childNodes) {
+            var nodes = node.childNodes
+            for (var i = 0, el; el = nodes[i++]; ) {
+                if (el.tagName) {
+                    var svg = document.createElementNS(svgns,
+                            el.tagName.toLowerCase())
+                    // copy attrs
+                    ap.forEach.call(el.attributes, function(attr) {
+                        svg.setAttribute(attr.name, attr.value)
+                    })
+                    // 递归处理子节点
+                    enumerateNode(el, svg)
+                    targetNode.appendChild(svg)
+                }
+            }
+        }
+    }
+    var svgns = "http://www.w3.org/2000/svg"
+    var svg = document.createElementNS(svgns, "svg")
+    svg.innerHTML = '<Rect width="300" height="100"/>'
+    var supportSVGHTML = svg.firstChild && svg.firstChild.tagName === "rect"
+    if (window.SVGElement && !supportSVGHTML) {
+        Object.defineProperties(SVGElement.prototype, {
+            "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
+                enumerable: true,
+                configurable: true,
+                get: outerHTML,
+                set: function(html) {
+                    var tagName = this.tagName.toLowerCase(),
+                            par = this.parentNode,
+                            frag = avalon.parseHTML(html)
+                    // 操作的svg，直接插入
+                    if (tagName === "svg") {
+                        par.insertBefore(frag, this)
+                        // svg节点的子节点类似
+                    } else {
+                        var newFrag = document.createDocumentFragment()
+                        enumerateNode(frag, newFrag)
+                        par.insertBefore(newFrag, this)
+                    }
+                    par.removeChild(this)
+                }
+            },
+            "innerHTML": {
+                enumerable: true,
+                configurable: true,
+                get: function() {
+                    var s = this.outerHTML
+                    var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
+                    var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
+                    return  s.replace(ropen, "").replace(rclose, "")
+                },
+                set: function(html) {
+                    avalon.clearHTML(this)
+                    var frag = avalon.parseHTML(html)
+                    enumerateNode(frag, this)
+                }
+            }
+        })
+    }
     /*********************************************************************
      *                           modelFactory                              *
      **********************************************************************/
@@ -432,7 +484,7 @@
             return normalProperties[name] = val
         }
         // 此外， 函数也不会产生accessor
-        var valueType = getType(val)
+        var valueType = avalon.type(val)
         if (valueType === "function") {
             return normalProperties[name] = val
         }
@@ -570,9 +622,8 @@
     }
 
     /*********************************************************************
-     *                       配置模块                                   *
+     *                       配置系统                                     *
      **********************************************************************/
-
     function kernel(settings) {
         for (var p in settings) {
             if (!ohasOwn.call(settings, p))
@@ -629,78 +680,16 @@
     avalon.config = kernel
 
     /*********************************************************************
-     *                           DOM API的高级封装                        *
+     *                        avalon的原型方法定义区                        *
      **********************************************************************/
-    function outerHTML() {
-        return new XMLSerializer().serializeToString(this)
-    }
-    function enumerateNode(node, targetNode) {
-        if (node && node.childNodes) {
-            var nodes = node.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.tagName) {
-                    var svg = document.createElementNS(svgns,
-                            el.tagName.toLowerCase())
-                    // copy attrs
-                    ap.forEach.call(el.attributes, function(attr) {
-                        svg.setAttribute(attr.name, attr.value)
-                    })
-                    // 递归处理子节点
-                    enumerateNode(el, svg)
-                    targetNode.appendChild(svg)
-                }
-            }
-        }
-    }
-    var svgns = "http://www.w3.org/2000/svg"
-    var svg = document.createElementNS(svgns, "svg")
-    svg.innerHTML = '<Rect width="300" height="100"/>'
-    var supportSVGHTML = svg.firstChild && svg.firstChild.tagName === "rect"
-    if (window.SVGElement && !supportSVGHTML) {
-        Object.defineProperties(SVGElement.prototype, {
-            "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
-                enumerable: true,
-                configurable: true,
-                get: outerHTML,
-                set: function(html) {
-                    var tagName = this.tagName.toLowerCase(),
-                            par = this.parentNode,
-                            frag = avalon.parseHTML(html)
-                    // 操作的svg，直接插入
-                    if (tagName === "svg") {
-                        par.insertBefore(frag, this)
-                        // svg节点的子节点类似
-                    } else {
-                        var newFrag = document.createDocumentFragment()
-                        enumerateNode(frag, newFrag)
-                        par.insertBefore(newFrag, this)
-                    }
-                    par.removeChild(this)
-                }
-            },
-            "innerHTML": {
-                enumerable: true,
-                configurable: true,
-                get: function() {
-                    var s = this.outerHTML
-                    var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
-                    var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                    return  s.replace(ropen, "").replace(rclose, "")
-                },
-                set: function(html) {
-                    avalon.clearHTML(this)
-                    var frag = avalon.parseHTML(html)
-                    enumerateNode(frag, this)
-                }
-            }
-        })
-    }
-    /*转换为连字符线风格*/
+
+
     function hyphen(target) {
+        //转换为连字符线风格
         return target.replace(/([a-z\d])([A-Z]+)/g, "$1-$2").toLowerCase()
     }
-    /*转换为驼峰风格*/
     function camelize(target) {
+        //转换为驼峰风格
         if (target.indexOf("-") < 0 && target.indexOf("_") < 0) {
             return target //提前判断，提高getStyle等的效率
         }
@@ -896,10 +885,10 @@
         }
     })
 
-
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
     }
+    
     //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
@@ -1109,8 +1098,8 @@
     }
 
     /************************************************************************
-     *                                parseHTML                                 *
-     ****************************************************************************/
+     *              HTML处理(parseHTML, innerHTML, clearHTML)                 *
+     **************************************************************************/
     var rtagName = /<([\w:]+)/,
             //取得其tagName
             rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
@@ -1186,7 +1175,7 @@
         }
     }
     /*********************************************************************
-     *                           Observable                                 *
+     *                        自定义事件系统                                *
      **********************************************************************/
     var Observable = {
         $watch: function(type, callback) {
@@ -1262,7 +1251,7 @@
     }
 
     /*********************************************************************
-     *                         依赖收集与触发                             *
+     *                       依赖调度系统                                 *
      **********************************************************************/
 
     function registerSubscriber(data, val) {
@@ -1589,7 +1578,7 @@
         return tokens
     }
     /*********************************************************************
-     *                          编译模块                                   *
+     *                          编译系统                                   *
      **********************************************************************/
     var keywords =
             // 关键字
@@ -2269,7 +2258,7 @@
             var freturn = true
             try {
                 list = data.getter()
-                if (rcomplextype.test(getType(list))) {
+                if (rcomplextype.test(avalon.type(list))) {
                     freturn = false
                 }
             } catch (e) {
@@ -2802,7 +2791,9 @@
         },
         splice: function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-            a = resetNumber(a, this.length)
+            var len = this.length
+            a = Math.floor(a) || 0
+            a = a < 0 ? Math.max(len + a, 0) : Math.min(a, len)
             var removed = _splice.apply(this.$model, arguments),
                     ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
@@ -2862,7 +2853,7 @@
         },
         set: function(index, val) {
             if (index >= 0) {
-                var valueType = getType(val)
+                var valueType = avalon.type(val)
                 if (val && val.$model) {
                     val = val.$model
                 }
@@ -2912,7 +2903,7 @@
     })
 
     function convert(val) {
-        var type = getType(val)
+        var type = avalon.type(val)
         if (rcomplextype.test(type)) {
             val = val.$id ? val : modelFactory(val, val)
         }
@@ -3322,7 +3313,7 @@
             if (typeof date === "number") {
                 date = new Date(date)
             }
-            if (getType(date) !== "date") {
+            if (avalon.type(date) !== "date") {
                 return
             }
             while (format) {

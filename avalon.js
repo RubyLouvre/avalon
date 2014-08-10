@@ -177,20 +177,14 @@
         return target
     }
 
-    function resetNumber(a, n, end) { //用于模拟slice, splice的效果
-        if ((a === +a) && !(a % 1)) { //如果是整数
-            if (a < 0) {
-                a = a * -1 >= n ? 0 : a + n
-            } else {
-                a = a > n ? n : a
-            }
+    function _number(a, len, end) { //用于模拟slice, splice的效果
+        if (end) {
+            a = a === void 0 ? len : Math.floor(a) || 0
         } else {
-            a = end ? n : 0
+            a = Math.floor(a) || 0
         }
-        return a
+        return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
     }
-
-
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -200,10 +194,10 @@
         slice: W3C ? function(nodes, start, end) {
             return aslice.call(nodes, start, end)
         } : function(nodes, start, end) {
-            var ret = [],
-                    n = nodes.length
-            start = resetNumber(start, n)
-            end = resetNumber(end, n, 1)
+            var ret = []
+            var len = nodes.length
+            start = _number(start, len)
+            end = _number(end, len, true)
             for (var i = start; i < end; ++i) {
                 ret[i - start] = nodes[i]
             }
@@ -351,8 +345,6 @@
             }
         }
     })
-
-
 
     /*判定类数组,如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     function isArrayLike(obj) {
@@ -772,7 +764,7 @@
     }) {
         enumerables = false
     }
-    
+
     if (!Object.keys) {
         Object.keys = function(obj) { //ecma262v5 15.2.3.14
             var result = []
@@ -951,7 +943,6 @@
     /*********************************************************************
      *                           配置系统                                 *
      **********************************************************************/
-
     function kernel(settings) {
         for (var p in settings) {
             if (!ohasOwn.call(settings, p))
@@ -3462,7 +3453,7 @@
         },
         splice: function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-            a = resetNumber(a, this.length)
+            a = _number(a, this.length)
             var removed = _splice.apply(this.$model, arguments),
                     ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
