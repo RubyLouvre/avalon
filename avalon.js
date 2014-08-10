@@ -178,11 +178,10 @@
     }
 
     function _number(a, len, end) { //用于模拟slice, splice的效果
-        if (end) {
-            a = a === void 0 ? len : Math.floor(a) || 0
-        } else {
-            a = Math.floor(a) || 0
+        if (end && a === void 0) {
+            a = len
         }
+        a = Math.floor(a) || 0
         return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
     }
     avalon.mix({
