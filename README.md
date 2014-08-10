@@ -98,3 +98,22 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
     </body>
 </html>
 ```
+<h3>源码内部的模块划分</h3>
+<p>从上至下，依次是</p>
+- 全局变量及方法
+- avalon的静态方法定义区
+- modelFactory
+- javascript 底层补丁  
+- DOM 底层补丁    
+- 配置系统
+- avalon的原型方法定义区
+- HTML处理(parseHTML, innerHTML, clearHTML)  
+- 自定义事件系统
+- 依赖调度系统  
+- 扫描系统
+- 编译系统
+- 绑定处理系统
+- 监控数组
+- 自带过滤器 
+- AMD加载器
+- DOMReady

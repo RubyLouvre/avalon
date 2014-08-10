@@ -8,10 +8,14 @@
  avalon 1.3.2 2014.7.25
  ==================================================*/
 (function(DOC) {
+    /*********************************************************************
+     *                    全局变量及方法                                  *
+     **********************************************************************/
     var prefix = "ms-"
     var expose = new Date - 0
     var subscribers = "$" + expose
-    var window = this || (0, eval)("this") //http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
+    //http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
+    var window = this || (0, eval)("this")
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -35,6 +39,7 @@
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
 
+
     function noop() {
     }
 
@@ -44,8 +49,24 @@
         }
     }
 
+    function oneObject(array, val) {
+        if (typeof array === "string") {
+            array = array.match(rword) || []
+        }
+        var result = {},
+                value = val !== void 0 ? val : 1
+        for (var i = 0, n = array.length; i < n; i++) {
+            result[array[i]] = value
+        }
+        return result
+    }
+
+    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+    function generateID() {
+        return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    }
     /*********************************************************************
-     *                    命名空间与工具函数                               *
+     *                 avalon的静态方法定义区                              *
      **********************************************************************/
     avalon = function(el) { //创建jQuery式的无new 实例化结构
         return new avalon.init(el)
@@ -57,7 +78,8 @@
     avalon.fn = avalon.prototype = avalon.init.prototype
 
     /*取得目标的类型*/
-    function getType(obj) {
+
+    avalon.type = function(obj) {
         if (obj == null) {
             return String(obj)
         }
@@ -66,7 +88,6 @@
                 class2type[serialize.call(obj)] || "object" :
                 typeof obj
     }
-    avalon.type = getType
 
     avalon.isWindow = function(obj) {
         if (!obj)
@@ -84,7 +105,7 @@
     }
     /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
     avalon.isPlainObject = function(obj) {
-        if (getType(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
+        if (avalon.type(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
             return false
         }
         try {
@@ -117,7 +138,7 @@
         }
 
         //确保接受方为一个复杂的数据类型
-        if (typeof target !== "object" && getType(target) !== "function") {
+        if (typeof target !== "object" && avalon.type(target) !== "function") {
             target = {}
         }
 
@@ -171,17 +192,7 @@
         return a
     }
 
-    function oneObject(array, val) {
-        if (typeof array === "string") {
-            array = array.match(rword) || []
-        }
-        var result = {},
-                value = val !== void 0 ? val : 1
-        for (var i = 0, n = array.length; i < n; i++) {
-            result[array[i]] = value
-        }
-        return result
-    }
+
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -343,10 +354,7 @@
         }
     })
 
-    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-    function generateID() {
-        return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    }
+
 
     /*判定类数组,如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 
@@ -435,8 +443,8 @@
         vmodel.$id = generateID()
         vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
-        for (var i in Observable) {
-            var fn = Observable[i]
+        for (var i in Events) {
+            var fn = Events [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
                 fn = fn.bind(vmodel)
             }
@@ -468,7 +476,7 @@
 
     function safeFire(a, b, c, d) {
         if (a.$events) {
-            Observable.$fire.call(a, b, c, d)
+            Events.$fire.call(a, b, c, d)
         }
     }
     var descriptorFactory = W3C ? function(obj) {
@@ -494,7 +502,7 @@
             return normalProperties[name] = val
         }
         // 此外， 函数也不会产生accessor
-        var valueType = getType(val)
+        var valueType = avalon.type(val)
         if (valueType === "function") {
             return normalProperties[name] = val
         }
@@ -753,81 +761,13 @@
         }
     }
     /*********************************************************************
-     *                           ecma262 v5语法补丁                   *
+     *                         javascript 底层补丁                       *
      **********************************************************************/
     if (!"司徒正美".trim) {
         var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         String.prototype.trim = function() {
             return this.replace(rtrim, "")
         }
-    }
-    function outerHTML() {
-        return new XMLSerializer().serializeToString(this)
-    }
-    function enumerateNode(node, targetNode) {
-        if (node && node.childNodes) {
-            var nodes = node.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.tagName) {
-                    var svg = document.createElementNS(svgns,
-                            el.tagName.toLowerCase())
-                    // copy attrs
-                    ap.forEach.call(el.attributes, function(attr) {
-                        svg.setAttribute(attr.name, attr.value)
-                    })
-                    // 递归处理子节点
-                    enumerateNode(el, svg)
-                    targetNode.appendChild(svg)
-                }
-            }
-        }
-    }
-    var svgns = "http://www.w3.org/2000/svg"
-    if (window.SVGElement) {
-        var svg = document.createElementNS(svgns, "svg")
-        svg.innerHTML = '<Rect width="300" height="100"/>'
-        if (!(svg.firstChild && svg.firstChild.tagName === "rect")) {
-            Object.defineProperties(SVGElement.prototype, {
-                "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
-                    enumerable: true,
-                    configurable: true,
-                    get: outerHTML,
-                    set: function(html) {
-                        var tagName = this.tagName.toLowerCase(),
-                                par = this.parentNode,
-                                frag = avalon.parseHTML(html)
-                        // 操作的svg，直接插入
-                        if (tagName === "svg") {
-                            par.insertBefore(frag, this)
-                            // svg节点的子节点类似
-                        } else {
-                            var newFrag = document.createDocumentFragment()
-                            enumerateNode(frag, newFrag)
-                            par.insertBefore(newFrag, this)
-                        }
-                        par.removeChild(this)
-                    }
-                },
-                "innerHTML": {
-                    enumerable: true,
-                    configurable: true,
-                    get: function() {
-                        var s = this.outerHTML
-                        var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
-                        var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                        return  s.replace(ropen, "").replace(rclose, "")
-                    },
-                    set: function(html) {
-                        avalon.clearHTML(this)
-                        var frag = avalon.parseHTML(html)
-                        enumerateNode(frag, this)
-                    }
-                }
-            })
-        }
-    }
-    if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
-        HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
     }
     var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
 
@@ -855,7 +795,7 @@
     }
     if (!Array.isArray) {
         Array.isArray = function(a) {
-            return a && getType(a) === "array"
+            return a && avalon.type(a) === "array"
         }
     }
 
@@ -917,7 +857,9 @@
             every: iterator("", 'if(!_)return false', 'return true')
         })
     }
-
+    /*********************************************************************
+     *                           DOM 底层补丁                             *
+     **********************************************************************/
     function fixContains(a, b) {
         if (b) {
             while ((b = b.parentNode)) {
@@ -928,19 +870,89 @@
         }
         return false;
     }
-    if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+    //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+    if (!root.contains) {
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
         }
     }
-    if (!DOC.contains) { //IE6-11的文档对象没有contains
+    //IE6-11的文档对象没有contains
+    if (!DOC.contains) {
         DOC.contains = function(b) {
             return fixContains(this, b)
         }
     }
+    //IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
+    function outerHTML() {
+        return new XMLSerializer().serializeToString(this)
+    }
+    function enumerateNode(node, targetNode) {
+        if (node && node.childNodes) {
+            var nodes = node.childNodes
+            for (var i = 0, el; el = nodes[i++]; ) {
+                if (el.tagName) {
+                    var svg = document.createElementNS(svgns,
+                            el.tagName.toLowerCase())
+                    ap.forEach.call(el.attributes, function(attr) {
+                        svg.setAttribute(attr.name, attr.value)//复制属性
+                    })
+                    // 递归处理子节点
+                    enumerateNode(el, svg)
+                    targetNode.appendChild(svg)
+                }
+            }
+        }
+    }
+    var svgns = "http://www.w3.org/2000/svg"
+    if (window.SVGElement) {
+        var svg = document.createElementNS(svgns, "svg")
+        svg.innerHTML = '<Rect width="300" height="100"/>'
+        if (!(svg.firstChild && svg.firstChild.tagName === "rect")) {
+            Object.defineProperties(SVGElement.prototype, {
+                "outerHTML": {
+                    enumerable: true,
+                    configurable: true,
+                    get: outerHTML,
+                    set: function(html) {
+                        var tagName = this.tagName.toLowerCase(),
+                                par = this.parentNode,
+                                frag = avalon.parseHTML(html)
+                        // 操作的svg，直接插入
+                        if (tagName === "svg") {
+                            par.insertBefore(frag, this)
+                            // svg节点的子节点类似
+                        } else {
+                            var newFrag = document.createDocumentFragment()
+                            enumerateNode(frag, newFrag)
+                            par.insertBefore(newFrag, this)
+                        }
+                        par.removeChild(this)
+                    }
+                },
+                "innerHTML": {
+                    enumerable: true,
+                    configurable: true,
+                    get: function() {
+                        var s = this.outerHTML
+                        var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
+                        var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
+                        return  s.replace(ropen, "").replace(rclose, "")
+                    },
+                    set: function(html) {
+                        avalon.clearHTML(this)
+                        var frag = avalon.parseHTML(html)
+                        enumerateNode(frag, this)
+                    }
+                }
+            })
+        }
+    }
+    if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
+        HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
+    }
 
     /*********************************************************************
-     *                           配置模块                                  *
+     *                           配置系统                                 *
      **********************************************************************/
 
     function kernel(settings) {
@@ -1001,7 +1013,7 @@
     avalon.config = kernel
 
     /*********************************************************************
-     *                      DOM API的高级封装                           *
+     *                  avalon的原型方法定义区                            *
      **********************************************************************/
 
     function hyphen(target) {
@@ -1042,7 +1054,7 @@
             } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
                 node.setAttribute("class", cls)
             }
-        }
+        }//toggle存在版本差异，因此不使用它
     }
     function ClassList(node) {
         if (!("classList" in node)) {
@@ -1525,7 +1537,7 @@
     }
 
     /************************************************************************
-     *                                parseHTML                              *
+     *            HTML处理(parseHTML, innerHTML, clearHTML)                  *
      ************************************************************************/
     var rtagName = /<([\w:]+)/,
             //取得其tagName
@@ -1613,9 +1625,9 @@
         return node
     }
     /*********************************************************************
-     *                           Observable                              *
+     *                    自定义事件系统                                  *
      **********************************************************************/
-    var Observable = {
+    var Events = {
         $watch: function(type, callback) {
             if (typeof callback === "function") {
                 var callbacks = this.$events[type]
@@ -1694,7 +1706,7 @@
         }
     }
     /*********************************************************************
-     *                           依赖收集与触发                                *
+     *                           依赖调度系统                             *
      **********************************************************************/
 
     function registerSubscriber(data, val) {
@@ -2082,7 +2094,7 @@
         return tokens
     }
     /*********************************************************************
-     *                          编译模块                                  *
+     *                          编译系统                                  *
      **********************************************************************/
 
     var keywords =
@@ -2296,7 +2308,7 @@
     }
     avalon.parseExprProxy = parseExprProxy
     /*********************************************************************
-     *绑定模块（实现“操作数据即操作DOM”的关键，将DOM操作放逐出前端开发人员的视野，让它交由框架自行处理，开发人员专致于业务本身） *                                 *
+     *                     绑定处理系统                                    *
      **********************************************************************/
     var cacheDisplay = oneObject("a,abbr,b,span,strong,em,font,i,kbd", "inline")
     avalon.mix(cacheDisplay, oneObject("div,h1,h2,h3,h4,h5,h6,section,p", "block"))
@@ -2840,7 +2852,7 @@
             var freturn = true
             try {
                 list = data.getter()
-                var xtype = getType(list)
+                var xtype = avalon.type(list)
                 if (xtype == "object" || xtype == "array") {
                     freturn = false
                 }
@@ -3392,8 +3404,8 @@
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
         })
-        for (var i in Observable) {
-            array[i] = Observable[i]
+        for (var i in Events) {
+            array[i] = Events[i]
         }
         avalon.mix(array, CollectionPrototype)
         return array
@@ -3513,7 +3525,7 @@
         },
         set: function(index, val) {
             if (index >= 0) {
-                var valueType = getType(val)
+                var valueType = avalon.type(val)
                 if (val && val.$model) {
                     val = val.$model
                 }
@@ -3731,7 +3743,7 @@
         }
     }
     /*********************************************************************
-     *                  文本绑定里默认可用的过滤器                          *
+     *                             自带过滤器                            *
      **********************************************************************/
     var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
     var raimg = /^<(a|img)\s/i
@@ -3974,7 +3986,7 @@
             if (typeof date === "number") {
                 date = new Date(date)
             }
-            if (getType(date) !== "date") {
+            if (avalon.type(date) !== "date") {
                 return
             }
             while (format) {
@@ -4043,7 +4055,7 @@
         filters.date.locate = locate
     }
     /*********************************************************************
-     *                      AMD Loader                                *
+     *                      AMD加载器                                   *
      **********************************************************************/
 
     var innerRequire
