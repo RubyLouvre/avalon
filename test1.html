@@ -11,7 +11,7 @@
                 vm.lastName = "lastName"
                 vm.firstName = "firstName"
                 vm.ddd = "input"
-                vm.array = [1, 7, 3]
+                vm.array = [1,2,3,4,5,6,7]
                 vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
                     set: function(val) {//里面必须用this指向scope，不能使用scope
                         var array = (val || "").split(" ");
@@ -33,6 +33,7 @@
 
                 a.ddd = "新值"
                 a.fullName = "newValue 54545"
+                a.array.push(88)
             }, 2000)
             
         </script>
@@ -41,5 +42,6 @@
         <div>{{fullName}}</div>
         <input ms-duplex="ddd"/>
         {{ddd}} {{lastName}}
+        <ul><li ms-repeat="array">{{el}}</li></ul>
     </body>
 </html>
