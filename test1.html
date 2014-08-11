@@ -8,9 +8,9 @@
         <script>
             var a = avalon.define("test", function(vm) {
                 vm.aaa = 111111111
-                vm.lastName = "ddd"
-                vm.firstName = "ddd"
-                vm.ddd = "ddd"
+                vm.lastName = "lastName"
+                vm.firstName = "firstName"
+                vm.ddd = "input"
                 vm.array = [1, 7, 3]
                 vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
                     set: function(val) {//里面必须用this指向scope，不能使用scope

@@ -1223,7 +1223,7 @@
     }
     /*通知依赖于这个访问器的订阅者更新自身*/
     function notifySubscribers(accessor, name) {
-        var list = Array.isArray(accessor) ? accessor[subscribers] : accessor.$accessors[name]
+        var list = Array.isArray(accessor) ? accessor[subscribers] : accessor[name]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
