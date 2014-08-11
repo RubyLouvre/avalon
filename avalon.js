@@ -102,18 +102,22 @@
         avalon.isWindow = isWindow
     }
     /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
-    avalon.isPlainObject = function(obj) {
-        if (avalon.type(obj) !== "object" || obj.nodeType || this.isWindow(obj)) {
-            return false
+    avalon.isPlainObject = function(obj, key) {
+        if (!obj || avalon.type(obj) !== "object" || obj.nodeType || avalon.isWindow(obj)) {
+            return false;
         }
-        try {
-            if (obj.constructor && !ohasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-                return false
+        try {//IE内置对象没有constructor
+            if (obj.constructor &&
+                    !ohasOwn.call(obj, "constructor") &&
+                    !ohasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+                return false;
             }
-        } catch (e) {
-            return false
+        } catch (e) {//IE8 9会在这里抛错
+            return false;
         }
-        return true
+        for (key in obj) {
+        }
+        return key === undefined || ohasOwn.call(obj, key);
     }
     if (rnative.test(Object.getPrototypeOf)) {
         avalon.isPlainObject = function(obj) {
@@ -177,10 +181,7 @@
         return target
     }
 
-    function _number(a, len, end) { //用于模拟slice, splice的效果
-        if (end && a === void 0) {
-            a = len
-        }
+    function _number(a, len) { //用于模拟slice, splice的效果
         a = Math.floor(a) || 0
         return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
     }
@@ -195,10 +196,14 @@
         } : function(nodes, start, end) {
             var ret = []
             var len = nodes.length
-            start = _number(start, len)
-            end = _number(end, len, true)
-            for (var i = start; i < end; ++i) {
-                ret[i - start] = nodes[i]
+            if (end === void 0)
+                end = len
+            if (typeof end === "number" && isFinite(end)) {
+                start = _number(start, len)
+                end = _number(end, len)
+                for (var i = start; i < end; ++i) {
+                    ret[i - start] = nodes[i]
+                }
             }
             return ret
         },
@@ -757,28 +762,48 @@
             return this.replace(rtrim, "")
         }
     }
-    var enumerables = "propertyIsEnumerable,isPrototypeOf,hasOwnProperty,toLocaleString,toString,valueOf,constructor".split(",")
-    for (var i in {
-        toString: 1
-    }) {
-        enumerables = false
-    }
-
+    var hasDontEnumBug = !({'toString': null}).propertyIsEnumerable('toString'),
+            hasProtoEnumBug = (function() {
+            }).propertyIsEnumerable('prototype'),
+            dontEnums = [
+                "toString",
+                "toLocaleString",
+                "valueOf",
+                "hasOwnProperty",
+                "isPrototypeOf",
+                "propertyIsEnumerable",
+                "constructor"
+            ],
+            dontEnumsLength = dontEnums.length;
     if (!Object.keys) {
-        Object.keys = function(obj) { //ecma262v5 15.2.3.14
-            var result = []
-            for (var key in obj)
-                if (obj.hasOwnProperty(key)) {
-                    result.push(key)
+        Object.keys = function(object) { //ecma262v5 15.2.3.14
+
+            var isFn = typeof object === "function"
+            var theKeys = [];
+            var skipProto = hasProtoEnumBug && isFn;
+            if (typeof object === "string" || (object && object.callee)) {
+                for (var i = 0; i < object.length; ++i) {
+                    theKeys.push(String(i));
                 }
-            if (enumerables && obj) {
-                for (var i = 0; key = enumerables[i++]; ) {
-                    if (obj.hasOwnProperty(key)) {
-                        result.push(key)
+            } else {
+                for (var name in object) {
+                    if (!(skipProto && name === 'prototype') && ohasOwn.call(object, name)) {
+                        theKeys.push(String(name));
                     }
                 }
             }
-            return result
+
+            if (hasDontEnumBug) {
+                var ctor = object.constructor,
+                        skipConstructor = ctor && ctor.prototype === object;
+                for (var j = 0; j < dontEnumsLength; j++) {
+                    var dontEnum = dontEnums[j];
+                    if (!(skipConstructor && dontEnum === 'constructor') &&  ohasOwn.call(object, dontEnum)) {
+                        theKeys.push(dontEnum);
+                    }
+                }
+            }
+            return theKeys;
         }
     }
     if (!Array.isArray) {
