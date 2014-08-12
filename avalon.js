@@ -1930,10 +1930,25 @@
                     //如果是以指定前缀命名的
                     var type = match[1]
                     var param = match[2] || ""
-                    msData[attr.name] = attr.value
+                    var value = attr.value
+                    var name = attr.name
+                    msData[name] = value
                     if (ons[type]) {
                         param = type
                         type = "on"
+                    } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        type = "disabled"
+                        value = "!(" + value + ")"
+                    }
+                    //吃掉以下几个绑定,用ms-attr-*绑定代替
+                    if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
+                        param = type
+                        type = "attr"
+                        elem.removeAttribute(name)
+                        name = "ms-attr-" + param
+                        elem.setAttribute(name, value)
+                        match = [name]
+                        msData[name] = value
                     }
                     if (typeof bindingHandlers[type] === "function") {
                         var binding = {
@@ -1941,7 +1956,7 @@
                             param: param,
                             element: elem,
                             name: match[0],
-                            value: attr.value,
+                            value: value,
                             priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                         }
                         if (type === "if" && param.indexOf("loop") > -1) {
@@ -2531,15 +2546,15 @@
                 elem.setAttribute(key, String(val))
             }
         },
-        "checked": function(val, elem, data) {
-            var name = data.type;
-            if (name === "enabled") {
-                elem.disabled = !val
-            } else {
-                var propName = name === "readonly" ? "readOnly" : name
-                elem[propName] = !!val
-            }
-        },
+//        "checked": function(val, elem, data) {
+//            var name = data.type;
+//            if (name === "enabled") {
+//                elem.disabled = !val
+//            } else {
+//                var propName = name === "readonly" ? "readOnly" : name
+//                elem[propName] = !!val
+//            }
+//        },
         "repeat": function(method, pos, el) {
             if (method) {
                 var data = this
@@ -2781,10 +2796,10 @@
             data.handlerName = "attr" //handleName用于处理多种绑定共用同一种bindingExecutor的情况
             parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
         },
-        "checked": function(data, vmodels) {
-            data.handlerName = "checked"
-            parseExprProxy(data.value, vmodels, data)
-        },
+//        "checked": function(data, vmodels) {
+//            data.handlerName = "checked"
+//            parseExprProxy(data.value, vmodels, data)
+//        },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
         "class": function(data, vmodels) {
@@ -3064,9 +3079,9 @@
         bindingHandlers[name] = bindingHandlers.repeat
     })
     //============================= boolean preperty binding =======================
-    "disabled,enabled,readonly,selected".replace(rword, function(name) {
-        bindingHandlers[name] = bindingHandlers.checked
-    })
+//    "disabled,enabled,readonly,selected".replace(rword, function(name) {
+//        bindingHandlers[name] = bindingHandlers.checked
+//    })
     bindingHandlers.data = bindingHandlers.text = bindingHandlers.html
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
