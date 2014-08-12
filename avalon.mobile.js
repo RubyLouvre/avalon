@@ -1441,7 +1441,8 @@
     var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll,submit")
 
     function scanAttr(elem, vmodels) {
-        var attributes = elem.attributes
+        //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
+        var attributes = avalon.slice(elem.attributes)
         var bindings = [],
                 msData = {},
                 match
