@@ -3629,9 +3629,47 @@
         }
     }
     //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
-
+    function cloneNode(src) {
+        var target = src.cloneNode(true)
+        if (!W3C) {
+            var srcAll = src.all
+            var destAll = target.getElementsByTagName("*")
+            for (var i = 0, src; src = srcAll[i]; i++) {
+                if (src.nodeType === 1) {
+                    var dest = destAll[i]
+                    var nodeName = src.nodeName
+                    console.log(nodeName)
+                    if (nodeName == "INPUT" && /radio|checkbox/.test(src.type)) {
+                        dest.defaultChecked = dest.checked = src.checked
+                        dest.value = src.value
+                    } else if (nodeName === "OPTION") {
+                        dest.defaultSelected = dest.selected = src.defaultSelected
+                    } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
+                        dest.defaultValue = src.defaultValue
+                    } else if (nodeName.toLowerCase() == nodeName && src.tagUrn == "urn:schemas-microsoft-com:vml") {
+                        var props = {}
+                        console.log(src.outerHTML)
+                        src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
+                            props[prop] = val
+                        }).replace(/(\w+)='([^']+)'/g, function(a, prop, val) {
+                            props[prop] = val
+                        })
+                        dest.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="/g, function(a, prop) {
+                            delete props[prop]
+                        }).replace(/(\w+)='/g, function(a, prop) {
+                            delete props[prop]
+                        })
+                        for (var i in props) {
+                            dest.setAttribute(i, props[i])
+                        }
+                    }
+                }
+            }
+        }
+        return target
+    }
     function shimController(data, transation, spans, proxy) {
-        var tview = data.template.cloneNode(true)
+        var tview = cloneNode(data.template)
         var id = proxy.$id
         var span = tview.firstChild
         if (!data.fastRepeat) {
