@@ -888,7 +888,7 @@
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
     }
-    
+
     //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
@@ -2958,6 +2958,8 @@
             span.appendChild(tview)
         }
         span.setAttribute("ms-controller", id)
+        span.removeAttribute(data.callbackName)
+        span.removeAttribute("data-with-sorted")
         spans.push(span)
         transation.appendChild(span)
         proxy.$outer = data.$outer

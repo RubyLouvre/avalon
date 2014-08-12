@@ -798,7 +798,7 @@
                         skipConstructor = ctor && ctor.prototype === object;
                 for (var j = 0; j < dontEnumsLength; j++) {
                     var dontEnum = dontEnums[j];
-                    if (!(skipConstructor && dontEnum === 'constructor') &&  ohasOwn.call(object, dontEnum)) {
+                    if (!(skipConstructor && dontEnum === 'constructor') && ohasOwn.call(object, dontEnum)) {
                         theKeys.push(dontEnum);
                     }
                 }
@@ -3641,6 +3641,8 @@
             span.appendChild(tview)
         }
         span.setAttribute("ms-controller", id)
+        span.removeAttribute(data.callbackName)
+        span.removeAttribute("data-with-sorted")
         spans.push(span)
         transation.appendChild(span)
         proxy.$outer = data.$outer
