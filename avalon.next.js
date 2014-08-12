@@ -1175,40 +1175,8 @@
             }
             log("warning:evaluator of [" + data.value + "] throws error!")
         }
-//        Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-//        avalon.openComputedCollect = true
-//        var fn = data.evaluator
-//        if (fn) { //如果是求值函数
-//            if (data.type === "duplex") {
-//                data.handler()
-//            } else {
-//                try {
-//                    data.handler(fn.apply(0, data.args), data.element, data)
-//                } catch (e) {
-//                    delete data.evaluator
-//                    if (data.nodeType === 3) {
-//                        if (kernel.commentInterpolate) {
-//                            data.element.replaceChild(DOC.createComment(data.value), data.node)
-//                        } else {
-//                            data.node.data = openTag + data.value + closeTag
-//                        }
-//                    }
-//                    log("warning:evaluator of [" + data.value + "] throws error!")
-//                }
-//            }
-//        } else { //如果是计算属性的accessor
-//            data()
-//        }
-//        avalon.openComputedCollect = false
-//        delete Registry[expose]
     }
-    /*收集依赖于这个访问器的订阅者*/
-    function collectSubscribers(accessor) {
-        if (Registry[expose]) {
-            var list = accessor[subscribers]
-            list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
-        }
-    }
+
     /*通知依赖于这个访问器的订阅者更新自身*/
     function notifySubscribers(accessor, name) {
         var list = Array.isArray(accessor) ? accessor[subscribers] : accessor[name]
@@ -1219,10 +1187,8 @@
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
                     log("debug: remove " + fn.name)
-//                } else if (typeof fn === "function") {
-//                    fn.apply(0, args) //强制重新计算自身
-//                } else if (fn.getter) {
-//                    fn.handler.apply(fn, args) //强制重新计算自身
+                } else if (fn.getter) {
+                    fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
                     fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
                 }
@@ -2150,7 +2116,6 @@
                 parseExprProxy(text, vmodels, data)
             }
         },
-
         "duplex": function(data, vmodels) {
             var elem = data.element,
                     tagName = elem.tagName
@@ -2381,7 +2346,7 @@
     "with,each".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.repeat
     })
-    
+
     bindingHandlers.data = bindingHandlers.text = bindingHandlers.html
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
@@ -2641,6 +2606,7 @@
                 added[i] = convert(arr[i])
             }
             _splice.apply(this, [pos, 0].concat(added))
+
             notifySubscribers(this, "add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
