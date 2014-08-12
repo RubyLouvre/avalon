@@ -19,7 +19,6 @@
     var serialize = oproto.toString
     var ap = Array.prototype
     var aslice = ap.slice
-    var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var head = DOC.head //HEAD元素
     var root = DOC.documentElement
     var hyperspace = DOC.createDocumentFragment()
@@ -48,9 +47,8 @@
         this[0] = this.element = el
     }
     avalon.fn = avalon.prototype = avalon.init.prototype
-
-    /*取得目标类型*/
-    function getType(obj) { //
+    avalon.type = function(obj) {
+        /*取得目标类型*/
         if (obj == null) {
             return String(obj)
         }
@@ -59,7 +57,6 @@
                 class2type[serialize.call(obj)] || "object" :
                 typeof obj
     }
-    avalon.type = getType
     avalon.isWindow = function(obj) {
         return rwindow.test(serialize.call(obj))
     }
@@ -85,7 +82,7 @@
         }
 
         //确保接受方为一个复杂的数据类型
-        if (typeof target !== "object" && getType(target) !== "function") {
+        if (typeof target !== "object" && avalon.type(target) !== "function") {
             target = {}
         }
 
@@ -333,7 +330,6 @@
                 host.$fire(name, host[name], oldValue)
                 notifySubscribers(host.$accessors, name)
             }
-
         })
     }
     function isObservable(name, value, $skipArray) {
@@ -429,7 +425,6 @@
         return scope
     }
     var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
-
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
@@ -560,49 +555,8 @@
             }
         }
     }
-    var svgns = "http://www.w3.org/2000/svg"
-    var svg = document.createElementNS(svgns, "svg")
-    svg.innerHTML = '<Rect width="300" height="100"/>'
-    var supportSVGHTML = svg.firstChild && svg.firstChild.tagName === "rect"
-    if (window.SVGElement && !supportSVGHTML) {
-        Object.defineProperties(SVGElement.prototype, {
-            "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
-                enumerable: true,
-                configurable: true,
-                get: outerHTML,
-                set: function(html) {
-                    var tagName = this.tagName.toLowerCase(),
-                            par = this.parentNode,
-                            frag = avalon.parseHTML(html)
-                    // 操作的svg，直接插入
-                    if (tagName === "svg") {
-                        par.insertBefore(frag, this)
-                        // svg节点的子节点类似
-                    } else {
-                        var newFrag = document.createDocumentFragment()
-                        enumerateNode(frag, newFrag)
-                        par.insertBefore(newFrag, this)
-                    }
-                    par.removeChild(this)
-                }
-            },
-            "innerHTML": {
-                enumerable: true,
-                configurable: true,
-                get: function() {
-                    var s = this.outerHTML
-                    var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
-                    var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                    return  s.replace(ropen, "").replace(rclose, "")
-                },
-                set: function(html) {
-                    avalon.clearHTML(this)
-                    var frag = avalon.parseHTML(html)
-                    enumerateNode(frag, this)
-                }
-            }
-        })
-    }
+  
+
     /*转换为连字符线风格*/
     function hyphen(target) {
         return target.replace(/([a-z\d])([A-Z]+)/g, "$1-$2").toLowerCase()
@@ -2155,7 +2109,7 @@
             var freturn = true
             try {
                 list = data.getter()
-                if (rcomplextype.test(getType(list))) {
+                if (rcomplextype.test(avalon.type(list))) {
                     freturn = false
                 }
             } catch (e) {
@@ -2712,7 +2666,7 @@
         },
         set: function(index, val) {
             if (index >= 0) {
-                var valueType = getType(val)
+                var valueType = avalon.type(val)
                 if (val && val.$model) {
                     val = val.$model
                 }
@@ -2762,7 +2716,7 @@
     })
 
     function convert(val) {
-        var type = getType(val)
+        var type = avalon.type(val)
         if (rcomplextype.test(type)) {
             val = val.$id ? val : modelFactory(val, val)
         }
@@ -3171,7 +3125,7 @@
             if (typeof date === "number") {
                 date = new Date(date)
             }
-            if (getType(date) !== "date") {
+            if (avalon.type(date) !== "date") {
                 return
             }
             while (format) {
