@@ -3666,7 +3666,7 @@
                         }
                     } else if (nodeName === "OBJECT") {
                         if (dest.parentNode) {//IE6-10拷贝子孙元素失败了
-                            dest.outerHTML = src.outerHTML;
+                            dest.outerHTML = src.outerHTML
                         }
                     } else if (nodeName === "OPTION") {
                         dest.defaultSelected = dest.selected = src.defaultSelected
@@ -3689,7 +3689,10 @@
                         for (var i in props) {
                             dest.setAttribute(i, props[i])
                         }
-                        avalon(dest).addClass("vml")
+                        if (dest.currentStyle.behavior !== "url(#default#VML)") {
+                            dest.style.behavior = "url(#default#VML)"
+                            dest.style.display = "inline-block"
+                        }
                     }
                 }
             }

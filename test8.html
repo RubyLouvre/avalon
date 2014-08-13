@@ -6,14 +6,14 @@
 
         <!--        <meta http-equiv="X-UA-Compatible" content="IE=7" />-->
         <script>
-          //  document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
+            document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
 
         </script>
         <script src="avalon.js"></script>
         <style>
             .vml{
                 behavior: url(#default#VML);
-                display: inline-block\0;
+             
             }
         </style>
 
@@ -28,9 +28,7 @@
                 //  alert(el.children)
                 //  vmodel.pp = el.outerHTML
                 var el2 = document.getElementById("sid")
-                var a = document.createCDATASection("aaa")
-                console.log(a)
-                document.body.append(a)
+              
                 setTimeout(function() {
                     // alert(document.body.innerHTML)
                 })
