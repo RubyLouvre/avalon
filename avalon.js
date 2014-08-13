@@ -3697,6 +3697,7 @@
         }
         return target
     }
+    
     function fixVML(node) {
         if (node.currentStyle.behavior !== "url(#default#VML)") {
             node.style.behavior = "url(#default#VML)"
