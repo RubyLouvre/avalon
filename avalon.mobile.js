@@ -1516,7 +1516,8 @@
         }
         if (elem.patchRepeat) {
             elem.patchRepeat()
-            elem.patchRepeat = null
+            elem.patchRepeat = ""
+            elem.removeAttribute("patchRepeat")
         }
     }
 

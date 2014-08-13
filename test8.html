@@ -4,7 +4,7 @@
         <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">     
 
-        <meta http-equiv="X-UA-Compatible" content="IE=7" />
+<!--        <meta http-equiv="X-UA-Compatible" content="IE=7" />-->
         <script>
             document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
 
@@ -13,28 +13,38 @@
         <style>
             .vml{
                 behavior: url(#default#VML);
-                display:inline-block;
-                _zoom:1;
-                width:200px;
-                height:100px;
-         
+                display: inline-block;
             }
 
 
         </style>
 
         <script>
-            avalon.define('test', function(vm){
-                vm.array = [1,2,3,4]
+            var vmodel = avalon.define('test', function(vm) {
+                vm.array = [1, 2, 3, 4]
+                vm.pp = ""
+                vm.ss = ""
             })
-
+            window.onload = function() {
+                var el = document.getElementById("pid")
+                //  alert(el.children)
+                //  vmodel.pp = el.outerHTML
+                var el2 = document.getElementById("sid")
+                
+                setTimeout(function(){
+                   // alert(document.body.innerHTML)
+                })
+                //   vmodel.ss = el2.outerHTML
+            }
         </script>
 
     </head>
     <body ms-controller="test">
+        <p>{{pp}}</p>
+        <p>{{ss}}</p>
         <p><input id="input"></p>
-    <v:rect style='width:120px;height:80px' fillcolor="red" class="vml" ms-repeat="array">
-        <v:fill type="gradient" />
+    <v:rect style='width:200px;height:80px' fillcolor="red" class="vml" ms-repeat="array">
+        <v:fill type="gradient" id="sid" />
     </v:rect>
     <v:oval strokecolor='red' fillcolor=' green ' style="width:400;height:400"/>
     <v:curve style="z-index:1;left:100;position:absolute;top:300" from="0px,0px" to="150px,0px" filled='f' control1="75,150" control2="75,-150"/>
