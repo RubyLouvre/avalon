@@ -1836,6 +1836,7 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
+
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             newVmodel.$events.element = elem
             avalon.bind(elem, "dataavailable", function(e) {
@@ -1845,6 +1846,7 @@
             })
             avalon(elem).removeClass(node.name)
         }
+
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
@@ -3650,6 +3652,46 @@
         return get(elem, ret)
     }
 
+    function fixNode(dest, src) {
+        var nodeName = src.nodeName
+        if (nodeName === "INPUT" && /radio|checkbox/.test(src.type)) {
+            dest.defaultChecked = dest.checked = src.checked
+            if (dest.value !== src.value) {
+                dest.value = src.value//IE67复制后，value从on变成""
+            }
+        } else if (nodeName === "OBJECT") {
+            if (dest.parentNode) {//IE6-10拷贝子孙元素失败了
+                dest.outerHTML = src.outerHTML
+            }
+        } else if (nodeName === "OPTION") {
+            dest.defaultSelected = dest.selected = src.defaultSelected
+        } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
+            dest.defaultValue = src.defaultValue
+        } else if (src.tagUrn === "urn:schemas-microsoft-com:vml") {
+            var props = {}//处理VML元素
+            src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
+                props[prop] = val
+            }).replace(/(\w+)='([^']+)'/g, function(a, prop, val) {
+                props[prop] = val
+            })
+            dest.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="/g, function(a, prop) {
+                delete props[prop]
+            }).replace(/(\w+)='/g, function(a, prop) {
+                delete props[prop]
+            })
+            delete props.urn
+            delete props.implementation
+            for (var i in props) {
+                dest.setAttribute(i, props[i])
+            }
+            if (dest.currentStyle.behavior !== "url(#default#VML)") {
+                dest.style.behavior = "url(#default#VML)"
+                if (dest.currentStyle.display !== "block") {
+                    dest.style.display = "inline-block"
+                }
+            }
+        }
+    }
     function fixCloneNode(src) {
         var target = src.cloneNode(true)
         if (window.VBArray) {//只处理IE
@@ -3657,43 +3699,7 @@
             var destAll = getAll(target)
             for (var k = 0, src; src = srcAll[k]; k++) {
                 if (src.nodeType === 1) {
-                    var dest = destAll[k]
-                    var nodeName = src.nodeName
-                    if (nodeName === "INPUT" && /radio|checkbox/.test(src.type)) {
-                        dest.defaultChecked = dest.checked = src.checked
-                        if (dest.value !== src.value) {
-                            dest.value = src.value//IE67复制后，value从on变成""
-                        }
-                    } else if (nodeName === "OBJECT") {
-                        if (dest.parentNode) {//IE6-10拷贝子孙元素失败了
-                            dest.outerHTML = src.outerHTML
-                        }
-                    } else if (nodeName === "OPTION") {
-                        dest.defaultSelected = dest.selected = src.defaultSelected
-                    } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
-                        dest.defaultValue = src.defaultValue
-                    } else if (nodeName.toLowerCase() == nodeName && src.tagUrn === "urn:schemas-microsoft-com:vml") {
-                        var props = {}//处理VML元素
-                        src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
-                            props[prop] = val
-                        }).replace(/(\w+)='([^']+)'/g, function(a, prop, val) {
-                            props[prop] = val
-                        })
-                        dest.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="/g, function(a, prop) {
-                            delete props[prop]
-                        }).replace(/(\w+)='/g, function(a, prop) {
-                            delete props[prop]
-                        })
-                        delete props.urn
-                        delete props.implementation
-                        for (var i in props) {
-                            dest.setAttribute(i, props[i])
-                        }
-                        if (dest.currentStyle.behavior !== "url(#default#VML)") {
-                            dest.style.behavior = "url(#default#VML)"
-                            dest.style.display = "inline-block"
-                        }
-                    }
+                    fixNode(destAll[k], src)
                 }
             }
         }
