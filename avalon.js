@@ -777,18 +777,16 @@
             dontEnumsLength = dontEnums.length;
     if (!Object.keys) {
         Object.keys = function(object) { //ecma262v5 15.2.3.14
-
-            var isFn = typeof object === "function"
             var theKeys = [];
-            var skipProto = hasProtoEnumBug && isFn;
+            var skipProto = hasProtoEnumBug && typeof object === "function"
             if (typeof object === "string" || (object && object.callee)) {
                 for (var i = 0; i < object.length; ++i) {
-                    theKeys.push(String(i));
+                    theKeys.push(String(i))
                 }
             } else {
                 for (var name in object) {
-                    if (!(skipProto && name === 'prototype') && ohasOwn.call(object, name)) {
-                        theKeys.push(String(name));
+                    if (!(skipProto && name === "prototype") && ohasOwn.call(object, name)) {
+                        theKeys.push(String(name))
                     }
                 }
             }
@@ -797,13 +795,13 @@
                 var ctor = object.constructor,
                         skipConstructor = ctor && ctor.prototype === object;
                 for (var j = 0; j < dontEnumsLength; j++) {
-                    var dontEnum = dontEnums[j];
-                    if (!(skipConstructor && dontEnum === 'constructor') && ohasOwn.call(object, dontEnum)) {
-                        theKeys.push(dontEnum);
+                    var dontEnum = dontEnums[j]
+                    if (!(skipConstructor && dontEnum === "constructor") && ohasOwn.call(object, dontEnum)) {
+                        theKeys.push(dontEnum)
                     }
                 }
             }
-            return theKeys;
+            return theKeys
         }
     }
     if (!Array.isArray) {
