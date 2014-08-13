@@ -3,7 +3,7 @@
     <head>
         <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">     
-<!--               <meta http-equiv="X-UA-Compatible" content="IE=7" />-->
+<!--        <meta http-equiv="X-UA-Compatible" content="IE=7" />-->
         <script>
             document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
         </script>
@@ -13,8 +13,11 @@
         <script>
             var vmodel = avalon.define('test', function(vm) {
                 vm.array = [1, 2, 3, 4]
+                vm.aa = 44444
             })
+            avalon.ready(function() {
 
+            })
         </script>
 
     </head>
@@ -22,9 +25,11 @@
 
         <p>现在avalon只需要添加一行<em>  document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML")</em></p>
         <p>定义好VML所使用的命名空间，然后保证VML元素的localName正确就行了</p>
-    <v:rect style='width:200px;height:80px' fillcolor="red" ms-repeat="array">
+
+    <v:rect style='width:200px;height:80px' fillcolor="red"  id="aaa">
         <v:fill type="gradient" id="sid" />
     </v:rect>
+    <div><p>{{aa}}</p></div>
     <v:oval id=test style="width: 100px; height: 100px" > 
         <v:stroke weight="1px" color="navy"/> 
     </v:oval>

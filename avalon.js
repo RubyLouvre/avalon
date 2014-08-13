@@ -3690,17 +3690,18 @@
                         for (var i in props) {
                             dest.setAttribute(i, props[i])
                         }
-                        if (dest.currentStyle.behavior !== "url(#default#VML)") {
-                            dest.style.behavior = "url(#default#VML)"
-                            if (dest.currentStyle.display !== "block") {
-                                dest.style.display = "inline-block"
-                            }
-                        }
+                        fixVML(dest)
                     }
                 }
             }
         }
         return target
+    }
+    function fixVML(node) {
+        if (node.currentStyle.behavior !== "url(#default#VML)") {
+            node.style.behavior = "url(#default#VML)"
+            node.style.zoom = 1 //hasLayout
+        }
     }
 
     //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
