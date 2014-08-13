@@ -1,0 +1,43 @@
+
+<html >
+    <head>
+        <title>by 司徒正美</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">     
+
+        <meta http-equiv="X-UA-Compatible" content="IE=7" />
+        <script>
+            document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
+
+        </script>
+        <script src="avalon.js"></script>
+        <style>
+            .vml{
+                behavior: url(#default#VML);
+                display:inline-block;
+                _zoom:1;
+                width:200px;
+                height:100px;
+         
+            }
+
+
+        </style>
+
+        <script>
+            avalon.define('test', function(vm){
+                vm.array = [1,2,3,4]
+            })
+
+        </script>
+
+    </head>
+    <body ms-controller="test">
+        <p><input id="input"></p>
+    <v:rect style='width:120px;height:80px' fillcolor="red" class="vml" ms-repeat="array">
+        <v:fill type="gradient" />
+    </v:rect>
+    <v:oval strokecolor='red' fillcolor=' green ' style="width:400;height:400"/>
+    <v:curve style="z-index:1;left:100;position:absolute;top:300" from="0px,0px" to="150px,0px" filled='f' control1="75,150" control2="75,-150"/>
+
+</body>
+</html>
