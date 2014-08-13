@@ -3652,22 +3652,28 @@
 
     function fixCloneNode(src) {
         var target = src.cloneNode(true)
-        if (!W3C) {
+        if (window.VBArray) {//只处理IE
             var srcAll = getAll(src)
             var destAll = getAll(target)
             for (var k = 0, src; src = srcAll[k]; k++) {
                 if (src.nodeType === 1) {
                     var dest = destAll[k]
                     var nodeName = src.nodeName
-                    if (nodeName == "INPUT" && /radio|checkbox/.test(src.type)) {
+                    if (nodeName === "INPUT" && /radio|checkbox/.test(src.type)) {
                         dest.defaultChecked = dest.checked = src.checked
-                        dest.value = src.value
+                        if (dest.value !== src.value) {
+                            dest.value = src.value//IE67复制后，value从on变成""
+                        }
+                    } else if (nodeName === "OBJECT") {
+                        if (dest.parentNode) {//IE6-10拷贝子孙元素失败了
+                            dest.outerHTML = src.outerHTML;
+                        }
                     } else if (nodeName === "OPTION") {
                         dest.defaultSelected = dest.selected = src.defaultSelected
                     } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
                         dest.defaultValue = src.defaultValue
-                    } else if (nodeName.toLowerCase() == nodeName && src.tagUrn == "urn:schemas-microsoft-com:vml") {
-                        var props = {}
+                    } else if (nodeName.toLowerCase() == nodeName && src.tagUrn === "urn:schemas-microsoft-com:vml") {
+                        var props = {}//处理VML元素
                         src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
                             props[prop] = val
                         }).replace(/(\w+)='([^']+)'/g, function(a, prop, val) {
@@ -3683,8 +3689,6 @@
                         for (var i in props) {
                             dest.setAttribute(i, props[i])
                         }
-                       // dest.className += " vml"
-                    
                         avalon(dest).addClass("vml")
                     }
                 }
