@@ -13,7 +13,7 @@
                 vm.ddd = "input"
                 vm.array = [1, 2, 3, 4, 5, 6, 7]
                 vm.notify = function(a) {
-                    avalon.log(a+"-----------")
+                    avalon.log(a + "-----------")
                 }
                 vm.object = {
                     aaa: 1,
@@ -29,6 +29,16 @@
                     get: function() {
                         return this.firstName + " " + this.lastName;
                     }
+                }
+                vm.fn = function() {
+                    vm.object = {
+                       bbb:333,
+                       rrr:555,
+                       444:777
+                    }
+                    setTimeout(function(){
+                        vm.object.rrr = "++++++++++++++"
+                    },2500)
                 }
 
                 vm.$watch("aaa", function() {
@@ -60,5 +70,6 @@
         <div ms-repeat="object" ms-click="notify($key)">
             这是循环体<p>{{$val}}</p>
         </div>
+        <button type="button" ms-click="fn">cccc</button>
     </body>
 </html>

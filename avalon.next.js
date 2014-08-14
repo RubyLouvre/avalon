@@ -325,24 +325,20 @@
                 var host = description.object
                 var name = description.name
                 var oldValue = description.oldValue
+                var newValue = host[name]
                 if (!isObservable(name, oldValue, host.$skipArray)) {
                     return
                 }
                 var type = avalon.type(oldValue)
                 if (type === "array" || type === "object") {
-                    console.log(oldValue)
-                    //   var iterators = type[subscribers] || []
-                    // console.log( host[name])
-//                    var newValue = updateVModel(oldValue, host[name], Array, type)
-//                    var fn = rebindings[newValue.$id]
-//                    fn && fn();
-//                    host.$model[name] = newValue.$model //同步$model
-//                    console.log(newValue)
-
+                    newValue = updateVModel(oldValue, newValue, type)
+                    var fn = rebindings[newValue.$id]
+                    fn && fn()
+                    host.$model[name] = newValue.$model //同步$model
+                } else {
+                    withProxyCount && updateWithProxy(host.$id, name, newValue) //同步循环绑定中的代理VM
                 }
-                //     console.log(withProxyCount + "  " + name)
-                withProxyCount && updateWithProxy(host.$id, name, host[name]) //同步循环绑定中的代理VM
-                host.$fire(name, host[name], oldValue)
+                host.$fire(name, newValue, oldValue)
                 notifySubscribers(host.$accessors, name)
             }
         })
