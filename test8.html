@@ -3,30 +3,44 @@
     <head>
         <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">     
-        <!--        <meta http-equiv="X-UA-Compatible" content="IE=7" />-->
+          <meta http-equiv="X-UA-Compatible" content="IE=7" />
         <script>
-            //  document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
+
+            document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML");
         </script>
         <script src="avalon.js"></script>
         <style>
         </style>
         <script>
-            window.onload = function() {
-                var el = document.getElementById("eee")
-                var attrs = el.attributes
-                for (var i = 0, attr; attr = attrs[i++]; ) {
-                    if (attr.name == "ms-disabled") {
-                        console.log("namefffffffffff")
-                        attr.name = "ms-attr"
-                    }
-                }
-                console.log(attrs)
-            }
+            var vmodel = avalon.define('test', function(vm) {
+                vm.array = [1, 2, 3, 4]
+            })
+
         </script>
 
     </head>
     <body ms-controller="test">
 
-        <div ms-if="aaa" ms-value='ere' ms-disabled='eee' id='eee'></div>
-    </body>
+        <p>现在avalon只需要添加一行<em>  document.namespaces.add("v", "urn:schemas-microsoft-com:vml", "#default#VML")</em></p>
+        <p>定义好VML所使用的命名空间，然后保证VML元素的localName正确就行了</p>
+    <v:rect style='width:200px;height:80px' fillcolor="red" ms-repeat="array">
+        <v:fill type="gradient" id="sid" />
+    </v:rect>
+    <v:oval id=test style="width: 100px; height: 100px" > 
+        <v:stroke weight="1px" color="navy"/> 
+    </v:oval>
+    <v:line strokecolor="red" strokeweight="2" 
+            style="z-index:5;position:absolute;left:233px;top:150px" 
+            from="0,0" to="200,200"/>
+    <v:curve style="z-index:1;left:100;position:absolute;top:300" 
+             from="0px,0px" to="150px,0px" filled='f' control1="75,150" control2="75,-150"/>
+    <v:oval strokecolor="black" fillcolor="white" 
+            style="position:relative;left:9px;top:20px;width:60px;height:60px;z-index:8">
+        <v:shadow on="t" type="single" color="silver" offset="3pt,3pt"></v:shadow>
+    </v:oval>
+    <v:roundrect strokecolor="yellow" fillcolor="white" style="position:relative;left:20;top:5;width:100px;height:40px;z-index:9">
+        <v:shadow on="t" type="single" color="silver" offset="3pt,3pt"></v:shadow>
+        <v:textbox id="memo" style="font-size:10pt;color:green;line-height:18px" inset="1,1,1,1">Hello world!<br>Hello VML!</v:textbox>
+    </v:roundrect>
+</body>
 </html>

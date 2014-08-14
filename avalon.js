@@ -3695,10 +3695,11 @@
         }
         return target
     }
-    
+
     function fixVML(node) {
         if (node.currentStyle.behavior !== "url(#default#VML)") {
             node.style.behavior = "url(#default#VML)"
+            node.style.display = "inline-block"
             node.style.zoom = 1 //hasLayout
         }
     }
