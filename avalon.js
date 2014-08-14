@@ -3671,7 +3671,8 @@
                         dest.defaultSelected = dest.selected = src.defaultSelected
                     } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
                         dest.defaultValue = src.defaultValue
-                    } else if (src.tagUrn === "urn:schemas-microsoft-com:vml") {
+                    } else if (nodeName.toLowerCase() === nodeName && src.localName && src.outerText === "") {
+                        //src.tagUrn === "urn:schemas-microsoft-com:vml"
                         var props = {}//处理VML元素
                         src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
                             props[prop] = val
