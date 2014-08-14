@@ -15,6 +15,9 @@
             var vmodel = avalon.define('test', function(vm) {
                 vm.array = [1, 2, 3, 4]
             })
+            avalon.ready(function(){
+                alert(document.getElementById("ggg").outerText)
+            })
 
         </script>
 
@@ -26,7 +29,7 @@
     <v:rect style='width:200px;height:80px' fillcolor="red" ms-repeat="array">
         <v:fill type="gradient" id="sid" />
     </v:rect>
-    <v:oval id=test style="width: 100px; height: 100px" > 
+    <v:oval  style="width: 100px; height: 100px" id="ggg" > 
         <v:stroke weight="1px" color="navy"/> 
     </v:oval>
     <v:line strokecolor="red" strokeweight="2" 

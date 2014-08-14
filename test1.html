@@ -11,7 +11,15 @@
                 vm.lastName = "lastName"
                 vm.firstName = "firstName"
                 vm.ddd = "input"
-                vm.array = [1,2,3,4,5,6,7]
+                vm.array = [1, 2, 3, 4, 5, 6, 7]
+                vm.notify = function(a) {
+                    avalon.log(a+"-----------")
+                }
+                vm.object = {
+                    aaa: 1,
+                    bbb: 2,
+                    ccc: 3
+                }
                 vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
                     set: function(val) {//里面必须用this指向scope，不能使用scope
                         var array = (val || "").split(" ");
@@ -27,21 +35,30 @@
                     avalon.log("=================")
                 })
             })
-            
-          
-            setTimeout(function() {
 
+
+            setTimeout(function() {
+                console.log("更新")
                 a.ddd = "新值"
                 a.fullName = "newValue 54545"
                 a.array.push(88)
+                a.object.aaa = 9
+//                a.object = {
+//                    xxx: "iiii",
+//                    yyy: "jjjj",
+//                    zzz: "kkkk"
+//                }
             }, 2000)
-            
+
         </script>
     </head>
     <body ms-controller="test" id="aa">
-        <div>{{fullName}}</div>
-        <input ms-duplex="ddd"/>
-        {{ddd}} {{lastName}}
-        <ul><li ms-repeat="array">{{el}}</li></ul>
+        <div>{{fullName}}</div><!--
+           <input ms-duplex="ddd"/>
+           {{ddd}} {{lastName}}
+           <ul><li ms-repeat="array">{{el}}</li></ul>-->
+        <div ms-repeat="object" ms-click="notify($key)">
+            这是循环体<p>{{$val}}</p>
+        </div>
     </body>
 </html>

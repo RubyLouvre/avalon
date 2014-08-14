@@ -37,6 +37,17 @@
         }
     }
 
+    function oneObject(array, val) {
+        if (typeof array === "string") {
+            array = array.match(rword) || []
+        }
+        var result = {},
+                value = val !== void 0 ? val : 1
+        for (var i = 0, n = array.length; i < n; i++) {
+            result[array[i]] = value
+        }
+        return result
+    }
     /*********************************************************************
      *                 命名空间与工具函数                                 *
      **********************************************************************/
@@ -123,17 +134,6 @@
     }
 
 
-    function oneObject(array, val) {
-        if (typeof array === "string") {
-            array = array.match(rword) || []
-        }
-        var result = {},
-                value = val !== void 0 ? val : 1
-        for (var i = 0, n = array.length; i < n; i++) {
-            result[array[i]] = value
-        }
-        return result
-    }
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
@@ -271,6 +271,7 @@
             }
         }
     })
+
     /*生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript*/
     function generateID() {
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -327,6 +328,20 @@
                 if (!isObservable(name, oldValue, host.$skipArray)) {
                     return
                 }
+                var type = avalon.type(oldValue)
+                if (type === "array" || type === "object") {
+                    console.log(oldValue)
+                    //   var iterators = type[subscribers] || []
+                    // console.log( host[name])
+//                    var newValue = updateVModel(oldValue, host[name], Array, type)
+//                    var fn = rebindings[newValue.$id]
+//                    fn && fn();
+//                    host.$model[name] = newValue.$model //同步$model
+//                    console.log(newValue)
+
+                }
+                //     console.log(withProxyCount + "  " + name)
+                withProxyCount && updateWithProxy(host.$id, name, host[name]) //同步循环绑定中的代理VM
                 host.$fire(name, host[name], oldValue)
                 notifySubscribers(host.$accessors, name)
             }
@@ -364,9 +379,8 @@
             if (!isObservable(key, val, scope.$skipArray)) {
                 return //过滤所有非监控属性
             }
-            if (Array.isArray(val)) { //将数组转换为监控数组
-                scope[key] = modelFactory(val)
-            } else if (val && (typeof val) === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
+            var valueType = avalon.type(val)
+            if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                 var userGet = val.get // 将计算属性转为真正的访问器属性,并重写set方法
                 var userSet = val.set || noop
                 Object.defineProperty(scope, key, {
@@ -387,6 +401,8 @@
                         }
                     }
                 })
+            } else if (valueType === "object" || valueType === "array") {
+                scope[key] = modelFactory(val)
             }
         })
         scope.$events = scope.$events || {}
@@ -446,7 +462,7 @@
             }
             var bb = b.concat()
             a.clear()
-            a.push.apply(a, bb)
+            a.pushArray(bb)
             return a
         } else {
             var iterators = a[subscribers] || []
@@ -555,7 +571,7 @@
             }
         }
     }
-  
+
 
     /*转换为连字符线风格*/
     function hyphen(target) {
