@@ -3,6 +3,7 @@
 // 之前的avalon是在动态执行时收集依赖,而次世代avalon是通过静态编译获取依赖关系
 // 之前的avalon通过劫持内部set,get函数实现对视图的同步，VM与M是分开的，次世代avalon是直接在原对象上修改，
 // 通过Object.observe(chrome36可以直接使用)监听用户行为进行视图同步
+// 通过Promise实现avalon.nextTick
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -292,9 +293,12 @@
     }
     avalon.isArrayLike = isArrayLike
     /*视浏览器情况采用最快的异步回调*/
-    avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
-        setTimeout(callback, 0)
+    avalon.nextTick = function(callback) {
+        new Promise(function(resolve) {
+            resolve()
+        }).then(callback)
     }
+
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
@@ -546,27 +550,8 @@
     /*********************************************************************
      *                           DOM API的高级封装                        *
      **********************************************************************/
-    function outerHTML() {
-        return new XMLSerializer().serializeToString(this)
-    }
-    function enumerateNode(node, targetNode) {
-        if (node && node.childNodes) {
-            var nodes = node.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.tagName) {
-                    var svg = document.createElementNS(svgns,
-                            el.tagName.toLowerCase())
-                    // copy attrs
-                    ap.forEach.call(el.attributes, function(attr) {
-                        svg.setAttribute(attr.name, attr.value)
-                    })
-                    // 递归处理子节点
-                    enumerateNode(el, svg)
-                    targetNode.appendChild(svg)
-                }
-            }
-        }
-    }
+
+
 
 
     /*转换为连字符线风格*/
@@ -583,7 +568,18 @@
         })
     }
 
-    var rnospaces = /\S+/g
+    "add,remove".replace(rword, function(method) {
+        avalon.fn[method + "Class"] = function(cls) {
+            var el = this[0]
+            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+                cls.replace(/\S+/g, function(c) {
+                    el.classList[method](c)
+                })
+            }
+            return this
+        }
+    })
 
     avalon.fn.mix({
         hasClass: function(cls) {
@@ -591,12 +587,13 @@
             return el.nodeType === 1 && el.classList.contains(cls)
         },
         toggleClass: function(value, stateVal) {
-            var state = stateVal,
-                    className, i = 0
-            var classNames = value.match(rnospaces) || []
-            var isBool = typeof stateVal === "boolean"
-            var node = this[0] || {}, classList
-            if (classList = node.classList) {
+            var node = this[0]
+            if (node && node.nodeType === 1) {
+                var state = stateVal
+                var i = 0
+                var classNames = value.split(/\s+/)
+                var isBool = typeof stateVal === "boolean"
+                var classList = node.classList, className
                 while ((className = classNames[i++])) {
                     state = isBool ? state : !classList.contains(className)
                     classList[state ? "add" : "remove"](className)
@@ -612,7 +609,7 @@
                 return this[0].getAttribute(name)
             }
         },
-        data: function(name, value) {
+        data: function(name, val) {
             var dataset = this[0].dataset
             switch (arguments.length) {
                 case 2:
@@ -706,20 +703,6 @@
         }
     })
 
-    "add,remove".replace(rword, function(method) {
-        avalon.fn[method + "Class"] = function(cls) {
-            var el = this[0]
-            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
-            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
-                cls.replace(rnospaces, function(c) {
-                    el.classList[method](c)
-                })
-            }
-            return this
-        }
-    })
-
-
     var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 
     function parseData(data) {
@@ -749,7 +732,6 @@
             }
         }
     })
-
 
     function getWindow(node) {
         return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
@@ -1075,11 +1057,10 @@
             return this
         },
         $fire: function(type) {
-            var bubbling = false, broadcast = false
-            if (type.match(/^bubble!(\w+)$/)) {
-                bubbling = type = RegExp.$1
-            } else if (type.match(/^capture!(\w+)$/)) {
-                broadcast = type = RegExp.$1
+            var special
+            if (/^(\w+)!(\w+)$/.test(type)) {
+                special = RegExp.$1
+                type = RegExp.$2
             }
             var events = this.$events
             var callbacks = events[type] || []
@@ -1094,15 +1075,21 @@
             var element = events.element
             if (element) {
                 var detail = [type].concat(args)
-                if (bubbling) {
-                    W3CFire(element, "dataavailable", detail)
-                } else if (broadcast) {
+                if (special === "up") {
+                    if (W3C) {
+                        W3CFire(element, "dataavailable", detail)
+                    } else {
+                        var event = document.createEventObject()
+                        event.detail = detail
+                        element.fireEvent("ondataavailable", event)
+                    }
+                } else if (special === "down") {
                     var alls = []
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
                         if (v && v.$events && v.$events.element) {
                             var node = v.$events.element;
-                            if (avalon.contains(element, node) && element !== node) {
+                            if (avalon.contains(element, node) && element != node) {
                                 alls.push(v)
                             }
                         }
@@ -1110,6 +1097,13 @@
                     alls.forEach(function(v) {
                         v.$fire.apply(v, detail)
                     })
+                } else if (special === "all") {
+                    for (var i in avalon.vmodels) {
+                        var v = avalon.vmodels[i]
+                        if (v !== this) {
+                            v.$fire.apply(v, detail)
+                        }
+                    }
                 }
             }
         }
@@ -2838,8 +2832,6 @@
         }
         return view
     }
-
-
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
     var watchEachOne = oneObject("$index,$first,$last")
 

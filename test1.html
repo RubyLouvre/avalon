@@ -32,13 +32,13 @@
                 }
                 vm.fn = function() {
                     vm.object = {
-                       bbb:333,
-                       rrr:555,
-                       444:777
+                        bbb: 333,
+                        rrr: 555,
+                        444: 777
                     }
-                    setTimeout(function(){
+                    setTimeout(function() {
                         vm.object.rrr = "++++++++++++++"
-                    },2500)
+                    }, 2500)
                 }
 
                 vm.$watch("aaa", function() {
@@ -59,16 +59,22 @@
 //                    zzz: "kkkk"
 //                }
             }, 2000)
-            
-            avalon.ready(function(){
+
+            avalon.ready(function() {
                 var el = document.getElementById("aa")
                 avalon(el).addClass("ddd erew sdfdsf sddfdfd")
             })
 
+            new Promise(function(resolve) {
+                resolve()
+            }).then(function() {
+                console.log("111111111111")
+            })
+            console.log("22222222222")
         </script>
     </head>
     <body ms-controller="test" id="aa">
-        <div>{{fullName}}</div><!--
+        <div ms-click="notify(111)">{{fullName}}</div><!--
            <input ms-duplex="ddd"/>
            {{ddd}} {{lastName}}
            <ul><li ms-repeat="array">{{el}}</li></ul>-->
