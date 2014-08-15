@@ -2882,10 +2882,12 @@
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
         ["$index", "$last", "$first"].forEach(function(prop) {
-            obj[prop][subscribers].length = 0
+            if(obj[prop]){
+                obj[prop].length = 0
+            }
         })
-        if (proxy[name][subscribers]) {
-            proxy[name][subscribers].length = 0;
+        if (proxy[name]) {
+            proxy[name].length = 0;
         }
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
