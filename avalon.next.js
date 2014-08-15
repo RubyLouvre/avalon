@@ -1122,7 +1122,8 @@
             avalon.Array.ensure(arr, data)
         }
         try {
-            data.handler(data.evaluator.apply(0, data.args), data.element, data)
+            var c = data.type === "on" ? data : data.evaluator.apply(0, data.args)
+            data.handler(c, data.element, data)
         } catch (e) {
             delete data.evaluator
             delete data.deps
@@ -1608,13 +1609,12 @@
             var lastIndex = code.lastIndexOf("\nreturn")
             var header = code.slice(0, lastIndex)
             var footer = code.slice(lastIndex)
-            code = header + "\nif(avalon.openComputedCollect) return ;" + footer
+            code = header + "\n" + footer
         } else { //其他绑定
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
         }
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-
             data.evaluator = cacheExprs(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)

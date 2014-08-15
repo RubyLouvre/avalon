@@ -46,18 +46,12 @@
                 })
             })
 
-
             setTimeout(function() {
                 console.log("更新")
                 a.ddd = "新值"
                 a.fullName = "newValue 54545"
                 a.array.push(88)
                 a.object.aaa = 9
-//                a.object = {
-//                    xxx: "iiii",
-//                    yyy: "jjjj",
-//                    zzz: "kkkk"
-//                }
             }, 2000)
 
             avalon.ready(function() {
@@ -65,12 +59,6 @@
                 avalon(el).addClass("ddd erew sdfdsf sddfdfd")
             })
 
-            new Promise(function(resolve) {
-                resolve()
-            }).then(function() {
-                console.log("111111111111")
-            })
-            console.log("22222222222")
         </script>
     </head>
     <body ms-controller="test" id="aa">
