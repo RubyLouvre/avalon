@@ -1455,62 +1455,84 @@
             // ECMA 5 - use strict
             + ",arguments,let,yield"
             + ",undefined"
-    var rrexpstr = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
-    var rsplit = /[^\w$]+/g
-    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    //console.log(rkeywords)
+    var robjectProperty = /([\w\.\_$])\s*\[['"]([^'"]+)['"]\]/
+    //处理注释及字符串
+    var rstringComment = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'/g
+    //处理加减乘除小括号等运算符
+    var roperator = /[^\w\.$]+/g
+    //处理数字
     var rnumber = /\b\d[^,]*/g
-    var rcomma = /^,+|,+$/g
+    //处理最前面或最后面逗号
+    var rcommaOfFirstOrLast = /^,+|,+$/g
+    //处理位于中间的逗号
+    var rcommaInMiddle = /,+/
+    //去掉所有关键字保留字
+    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
     var cacheVars = createCache(512)
-    var getVariables = function(code) {
-        var key = "," + code.trim()
+    var getVariables = function(str) {
+        var key = "," + str.trim()
         if (cacheVars[key]) {
             return cacheVars[key]
         }
-        var match = code
-                .replace(rrexpstr, "")
-                .replace(rsplit, ",")
-                .replace(rkeywords, "")
-                .replace(rnumber, "")
-                .replace(rcomma, "")
-                .split(/^$|,+/)
-        var vars = [],
-                unique = {}
-        for (var i = 0; i < match.length; ++i) {
-            var variable = match[i]
-            if (!unique[variable]) {
-                unique[variable] = vars.push(variable)
+        while (robjectProperty.test(str)) {
+            str = str.replace(robjectProperty, function(match, obj, prop) {
+                return obj + '.' + prop;
+            })
+        }
+        var vars = str.replace(rstringComment, "")
+                .replace(roperator, ",")
+                .replace(rkeywords, ",")
+                .replace(rnumber, ",")
+                .replace(rcommaOfFirstOrLast, "")
+                .split(rcommaInMiddle)
+        return cacheVars(key, new Set(vars))
+    }
+
+    function addDeps(scope, prop, data) {
+        var obj = scope.$accessors
+        if (obj) {
+            var arr = obj[prop] || (obj[prop] = [])
+            avalon.Array.ensure(arr, data)
+        }
+    }
+    function inObject(obj, array) {
+        for (var i = 0, el; el = array[i++]; ) {
+            if (!obj.hasOwnProperty(el)) {
+                return false
+            } else {
+                obj = obj[el]
             }
         }
-        return cacheVars(key, vars)
+        return true
     }
     /*添加赋值语句*/
-    function addAssign(vars, scope, name, duplex, deps) {
+    function addAssign(paths, scope, name, data, uinq) {
         var ret = [],
-                prefix = " = " + name + "."
-        for (var i = vars.length, prop; prop = vars[--i]; ) {
-            if (scope.hasOwnProperty(prop)) {
-                deps.push([scope, prop])
+                prefix = " =" + name + "."
+        paths.forEach(function(path) {
+            var arr = path.split(".")
+            if (uinq["_" + path])
+                return
+            if (inObject(scope, arr)) {
+                uinq["_" + path] = true
+                var prop = arr.shift()
+                addDeps(scope, prop, data)
                 ret.push(prop + prefix + prop)
-                if (duplex === "duplex") {
-                    vars.get = name + "." + prop
+                if (data.type === "duplex") {
+                    uinq.get = name + "." + prop
                 }
-                vars.splice(i, 1)
-            }
-        }
-        return ret
-
-    }
-
-    function uniqVmodels(arr) {
-        var uniq = {}
-        return arr.filter(function(el) {
-            if (!uniq[el.$id]) {
-                uniq[el.$id] = 1
-                return true
+                while (arr.length) {
+                    prop = arr.shift()
+                    scope = scope[prop]
+                    if (scope && typeof scope === "object") {
+                        addDeps(scope, prop, data)
+                    }
+                }
             }
         })
+        return ret
     }
+
 
     /*创建具有一定容量的缓存体*/
     function createCache(maxLength) {
@@ -1531,27 +1553,28 @@
 
     function parseExpr(code, scopes, data, four) {
         var dataType = data.type
-        var deps = data.deps = []
+
         var filters = dataType === "html" || dataType === "text" ? data.filters : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
-        var vars = getVariables(code).concat(),
-                assigns = [],
-                names = [],
-                args = [],
-                prefix = ""
-        //args 是一个对象数组， names 是将要生成的求值函数的参数
-        scopes = uniqVmodels(scopes)
-        for (var i = 0, sn = scopes.length; i < sn; i++) {
-            if (vars.length) {
+        var vars = getVariables(code)
+        var assigns = [] //收集赋值表达式
+        var names = [] 
+        var args = []  //新生成的求值函数的传参 包括所有VM与avalon.filters对象
+        var uniq = {}
+        data.deps = []
+        scopes = new Set(scopes)
+        if (vars.size) {
+            scopes.forEach(function(scope, i) {
                 var name = "vm" + expose + "_" + i
                 names.push(name)
-                args.push(scopes[i])
-                assigns.push.apply(assigns, addAssign(vars, scopes[i], name, four, deps))
-            }
+                args.push(scope)
+                assigns.push.apply(assigns, addAssign(vars, scope, name, data, uniq))
+            })
         }
-        if (!assigns.length && four === "duplex") {
+
+        if (!assigns.length && dataType === "duplex") {
             return
         }
         //---------------args----------------
@@ -1594,7 +1617,7 @@
                     prefix +
                     ";\n\tif(!arguments.length){\n\t\treturn " +
                     code +
-                    "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
+                    "\n\t}\n\t" + (!rduplex.test(code) ? uniq.get : code) +
                     "= vvv;\n} "
             try {
                 fn = Function.apply(noop, names.concat(_body))
@@ -1605,8 +1628,8 @@
             return
         } else if (dataType === "on") { //事件绑定
             code = code.replace("(", ".call(this,")
-            if (four === "$event") {
-                names.push(four)
+            if (data.hasArgs === "$event") {
+                names.push(data.hasArgs)
             }
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             var lastIndex = code.lastIndexOf("\nreturn")
@@ -1622,7 +1645,7 @@
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
-            vars = textBuffer = names = null //释放内存
+            textBuffer = names = null //释放内存
         }
     }
 
