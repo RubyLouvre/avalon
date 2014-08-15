@@ -1083,7 +1083,7 @@
             var el = this[0]
             //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
             if (cls && typeof cls === "string" && el && el.nodeType == 1) {
-                cls.replace(/\S+/, function(c) {
+                cls.replace(/\S+/g, function(c) {
                     ClassList(el)[method](c)
                 })
             }

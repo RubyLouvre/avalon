@@ -4,7 +4,7 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="avalon.next.js" ></script>
+        <script src="avalon.js" ></script>
         <script>
             var a = avalon.define("test", function(vm) {
                 vm.aaa = 111111111
@@ -59,6 +59,11 @@
 //                    zzz: "kkkk"
 //                }
             }, 2000)
+            
+            avalon.ready(function(){
+                var el = document.getElementById("aa")
+                avalon(el).addClass("ddd erew sdfdsf sddfdfd")
+            })
 
         </script>
     </head>
