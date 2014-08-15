@@ -1210,11 +1210,10 @@
             return this
         },
         $fire: function(type) {
-            var bubbling = false, broadcast = false
-            if (type.match(/^bubble!(\w+)$/)) {
-                bubbling = type = RegExp.$1
-            } else if (type.match(/^capture!(\w+)$/)) {
-                broadcast = type = RegExp.$1
+            var special
+            if (/^(\w+)!(\w+)$/.test(type)) {
+                special = RegExp.$1
+                type = RegExp.$2
             }
             var events = this.$events
             var callbacks = events[type] || []
@@ -1229,15 +1228,15 @@
             var element = events.element
             if (element) {
                 var detail = [type].concat(args)
-                if (bubbling) {
+                if (special === "up") {//向上冒泡
                     W3CFire(element, "dataavailable", detail)
-                } else if (broadcast) {
+                } else if (special === "down") {//向下捕获
                     var alls = []
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
                         if (v && v.$events && v.$events.element) {
                             var node = v.$events.element;
-                            if (avalon.contains(element, node) && element !== node) {
+                            if (element.contains(node) && element != node) {
                                 alls.push(v)
                             }
                         }
@@ -1245,6 +1244,13 @@
                     alls.forEach(function(v) {
                         v.$fire.apply(v, detail)
                     })
+                } else if (special === "all") {//全局广播
+                    for (var i in avalon.vmodels) {
+                        var v = avalon.vmodels[i]
+                        if (v !== this) {
+                            v.$fire.apply(v, detail)
+                        }
+                    }
                 }
             }
         }

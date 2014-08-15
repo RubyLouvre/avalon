@@ -1,47 +1,60 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <title>by 司徒正美</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
-
-
         <script>
-            var a = [1, 2, 3, 4, 5, 6, 7]
-          //  alert(a.slice(1,NaN))
-            function expect(a, b) {
-                if (a.length != b.length) {
-                    throw( "a,  b不相等"+a+" vs  "+b)
+            avalon.define("ancestor", function(vm) {
+                vm.aaa = '1111111111'
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("ancestor.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    avalon.log("向下广播")
+                    vm.$fire("capture!aaa", "capture")
                 }
-                var n = a.length
-                for (var i = 0; i < n; i++) {
-                    if (a[i] != b[i]) {
-                        throw(  [i, a[i], b[i]] + "不相等")
-                    }
+            })
+            avalon.define("parent", function(vm) {
+                vm.text = "222222222"
+                vm.aaa = '3333333333'
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("parent.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    console.log("全局扩播")
+                    vm.$fire("all!aaa", "broadcast")
                 }
-                avalon.log("=============")
-            }
-
-            expect(avalon.slice(a, 0), a.slice(0))
-            expect(avalon.slice(a, 1, 4), a.slice(1, 4))
-            expect(avalon.slice(a, -1), a.slice(-1))
-            expect(avalon.slice(a, 1, -2), a.slice(1, -2))
-            expect(avalon.slice(a, 1, NaN), a.slice(1, NaN))
-            expect(avalon.slice(a, 1, 2.1), a.slice(1, 2.1))
-            expect(avalon.slice(a, 1.1, 4), a.slice(1.1, 4))
-            expect(avalon.slice(a, 1.2, NaN), a.slice(1, NaN))
-            expect(avalon.slice(a, NaN), a.slice(NaN))
-            expect(avalon.slice(a, 1.3, 3.1), a.slice(1.3, 3.1))
-            expect(avalon.slice(a, 2, "XXX"), a.slice(2, "XXX"))
-            expect(avalon.slice(a, -2), a.slice(-2))
-            expect(avalon.slice(a, 1, 9), a.slice(1, 9))
-            expect(avalon.slice(a, 20, -21), a.slice(20, -21))
-            expect(avalon.slice(a, -1, null), a.slice(-1, null))
-
+            })
+            avalon.define("son", function(vm) {
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("son.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    console.log("向上冒泡")
+                    vm.$fire("bubble!aaa", "bubble")
+                }
+            })
         </script>
+        <style>
+
+        </style>
     </head>
-    <body>
-        <div>TODO write content</div>
+    <body class="ms-controller"   ms-controller="ancestor">
+        <h3>avalon vm.$fire的升级版 </h3>
+        <button type="button" ms-click="click">
+            capture
+        </button>
+        <div ms-controller="parent">
+            <button type="button" ms-click="click">broadcast</button>
+            <div ms-controller="son">
+                <button type="button" ms-click="click">
+                    bubble
+                </button>
+            </div>
+        </div>
     </body>
 </html>
