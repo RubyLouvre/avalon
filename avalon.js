@@ -1691,7 +1691,7 @@
             var element = events.element
             if (element) {
                 var detail = [type].concat(args)
-                if (special === "bubble") {
+                if (special === "up") {
                     if (W3C) {
                         W3CFire(element, "dataavailable", detail)
                     } else {
@@ -1699,7 +1699,7 @@
                         event.detail = detail
                         element.fireEvent("ondataavailable", event)
                     }
-                } else if (special === "capture") {
+                } else if (special === "down") {
                     var alls = []
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
