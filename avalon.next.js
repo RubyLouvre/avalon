@@ -1444,25 +1444,28 @@
      **********************************************************************/
     var keywords =
             // 关键字
-            "break,case,catch,continue,debugger,default,delete,do,else,false" + ",finally,for,function,if,in,instanceof,new,null,return,switch,this" + ",throw,true,try,typeof,var,void,while,with"
-
+            "break,case,catch,continue,debugger,default,delete,do,else,false"
+            + ",finally,for,function,if,in,instanceof,new,null,return,switch,this"
+            + ",throw,true,try,typeof,var,void,while,with"
             // 保留字
-            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends" + ",final,float,goto,implements,import,int,interface,long,native" + ",package,private,protected,public,short,static,super,synchronized" + ",throws,transient,volatile"
-
+            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends"
+            + ",final,float,goto,implements,import,int,interface,long,native"
+            + ",package,private,protected,public,short,static,super,synchronized"
+            + ",throws,transient,volatile"
             // ECMA 5 - use strict
             + ",arguments,let,yield"
-
             + ",undefined"
     var rrexpstr = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
     var rsplit = /[^\w$]+/g
     var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
+    //console.log(rkeywords)
     var rnumber = /\b\d[^,]*/g
     var rcomma = /^,+|,+$/g
     var cacheVars = createCache(512)
     var getVariables = function(code) {
-        code = "," + code.trim()
-        if (cacheVars[code]) {
-            return cacheVars[code]
+        var key = "," + code.trim()
+        if (cacheVars[key]) {
+            return cacheVars[key]
         }
         var match = code
                 .replace(rrexpstr, "")
@@ -1479,7 +1482,7 @@
                 unique[variable] = vars.push(variable)
             }
         }
-        return cacheVars(code, vars)
+        return cacheVars(key, vars)
     }
     /*添加赋值语句*/
     function addAssign(vars, scope, name, duplex, deps) {
@@ -2882,7 +2885,7 @@
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
         ["$index", "$last", "$first"].forEach(function(prop) {
-            if(obj[prop]){
+            if (obj[prop]) {
                 obj[prop].length = 0
             }
         })

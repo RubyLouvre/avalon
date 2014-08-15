@@ -7,68 +7,42 @@
         <script src="avalon.next.js" ></script>
         <script>
             var a = avalon.define("test", function(vm) {
-                vm.aaa = 111111111
-                vm.lastName = "lastName"
-                vm.firstName = "firstName"
-                vm.ddd = "input"
-                vm.array = [1, 2, 3, 4, 5, 6, 7]
-                vm.notify = function(a) {
-                    avalon.log(a + "-----------")
-                }
-                vm.object = {
-                    aaa: 1,
-                    bbb: 2,
-                    ccc: 3
-                }
-                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    set: function(val) {//里面必须用this指向scope，不能使用scope
-                        var array = (val || "").split(" ");
-                        this.firstName = array[0] || "";
-                        this.lastName = array[1] || "";
-                    },
-                    get: function() {
-                        return this.firstName + " " + this.lastName;
-                    }
-                }
-                vm.fn = function() {
-                    vm.object = {
-                        bbb: 333,
-                        rrr: 555,
-                        444: 777
-                    }
-                    setTimeout(function() {
-                        vm.object.rrr = "++++++++++++++"
-                    }, 2500)
-                }
+                vm.aaa = "iiii"
+            })
 
-                vm.$watch("aaa", function() {
-                    avalon.log("=================")
+
+            var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"
+            //处理以中括号表示的属性
+            var robjectProperty = /([\w\.\_$])\s*\[['"]([^'"]+)['"]\]/
+            //处理注释及字符串
+            var rstringComment = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'/g
+            //处理加减乘除小括号等运算符
+            var roperator = /[^\w\.$]+/g
+            //处理数字
+            var rnumber = /\b\d[^,]*/g
+            //处理最前面或最后面逗号
+            var rcommaOfFirstOrLast = /^,+|,+$/g
+            var rcommaInMiddle = /,+/
+            while (robjectProperty.test(str)) {
+                str = str.replace(robjectProperty, function(match, obj, prop) {
+                    return obj + '.' + prop;
                 })
-            })
+            }
+            str = str.replace(rstringComment, "")
+            str = str.replace(roperator, ",")
+            str = str.replace(rnumber, ",")
+            str = str.replace(rcommaOfFirstOrLast, "")
+            str = str.split(rcommaInMiddle)
+            console.log(str)
 
-            setTimeout(function() {
-                console.log("更新")
-                a.ddd = "新值"
-                a.fullName = "newValue 54545"
-                a.array.push(88)
-                a.object.aaa = 9
-            }, 2000)
 
-            avalon.ready(function() {
-                var el = document.getElementById("aa")
-                avalon(el).addClass("ddd erew sdfdsf sddfdfd")
-            })
+
 
         </script>
     </head>
-    <body ms-controller="test" id="aa">
-        <div ms-click="notify(111)">{{fullName}}</div><!--
-           <input ms-duplex="ddd"/>
-           {{ddd}} {{lastName}}
-           <ul><li ms-repeat="array">{{el}}</li></ul>-->
-        <div ms-repeat="object" ms-click="notify($key)">
-            这是循环体<p>{{$val}}</p>
-        </div>
-        <button type="button" ms-click="fn">cccc</button>
+    <body ms-controller="test" >
+
+        <input ms-duplex="aaa"/> {{aaa + "  "+ aaa}}
+
     </body>
 </html>

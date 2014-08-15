@@ -1622,9 +1622,9 @@
     var rcomma = /^,+|,+$/g
     var cacheVars = createCache(512)
     var getVariables = function(code) {
-        code = "," + code.trim()
-        if (cacheVars[code]) {
-            return cacheVars[code]
+        var key = "," + code.trim()
+        if (cacheVars[key]) {
+            return cacheVars[key]
         }
         var match = code
                 .replace(rrexpstr, "")
@@ -1641,7 +1641,7 @@
                 unique[variable] = vars.push(variable)
             }
         }
-        return cacheVars(code, vars)
+        return cacheVars(key, vars)
     }
     /*添加赋值语句*/
     function addAssign(vars, scope, name, duplex) {
