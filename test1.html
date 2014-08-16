@@ -4,12 +4,12 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="avalon.next.js" ></script>
+        <script src="avalon.js" ></script>
         <script>
             var a = avalon.define("test", function(vm) {
-//                vm.aaa = {
-//                    aa: "ooo"
-//                }
+                vm.aaa = {
+                    aa: "ooo"
+                }
                 vm.eee = "pppp"
                 vm.ddd = "0000"
             })
@@ -22,9 +22,10 @@
         </script>
     </head>
     <body ms-controller="test" >
-        <a ms-href="{{eee}}/{{ddd}}.html">ddd</a>
-<!--        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}-->
+        <p><a ms-href="{{eee}}/{{ddd}}/{{aaa.aa}}.html">{{eee}}/{{ddd}}</a></p>
+        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}
         <input ms-duplex="eee"/>
+        <input ms-duplex="ddd"/>
         <pre>
             
           var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"

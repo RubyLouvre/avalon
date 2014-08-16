@@ -1268,7 +1268,7 @@
                 data.handler()
             } else {
                 try {
-                    var c = data.type === "on" ? data: fn.apply(0, data.args)
+                    var c = data.type === "on" ? data : fn.apply(0, data.args)
                     data.handler(c, data.element, data)
                 } catch (e) {
                     delete data.evaluator
@@ -1686,7 +1686,7 @@
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
 
-    function parseExpr(code, scopes, data, four) {
+    function parseExpr(code, scopes, data) {
         var dataType = data.type
         var filters = dataType === "html" || dataType === "text" ? data.filters : ""
         var exprId = scopes.map(function(el) {
@@ -1704,10 +1704,10 @@
                 var name = "vm" + expose + "_" + i
                 names.push(name)
                 args.push(scopes[i])
-                assigns.push.apply(assigns, addAssign(vars, scopes[i], name, four))
+                assigns.push.apply(assigns, addAssign(vars, scopes[i], name, dataType))
             }
         }
-        if (!assigns.length && four === "duplex") {
+        if (!assigns.length && dataType === "duplex") {
             return
         }
         //---------------args----------------
@@ -1761,8 +1761,8 @@
             return
         } else if (dataType === "on") { //事件绑定
             code = code.replace("(", ".call(this,")
-            if (four === "$event") {
-                names.push(four)
+            if (data.hasArgs === "$event") {
+                names.push("$event")
             }
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             var lastIndex = code.lastIndexOf("\nreturn")
@@ -1785,21 +1785,11 @@
     /*parseExpr的智能引用代理*/
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
-            var array = tokens.map(function(token) {
-                var tmpl = {}
-                return token.expr ? parseExpr(token.value, scopes, tmpl) || tmpl : token.value
-            })
-            data.evaluator = function() {
-                var ret = ""
-                for (var i = 0, el; el = array[i++]; ) {
-                    ret += typeof el === "string" ? el : el.evaluator.apply(0, el.args)
-                }
-                return ret
-            }
-            data.args = []
-        } else {
-            parseExpr(code, scopes, data, tokens)
+            code = tokens.map(function(el) {
+                return el.expr ? "(" + el.value + ")" : JSON.stringify(el.value)
+            }).join(" + ")
         }
+        parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
             data.evaluator.toString = function() {
@@ -2384,7 +2374,7 @@
                 four = void 0
             }
             data.hasArgs = four
-            parseExprProxy(value, vmodels, data, four)
+            parseExprProxy(value, vmodels, data)
         },
         "visible": function(data, vmodels) {
             var elem = data.element

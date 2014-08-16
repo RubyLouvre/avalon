@@ -1110,13 +1110,6 @@
      **********************************************************************/
 
     function registerSubscriber(data) {
-//        for (var i = 0, el; el = data.deps[i++]; ) {
-//            var scope = el[0]
-//            var prop = el[1]
-//            var obj = scope.$accessors
-//            var arr = obj[prop] || (obj[prop] = [])
-//            avalon.Array.ensure(arr, data)
-//        }
         try {
             var c = data.type === "on" ? data : data.evaluator.apply(0, data.args)
             data.handler(c, data.element, data)
@@ -1572,8 +1565,6 @@
         var assigns = [] //收集赋值表达式
         var names = []
         var args = []  //新生成的求值函数的传参 包括所有VM与avalon.filters对象
-        data.deps = []
-
         if (vars.length) {
             scopes.forEach(function(scope, i) {
                 var name = "vm" + expose + "_" + i
