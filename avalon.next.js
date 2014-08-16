@@ -437,6 +437,7 @@
                 configurable: true
             }
         })
+
         Object.observe(scope, observeCallback)
         return scope
     }
@@ -1151,6 +1152,7 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
+                    console.log(fn)
                     fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
                 }
             }
@@ -1487,13 +1489,13 @@
                 .split(rcommaInMiddle)
         return cacheVars(key, uinqSet(vars))
     }
-    function uinqSet(arr){
-        var set = new Set 
-        arr.forEach(function(el){
+    function uinqSet(arr) {
+        var set = new Set
+        arr.forEach(function(el) {
             set.add(el)
         })
         var ret = []
-        set.forEach(function(el){
+        set.forEach(function(el) {
             ret.push(el)
         })
         return ret
@@ -1517,31 +1519,33 @@
         return true
     }
     /*添加赋值语句*/
-    function addAssign(paths, scope, name, data, uinq) {
+    function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " =" + name + "."
-        
-        paths.forEach(function(path) {
+
+        for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
-            if (uinq["_" + path])
-                return
             if (inObject(scope, arr)) {
-                uinq["_" + path] = true
                 var prop = arr.shift()
                 addDeps(scope, prop, data)
                 ret.push(prop + prefix + prop)
                 if (data.type === "duplex") {
-                    uinq.get = name + "." + prop
+                    vars.get = name + "." + prop
                 }
-                while (arr.length) {
-                    prop = arr.shift()
-                    scope = scope[prop]
-                    if (scope && typeof scope === "object") {
-                        addDeps(scope, prop, data)
+                var subscope = scope
+                do {//处理子对象
+                    subscope = subscope[prop]
+                    if (subscope && typeof subscope === "object") {
+                        prop = arr.shift()
+                        addDeps(subscope, prop, data)
+                    } else {
+                        break
                     }
-                }
+                } while (arr.length);
+
+                vars.splice(i, 1)
             }
-        })
+        }
         return ret
     }
 
@@ -1549,7 +1553,6 @@
     /*创建具有一定容量的缓存体*/
     function createCache(maxLength) {
         var keys = []
-
         function cache(key, value) {
             if (keys.push(key) > maxLength) {
                 delete cache[keys.shift()]
@@ -1572,19 +1575,16 @@
         }) + code + dataType + filters
         var vars = getVariables(code).concat()
         var assigns = [] //收集赋值表达式
-        var names = [] 
+        var names = []
         var args = []  //新生成的求值函数的传参 包括所有VM与avalon.filters对象
-        var uniq = {}
         data.deps = []
-    
 
         if (vars.length) {
             scopes.forEach(function(scope, i) {
                 var name = "vm" + expose + "_" + i
                 names.push(name)
                 args.push(scope)
-                console.log(scope)
-                assigns.push.apply(assigns, addAssign(vars, scope, name, data, uniq))
+                assigns.push.apply(assigns, addAssign(vars, scope, name, data))
             })
         }
 
@@ -1631,7 +1631,7 @@
                     prefix +
                     ";\n\tif(!arguments.length){\n\t\treturn " +
                     code +
-                    "\n\t}\n\t" + (!rduplex.test(code) ? uniq.get : code) +
+                    "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
                     "= vvv;\n} "
             try {
                 fn = Function.apply(noop, names.concat(_body))
