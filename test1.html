@@ -7,11 +7,24 @@
         <script src="avalon.next.js" ></script>
         <script>
             var a = avalon.define("test", function(vm) {
-                vm.aaa = "iiii"
+                vm.aaa = {
+                    aa: "ooo"
+                }
             })
 
 
-            var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"
+
+
+
+
+        </script>
+    </head>
+    <body ms-controller="test" >
+
+        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}
+        <pre>
+            
+          var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"
             //处理以中括号表示的属性
             var robjectProperty = /([\w\.\_$])\s*\[['"]([^'"]+)['"]\]/
             //处理注释及字符串
@@ -34,15 +47,6 @@
             str = str.replace(rcommaOfFirstOrLast, "")
             str = str.split(rcommaInMiddle)
             console.log(str)
-
-
-
-
-        </script>
-    </head>
-    <body ms-controller="test" >
-
-        <input ms-duplex="aaa"/> {{aaa + "  "+ aaa}}
-
+        </pre>
     </body>
 </html>

@@ -1485,7 +1485,18 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-        return cacheVars(key, new Set(vars))
+        return cacheVars(key, uinqSet(vars))
+    }
+    function uinqSet(arr){
+        var set = new Set 
+        arr.forEach(function(el){
+            set.add(el)
+        })
+        var ret = []
+        set.forEach(function(el){
+            ret.push(el)
+        })
+        return ret
     }
 
     function addDeps(scope, prop, data) {
@@ -1509,6 +1520,7 @@
     function addAssign(paths, scope, name, data, uinq) {
         var ret = [],
                 prefix = " =" + name + "."
+        
         paths.forEach(function(path) {
             var arr = path.split(".")
             if (uinq["_" + path])
@@ -1558,18 +1570,20 @@
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
-        var vars = getVariables(code)
+        var vars = getVariables(code).concat()
         var assigns = [] //收集赋值表达式
         var names = [] 
         var args = []  //新生成的求值函数的传参 包括所有VM与avalon.filters对象
         var uniq = {}
         data.deps = []
-        scopes = new Set(scopes)
-        if (vars.size) {
+    
+
+        if (vars.length) {
             scopes.forEach(function(scope, i) {
                 var name = "vm" + expose + "_" + i
                 names.push(name)
                 args.push(scope)
+                console.log(scope)
                 assigns.push.apply(assigns, addAssign(vars, scope, name, data, uniq))
             })
         }
