@@ -7,9 +7,11 @@
         <script src="avalon.next.js" ></script>
         <script>
             var a = avalon.define("test", function(vm) {
-                vm.aaa = {
-                    aa: "ooo"
-                }
+//                vm.aaa = {
+//                    aa: "ooo"
+//                }
+                vm.eee = "pppp"
+                vm.ddd = "0000"
             })
 
 
@@ -20,8 +22,9 @@
         </script>
     </head>
     <body ms-controller="test" >
-
-        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}
+        <a ms-href="{{eee}}/{{ddd}}.html">ddd</a>
+<!--        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}-->
+        <input ms-duplex="eee"/>
         <pre>
             
           var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"

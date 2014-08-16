@@ -1076,13 +1076,9 @@
             if (element) {
                 var detail = [type].concat(args)
                 if (special === "up") {
-                    if (W3C) {
-                        W3CFire(element, "dataavailable", detail)
-                    } else {
-                        var event = document.createEventObject()
-                        event.detail = detail
-                        element.fireEvent("ondataavailable", event)
-                    }
+
+                    W3CFire(element, "dataavailable", detail)
+
                 } else if (special === "down") {
                     var alls = []
                     for (var i in avalon.vmodels) {
@@ -1114,13 +1110,13 @@
      **********************************************************************/
 
     function registerSubscriber(data) {
-        for (var i = 0, el; el = data.deps[i++]; ) {
-            var scope = el[0]
-            var prop = el[1]
-            var obj = scope.$accessors
-            var arr = obj[prop] || (obj[prop] = [])
-            avalon.Array.ensure(arr, data)
-        }
+//        for (var i = 0, el; el = data.deps[i++]; ) {
+//            var scope = el[0]
+//            var prop = el[1]
+//            var obj = scope.$accessors
+//            var arr = obj[prop] || (obj[prop] = [])
+//            avalon.Array.ensure(arr, data)
+//        }
         try {
             var c = data.type === "on" ? data : data.evaluator.apply(0, data.args)
             data.handler(c, data.element, data)
@@ -1665,27 +1661,13 @@
     /*parseExpr的智能引用代理*/
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
-            var deps = []
-            var array = tokens.map(function(token) {
-                var _data = {}
-                var last = token.expr ? parseExpr(token.value, scopes, _data) || _data : token.value
-                if (_data.deps) {
-                    deps = deps.concat(_data.deps)
-                }
-                return last
-            })
-            data.evaluator = function() {
-                var ret = ""
-                for (var i = 0, el; el = array[i++]; ) {
-                    ret += typeof el === "string" ? el : el.evaluator.apply(0, el.args)
-                }
-                return ret
-            }
-            data.args = []
-            data.deps = []
-        } else {
-            parseExpr(code, scopes, data, tokens)
+            code = tokens.map(function(el) {
+                return el.expr ? "("+ el.value+")" : JSON.stringify(el.value)
+            }).join(" + ")
         }
+
+        parseExpr(code, scopes, data)
+
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
             data.evaluator.toString = function() {
@@ -2077,7 +2059,8 @@
                 }
             }
             data.handlerName = "attr" //handleName用于处理多种绑定共用同一种bindingExecutor的情况
-            parseExprProxy(text, vmodels, data, (simple ? null : scanExpr(data.value)))
+
+            parseExprProxy(text, vmodels, data, simple ? null : scanExpr(data.value))
         },
         //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
         //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
