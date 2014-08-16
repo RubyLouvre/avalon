@@ -141,7 +141,6 @@
         subscribers: subscribers,
         version: 1.31,
         ui: {},
-        models: {},
         log: log,
         noop: noop,
         error: function(str, e) { //如果不用Error对象封装一下，str在控制台下可能会乱码
