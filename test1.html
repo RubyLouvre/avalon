@@ -4,16 +4,78 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="avalon.js" ></script>
+        <script src="avalon.next.js" ></script>
         <script>
-            var a = avalon.define("test", function(vm) {
-                vm.aaa = {
-                    aa: "ooo"
+      
+            avalon.ready(function() {
+                var vmodel = avalon.define("recycleEachProxy", function(vm) {
+                    vm.array = [{
+                            a: 1
+                        }, {
+                            a: 2
+                        }, {
+                            a: 3
+                        }]
+                    vm.add = function() {
+                        vmodel.array.push({
+                            a: 4
+                        })
+                    }
+                })
+                function expect(a,b){
+                    if(a !== b){
+                        console.log(a+"  !== "+b)
+                    }
                 }
-                vm.eee = "pppp"
-                vm.ddd = "0000"
-            })
+                var body = document.body
+                var div = document.createElement("div")
+                div.innerHTML = '<ul><li ms-repeat="array" ms-click="$remove"><input ms-duplex="el.a">{{el.a}}</li></ul><button ms-click="add" type="button">add</button>'
+                body.appendChild(div)
+                avalon.scan(div, vmodel)
+                var prop = "innerText" in div ? "innerText" : "textContent"
+                setTimeout(function() {
+                    var lis = div.getElementsByTagName("li")
+                    expect(lis.length, 3)
+                    expect(lis[0][prop].trim(), "1")
+                    expect(lis[1][prop].trim(), "2")
+                    vmodel.array[2].a = "888"
+                    expect(lis[2][prop].trim(), "3")
+                    lis[0].click()
+                    lis = div.getElementsByTagName("li")
+                    lis[0].click()
+                    lis = div.getElementsByTagName("li")
+                    lis[0].click()
+                    setTimeout(function() {
+                        var lis = div.getElementsByTagName("li")
+                        expect(lis.length, 0)
+                        var button = div.getElementsByTagName("button")[0]
+                        button.click()
+                        button.click()
+                        button.click()
+                        setTimeout(function() {
+                            var lis = div.getElementsByTagName("li")
+                            expect(lis.length, 3)
+                            expect(lis[0][prop].trim(), "4")
+                            expect(lis[1][prop].trim(), "4")
+                            expect(lis[2][prop].trim(), "4")
+                            vmodel.array[2].a = 5
+                            console.log(vmodel.array[2])
+                              console.log(lis[2][prop].trim())
+                            setTimeout(function(){
+                                console.log(lis[2][prop].trim())
+                            },2000)
+                           // expect(lis[2][prop].trim(), "5")
+                         ///   body.removeChild(div)
+                         //   div.innerHTML = ""
+                        //    delete avalon.vmodels["recycleEachProxy"]
+                          //  done()
+                        }, 300)
 
+                    }, 300)
+
+
+                }, 300)
+            })
 
 
 
@@ -22,10 +84,11 @@
         </script>
     </head>
     <body ms-controller="test" >
-        <p><a ms-href="{{eee}}/{{ddd}}/{{aaa.aa}}.html">{{eee}}/{{ddd}}</a></p>
-        <input ms-duplex="aaa.aa"/> {{aaa.aa + "  "+ aaa.aa}}
-        <input ms-duplex="eee"/>
-        <input ms-duplex="ddd"/>
+        <input ms-click="clear" type="button" value="clear"/>
+        <input ms-click="add" type="button" value="add"/>
+        <ul>
+            <li ms-repeat="array"><input ms-duplex="el.text">{{el.text|lowercase }} <b ms-click="$remove">X</b></li>
+        </ul>
         <pre>
             
           var str = "rer['argument']['ddd']+(1*2)+aaa.bbb"

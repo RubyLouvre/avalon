@@ -138,7 +138,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.31,
+        version: 1.33,
         ui: {},
         log: log,
         noop: noop,
@@ -293,9 +293,10 @@
     avalon.isArrayLike = isArrayLike
     /*视浏览器情况采用最快的异步回调*/
     avalon.nextTick = function(callback) {
-        new Promise(function(resolve) {
-            resolve()
-        }).then(callback)
+        callback()
+     //   new Promise(function(resolve) {
+       //     resolve()
+    //    }).then(callback)
     }
 
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -1115,7 +1116,6 @@
             data.handler(c, data.element, data)
         } catch (e) {
             delete data.evaluator
-            delete data.deps
             if (data.nodeType === 3) {
                 if (kernel.commentInterpolate) {
                     data.element.replaceChild(DOC.createComment(data.value), data.node)
@@ -1140,7 +1140,6 @@
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
                 } else {
-                    console.log(fn)
                     fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
                 }
             }
@@ -1653,7 +1652,7 @@
     function parseExprProxy(code, scopes, data, tokens) {
         if (Array.isArray(tokens)) {
             code = tokens.map(function(el) {
-                return el.expr ? "("+ el.value+")" : JSON.stringify(el.value)
+                return el.expr ? "(" + el.value + ")" : JSON.stringify(el.value)
             }).join(" + ")
         }
 
