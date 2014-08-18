@@ -138,7 +138,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.33,
+        version: "1.33observe",
         ui: {},
         log: log,
         noop: noop,
@@ -411,10 +411,11 @@
         for (var i in Observable) {
             scope[i] = Observable[i]
         }
+
         Object.defineProperties(scope, {
             "$model": {
                 enumerable: false,
-                configurable: false,
+                configurable: true,
                 get: function() {
                     var obj = {}
                     for (var i in this) {
@@ -436,7 +437,6 @@
                 configurable: true
             }
         })
-
         Object.observe(scope, observeCallback)
         return scope
     }
@@ -1076,9 +1076,7 @@
             if (element) {
                 var detail = [type].concat(args)
                 if (special === "up") {
-
                     W3CFire(element, "dataavailable", detail)
-
                 } else if (special === "down") {
                     var alls = []
                     for (var i in avalon.vmodels) {
@@ -1495,7 +1493,10 @@
         }
     }
     function inObject(obj, array) {
-        for (var i = 0, el; el = array[i++]; ) {
+        if (!obj.hasOwnProperty(array[0])) {
+            return 0
+        }
+        for (var i = 1, el; el = array[i++]; ) {
             if (!obj.hasOwnProperty(el)) {
                 return (obj && typeof obj === "object") ? 1 : 0
             } else {

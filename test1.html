@@ -6,30 +6,26 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="avalon.observe.js" ></script>
         <script>
-
+            function expect(a, b) {
+                console.log([a, b])
+            }
             avalon.ready(function() {
-                var vmodel = avalon.define("override2", function(vm) {
-                    vm.first = {
+                var model = avalon.define("nest-object", function(vm) {
+                    vm.list = {
+                        a: {str: 444},
+                        b: {str: 666}
                     }
                 })
                 var body = document.body
                 var div = document.createElement("div")
-                div.innerHTML = '<ul><li ms-repeat="first.array">{{el}}</li></ul><ol><li ms-repeat="first.object">{{$key}}:{{$val}}</li></ol>'
+                div.innerHTML = "<ul ms-controller=\"nest-object\"><li ms-repeat=\"list\"><input ms-duplex=\"$val.str\"/></li></ul>"
                 body.appendChild(div)
-                avalon.scan(div, vmodel)
-//                setTimeout(function() {
-//                    vmodel.first = {
-//                        array: ["@@@", "###", "$$$", "%%%"],
-//                        object: {
-//                            grape: "葡萄",
-//                            coconut: "椰子",
-//                            pitaya: "火龙果",
-//                            orange: "橙子"
-//                        }
-//                    }
-//
-//                },1000)
-
+                avalon.scan(div, model)
+                setTimeout(function() {
+                    var inputs = div.getElementsByTagName("input")
+                    expect(inputs[0].value, "444")
+                    expect(inputs[1].value, "666")
+                }, 100)
 
             })
 
@@ -37,6 +33,6 @@
         </script>
     </head>
     <body  >
-       <!--aaa-->
+        <!--aaa-->
     </body>
 </html>
