@@ -293,10 +293,9 @@
     avalon.isArrayLike = isArrayLike
     /*视浏览器情况采用最快的异步回调*/
     avalon.nextTick = function(callback) {
-        callback()
-     //   new Promise(function(resolve) {
-       //     resolve()
-    //    }).then(callback)
+        new Promise(function(resolve) {
+            resolve()
+        }).then(callback)
     }
 
     if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -466,7 +465,9 @@
             a.pushArray(bb)
             return a
         } else {
+
             var iterators = a[subscribers] || []
+            console.log(iterators[0])
             if (withProxyPool[a.$id]) {
                 withProxyCount--
                 delete withProxyPool[a.$id]
@@ -2127,10 +2128,13 @@
             var freturn = true
             try {
                 list = data.getter()
+              
                 if (rcomplextype.test(avalon.type(list))) {
                     freturn = false
                 }
             } catch (e) {
+              var obj =  vmodels[0].$accessors
+              obj.array = [data]
             }
             var template = hyperspace.cloneNode(false)
             if (type === "repeat") {
