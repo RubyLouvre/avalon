@@ -465,9 +465,7 @@
             a.pushArray(bb)
             return a
         } else {
-
             var iterators = a[subscribers] || []
-            console.log(iterators[0])
             if (withProxyPool[a.$id]) {
                 withProxyCount--
                 delete withProxyPool[a.$id]
@@ -1499,12 +1497,12 @@
     function inObject(obj, array) {
         for (var i = 0, el; el = array[i++]; ) {
             if (!obj.hasOwnProperty(el)) {
-                return false
+                return (obj && typeof obj === "object") ? 1 : 0
             } else {
                 obj = obj[el]
             }
         }
-        return true
+        return 2
     }
     /*添加赋值语句*/
     function addAssign(vars, scope, name, data) {
@@ -1513,7 +1511,8 @@
 
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
-            if (inObject(scope, arr)) {
+            var flag = inObject(scope, arr)
+            if (flag) {
                 var prop = arr.shift()
                 addDeps(scope, prop, data)
                 ret.push(prop + prefix + prop)
@@ -1530,8 +1529,8 @@
                         break
                     }
                 } while (arr.length);
-
-                vars.splice(i, 1)
+                if (flag === 2)
+                    vars.splice(i, 1)
             }
         }
         return ret
@@ -2124,17 +2123,17 @@
             data.getter = function() {
                 return this.evaluator.apply(0, this.args || [])
             }
+
             data.proxies = []
             var freturn = true
             try {
                 list = data.getter()
-              
                 if (rcomplextype.test(avalon.type(list))) {
                     freturn = false
                 }
             } catch (e) {
-              var obj =  vmodels[0].$accessors
-              obj.array = [data]
+                var obj = vmodels[0].$accessors
+                obj.array = [data]
             }
             var template = hyperspace.cloneNode(false)
             if (type === "repeat") {
@@ -2555,6 +2554,7 @@
         var array = []
         array.$id = generateID()
         array[subscribers] = []
+        array.$accessors = {}
         array.$model = model
         array.$events = {}
         array._ = modelFactory({
