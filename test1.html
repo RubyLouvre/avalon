@@ -4,69 +4,32 @@
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
+        <script src="fix.js" ></script>
         <script>
+            var a
             var model = avalon.define({
                 $id: "test",
-                firstName: "司徒",
-                lastName: "正美",
-                fullName: {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    set: function(val) {//里面必须用this指向scope，不能使用scope
-                        var array = (val || "").split(" ");
-                        this.firstName = array[0] || "";
-                        this.lastName = array[1] || "";
-                    },
-                    get: function() {
-                        return this.firstName + " " + this.lastName;
-                    },
+                click: function(e) {
+                    console.log("-------------")
+                    console.log(this)
                 },
-                click: function() {
-                    alert(model.firstName)
-                },
-                arr: ["aaa", 'bbb', "ccc", "ddd"],
-                selected: ["bbb", "ccc"],
-                checkAllbool: true,
-                checkAll: function() {
-                    if (this.checked) {
-                        model.selected = model.arr
-                    } else {
-                        model.selected.clear()
-                    }
+                dblclick: function(e) {
+                    console.log(e.type)
                 }
             })
-            model.checkAllbool = model.arr.length === model.selected.length
-            model.$watch("firstName", function() {
-                alert(model.firstName)
-            })
-            model.selected.$watch("length", function(n) {
-                model.checkAllbool = n === model.arr.size()
-            })
+
         </script>
     </head>
     <body>
+        <style>
+            .ms-click-active{
+                color: red
+            }
+        </style>
         <div ms-controller="test">
-            <p>First name: <input ms-duplex="firstName" /></p>
-            <p>Last name: <input ms-duplex="lastName"  /></p>
-            <p>Hello,    <input ms-duplex="fullName"></p>
-            <div>{{firstName +" | "+ lastName }}</div>
-            <ul>
-                <li><input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/>全选</li>
-                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected"/>{{el}}</li>
-            </ul>
-            <p ms-click="click">xxx</p>
+<!--            <label for="female" ms-click="click">Female</label>
+            <input type="radio" name="sex" id="female" ms-click="click" />-->
+            <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
         </div>
-        <ul>
-            <li>fix IE6-8下直接修改表单元素值不触发data-duplex-changed回调的BUG,
-                详见<a href="https://github.com/RubyLouvre/avalon/commit/7f1fde22815213c3ebe87498fcf97e5dee97945f">这里</a></li>
-            <li>chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件,这会引发widget组件的VM自动调用$remove方法
-                详见<a href="https://github.com/RubyLouvre/avalon/issues/441">这里</a></li>
-            <li>fix ms-include 从textarea元素取得模板出错的BUG</li>
-            <li>对SVG元素取className出错的BUG, 现在addClass, removeClass, hasClass都是通过classList处理，如果浏览器支持classList，框架会通过ClassList内部方法为它进行兼容。</li>
-            <li>重构avalon.slice, avalon.isPlainObject, Object.keys，让它们在IE6-8下与其他浏览器表现得更加一致</li>
-            <li>重构avalon.parseExprProxy</li>
-            <li>ms-disabled, ms-enabled, ms-checked, ms-selected, ms-readonly这些绑定现在的实现都改为走ms-attr的通道。</li>
-            <li>修复IE下的cloneNode BUG，让其完美支持VML元素的复制。<a href="https://github.com/RubyLouvre/avalon/commit/f33f371bd1a7ee390f1da9a0bd71dafa3024cdbb">其一</a>, <a href="https://github.com/RubyLouvre/avalon/commit/f51982531ab28155a73bcbda1349bd0855b81bdc">其二</a></li>
-            <li><a href="https://github.com/RubyLouvre/avalon/commit/908f48c1b87e1b0965b33db5d23ecd048fb53e62">修复getVariables  BUG</a>，让其能从缓存直接取已经计算好的数据。</li>
-            <li style="color:red">升级avalon.define, 让其支持新的传参方式</li>
-        </ul>
     </body>
 </html>
