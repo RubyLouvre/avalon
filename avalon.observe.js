@@ -2254,9 +2254,16 @@
             if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
                 var display = parseDisplay(elem.tagName)
             }
-            display = display || avalon(elem).css("display")
-            data.display = display === "none" ? parseDisplay(elem.tagName) : display
-            parseExprProxy(data.value, vmodels, data)
+            function callback() {//防止元素还没有应用样式就被取值，导致结果不正确
+                display = display || avalon(elem).css("display")
+                data.display = display === "none" ? parseDisplay(elem.tagName) : display
+                parseExprProxy(data.value, vmodels, data)
+            }
+            if (elem.style.display == "") {
+                avalon.nextTick(callback)
+            } else {
+                callback()
+            }
         },
         "widget": function(data, vmodels) {
             var args = data.value.match(rword)
