@@ -2737,7 +2737,11 @@
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
                 if (data.msInDocument) {
                     data.msInDocument = false
-                    elem.parentNode.replaceChild(placehoder, elem)
+                    try {
+                        elem.parentNode.replaceChild(placehoder, elem)
+                    } catch (e) {
+                        log("debug: ms-if: elem.parentNode= " + elem.parentNode)
+                    }
                     placehoder.elem = elem
                     ifSanctuary.appendChild(elem)
                 }

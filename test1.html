@@ -4,21 +4,25 @@
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
-        <script src="mobile.js" ></script>
+        <!--        <script src="mobile.js" ></script>-->
         <script>
             var a
             var model = avalon.define({
                 $id: "test",
+                pos: "ccc",
                 click: function(e) {
                     console.log("-------------")
                     console.log(this)
                 },
-           
                 dblclick: function(e) {
                     console.log(e.type)
                 }
             })
+            var model2 = avalon.define("tab", function(vm) {
+                vm.type = 0
+            })
 
+            model2.type = 1
         </script>
     </head>
     <body>
@@ -28,8 +32,9 @@
             }
         </style>
         <div ms-controller="test">
-         
-         
+            <div ms-class-100="ui-scrollbar-{{pos}}" 
+                 >ddddddddddddd</div>
+
             <!--            <label for="female" ms-click="click">Female</label>
                         <input type="radio" name="sex" id="female" ms-click="click" />-->
             <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
