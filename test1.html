@@ -13,11 +13,7 @@
                     console.log("-------------")
                     console.log(this)
                 },
-                array:[1,2,3,4],
-                callback: function(){
-                    console.log(arguments)
-                },
-                
+           
                 dblclick: function(e) {
                     console.log(e.type)
                 }
@@ -32,23 +28,12 @@
             }
         </style>
         <div ms-controller="test">
-            <div style="height:300px;width:200px;border:1px solid red;overflow: scroll">
-                  <div style="height:600px;">
-                http://www.aliued.cn/2013/04/27/%E7%A7%BB%E5%8A%A8%E5%BC%80%E5%8F%91%E4%B9%8Btouch-event%E7%AF%87.html
-            </div>
-            <a href="#anchor" ms-click="click">xxxx</a>
-            <br/>
-             <br/>
-            </div>
-            <div id="anchor">测试描记</div>
+         
+         
             <!--            <label for="female" ms-click="click">Female</label>
                         <input type="radio" name="sex" id="female" ms-click="click" />-->
             <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
             <input disabled="disabled" ms-click="click" value="这是disabled元素">
-            <ul ms-each="array" data-each-rendered="callback">
-                <li>ddd</li>
-                 <li>dddfdfd</li>
-            </ul>
         </div>
     </body>
 </html>

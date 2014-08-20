@@ -146,7 +146,9 @@ void function() {
                     doubleStartTime = Date.now()
                 }
                 tapping = true
-                avalon(element).addClass(fastclick.activeClass)
+                if (avalon.fastclick.canClick(element)) {
+                    avalon(element).addClass(fastclick.activeClass)
+                }
                 startTime = Date.now()
                 var touches = event.touches && event.touches.length ? event.touches : [event]
                 var e = touches[0]
