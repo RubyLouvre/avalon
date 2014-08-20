@@ -5,11 +5,22 @@ var isAndroid = ua.indexOf('Android') > 0
 var isIOS = /iP(ad|hone|od)/.test(ua)
 
 var ghostPrevent = false
-document.addEventListener('click', function() {
+document.addEventListener('click', function(e) {
     if (ghostPrevent) {
-        if (!event.markFastClick) {
-            event.stopPropagation()//阻止浏览器自己触发的点击事件
+        if (!event.markFastClick) {//阻止浏览器自己触发的点击事件
+            event.stopPropagation()
             event.preventDefault()
+        }
+    }
+    var target = e.target
+
+    if (target.href && target.href.match(/#(\w+)/)) {
+        var id = RegExp.$1
+        if (id) {
+            var el = document.getElementById(id)
+            if (el) {
+                el.scrollIntoView(true)
+            }
         }
     }
 }, true)
@@ -109,26 +120,22 @@ avalon.bindingHandlers.on = function(data, vmodels) {
     if (data.param === "click") {
         var tapping = false,
                 fastclick = avalon.fastclick,
-                tapElement, // Used to blur the element after a tap.
-                startTime, // Used to check if the tap was held too long.
+                doubleIndex = 0, //用于决定何时重置doubleStartTime
+                doubleStartTime, //双击开始时间,
+                startTime, // 单击开始时间
                 touchStartX,
                 touchStartY;
         function resetState() {
             tapping = false;
-            avalon(tapElement).removeClass(fastclick.activeClass)
+            avalon(element).removeClass(fastclick.activeClass)
         }
-        var doubleIndex = 0, doubleStartTime
         function touchstart(event) {
             doubleIndex++
             if (doubleIndex === 1) {
                 doubleStartTime = Date.now()
             }
-            tapping = true;
-            tapElement = event.target
-            if (tapElement.nodeType == 3) {//fix safari 事件源对象可能是文本节点
-                tapElement = tapElement.parentNode;
-            }
-            avalon(tapElement).addClass(fastclick.activeClass)
+            tapping = true
+            avalon(element).addClass(fastclick.activeClass)
             startTime = Date.now()
             var touches = event.touches && event.touches.length ? event.touches : [event];
             var e = touches[0]
@@ -138,7 +145,7 @@ avalon.bindingHandlers.on = function(data, vmodels) {
         function touchend(event) {
             var touches = (event.changedTouches && event.changedTouches.length) ? event.changedTouches :
                     ((event.touches && event.touches.length) ? event.touches : [event]);
-            var e = touches[0].originalEvent || touches[0];
+            var e = touches[0];
             var x = e.clientX
             var y = e.clientY
             var diff = Date.now() - startTime //经过时间
@@ -154,35 +161,33 @@ avalon.bindingHandlers.on = function(data, vmodels) {
                     ghostPrevent = false
                 }, fastclick.preventTime)
                 // 失去焦点的处理
-                if (tapElement) {
-                    if (document.activeElement && document.activeElement !== tapElement) {
-                        document.activeElement.blur()
+                if (document.activeElement && document.activeElement !== element) {
+                    document.activeElement.blur()
+                }
+                if (fastclick.canClick(element)) {
+                    var forElement
+                    if (element.tagName.toLowerCase() === "label") {
+                        forElement = element.htmlFor ? document.getElementById(element.htmlFor) : null
                     }
-                    if (fastclick.canClick(tapElement)) {
-                        var forElement
-                        if (tapElement.tagName.toLowerCase() === "label") {
-                            forElement = tapElement.htmlFor ? document.getElementById(tapElement.htmlFor) : null
-                        }
-                        if (forElement) {
-                            fastclick.focus(forElement)
-                        } else {
-                            fastclick.focus(tapElement)
-                        }
+                    if (forElement) {
+                        fastclick.focus(forElement)
+                    } else {
+                        fastclick.focus(element)
+                    }
 
-                        avalon.fastclick.fireEvent(tapElement, "click", event)
-                        if (forElement) {
-                            avalon.fastclick.fireEvent(forElement, "click", event)
-                        }
+                    avalon.fastclick.fireEvent(element, "click", event)
+                    if (forElement) {
+                        avalon.fastclick.fireEvent(forElement, "click", event)
+                    }
 
-                        if (canDoubleClick) {
-                            //Windows default double-click time is 500 ms (half a second)
-                            //http://ux.stackexchange.com/questions/40364/what-is-the-expected-timeframe-of-a-double-click
-                            //http://msdn.microsoft.com/en-us/library/windows/desktop/bb760404(v=vs.85).aspx
-                            if (new Date - doubleStartTime < 500) {
-                                avalon.fastclick.fireEvent(tapElement, "dblclick", event)
-                            }
-                            doubleIndex = 0
+                    if (canDoubleClick) {
+                        //Windows default double-click time is 500 ms (half a second)
+                        //http://ux.stackexchange.com/questions/40364/what-is-the-expected-timeframe-of-a-double-click
+                        //http://msdn.microsoft.com/en-us/library/windows/desktop/bb760404(v=vs.85).aspx
+                        if (new Date - doubleStartTime < 500) {
+                            avalon.fastclick.fireEvent(element, "dblclick", event)
                         }
+                        doubleIndex = 0
                     }
                 }
             }

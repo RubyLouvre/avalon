@@ -4,7 +4,7 @@
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
-        <script src="fix.js" ></script>
+        <script src="mobile.js" ></script>
         <script>
             var a
             var model = avalon.define({
@@ -27,9 +27,20 @@
             }
         </style>
         <div ms-controller="test">
-<!--            <label for="female" ms-click="click">Female</label>
-            <input type="radio" name="sex" id="female" ms-click="click" />-->
+            <div style="height:300px;width:200px;border:1px solid red;overflow: scroll">
+                  <div style="height:600px;">
+                http://www.aliued.cn/2013/04/27/%E7%A7%BB%E5%8A%A8%E5%BC%80%E5%8F%91%E4%B9%8Btouch-event%E7%AF%87.html
+            </div>
+            <a href="#anchor" ms-click="click">xxxx</a>
+            <br/>
+             <br/>
+            </div>
+            <div id="anchor">测试描记</div>
+            <!--            <label for="female" ms-click="click">Female</label>
+                        <input type="radio" name="sex" id="female" ms-click="click" />-->
             <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
+            <input disabled="disabled" ms-click="click" value="这是disabled元素">
+          
         </div>
     </body>
 </html>
