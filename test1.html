@@ -13,6 +13,11 @@
                     console.log("-------------")
                     console.log(this)
                 },
+                array:[1,2,3,4],
+                callback: function(){
+                    console.log(arguments)
+                },
+                
                 dblclick: function(e) {
                     console.log(e.type)
                 }
@@ -40,7 +45,10 @@
                         <input type="radio" name="sex" id="female" ms-click="click" />-->
             <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
             <input disabled="disabled" ms-click="click" value="这是disabled元素">
-          
+            <ul ms-each="array" data-each-rendered="callback">
+                <li>ddd</li>
+                 <li>dddfdfd</li>
+            </ul>
         </div>
     </body>
 </html>
