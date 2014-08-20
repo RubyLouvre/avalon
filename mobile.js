@@ -18,9 +18,7 @@ document.addEventListener('click', function(e) {
         var id = RegExp.$1
         if (id) {
             var el = document.getElementById(id)
-            if (el) {
-                el.scrollIntoView(true)
-            }
+            //这里做锚点的滚动处理,或做在scroll插件中
         }
     }
 }, true)
@@ -151,7 +149,7 @@ avalon.bindingHandlers.on = function(data, vmodels) {
             var diff = Date.now() - startTime //经过时间
             var dist = Math.sqrt(Math.pow(x - touchStartX, 2) + Math.pow(y - touchStartY, 2)) //移动距离
             var canDoubleClick = false
-            if (doubleIndex == 2) {
+            if (doubleIndex === 2) {
                 doubleIndex = 0
                 canDoubleClick = true
             }
