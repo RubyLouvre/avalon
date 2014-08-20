@@ -35,15 +35,17 @@ void function() {
             clickEvent.markFastClick = "司徒正美";
             element.dispatchEvent(clickEvent)
         },
-        focus: function(targetElement) {
-            if (this.canFocus(targetElement)) {
-                var length;
-                // Issue #160: on iOS 7, some input elements (e.g. date datetime) throw a vague TypeError on setSelectionRange. These elements don't have an integer value for the selectionStart and selectionEnd properties, but unfortunately that can't be used for detection because accessing the properties also throws a TypeError. Just check the type instead. Filed as Apple bug #15122724.
-                if (isIOS && targetElement.setSelectionRange && targetElement.type.indexOf("date") !== 0 && targetElement.type !== 'time') {
-                    length = targetElement.value.length
-                    targetElement.setSelectionRange(length, length)
+        focus: function(target) {
+            if (this.canFocus(target)) {
+                //https://github.com/RubyLouvre/avalon/issues/254
+                var value = target.value
+                target.value = value
+                if (isIOS && target.setSelectionRange && target.type.indexOf("date") !== 0 && target.type !== 'time') {
+                    // iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
+                    var n = value.length
+                    target.setSelectionRange(n, n)
                 } else {
-                    targetElement.focus()
+                    target.focus()
                 }
             }
         },
