@@ -3075,7 +3075,7 @@
                         elem.addEventListener("DOMNodeRemoved", function(e) {
                             if (e.target === this && !this.msRetain &&
                                     //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                            (window.chrome ? this.tagName === "INPUT" && e.relatedNode.nodeType === 1 : 1)) {
+                                            (window.chrome ? (this.tagName === "INPUT" ? e.relatedNode.nodeType === 1 : 1) : 1)) {
                                 offTree()
                             }
                         })
