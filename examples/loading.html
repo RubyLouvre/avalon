@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>by 司徒正美</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+//            avalon.define("test", function(vm) {
+//                vm.click = function(){
+//                    alert(1)
+//                }
+//                vm.text = "hello avalon"
+//            })
+        </script>
+        <style>
+            .ms-controller{
+                visibility: hidden;
+            }
+            .loading{
+                visibility: hidden;
+                vertical-align:middle;
+            }
+            .ms-controller .loading{
+                visibility: visible;
+            }
+        </style>
+    </head>
+    <body class="ms-controller"   ms-controller="test">
+    <center class="loading"><img src="images/loading.gif"></center>
+    <h3>avalon在ms-controller区域加loading的最佳实践</h3>
+    <div>{{text}}</div>
+    <button type="button" ms-click="click">
+        点我
+    </button>
+  
+
+</body>
+</html>
