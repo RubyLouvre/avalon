@@ -2762,17 +2762,19 @@
             }
             elem.$vmodel = vmodels[0]
             elem.$vmodels = vmodels
-            data.param = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
-            if (typeof data.specialBind === "function") {
+            var eventType = data.param = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+            if (eventType === "scan") {
+                callback.call(elem, {type: eventType})
+            } else if (typeof data.specialBind === "function") {
                 data.specialBind(elem, callback)
             } else {
-                var removeFn = avalon.bind(elem, data.param, callback)
+                var removeFn = avalon.bind(elem, eventType, callback)
             }
             data.rollback = function() {
                 if (typeof data.specialUnbind === "function") {
                     data.specialUnbind()
                 } else {
-                    avalon.unbind(elem, data.param, removeFn)
+                    avalon.unbind(elem, eventType, removeFn)
                 }
             }
             data.evaluator = data.handler = noop

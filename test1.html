@@ -10,6 +10,10 @@
             var model = avalon.define({
                 $id: "test",
                 pos: "ccc",
+                images: [{src:"https://www.google.com/images/srpr/logo11w.png"}],
+                getRealImage: function(a){
+                    console.log("----"+a+this.tagName)
+                },
                 click: function(e) {
                     console.log("-------------")
                     console.log(this)
@@ -32,8 +36,9 @@
             }
         </style>
         <div ms-controller="test">
-            <div ms-class-100="ui-scrollbar-{{pos}}" 
-                 >ddddddddddddd</div>
+            <div  ms-each-el="images">
+                <img  ms-on-scan="getRealImage(el.src)" src="14.png" />
+            </div>
 
             <!--            <label for="female" ms-click="click">Female</label>
                         <input type="radio" name="sex" id="female" ms-click="click" />-->
