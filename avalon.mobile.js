@@ -2445,7 +2445,9 @@
                         }
                     }
                     if (window.chrome) {
-                        elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
+                        elem.addEventListener("DOMNodeRemovedFromDocument", function(){
+                            setTimeout(offTree)
+                        })
                     } else {
                         avalon.tick(offTree)
                     }

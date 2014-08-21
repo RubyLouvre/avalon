@@ -24,17 +24,38 @@
 
             window.onload = function() {
                 var elem = document.querySelector("#son")
+                var offset = function(el) {
+                    var left = -el.offsetLeft,
+                            top = -el.offsetTop;
+
+                    // jshint -W084
+                    while (el = el.offsetParent) {
+                        left -= el.offsetLeft;
+                        top -= el.offsetTop;
+                    }
+                    // jshint +W084
+
+                    return {
+                        left: left,
+                        top: top
+                    };
+                };
+
                 elem.addEventListener("DOMNodeRemovedFromDocument", function() {
-                    console.log("ddd")
+                    setTimeout(function() {
+                        console.log(document.documentElement.contains(elem))
+                        console.log("ddd")
+                    },4)
+
                 })
                 setTimeout(function() {
-                 //   elem.value = "dddddddddddddddd"
+                    //   elem.value = "dddddddddddddddd"
                 }, 3000)
                 setTimeout(function() {
                     var el = document.querySelector("#parent")
-                    //   el.parentNode.removeChild(el)
+                    el.parentNode.removeChild(el)
 
-                }, 5000)
+                }, 3000)
 
             }
 
@@ -46,12 +67,22 @@
             .ms-click-active{
                 color: red
             }
+            #parent{
+                position: absolute;
+                top:200px;
+                left:200px;
+            }
+            #son {
+                position: absolute;
+                top:200px;
+                left:200px;
+            }
         </style>
         <div ms-controller="test">
-            <div  id="parent">
-                <input id="son"  />ddd   
+            <div  id="parent" >
+                <input id="son"  value="ddd"/>ddd   
             </div
-            <p>ddddddddddddddddddddddddddd</p>
+
 
             <label for="female" ms-click="click">Female</label>
             <input type="radio" name="sex" id="female" ms-click="click" />
