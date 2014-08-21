@@ -1452,7 +1452,7 @@
         "on": 3000
     }
 
-    var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll,submit")
+    var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
@@ -1469,7 +1469,7 @@
                     var value = attr.value
                     var name = attr.name
                     msData[name] = value
-                    if (ons[type]) {
+                    if (events[type]) {
                         param = type
                         type = "on"
                     } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
@@ -2436,23 +2436,18 @@
                     vmodel.$init()
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
-                    var offTree = function() {
-                        vmodel.$remove()
-                        elem.msData = {}
-                        delete VMODELS[vmodel.$id]
+                     function offTree() {
+                        if (!elem.msRetain && !root.contains(elem)) {
+                            vmodel.$remove()
+                            elem.msData = {}
+                            delete VMODELS[vmodel.$id]
+                            return false
+                        }
                     }
-                    if (supportMutationEvents) {
-                        elem.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this && !this.msRetain &&
-                                    //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                            (window.chrome ? this.tagName === "INPUT" && e.relatedNode.nodeType === 1 : 1)) {
-                                offTree()
-                            }
-                        })
-                    } else {
-                        elem.offTree = offTree
-                        launchImpl(elem)
+                    if (window.chrome) {
+                        elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
                     }
+                    avalon.tick(offTree)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
@@ -2570,8 +2565,13 @@
             }
         }
         element.oldValue = element.value
-        element.onTree = onTree
-        launch(element)
+        launch(function() {
+            if (avalon.contains(root, element)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
         registerSubscriber(data)
         var timer = setTimeout(function() {
             if (!firstTigger) {
@@ -2591,6 +2591,7 @@
         }
         el.dispatchEvent(event)
     }
+
     function onTree() { //disabled状态下改动不触发inout事件
         if (!this.disabled && this.oldValue !== this.value) {
             W3CFire(this, "input")
@@ -2600,10 +2601,7 @@
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
-            if (avalon.contains(root, el)) {
-                el.onTree && el.onTree()
-            } else if (!el.msRetain) {
-                el.offTree && el.offTree()
+            if (el() === false) {
                 ribbon.splice(n, 1)
             }
         }
@@ -2612,8 +2610,8 @@
         }
     }
 
-    function launchImpl(el) {
-        if (ribbon.push(el) === 1) {
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
             TimerID = setInterval(ticker, 30)
         }
     }
@@ -2632,11 +2630,11 @@
             configurable: true
         })
     } catch (e) {
-        launch = launchImpl
+        launch = avalon.tick
     }
+
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
-
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组

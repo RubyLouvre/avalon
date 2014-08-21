@@ -1935,7 +1935,7 @@
         "duplex": 2000,
         "on": 3000
     }
-    var ons = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scroll,submit")
+    var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
@@ -1952,7 +1952,7 @@
                     var value = attr.value
                     var name = attr.name
                     msData[name] = value
-                    if (ons[type]) {
+                    if (events[type]) {
                         param = type
                         type = "on"
                     } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
@@ -3066,19 +3066,16 @@
                     vmodel.$init()
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
-                    var offTree = function() {
-                        if (VMODELS[vmodel.$id]) {
+                    function offTree() {
+                        if (!elem.msRetain && !root.contains(elem)) {
                             vmodel.$remove()
                             elem.msData = {}
                             delete VMODELS[vmodel.$id]
+                            return false
                         }
                     }
                     if (window.chrome) {
-                        elem.addEventListener("DOMNodeRemovedFromDocument", function(e) {
-                            if (!this.msRetain) {
-                                offTree()
-                            }
-                        })
+                        elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
                     }
                     avalon.tick(offTree)
                 }
@@ -3225,6 +3222,7 @@
                 }
             }
         }
+        element.oldValue = element.value
         launch(function() {
             if (avalon.contains(root, element)) {
                 onTree.call(element)
@@ -3232,7 +3230,6 @@
                 return false
             }
         })
-        element.oldValue = element.value
         registerSubscriber(data)
         var timer = setTimeout(function() {
             if (!firstTigger) {
@@ -3261,6 +3258,7 @@
             }
         }
     }
+    
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
@@ -3298,7 +3296,6 @@
 
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
-
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
