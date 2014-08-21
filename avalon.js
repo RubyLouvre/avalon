@@ -3076,8 +3076,9 @@
                     }
                     if (window.chrome) {
                         elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
+                    } else {
+                        avalon.tick(offTree)
                     }
-                    avalon.tick(offTree)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
@@ -3258,7 +3259,7 @@
             }
         }
     }
-    
+
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]

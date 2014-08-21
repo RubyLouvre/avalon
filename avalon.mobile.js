@@ -2436,7 +2436,7 @@
                     vmodel.$init()
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
-                     function offTree() {
+                    function offTree() {
                         if (!elem.msRetain && !root.contains(elem)) {
                             vmodel.$remove()
                             elem.msData = {}
@@ -2446,8 +2446,9 @@
                     }
                     if (window.chrome) {
                         elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
+                    } else {
+                        avalon.tick(offTree)
                     }
-                    avalon.tick(offTree)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
