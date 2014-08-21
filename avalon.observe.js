@@ -2254,16 +2254,9 @@
             if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
                 var display = parseDisplay(elem.tagName)
             }
-            function callback() {//防止元素还没有应用样式就被取值，导致结果不正确
-                display = display || avalon(elem).css("display")
-                data.display = display === "none" ? parseDisplay(elem.tagName) : display
-                parseExprProxy(data.value, vmodels, data)
-            }
-            if (elem.style.display == "") {
-                avalon.nextTick(callback)
-            } else {
-                callback()
-            }
+            display = display || avalon(elem).css("display")
+            data.display = display === "none" ? parseDisplay(elem.tagName) : display
+            parseExprProxy(data.value, vmodels, data)
         },
         "widget": function(data, vmodels) {
             var args = data.value.match(rword)
@@ -2302,18 +2295,19 @@
                     vmodel.$init()
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
-                    var offTree = function() {
-                        vmodel.$remove()
-                        elem.msData = {}
-                        delete VMODELS[vmodel.$id]
-                    }
-                    elem.addEventListener("DOMNodeRemoved", function(e) {
-                        if (e.target === this && !this.msRetain &&
-                                //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                        (window.chrome ? this.tagName === "INPUT" && e.relatedNode.nodeType === 1 : 1)) {
-                            offTree()
+                    function offTree() {
+                        if (!elem.msRetain && !root.contains(elem)) {
+                            vmodel.$remove()
+                            elem.msData = {}
+                            delete VMODELS[vmodel.$id]
+                            return false
                         }
-                    })
+                    }
+                    if (window.chrome) {
+                        elem.addEventListener("DOMNodeRemovedFromDocument", offTree)
+                    } else {
+                        avalon.tick(offTree)
+                    }
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
@@ -2431,8 +2425,13 @@
             }
         }
         element.oldValue = element.value
-        element.onTree = onTree
-        launch(element)
+        launch(function() {
+            if (avalon.contains(root, element)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
         registerSubscriber(data)
         var timer = setTimeout(function() {
             if (!firstTigger) {
@@ -2461,10 +2460,7 @@
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
-            if (avalon.contains(root, el)) {
-                el.onTree && el.onTree()
-            } else if (!el.msRetain) {
-                el.offTree && el.offTree()
+            if (el() === false) {
                 ribbon.splice(n, 1)
             }
         }
@@ -2473,8 +2469,8 @@
         }
     }
 
-    function launchImpl(el) {
-        if (ribbon.push(el) === 1) {
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
             TimerID = setInterval(ticker, 30)
         }
     }
@@ -2493,11 +2489,11 @@
             configurable: true
         })
     } catch (e) {
-        launch = launchImpl
+        launch = avalon.tick
     }
+    
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
-
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组

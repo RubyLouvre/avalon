@@ -24,13 +24,15 @@
 
             window.onload = function() {
                 var elem = document.querySelector("#son")
-
+                elem.addEventListener("DOMNodeRemovedFromDocument", function() {
+                    console.log("ddd")
+                })
                 setTimeout(function() {
-                    elem.value = "dddddddddddddddd"
+                 //   elem.value = "dddddddddddddddd"
                 }, 3000)
                 setTimeout(function() {
-                     var el = document.querySelector("#parent")
-                      el.parentNode.removeChild(el)
+                    var el = document.querySelector("#parent")
+                    //   el.parentNode.removeChild(el)
 
                 }, 5000)
 
@@ -47,8 +49,9 @@
         </style>
         <div ms-controller="test">
             <div  id="parent">
-                <input id="son"  ms-duplex="aaa"/>ddd   
-            </div>
+                <input id="son"  />ddd   
+            </div
+            <p>ddddddddddddddddddddddddddd</p>
 
             <label for="female" ms-click="click">Female</label>
             <input type="radio" name="sex" id="female" ms-click="click" />
