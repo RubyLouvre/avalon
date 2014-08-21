@@ -3,16 +3,15 @@
     <head>
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js" ></script>
+        <script src="avalon.mobile.js" ></script>
         <!--        <script src="mobile.js" ></script>-->
         <script>
-            var a
+
             var model = avalon.define({
                 $id: "test",
-                pos: "ccc",
-                images: [{src:"https://www.google.com/images/srpr/logo11w.png"}],
-                getRealImage: function(a){
-                    console.log("----"+a+this.tagName)
+                images: [{src: "https://www.google.com/images/srpr/logo11w.png"}],
+                getRealImage: function(a) {
+                    console.log("----" + a + this.tagName)
                 },
                 click: function(e) {
                     console.log("-------------")
@@ -22,11 +21,34 @@
                     console.log(e.type)
                 }
             })
-            var model2 = avalon.define("tab", function(vm) {
-                vm.type = 0
-            })
 
-            model2.type = 1
+            window.onload = function() {
+                var elem = document.querySelector("#son")
+                var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        console.log(mutation.target.id + "=======");
+                    });
+                });
+
+                observer.observe(document.body, {
+                   subtree: true,
+                    childList: true
+                });
+                elem.addEventListener("DOMNodeRemovedFromDocument", function(e) {
+                    console.log(e)
+
+
+                })
+                setTimeout(function() {
+                    var el = document.querySelector("#parent")
+                    el.parentNode.removeChild(el)
+
+                }, 1000)
+
+            }
+
+
         </script>
     </head>
     <body>
@@ -36,12 +58,12 @@
             }
         </style>
         <div ms-controller="test">
-            <div  ms-each-el="images">
-                <img  ms-on-scan="getRealImage(el.src)" src="14.png" />
+            <div  id="parent">
+                <input id="son" />ddd
             </div>
 
-            <!--            <label for="female" ms-click="click">Female</label>
-                        <input type="radio" name="sex" id="female" ms-click="click" />-->
+            <label for="female" ms-click="click">Female</label>
+            <input type="radio" name="sex" id="female" ms-click="click" />
             <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
             <input disabled="disabled" ms-click="click" value="这是disabled元素">
         </div>
