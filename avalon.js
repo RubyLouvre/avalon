@@ -3067,31 +3067,26 @@
                 }
                 if (vmodel.hasOwnProperty("$remove")) {
                     var offTree = function() {
-                        vmodel.$remove()
-                        elem.msData = {}
-                        delete VMODELS[vmodel.$id]
+                        if (VMODELS[vmodel.$id]) {
+                            vmodel.$remove()
+                            elem.msData = {}
+                            delete VMODELS[vmodel.$id]
+                        }
                     }
-                    if (supportMutationEvents) {
-                        elem.addEventListener("DOMNodeRemoved", function(e) {
-                            if (e.target === this && !this.msRetain &&
-                                    //#441 chrome浏览器对文本域进行Ctrl+V操作，会触发DOMNodeRemoved事件
-                                            (window.chrome ? this.tagName === "INPUT" && e.relatedNode.nodeType === 1 : 1)) {
+                    if (window.chrome) {
+                        elem.addEventListener("DOMNodeRemovedFromDocument", function(e) {
+                            if (!this.msRetain) {
                                 offTree()
                             }
                         })
-                    } else {
-                        elem.offTree = offTree
-                        launchImpl(elem)
                     }
+                    avalon.tick(offTree)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
             }
         }
     }
-
-    var supportMutationEvents = W3C && DOC.implementation.hasFeature("MutationEvents", "2.0")
-
     //============================ class preperty binding  =======================
     "hover,active".replace(rword, function(method) {
         bindingHandlers[method] = bindingHandlers["class"]
@@ -3228,11 +3223,15 @@
                         })
                     }
                 }
-
             }
         }
-        element.onTree = onTree
-        launch(element)
+        launch(function() {
+            if (avalon.contains(root, element)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
         element.oldValue = element.value
         registerSubscriber(data)
         var timer = setTimeout(function() {
@@ -3252,6 +3251,7 @@
         }
         el.dispatchEvent(event)
     }
+
     function onTree() { //disabled状态下改动不触发input事件
         if (!this.disabled && this.oldValue !== this.value) {
             if (W3C) {
@@ -3261,14 +3261,10 @@
             }
         }
     }
-
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
-            if (avalon.contains(root, el)) {
-                el.onTree && el.onTree()
-            } else if (!el.msRetain) {
-                el.offTree && el.offTree()
+            if (el() === false) {
                 ribbon.splice(n, 1)
             }
         }
@@ -3276,8 +3272,9 @@
             clearInterval(TimerID)
         }
     }
-    function launchImpl(el) {
-        if (ribbon.push(el) === 1) {
+
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
             TimerID = setInterval(ticker, 30)
         }
     }
@@ -3296,7 +3293,7 @@
             set: newSetter
         })
     } catch (e) {
-        launch = launchImpl
+        launch = avalon.tick
     }
 
     duplexBinding.SELECT = function(element, evaluator, data) {
