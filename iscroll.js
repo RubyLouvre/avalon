@@ -126,6 +126,7 @@ IScroll.prototype = {
 		this._transitionTime();//设置CSS3 渐变时长 transition-duration
 
 		this.startTime = utils.getTime();
+                //每次都从utils.getTime方法来取，估计是怕e.timestamp在某些浏览器下有BUG
 
 		if ( this.options.useTransition && this.isInTransition ) {
 			this.isInTransition = false;
@@ -177,10 +178,10 @@ IScroll.prototype = {
 			newX, newY,
 			absDistX, absDistY;
 
-		this.pointX		= point.pageX;
+		this.pointX		= point.pageX;//当前的坐标
 		this.pointY		= point.pageY;
 
-		this.distX		+= deltaX;
+		this.distX		+= deltaX;//当前已经走了多少距离
 		this.distY		+= deltaY;
 		absDistX		= Math.abs(this.distX);
 		absDistY		= Math.abs(this.distY);

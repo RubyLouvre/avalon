@@ -2194,7 +2194,7 @@
         }
         return ret
     }
-    
+
     function uniqSet(array) {
         var ret = [], unique = {}
         for (var i = 0; i < array.length; i++) {
@@ -2218,7 +2218,7 @@
         }
         return cache;
     }
-    
+
     var cacheExprs = createCache(256)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
@@ -2756,7 +2756,7 @@
             }
             elem.$vmodel = vmodels[0]
             elem.$vmodels = vmodels
-            var eventType = data.param = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+            var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
             if (eventType === "scan") {
                 callback.call(elem, {type: eventType})
             } else if (typeof data.specialBind === "function") {
@@ -3002,6 +3002,10 @@
         "on": function(data, vmodels) {
             var value = data.value,
                     four = "$event"
+            var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+            if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
+               bindingHandlers.on[eventType + "Hook"](data)
+            }
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -3069,7 +3073,7 @@
                         }
                     }
                     if (window.chrome) {
-                        elem.addEventListener("DOMNodeRemovedFromDocument", function(){
+                        elem.addEventListener("DOMNodeRemovedFromDocument", function() {
                             setTimeout(offTree)
                         })
                     } else {

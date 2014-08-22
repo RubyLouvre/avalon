@@ -126,106 +126,13 @@ void function() {
 //==============================================
 //重写原bindingHandlers.on处理函数
     var rdash = /\(([^)]*)\)/
-    avalon.bindingHandlers.on = function(data, vmodels) {
+    var self = avalon.bindingHandlers.on = function(data, vmodels) {
         var value = data.value,
                 four = "$event"
-        var element = data.element
-        if (data.param === "click") {
-            var tapping = false,
-                    fastclick = avalon.fastclick,
-                    doubleIndex = 0, //用于决定何时重置doubleStartTime
-                    doubleStartTime, //双击开始时间,
-                    startTime, // 单击开始时间
-                    touchStartX,
-                    touchStartY
-            function resetState() {
-                tapping = false;
-                avalon(element).removeClass(fastclick.activeClass)
-            }
-            function touchstart(event) {
-                doubleIndex++
-                if (doubleIndex === 1) {
-                    doubleStartTime = Date.now()
-                }
-                tapping = true
-                if (avalon.fastclick.canClick(element)) {
-                    avalon(element).addClass(fastclick.activeClass)
-                }
-                startTime = Date.now()
-                var touches = event.touches && event.touches.length ? event.touches : [event]
-                var e = touches[0]
-                touchStartX = e.clientX
-                touchStartY = e.clientY
-            }
-            function touchend(event) {
-                var touches = (event.changedTouches && event.changedTouches.length) ? event.changedTouches :
-                        ((event.touches && event.touches.length) ? event.touches : [event])
-                var e = touches[0];
-                var x = e.clientX
-                var y = e.clientY
-                var diff = Date.now() - startTime //经过时间
-                var dist = Math.sqrt(Math.pow(x - touchStartX, 2) + Math.pow(y - touchStartY, 2)) //移动距离
-                var canDoubleClick = false
-                if (doubleIndex === 2) {
-                    doubleIndex = 0
-                    canDoubleClick = true
-                }
-                if (tapping && diff < fastclick.clickDuration && dist < fastclick.dragDistance) {
-                    ghostPrevent = true //在这里阻止浏览器的默认事件
-                    setTimeout(function() {
-                        ghostPrevent = false
-                    }, fastclick.preventTime)
-                    // 失去焦点的处理
-                    if (document.activeElement && document.activeElement !== element) {
-                        document.activeElement.blur()
-                    }
-                    if (fastclick.canClick(element)) {
-                        var forElement
-                        if (element.tagName.toLowerCase() === "label") {
-                            forElement = element.htmlFor ? document.getElementById(element.htmlFor) : null
-                        }
-                        if (forElement) {
-                            fastclick.focus(forElement)
-                        } else {
-                            fastclick.focus(element)
-                        }
-
-                        avalon.fastclick.fireEvent(element, "click", event)
-                        if (forElement) {
-                            avalon.fastclick.fireEvent(forElement, "click", event)
-                        }
-
-                        if (canDoubleClick) {
-                            //Windows default double-click time is 500 ms (half a second)
-                            //http://ux.stackexchange.com/questions/40364/what-is-the-expected-timeframe-of-a-double-click
-                            //http://msdn.microsoft.com/en-us/library/windows/desktop/bb760404(v=vs.85).aspx
-                            if (new Date - doubleStartTime < 500) {
-                                avalon.fastclick.fireEvent(element, "dblclick", event)
-                            }
-                            doubleIndex = 0
-                        }
-                    }
-                }
-                resetState()
-            }
-            if (avalon.fastclick.canFix(element)) {
-                data.specialBind = function(element, callback) {
-                    element.addEventListener("touchstart", touchstart)
-                    element.addEventListener("touchmove", resetState)
-                    element.addEventListener("touchcancel", resetState)
-                    element.addEventListener("touchend", touchend)
-                    element.addEventListener("click", callback)
-                }
-                data.specialUnbind = function(element, callback) {
-                    element.removeEventListener("touchstart", touchstart)
-                    element.removedEventListener("touchmove", resetState)
-                    element.removeEventListener("touchcancel", resetState)
-                    element.removeEventListener("touchend", touchend)
-                    element.removeEventListener("click", callback)
-                }
-            }
+        var type = data.param
+        if (typeof self[type + "Hook"] === "function") {
+            self[type + "Hook"](data)
         }
-
         if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
             var matched = (value.match(rdash) || ["", ""])[1].trim()
             if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -238,8 +145,105 @@ void function() {
         data.hasArgs = four
         avalon.parseExprProxy(value, vmodels, data)
     }
-}()
 
+    self["clickHook"] = function(data) {
+        var tapping = false,
+                element = data.element,
+                fastclick = avalon.fastclick,
+                doubleIndex = 0, //用于决定何时重置doubleStartTime
+                doubleStartTime, //双击开始时间,
+                startTime, // 单击开始时间
+                touchStartX,
+                touchStartY
+        function resetState() {
+            tapping = false;
+            avalon(element).removeClass(fastclick.activeClass)
+        }
+        function touchstart(event) {
+            doubleIndex++
+            if (doubleIndex === 1) {
+                doubleStartTime = Date.now()
+            }
+            tapping = true
+            if (avalon.fastclick.canClick(element)) {
+                avalon(element).addClass(fastclick.activeClass)
+            }
+            startTime = Date.now()
+            var touches = event.touches && event.touches.length ? event.touches : [event]
+            var e = touches[0]
+            touchStartX = e.clientX
+            touchStartY = e.clientY
+        }
+        function touchend(event) {
+            var touches = (event.changedTouches && event.changedTouches.length) ? event.changedTouches :
+                    ((event.touches && event.touches.length) ? event.touches : [event])
+            var e = touches[0];
+            var x = e.clientX
+            var y = e.clientY
+            var diff = Date.now() - startTime //经过时间
+            var dist = Math.sqrt(Math.pow(x - touchStartX, 2) + Math.pow(y - touchStartY, 2)) //移动距离
+            var canDoubleClick = false
+            if (doubleIndex === 2) {
+                doubleIndex = 0
+                canDoubleClick = true
+            }
+            if (tapping && diff < fastclick.clickDuration && dist < fastclick.dragDistance) {
+                ghostPrevent = true //在这里阻止浏览器的默认事件
+                setTimeout(function() {
+                    ghostPrevent = false
+                }, fastclick.preventTime)
+                // 失去焦点的处理
+                if (document.activeElement && document.activeElement !== element) {
+                    document.activeElement.blur()
+                }
+                if (fastclick.canClick(element)) {
+                    var forElement
+                    if (element.tagName.toLowerCase() === "label") {
+                        forElement = element.htmlFor ? document.getElementById(element.htmlFor) : null
+                    }
+                    if (forElement) {
+                        fastclick.focus(forElement)
+                    } else {
+                        fastclick.focus(element)
+                    }
+
+                    avalon.fastclick.fireEvent(element, "click", event)
+                    if (forElement) {
+                        avalon.fastclick.fireEvent(forElement, "click", event)
+                    }
+
+                    if (canDoubleClick) {
+                        //Windows default double-click time is 500 ms (half a second)
+                        //http://ux.stackexchange.com/questions/40364/what-is-the-expected-timeframe-of-a-double-click
+                        //http://msdn.microsoft.com/en-us/library/windows/desktop/bb760404(v=vs.85).aspx
+                        if (new Date - doubleStartTime < 500) {
+                            avalon.fastclick.fireEvent(element, "dblclick", event)
+                        }
+                        doubleIndex = 0
+                    }
+                }
+            }
+            resetState()
+        }
+        if (avalon.fastclick.canFix(element)) {
+            data.specialBind = function(element, callback) {
+                element.addEventListener("touchstart", touchstart)
+                element.addEventListener("touchmove", resetState)
+                element.addEventListener("touchcancel", resetState)
+                element.addEventListener("touchend", touchend)
+                element.addEventListener("click", callback)
+            }
+            data.specialUnbind = function(element, callback) {
+                element.removeEventListener("touchstart", touchstart)
+                element.removedEventListener("touchmove", resetState)
+                element.removeEventListener("touchcancel", resetState)
+                element.removeEventListener("touchend", touchend)
+                element.removeEventListener("click", callback)
+            }
+        }
+    }
+
+}()
 
 
 
