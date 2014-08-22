@@ -1640,15 +1640,7 @@
                 .replace(rnumber, "")
                 .replace(rcomma, "")
                 .split(/^$|,+/)
-        var vars = [],
-                unique = {}
-        for (var i = 0; i < match.length; ++i) {
-            var variable = match[i]
-            if (!unique[variable]) {
-                unique[variable] = vars.push(variable)
-            }
-        }
-        return cacheVars(key, vars)
+        return cacheVars(key, uniqSet(match))
     }
     /*添加赋值语句*/
     function addAssign(vars, scope, name, duplex) {
@@ -1667,14 +1659,16 @@
 
     }
 
-    function uniqVmodels(arr) {
-        var uniq = {}
-        return arr.filter(function(el) {
-            if (!uniq[el.$id]) {
-                uniq[el.$id] = 1
-                return true
+    function uniqSet(array) {
+        var ret = [], unique = {}
+        for (var i = 0; i < array.length; i++) {
+            var el = array[i]
+            var id = el && typeof el.$id === "string" ? el.$id : el
+            if (!unique[id]) {
+                unique[id] = ret.push(el)
             }
-        })
+        }
+        return ret
     }
 
     /*创建具有一定容量的缓存体*/
@@ -1706,7 +1700,7 @@
                 args = [],
                 prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
-        scopes = uniqVmodels(scopes)
+        scopes = uniqSet(scopes)
         for (var i = 0, sn = scopes.length; i < sn; i++) {
             if (vars.length) {
                 var name = "vm" + expose + "_" + i
@@ -2445,7 +2439,7 @@
                         }
                     }
                     if (window.chrome) {
-                        elem.addEventListener("DOMNodeRemovedFromDocument", function(){
+                        elem.addEventListener("DOMNodeRemovedFromDocument", function() {
                             setTimeout(offTree)
                         })
                     } else {

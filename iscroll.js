@@ -141,13 +141,27 @@ IScroll.prototype = {
 		this.startY    = this.y;
 		this.absStartX = this.x;
 		this.absStartY = this.y;
-		this.pointX    = point.pageX;
+		this.pointX    = point.pageX;//开始时相对于页面的坐标
 		this.pointY    = point.pageY;
 
 		this._execEvent('beforeScrollStart');
 	},
 
 	_move: function (e) {
+            
+//              touchstart: 1,
+//		touchmove: 1,
+//		touchend: 1,
+//		mousedown: 2,
+//		mousemove: 2,
+//		mouseup: 2,
+//		pointerdown: 3,
+//		pointermove: 3,
+//		pointerup: 3,
+//		MSPointerDown: 3,
+//		MSPointerMove: 3,
+//		MSPointerUp: 3
+//              只有同一个系列的才能进入
 		if ( !this.enabled || utils.eventType[e.type] !== this.initiated ) {
 			return;
 		}
