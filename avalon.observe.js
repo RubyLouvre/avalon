@@ -1471,19 +1471,33 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-        return cacheVars(key, uinqSet(vars))
+        return cacheVars(key, uniqSet(vars))
     }
-    function uinqSet(arr) {
-        var set = new Set
-        arr.forEach(function(el) {
-            set.add(el)
-        })
-        var ret = []
-        set.forEach(function(el) {
-            ret.push(el)
-        })
+    
+    function uniqSet(array) {
+        var ret = [], unique = {}
+        for (var i = 0; i < array.length; i++) {
+            var el = array[i]
+            var id = el && typeof el.$id === "string" ? el.$id : el
+            if (!unique[id]) {
+                unique[id] = ret.push(el)
+            }
+        }
         return ret
     }
+    
+    void function() {
+        var test = [1, 2, 3, 1]
+        if (typeof Set == "function" && (new Set(test)).size == 3) {
+            var uniqSet = function(arr) {//重写uniqSet
+                var set = new Set(arr), ret = []
+                set.forEach(function(el) {
+                    ret.push(el)
+                })
+                return ret
+            }
+        }
+    }()
 
     function addDeps(scope, prop, data) {
         var obj = scope.$accessors
@@ -2491,7 +2505,7 @@
     } catch (e) {
         launch = avalon.tick
     }
-    
+
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
         function updateVModel() {

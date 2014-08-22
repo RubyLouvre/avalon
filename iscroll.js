@@ -1,7 +1,7 @@
 function IScroll (el, options) {
 	this.wrapper = typeof el == 'string' ? document.querySelector(el) : el;
 	this.scroller = this.wrapper.children[0];
-	this.scrollerStyle = this.scroller.style;		// cache style for better performance
+	this.scrollerStyle = this.scroller.style;		//保存滚动条元素的样式对象，以提高性能
 
 	this.options = {
 
@@ -76,16 +76,12 @@ IScroll.prototype = {
 	version: '/* VERSION */',
 
 	_init: function () {
-		this._initEvents();
-
-// INSERT POINT: _init
-
+		this._initEvents();//绑定事件
 	},
 
 	destroy: function () {
-		this._initEvents(true);
-
-		this._execEvent('destroy');
+		this._initEvents(true);//移除事件
+		this._execEvent('destroy');//执行用户回调
 	},
 
 	_transitionEnd: function (e) {
@@ -96,7 +92,7 @@ IScroll.prototype = {
 		this._transitionTime();
 		if ( !this.resetPosition(this.options.bounceTime) ) {
 			this.isInTransition = false;
-			this._execEvent('scrollEnd');
+			this._execEvent('scrollEnd');//执行用户回调
 		}
 	},
 
@@ -127,14 +123,14 @@ IScroll.prototype = {
 		this.directionY = 0;
 		this.directionLocked = 0;
 
-		this._transitionTime();
+		this._transitionTime();//设置CSS3 渐变时长 transition-duration
 
 		this.startTime = utils.getTime();
 
 		if ( this.options.useTransition && this.isInTransition ) {
 			this.isInTransition = false;
 			pos = this.getComputedPosition();
-			this._translate(Math.round(pos.x), Math.round(pos.y));
+			this._translate(Math.round(pos.x), Math.round(pos.y));//强制回到起始位置
 			this._execEvent('scrollEnd');
 		} else if ( !this.options.useTransition && this.isAnimating ) {
 			this.isAnimating = false;
@@ -234,7 +230,7 @@ IScroll.prototype = {
 
 		this.moved = true;
 
-		this._translate(newX, newY);
+		this._translate(newX, newY);//移动到新位置
 
 /* REPLACE START: _move */
 
