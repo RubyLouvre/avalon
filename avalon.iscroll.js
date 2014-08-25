@@ -145,12 +145,28 @@ define(["avalon"], function() {
         touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
     }
 
-
+//https://www.gitbook.io/book/iiunknown/iscroll-5-api-cn/reviews
     function IScroll(el, options) {
         this.wrapper = typeof el === 'string' ? document.querySelector(el) : el;
         this.scroller = this.wrapper.children[0];
         this.scrollerStyle = this.scroller.style;		// cache style for better performance
         //默认参数
+
+        //options.useTransform
+        //默认情况下引擎会使用CSStransform属性。如果现在还是2007年，那么可以设置这个属性为false，这就是说：引擎将使
+        //用top/left属性来进行滚动。
+        //这个属性在滚动器感知到Flash，iframe或者视频插件内容时会有用，但是需要注意：性能会有极大的损耗。
+        //默认值：true
+        //options.useTransition
+        //iScroll使用CSS transition来实现动画效果（动量和弹力）。如果设置为false，那么将使用requestAnimationFrame代替。
+        //在现在浏览器中这两者之间的差异并不明显。在老的设备上transitions执行得更好。
+        //默认值：true
+        //options.HWCompositing
+        //这个选项尝试使用translateZ(0)来把滚动器附加到硬件层，以此来改变CSS属性。在移动设备上这将提高性能，但在有些
+        //情况下,你可能想要禁用它(特别是如果你有太多的元素和硬件性能跟不上)。
+        //默认值：true
+        //如果不确定iScroll的最优配置。从性能角度出发，上面的所有选项应该设置为true。（或者更好的方式，让他们自动设置属
+        //性为true）。你可以尝试这配置他们，但是要小心内存泄漏。
         this.options = {
             resizeScrollbars: true,
             mouseWheelSpeed: 20,
@@ -159,8 +175,8 @@ define(["avalon"], function() {
             startY: 0,
             scrollY: true,
             directionLockThreshold: 5,
-            momentum: true,
-            bounce: true,
+            momentum: true,//动量效果，拖动惯性
+            bounce: true,//是否超过实际位置反弹
             bounceTime: 600,
             bounceEasing: '',
             preventDefault: true,
@@ -599,6 +615,7 @@ define(["avalon"], function() {
 
             this.scrollTo(x, y, time, easing);
         },
+        //这个方法接受4个参数 x, y, time, easing x 为移动的x轴坐标，y为移动的y轴坐标, time为移动时间，easing表示使用何种缓动公式。 
         scrollTo: function(x, y, time, easing) {
             easing = easing || utils.ease.circular;
             this.isInTransition = this.options.useTransition && time > 0;// 正在使用CSS3transition
@@ -753,9 +770,11 @@ define(["avalon"], function() {
 
             return true;
         },
+        //调用这个方法会立即停止动画滚动，并且把滚动位置还原成0，取消绑定touchmove, touchend、touchcancel事件。 
         disable: function() {
             this.enabled = false;
         },
+        //调用这个方法，使得iscroll恢复默认正常状态
         enable: function() {
             this.enabled = true;
         }
