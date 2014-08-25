@@ -3826,8 +3826,8 @@
         for (var i = 0, n = eachProxyPool.length; i < n; i++) {
             var proxy = eachProxyPool[i]
             if (proxy.hasOwnProperty(param)) {
-                for (var i in source) {
-                    proxy[i] = source[i]
+                for (var k in source) {
+                    proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
                 return proxy
