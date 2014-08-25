@@ -3,7 +3,7 @@
     <head>
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.observe.js"></script>
+        <script src="avalon.js"></script>
         <script>
             var vmodels = avalon.define("test", function(vm) {
                 vm.aaa = {
@@ -29,7 +29,7 @@
         <ul>
             <li ms-repeat="aaa.aa.a">{{el}}</li>
         </ul>
-        <p>{{xxx}}</p>
+     
         <div ms-repeat="aaa.object">
             {{$key}}: {{$val}}
         </div>

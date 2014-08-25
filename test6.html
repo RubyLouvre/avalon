@@ -9,12 +9,13 @@
 
         <script>
 
-     var vmodel = avalon.define("test", function(vm){
-        vm.array = [[1,2], [3,4], [5, 6]]
-      })
-      setTimeout(function(){
-         vmodel.array[1].set(1, "xxx")
-      }, 2500)
+            var vmodel = avalon.define("test", function(vm) {
+                vm.array = [[1, 2], [3, 4], [5, 6]]
+            })
+            setTimeout(function() {
+                vmodel.array[1].set(1, "xxx")
+            }, 2500)
+
 
         </script>
     </head>

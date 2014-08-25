@@ -18,9 +18,8 @@
                 add: function(obj) {
                     this.registerState(obj, true)
                 },
-     
                 _transitionTo: function(from, to) {
-              
+
                     var curr = from
                     var fromList = []
                     do {
@@ -84,6 +83,8 @@
             router.currentState = "home.eee"
             var array = router.transitionTo("contacts.detail.item")
             console.log(array)
+
+          
         </script>
     </head>
 
