@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.4 2014.8.26
+ 此版本是基于avalon.js，删掉了AMD加载器、DOMReady模块
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
