@@ -4530,7 +4530,7 @@
     /*********************************************************************
      *                           DOMReady                               *
      **********************************************************************/
-    var ready = W3C ? "DOMContentLoaded" : "readystatechange"
+
     var readyList = []
     function fireReady() {
         if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
@@ -4558,20 +4558,19 @@
     if (DOC.readyState === "complete") {
         setTimeout(fireReady) //如果在domReady之外加载
     } else if (W3C) {
-        DOC.addEventListener(ready, fireReady)
-        window.addEventListener("load", fireReady)
+        DOC.addEventListener("DOMContentLoaded", fireReady)
     } else {
         DOC.attachEvent("onreadystatechange", function() {
             if (DOC.readyState === "complete") {
                 fireReady()
             }
         })
-        window.attachEvent("onload", fireReady)
         if (root.doScroll) {
             doScrollCheck()
         }
     }
-
+    avalon.bind(window, "load", fireReady)
+    
     avalon.ready = function(fn) {
         if (innerRequire) {
             innerRequire("ready!", fn)
