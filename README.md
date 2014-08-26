@@ -7,7 +7,8 @@
 <hr>
 <ul>
     <li>avalon.js 兼容IE6，及标准浏览器</li>
-    <li>avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>如果想支持触摸屏，请再添加mobile.js</li>
     <li>想使用路由器，可以用<a href="https://github.com/RubyLouvre/mmRouter">mmRouter</a>，
 想使用动画，可以用<a href="https://github.com/RubyLouvre/mmAnimate">mmAnimate</a>，
 想使用AJAX，可以用<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>，
