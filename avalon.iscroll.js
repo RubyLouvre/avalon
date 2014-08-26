@@ -145,28 +145,19 @@ define(["avalon"], function() {
         touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
     }
 
+    var Passthrough = {
+        vertical: "vertical",
+        horizontal: "horizontal",
+        true: "vertical"
+    }
+
 //https://www.gitbook.io/book/iiunknown/iscroll-5-api-cn/reviews
     function IScroll(el, options) {
         this.wrapper = typeof el === 'string' ? document.querySelector(el) : el;
         this.scroller = this.wrapper.children[0];
-        this.scrollerStyle = this.scroller.style;		// cache style for better performance
+        this.scrollerStyle = this.scroller.style;
         //默认参数
 
-        //options.useTransform
-        //默认情况下引擎会使用CSStransform属性。如果现在还是2007年，那么可以设置这个属性为false，这就是说：引擎将使
-        //用top/left属性来进行滚动。
-        //这个属性在滚动器感知到Flash，iframe或者视频插件内容时会有用，但是需要注意：性能会有极大的损耗。
-        //默认值：true
-        //options.useTransition
-        //iScroll使用CSS transition来实现动画效果（动量和弹力）。如果设置为false，那么将使用requestAnimationFrame代替。
-        //在现在浏览器中这两者之间的差异并不明显。在老的设备上transitions执行得更好。
-        //默认值：true
-        //options.HWCompositing
-        //这个选项尝试使用translateZ(0)来把滚动器附加到硬件层，以此来改变CSS属性。在移动设备上这将提高性能，但在有些
-        //情况下,你可能想要禁用它(特别是如果你有太多的元素和硬件性能跟不上)。
-        //默认值：true
-        //如果不确定iScroll的最优配置。从性能角度出发，上面的所有选项应该设置为true。（或者更好的方式，让他们自动设置属
-        //性为true）。你可以尝试这配置他们，但是要小心内存泄漏。
         this.options = {
             resizeScrollbars: true,
             mouseWheelSpeed: 20,
@@ -175,38 +166,56 @@ define(["avalon"], function() {
             startY: 0,
             scrollY: true,
             directionLockThreshold: 5,
-            momentum: true,//动量效果，拖动惯性
-            bounce: true,//是否超过实际位置反弹
+            momentum: true, //动量效果，拖动惯性;关闭此功能将大幅度提升性能。
+            bounce: true, //当滚动器到达容器边界时他将执行一个小反弹动画。在老的或者性能低的设备上禁用反弹对实现平滑的滚动有帮助。
+
             bounceTime: 600,
             bounceEasing: '',
             preventDefault: true,
-            preventDefaultException: {tagName: /^(INPUT|TEXTAREA|BUTTON|SELECT)$/},
-            HWCompositing: true,
+            HWCompositing: true, //开启CSS3硬件加速(通过translateZ(0)实现)
             useTransition: true,
-            useTransform: true
+            useTransform: true,
+            
+            scrollbars: false//是否出现滚动条
+
         };
         avalon.mix(this.options, options)
 
         // 调整参数
         this.translateZ = this.options.HWCompositing && utils.hasPerspective ? ' translateZ(0)' : '';
 
-        this.options.useTransition = utils.hasTransition && this.options.useTransition;
+        //使用CSS transition来实现动画效果（动量和弹力）。如果设置为false，那么将使用requestAnimationFrame代替。
+        //在现在浏览器中这两者之间的差异并不明显。在老的设备上transitions执行得更好。
+        this.options.useTransition = utils.hasTransition && this.options.useTransition
+
+        //默认情况下引擎会使用CSStransform属性。如果现在还是2007年，那么可以设置这个属性为false，这就是说：引擎将使
+        //用top/left属性来进行滚动。
+        //这个属性在滚动器感知到Flash，iframe或者视频插件内容时会有用，但是需要注意：性能会有极大的损耗。
         this.options.useTransform = utils.hasTransform && this.options.useTransform;
 
-        this.options.eventPassthrough = this.options.eventPassthrough === true ? 'vertical' : this.options.eventPassthrough;
-        this.options.preventDefault = !this.options.eventPassthrough && this.options.preventDefault;
+        // 决定哪一个滚动条使用原生滚动条 
+        // 当其值为horizontal时，横向为人工的，纵向为原生的；
+        // 当其值为vertical时，横向为原生的，纵向为人工的；
+        // 它只有horizontal,vertical,undefined三种值
+        var ep = this.options.eventPassthrough
+        ep = this.options.eventPassthrough = Passthrough[ep]
 
-        // If you want eventPassthrough I have to lock one of the axes
-        this.options.scrollY = this.options.eventPassthrough == 'vertical' ? false : this.options.scrollY;
-        this.options.scrollX = this.options.eventPassthrough == 'horizontal' ? false : this.options.scrollX;
+        // 默认情况下scrollY为true, scrollX为false，因此只出现纵向滚动条，想出现横向滚动条，需要设置scrollX = true
+        this.options.scrollY = ep == "vertical" ? false : !!this.options.scrollY
+        this.options.scrollX = ep == "horizontal" ? false : !!this.options.scrollX
 
-        // With eventPassthrough we also need lockDirection mechanism
-        this.options.freeScroll = this.options.freeScroll && !this.options.eventPassthrough;
+        this.options.preventDefault = !this.options.eventPassthrough && !!this.options.preventDefault;
+
+        // 此属性针对于两个两个纬度的滚动条（当你需要横向和纵向滚动条）。通常情况下你开始滚动一个方向上的滚动条，另外一
+        // 个方向上会被锁定不动。有些时候，你需要无约束的移动（横向和纵向可以同时响应），在这样的情况下此属性需要设置
+        // 为true。默认值：false
+
+        this.options.freeScroll = !!(this.options.freeScroll && !this.options.eventPassthrough);
         this.options.directionLockThreshold = this.options.eventPassthrough ? 0 : this.options.directionLockThreshold;
 
         this.options.bounceEasing = typeof this.options.bounceEasing == 'string' ? utils.ease[this.options.bounceEasing] || utils.ease.circular : this.options.bounceEasing;
 
-        this.options.resizePolling = this.options.resizePolling === undefined ? 60 : this.options.resizePolling;
+        this.options.resizePolling = this.options.resizePolling === void 0 ? 60 : this.options.resizePolling;
 
         if (this.options.tap === true) {
             this.options.tap = 'tap';
@@ -230,11 +239,12 @@ define(["avalon"], function() {
 // INSERT POINT: DEFAULTS
 
         this._init();
-        this.refresh();
+        // this.refresh();
 
-        this.scrollTo(this.options.startX, this.options.startY);
-        this.enable();
+        //    this.scrollTo(this.options.startX, this.options.startY);
+        //    this.enable();
     }
+    avalon.IScroll = IScroll
 
     function getTransitionEndEventName() {
         var obj = {
@@ -309,25 +319,84 @@ define(["avalon"], function() {
             this._initEvents()
 
             if (this.options.scrollbars || this.options.indicators) {
-                this._initIndicators();
+                // this._initIndicators();
             }
 
             if (this.options.mouseWheel) {
-                this._initWheel();
+                // this._initWheel();
             }
 
             if (this.options.snap) {
-                this._initSnap();
+                // this._initSnap();
             }
 
             if (this.options.keyBindings) {
-                this._initKeys();
+                // this._initKeys();
             }
+
+        },
+        destroy: function() {
+            this._initEvents(true);
+
+            this._execEvent('destroy');
+        },
+        _transitionEnd: function(e) {
+            if (e.target != this.scroller || !this.isInTransition) {
+                return;
+            }
+
+            this._transitionTime();
+            if (!this.resetPosition(this.options.bounceTime)) {
+                this.isInTransition = false;
+                this._execEvent('scrollEnd');
+            }
+        },
+        refresh: function() {
+            var rf = this.wrapper.offsetHeight;		// Force reflow
+
+            this.wrapperWidth = this.wrapper.clientWidth;
+            this.wrapperHeight = this.wrapper.clientHeight;
+
+            /* REPLACE START: refresh */
+
+            this.scrollerWidth = this.scroller.offsetWidth;
+            this.scrollerHeight = this.scroller.offsetHeight;
+
+            this.maxScrollX = this.wrapperWidth - this.scrollerWidth;
+            this.maxScrollY = this.wrapperHeight - this.scrollerHeight;
+
+            /* REPLACE END: refresh */
+
+            this.hasHorizontalScroll = this.options.scrollX && this.maxScrollX < 0;
+            this.hasVerticalScroll = this.options.scrollY && this.maxScrollY < 0;
+
+            if (!this.hasHorizontalScroll) {
+                this.maxScrollX = 0;
+                this.scrollerWidth = this.wrapperWidth;
+            }
+
+            if (!this.hasVerticalScroll) {
+                this.maxScrollY = 0;
+                this.scrollerHeight = this.wrapperHeight;
+            }
+
+            this.endTime = 0;
+            this.directionX = 0;
+            this.directionY = 0;
+
+            this.wrapperOffset = utils.offset(this.wrapper);
+
+            this._execEvent('refresh');
+
+            this.resetPosition();
+
+// INSERT POINT: _refresh
 
         },
         _initEvents: function(remove) {
             //绑定或卸载事件
             var eventType = remove ? utils.removeEvent : utils.addEvent
+           
             var target = this.options.bindToWrapper ? this.wrapper : window
             var that = this
 
@@ -344,7 +413,7 @@ define(["avalon"], function() {
             if (this.options.click) {
                 eventType(this.wrapper, "click", hander, true)
             }
-            for (var i = 0, type; type = touchNames[i]; i = 0) {
+            for (var i = 0, type; type = touchNames[i]; i++) {
                 var el = i === 0 ? this.wrapper : target
                 eventType(el, type, hander)
             }

@@ -6,15 +6,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
 
         <title>iScroll demo: simple</title>
-
         <script type="text/javascript" src="iscroll.js"></script>
 
         <script type="text/javascript">
 
-            var myScroll;
-
-            function loaded() {
-                myScroll = new IScroll('#wrapper', {mouseWheel: true});
+       
+            window.onload = function() {
+               var myScroll = new IScroll('#wrapper', {
+                    mouseWheel: true,
+                    scrollbars: true
+                });
+                console.log(myScroll)
             }
 
             document.addEventListener('touchmove', function(e) {
@@ -22,6 +24,24 @@
             }, false);
 
         </script>
+        <!--        <script src="avalon.js">
+        
+                </script>
+                <script>
+                    require(["avalon.iscroll", "ready!"], function() {
+                        setTimeout(function() {
+                            var myScroll = new avalon.IScroll('#wrapper', {
+                                mouseWheel: true,
+                                scrollbars: true
+        });
+                            console.log(myScroll)
+        
+                            document.addEventListener('touchmove', function(e) {
+                                e.preventDefault();
+                            }, false);
+                        }, 500)
+                    })
+                </script>-->
 
         <style type="text/css">
             * {
@@ -127,7 +147,7 @@
 
         </style>
     </head>
-    <body onload="loaded()">
+    <body >
         <div id="header">iScroll</div>
 
         <div id="wrapper">
