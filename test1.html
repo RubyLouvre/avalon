@@ -4,68 +4,22 @@
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
-        <!--        <script src="mobile.js" ></script>-->
         <script>
-
             var model = avalon.define({
                 $id: "test",
-                aaa: "xxx",
-                click: function(e) {
-                    console.log("-------------")
-                    console.log(this)
-                },
-                dblclick: function(e) {
-                    console.log(e.type)
-                }
+                array: [{a: 222}, {a: 333}]
             })
-            model.$watch("aaa", function(a) {
-                console.log(a)
-            })
-
-            window.onload = function() {
-           //     var elem = document.querySelector("#son")
-              
-         
-                setTimeout(function() {
-                    //   elem.value = "dddddddddddddddd"
-                }, 3000)
-                setTimeout(function() {
-                //    var el = document.querySelector("#parent")
-                 //   el.parentNode.removeChild(el)
-
-                }, 3000)
-
-            }
-          
+            setTimeout(function() {
+                model.array.set(1, {a: 444})
+            }, 2000)
 
         </script>
     </head>
     <body>
-        <style>
-            .ms-click-active{
-                color: red
-            }
-            #parent{
-                position: absolute;
-                top:200px;
-                left:200px;
-            }
-            #son {
-                position: absolute;
-                top:200px;
-                left:200px;
-            }
-        </style>
         <div ms-controller="test">
-            <div  id="parent" >
-                <input id="son"  value="ddd"/>ddd   
-            </div
-
-
-            <label for="female" ms-click="click" >Female</label>
-            <input  name="sex" id="female" ms-click="click" disabled/>
-            <p type="button"  ms-click="click" ms-on-dblclick="dblclick">sss</p>
-            <input disabled="disabled" ms-click="click" value="这是disabled元素">
+            <ul>
+                <li ms-repeat="array">{{el.a}}</li>
+            </ul>
         </div>
     </body>
 </html>
