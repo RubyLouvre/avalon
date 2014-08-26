@@ -3763,14 +3763,20 @@
         innerRequire.config = kernel
         innerRequire.checkDeps = checkDeps
     }
-    
+
     /*********************************************************************
      *                    DOMReady                                         *
      **********************************************************************/
-
+    var readyList = []
     function fireReady() {
-        modules["ready!"].state = 2
-        innerRequire.checkDeps()
+        if (innerRequire) {
+            modules["ready!"].state = 2
+            innerRequire.checkDeps()//隋性函数，防止IE9二次调用_checkDeps
+        } else {
+            readyList.forEach(function(a) {
+                a(avalon)
+            })
+        }
         fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
     }
 
@@ -3781,7 +3787,13 @@
         window.addEventListener("load", fireReady)
     }
     avalon.ready = function(fn) {
-        innerRequire("ready!", fn)
+        if (innerRequire) {
+            innerRequire("ready!", fn)
+        } else if (fireReady === noop) {
+            fn(avalon)
+        } else {
+            readyList.push(fn)
+        }
     }
     avalon.config({
         loader: true
