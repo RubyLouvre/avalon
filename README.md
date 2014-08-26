@@ -43,7 +43,7 @@
 <h3>JS文件的压缩</h3>
 ```
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
-java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.js
+java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.js
 ```
 <p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
 
