@@ -863,9 +863,13 @@ define(["avalon"], function() {
                     that._execEvent('scrollEnd');
                     that.wheelTimeout = undefined;
                 }, 400);
-                var wheelDeltaX = e.wheelDeltaX * that.options.mouseWheelSpeed
-                var wheelDeltaY = e.wheelDeltaY * that.options.mouseWheelSpeed
-
+                if(e.wheelDeltaX === void 0){
+                   e.wheelDeltaY = e.wheelDelta
+                    e.wheelDeltaX = 0
+                }
+                var wheelDeltaX = e.wheelDeltaX / 120 * that.options.mouseWheelSpeed
+                var wheelDeltaY = e.wheelDeltaY / 120 * that.options.mouseWheelSpeed
+console.log(wheelDeltaY)
                 wheelDeltaX *= that.options.invertWheelDirection
                 wheelDeltaY *= that.options.invertWheelDirection
 
