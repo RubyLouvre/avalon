@@ -31,8 +31,8 @@
             require(["avalon.iscroll", "ready!"], function() {
                 setTimeout(function() {
                     var myScroll = new avalon.IScroll('#wrapper', {
-                        mouseWheel: true,
-                        scrollbars: true
+                        mouseWheel: true
+                    //    scrollbars: true
                     });
 
                     document.addEventListener('touchmove', function(e) {
@@ -147,7 +147,7 @@
         </style>
     </head>
     <body >
-        <div id="header">iScroll</div>
+        <div id="header">avalon iScroll</div>
 
         <div id="wrapper">
             <div id="scroller">
