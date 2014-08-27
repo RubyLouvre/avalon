@@ -2709,10 +2709,11 @@
          IE9-11 wheel deltaY 下40 上-40
          chrome wheel deltaY 下100 上-100 */
         eventHooks.mousewheel = {
-            type: "DOMMouseScroll",
+            type: "wheel",
             deel: function(elem, fn) {
                 return function(e) {
-                    e.wheelDelta = e.detail > 0 ? -120 : 120
+                    e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
+                    e.wheelDeltaX = 0
                     Object.defineProperty(e, "type", {
                         value: "mousewheel"
                     })

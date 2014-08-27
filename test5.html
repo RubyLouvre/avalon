@@ -8,40 +8,40 @@
         <title>iScroll demo: simple</title>
         <script type="text/javascript" src="iscroll.js"></script>
 
-        <script type="text/javascript">
-
-       
-            window.onload = function() {
-               var myScroll = new IScroll('#wrapper', {
-                    mouseWheel: true,
-                    scrollbars: true
-                });
-                console.log(myScroll)
-            }
-
-            document.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-            }, false);
+        <!--        <script type="text/javascript">
+        
+               
+                    window.onload = function() {
+                       var myScroll = new IScroll('#wrapper', {
+                            mouseWheel: true,
+                            scrollbars: true
+                        });
+                        console.log(myScroll)
+                    }
+        
+                    document.addEventListener('touchmove', function(e) {
+                        e.preventDefault();
+                    }, false);
+        
+                </script>-->
+        <script src="avalon.js">
 
         </script>
-        <!--        <script src="avalon.js">
-        
-                </script>
-                <script>
-                    require(["avalon.iscroll", "ready!"], function() {
-                        setTimeout(function() {
-                            var myScroll = new avalon.IScroll('#wrapper', {
-                                mouseWheel: true,
-                                scrollbars: true
-        });
-                            console.log(myScroll)
-        
-                            document.addEventListener('touchmove', function(e) {
-                                e.preventDefault();
-                            }, false);
-                        }, 500)
-                    })
-                </script>-->
+        <script>
+            require(["avalon.iscroll", "ready!"], function() {
+                setTimeout(function() {
+                    var myScroll = new avalon.IScroll('#wrapper', {
+                        mouseWheel: true,
+                        scrollbars: true
+                    });
+                    console.log(myScroll)
+
+                    document.addEventListener('touchmove', function(e) {
+                        e.preventDefault();
+                    }, false);
+                }, 500)
+            })
+        </script>
 
         <style type="text/css">
             * {

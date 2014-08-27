@@ -175,7 +175,6 @@ define(["avalon"], function() {
             HWCompositing: true, //开启CSS3硬件加速(通过translateZ(0)实现)
             useTransition: true,
             useTransform: true,
-            
             scrollbars: false//是否出现滚动条
 
         };
@@ -239,10 +238,10 @@ define(["avalon"], function() {
 // INSERT POINT: DEFAULTS
 
         this._init();
-        // this.refresh();
+        this.refresh();
 
-        //    this.scrollTo(this.options.startX, this.options.startY);
-        //    this.enable();
+        this.scrollTo(this.options.startX, this.options.startY);
+        this.enable();
     }
     avalon.IScroll = IScroll
 
@@ -323,7 +322,7 @@ define(["avalon"], function() {
             }
 
             if (this.options.mouseWheel) {
-                // this._initWheel();
+                this._initWheel();
             }
 
             if (this.options.snap) {
@@ -396,7 +395,7 @@ define(["avalon"], function() {
         _initEvents: function(remove) {
             //绑定或卸载事件
             var eventType = remove ? utils.removeEvent : utils.addEvent
-           
+
             var target = this.options.bindToWrapper ? this.wrapper : window
             var that = this
 
@@ -406,6 +405,7 @@ define(["avalon"], function() {
                 }
                 that.handleEvent(e)
             }
+            
 
             eventType(window, "orientationchange", hander)
             eventType(window, "resize", hander)
@@ -437,11 +437,6 @@ define(["avalon"], function() {
                     break
                 case getTransitionEndEventName():
                     this._transitionEnd(e)
-                    break
-                case "wheel":
-                case "DOMMouseScroll":
-                case "mousewheel":
-                    this._wheel(e)
                     break
                 case "keydown":
                     this._key(e)
@@ -846,6 +841,81 @@ define(["avalon"], function() {
         //调用这个方法，使得iscroll恢复默认正常状态
         enable: function() {
             this.enabled = true;
+        },
+        //===============================处理滚轮事件====================
+        _initWheel: function() {
+            var that = this
+            var removeFn = avalon.bind(this.wrapper, "mousewheel", function(e) {
+                if (!that.enabled) {
+                    return;
+                }
+
+                e.preventDefault();
+                e.stopPropagation()
+
+                if (that.wheelTimeout === undefined) {
+                    that._execEvent('scrollStart');
+                }
+
+                // Execute the scrollEnd event after 400ms the wheel stopped scrolling
+                clearTimeout(that.wheelTimeout);
+                that.wheelTimeout = setTimeout(function() {
+                    that._execEvent('scrollEnd');
+                    that.wheelTimeout = undefined;
+                }, 400);
+                var wheelDeltaX = e.wheelDeltaX * that.options.mouseWheelSpeed
+                var wheelDeltaY = e.wheelDeltaY * that.options.mouseWheelSpeed
+
+                wheelDeltaX *= that.options.invertWheelDirection
+                wheelDeltaY *= that.options.invertWheelDirection
+
+                if (!that.hasVerticalScroll) {
+                    wheelDeltaX = wheelDeltaY;
+                    wheelDeltaY = 0;
+                }
+
+                if (that.options.snap) {
+                    var newX = that.currentPage.pageX;
+                    var newY = that.currentPage.pageY;
+
+                    if (wheelDeltaX > 0) {
+                        newX--;
+                    } else if (wheelDeltaX < 0) {
+                        newX++;
+                    }
+
+                    if (wheelDeltaY > 0) {
+                        newY--;
+                    } else if (wheelDeltaY < 0) {
+                        newY++;
+                    }
+
+                    that.goToPage(newX, newY);
+
+                    return;
+                }
+                newX = that.x + Math.round(that.hasHorizontalScroll ? wheelDeltaX : 0);
+                newY = that.y + Math.round(that.hasVerticalScroll ? wheelDeltaY : 0);
+
+                if (newX > 0) {
+                    newX = 0;
+                } else if (newX < that.maxScrollX) {
+                    newX = that.maxScrollX;
+                }
+
+                if (newY > 0) {
+                    newY = 0;
+                } else if (newY < that.maxScrollY) {
+                    newY = that.maxScrollY;
+                }
+
+                that.scrollTo(newX, newY, 0);
+
+            })
+
+            this.on('destroy', function() {
+                avalon.bind(this.wrapper, "mousewheel", removeFn)
+            });
         }
     }
 })

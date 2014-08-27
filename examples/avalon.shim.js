@@ -3346,6 +3346,8 @@
             var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
             ret.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
             ret.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+            ret.wheelDeltaY = ret.wheelDelta
+            ret.wheelDeltaX = 0
         }
         ret.timeStamp = new Date - 0
         ret.originalEvent = event
@@ -3411,11 +3413,14 @@
          firefox wheel detlaY 下3 上-3
          IE9-11 wheel deltaY 下40 上-40
          chrome wheel deltaY 下100 上-100 */
+        var fixWheelType = document.onwheel !== void 0 ? "wheel" : "DOMMouseScroll"
+        var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
         eventHooks.mousewheel = {
-            type: "DOMMouseScroll",
+            type: fixWheelType,
             deel: function(elem, fn) {
                 return function(e) {
-                    e.wheelDelta = e.detail > 0 ? -120 : 120
+                    e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
+                    e.wheelDeltaX = 0
                     if (Object.defineProperty) {
                         Object.defineProperty(e, "type", {
                             value: "mousewheel"
