@@ -159,7 +159,6 @@ define(["avalon"], function() {
         //默认参数
 
         this.options = {
-            resizeScrollbars: true,
             mouseWheelSpeed: 20,
             snapThreshold: 0.334,
             startX: 0,
@@ -168,14 +167,20 @@ define(["avalon"], function() {
             directionLockThreshold: 5,
             momentum: true, //动量效果，拖动惯性;关闭此功能将大幅度提升性能。
             bounce: true, //当滚动器到达容器边界时他将执行一个小反弹动画。在老的或者性能低的设备上禁用反弹对实现平滑的滚动有帮助。
-
             bounceTime: 600,
             bounceEasing: '',
             preventDefault: true,
             HWCompositing: true, //开启CSS3硬件加速(通过translateZ(0)实现)
             useTransition: true,
             useTransform: true,
-            scrollbars: false//是否出现滚动条
+            scrollbars: false, //是否出现滚动条
+            fadeScrollbars: false, //不想使用滚动条淡入淡出方式时，需要设置此属性为false以便节省资源。
+            interactiveScrollbars: false, //此属性可以让滚动条能拖动，用户可以与之交互。
+            //滚动条尺寸改变基于容器和滚动区域的宽/高之间的比例。此属性设置为false让滚动条固定大小。
+            //这可能有助于自定义滚动条样式（参考下面）。
+            resizeScrollbars: true
+
+
 
         };
         avalon.mix(this.options, options)
@@ -405,10 +410,9 @@ define(["avalon"], function() {
                 }
                 that.handleEvent(e)
             }
-            
 
-            eventType(window, "orientationchange", hander)
-            eventType(window, "resize", hander)
+
+            eventType(window, 'onorientationchange' in window ? "orientationchange" : "resize", hander)
 
             if (this.options.click) {
                 eventType(this.wrapper, "click", hander, true)
@@ -475,7 +479,9 @@ define(["avalon"], function() {
             }
 
             if (this.options.preventDefault && !utils.isBadAndroid && !noScroll[e.target.tagName]) {
-                e.preventDefault();
+                if (!this.options.mouseWheel) {
+                    e.preventDefault();
+                }
             }
 
             var point = e.touches ? e.touches[0] : e
@@ -642,8 +648,6 @@ define(["avalon"], function() {
 
             // we scrolled less than 10 pixels
             if (!this.moved) {
-
-
                 this._execEvent('scrollCancel');
                 return;
             }
@@ -863,13 +867,12 @@ define(["avalon"], function() {
                     that._execEvent('scrollEnd');
                     that.wheelTimeout = undefined;
                 }, 400);
-                if(e.wheelDeltaX === void 0){
-                   e.wheelDeltaY = e.wheelDelta
+                if (e.wheelDeltaX === void 0) {
+                    e.wheelDeltaY = e.wheelDelta
                     e.wheelDeltaX = 0
                 }
                 var wheelDeltaX = e.wheelDeltaX / 120 * that.options.mouseWheelSpeed
                 var wheelDeltaY = e.wheelDeltaY / 120 * that.options.mouseWheelSpeed
-console.log(wheelDeltaY)
                 wheelDeltaX *= that.options.invertWheelDirection
                 wheelDeltaY *= that.options.invertWheelDirection
 
