@@ -366,7 +366,7 @@ void function() {
             if (touchNames[3]) {
                 DOC.addEventListener(touchNames[3], cancelAll)
             }
-        })(documents)
+        })(document)
         //http://quojs.tapquo.com/ http://code.baidu.com/
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
     }

@@ -2776,7 +2776,6 @@
 
     var rdash = /\(([^)]*)\)/
     var rwhitespace = /^\s+$/
-    var rdisplayNone = /display:\snone(;)?/i
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -3002,11 +3001,7 @@
             var display = elem.css("display")
             if (display === "none") {
                 var style = elem[0].style
-                var cssText = style.cssText || ""
                 var visibility = elem.css("visibility")
-                if (rdisplayNone.test(cssText)) {
-                    style.cssText = cssText.replace(rdisplayNone, "")
-                }
                 style.display = ""
                 style.visibility = "visible"
                 data.display = elem.css("display")
