@@ -2359,30 +2359,6 @@
     /*********************************************************************
      *                     绑定处理系统                                    *
      **********************************************************************/
-    var cacheDisplay = oneObject("a,abbr,b,span,strong,em,font,i,kbd", "inline")
-    avalon.mix(cacheDisplay, oneObject("div,h1,h2,h3,h4,h5,h6,section,p", "block"))
-
-    function parseDisplay(nodeName, val) {
-        //用于取得此类标签的默认display值
-        nodeName = nodeName.toLowerCase()
-        if (!cacheDisplay[nodeName]) {
-            var node = DOC.createElement(nodeName)
-            root.appendChild(node)
-            if (W3C) {
-                val = getComputedStyle(node, null).display
-            } else {
-                val = node.currentStyle.display
-            }
-            root.removeChild(node)
-            cacheDisplay[nodeName] = val
-        }
-        return cacheDisplay[nodeName]
-    }
-    avalon.parseDisplay = parseDisplay
-    var supportDisplay = (function(td) {
-        return W3C ? getComputedStyle(td, null).display === "table-cell" : true
-    })(DOC.createElement("td"))
-
     var propMap = {//属性名映射
         "accept-charset": "acceptCharset",
         "char": "ch",
@@ -2397,7 +2373,7 @@
     anomaly.replace(rword, function(name) {
         propMap[name.toLowerCase()] = name
     })
-    var rdash = /\(([^)]*)\)/
+
     var cssText = "<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
     head.insertBefore(avalon.parseHTML(cssText), head.firstChild) //避免IE6 base标签BUG
     var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
@@ -2797,7 +2773,10 @@
         },
         "widget": noop
     }
+
+    var rdash = /\(([^)]*)\)/
     var rwhitespace = /^\s+$/
+    var rdisplayNone = /display:\snone(;)?/i
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -3019,12 +2998,22 @@
             parseExprProxy(value, vmodels, data, four)
         },
         "visible": function(data, vmodels) {
-            var elem = data.element
-            if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
-                var display = parseDisplay(elem.tagName)
+            var elem = avalon(data.element)
+            var display = elem.css("display")
+            if (display === "none") {
+                var style = elem[0].style
+                var cssText = style.cssText || ""
+                var visibility = elem.css("visibility")
+                if (rdisplayNone.test(cssText)) {
+                    style.cssText = cssText.replace(rdisplayNone, "")
+                }
+                style.display = ""
+                style.visibility = "visible"
+                data.display = elem.css("display")
+                style.visibility = visibility
+            } else {
+                data.display = display
             }
-            display = display || avalon(elem).css("display")
-            data.display = display === "none" ? parseDisplay(elem.tagName) : display
             parseExprProxy(data.value, vmodels, data)
         },
         "widget": function(data, vmodels) {

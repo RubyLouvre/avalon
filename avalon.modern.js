@@ -1807,26 +1807,8 @@
     /*********************************************************************
      *绑定模块（实现“操作数据即操作DOM”的关键，将DOM操作放逐出前端开发人员的视野，让它交由框架自行处理，开发人员专致于业务本身） *                                 *
      **********************************************************************/
-    var cacheDisplay = oneObject("a,abbr,b,span,strong,em,font,i,kbd", "inline")
-    avalon.mix(cacheDisplay, oneObject("div,h1,h2,h3,h4,h5,h6,section,p", "block"))
 
-    /*用于取得此类标签的默认display值*/
-    function parseDisplay(nodeName, val) {
-        nodeName = nodeName.toLowerCase()
-        if (!cacheDisplay[nodeName]) {
-            var node = DOC.createElement(nodeName)
-            root.appendChild(node)
-            val = getComputedStyle(node, null).display
-            root.removeChild(node)
-            cacheDisplay[nodeName] = val
-        }
-        return cacheDisplay[nodeName]
-    }
-    avalon.parseDisplay = parseDisplay
-    var supportDisplay = (function(td) {
-        return getComputedStyle(td, null).display == "table-cell"
-    })(DOC.createElement("td"))
-    var rdash = /\(([^)]*)\)/
+
     head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.avalonHide{ display: none!important }</style>')
     var getBindingCallback = function(elem, name, vmodels) {
         var callback = elem.getAttribute(name)
@@ -1840,7 +1822,7 @@
     }
     var cacheTmpls = avalon.templateCache = {}
     var ifSanctuary = DOC.createElement("div")
-    var rwhitespace = /^\s+$/
+
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
@@ -2174,6 +2156,10 @@
         },
         "widget": noop
     }
+
+    var rdash = /\(([^)]*)\)/
+    var rwhitespace = /^\s+$/
+    var rdisplayNone = /display:\snone(;)?/i
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -2389,12 +2375,22 @@
             parseExprProxy(value, vmodels, data)
         },
         "visible": function(data, vmodels) {
-            var elem = data.element
-            if (!supportDisplay && !root.contains(elem)) { //fuck firfox 全家！
-                var display = parseDisplay(elem.tagName)
+            var elem = avalon(data.element)
+            var display = elem.css("display")
+            if (display === "none") {
+                var style = elem[0].style
+                var cssText = style.cssText || ""
+                var visibility = elem.css("visibility")
+                if (rdisplayNone.test(cssText)) {
+                    style.cssText = cssText.replace(rdisplayNone, "")
+                }
+                style.display = ""
+                style.visibility = "visible"
+                data.display = elem.css("display")
+                style.visibility = visibility
+            } else {
+                data.display = display
             }
-            display = display || avalon(elem).css("display")
-            data.display = display === "none" ? parseDisplay(elem.tagName) : display
             parseExprProxy(data.value, vmodels, data)
         },
         "widget": function(data, vmodels) {
