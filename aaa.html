@@ -1,63 +1,36 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="avalon.js"></script>
-        <script >
-            var model = avalon.define({
+        <title>ms-if</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" ></script>
+        <script>
+            var vmodel = avalon.define({
                 $id: "test",
-                toggle: false,
-                array:[1,2,3,4]
+                object: {}
             })
+
             setTimeout(function() {
-                model.toggle = true
+                vmodel.object = {id: "132", message: "显示！！"}
             }, 3000)
 
+            setTimeout(function() {
+                vmodel.object = {}
+            }, 5000)
+
         </script>
-        <style>
-            table{
-                width:300px;
-                border-collapse: collapse;
-                border:1px solid red;
-            }
-            td {
-                padding:5px;
-                border:1px solid red;
-            }
-            .menu{
-                display:inline-block;
-                *display:inline;
-                *zoom:1;
-                width:140px;
-                padding:5px 20px;
-                text-align: center;
-                margin-left:1em;
-                border: 1px solid greenyellow;
-            }
-            .btn{
-                padding:5px 20px;
-                margin-left:1em;
-                display: inline-block;
-            }
-        </style>
     </head>
-    <body ms-controller="test" >
-        <table ms-visible="toggle" border="1" >
-            <tr><td>1111</td><td>1111</td></tr>
-            <tr><td>1111</td><td>1111</td></tr>
-        </table>
-        <br/>
-        <table border="1" >
-            <tr><td ms-visible="toggle">test</td><td>2222</td></tr>
-            <tr><td>2222</td><td>2222</td></tr>
-        </table>
-          <table border="1" >
-            <tr ms-repeat="array"><td ms-visible="toggle">{{el}}</td><td ms-visible="toggle">{{el+10}}</td></tr>
-        </table>
-        <div style="display:none" class="menu" ms-visible="toggle">item</div>  <div style="display:none" class="menu" ms-visible="toggle">item</div>
-        <button style="display:none" class="btn" type="button" ms-visible="toggle">btn</button> 
-        <button style="display:none" class="btn" type="button" ms-visible="toggle">btn</button> 
+    <body>
+        <div ms-controller="test" >
+            这是比较输出结果:{{object.id != null}}
+            <div ms-visible="object.id != null">
+                这是visible的:
+                <span>{{object.message}}</span>
+            </div>
+            <div ms-if="object.id != null">
+                这是if的:
+                <span>{{object.message}}</span>
+            </div>
+        </div>
     </body>
 </html>
