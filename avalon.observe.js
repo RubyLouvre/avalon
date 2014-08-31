@@ -4,6 +4,7 @@
 // 之前的avalon通过劫持内部set,get函数实现对视图的同步，VM与M是分开的，次世代avalon是直接在原对象上修改，
 // 通过Object.observe(chrome36可以直接使用)监听用户行为进行视图同步
 // 通过Promise实现avalon.nextTick
+// Element.prototype.remove 、  Comment.prototype.remove 
 //==================================================
 (function(DOC) {
     var prefix = "ms-"
@@ -1946,7 +1947,7 @@
                 var replaceNodes = avalon.slice(fragment.childNodes)
                 elem.insertBefore(fragment, data.replaceNodes[0] || null)
                 for (var i = 0, node; node = data.replaceNodes[i++]; ) {
-                    elem.removeChild(node)
+                    node.remove()//☆
                 }
                 data.replaceNodes = replaceNodes
             } else {
@@ -2148,7 +2149,7 @@
                 var node
                 while (node = elem.firstChild) {
                     if (node.nodeType === 3 && rwhitespace.test(node.data)) {
-                        elem.removeChild(node)
+                        node.remove()//☆
                     } else {
                         template.appendChild(node)
                     }
@@ -2161,8 +2162,8 @@
                 var parent = data.parent
                 parent.insertBefore(data.template, endRepeat || null)
                 if (endRepeat) {
-                    parent.removeChild(endRepeat)
-                    parent.removeChild(data.startRepeat)
+                    endRepeat.remove()//☆
+                    data.startRepeat.remove()//☆
                     data.element = data.callbackElement
                 }
             }
@@ -2810,7 +2811,7 @@
             data.group = 1
             if (!data.fastRepeat) {
                 data.group = span.childNodes.length
-                span.parentNode.removeChild(span)
+                span.remove()//☆
                 while (span.firstChild) {
                     transation.appendChild(span.firstChild)
                 }
@@ -3320,7 +3321,7 @@
                 function onerror(a, b) {
                     b && avalon.error(url + "对应资源不存在或没有开启 CORS")
                     setTimeout(function() {
-                        head.removeChild(link)
+                        link.remove()//☆
                     })
                 }
                 link.onerror = onerror
@@ -3402,7 +3403,7 @@
             node.onload = node.onerror = null
             if (onError) {
                 setTimeout(function() {
-                    head.removeChild(node)
+                     node.remove()//☆
                 })
                 log("debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {

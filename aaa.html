@@ -16,12 +16,39 @@
 
             setTimeout(function() {
                 vmodel.object = {}
+                document.getElementById("eee").remove(1)
+                document.getElementById("sel").remove("1")
             }, 5000)
+            avalon.ready(function() {
+                var comment = document.body.firstChild
+                
+                console.log(comment)
+                comment.remove()
+            })
+//
+        //    Element.prototype.remove = function(index) {
+//                if (this.tagName === "SELECT" && isFinite(index)) {
+//                    index = Math.floor(index)
+//                    var option = this.options[index]
+//                    if (option) {
+//                        this.removeChild(option)
+//                    }
+              //  } else if (this.parentNode) {
+             //       this.parentNode.removeChild(this);
+            //   }
+   //         };
 
         </script>
     </head>
-    <body>
+    <body><!--这是注释节点-->
         <div ms-controller="test" >
+            <div id="eee">dddddddddd</div>
+            <select id="sel">
+                <option>111</option>
+                <option>222</option>
+                <option>333</option>
+            </select>
+            
             这是比较输出结果:{{object.id != null}}
             <div ms-visible="object.id != null">
                 这是visible的:
