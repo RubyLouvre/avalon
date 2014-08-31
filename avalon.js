@@ -2367,6 +2367,7 @@
         "for": "htmlFor",
         "http-equiv": "httpEquiv"
     }
+
     var anomaly = "accessKey,allowTransparency,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan,contentEditable,"
             + "dateTime,defaultChecked,defaultSelected,defaultValue,frameBorder,isMap,longDesc,maxLength,marginWidth,marginHeight,"
             + "noHref,noResize,noShade,readOnly,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
@@ -2403,6 +2404,7 @@
     } catch (e) {
         avalon.contains = fixContains
     }
+
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
@@ -2415,16 +2417,21 @@
                 // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
                 // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
                 var toRemove = (val === false) || (val === null) || (val === void 0)
+                if (!W3C && propMap[attrName]) {//旧式IE下需要进行名字映射
+                    attrName = propMap[attrName]
+                    var isInnate = true
+                }
                 if (toRemove) {
-                    elem.removeAttribute(attrName)
-                } else if (!W3C) {
-                    attrName = propMap[attrName] || attrName
-                    if (toRemove) {
-                        elem.removeAttribute(attrName)
-                    } else {
-                        elem[attrName] = val
-                    }
-                } else if (!toRemove) {
+                    return elem.removeAttribute(attrName)
+                }
+                if (window.VBArray && !isInnate) {//IE下需要区分固有属性与自定义属性
+                    var attrs = elem.attributes || {}
+                    var attr = attrs[attrName]
+                    isInnate = attr ? attr.expando === false : attr === null
+                }
+                if (isInnate) {
+                    elem[attrName] = val
+                } else {
                     elem.setAttribute(attrName, val)
                 }
             } else if (method === "include" && val) {
@@ -2774,7 +2781,7 @@
     var rwhitespace = /^\s+$/
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
-        //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
+        //这是一个字符串属性绑定的范本, 方便你在title, alt, src, href, include, css添加插值表达式
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
         "attr": function(data, vmodels) {
             var text = data.value.trim(),
@@ -4604,5 +4611,5 @@
 /**
  http://www.cnblogs.com/henryzhu/p/mvvm-1-why-mvvm.ht
  http://dev.oupeng.com/wp-content/uploads/20131109-kennyluck-optimizing-js-games.html#controls-slide
-         http://ps.p12345.com/
+ http://ps.p12345.com/
  */

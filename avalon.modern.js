@@ -1848,10 +1848,19 @@
                 // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (toRemove) {
-                    elem.removeAttribute(attrName)
+                    return elem.removeAttribute(attrName)
+                }
+                if (window.VBArray) {//IE下需要区分固有属性与自定义属性
+                    var attrs = elem.attributes || {}
+                    var attr = attrs[attrName]
+                    var isInnate = attr && attr.expando === false
+                }
+                if (isInnate) {
+                    elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)
                 }
+
             } else if (method === "include" && val) {
                 var vmodels = data.vmodels
                 var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
