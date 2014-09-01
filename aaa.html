@@ -1,63 +1,46 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <title>ms-if</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js" ></script>
-        <script>
-            var vmodel = avalon.define({
-                $id: "test",
-                object: {}
-            })
-
-            setTimeout(function() {
-                vmodel.object = {id: "132", message: "显示！！"}
-            }, 3000)
-
-            setTimeout(function() {
-                vmodel.object = {}
-                document.getElementById("eee").remove(1)
-                document.getElementById("sel").remove("1")
-            }, 5000)
-            avalon.ready(function() {
-                var comment = document.body.firstChild
-                
-                console.log(comment)
-                comment.remove()
-            })
-//
-        //    Element.prototype.remove = function(index) {
-//                if (this.tagName === "SELECT" && isFinite(index)) {
-//                    index = Math.floor(index)
-//                    var option = this.options[index]
-//                    if (option) {
-//                        this.removeChild(option)
-//                    }
-              //  } else if (this.parentNode) {
-             //       this.parentNode.removeChild(this);
-            //   }
-   //         };
-
-        </script>
+        <meta charset="UTF-8">
+        <title>UI-demo</title>
+        <script src="avalon.js"></script>
     </head>
-    <body><!--这是注释节点-->
-        <div ms-controller="test" >
-            <div id="eee">dddddddddd</div>
-            <select id="sel">
-                <option>111</option>
-                <option>222</option>
-                <option>333</option>
-            </select>
-            
-            这是比较输出结果:{{object.id != null}}
-            <div ms-visible="object.id != null">
-                这是visible的:
-                <span>{{object.message}}</span>
-            </div>
-            <div ms-if="object.id != null">
-                这是if的:
-                <span>{{object.message}}</span>
-            </div>
+    <body>
+        <div ms-controller="test">
+            <div ms-repeat="fan_list" ms-widget="follow"></div>
         </div>
+        <script>
+
+
+            avalon.ui.follow = function(element, data, vmodels) {
+                //4 构建组建的ViewModel
+                console.log(vmodels)
+                var proxy = vmodels[0].el//在这里到ms-repeat生成的 el对象
+                console.log(proxy)
+                var model = avalon.define(proxy.user_id, function(v) {
+
+                    v.txt = "关注";
+
+                    v.$init = function() {//初始化 组件的界面
+                        avalon.nextTick(function() {
+
+                            element.innerHTML = '<div ms-controller="' + proxy.user_id + '" style="background:#000;color:#ff0">{{txt}}</div>'
+                            avalon.scan(element, [model].concat(vmodels))
+                        })
+                    }
+
+                });
+
+
+                return model;
+            };
+
+            avalon.define("test", function(v) {
+                v.fan_list = [
+                    {user_id: "a10000", is_follow: 1},
+                    {user_id: "a10002", is_follow: 0}
+                ]
+            })
+        </script>
     </body>
 </html>
