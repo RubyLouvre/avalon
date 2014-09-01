@@ -7,16 +7,29 @@
         <script>
             var model = avalon.define({
                 $id: "test",
-                array: [{a: 222}, {a: 333}]
+                array: [{a: 222}, {a: 333}],
+                aaa: "bbb ddd"
             })
             setTimeout(function() {
                 model.array.set(1, {a: 444})
             }, 2000)
-
+            setTimeout(function() {
+                alert(document.body.outerHTML)
+            }, 5000)
         </script>
+        <style>
+
+            .bbb{
+                background:pink;
+            }
+            .ddd{
+                border: 1px solid green;
+            }
+
+        </style>
     </head>
-    <body>
-        <div ms-controller="test">
+    <body ms-controller="test" ms-class="{{aaa}}">
+        <div >
             <ul>
                 <li ms-repeat="array">{{el.a}}</li>
             </ul>

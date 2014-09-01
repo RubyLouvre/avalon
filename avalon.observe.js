@@ -316,7 +316,7 @@
         }
         var scope = {
             $events: {},
-            $watch: Observable.$watch
+            $watch: EventManager.$watch
         }
         factory(scope) //得到所有定义
         scope.$id = id
@@ -409,8 +409,8 @@
         scope.$id = generateID()
         scope.$accessors = {}
         scope[subscribers] = []
-        for (var i in Observable) {
-            scope[i] = Observable[i]
+        for (var i in EventManager) {
+            scope[i] = EventManager[i]
         }
 
         Object.defineProperties(scope, {
@@ -1023,9 +1023,9 @@
         }
     }
     /*********************************************************************
-     *                           Observable                                 *
+     *                           事件管理器                                 *
      **********************************************************************/
-    var Observable = {
+    var EventManager = {
         $watch: function(type, callback) {
             if (typeof callback === "function") {
                 var callbacks = this.$events[type]
@@ -2571,8 +2571,8 @@
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
         })
-        for (var i in Observable) {
-            array[i] = Observable[i]
+        for (var i in EventManager) {
+            array[i] = EventManager[i]
         }
         avalon.mix(array, CollectionPrototype)
         return array

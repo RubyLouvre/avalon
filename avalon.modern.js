@@ -433,8 +433,8 @@
         vmodel.$id = generateID()
         vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
-        for (var i in Observable) {
-            vmodel[i] = Observable[i]
+        for (var i in EventManager) {
+            vmodel[i] = EventManager[i]
         }
         Object.defineProperty(vmodel, "hasOwnProperty", {
             value: function(name) {
@@ -466,7 +466,7 @@
 
     function safeFire(a, b, c, d) {
         if (a.$events) {
-            Observable.$fire.call(a, b, c, d)
+            EventManager.$fire.call(a, b, c, d)
         }
     }
 
@@ -1182,9 +1182,9 @@
         }
     }
     /*********************************************************************
-     *                        自定义事件系统                                *
+     *                        事件管理器                                *
      **********************************************************************/
-    var Observable = {
+    var EventManager = {
         $watch: function(type, callback) {
             if (typeof callback === "function") {
                 var callbacks = this.$events[type]
@@ -2734,8 +2734,8 @@
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
         })
-        for (var i in Observable) {
-            array[i] = Observable[i]
+        for (var i in EventManager) {
+            array[i] = EventManager[i]
         }
         avalon.mix(array, CollectionPrototype)
         return array

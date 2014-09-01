@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- 此版本是基于avalon.js，删掉了AMD加载器、DOMReady模块
+ avalon 1.3.4 2014.8.26
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -444,8 +444,8 @@
         vmodel.$id = generateID()
         vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
-        for (var i in Events) {
-            var fn = Events [i]
+        for (var i in EventManager) {
+            var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
                 fn = fn.bind(vmodel)
             }
@@ -477,7 +477,7 @@
 
     function safeFire(a, b, c, d) {
         if (a.$events) {
-            Events.$fire.call(a, b, c, d)
+            EventManager.$fire.call(a, b, c, d)
         }
     }
     var descriptorFactory = W3C ? function(obj) {
@@ -1050,24 +1050,24 @@
     }
 
     var ClassListMethods = {
-        toString: function() {
+        _toString: function() {
             var node = this.node//IE6,7元素节点不存在hasAttribute方法
             var cls = node.className
             var str = typeof cls === "string" ? cls : cls.baseVal
             return str.split(/\s+/).join(" ")
         },
-        contains: function(cls) {
+        _contains: function(cls) {
             return (" " + this + " ").indexOf(" " + cls + " ") > -1
         },
-        add: function(cls) {
+        _add: function(cls) {
             if (!this.contains(cls)) {
                 this._set(this + " " + cls)
             }
         },
-        remove: function(cls) {
+        _remove: function(cls) {
             this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
         },
-        _set: function(cls) {
+        __set: function(cls) {
             var node = this.node
             if (typeof node.className == "string") {
                 node.className = cls
@@ -1078,13 +1078,16 @@
     }
     function ClassList(node) {
         if (!("classList" in node)) {
-            avalon.mix(node.classList = {
+            node.classList = {
                 node: node
-            }, ClassListMethods)
-            node.classList.toString = ClassListMethods.toString //fix IE
+            }
+            for(var k in ClassListMethods){
+                node.classList[k.slice(1)] = ClassListMethods[k]
+            }
         }
         return node.classList
     }
+    
 
     "add,remove".replace(rword, function(method) {
         avalon.fn[method + "Class"] = function(cls) {
@@ -1646,9 +1649,9 @@
         return node
     }
     /*********************************************************************
-     *                    自定义事件系统                                  *
+     *                            事件管理器                            *
      **********************************************************************/
-    var Events = {
+    var EventManager = {
         $watch: function(type, callback) {
             if (typeof callback === "function") {
                 var callbacks = this.$events[type]
@@ -2359,7 +2362,6 @@
     /*********************************************************************
      *                     绑定处理系统                                    *
      **********************************************************************/
-
     var propMap = {//属性名映射
         "accept-charset": "acceptCharset",
         "char": "ch",
@@ -2368,6 +2370,7 @@
         "for": "htmlFor",
         "http-equiv": "httpEquiv"
     }
+
     var anomaly = "accessKey,allowTransparency,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan,contentEditable,"
             + "dateTime,defaultChecked,defaultSelected,defaultValue,frameBorder,isMap,longDesc,maxLength,marginWidth,marginHeight,"
             + "noHref,noResize,noShade,readOnly,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
@@ -2404,6 +2407,7 @@
     } catch (e) {
         avalon.contains = fixContains
     }
+
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
@@ -2416,16 +2420,21 @@
                 // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
                 // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
                 var toRemove = (val === false) || (val === null) || (val === void 0)
+                if (!W3C && propMap[attrName]) {//旧式IE下需要进行名字映射
+                    attrName = propMap[attrName]
+                    var isInnate = true
+                }
                 if (toRemove) {
-                    elem.removeAttribute(attrName)
-                } else if (!W3C) {
-                    attrName = propMap[attrName] || attrName
-                    if (toRemove) {
-                        elem.removeAttribute(attrName)
-                    } else {
-                        elem[attrName] = val
-                    }
-                } else if (!toRemove) {
+                    return elem.removeAttribute(attrName)
+                }
+                if (window.VBArray && !isInnate) {//IE下需要区分固有属性与自定义属性
+                    var attrs = elem.attributes || {}
+                    var attr = attrs[attrName]
+                    isInnate = attr ? attr.expando === false : attr === null
+                }
+                if (isInnate) {
+                    elem[attrName] = val
+                } else {
                     elem.setAttribute(attrName, val)
                 }
             } else if (method === "include" && val) {
@@ -2696,10 +2705,8 @@
             if (val) { //插回DOM树
                 if (!data.msInDocument) {
                     data.msInDocument = true
-                    try {
+                    if (placehoder.parentNode) {
                         placehoder.parentNode.replaceChild(elem, placehoder)
-                    } catch (e) {
-                        log("debug: ms-if  " + e.message)
                     }
                 }
                 if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
@@ -2708,10 +2715,8 @@
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
                 if (data.msInDocument) {
                     data.msInDocument = false
-                    try {
+                    if (elem.parentNode) {
                         elem.parentNode.replaceChild(placehoder, elem)
-                    } catch (e) {
-                        log("debug: ms-if: elem.parentNode= " + elem.parentNode)
                     }
                     placehoder.elem = elem
                     ifSanctuary.appendChild(elem)
@@ -2779,7 +2784,7 @@
     var rwhitespace = /^\s+$/
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
-        //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
+        //这是一个字符串属性绑定的范本, 方便你在title, alt, src, href, include, css添加插值表达式
         //<a ms-href="{{url.hostname}}/{{url.pathname}}.html">
         "attr": function(data, vmodels) {
             var text = data.value.trim(),
@@ -3006,7 +3011,7 @@
                 style.display = ""
                 style.visibility = "visible"
                 data.display = elem.css("display")
-                style.visibility = visibility
+                style.visibility = visibility === "visible" ? "" : visibility
             } else {
                 data.display = display
             }
@@ -3433,8 +3438,8 @@
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
         })
-        for (var i in Events) {
-            array[i] = Events[i]
+        for (var i in EventManager) {
+            array[i] = EventManager[i]
         }
         avalon.mix(array, CollectionPrototype)
         return array
@@ -4155,7 +4160,8 @@
         filters.date.locate = locate
     }
 
-    /*********************************************************************
+
+  /*********************************************************************
      *                     END                                  *
      **********************************************************************/
     avalon.ready = noop
@@ -4166,4 +4172,5 @@
 /**
  http://www.cnblogs.com/henryzhu/p/mvvm-1-why-mvvm.ht
  http://dev.oupeng.com/wp-content/uploads/20131109-kennyluck-optimizing-js-games.html#controls-slide
+ http://ps.p12345.com/
  */

@@ -444,8 +444,8 @@
         vmodel.$id = generateID()
         vmodel.$accessors = accessingProperties
         vmodel[subscribers] = []
-        for (var i in Events) {
-            var fn = Events [i]
+        for (var i in EventManager) {
+            var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
                 fn = fn.bind(vmodel)
             }
@@ -477,7 +477,7 @@
 
     function safeFire(a, b, c, d) {
         if (a.$events) {
-            Events.$fire.call(a, b, c, d)
+            EventManager.$fire.call(a, b, c, d)
         }
     }
     var descriptorFactory = W3C ? function(obj) {
@@ -1050,24 +1050,24 @@
     }
 
     var ClassListMethods = {
-        toString: function() {
+        _toString: function() {
             var node = this.node//IE6,7元素节点不存在hasAttribute方法
             var cls = node.className
             var str = typeof cls === "string" ? cls : cls.baseVal
             return str.split(/\s+/).join(" ")
         },
-        contains: function(cls) {
+        _contains: function(cls) {
             return (" " + this + " ").indexOf(" " + cls + " ") > -1
         },
-        add: function(cls) {
+        _add: function(cls) {
             if (!this.contains(cls)) {
                 this._set(this + " " + cls)
             }
         },
-        remove: function(cls) {
+        _remove: function(cls) {
             this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
         },
-        _set: function(cls) {
+        __set: function(cls) {
             var node = this.node
             if (typeof node.className == "string") {
                 node.className = cls
@@ -1078,13 +1078,16 @@
     }
     function ClassList(node) {
         if (!("classList" in node)) {
-            avalon.mix(node.classList = {
+            node.classList = {
                 node: node
-            }, ClassListMethods)
-            node.classList.toString = ClassListMethods.toString //fix IE
+            }
+            for(var k in ClassListMethods){
+                node.classList[k.slice(1)] = ClassListMethods[k]
+            }
         }
         return node.classList
     }
+    
 
     "add,remove".replace(rword, function(method) {
         avalon.fn[method + "Class"] = function(cls) {
@@ -1646,9 +1649,9 @@
         return node
     }
     /*********************************************************************
-     *                    自定义事件系统                                  *
+     *                            事件管理器                            *
      **********************************************************************/
-    var Events = {
+    var EventManager = {
         $watch: function(type, callback) {
             if (typeof callback === "function") {
                 var callbacks = this.$events[type]
@@ -3435,8 +3438,8 @@
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
         })
-        for (var i in Events) {
-            array[i] = Events[i]
+        for (var i in EventManager) {
+            array[i] = EventManager[i]
         }
         avalon.mix(array, CollectionPrototype)
         return array
