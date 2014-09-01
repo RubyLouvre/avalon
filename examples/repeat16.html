@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <script>
+            var vmodels = avalon.define("test", function(vm) {
+                vm.aaa = {
+                }
+            })
+            setTimeout(function() {
+                vmodels.aaa = {
+                    aa: {
+                        a: [1, 2, 3, 4]
+                    },
+                    object: {
+                        aaa: 11,
+                        bbb: 22,
+                        ccc: 33
+                    }
+                    
+                }
+            }, 1000)
+        </script>
+
+    </head>
+    <body ms-controller="test"> 
+        <ul>
+            <li ms-repeat="aaa.aa.a">{{el}}</li>
+        </ul>
+     
+        <div ms-repeat="aaa.object">
+            {{$key}}: {{$val}}
+        </div>
+    </body>
+</html>
