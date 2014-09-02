@@ -1081,13 +1081,13 @@
             node.classList = {
                 node: node
             }
-            for(var k in ClassListMethods){
+            for (var k in ClassListMethods) {
                 node.classList[k.slice(1)] = ClassListMethods[k]
             }
         }
         return node.classList
     }
-    
+
 
     "add,remove".replace(rword, function(method) {
         avalon.fn[method + "Class"] = function(cls) {
@@ -2508,39 +2508,40 @@
         "class": function(val, elem, data) {
             var $elem = avalon(elem),
                     method = data.type
-            if (method === "class" && data.param) { //如果是旧风格
-                $elem.toggleClass(data.param, !!val)
+            if (method === "class" && data.oldStyle) { //如果是旧风格
+                $elem.toggleClass(data.oldStyle, !!val)
             } else {
-                var toggle = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
-                var className = data._class || val
+                //如果存在冒号就有求值函数
+                data.toggleClass = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
+                data.newClass = data.immobileClass || val
+                if (data.oldClass && data.newClass !== data.oldClass) {
+                    $elem.removeClass(data.oldClass)
+                }
+                data.oldClass = data.newClass
                 switch (method) {
                     case "class":
-                        if (toggle && data.oldClass) {
-                            $elem.removeClass(data.oldClass)
-                        }
-                        $elem.toggleClass(className, toggle)
-                        data.oldClass = className
-                        break;
+                        $elem.toggleClass(data.newClass, data.toggleClass)
+                        break
                     case "hover":
                     case "active":
-                        if (!data.init) { //确保只绑定一次
-                            if (method === "hover") { //在移出移入时切换类名
-                                var event1 = "mouseenter",
-                                        event2 = "mouseleave"
-                            } else { //在聚焦失焦中切换类名
+                        if (!data.hasBindEvent) { //确保只绑定一次
+                            var activate = "mouseenter" //在移出移入时切换类名
+                            var abandon = "mouseleave"
+                            if (method === "active") {//在聚焦失焦中切换类名
                                 elem.tabIndex = elem.tabIndex || -1
-                                event1 = "mousedown", event2 = "mouseup"
+                                activate = "mousedown"
+                                abandon = "mouseup"
                                 $elem.bind("mouseleave", function() {
-                                    toggle && $elem.removeClass(className)
+                                    data.toggleClass && $elem.removeClass(data.newClass)
                                 })
                             }
-                            $elem.bind(event1, function() {
-                                toggle && $elem.addClass(className)
+                            $elem.bind(activate, function() {
+                                data.toggleClass && $elem.addClass(data.newClass)
                             })
-                            $elem.bind(event2, function() {
-                                toggle && $elem.removeClass(className)
+                            $elem.bind(abandon, function() {
+                                data.toggleClass && $elem.removeClass(data.newClass)
                             })
-                            data.init = 1
+                            data.hasBindEvent = 1
                         }
                         break;
                 }
@@ -2828,10 +2829,11 @@
                 }
                 var hasExpr = rexpr.test(className) //比如ms-class="width{{w}}"的情况
                 if (!hasExpr) {
-                    data._class = className
+                    data.immobileClass = className
                 }
                 parseExprProxy("", vmodels, data, (hasExpr ? scanExpr(className) : null))
-            } else if (data.type === "class") {
+            } else {
+                data.immobileClass = data.oldStyle = data.param
                 parseExprProxy(text, vmodels, data)
             }
         },
