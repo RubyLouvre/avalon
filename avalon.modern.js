@@ -1218,7 +1218,7 @@
         },
         $fire: function(type) {
             var special
-            if (/^(\w+)!(\w+)$/.test(type)) {
+            if (/^(\w+)!(\S+)$/.test(type)) {
                 special = RegExp.$1
                 type = RegExp.$2
             }
