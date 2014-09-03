@@ -2033,6 +2033,18 @@
 
     var rdash = /\(([^)]*)\)/
     var rwhitespace = /^\s+$/
+    function parseDisplay(nodeName, val) {
+        //用于取得此类标签的默认display值
+        var key = "_" + nodeName
+        if (!parseDisplay[key]) {
+            var node = DOC.createElement(nodeName)
+            root.appendChild(node)
+            val = getComputedStyle(node, null).display
+            root.removeChild(node)
+            parseDisplay[key] = val
+        }
+        return parseDisplay[key]
+    }
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt,  src, href, include, css添加插值表达式
@@ -2252,14 +2264,17 @@
             var display = elem.css("display")
             if (display === "none") {
                 var style = elem[0].style
-                var visibility = elem.css("visibility")
+                var has = /visibility/i.test(style.cssText)
+                var visible = elem.css("visibility")
                 style.display = ""
-                style.visibility = "visible"
-                data.display = elem.css("display")
-                style.visibility = visibility === "visible" ? "" : visibility
-            } else {
-                data.display = display
+                style.visibility = "hidden"
+                display = elem.css("display")
+                if (display === "none") {
+                    display = parseDisplay(elem[0].nodeName)
+                }
+                style.visibility = has ? visible : ""
             }
+            data.display = display
             parseExprProxy(data.value, vmodels, data)
         },
         "widget": function(data, vmodels) {
@@ -3403,7 +3418,7 @@
             node.onload = node.onerror = null
             if (onError) {
                 setTimeout(function() {
-                     node.remove()//☆
+                    node.remove()//☆
                 })
                 log("debug: 加载 " + id + " 失败" + onError + " " + (!modules[id].state))
             } else {
