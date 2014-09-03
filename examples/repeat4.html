@@ -1,43 +1,46 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../avalon.js" ></script>
         <script>
-            if (!Date.now) {
+            if (!Date.now) {//fix 旧式IE
                 Date.now = function() {
                     return new Date - 0;
                 }
             }
-            avalon.define('test', function(scope) {
-                scope.selected = "name"
-                scope.options = ["name", "size", "date"]
-                scope.trend = 1
-                scope.data = [
+            var model = avalon.define({
+                $id: "test",
+                selected: "name",
+                options: ["name", "size", "date"],
+                trend: 1,
+                data: [
                     {name: "aaa", size: 213, date: Date.now() + 20},
-                    {name: "bbb", size: 4576, date: new Date - 4},
-                    {name: "ccc", size: 563, date: new Date - 7},
-                    {name: "eee", size: 3713, date: 9 + Date.now()},
+                    {name: "bbb", size: 4576, date:Date.now() - 4},
+                    {name: "ccc", size: 563, date: Date.now() - 7},
+                    {name: "eee", size: 3713, date: Date.now() + 9},
                     {name: "555", size: 389, date: Date.now() - 20}
-                ];
-                scope.$watch("selected", function(v) {
-                    var t = parseFloat(scope.trend)
-                    scope.data.sort(function(a, b) {
+                ]
+            })
+            model.$watch("selected", function(v) {
+                var t = parseFloat(model.trend)
+                model.data.sort(function(a, b) {
+                    if (v === "name") {
+                        return t * a[v].toLocaleString(b[v])
+                    } else {
                         var ret = a[v] > b[v] ? 1 : -1
                         return t * ret
-                    })
+                    }
                 })
-                scope.$watch("trend", function(t) {
-                    var v = scope.selected, t = parseFloat(t)
-                    scope.data.sort(function(a, b) {
-                        var ret = a[v] > b[v] ? 1 : -1
-                        return t * ret
-                    })
+            })
+            model.$watch("trend", function(t) {
+                var v = model.selected, t = parseFloat(t)
+                model.data.sort(function(a, b) {
+                    var ret = a[v] > b[v] ? 1 : -1
+                    return t * ret
                 })
-            });
-
+            })
 
         </script>
     </head>
