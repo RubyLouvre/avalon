@@ -57,6 +57,7 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
         <script>
+            var first = 0;
             var model = avalon.define("test", function(vm) {
                 vm.firstName = "司徒"
                 vm.lastName = "正美"
@@ -72,18 +73,28 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
                 }
                 vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
                 vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = vm.arr.length === vm.selected.length
+                vm.checkAllbool = false
                 vm.checkAll = function() {
+                    if (!first) {
+                        first++
+                        return
+                    }
                     if (this.checked) {
                         vm.selected = vm.arr
                     } else {
                         vm.selected.clear()
                     }
                 }
+                vm.checkOne = function() {
+                    var bool = this.checked
+                    if (!bool) {
+                        vm.checkAllbool = false
+                    } else {
+                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                    }
+                }
             })
-            model.selected.$watch("length", function(n) {
-                model.checkAllbool = n === model.arr.size()
-            })
+
         </script> 
     </head>
     <body>
@@ -93,8 +104,8 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
             <p>Hello,    <input ms-duplex="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
             <ul>
-                <li><input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/>全选</li>
-                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected"/>{{el}}</li>
+                <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>全选</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
             </ul>
         </div>
 
