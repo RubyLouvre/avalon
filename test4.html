@@ -1,31 +1,78 @@
-<!DOCTYPE HTML>
 <html>
-    <head>
-        <title>ms-repeat</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js"></script>
-        <script>
-            var vmodels = avalon.define("test", function(vm) {
-                vm.aaa = {
-                }
-            })
-            setTimeout(function() {
-                vmodels.aaa = {
-                    aa: {
-                        a: [1, 2, 3, 4]
-                    },
-                    object: {
-                        aaa: 11,
-                        bbb: 22,
-                        ccc: 33
-                    }
-                    
-                }
-            }, 1000)
-        </script>
-
-    </head>
-    <body AAA="aaa"> 
-       test
-    </body>
+<head>
+<title>中国站长天空-网页特效-时间特效-</title>
+<meta http-equiv="content-Type" content="text/html;charset=gb2312">
+<!--把下面代码加到<head>与</head>之间-->
+<xml:namespace ns="urn:schemas-microsoft-com:vml" prefix="v" />
+<object id="VMLRender" codebase="vgx.dll" classid="CLSID:10072CEC-8CC1-11D1-986E-00A0C955B42E">
+</object>
+<style>
+<!--
+v\:* { behavior: url(#VMLRender); }
+-->
+</style>
+<script language="JavaScript1.2">
+<!--
+/*
+  DHTML analog clock II
+*/
+//specify clock size in pixels
+  var clocksize=135
+function updatePointers() {
+  var now = new Date();
+  secondsPointer.style.rotation = now.getSeconds() * 6;
+  minutesPointer.style.rotation = now.getMinutes() * 6 + now.getSeconds() / 10;
+  hoursPointer.style.rotation = now.getHours() * 30 + now.getMinutes() / 2;
+  }
+if (document.all&&window.print){
+  window.attachEvent("onload", initVMLClock);
+  window.attachEvent("onresize", resizeObjects);
+  }
+function initVMLClock() {
+  resizeObjects();
+  updatePointers();
+  window.setInterval("updatePointers()", 1000);
+}
+function resizeObjects() {
+  var size = Math.min(clocksize, clocksize);
+  clock.style.pixelWidth = size - 2*(size * 0.045);
+  clock.style.pixelHeight = size - 2*(size * 0.045);
+  
+  clock.childNodes.item(0).childNodes.item(0).weight = size * 0.01;
+ secondsPointer.childNodes.item(0).childNodes.item(0).weight = size * 0.001;
+  minutesPointer.childNodes.item(0).childNodes.item(0).weight = size * 0.002;
+  hoursPointer.childNodes.item(0).childNodes.item(0).weight = size * 0.004;
+  }
+function toggle(sId) {
+  var el = document.getElementById(sId);
+  el.style.display = (el.style.display == "none") ? "block" : "none";
+  }
+//-->
+</script>
+</head>
+<body>
+<!--把下面代码加到<body>与</body>之间-->
+<v:group id="clock" coordsize="100 100" style="position: relative;">
+<v:oval style="width: 100%; height: 100%">
+<v:stroke weight="10px" color="gray"/>
+<!-- I removed this gradient fill to match the WebFX color theme
+<v:fill type="gradient" color="white" color2="#eeeeff" angle="225deg"/>-->
+</v:oval>
+ <v:group id="secondsPointer" style="width: 100%; height: 100%; position: absolute; top: 0px; left: 0px;">
+<v:line from="50,50" to="50,5">
+<v:stroke weight="2px" endcap="round" color="navy"/>
+</v:line>
+</v:group>
+ <v:group id="minutesPointer" style="width: 100%; height: 100%; position: absolute; top: 0px; left: 0px;">
+<v:line from="50,50" to="50,8">
+<v:stroke weight="4px" endcap="round" color="navy"/>
+</v:line>
+</v:group>
+ <v:group id="hoursPointer" style="width: 100%; height: 100%; position: absolute; top: 0px; left: 0px;">
+<v:line from="50,50" to="50,18">
+<v:stroke weight="7px" endcap="round" color="navy"/>
+</v:line>
+</v:group>
+</v:group>
+</body>
 </html>
