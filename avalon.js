@@ -2454,7 +2454,9 @@
                 }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
-                        scanTemplate(cacheTmpls[val])
+                        avalon.nextTick(function() {
+                            scanTemplate(cacheTmpls[val])
+                        })
                     } else {
                         var xhr = getXHR()
                         xhr.onreadystatechange = function() {
