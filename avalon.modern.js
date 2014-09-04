@@ -3501,7 +3501,7 @@
                 }
 
                 function onerror(a, b) {
-                    b && avalon.error(url + "对应资源不存在或没有开启 CORS")
+                    !b && avalon.error(url + "对应资源不存在或没有开启 CORS")
                     setTimeout(function() {
                         head.removeChild(link)
                     })
