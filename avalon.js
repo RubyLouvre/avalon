@@ -1738,29 +1738,25 @@
     /*********************************************************************
      *                           依赖调度系统                             *
      **********************************************************************/
-
+    var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data, val) {
         Registry[expose] = data //暴光此函数,方便collectSubscribers收集
         avalon.openComputedCollect = true
         var fn = data.evaluator
         if (fn) { //如果是求值函数
-            if (data.type === "duplex") {
-                data.handler()
-            } else {
-                try {
-                    var c = data.type === "on" ? data : fn.apply(0, data.args)
-                    data.handler(c, data.element, data)
-                } catch (e) {
-                    delete data.evaluator
-                    if (data.nodeType === 3) {
-                        if (kernel.commentInterpolate) {
-                            data.element.replaceChild(DOC.createComment(data.value), data.node)
-                        } else {
-                            data.node.data = openTag + data.value + closeTag
-                        }
+            try {
+                var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
+                data.handler(c, data.element, data)
+            } catch (e) {
+                delete data.evaluator
+                if (data.nodeType === 3) {
+                    if (kernel.commentInterpolate) {
+                        data.element.replaceChild(DOC.createComment(data.value), data.node)
+                    } else {
+                        data.node.data = openTag + data.value + closeTag
                     }
-                    log("warning:evaluator of [" + data.value + "] throws error!")
                 }
+                log("warning:evaluator of [" + data.value + "] throws error!")
             }
         } else { //如果是计算属性的accessor
             data()
@@ -1772,7 +1768,16 @@
     function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
         if (Registry[expose]) {
             var list = accessor[subscribers]
-            list && avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
+            if (list) {
+                avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
+                for (var i = list.length, fn; fn = list[--i]; ) {
+                    var el = fn.element
+                    if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
+                        list.splice(i, 1)
+                        log("debug: remove " + fn.name)
+                    }
+                }
+            }
         }
     }
 
@@ -2762,14 +2767,12 @@
             val = val == null ? "" : val //不在页面上显示undefined null
             var node = data.node
             if (data.nodeType === 3) { //绑定在文本节点上
+                data.element = node.parentNode
                 try {//IE对游离于DOM树外的节点赋值会报错
                     node.data = val
                 } catch (e) {
                 }
             } else { //绑定在特性节点上
-                if (!elem) {
-                    elem = data.element = node.parentNode
-                }
                 if ("textContent" in elem) {
                     elem.textContent = val
                 } else {
@@ -2970,6 +2973,7 @@
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
             list[subscribers] && list[subscribers].push(data)
+            notifySubscribers(list) //强制垃圾回收
             if (!Array.isArray(list) && type !== "each") {
                 var pool = withProxyPool[list.$id]
                 if (!pool) {
