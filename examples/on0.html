@@ -41,9 +41,9 @@
         <fieldset ms-controller="test">
             <legend>有关事件回调传参</legend>
             <div ms-mouseenter="callback" ms-mouseleave="callback">{{status}}<br/>
-                <input ms-on-input="check"/>{{field}}
+              <input ms-on-input="check"/>{{field}}
             </div>
-            <div ms-click="argsClick($event, 100, firstName)">点我</div>
+        <div ms-click="argsClick($event, 100, firstName)">点我</div>
             <div ms-each-el="array" >
                 <p ms-click="loopClick(el, $event)">{{el}}</p>
             </div>
