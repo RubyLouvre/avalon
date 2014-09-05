@@ -1702,35 +1702,36 @@
             var element = events.element
             if (element) {
                 var detail = [type].concat(args)
-                if (special === "up") {
-                    if (W3C) {
-                        W3CFire(element, "dataavailable", detail)
-                    } else {
-                        var event = document.createEventObject()
-                        event.detail = detail
-                        element.fireEvent("ondataavailable", event)
-                    }
-                } else if (special === "down") {
-                    var alls = []
+                if (special === "up" || special === "down" || special === "all") {
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
                         if (v && v.$events && v.$events.element) {
-                            var node = v.$events.element;
-                            if (avalon.contains(element, node) && element != node) {
-                                alls.push(v)
+                            if (v !== this) {
+                                var node = v.$events.element
+                                var ok = special === "all" ? 1 : //全局广播
+                                        special === "down" ? element.contains(node) : //向下捕获
+                                        node.contains(element)//向上冒泡
+                                if (ok) {
+                                    node._vv = v//符合条件的加一个标识
+                                }
                             }
                         }
+                    }
+                    var nodes = document.getElementsByTagName("*")//实现节点排序
+                    var alls = []
+                    Array.prototype.forEach.call(nodes, function(el) {
+                        if (el._vv) {
+                            alls.push(el._vv)
+                            el._vv = ""
+                            el.removeAttribute("_vv")
+                        }
+                    })
+                    if (special === "up") {
+                        alls.reverse()
                     }
                     alls.forEach(function(v) {
                         v.$fire.apply(v, detail)
                     })
-                } else if (special === "all") {
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        if (v !== this) {
-                            v.$fire.apply(v, detail)
-                        }
-                    }
                 }
             }
         }
@@ -1860,11 +1861,6 @@
 
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             newVmodel.$events.element = elem
-            avalon.bind(elem, "dataavailable", function(e) {
-                if (typeof e.detail === "object" && elem !== e.target) {
-                    newVmodel.$fire.apply(newVmodel, e.detail)
-                }
-            })
             avalon(elem).removeClass(node.name)
         }
 

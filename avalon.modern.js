@@ -1235,29 +1235,36 @@
             var element = events.element
             if (element) {
                 var detail = [type].concat(args)
-                if (special === "up") {//向上冒泡
-                    W3CFire(element, "dataavailable", detail)
-                } else if (special === "down") {//向下捕获
-                    var alls = []
+                if (special === "up" || special === "down" || special === "all") {
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
                         if (v && v.$events && v.$events.element) {
-                            var node = v.$events.element;
-                            if (element.contains(node) && element != node) {
-                                alls.push(v)
+                            if (v !== this) {
+                                var node = v.$events.element
+                                var ok = special === "all" ? 1 : //全局广播
+                                        special === "down" ? element.contains(node) : //向下捕获
+                                        node.contains(element)//向上冒泡
+                                if (ok) {
+                                    node._vv = v//符合条件的加一个标识
+                                }
                             }
                         }
+                    }
+                    var nodes = document.getElementsByTagName("*")//实现节点排序
+                    var alls = []
+                    Array.prototype.forEach.call(nodes, function(el) {
+                        if (el._vv) {
+                            alls.push(el._vv)
+                            el._vv = ""
+                            el.removeAttribute("_vv")
+                        }
+                    })
+                    if (special === "up") {
+                        alls.reverse()
                     }
                     alls.forEach(function(v) {
                         v.$fire.apply(v, detail)
                     })
-                } else if (special === "all") {//全局广播
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        if (v !== this) {
-                            v.$fire.apply(v, detail)
-                        }
-                    }
                 }
             }
         }
@@ -1267,7 +1274,7 @@
      *                       依赖调度系统                                 *
      **********************************************************************/
 
-     var ronduplex = /^(duplex|on)$/
+    var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data, val) {
         Registry[expose] = data //暴光此函数,方便collectSubscribers收集
         avalon.openComputedCollect = true
@@ -1293,7 +1300,7 @@
         avalon.openComputedCollect = false
         delete Registry[expose]
     }
-    
+
     /*收集依赖于这个访问器的订阅者*/
     function collectSubscribers(accessor) {
         if (Registry[expose]) {
@@ -1304,7 +1311,8 @@
                     var el = fn.element
                     if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                         list.splice(i, 1)
-                        log("debug: remove " + fn.name)
+                        log("debug:delete " + fn.name)
+                        fn = null
                     }
                 }
             }
@@ -1320,6 +1328,7 @@
                 if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
                     list.splice(i, 1)
                     log("debug: remove " + fn.name)
+                    fn = null
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
@@ -1377,11 +1386,7 @@
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
             newVmodel.$events.element = elem
-            elem.addEventListener("dataavailable", function(e) {
-                if (typeof e.detail === "object" && elem !== e.target) {
-                    newVmodel.$fire.apply(newVmodel, e.detail)
-                }
-            })
+         
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
