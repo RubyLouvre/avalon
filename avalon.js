@@ -2302,10 +2302,12 @@
             }
             return
         } else if (dataType === "on") { //事件绑定
-            code = code.replace("(", ".call(this,")
-            if (data.hasArgs === "$event") {
-                names.push("$event")
+            if (code.indexOf("(") === -1) {
+                code += ".call(this, $event)"
+            } else {
+                code = code.replace("(", ".call(this,")
             }
+            names.push("$event")
             code = "\nreturn " + code + ";" //IE全家 Function("return ")出错，需要Function("return ;")
             var lastIndex = code.lastIndexOf("\nreturn")
             var header = code.slice(0, lastIndex)
@@ -2728,17 +2730,10 @@
             }
         },
         "on": function(callback, elem, data) {
-            var fn = data.evaluator
-            var args = data.args
             var vmodels = data.vmodels
-            if (!data.hasArgs) {
-                callback = function(e) {
-                    return fn.apply(0, args).call(this, e)
-                }
-            } else {
-                callback = function(e) {
-                    return fn.apply(this, args.concat(e))
-                }
+            var fn = data.evaluator
+            callback = function(e) {
+                return fn.apply(this, data.args.concat(e))
             }
             elem.$vmodel = vmodels[0]
             elem.$vmodels = vmodels
@@ -3005,8 +3000,7 @@
 
         },
         "on": function(data, vmodels) {
-            var value = data.value,
-                    four = "$event"
+            var value = data.value
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
             if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
                 bindingHandlers.on[eventType + "Hook"](data)
@@ -3014,14 +3008,10 @@
             if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
                 var matched = (value.match(rdash) || ["", ""])[1].trim()
                 if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
-                    four = void 0
                     value = value.replace(rdash, "")
                 }
-            } else {
-                four = void 0
             }
-            data.hasArgs = four
-            parseExprProxy(value, vmodels, data, four)
+            parseExprProxy(value, vmodels, data)
         },
         "visible": function(data, vmodels) {
             var elem = avalon(data.element)
