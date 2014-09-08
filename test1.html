@@ -1,41 +1,37 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>avalon入门</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.js" ></script>
+        <title>ms-attr-*</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js"></script>
+
         <script>
-            var model = avalon.define({
-                $id: "test",
-                array: [{a: 222}, {a: 333}],
-                "aaa-eee": "ddd",
-                aaa: "bbb ddd"
+            avalon.define("aaa", function(vm) {
+                vm.e = "true"
+
             })
-            model.$watch("aaa-eee", function(e){
-                alert(e)
+            avalon.define("bbb", function(vm) {
+                vm.e = "false"
+
             })
-            setTimeout(function() {
-                model.array.set(1, {a: 444})
-              //  model.$fire("aaa-eee", "oooo")
-            }, 2000)
-   
         </script>
         <style>
-
-            .bbb{
-                background:pink;
+            .active {
+                background: goldenrod;
             }
-            .ddd{
-                border: 1px solid green;
+            .readonly{
+                border:1px solid blueviolet;
             }
-
         </style>
+
     </head>
-    <body ms-controller="test" ms-class="{{aaa}}">
-        <div >
-            <ul>
-                <li ms-repeat="array">{{el.a}}</li>
-            </ul>
-        </div>
+    <body>
+        <form method="get" action="aaa.html" ms-controller="bbb">
+            <div ms-controller="aaa">
+                <div ms-class="{{e}}111">11111
+                </div>
+            </div>
+        </form>
     </body>
 </html>
