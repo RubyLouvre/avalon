@@ -1311,14 +1311,17 @@
             var list = accessor[subscribers]
             if (list) {
                 avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
-                for (var i = list.length, fn; fn = list[--i]; ) {
-                    var el = fn.element
-                    if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
-                        list.splice(i, 1)
-                        log("debug:delete " + fn.name)
-                        fn = null
+                setTimeout(function() {
+                    for (var i = list.length, fn; fn = list[--i]; ) {
+                        var el = fn.element
+                        if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
+                            list.splice(i, 1)
+                            fn.vmodels.length = 0
+                            fn.element = fn.node = null
+                            log("debug: remove " + fn.name)
+                        }
                     }
-                }
+                })
             }
         }
     }
