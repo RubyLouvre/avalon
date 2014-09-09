@@ -2799,6 +2799,8 @@
         }
         return parseDisplay[key]
     }
+    avalon.parseDisplay = parseDisplay
+    
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt, src, href, include, css添加插值表达式
