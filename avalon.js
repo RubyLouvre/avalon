@@ -1799,12 +1799,10 @@
                 if (remove) { //如果它没有在DOM树
                     list.splice(i, 1)
                     if (fn.proxies) {
-                        for (var p = 0, proxy; proxy = fn.proxies[p++]; ) {
-                            recycleEachProxy(proxy)
-                        }
-                        fn.proxies = fn.callbackElemeent = fn.element = fn.parent = fn.template = fn.startRepeat = fn.endRepeat = null
+                        recycleEachProxies(fn.proxies)
+                        fn.proxies = fn.callbackElement = fn.parent = fn.template = fn.startRepeat = fn.endRepeat = null
                     }
-                    // console.log(fn.proxies)
+                    fn.element = fn.node = null
                     log("debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
@@ -2604,9 +2602,7 @@
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
-                        for (var i = 0, proxy; proxy = removed[i++]; ) {
-                            recycleEachProxy(proxy)
-                        }
+                        recycleEachProxies(removed)
                         expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -2630,8 +2626,8 @@
                         } else {
                             transation = parent
                         }
+                        recycleEachProxies(proxies)
                         expelFromSanctuary(transation)
-                        proxies.length = 0
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                         var t = proxies.splice(pos, 1)[0]
@@ -2910,7 +2906,7 @@
             if (type === "repeat") {
                 var startRepeat = DOC.createComment("ms-repeat-start")
                 var endRepeat = DOC.createComment("ms-repeat-end")
-                data.element = data.parent = elem.parentNode
+                data.element = data.parent = elem.parentNode//?
                 data.startRepeat = startRepeat
                 data.endRepeat = endRepeat
                 elem.removeAttribute(data.name)
@@ -3855,6 +3851,12 @@
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
+    }
+    function recycleEachProxies(array){
+       for(var i = 0, el; el = array[i++];){
+           recycleEachProxy(el)
+       }
+       array.length  = 0
     }
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
