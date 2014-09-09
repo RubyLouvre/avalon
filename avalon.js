@@ -1798,6 +1798,13 @@
                 }
                 if (remove) { //如果它没有在DOM树
                     list.splice(i, 1)
+                    if (fn.proxies) {
+                        for (var p = 0, proxy; proxy = fn.proxies[p++]; ) {
+                            recycleEachProxy(proxy)
+                        }
+                        fn.proxies = fn.callbackElemeent = fn.element = fn.parent = fn.template = fn.startRepeat = fn.endRepeat = null
+                    }
+                    // console.log(fn.proxies)
                     log("debug: remove " + fn.name)
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身

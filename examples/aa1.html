@@ -1,50 +1,60 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <title>by 司徒正美</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="../avalon.js"></script>
-    </head>
-    <body>
-        <div ms-controller="box">
-            <div>
-                {{$maps[name] | html}}
-            </div>
-            <input ms-duplex="name"/>
-            <em>{{oo.xx}}</em> <em>{{oo}}</em>
-        </div>
-        <div ms-controller="box2">
-            <div ms-include-src="name">
-
-            </div>
-            <input ms-duplex="name"/>
-
-        </div>
         <script>
-
-avalon.define("box", function(vm) {
-    vm.$maps = {
-        a: "dddd<b>{{name}}</b>dddddd",
-        b: "2222222222",
-        c: "<em>333333</em>"
-    }
-    vm.oo = {
-        xx: "ddddddd"
-    }
-    vm.name = "a"
-})
-
-avalon.mix(avalon.templateCache,
-        {
-            a: "dddd<b>{{name}}</b>dddddd",
-            b: "2222222222",
-            c: "<em>333333</em>"
-        })
-
-avalon.define("box2", function(vm) {
-    vm.name = "a"
-})
-
+            avalon.define("ancestor", function(vm) {
+                vm.aaa = '1111111111'
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("ancestor.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    avalon.log("向下广播")
+                    vm.$fire("down!aaa", "capture")
+                }
+            })
+            avalon.define("parent", function(vm) {
+                vm.text = "222222222"
+                vm.aaa = '3333333333'
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("parent.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    console.log("全局扩播")
+                    vm.$fire("all!aaa", "broadcast")
+                }
+            })
+            avalon.define("son", function(vm) {
+                vm.$watch("aaa", function(v) {
+                    avalon.log(v)
+                    avalon.log("son.aaa事件被触发了")
+                })
+                vm.click = function() {
+                    console.log("向上冒泡")
+                    vm.$fire("up!aaa", "bubble")
+                }
+            })
         </script>
+        <style>
+ 
+        </style>
+    </head>
+    <body class="ms-controller"   ms-controller="ancestor">
+        <h3>avalon vm.$fire的升级版 </h3>
+        <button type="button" ms-click="click">
+            capture
+        </button>
+        <div ms-controller="parent">
+            <button type="button" ms-click="click">broadcast</button>
+            <div ms-controller="son">
+                <button type="button" ms-click="click">
+                    bubble
+                </button>
+            </div>
+        </div>
     </body>
 </html>
