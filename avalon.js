@@ -1489,7 +1489,7 @@
         //http://hkom.blog1.fc2.com/?mode=m&no=750 body的偏移量是不包含margin的
         //我们可以通过getBoundingClientRect来获得元素相对于client的rect.
         //http://msdn.microsoft.com/en-us/library/ms536433.aspx
-        if (typeof node.getBoundingClientRect !== "undefined") {
+        if ( node.getBoundingClientRect ) {
             box = node.getBoundingClientRect() // BlackBerry 5, iOS 3 (original iPhone)
         }
         //chrome/IE6: body.scrollTop, firefox/other: root.scrollTop
