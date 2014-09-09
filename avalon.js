@@ -1777,21 +1777,13 @@
             if (list) {
                 avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
                 setTimeout(function() {
-                    for (var i = list.length, fn; fn = list[--i]; ) {
-                        var el = fn.element
-                        if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
-                            list.splice(i, 1)
-                            fn.vmodels.length = 0
-                            fn.element = fn.node = null
-                            log("debug: remove " + fn.name)
-                        }
-                    }
+                    notifySubscribers(accessor, true)
                 })
             }
         }
     }
 
-    function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
+    function notifySubscribers(accessor, nofire) { //通知依赖于这个访问器的订阅者更新自身
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
@@ -1814,6 +1806,8 @@
                     fn.vmodels.length = 0
                     fn.element = fn.node = null
                     log("debug: remove " + fn.name)
+                } else if (nofire === true) {
+                    //nothing
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
