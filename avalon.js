@@ -1022,7 +1022,8 @@
             rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
-    kernel.debug = true
+
+    kernel.dettachVModels = kernel.debug = true
     kernel.plugins = plugins
     kernel.plugins['interpolate'](["{{", "}}"])
     kernel.paths = {}
@@ -1494,7 +1495,7 @@
         //http://hkom.blog1.fc2.com/?mode=m&no=750 body的偏移量是不包含margin的
         //我们可以通过getBoundingClientRect来获得元素相对于client的rect.
         //http://msdn.microsoft.com/en-us/library/ms536433.aspx
-        if ( node.getBoundingClientRect ) {
+        if (node.getBoundingClientRect) {
             box = node.getBoundingClientRect() // BlackBerry 5, iOS 3 (original iPhone)
         }
         //chrome/IE6: body.scrollTop, firefox/other: root.scrollTop
@@ -1704,20 +1705,23 @@
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
             }
-            var element = events.element
+            var element = events.expr && findNode(events.expr)
             if (element) {
                 var detail = [type].concat(args)
                 if (special === "up" || special === "down" || special === "all") {
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
-                        if (v && v.$events && v.$events.element) {
+                        if (v && v.$events && v.$events.expr) {
                             if (v !== this) {
-                                var node = v.$events.element
+                                var node = findNode(v.$events.expr)
+                                if (!node) {
+                                    continue
+                                }
                                 var ok = special === "all" ? 1 : //全局广播
                                         special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element)//向上冒泡
                                 if (ok) {
-                                    node._vv = v//符合条件的加一个标识
+                                    node._avalon = v//符合条件的加一个标识
                                 }
                             }
                         }
@@ -1725,10 +1729,10 @@
                     var nodes = document.getElementsByTagName("*")//实现节点排序
                     var alls = []
                     Array.prototype.forEach.call(nodes, function(el) {
-                        if (el._vv) {
-                            alls.push(el._vv)
-                            el._vv = ""
-                            el.removeAttribute("_vv")
+                        if (el._avalon) {
+                            alls.push(el._avalon)
+                            el._avalon = ""
+                            el.removeAttribute("_avalon")
                         }
                     })
                     if (special === "up") {
@@ -1738,6 +1742,18 @@
                         v.$fire.apply(v, detail)
                     })
                 }
+            }
+        }
+    }
+    var ravalon = /(\w+)\[(avalonctrl)="(\d+)"\]/
+    var findNode = document.querySelector ? function(str) {
+        return  document.querySelector(str)
+    } : function(str) {
+        var match = str.match(ravalon)
+        var all = document.getElementsByTagName(match[1])
+        for (var i = 0, el; el = all[i++]; ) {
+            if (el.getAttribute(match[2]) === match[3]) {
+                return el
             }
         }
     }
@@ -1804,8 +1820,8 @@
                         fn.proxies = fn.callbackElement = fn.template = fn.startRepeat = fn.endRepeat = null
                     }
                     fn.vmodels.length = 0
-                    fn.element = fn.node = null
                     log("debug: remove " + fn.name)
+                    fn = fn.element = fn.node = fn.evaluator = null
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
@@ -1868,12 +1884,14 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            newVmodel.$events.element = elem
-            avalon(elem).removeClass(node.name)
-        }
+            var id = setTimeout("1")
 
+            elem.setAttribute("avalonctrl", id + "")
+            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
+            avalon(elem).removeClass(node.name)
+
+        }
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
@@ -2220,7 +2238,7 @@
         }
         return ret
     }
-   
+
 
     function createCache(maxLength) {
         var keys = []
@@ -2232,7 +2250,7 @@
         }
         return cache;
     }
- //缓存求值函数，以便多次利用
+    //缓存求值函数，以便多次利用
     var cacheExprs = createCache(256)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
@@ -2362,9 +2380,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
+//            data.evaluator.toString = function() {
+//                return data.type + " binding to eval(" + code + ")"
+//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -2739,8 +2757,13 @@
             callback = function(e) {
                 return fn.apply(this, data.args.concat(e))
             }
-            elem.$vmodel = vmodels[0]
-            elem.$vmodels = vmodels
+            try {
+                if (!avalon.configs.dettachVModels) {
+                    elem.$vmodel = vmodels[0]
+                    elem.$vmodels = vmodels//IE11的IE8兼容模式会报错 SCRIPT438: 对象不支持此属性或方法
+                }
+            } catch (e) {
+            }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
             if (eventType === "scan") {
                 callback.call(elem, {type: eventType})
@@ -2756,7 +2779,8 @@
                     avalon.unbind(elem, eventType, removeFn)
                 }
             }
-            data.evaluator = data.handler = noop
+            // data.evaluator =
+            data.handler = noop
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
@@ -2800,6 +2824,8 @@
         }
         return parseDisplay[key]
     }
+
+    avalon.parseDisplay = parseDisplay
     //这里的函数只会在第一次被扫描后被执行一次，并放进行对应VM属性的subscribers数组内（操作方为registerSubscriber）
     var bindingHandlers = avalon.bindingHandlers = {
         //这是一个字符串属性绑定的范本, 方便你在title, alt, src, href, include, css添加插值表达式

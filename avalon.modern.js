@@ -678,7 +678,7 @@
             rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
-    kernel.debug = true
+    kernel.dettachVModels = kernel.debug = true
     kernel.plugins = plugins
     kernel.plugins['interpolate'](["{{", "}}"])
     kernel.paths = {}
@@ -1236,31 +1236,31 @@
             for (var i = 0, callback; callback = all[i++]; ) {
                 callback.apply(this, arguments)
             }
-            var element = events.element
+            var element = events.expr && findNode(events.expr)
             if (element) {
                 var detail = [type].concat(args)
                 if (special === "up" || special === "down" || special === "all") {
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
-                        if (v && v.$events && v.$events.element) {
+                        if (v && v.$events && v.$events.expr) {
                             if (v !== this) {
-                                var node = v.$events.element
+                                var node = findNode(v.$events.expr)
                                 var ok = special === "all" ? 1 : //全局广播
                                         special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element)//向上冒泡
                                 if (ok) {
-                                    node._vv = v//符合条件的加一个标识
+                                    node._avalon = v//符合条件的加一个标识
                                 }
                             }
                         }
                     }
-                    var nodes = document.getElementsByTagName("*")//实现节点排序
+                    var nodes = document.querySelectorAll("[avalonctrl]")//实现节点排序
                     var alls = []
                     Array.prototype.forEach.call(nodes, function(el) {
-                        if (el._vv) {
-                            alls.push(el._vv)
-                            el._vv = ""
-                            el.removeAttribute("_vv")
+                        if (el._avalon) {
+                            alls.push(el._avalon)
+                            el._avalon = ""
+                            el.removeAttribute("_avalon")
                         }
                     })
                     if (special === "up") {
@@ -1274,6 +1274,9 @@
         }
     }
 
+    function findNode(str) {
+        return  document.querySelector(str)
+    }
     /*********************************************************************
      *                       依赖调度系统                                 *
      **********************************************************************/
@@ -1331,9 +1334,8 @@
                         recycleEachProxies(fn.proxies)
                         fn.proxies = fn.callbackElement = fn.template = fn.startRepeat = fn.endRepeat = null
                     }
-                    fn.element = fn.node = null
                     log("debug: remove " + fn.name)
-                    fn = null
+                    fn = fn.element = fn.node = fn.evaluator = null
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
@@ -1392,8 +1394,9 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
-            newVmodel.$events.element = elem
-
+            var id = setTimeout("1")
+            elem.setAttribute("avalonctrl", id)
+            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
@@ -2133,8 +2136,10 @@
             callback = function(e) {
                 return fn.apply(this, data.args.concat(e))
             }
-            elem.$vmodel = vmodels[0]
-            elem.$vmodels = vmodels
+            if (!avalon.configs.dettachVModels) {
+                elem.$vmodel = vmodels[0]
+                elem.$vmodels = vmodels
+            }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
             if (eventType === "scan") {
                 callback.call(elem, {type: eventType})
