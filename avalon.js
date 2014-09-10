@@ -2220,7 +2220,7 @@
         }
         return ret
     }
-    //缓存求值函数，以便多次利用
+   
 
     function createCache(maxLength) {
         var keys = []
@@ -2232,7 +2232,7 @@
         }
         return cache;
     }
-
+ //缓存求值函数，以便多次利用
     var cacheExprs = createCache(256)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
