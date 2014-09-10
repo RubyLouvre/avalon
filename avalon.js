@@ -1819,6 +1819,8 @@
                             remove = true
                         }
                     }
+                } else if(fn.type === "if") {
+                    remove = true
                 }
                 if (remove) { //如果它没有在DOM树
                     list.splice(i, 1)
