@@ -1332,7 +1332,7 @@
                     var inTree = root.contains(el)
                     var remove = !ifSanctuary.contains(el) && !inTree
                     var comment = fn.placehoder
-                    if (fn.type === "if" && comment) {
+                    if (fn.type === "if") {
                         var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
                         if (recycle) {
                             if (!fn.msInDocument && comment.elem) {
@@ -1342,6 +1342,8 @@
                             remove = true
                         }
                     }
+                } else if(fn.type === "if") {
+                    remove = true
                 }
                 if (remove) {
                     list.splice(i, 1)
