@@ -22,7 +22,12 @@
             <div ms-controller="test" >
 
                 <div ms-repeat="elements">
-                    {{new Date - 0}}
+                   <div ms-if="data[el].length===0">
+                            no number
+                        </div>
+                        <div ms-repeat-number="data[el]">
+                                {{number}}
+                        </div>
                 </div>
             </div>
         </div>

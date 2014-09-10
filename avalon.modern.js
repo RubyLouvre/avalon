@@ -1328,7 +1328,22 @@
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
+                if (el) {
+                    var inTree = root.contains(el)
+                    var remove = !ifSanctuary.contains(el) && !inTree
+                    var comment = fn.placehoder
+                    if (fn.type === "if" && comment) {
+                        var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
+                        if (recycle) {
+                            if (!fn.msInDocument && comment.elem) {
+                                ifSanctuary.removeChild(comment.elem)
+                            }
+                            fn.placehoder = fn.msInDocument = comment.elem = null
+                            remove = true
+                        }
+                    }
+                }
+                if (remove) {
                     list.splice(i, 1)
                     if (fn.proxies) {
                         recycleEachProxies(fn.proxies)

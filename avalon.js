@@ -1804,13 +1804,20 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.element,
-                        remove
-                if (el && !avalon.contains(ifSanctuary, el)) {
-                    if (typeof el.sourceIndex == "number") { //IE6-IE11
-                        remove = el.sourceIndex === 0
-                    } else {
-                        remove = !avalon.contains(root, el)
+                var el = fn.element
+                if (el) {
+                    var inTree = avalon.contains(root, el)
+                    var remove = !ifSanctuary.contains(el) && !inTree
+                    var comment = fn.placehoder
+                    if (fn.type === "if" && comment) {
+                        var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
+                        if (recycle) {
+                            if (!fn.msInDocument && comment.elem) {
+                                ifSanctuary.removeChild(comment.elem)
+                            }
+                            fn.placehoder = fn.msInDocument = comment.elem = null
+                            remove = true
+                        }
                     }
                 }
                 if (remove) { //如果它没有在DOM树
@@ -2779,8 +2786,7 @@
                     avalon.unbind(elem, eventType, removeFn)
                 }
             }
-            // data.evaluator =
-            data.handler = noop
+            data.evaluator = data.handler = noop
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
@@ -3027,7 +3033,6 @@
             }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
-
         },
         "on": function(data, vmodels) {
             var value = data.value
