@@ -2380,9 +2380,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-//            data.evaluator.toString = function() {
-//                return data.type + " binding to eval(" + code + ")"
-//            }
+            data.evaluator.toString = function() {
+                return data.type + " binding to eval(" + code + ")"
+            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
