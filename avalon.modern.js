@@ -2164,7 +2164,7 @@
             callback = function(e) {
                 return fn.apply(this, data.args.concat(e))
             }
-            if (!avalon.configs.dettachVModels) {
+            if (!avalon.config.dettachVModels) {
                 elem.$vmodel = vmodels[0]
                 elem.$vmodels = vmodels
             }

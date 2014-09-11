@@ -2779,7 +2779,7 @@
                 return fn.apply(this, data.args.concat(e))
             }
             try {
-                if (!avalon.configs.dettachVModels) {
+                if (!avalon.config.dettachVModels) {
                     elem.$vmodel = vmodels[0]
                     elem.$vmodels = vmodels//IE11的IE8兼容模式会报错 SCRIPT438: 对象不支持此属性或方法
                 }
