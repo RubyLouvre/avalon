@@ -1828,8 +1828,7 @@
                         recycleEachProxies(fn.proxies)
                         fn.proxies = fn.callbackElement = fn.template = fn.startRepeat = fn.endRepeat = null
                     }
-                    fn.vmodels.length = 0
-                    log("debug: remove " + fn.name)
+                    log("debug: remove " + fn.type)
                     fn = fn.element = fn.node = fn.evaluator = null
                 } else if (nofire === true) {
                     //nothing
