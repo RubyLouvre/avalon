@@ -45,9 +45,9 @@
                     scope.showItems.push(avalon.mix(true, {}, a));
                     scope.getPages();
                 };
-                scope.removeItem = function(e) {
+                scope.removeItem = function(fn, e) {
                     e.preventDefault()
-                    var item = this.$vmodel.$remove();
+                    var item = fn()[0];
                     scope.items.remove(item);
                     if (!scope.showItems.length) {
                         if (Math.ceil(scope.items.length / scope.pageCount) === scope.pageIndex) {
@@ -73,9 +73,9 @@
                     scope.pageIndex = 0;
                     scope.getShowItems();
                 };
-                scope.jumpPage = function(e) {
+                scope.jumpPage = function($index, e) {
                     e.preventDefault()
-                    scope.pageIndex = this.$vmodel.$index;
+                    scope.pageIndex = $index;
                     scope.getShowItems();
                 }
             });
@@ -100,14 +100,14 @@
                         <td>{{row.name}}</td>
                         <td>{{row.sales | number}}</td>
                         <td>${{row.price }}</td>
-                        <td><a href="javascript:void(0)" ms-click="removeItem">删除</a></td>
+                        <td><a href="javascript:void(0)" ms-click="removeItem($remove, $event)">删除</a></td>
                     </tr>
                 </tbody>
             </table>
             <div class="ms-grid-pageLinks">
                 <span>Page:</span>
                 <span >
-                    <a ms-repeat-page="pages" ms-href="#{{page}}" ms-click="jumpPage"  ms-class-selected="$index==pageIndex"   >{{page+1}}</a>
+                    <a ms-repeat-page="pages" ms-href="#{{page}}" ms-click="jumpPage($index,$event)"  ms-class-selected="$index==pageIndex"   >{{page+1}}</a>
                 </span>
             </div>
             <button ms-click='addItem'>
