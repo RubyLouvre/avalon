@@ -2481,9 +2481,13 @@
                     return elem.removeAttribute(attrName)
                 }
                 if (window.VBArray && !isInnate) {//IE下需要区分固有属性与自定义属性
-                    var attrs = elem.attributes || {}
-                    var attr = attrs[attrName]
-                    isInnate = attr ? attr.expando === false : attr === null
+                    if (isVML(elem)) {
+                        isInnate = true
+                    } else {
+                        var attrs = elem.attributes || {}
+                        var attr = attrs[attrName]
+                        isInnate = attr ? attr.expando === false : attr === null
+                    }
                 }
                 if (isInnate) {
                     elem[attrName] = val
@@ -3729,6 +3733,10 @@
         }
         return get(elem, ret)
     }
+    function isVML(src) {
+        var nodeName = src.nodeName
+        return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
+    }
     function fixCloneNode(src) {
         var target = src.cloneNode(true)
         if (window.VBArray) {//只处理IE
@@ -3751,7 +3759,7 @@
                         dest.defaultSelected = dest.selected = src.defaultSelected
                     } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
                         dest.defaultValue = src.defaultValue
-                    } else if (nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === "") {
+                    } else if (isVML(src)) {
                         //src.tagUrn === "urn:schemas-microsoft-com:vml"//判定是否为VML元素
                         var props = {}//处理VML元素
                         src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
