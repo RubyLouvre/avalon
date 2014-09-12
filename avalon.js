@@ -962,7 +962,7 @@
                             avalon.clearHTML(this)
                             var frag = avalon.parseHTML(html)
                             enumerateNode(frag, this)
-                        } 
+                        }
                     }
                 }
             })
