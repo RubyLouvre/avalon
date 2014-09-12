@@ -925,8 +925,8 @@
     var svgns = "http://www.w3.org/2000/svg"
     if (window.SVGElement) {
         var svg = document.createElementNS(svgns, "svg")
-        svg.innerHTML = '<Rect width="300" height="100"/>'
-        if (!(svg.firstChild && svg.firstChild.tagName === "rect")) {
+        svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
+        if (svg.firstChild !== "[object SVGCircleElement]") {// #409
             Object.defineProperties(SVGElement.prototype, {
                 "outerHTML": {
                     enumerable: true,
