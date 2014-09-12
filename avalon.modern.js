@@ -2557,9 +2557,10 @@
 
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var curValue = evaluator()
-            if (curValue !== element.value) {
-                element.value = curValue
+            var val = evaluator()
+            val = val == null ? "" : val +""
+            if (val !== element.value) {
+                element.value = val
             }
         }
         if (type === "checkbox" && fixType === "radio") {

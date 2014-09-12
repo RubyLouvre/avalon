@@ -3188,8 +3188,9 @@
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
+            val = val == null ? "" : val +""
             if (val !== element.value) {
-                element.value = val + ""
+                element.value = val 
             }
         }
 
