@@ -958,9 +958,11 @@
                         return  s.replace(ropen, "").replace(rclose, "")
                     },
                     set: function(html) {
-                        avalon.clearHTML(this)
-                        var frag = avalon.parseHTML(html)
-                        enumerateNode(frag, this)
+                        if (avalon.clearHTM) {
+                            avalon.clearHTML(this)
+                            var frag = avalon.parseHTML(html)
+                            enumerateNode(frag, this)
+                        } 
                     }
                 }
             })
@@ -3188,9 +3190,9 @@
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
-            val = val == null ? "" : val +""
+            val = val == null ? "" : val + ""
             if (val !== element.value) {
-                element.value = val 
+                element.value = val
             }
         }
 
