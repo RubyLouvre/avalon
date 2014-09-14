@@ -202,8 +202,8 @@ void function() {
             }
         },
         canFix: function(element) {
-            // 如果是PC端就不需要修复了
-            if (typeof window.ontouchstart === 'undefined') {
+            // 如果设备不支持触摸就不需要修复了
+            if (!touchSupported) {
                 return false
             }
             //在Android 平台的chrome 32，为了避免点击延迟，允许用户设置如下代码
@@ -243,10 +243,10 @@ void function() {
         }
     }
 
-
     var IE11touch = navigator.pointerEnabled
     var IE9_10touch = navigator.msPointerEnabled
-    if ("ontouchstart" in window || IE9_10touch || IE11touch) {
+    var touchSupported = "ontouchstart" in window || IE9_10touch || IE11touch
+    if (touchSupported) {
         (function(DOC) {
             var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
                     now, firstTouch, _isPointerType, delta, deltaX = 0,
