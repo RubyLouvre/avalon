@@ -276,7 +276,7 @@ void function() {
                 clearTimeout(holdTimeout)
                 touchProxy = {}
             }
-            touchNames = ["mousedown", "mousemove", "mouseup", ""]
+            //touchNames = ["mousedown", "mousemove", "mouseup", ""]
             if (IE11touch) { //IE11 与 W3C
                 touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
             } else if (IE9_10touch) { //IE9-10
