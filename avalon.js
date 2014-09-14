@@ -385,7 +385,7 @@
         if (VMODELS[id]) {
             log("warning: " + $id + " 已经存在于avalon.vmodels中")
         }
-        if (typeof id == "object") {
+        if (typeof id === "object") {
             var model = modelFactory(id)
         } else {
             var scope = {
@@ -701,7 +701,7 @@
 
         function VBMediator(accessingProperties, name, value) {
             var accessor = accessingProperties[name]
-            if (typeof accessor == "function") {
+            if (typeof accessor === "function") {
                 if (arguments.length === 3) {
                     accessor(value)
                 } else {
@@ -748,7 +748,7 @@
             buffer.push("End Class")
             var code = buffer.join("\r\n"),
                     realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
-            if (realClassName == className) {
+            if (realClassName === className) {
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
                     "\tDim o",
@@ -901,37 +901,35 @@
             return fixContains(this, b)
         }
     }
-    //IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
-    function outerHTML() {
-        return new XMLSerializer().serializeToString(this)
-    }
-    function enumerateNode(node, targetNode) {
-        if (node && node.childNodes) {
-            var nodes = node.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.tagName) {
-                    var svg = document.createElementNS(svgns,
-                            el.tagName.toLowerCase())
-                    ap.forEach.call(el.attributes, function(attr) {
-                        svg.setAttribute(attr.name, attr.value)//复制属性
-                    })
-                    // 递归处理子节点
-                    enumerateNode(el, svg)
-                    targetNode.appendChild(svg)
-                }
-            }
-        }
-    }
-    var svgns = "http://www.w3.org/2000/svg"
     if (window.SVGElement) {
+        var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
         if (svg.firstChild !== "[object SVGCircleElement]") {// #409
+            function enumerateNode(node, targetNode) {
+                if (node && node.childNodes) {
+                    var nodes = node.childNodes
+                    for (var i = 0, el; el = nodes[i++]; ) {
+                        if (el.tagName) {
+                            var svg = document.createElementNS(svgns,
+                                    el.tagName.toLowerCase())
+                            ap.forEach.call(el.attributes, function(attr) {
+                                svg.setAttribute(attr.name, attr.value)//复制属性
+                            })
+                            // 递归处理子节点
+                            enumerateNode(el, svg)
+                            targetNode.appendChild(svg)
+                        }
+                    }
+                }
+            }
             Object.defineProperties(SVGElement.prototype, {
-                "outerHTML": {
+                "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                     enumerable: true,
                     configurable: true,
-                    get: outerHTML,
+                    get: function() {
+                        return new XMLSerializer().serializeToString(this)
+                    },
                     set: function(html) {
                         var tagName = this.tagName.toLowerCase(),
                                 par = this.parentNode,
@@ -1072,7 +1070,7 @@
         },
         __set: function(cls) {
             var node = this.node
-            if (typeof node.className == "string") {
+            if (typeof node.className === "string") {
                 node.className = cls
             } else {//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
                 node.setAttribute("class", cls)
@@ -1096,7 +1094,7 @@
         avalon.fn[method + "Class"] = function(cls) {
             var el = this[0]
             //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
-            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+            if (cls && typeof cls === "string" && el && el.nodeType === 1) {
                 cls.replace(/\S+/g, function(c) {
                     ClassList(el)[method](c)
                 })
@@ -1406,7 +1404,7 @@
                 array.push(obj)
             }
             var parent = node.parentNode
-            if (parent && parent.nodeType == 1) {
+            if (parent && parent.nodeType === 1) {
                 showHidden(parent, array)
             }
         }
@@ -2268,7 +2266,7 @@
 
     function parseExpr(code, scopes, data) {
         var dataType = data.type
-        var filters = dataType == "html" || dataType === "text" ? data.filters : ""
+        var filters = dataType === "html" || dataType === "text" ? data.filters : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
@@ -2534,7 +2532,7 @@
                 } else {
                     //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
                     //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
-                    var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
+                    var el = val && val.nodeType === 1 ? val : DOC.getElementById(val)
                     if (el) {
                         if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
                             var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
@@ -2600,7 +2598,7 @@
                             $elem.bind(abandon, function() {
                                 data.toggleClass && $elem.removeClass(data.newClass)
                             })
-                            data.hasBindEvent = 1
+                            data.hasBindEvent = true
                         }
                         break;
                 }
@@ -2949,7 +2947,7 @@
             try {
                 list = data.getter()
                 var xtype = avalon.type(list)
-                if (xtype == "object" || xtype == "array") {
+                if (xtype === "object" || xtype === "array") {
                     freturn = false
                 }
             } catch (e) {
@@ -3701,7 +3699,7 @@
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
-            if (comment.nodeValue == "ms-if") {
+            if (comment.nodeValue === "ms-if") {
                 cinerator.appendChild(comment.elem)
             }
         }
@@ -3839,7 +3837,7 @@
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
-                if (ret == end)
+                if (ret === end)
                     return end
             }
             return ret

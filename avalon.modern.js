@@ -300,37 +300,36 @@
             return !!(this.compareDocumentPosition(arg) & 16)
         }
     }
-    function outerHTML() {
-        return new XMLSerializer().serializeToString(this)
-    }
-    function enumerateNode(node, targetNode) {
-        if (node && node.childNodes) {
-            var nodes = node.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.tagName) {
-                    var svg = document.createElementNS(svgns,
-                            el.tagName.toLowerCase())
-                    // copy attrs
-                    ap.forEach.call(el.attributes, function(attr) {
-                        svg.setAttribute(attr.name, attr.value)
-                    })
-                    // 递归处理子节点
-                    enumerateNode(el, svg)
-                    targetNode.appendChild(svg)
-                }
-            }
-        }
-    }
-    var svgns = "http://www.w3.org/2000/svg"
     if (window.SVGElement) {
+        var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
         if (svg.firstChild !== "[object SVGCircleElement]") {// #409
+            function enumerateNode(node, targetNode) {
+                if (node && node.childNodes) {
+                    var nodes = node.childNodes
+                    for (var i = 0, el; el = nodes[i++]; ) {
+                        if (el.tagName) {
+                            var svg = document.createElementNS(svgns,
+                                    el.tagName.toLowerCase())
+                            // copy attrs
+                            ap.forEach.call(el.attributes, function(attr) {
+                                svg.setAttribute(attr.name, attr.value)
+                            })
+                            // 递归处理子节点
+                            enumerateNode(el, svg)
+                            targetNode.appendChild(svg)
+                        }
+                    }
+                }
+            }
             Object.defineProperties(SVGElement.prototype, {
                 "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                     enumerable: true,
                     configurable: true,
-                    get: outerHTML,
+                    get: function() {
+                        return new XMLSerializer().serializeToString(this)
+                    },
                     set: function(html) {
                         var tagName = this.tagName.toLowerCase(),
                                 par = this.parentNode,
@@ -380,7 +379,7 @@
         if (VMODELS[id]) {
             log("warning: " + $id + " 已经存在于avalon.vmodels中")
         }
-        if (typeof id == "object") {
+        if (typeof id === "object") {
             var model = modelFactory(id)
         } else {
             var scope = {
@@ -712,7 +711,7 @@
         avalon.fn[method + "Class"] = function(cls) {
             var el = this[0]
             //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
-            if (cls && typeof cls === "string" && el && el.nodeType == 1) {
+            if (cls && typeof cls === "string" && el && el.nodeType === 1) {
                 cls.replace(/\S+/g, function(c) {
                     el.classList[method](c)
                 })
@@ -972,7 +971,7 @@
                 array.push(obj)
             }
             var parent = node.parentNode
-            if (parent && parent.nodeType == 1) {
+            if (parent && parent.nodeType === 1) {
                 showHidden(parent, array)
             }
         }
@@ -1987,7 +1986,7 @@
                             $elem.bind(abandon, function() {
                                 data.toggleClass && $elem.removeClass(data.newClass)
                             })
-                            data.hasBindEvent = 1
+                            data.hasBindEvent = true
                         }
                         break;
                 }
@@ -2991,7 +2990,7 @@
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
-            if (comment.nodeValue == "ms-if") {
+            if (comment.nodeValue === "ms-if") {
                 cinerator.appendChild(comment.elem)
             }
         }
@@ -3056,7 +3055,7 @@
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
-                if (ret == end)
+                if (ret === end)
                     return end
             }
             return ret
