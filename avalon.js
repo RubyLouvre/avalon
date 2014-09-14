@@ -901,6 +901,9 @@
             return fixContains(this, b)
         }
     }
+    function outerHTML() {
+        return new XMLSerializer().serializeToString(this)
+    }
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
@@ -927,9 +930,7 @@
                 "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                     enumerable: true,
                     configurable: true,
-                    get: function() {
-                        return new XMLSerializer().serializeToString(this)
-                    },
+                    get: outerHTML,
                     set: function(html) {
                         var tagName = this.tagName.toLowerCase(),
                                 par = this.parentNode,
