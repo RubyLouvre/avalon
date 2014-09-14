@@ -1088,7 +1088,7 @@
                         var v = avalon.vmodels[i]
                         if (v && v.$events && v.$events.element) {
                             var node = v.$events.element;
-                            if (avalon.contains(element, node) && element != node) {
+                            if (avalon.contains(element, node) && element !== node) {
                                 alls.push(v)
                             }
                         }
@@ -1498,7 +1498,7 @@
 
     void function() {
         var test = [1, 2, 3, 1]
-        if (typeof Set == "function" && (new Set(test)).size == 3) {
+        if (typeof Set === "function" && (new Set(test)).size === 3) {
             var uniqSet = function(arr) {//重写uniqSet
                 var set = new Set(arr), ret = []
                 set.forEach(function(el) {
@@ -1767,7 +1767,7 @@
                 } else {
                     //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
                     //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
-                    var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
+                    var el = val && val.nodeType === 1 ? val : DOC.getElementById(val)
                     avalon.nextTick(function() {
                         scanTemplate(el.innerText || el.innerHTML)
                     })
@@ -2778,7 +2778,7 @@
     function expelFromSanctuary(parent) {
         var comments = queryComments(parent)
         for (var i = 0, comment; comment = comments[i++]; ) {
-            if (comment.nodeValue == "ms-if") {
+            if (comment.nodeValue === "ms-if") {
                 cinerator.appendChild(comment.elem)
             }
         }
@@ -2841,7 +2841,7 @@
             pos += 1
             for (var i = 0; i < pos; i++) {
                 ret = ret.nextSibling
-                if (ret == end)
+                if (ret === end)
                     return end
             }
             return ret
