@@ -139,7 +139,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.34,
+        version: 1.35,
         ui: {},
         log: log,
         noop: noop,

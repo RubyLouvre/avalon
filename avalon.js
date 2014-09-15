@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.4 2014.8.26
+ avalon 1.3.4 2014.9.15
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -188,7 +188,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.34,
+        version: 1.35,
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
