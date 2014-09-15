@@ -2482,7 +2482,7 @@
                 if (window.VBArray && !isInnate) {//IE下需要区分固有属性与自定义属性
                     if (isVML(elem)) {
                         isInnate = true
-                    } else {
+                    } else if(window.SVGElement && !(elem instanceof SVGElement)) {
                         var attrs = elem.attributes || {}
                         var attr = attrs[attrName]
                         isInnate = attr ? attr.expando === false : attr === null
