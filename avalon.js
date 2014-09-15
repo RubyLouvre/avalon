@@ -2260,7 +2260,7 @@
         return cache;
     }
     //缓存求值函数，以便多次利用
-    var cacheExprs = createCache(256)
+    var cacheExprs = createCache(128)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/

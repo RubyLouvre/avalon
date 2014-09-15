@@ -1724,7 +1724,7 @@
         }
         return cache;
     }
-    var cacheExprs = createCache(256)
+    var cacheExprs = createCache(128)
     //根据一段文本与一堆VM，转换为对应的求值函数及匹配的VM(解释器模式)
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
