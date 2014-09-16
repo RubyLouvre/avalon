@@ -380,7 +380,7 @@
     avalon.define = function(id, factory) {
         var $id = id.$id || id
         if (!$id) {
-            log("warning: 必须指定$id")
+            log("warning: vm必须指定$id")
         }
         if (VMODELS[id]) {
             log("warning: " + $id + " 已经存在于avalon.vmodels中")
@@ -420,14 +420,14 @@
         var watchProperties = arguments[2] || {} //强制要监听的属性
         var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
-            if (typeof name !== "string") {
-                log("warning:$skipArray[" + name + "] must be a string")
-            }
             delete scope[name]
             normalProperties[name] = true
         }
         if (Array.isArray(skipArray)) {
             for (var i = 0, name; name = skipArray[i++]; ) {
+                if (typeof name !== "string") {
+                    log("warning:$skipArray[" + name + "] must be a string")
+                }
                 normalProperties[name] = true
             }
         }
