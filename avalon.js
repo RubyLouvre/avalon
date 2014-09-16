@@ -22,7 +22,7 @@
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var rnative = /\[native code\]/  //判定是否原生函数
     var rcomplexType = /^(?:object|array)$/
-    var rwindow = /^\[object (Window|DOMWindow|global)\]$/
+    var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
     var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
     var serialize = oproto.toString
@@ -1977,7 +1977,9 @@
         "on": 3000
     }
     var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+    function bindingSorter(a, b){
+        return a.priority - b.priority
+    }
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
         var attributes = getAttributes ? getAttributes(elem) : avalon.slice(elem.attributes)
@@ -2032,9 +2034,7 @@
                 }
             }
         }
-        bindings.sort(function(a, b) {
-            return a.priority - b.priority
-        })
+        bindings.sort(bindingSorter)
         if (msData["ms-checked"] && msData["ms-duplex"]) {
             log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
         }
