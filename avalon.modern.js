@@ -1904,7 +1904,7 @@
                 if (toRemove) {
                     return elem.removeAttribute(attrName)
                 }
-                if (window.VBArray && window.SVGElement && !(elem instanceof SVGElement)) { {//IE下需要区分固有属性与自定义属性
+                if (window.VBArray && window.SVGElement && !(elem instanceof SVGElement)) {//IE下需要区分固有属性与自定义属性
                     var attrs = elem.attributes || {}
                     var attr = attrs[attrName]
                     var isInnate = attr && attr.expando === false
