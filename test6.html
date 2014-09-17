@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>
+            新路由系统
+        </title>
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                get: function() {
+                    alert(this.getAttribute("href")+" :" +this.href+" "+this.getAttribute("href",2)) 
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <table>
+            <tr>
+                <td>
+                    <ul>
+                        <li >
+                            <a href="#/aaa?name=中文" ms-click="get">aaa</a>
+                        </li>
+                        <li >
+                            <a href="#/bbb" ms-click="get">ccc</a>
+                        </li>
+                        <li >
+                            <a href="#/aaa/1232" ms-click="get">aaa/2333</a>
+                        </li>
+                    </ul>
+                </td>
+                <td>
+                    dddddddddddd
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
