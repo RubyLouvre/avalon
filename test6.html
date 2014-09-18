@@ -2,12 +2,9 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>
-            新路由系统
-        </title>
+        <title>路由系统</title>
         <script src="avalon.js"></script>
         <script>
-        
             require(["mmRouter"], function() {
                 var model = avalon.define('xxx', function(vm) {
                     vm.currPath = ""
@@ -23,35 +20,34 @@
                 })
                 avalon.router.get("/ddd/:ddd", function(a) {//:ddd为参数
                     avalon.log(a)
+                    console.log(this)
                     model.currPath = this.path
                 })
                 avalon.router.get("/eee", function(a) {
                     model.currPath = this.path
                 })
                 avalon.history.start({
+                    html5Mode: true,
                     basepath: "/avalon"
                 })
                 avalon.scan()
             })
-
-
-
         </script>
     </head>
     <body >
         <div ms-controller="xxx">
             <ul>
-                <li><a href="#/aaa">aaa</a></li>
-                <li><a href="#/bbb">bbb</a></li>
-                <li><a href="#/ccc">ccc</a></li>
-                <li><a href="#/ddd/222">ddd</a></li>
-                <li><a href="#/eee">eee</a></li>
+                <li><a href="#!/aaa">aaa</a></li>
+                <li><a href="#!/bbb">bbb</a></li>
+                <li><a href="#!/ccc">ccc</a></li>
+                <li><a href="#!/ddd/222">ddd</a></li>
+                <li><a href="#!/eee">eee</a></li>
             </ul>
             <div style="color:red">{{currPath}}</div>
             <div style="height: 600px;width:1px;">
 
             </div>
-            <p id="eee">会定位到这里</p>-->
+            <p id="eee">会定位到这里</p>
         </div>
 
     </body>

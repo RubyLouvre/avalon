@@ -1,4 +1,5 @@
 define(["mmHistory"], function() {
+
     function Router() {
         var table = {}
         "get,post,delete,put".replace(avalon.rword, function(name) {
@@ -6,19 +7,19 @@ define(["mmHistory"], function() {
         })
         this.routingTable = table
     }
-    
+
     function parseQuery(path) {
         var array = path.split("#"), query = {}, tail = array[1];
         if (tail) {
-            var index = tail.indexOf("?");
+            var index = tail.indexOf("?")
             if (index > 0) {
-                var seg = tail.slice(index + 1).split('&'),
+                var seg = tail.slice(index + 1).split("&"),
                         len = seg.length, i = 0, s;
                 for (; i < len; i++) {
                     if (!seg[i]) {
                         continue
                     }
-                    s = seg[i].split('=');
+                    s = seg[i].split("=")
                     query[decodeURIComponent(s[0])] = decodeURIComponent(s[1])
                 }
             }
@@ -42,7 +43,7 @@ define(["mmHistory"], function() {
                     .replace(/(\/)?:(\w+)([\?\*])?/g, function(_, slash, key, option) {
                         var optional = option === '?' ? option : null;
                         var star = option === '*' ? option : null;
-                        keys.push({name: key, optional: !!optional});
+                        keys.push(key)
                         slash = slash || '';
                         return ''
                                 + (optional ? '' : slash)
@@ -111,13 +112,12 @@ define(["mmHistory"], function() {
         }
     }
 
-    Router.prototype.getLatelyPath = Router.prototype.getLastPath
-    Router.prototype.setLatelyPath = Router.prototype.setLastPath
     "get,put,delete,post".replace(avalon.rword, function(method) {
         return  Router.prototype[method] = function(path, fn) {
             this.add(method, path, fn)
         }
     })
+    
     function supportLocalStorage() {
         try {
             return 'localStorage' in window && window['localStorage'] !== null;
@@ -125,6 +125,7 @@ define(["mmHistory"], function() {
             return false;
         }
     }
+    
     if (supportLocalStorage()) {
         Router.prototype.getLatelyPath = function() {
             return localStorage.getItem("msLastPath")
@@ -153,3 +154,59 @@ define(["mmHistory"], function() {
 
     return avalon
 })
+/*
+ <!DOCTYPE html>
+ <html>
+ <head>
+ <meta charset="utf-8">
+ <title>路由系统</title>
+ <script src="avalon.js"></script>
+ <script>
+ require(["mmRouter"], function() {
+ var model = avalon.define('xxx', function(vm) {
+ vm.currPath = ""
+ })
+ avalon.router.get("/aaa", function(a) {
+ model.currPath = this.path
+ })
+ avalon.router.get("/bbb", function(a) {
+ model.currPath = this.path
+ })
+ avalon.router.get("/ccc", function(a) {
+ model.currPath = this.path
+ })
+ avalon.router.get("/ddd/:ddd", function(a) {//:ddd为参数
+ avalon.log(a)
+ model.currPath = this.path
+ })
+ avalon.router.get("/eee", function(a) {
+ model.currPath = this.path
+ })
+ avalon.history.start({
+ html5Mode: true,
+ basepath: "/avalon"
+ })
+ avalon.scan()
+ })
+ </script>
+ </head>
+ <body >
+ <div ms-controller="xxx">
+ <ul>
+ <li><a href="#!/aaa">aaa</a></li>
+ <li><a href="#!/bbb">bbb</a></li>
+ <li><a href="#!/ccc">ccc</a></li>
+ <li><a href="#!/ddd/222">ddd</a></li>
+ <li><a href="#!/eee">eee</a></li>
+ </ul>
+ <div style="color:red">{{currPath}}</div>
+ <div style="height: 600px;width:1px;">
+ 
+ </div>
+ <p id="eee">会定位到这里</p>
+ </div>
+ 
+ </body>
+ </html>
+ 
+ */

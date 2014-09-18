@@ -1,6 +1,4 @@
 define(["avalon"], function(avalon) {
-
-
     var anchorElement = document.createElement('a')
 
     var History = avalon.History = function() {
@@ -8,13 +6,14 @@ define(["avalon"], function(avalon) {
     }
 
     History.started = false
+    //取得当前IE的真实运行环境
     History.IEVersion = (function() {
         var mode = document.documentMode
         return mode ? mode : window.XMLHttpRequest ? 7 : 6
     })()
 
     History.defaults = {
-        basepath: '/',
+        basepath: "/",
         html5Mode: false,
         hashPrefix: "!",
         interval: 50, //IE6-7,使用轮询，这是其时间时隔
@@ -88,7 +87,6 @@ define(["avalon"], function(avalon) {
             if (!supportHashChange) {
                 this.monitorMode = "iframepoll"
             }
-
             this.prefix = "#" + this.options.hashPrefix + "/"
             //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
             this.basepath = ("/" + this.options.basepath + "/").replace(/^\/+|\/+$/g, "/")  // 去最左右两边的斜线
@@ -162,34 +160,26 @@ define(["avalon"], function(avalon) {
             // 否则的话只能每隔一段时间进行检测了(IE6, IE7)
             switch (this.monitorMode) {
                 case "popstate":
-                    this.checkUrl = avalon.bind(window, 'popstate', checkUrl)
+                    this.checkUrl = avalon.bind(window, "popstate", checkUrl)
                     this._fireLocationChange = checkUrl
                     break
                 case  "hashchange":
-                    this.checkUrl = avalon.bind(window, 'hashchange', checkUrl)
+                    this.checkUrl = avalon.bind(window, "hashchange", checkUrl)
                     break;
                 case  "iframepoll":
                     this.checkUrl = setInterval(checkUrl, this.options.interval)
                     break;
             }
             //根据当前的location立即进入不同的路由回调
-            if (this.html5Mode) {
-                this.fireRouteChange(this.getPath() || "/")
-            } else {
-                var hash = this.getHash()
-                if (hash) {
-                    return this.fireRouteChange(hash)
-                } else {
-                    return this.fireRouteChange("/")
-                }
-            }
+
+            this.fireRouteChange(this.fragment || "/")
 
         },
         fireRouteChange: function(hash) {
             var router = avalon.router
             if (router && router.navigate) {
                 router.setLastPath(hash)
-                router.navigate(hash == "/" ? hash : "/" + hash)
+                router.navigate(hash === "/" ? hash : "/" + hash)
             }
             if (this.options.fireAnchor) {
                 scrollToAnchorId(hash)
@@ -202,7 +192,6 @@ define(["avalon"], function(avalon) {
             clearInterval(this.checkUrl)
             History.started = false
         },
-        
         updateLocation: function(hash) {
             if (this.monitorMode === "popstate") {
                 var path = this.rootpath + hash
@@ -273,67 +262,3 @@ define(["avalon"], function(avalon) {
 })
 
 // 主要参数有 basepath  html5Mode  hashPrefix  interval domain fireAnchor
-
-/*
- 移动解决方案
- 
- 活动/后台系统/前台系统
- •detective - 司徒
- •network monitor - 司徒
- •storage - 中文
- •amd - 林浩
- •manifest - 中文
- •route - 司徒
- •嵌入端支持(如微信) - 中文
- •native协议 - 瑶姐
- •响应式 - 瑶姐
- •手势和动画 - 中文
- •ui - 司徒
- <div ui-view></div> 
- $stateProvider.state("home", {
- template: "<h1>HELLO!</h1>"
- })
- </pre>
- 
- 
- <pre>
- $stateProvider.state("home", {
- views: {
- "": {
- template: "<h1>HELLO!</h1>"
- }
- }    
- })
- </pre>         
- <div ui-view="main"></div>
- </pre> 
- <pre>
- $stateProvider.state("home", {
- views: {
- "main": {
- template: "<h1>HELLO!</h1>"
- }
- }    
- }) 
- <pre>
- <div ui-view></div>
- <div ui-view="chart"></div> 
- <div ui-view="data"></div> 
- </pre>
- 
- <pre>
- $stateProvider.state("home", {
- views: {
- "": {
- template: "<h1>HELLO!</h1>"
- },
- "chart": {
- template: "<chart_thing/>"
- },
- "data": {
- template: "<data_thing/>"
- }
- }    
- })
- </pre>
- */
