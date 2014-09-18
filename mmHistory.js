@@ -21,72 +21,7 @@ define(["avalon"], function(avalon) {
         fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
     }
 
-
-    /**
-     * We need our custom method because encodeURIComponent is too aggressive and doesn't follow
-     * http://www.ietf.org/rfc/rfc3986.txt with regards to the character set (pchar) allowed in path
-     * segments:
-     *    segment       = *pchar
-     *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
-     *    pct-encoded   = "%" HEXDIG HEXDIG
-     *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-     *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
-     *                     / "*" / "+" / "," / ";" / "="
-     */
-    function encodeUriSegment(val) {
-        return encodeUriQuery(val, true).
-                replace(/%26/gi, '&').
-                replace(/%3D/gi, '=').
-                replace(/%2B/gi, '+');
-    }
-
-
-    /**
-     * This method is intended for encoding *key* or *value* parts of query component. We need a custom
-     * method because encodeURIComponent is too aggressive and encodes stuff that doesn't have to be
-     * encoded per http://tools.ietf.org/html/rfc3986:
-     *    query       = *( pchar / "/" / "?" )
-     *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
-     *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-     *    pct-encoded   = "%" HEXDIG HEXDIG
-     *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
-     *                     / "*" / "+" / "," / ";" / "="
-     */
-    function encodeUriQuery(val, pctEncodeSpaces) {
-        return encodeURIComponent(val).
-                replace(/%40/gi, '@').
-                replace(/%3A/gi, ':').
-                replace(/%24/g, '$').
-                replace(/%2C/gi, ',').
-                replace(/%3B/gi, ';').
-                replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
-    }
-    /**
-     * Encode path using encodeUriSegment, ignoring forward slashes
-     *
-     * @param {string} path Path to encode
-     * @returns {string}
-     */
-    function encodePath(path) {
-        var segments = path.split('/'),
-                i = segments.length;
-
-        while (i--) {
-            segments[i] = encodeUriSegment(segments[i]);
-        }
-
-        return segments.join('/');
-    }
-    //判定A标签的target属性是否指向自身
-    //thanks https://github.com/quirkey/sammy/blob/master/lib/sammy.js#L219
-    History.targetIsThisWindow = function(targetWindow) {
-        if (!targetWindow || targetWindow === window.name || targetWindow === '_self' || (targetWindow === 'top' && window == window.top)) {
-            return true
-        }
-        return false
-    }
     var oldIE = window.VBArray && History.IEVersion <= 7
-
     var supportPushState = !!(window.history.pushState)
     var supportHashChange = !!("onhashchange" in window && (!window.VBArray || !oldIE))
     History.prototype = {
@@ -267,6 +202,7 @@ define(["avalon"], function(avalon) {
             clearInterval(this.checkUrl)
             History.started = false
         },
+        
         updateLocation: function(hash) {
             if (this.monitorMode === "popstate") {
                 var path = this.rootpath + hash
@@ -296,7 +232,7 @@ define(["avalon"], function(avalon) {
             }
         }
 
-        if (History.targetIsThisWindow(target.target)) {
+        if (targetIsThisWindow(target.target)) {
             var href = oldIE ? target.getAttribute("href", 2) : target.getAttribute("href") || target.getAttribute("xlink:href")
             var prefix = avalon.history.prefix
             var hash = href.replace(prefix, "").trim()
@@ -307,6 +243,14 @@ define(["avalon"], function(avalon) {
         }
     })
 
+    //判定A标签的target属性是否指向自身
+    //thanks https://github.com/quirkey/sammy/blob/master/lib/sammy.js#L219
+    function targetIsThisWindow(targetWindow) {
+        if (!targetWindow || targetWindow === window.name || targetWindow === '_self' || (targetWindow === 'top' && window == window.top)) {
+            return true
+        }
+        return false
+    }
     //得到页面第一个符合条件的A标签
     function getFirstAnchor(list) {
         for (var i = 0, el; el = list[i++]; ) {

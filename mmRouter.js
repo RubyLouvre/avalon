@@ -6,8 +6,8 @@ define(["mmHistory"], function() {
         })
         this.routingTable = table
     }
+    
     function parseQuery(path) {
-
         var array = path.split("#"), query = {}, tail = array[1];
         if (tail) {
             var index = tail.indexOf("?");
@@ -61,7 +61,7 @@ define(["mmHistory"], function() {
         },
         //添加一个路由规则
         add: function(method, path, callback) {
-          
+
             var array = this.routingTable[method.toLowerCase()]
 
             if (path.charAt(0) !== "/") {
@@ -74,7 +74,7 @@ define(["mmHistory"], function() {
                     : path + "/"
             avalon.Array.ensure(array,
                     this._pathToRegExp(redirectPath, {redirectTo: path, callback: callback}))
-                  
+
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
@@ -92,9 +92,11 @@ define(["mmHistory"], function() {
                             params[keys[j]] = args[j] || ""
                         }
                     }
-                    el.callback.apply(el, args)
-                    break
+                    return el.callback.apply(el, args)
                 }
+            }
+            if (this.errorback) {
+                this.errorback()
             }
         },
         getLastPath: function() {
