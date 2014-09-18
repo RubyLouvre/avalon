@@ -7,37 +7,52 @@
         </title>
         <script src="avalon.js"></script>
         <script>
-            avalon.define({
-                $id: "test",
-                get: function() {
-                    alert(this.getAttribute("href")+" :" +this.href+" "+this.getAttribute("href",2)) 
-                }
+        
+            require(["mmRouter"], function() {
+                var model = avalon.define('xxx', function(vm) {
+                    vm.currPath = ""
+                })
+                avalon.router.get("/aaa", function(a) {
+                    model.currPath = this.path
+                })
+                avalon.router.get("/bbb", function(a) {
+                    model.currPath = this.path
+                })
+                avalon.router.get("/ccc", function(a) {
+                    model.currPath = this.path
+                })
+                avalon.router.get("/ddd/:ddd", function(a) {//:ddd为参数
+                    avalon.log(a)
+                    model.currPath = this.path
+                })
+                avalon.router.get("/eee", function(a) {
+                    model.currPath = this.path
+                })
+                avalon.history.start({
+                    basepath: "/avalon"
+                })
+                avalon.scan()
             })
-            require(["mmHistory"], function(){
-                
-            })
+
+
+
         </script>
     </head>
-    <body ms-controller="test">
-        <table>
-            <tr>
-                <td>
-                    <ul>
-                        <li >
-                            <a href="#/aaa?name=中文" ms-click="get">aaa</a>
-                        </li>
-                        <li >
-                            <a href="#/bbb" ms-click="get">ccc</a>
-                        </li>
-                        <li >
-                            <a href="#/aaa/1232" ms-click="get">aaa/2333</a>
-                        </li>
-                    </ul>
-                </td>
-                <td>
-                    dddddddddddd
-                </td>
-            </tr>
-        </table>
+    <body >
+        <div ms-controller="xxx">
+            <ul>
+                <li><a href="#/aaa">aaa</a></li>
+                <li><a href="#/bbb">bbb</a></li>
+                <li><a href="#/ccc">ccc</a></li>
+                <li><a href="#/ddd/222">ddd</a></li>
+                <li><a href="#/eee">eee</a></li>
+            </ul>
+            <div style="color:red">{{currPath}}</div>
+            <div style="height: 600px;width:1px;">
+
+            </div>
+            <p id="eee">会定位到这里</p>-->
+        </div>
+
     </body>
 </html>
