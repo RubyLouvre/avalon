@@ -11,6 +11,7 @@
     var stopRepeatAssign = false
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var rcomplextype = /^(?:object|array)$/
+    var rsvg = /^\[object SVG\w*Element\]$/
     var rwindow = /^\[object (Window|DOMWindow|global)\]$/
     var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
@@ -304,7 +305,7 @@
         var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
-        if (svg.firstChild !== "[object SVGCircleElement]") {// #409
+        if (!rsvg.test(svg.firstChild)) {// #409
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
@@ -1486,6 +1487,7 @@
     var priorityMap = {
         "if": 10,
         "repeat": 90,
+        "data": 100,
         "widget": 110,
         "each": 1400,
         "with": 1500,
@@ -1904,7 +1906,7 @@
                 if (toRemove) {
                     return elem.removeAttribute(attrName)
                 }
-                if (window.VBArray && window.SVGElement && !(elem instanceof SVGElement)) {//IE下需要区分固有属性与自定义属性
+                if (window.VBArray && !rsvg.test(elem)) {//IE下需要区分固有属性与自定义属性
                     var attrs = elem.attributes || {}
                     var attr = attrs[attrName]
                     var isInnate = attr && attr.expando === false

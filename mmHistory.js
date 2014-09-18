@@ -20,63 +20,64 @@ define(["avalon"], function(avalon) {
         interval: 50, //IE6-7,使用轮询，这是其时间时隔
         fireAnchor: true//决定是否将滚动条定位于与hash同ID的元素上
     }
-    
-    
+
+
     /**
- * We need our custom method because encodeURIComponent is too aggressive and doesn't follow
- * http://www.ietf.org/rfc/rfc3986.txt with regards to the character set (pchar) allowed in path
- * segments:
- *    segment       = *pchar
- *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
- *    pct-encoded   = "%" HEXDIG HEXDIG
- *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
- *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
- *                     / "*" / "+" / "," / ";" / "="
- */
-function encodeUriSegment(val) {
-  return encodeUriQuery(val, true).
-             replace(/%26/gi, '&').
-             replace(/%3D/gi, '=').
-             replace(/%2B/gi, '+');
-}
+     * We need our custom method because encodeURIComponent is too aggressive and doesn't follow
+     * http://www.ietf.org/rfc/rfc3986.txt with regards to the character set (pchar) allowed in path
+     * segments:
+     *    segment       = *pchar
+     *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+     *    pct-encoded   = "%" HEXDIG HEXDIG
+     *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+     *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+     *                     / "*" / "+" / "," / ";" / "="
+     */
+    function encodeUriSegment(val) {
+        return encodeUriQuery(val, true).
+                replace(/%26/gi, '&').
+                replace(/%3D/gi, '=').
+                replace(/%2B/gi, '+');
+    }
 
 
-/**
- * This method is intended for encoding *key* or *value* parts of query component. We need a custom
- * method because encodeURIComponent is too aggressive and encodes stuff that doesn't have to be
- * encoded per http://tools.ietf.org/html/rfc3986:
- *    query       = *( pchar / "/" / "?" )
- *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
- *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
- *    pct-encoded   = "%" HEXDIG HEXDIG
- *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
- *                     / "*" / "+" / "," / ";" / "="
- */
-function encodeUriQuery(val, pctEncodeSpaces) {
-  return encodeURIComponent(val).
-             replace(/%40/gi, '@').
-             replace(/%3A/gi, ':').
-             replace(/%24/g, '$').
-             replace(/%2C/gi, ',').
-             replace(/%3B/gi, ';').
-             replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
-}
-/**
- * Encode path using encodeUriSegment, ignoring forward slashes
- *
- * @param {string} path Path to encode
- * @returns {string}
- */
-function encodePath(path) {
-  var segments = path.split('/'),
-      i = segments.length;
+    /**
+     * This method is intended for encoding *key* or *value* parts of query component. We need a custom
+     * method because encodeURIComponent is too aggressive and encodes stuff that doesn't have to be
+     * encoded per http://tools.ietf.org/html/rfc3986:
+     *    query       = *( pchar / "/" / "?" )
+     *    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+     *    unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+     *    pct-encoded   = "%" HEXDIG HEXDIG
+     *    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+     *                     / "*" / "+" / "," / ";" / "="
+     */
+    function encodeUriQuery(val, pctEncodeSpaces) {
+        return encodeURIComponent(val).
+                replace(/%40/gi, '@').
+                replace(/%3A/gi, ':').
+                replace(/%24/g, '$').
+                replace(/%2C/gi, ',').
+                replace(/%3B/gi, ';').
+                replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+    }
+    /**
+     * Encode path using encodeUriSegment, ignoring forward slashes
+     *
+     * @param {string} path Path to encode
+     * @returns {string}
+     */
+    function encodePath(path) {
+        var segments = path.split('/'),
+                i = segments.length;
 
-  while (i--) {
-    segments[i] = encodeUriSegment(segments[i]);
-  }
+        while (i--) {
+            segments[i] = encodeUriSegment(segments[i]);
+        }
 
-  return segments.join('/');
-}
+        return segments.join('/');
+    }
+    console.log("debug: " + encodePath(document.URL))
     //判定A标签的target属性是否指向自身
     //thanks https://github.com/quirkey/sammy/blob/master/lib/sammy.js#L219
     History.targetIsThisWindow = function(targetWindow) {
@@ -86,6 +87,9 @@ function encodePath(path) {
         return false
     }
     var oldIE = window.VBArray && History.IEVersion <= 7
+
+    var supportPushState = !!(window.history.pushState)
+    var supportHashChange = !!("onhashchange" in window && (!window.VBArray || !oldIE))
     History.prototype = {
         constructor: History,
         getFragment: function(fragment) {
@@ -143,16 +147,7 @@ function encodePath(path) {
             this.html5Mode = !!this.options.html5Mode
             //监听模式
             this.monitorMode = this.html5Mode ? "popstate" : "hashchange"
-            if (!this.supportPushState) {
-                if (this.html5Mode) {
-                    avalon.log("如果浏览器不支持HTML5 pushState，强制使用hash hack!")
-                    this.html5Mode = false
-                }
-                this.monitorMode = "hashchange"
-            }
-            if (!this.supportHashChange) {
-                this.monitorMode = "iframepoll"
-            }
+           
             this.prefix = "#" + this.options.hashPrefix + "/"
             //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
             this.basepath = ("/" + this.options.basepath + "/").replace(/^\/+|\/+$/g, "/")  // 去最左右两边的斜线
@@ -162,28 +157,12 @@ function encodePath(path) {
             this.rootpath = this._getAbsolutePath(anchorElement)
             var that = this
 
-
             var html = '<!doctype html><html><body>@</body></html>'
             if (this.options.domain) {
                 html = html.replace("<body>", "<script>document.domain =" + this.options.domain + "</script><body>")
             }
             this.iframeHTML = html
-            if (this.monitorMode === "iframepoll") {
-                //IE6,7在hash改变时不会产生历史，需要用一个iframe来共享历史
-                avalon.ready(function() {
-                    var iframe = document.createElement('iframe');
-                    iframe.src = 'javascript:0'
-                    iframe.style.display = 'none'
-                    iframe.tabIndex = -1
-                    document.body.appendChild(iframe)
-                    that.iframe = iframe.contentWindow
-                    var idoc = that.iframe.document
-                    idoc.open()
-                    idoc.write(that.iframeHTML)
-                    idoc.close()
-                })
-
-            }
+         
 
             // 支持popstate 就监听popstate
             // 支持hashchange 就监听hashchange
@@ -194,23 +173,7 @@ function encodePath(path) {
                     return false
                 }
                 var pageHash = that.getFragment(), hash
-                if (iframe) {//IE67
-                    var iframeHash = that.getHash(iframe)
-                    //与当前页面hash不等于之前的页面hash，这主要是用户通过点击链接引发的
-                    if (pageHash !== that.fragment) {
-                        var idoc = iframe.document
-                        idoc.open()
-                        idoc.write(that.iframeHTML)
-                        idoc.close()
-                        iframe.location.hash = that.prefix + pageHash
-                        hash = pageHash
-                        //如果是后退按钮触发hash不一致
-                    } else if (iframeHash !== that.fragment) {
-                        that.location.hash = that.prefix + iframeHash
-                        hash = iframeHash
-                    }
-
-                } else if (pageHash !== that.fragment) {
+               if (pageHash !== that.fragment) {
                     hash = pageHash
                 }
                 if (hash !== void 0) {
@@ -231,9 +194,6 @@ function encodePath(path) {
                     break
                 case  "hashchange":
                     this.checkUrl = avalon.bind(window, 'hashchange', checkUrl)
-                    break;
-                case  "iframepoll":
-                    this.checkUrl = setInterval(checkUrl, this.options.interval)
                     break;
             }
             //根据当前的location立即进入不同的路由回调
@@ -276,6 +236,91 @@ function encodePath(path) {
             }
         }
     }
+    if (!supportHashChange) {
+        History.prototype.start = function(options) {
+            if (History.started)
+                throw new Error("avalon.history has already been started")
+            History.started = true
+            this.options = avalon.mix({}, History.defaults, options)
+            //IE6不支持maxHeight, IE7支持XMLHttpRequest, IE8支持window.Element，querySelector, 
+            //IE9支持window.Node, window.HTMLElement, IE10不支持条件注释
+
+            this.html5Mode = false
+            //监听模式
+            this.monitorMode = "iframepoll"
+
+            this.prefix = "#" + this.options.hashPrefix + "/"
+            //确认前后都存在斜线， 如"aaa/ --> /aaa/" , "/aaa --> /aaa/", "aaa --> /aaa/", "/ --> /"
+            this.basepath = ("/" + this.options.basepath + "/").replace(/^\/+|\/+$/g, "/")  // 去最左右两边的斜线
+            this.fragment = this.getFragment()
+
+            anchorElement.href = this.basepath
+            this.rootpath = this._getAbsolutePath(anchorElement)
+
+            var that = this
+
+            var html = '<!doctype html><html><body>@</body></html>'
+            if (this.options.domain) {
+                html = html.replace("<body>", "<script>document.domain =" + this.options.domain + "</script><body>")
+            }
+            this.iframeHTML = html
+            if (this.monitorMode === "iframepoll") {
+                //IE6,7在hash改变时不会产生历史，需要用一个iframe来共享历史
+                avalon.ready(function() {
+                    var iframe = document.createElement('iframe');
+                    iframe.src = 'javascript:0'
+                    iframe.style.display = 'none'
+                    iframe.tabIndex = -1
+                    document.body.appendChild(iframe)
+                    that.iframe = iframe.contentWindow
+                    var idoc = that.iframe.document
+                    idoc.open()
+                    idoc.write(that.iframeHTML)
+                    idoc.close()
+                })
+
+            }
+
+            // 支持popstate 就监听popstate
+            // 支持hashchange 就监听hashchange
+            // 否则的话只能每隔一段时间进行检测了
+            function checkUrl() {
+                var iframe = that.iframe
+                if (!iframe) {
+                    return false
+                }
+                var pageHash = that.getFragment(), hash
+
+                var iframeHash = that.getHash(iframe)
+                //与当前页面hash不等于之前的页面hash，这主要是用户通过点击链接引发的
+                if (pageHash !== that.fragment) {
+                    var idoc = iframe.document
+                    idoc.open()
+                    idoc.write(that.iframeHTML)
+                    idoc.close()
+                    iframe.location.hash = that.prefix + pageHash
+                    hash = pageHash
+                    //如果是后退按钮触发hash不一致
+                } else if (iframeHash !== that.fragment) {
+                    that.location.hash = that.prefix + iframeHash
+                    hash = iframeHash
+                }
+                if (hash !== void 0) {
+                    that.fragment = hash
+                    that.fireRouteChange(hash)
+                }
+            }
+            //thanks https://github.com/browserstate/history.js/blob/master/scripts/uncompressed/history.html4.js#L272
+            this.checkUrl = setInterval(checkUrl, this.options.interval)
+            var hash = this.getHash()
+            if (hash) {
+                return this.fireRouteChange(hash)
+            } else {
+                return this.fireRouteChange("/")
+            }
+        }
+    }
+
     avalon.history = new History
 
     //https://github.com/asual/jquery-address/blob/master/src/jquery.address.js
@@ -298,7 +343,7 @@ function encodePath(path) {
             var href = oldIE ? target.getAttribute("href", 2) : target.getAttribute("href") || target.getAttribute("xlink:href")
             var prefix = avalon.history.prefix
             var hash = href.replace(prefix, "").trim()
-            if (href.indexOf(prefix) === 0 && hash !=="") {
+            if (href.indexOf(prefix) === 0 && hash !== "") {
                 event.preventDefault()
                 avalon.history.updateLocation(hash)
             }

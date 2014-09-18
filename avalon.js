@@ -22,6 +22,7 @@
     var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
     var rnative = /\[native code\]/  //判定是否原生函数
     var rcomplexType = /^(?:object|array)$/
+    var rsvg = /^\[object SVG\w*Element\]$/
     var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
     var oproto = Object.prototype
     var ohasOwn = oproto.hasOwnProperty
@@ -904,11 +905,13 @@
     function outerHTML() {
         return new XMLSerializer().serializeToString(this)
     }
+
+
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
-        if (svg.firstChild !== "[object SVGCircleElement]") {// #409
+        if (/rsvg/.test(svg.firstChild)) {// #409
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
@@ -1970,6 +1973,7 @@
     var priorityMap = {
         "if": 10,
         "repeat": 90,
+        "data": 100,
         "widget": 110,
         "each": 1400,
         "with": 1500,
@@ -1977,7 +1981,7 @@
         "on": 3000
     }
     var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-    function bindingSorter(a, b){
+    function bindingSorter(a, b) {
         return a.priority - b.priority
     }
     function scanAttr(elem, vmodels) {
@@ -2482,7 +2486,7 @@
                 if (window.VBArray && !isInnate) {//IE下需要区分固有属性与自定义属性
                     if (isVML(elem)) {
                         isInnate = true
-                    } else if(window.SVGElement && !(elem instanceof SVGElement)) {
+                    } else if (!rsvg.test(elem)) {
                         var attrs = elem.attributes || {}
                         var attr = attrs[attrName]
                         isInnate = attr ? attr.expando === false : attr === null
