@@ -35,29 +35,35 @@ define(["mmHistory"], function() {
         error: function(callback) {
             this.errorback = callback
         },
-        _pathToRegExp: function(path, opts) {
-            var insensitive = opts.caseInsensitiveMatch
+        _pathToRegExp: function(pattern, opts) {
             var keys = opts.keys = []
-            path = path
-                    .replace(/([().])/g, '\\$1')
-                    .replace(/(\/)?:(\w+)([\?\*])?/g, function(_, slash, key, option) {
-                        var optional = option === '?' ? option : null;
-                        var star = option === '*' ? option : null;
-                        keys.push(key)
-                        slash = slash || '';
-                        return ''
-                                + (optional ? '' : slash)
-                                + '(?:'
-                                + (optional ? slash : '')
-                                + (star && '(.+?)' || '([^/]+)')
-                                + (optional || '')
-                                + ')'
-                                + (optional || '')
-                    })
-                    .replace(/([\/$\*])/g, '\\$1')
 
-            opts.regexp = new RegExp('^' + path + '$', insensitive ? 'i' : '');
-            return opts;
+            var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,
+                    compiled = '^', last = 0, m, name, regexp, segment,
+                    segments = opts.segments = []
+
+            while ((m = placeholder.exec(pattern))) {
+                name = m[2] || m[3]; // IE[78] returns '' for unmatched groups instead of null
+                regexp = m[4] || (m[1] == '*' ? '.*' : 'string')
+                segment = pattern.substring(last, m.index);
+                var type = this.$types[regexp]
+                var key = {
+                    name: name
+                }
+                if (type) {
+                    regexp = type.pattern
+                    key.decode = type.decode
+                }
+                keys.push(key)
+                compiled += quoteRegExp(segment, regexp, false)
+                segments.push(segment)
+                last = placeholder.lastIndex
+            }
+            segment = pattern.substring(last);
+            compiled += quoteRegExp(segment) + (opts.strict ? opts.last : "\/?") + '$';
+            segments.push(segment);
+            opts.regexp = new RegExp(compiled, opts.caseInsensitive ? 'i' : undefined);
+            return opts
 
         },
         //添加一个路由规则
@@ -68,14 +74,16 @@ define(["mmHistory"], function() {
             if (path.charAt(0) !== "/") {
                 throw "path必须以/开头"
             }
-            avalon.Array.ensure(array,
-                    this._pathToRegExp(path, {callback: callback}))
-            var redirectPath = (path[path.length - 1] === "/")
-                    ? path.substr(0, path.length - 1)
-                    : path + "/"
-            avalon.Array.ensure(array,
-                    this._pathToRegExp(redirectPath, {redirectTo: path, callback: callback}))
+            var opts = {
+                callback: callback
+            }
+            if (path.length > 2 && path[path.length - 1] === "/") {
+                path = path.slice(0, -1)
+                opts.last = "/"
+            }
 
+            avalon.Array.ensure(array, this._pathToRegExp(path, opts))
+           // console.log(array)
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
@@ -89,8 +97,20 @@ define(["mmHistory"], function() {
                     var keys = el.keys
                     if (keys.length) {
                         args.shift()
+                        
                         for (var j = 0, jn = keys.length; j < jn; j++) {
-                            params[keys[j]] = args[j] || ""
+                            var key = keys[j]
+                            var value = args[j] || ""
+                            if (typeof key.decode === "function") {//在这里尝试转换参数的类型
+                                var val = key.decode(value)
+                            } else {
+                                try {
+                                    val = JSON.parse(value)         
+                                } catch (e) {
+                                    val = value
+                                }
+                            }
+                            args[j] = params[key.name] = val
                         }
                     }
                     return el.callback.apply(el, args)
@@ -109,15 +129,51 @@ define(["mmHistory"], function() {
         navigate: function(hash) {
             var parsed = parseQuery(hash)
             this.route("get", parsed.path, parsed.query)
+        },
+        // avalon.router.get("/ddd/:dddID/",callback)
+        // avalon.router.get("/ddd/{dddID}/",callback)
+        // avalon.router.get("/ddd/{dddID:[0-9]{4}}/",callback)
+        // avalon.router.get("/ddd/{dddID:int}/",callback)
+        // 我们甚至可以在这里添加新的类型，avalon.router.$type.d4 = { pattern: '[0-9]{4}', decode: Number}
+         // avalon.router.get("/ddd/{dddID:d4}/",callback)
+        $types: {
+            date: {
+                pattern: "[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])",
+                decode: function(val) {
+                    return new Date(val)
+                }
+            },
+            string: {
+                pattern: "[^\/]*"
+            },
+            bool: {
+                decode: function(val) {
+                    return parseInt(val, 10) === 0 ? false : true;
+                },
+                pattern: "0|1"
+            },
+            int: {
+                decode: function(val) {
+                    return parseInt(val, 10);
+                },
+                pattern: "\d+"
+            }
         }
     }
+
 
     "get,put,delete,post".replace(avalon.rword, function(method) {
         return  Router.prototype[method] = function(path, fn) {
             this.add(method, path, fn)
         }
     })
-    
+    function quoteRegExp(string, pattern, isOptional) {
+        var result = string.replace(/[\\\[\]\^$*+?.()|{}]/g, "\\$&");
+        if (!pattern)
+            return result;
+        var flag = isOptional ? '?' : '';
+        return result + flag + '(' + pattern + ')' + flag;
+    }
     function supportLocalStorage() {
         try {
             return 'localStorage' in window && window['localStorage'] !== null;
@@ -125,7 +181,7 @@ define(["mmHistory"], function() {
             return false;
         }
     }
-    
+
     if (supportLocalStorage()) {
         Router.prototype.getLatelyPath = function() {
             return localStorage.getItem("msLastPath")

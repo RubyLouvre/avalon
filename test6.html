@@ -9,25 +9,30 @@
                 var model = avalon.define('xxx', function(vm) {
                     vm.currPath = ""
                 })
-                avalon.router.get("/aaa", function(a) {
+                avalon.router.get("/aaa/", function(a) {
                     model.currPath = this.path
                 })
-                avalon.router.get("/bbb", function(a) {
+//                avalon.router.get("/bbb", function(a) {
+//                    model.currPath = this.path
+//                })
+//                avalon.router.get("/ccc", function(a) {
+//                    model.currPath = this.path
+//                })
+                avalon.router.get("/ddd/{id:\d{4}}/", function(a) {//:ddd为参数
+                    avalon.log(typeof a)
+        
                     model.currPath = this.path
                 })
-                avalon.router.get("/ccc", function(a) {
+                avalon.router.get("/ddd/:dddId/", function(a) {//:ddd为参数
+                    avalon.log(typeof a)
+        
                     model.currPath = this.path
                 })
-                avalon.router.get("/ddd/:ddd", function(a) {//:ddd为参数
-                    avalon.log(a)
-                    console.log(this)
-                    model.currPath = this.path
-                })
-                avalon.router.get("/eee", function(a) {
-                    model.currPath = this.path
-                })
+//                avalon.router.get("/eee", function(a) {
+//                    model.currPath = this.path
+//                })
                 avalon.history.start({
-                    html5Mode: true,
+                    //    html5Mode: true,
                     basepath: "/avalon"
                 })
                 avalon.scan()
@@ -40,7 +45,8 @@
                 <li><a href="#!/aaa">aaa</a></li>
                 <li><a href="#!/bbb">bbb</a></li>
                 <li><a href="#!/ccc">ccc</a></li>
-                <li><a href="#!/ddd/222">ddd</a></li>
+                <li><a href="#!/ddd/xxx">ddd</a></li>
+                <li><a href="#!/ddd/2222">ddd</a></li>
                 <li><a href="#!/eee">eee</a></li>
             </ul>
             <div style="color:red">{{currPath}}</div>
