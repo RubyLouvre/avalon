@@ -8,24 +8,21 @@ define(["mmHistory"], function() {
         this.routingTable = table
     }
 
-    function parseQuery(path) {
-        var array = path.split("#"), query = {}, tail = array[1];
-        if (tail) {
-            var index = tail.indexOf("?")
-            if (index > 0) {
-                var seg = tail.slice(index + 1).split("&"),
-                        len = seg.length, i = 0, s;
-                for (; i < len; i++) {
-                    if (!seg[i]) {
-                        continue
-                    }
-                    s = seg[i].split("=")
-                    query[decodeURIComponent(s[0])] = decodeURIComponent(s[1])
+    function parseQuery(url) {
+        var array = url.split("?"), query = {}, path = array[0], querystring = array[1]
+        if (querystring) {
+            var seg = querystring.split("&"),
+                    len = seg.length, i = 0, s;
+            for (; i < len; i++) {
+                if (!seg[i]) {
+                    continue
                 }
+                s = seg[i].split("=")
+                query[decodeURIComponent(s[0])] = decodeURIComponent(s[1])
             }
         }
         return {
-            path: array[0],
+            path: path,
             query: query
         }
     }
@@ -62,6 +59,7 @@ define(["mmHistory"], function() {
             segment = pattern.substring(last);
             compiled += quoteRegExp(segment) + (opts.strict ? opts.last : "\/?") + '$';
             segments.push(segment);
+          
             opts.regexp = new RegExp(compiled, opts.caseInsensitive ? 'i' : undefined);
             return opts
 
@@ -70,34 +68,32 @@ define(["mmHistory"], function() {
         add: function(method, path, callback) {
 
             var array = this.routingTable[method.toLowerCase()]
-
             if (path.charAt(0) !== "/") {
                 throw "path必须以/开头"
             }
             var opts = {
                 callback: callback
             }
-            if (path.length > 2 && path[path.length - 1] === "/") {
+            if (path.length > 2 && path.charAt(path.length - 1) === "/") {
                 path = path.slice(0, -1)
                 opts.last = "/"
             }
 
             avalon.Array.ensure(array, this._pathToRegExp(path, opts))
-           // console.log(array)
         },
         route: function(method, path, query) {//判定当前URL与预定义的路由规则是否符合
             path = path.trim()
             var array = this.routingTable[method]
             for (var i = 0, el; el = array[i++]; ) {
-                var args = path.match(el.regexp)
+                var args =path.match(el.regexp)
+              //  console.log(args)
                 if (args) {
                     el.query = query || {}
                     el.path = path
                     var params = el.params = {}
                     var keys = el.keys
+                    args.shift()
                     if (keys.length) {
-                        args.shift()
-                        
                         for (var j = 0, jn = keys.length; j < jn; j++) {
                             var key = keys[j]
                             var value = args[j] || ""
@@ -105,14 +101,16 @@ define(["mmHistory"], function() {
                                 var val = key.decode(value)
                             } else {
                                 try {
-                                    val = JSON.parse(value)         
+                                    val = JSON.parse(value)
                                 } catch (e) {
                                     val = value
                                 }
                             }
+
                             args[j] = params[key.name] = val
                         }
                     }
+
                     return el.callback.apply(el, args)
                 }
             }
@@ -135,12 +133,12 @@ define(["mmHistory"], function() {
         // avalon.router.get("/ddd/{dddID:[0-9]{4}}/",callback)
         // avalon.router.get("/ddd/{dddID:int}/",callback)
         // 我们甚至可以在这里添加新的类型，avalon.router.$type.d4 = { pattern: '[0-9]{4}', decode: Number}
-         // avalon.router.get("/ddd/{dddID:d4}/",callback)
+        // avalon.router.get("/ddd/{dddID:d4}/",callback)
         $types: {
             date: {
                 pattern: "[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])",
                 decode: function(val) {
-                    return new Date(val)
+                    return new Date(val.replace(/\-/g,"/"))
                 }
             },
             string: {
