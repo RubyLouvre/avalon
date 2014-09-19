@@ -27,15 +27,13 @@ define(["mmHistory"], function() {
         }
     }
 
-
+    var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g
     Router.prototype = {
         error: function(callback) {
             this.errorback = callback
         },
         _pathToRegExp: function(pattern, opts) {
-            var keys = opts.keys = []
-
-            var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,
+            var keys = opts.keys = [],
                     compiled = '^', last = 0, m, name, regexp, segment,
                     segments = opts.segments = []
 
@@ -64,15 +62,14 @@ define(["mmHistory"], function() {
 
         },
         //添加一个路由规则
-        add: function(method, path, callback) {
+        add: function(method, path, callback, opts) {
 
             var array = this.routingTable[method.toLowerCase()]
             if (path.charAt(0) !== "/") {
                 throw "path必须以/开头"
             }
-            var opts = {
-                callback: callback
-            }
+            opts = opts || {}
+            opts.callback = callback
             if (path.length > 2 && path.charAt(path.length - 1) === "/") {
                 path = path.slice(0, -1)
                 opts.last = "/"
@@ -127,13 +124,11 @@ define(["mmHistory"], function() {
             this.route("get", parsed.path, parsed.query)
         },
         /* *
-         `'/hello/'` - Matches only if the path is exactly '/hello/'. There is no special treatment for
-         trailing slashes, and patterns have to match the entire path, not just a prefix.
+         `'/hello/'` - 匹配'/hello/'或'/hello'
          `'/user/:id'` - 匹配 '/user/bob' 或 '/user/1234!!!' 或 '/user/' 但不匹配 '/user' 与 '/user/bob/details'
-         `'/user/{id}'` - Same as the previous example, but using curly brace syntax.
-         `'/user/{id:[^/]*}'` - Same as the previous example.
-         `'/user/{id:[0-9a-fA-F]{1,8}}'` - Similar to the previous example, but only matches if the id
-         parameter consists of 1 to 8 hex digits.
+         `'/user/{id}'` - 同上
+         `'/user/{id:[^/]*}'` - 同上
+         `'/user/{id:[0-9a-fA-F]{1,8}}'` - 要求ID匹配/[0-9a-fA-F]{1,8}/这个子正则
          `'/files/{path:.*}'` - Matches any URL starting with '/files/' and captures the rest of the
          path into the parameter 'path'.
          `'/files/*path'` - ditto.
@@ -171,8 +166,8 @@ define(["mmHistory"], function() {
 
 
     "get,put,delete,post".replace(avalon.rword, function(method) {
-        return  Router.prototype[method] = function(path, fn) {
-            this.add(method, path, fn)
+        return  Router.prototype[method] = function(a, b, c) {
+            this.add(method, a, b, c)
         }
     })
     function quoteRegExp(string, pattern, isOptional) {
@@ -191,10 +186,10 @@ define(["mmHistory"], function() {
     }
 
     if (supportLocalStorage()) {
-        Router.prototype.getLatelyPath = function() {
+        Router.prototype.getLastPath = function() {
             return localStorage.getItem("msLastPath")
         }
-        Router.prototype.setLatelyPath = function(path) {
+        Router.prototype.setLastPath = function(path) {
             localStorage.setItem("msLastPath", path)
         }
     }
@@ -272,15 +267,16 @@ define(["mmHistory"], function() {
                 config.templateUrl ? fromUrl(config.templateUrl, params) :
                 config.templateProvider)
     }
-    avalon.state = function(name, obj) {
-        avalon.router.get(obj.url, function() {
-            var ctrl = obj.controller
+    avalon.state = function(name, opts) {
+        opts.state = name
+        avalon.router.get(opts.url, function() {
+            var ctrl = opts.controller
             // var vmodel = avalon.vmodels[ctrl]
             var views = getViews(ctrl)
-            if (!obj.views) {
+            if (!opts.views) {
                 var node = getNamedView(views, "")
                 if (node) {
-                    var a = fromConfig(obj, this.params)
+                    var a = fromConfig(opts, this.params)
                     if (typeof a === "string") {
                         avalon.innerHTML(node, a)
                     } else if (a && a.then) {
@@ -290,7 +286,7 @@ define(["mmHistory"], function() {
                     }
                 }
             }
-        })
+        }, opts)
     }
 
     function escapeCookie(value) {
