@@ -1,59 +1,34 @@
 <!DOCTYPE html>
-
 <html>
     <head>
-        <title>路由器的相关测试</title>
+        <title>demo</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="avalon.js">
+        <script type="text/javascript" src="avalon.js"></script>
 
-        </script>
-        <script>
-            require(["ready!", "mmRouter"], function() {
-                var model = avalon.define("test", function(vm) {
-                    vm.hash = function(a, e) {
-                        location.hash = a
-                        e.preventDefault()
-                    }
-                })
-                avalon.state("home", {
-                    controller: "test",
-                    url: "/",
-                    template: '<p class="lead">Welcome to the UI-Router Demo</p>' +
-                            '<p>Use the menu above to navigate. ' +
-                            'Pay attention to the <code>$state</code> and <code>$stateParams</code> values below.</p>' +
-                            '<p>Click these links—<a href="#/c?id=1">Alice</a> or ' +
-                            '<a href="#/user/42">Bob</a>—to see a url redirect in action.</p>'
-                })
-                avalon.state("about", {
-                    controller: "test",
-                    url: "/about",
-                    templateProvider: new Promise(function(fn) {
-                        fn('<p class="lead">UI-Router Resources</p><ul>' +
-                                '<li><a href="https://github.com/angular-ui/ui-router/tree/master/sample">Source for this Sample</a></li>' +
-                                '<li><a href="https://github.com/angular-ui/ui-router">Github Main Page</a></li>' +
-                                '<li><a href="https://github.com/angular-ui/ui-router#quick-start">Quick Start</a></li>' +
-                                '<li><a href="https://github.com/angular-ui/ui-router/wiki">In-Depth Guide</a></li>' +
-                                '<li><a href="https://github.com/angular-ui/ui-router/wiki/Quick-Reference">API Reference</a></li>' +
-                                '</ul>')
-                    })
-                })
-                avalon.history.start({
-                    basepath: "/avalon"
+        <script type="text/javascript">
+            avalon.ready(function() {
+                var el = document.getElementById("aaa")
+                console.log(el.getBoundingClientRect())
+                console.log(el.offsetWidth)
+                console.log(el.offsetHeight)
+                avalon.define({
+                    $id: "test",
+                    arr: [1,2,3,4]
                 })
                 avalon.scan()
+
             })
-
-//http://angular-ui.github.io/ui-router/sample/#/contacts/42
         </script>
-
-
+        <style>
+            span{
+                border:2px solid red;
+            }
+        </style>
     </head>
-    <body>
-        <div ms-controller="test">
-            <a href="#!/about">about</a>
-            <div ms-view></div>
-        </div>
+    <body ms-controller="test" >
+        <span id="aaa">dddd</span>
+        <div ms-repeat="arr"><input ms-duplex="el">{{el}} {{$index}}</div>
+
 
     </body>
 </html>

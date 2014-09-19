@@ -3,92 +3,119 @@
     <head>
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <script src="avalon.js"></script>
         <meta name="viewport" content="width=device-width">
-        <script>
-            var rootState = {}
-            var Router = function() {
-                this.states = {
-                    "": rootState
-                }
-                this.currentState = ""
-                this.stateArray = []
-            }
-            Router.prototype = {
-                add: function(obj) {
-                    this.registerState(obj, true)
-                },
-                _transitionTo: function(from, to) {
-
-                    var curr = from
-                    var fromList = []
-                    do {
-                        fromList.push(from)
-                    } while ((from = this.states[from].parentNode) != null);
-
-                    var toList = []
-                    do {
-                        toList.push(to)
-                    } while ((to = this.states[to].parentNode) != null);
-                    do {
-                        if (fromList[fromList.length - 1] === toList[toList.length - 1]) {
-                            fromList.pop()
-                            toList.pop()
-                        } else {
-                            break
-                        }
-                    } while (true)
-                    var array = fromList.concat(toList.reverse())
-                    if (array[0] == curr) {
-                        array.shift()
-                    }
-                    return array
-
-                }
-                ,
-                transitionTo: function(to) {
-                    var from = this.currentState
-                    this.currentState = to
-                    return this._transitionTo(from, to)
-                },
-                registerState: function(obj, recursive) {
-                    var state = obj.state //这是一个字符串
-                    var match = state.match(/([\.\w]+)\./) || ["", ""]
-                    var parentNode = match[1]
-                    obj.parentNode = parentNode
-                    var parent = this.states[parentNode]
-                    if (parent) {
-                        parent.children = parent.children || []
-                        avalon.Array.ensure(parent.children, obj)
-                        this.states[state] = obj
-                        avalon.Array.ensure(this.stateArray, obj)
-                    }
-                    if (recursive) {
-                        for (var i = 0, el; el = this.stateArray[i++]; ) {
-                            if (el !== obj)
-                                this.registerState(el)
-                        }
-                    }
-                }
-            }
-            var router = new Router
-            router.add({state: "contacts"})
-            router.add({state: "contacts.list"})
-            router.add({state: "contacts.detail"})
-            router.add({state: "contacts.detail.item"})
-            router.add({state: "home"})
-            router.add({state: "home.eee"})
-            router.add({state: "abouts"})
-            console.log(router)
-            router.currentState = "home.eee"
-            var array = router.transitionTo("contacts.detail.item")
-            console.log(array)
-
-          
-        </script>
+        <script src="avalon.js"></script>
     </head>
-
     <body>
-        <div>TODO write content</div>
+        <script>
+            avalon.define("test", function(vm) {
+                vm.array = avalon.range(0, 4000)
+            })
+
+
+            function UrlMatcher(pattern, config) {
+                config = angular.isObject(config) ? config : {};
+
+                // Find all placeholders and create a compiled pattern, using either classic or curly syntax:
+                //   '*' name
+                //   ':' name
+                //   '{' name '}'
+                //   '{' name ':' regexp '}'
+                // The regular expression is somewhat complicated due to the need to allow curly braces
+                // inside the regular expression. The placeholder regexp breaks down as follows:
+                //    ([:*])(\w+)               classic placeholder ($1 / $2)
+                //    \{(\w+)(?:\:( ... ))?\}   curly brace placeholder ($3) with optional regexp ... ($4)
+                //    (?: ... | ... | ... )+    the regexp consists of any number of atoms, an atom being either
+                //    [^{}\\]+                  - anything other than curly braces or backslash
+                //    \\.                       - a backslash escape
+                //    \{(?:[^{}\\]+|\\.)*\}     - a matched set of curly braces containing other atoms
+                var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,
+                        compiled = '^', last = 0, m,
+                        segments = this.segments = [],
+                        params = this.params = {};
+
+                /**
+                 * [Internal] Gets the decoded representation of a value if the value is defined, otherwise, returns the
+                 * default value, which may be the result of an injectable function.
+                 */
+                function $value(value) {
+                    /*jshint validthis: true */
+                    return isDefined(value) ? this.type.decode(value) : $UrlMatcherFactory.$$getDefaultValue(this);
+                }
+
+                function addParameter(id, type, config) {
+                    if (!/^\w+(-+\w+)*$/.test(id))
+                        throw new Error("Invalid parameter name '" + id + "' in pattern '" + pattern + "'");
+                    if (params[id])
+                        throw new Error("Duplicate parameter name '" + id + "' in pattern '" + pattern + "'");
+                    params[id] = extend({type: type || new Type(), $value: $value}, config);
+                }
+
+                function quoteRegExp(string, pattern, isOptional) {
+                    var result = string.replace(/[\\\[\]\^$*+?.()|{}]/g, "\\$&");
+                    if (!pattern)
+                        return result;
+                    var flag = isOptional ? '?' : '';
+                    return result + flag + '(' + pattern + ')' + flag;
+                }
+
+                function paramConfig(param) {
+                    if (!config.params || !config.params[param])
+                        return {};
+                    var cfg = config.params[param];
+                    return isObject(cfg) ? cfg : {value: cfg};
+                }
+
+                this.source = pattern;
+
+                // Split into static segments separated by path parameter placeholders.
+                // The number of segments is always 1 more than the number of parameters.
+                var id, regexp, segment, type, cfg;
+
+                while ((m = placeholder.exec(pattern))) {
+                    id = m[2] || m[3]; // IE[78] returns '' for unmatched groups instead of null
+                    regexp = m[4] || (m[1] == '*' ? '.*' : '[^/]*');
+                    segment = pattern.substring(last, m.index);
+                    type = this.$types[regexp] || new Type({pattern: new RegExp(regexp)});
+                    cfg = paramConfig(id);
+
+                    if (segment.indexOf('?') >= 0)
+                        break; // we're into the search part
+
+                    compiled += quoteRegExp(segment, type.$subPattern(), isDefined(cfg.value));
+                    addParameter(id, type, cfg);
+                    segments.push(segment);
+                    last = placeholder.lastIndex;
+                }
+                segment = pattern.substring(last);
+
+                // Find any search parameter names and remove them from the last segment
+                var i = segment.indexOf('?');
+
+                if (i >= 0) {
+                    var search = this.sourceSearch = segment.substring(i);
+                    segment = segment.substring(0, i);
+                    this.sourcePath = pattern.substring(0, last + i);
+
+                    // Allow parameters to be separated by '?' as well as '&' to make concat() easier
+                    forEach(search.substring(1).split(/[&?]/), function(key) {
+                        addParameter(key, null, paramConfig(key));
+                    });
+                } else {
+                    this.sourcePath = pattern;
+                    this.sourceSearch = '';
+                }
+
+                compiled += quoteRegExp(segment) + (config.strict === false ? '\/?' : '') + '$';
+                segments.push(segment);
+
+                this.regexp = new RegExp(compiled, config.caseInsensitive ? 'i' : undefined);
+                this.prefix = segments[0];
+            }
+
+        </script>
+        <ul ms-controller="test">
+            <li ms-repeat="array" ms-class="odd: $index % 1 == 0" ms-title="$index">{{el}}<input ms-duplex="el"/>{{$index}}</li>
+        </ul>
     </body>
 </html>
