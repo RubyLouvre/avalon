@@ -59,7 +59,6 @@ define(["mmHistory"], function() {
             segment = pattern.substring(last);
             compiled += quoteRegExp(segment) + (opts.strict ? opts.last : "\/?") + '$';
             segments.push(segment);
-          
             opts.regexp = new RegExp(compiled, opts.caseInsensitive ? 'i' : undefined);
             return opts
 
@@ -85,8 +84,7 @@ define(["mmHistory"], function() {
             path = path.trim()
             var array = this.routingTable[method]
             for (var i = 0, el; el = array[i++]; ) {
-                var args =path.match(el.regexp)
-              //  console.log(args)
+                var args = path.match(el.regexp)
                 if (args) {
                     el.query = query || {}
                     el.path = path
@@ -128,6 +126,18 @@ define(["mmHistory"], function() {
             var parsed = parseQuery(hash)
             this.route("get", parsed.path, parsed.query)
         },
+        /* *
+         `'/hello/'` - Matches only if the path is exactly '/hello/'. There is no special treatment for
+         trailing slashes, and patterns have to match the entire path, not just a prefix.
+         `'/user/:id'` - 匹配 '/user/bob' 或 '/user/1234!!!' 或 '/user/' 但不匹配 '/user' 与 '/user/bob/details'
+         `'/user/{id}'` - Same as the previous example, but using curly brace syntax.
+         `'/user/{id:[^/]*}'` - Same as the previous example.
+         `'/user/{id:[0-9a-fA-F]{1,8}}'` - Similar to the previous example, but only matches if the id
+         parameter consists of 1 to 8 hex digits.
+         `'/files/{path:.*}'` - Matches any URL starting with '/files/' and captures the rest of the
+         path into the parameter 'path'.
+         `'/files/*path'` - ditto.
+         */
         // avalon.router.get("/ddd/:dddID/",callback)
         // avalon.router.get("/ddd/{dddID}/",callback)
         // avalon.router.get("/ddd/{dddID:[0-9]{4}}/",callback)
@@ -138,7 +148,7 @@ define(["mmHistory"], function() {
             date: {
                 pattern: "[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])",
                 decode: function(val) {
-                    return new Date(val.replace(/\-/g,"/"))
+                    return new Date(val.replace(/\-/g, "/"))
                 }
             },
             string: {
@@ -187,6 +197,100 @@ define(["mmHistory"], function() {
         Router.prototype.setLatelyPath = function(path) {
             localStorage.setItem("msLastPath", path)
         }
+    }
+
+    var findNode = function(str) {
+        var match = str.match(ravalon)
+        var all = document.getElementsByTagName(match[1] || "*")
+        for (var i = 0, el; el = all[i++]; ) {
+            if (el.getAttribute(match[2]) === match[3]) {
+                return el
+            }
+        }
+    }
+    var ravalon = /(\w+)\[(avalonctrl)="(\d+)"\]/
+
+    function getViews(ctrl) {
+        var v = avalon.vmodels[ctrl]
+        var expr = v && v.$events.expr || "[ms-controller='" + ctrl + "']"
+        var nodes = []
+        if (expr) {
+            if (document.querySelectorAll) {
+                nodes = document.querySelectorAll(expr + " [ms-view]")
+            } else {
+                var root = findNode(expr)
+                if (root) {
+                    nodes = Array.prototype.filter.call(root.getElementsByTagName("*"), function(node) {
+                        return typeof node.getAttribute("ms-view") === "string"
+                    })
+                }
+            }
+        }
+        return nodes
+    }
+    function getNamedView(nodes, name) {
+        for (var i = 0, el; el = nodes[i++]; ) {
+            if (el.getAttribute("ms-view") === name) {
+                return el
+            }
+        }
+    }
+
+    function fromString(template, params) {
+        return typeof template === "function" ? template(params) : template
+    }
+    function fromUrl(url, params) {
+        if (typeof url === "function")
+            url = url(params)
+        if (url == null)
+            return null
+        var reject, resolve
+        var promise = new Promise(function(a, b) {
+            a = resolve, b = reject
+        })
+        var xhr = getXHR()
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                var status = xhr.status;
+                if (status > 399 && status < 600) {
+                    reject(new Error(url + " 对应资源不存在或没有开启 CORS"))
+                } else {
+                    resolve(xhr.responseText)
+                }
+            }
+        }
+        xhr.open("GET", url, true)
+        if ("withCredentials" in xhr) {
+            xhr.withCredentials = true
+        }
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+        xhr.send()
+        return promise
+    }
+    function fromConfig(config, params) {
+        return (config.template ? fromString(config.template, params) :
+                config.templateUrl ? fromUrl(config.templateUrl, params) :
+                config.templateProvider)
+    }
+    avalon.state = function(name, obj) {
+        avalon.router.get(obj.url, function() {
+            var ctrl = obj.controller
+            // var vmodel = avalon.vmodels[ctrl]
+            var views = getViews(ctrl)
+            if (!obj.views) {
+                var node = getNamedView(views, "")
+                if (node) {
+                    var a = fromConfig(obj, this.params)
+                    if (typeof a === "string") {
+                        avalon.innerHTML(node, a)
+                    } else if (a && a.then) {
+                        a.then(function(s) {
+                            avalon.innerHTML(node, s)
+                        })
+                    }
+                }
+            }
+        })
     }
 
     function escapeCookie(value) {

@@ -171,7 +171,8 @@ define(["avalon"], function(avalon) {
                     break;
             }
             //根据当前的location立即进入不同的路由回调
-
+            
+ 
             this.fireRouteChange(this.fragment || "/")
 
         },
@@ -182,7 +183,7 @@ define(["avalon"], function(avalon) {
                 router.navigate(hash === "/" ? hash : "/" + hash)
             }
             if (this.options.fireAnchor) {
-                scrollToAnchorId(hash)
+                scrollToAnchorId(hash.replace(/\?.*/g,""))
             }
         },
         // 中断URL的监听
@@ -210,7 +211,8 @@ define(["avalon"], function(avalon) {
     //劫持页面上所有点击事件，如果事件源来自链接或其内部，
     //并且它不会跳出本页，并且以"#/"或"#!/"开头，那么触发updateLocation方法
     avalon.bind(document, "click", function(event) {
-        var defaultPrevented = "defaultPrevented" in event ? event['defaultPrevented'] : event.returnValue === false
+        var defaultPrevented = "defaultPrevented" in event ?
+        event['defaultPrevented'] : event.returnValue === false
         if (defaultPrevented || event.ctrlKey || event.metaKey || event.which === 2)
             return
         var target = event.target
@@ -222,7 +224,9 @@ define(["avalon"], function(avalon) {
         }
 
         if (targetIsThisWindow(target.target)) {
-            var href = oldIE ? target.getAttribute("href", 2) : target.getAttribute("href") || target.getAttribute("xlink:href")
+            var href = oldIE ? target.getAttribute("href", 2) :
+                    target.getAttribute("href") 
+                    || target.getAttribute("xlink:href")
             var prefix = avalon.history.prefix
             var hash = href.replace(prefix, "").trim()
             if (href.indexOf(prefix) === 0 && hash !== "") {

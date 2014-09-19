@@ -6,11 +6,12 @@
         <script src="avalon.js"></script>
         <script>
             require(["mmRouter"], function() {
-                var model = avalon.define('test', function(vm) {
-                    vm.currPath = ""
-                    vm.params = {}
-                    vm.query = {}
-                    vm.args = "[]"
+                var model = avalon.define({
+                    $id: "test",
+                    currPath: "",
+                    params: {},
+                    query: {},
+                    args: ""
                 })
                 function callback() {
                     model.currPath = this.path
@@ -19,19 +20,20 @@
                         params.time = avalon.filters.date(params.time, "yyyy年M月dd日")
                     }
                     model.params = params
-                    model.args = "[" + [].slice.call(arguments).join(",") + "]"
+                    model.args = "[" + [].slice.call(arguments, 0) + "]"
                     model.query = this.query
                 }
                 avalon.router.get("/aaa/", callback)
                 avalon.router.get("/bbb", callback)
                 avalon.router.get("/ccc/:ccc", callback)
                 avalon.router.get("/ddd/{time:date}/", callback)
-                avalon.router.get("/eee/{count:\\d{4}}/", callback)
+                avalon.router.get("/eee/{count:\\d{4}}/", callback)//注意这里使用双扛
                 avalon.router.get("/fff", callback)
+               
                 avalon.history.start({
                     basepath: "/avalon"
                 })
-                avalon.scan()
+                 avalon.scan()
             })
         </script>
     </head>
@@ -70,7 +72,7 @@
             <div style="height: 600px;width:1px;">
 
             </div>
-            <p id="eee">会定位到这里</p>
+            <p id="fff">会定位到这里</p>
         </div>
 
     </body>
