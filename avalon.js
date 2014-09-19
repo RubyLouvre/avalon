@@ -911,7 +911,7 @@
         var svgns = "http://www.w3.org/2000/svg"
         var svg = document.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
-        if (!/rsvg/.test(svg.firstChild)) {// #409
+        if (!rsvg.test(svg.firstChild)) {// #409
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
