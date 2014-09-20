@@ -1829,7 +1829,7 @@
                             remove = true
                         }
                     }
-                } else if (fn.type === "if") {
+                } else if (fn.type === "if" ||  fn.node === null) {
                     remove = true
                 }
                 if (remove) { //如果它没有在DOM树
@@ -1846,7 +1846,7 @@
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else {
+                } else if(fn.node || fn.element){
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }

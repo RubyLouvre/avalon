@@ -622,7 +622,9 @@
                                 if (el.element && el.name) {
                                     el.element.setAttribute(el.name, el.value)
                                 }
+                                console.log("=")
                                 if (el.nodeType == 3) {
+                                    console.log("=====")
                                     el.node.data = openTag + el.value + closeTag
                                 }
                                 el.rollback && el.rollback()
@@ -1351,7 +1353,7 @@
                             remove = true
                         }
                     }
-                } else if (fn.type === "if") {
+                } else if (fn.type === "if" ||  fn.node === null) {
                     remove = true
                 }
                 if (remove) {
@@ -1368,8 +1370,9 @@
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
-                } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
+                } else if(fn.node || fn.element){
+                    var f = fn.evaluator || noop
+                    fn.handler(f.apply(0, fn.args || []), el, fn)
                 }
             }
         }
