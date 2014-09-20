@@ -619,6 +619,12 @@
                     (function(el) {
                         if (el.type) {
                             avalon.nextTick(function() {
+                                if (el.element && el.name) {
+                                    el.element.setAttribute(el.name, el.value)
+                                }
+                                if (el.nodeType == 3) {
+                                    el.node.data = openTag + el.value + closeTag
+                                }
                                 el.rollback && el.rollback()
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
@@ -2283,7 +2289,7 @@
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
-                parseExpr(data.value, vmodels, data, "duplex")
+                parseExpr(data.value, vmodels, data)
                 if (data.evaluator && data.args) {
                     var form = elem.form
                     if (form && form.msValidate) {
@@ -2297,6 +2303,7 @@
                             old && old()
                         }
                     }
+                 
                     duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
             }

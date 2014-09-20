@@ -630,6 +630,12 @@
                         if (el.type) { //重新绑定
                             avalon.nextTick(function() {
                                 el.rollback && el.rollback() //还原 ms-with ms-on
+                                if (el.element && el.name) {
+                                    el.element.setAttribute(el.name, el.value)
+                                }
+                                if (el.nodeType == 3) {
+                                    el.node.data = openTag + el.value + closeTag
+                                }
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
                         }
