@@ -1749,7 +1749,7 @@
             }
         }
     }
-    var ravalon = /(\w+)\[(avalonctrl)="(\d+)"\]/
+    var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
     var findNode = document.querySelector ? function(str) {
         return  document.querySelector(str)
     } : function(str) {
@@ -1896,12 +1896,12 @@
             }
             //ms-important不包含父VM，ms-controller相反
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-            elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            var id = setTimeout("1")
+            var name = node.name
+            elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
 
-            elem.setAttribute("avalonctrl", id + "")
-            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
-            avalon(elem).removeClass(node.name)
+            elem.setAttribute("avalonctrl", node.value)
+            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
+            avalon(elem).removeClass(name)
 
         }
         scanAttr(elem, vmodels) //扫描特性节点
@@ -2062,6 +2062,7 @@
             try {
                 elem.patchRepeat = ""
                 elem.removeAttribute("patchRepeat")
+                elem.removeAttribute("avalonctrl")
             } catch (e) {
             }
         }

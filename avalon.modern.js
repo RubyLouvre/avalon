@@ -1414,9 +1414,8 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
-            var id = setTimeout("1")
-            elem.setAttribute("avalonctrl", id)
-            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
+            elem.setAttribute("avalonctrl", node.value)
+            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
@@ -1575,6 +1574,7 @@
             elem.patchRepeat()
             elem.patchRepeat = ""
             elem.removeAttribute("patchRepeat")
+            elem.removeAttribute("avalonctrl")
         }
     }
 
