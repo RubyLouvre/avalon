@@ -619,14 +619,6 @@
                     (function(el) {
                         if (el.type) {
                             avalon.nextTick(function() {
-                                if (el.element && el.name) {
-                                    el.element.setAttribute(el.name, el.value)
-                                }
-                                console.log("=")
-                                if (el.nodeType == 3) {
-                                    console.log("=====")
-                                    el.node.data = openTag + el.value + closeTag
-                                }
                                 el.rollback && el.rollback()
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
