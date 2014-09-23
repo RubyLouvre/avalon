@@ -8,3 +8,14 @@
 <p>生成于{{ 1373021259229 | date("yyyy MM dd:HH:mm:ss")}}</p>
 <p>生成于{{ "1373021259229" | date("yyyy MM dd:HH:mm:ss")}}</p>
 <p>值得注意的是，new Date可传的格式类型非常多，但不是所有浏览器都支持这么多，详看<a href="http://dygraphs.com/date-formats.html">这里</a>。</p>
+<div ms-controller="aaa">
+    {{hhh}}
+</div>
+
+<script type="text/javascript">
+    var modelProfile = avalon.define({
+        $id: 'aaa',
+        hhh: '哈哈哈哈'
+    });
+    avalon.scan(document.body, modelProfile);
+</script>
