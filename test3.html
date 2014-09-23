@@ -8,13 +8,14 @@
         <script type="text/javascript">
             avalon.ready(function() {
                 var el = document.getElementById("aaa")
-                console.log(el.getBoundingClientRect())
-                console.log(el.offsetWidth)
-                console.log(el.offsetHeight)
-                avalon.define({
+            
+              var a =  avalon.define({
                     $id: "test",
                     arr: [1,2,3,4]
                 })
+                console.log(a.arr.length)
+                console.log(a.arr.removeAt(1))
+                console.log(a.arr.length)
                 avalon.scan()
 
             })
