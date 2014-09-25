@@ -723,14 +723,13 @@
                     "\tEnd Function")
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
             for (name in scope) {
-                if (!accessingProperties.hasOwnProperty[name]) {
+                if (!accessingProperties.hasOwnProperty(name)) {
                     buffer.push("\tPublic [" + name + "]")
                 }
             }
             buffer.push("\tPublic [" + 'hasOwnProperty' + "]")
             //添加访问器属性 
             for (name in accessingProperties) {
-
                 buffer.push(
                         //由于不知对方会传入什么,因此set, let都用上
                         "\tPublic Property Let [" + name + "](val" + expose + ")", //setter
@@ -749,6 +748,7 @@
                         "\tEnd Property")
 
             }
+
             buffer.push("End Class")
             var code = buffer.join("\r\n"),
                     realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
@@ -1773,7 +1773,7 @@
 
 
     function notifySubscribers(list, nofire) {
-      
+
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
@@ -1806,7 +1806,7 @@
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
-                    fn.apply(0, args) //强制重新计算自身
+                   // fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
@@ -1817,7 +1817,7 @@
         }
     }
 
-   
+
 
     /*********************************************************************
      *                           扫描系统                                 *

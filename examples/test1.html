@@ -11,6 +11,9 @@
                 vm.b = 2
                 vm.$skipArray = ["a"]
             });
+            model.$watch("b", function(a){
+                console.log(a+"--------------")
+            })
            // console.log(model)
             setTimeout(function(){
                 model.b = 10
