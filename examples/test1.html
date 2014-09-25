@@ -11,6 +11,7 @@
                 vm.b = 2
                 vm.d = {a: "222222222",b: "ddddd", c: 345435 }
                 vm.$skipArray = ["a"]
+                vm.array = [1,2,3,4]
             });
             model.$watch("b", function(a) {
                 avalon.log(a + "--------------")
@@ -40,6 +41,10 @@
         <div ms-controller="test" >
             {{b}}
             <p ms-repeat="d">{{$key}}=={{$val}}</p>
+            <hr/>
+            <ul>
+                <li ms-repeat="array">{{el}}</li>
+            </ul>
         </div>
     </body>
 </html>

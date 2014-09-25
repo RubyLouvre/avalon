@@ -2697,7 +2697,7 @@
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
-                        var last = data.list.length - 1
+                        var last = data.$repeat.length - 1
                         var spans = []
                         var lastFn = {}
                         for (var i = 0, n = arr.length; i < n; i++) {
@@ -3596,7 +3596,7 @@
                 added[i] = convert(arr[i])
             }
             _splice.apply(this, [pos, 0].concat(added))
-            notifySubscribers(this, "add", pos, added)
+            notifySubscribers(this[subscribers], "add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
             }
@@ -3604,7 +3604,7 @@
         _del: function(pos, n) { //在第pos个位置上，删除N个元素
             var ret = this._splice(pos, n)
             if (ret.length) {
-                notifySubscribers(this, "del", pos, n)
+                notifySubscribers(this[subscribers], "del", pos, n)
                 if (!this._stopFireLength) {
                     this._.length = this.length
                 }
@@ -3614,7 +3614,7 @@
         push: function() {
             ap.push.apply(this.$model, arguments)
             var n = this._add(arguments)
-            notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
+            notifySubscribers(this[subscribers], "index", n > 2 ? n - 2 : 0)
             return n
         },
         pushArray: function(array) {
@@ -3623,13 +3623,13 @@
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             this._add(arguments, 0)
-            notifySubscribers(this, "index", arguments.length)
+            notifySubscribers(this[subscribers], "index", arguments.length)
             return this.$model.length //IE67的unshift不会返回长度
         },
         shift: function() {
             var el = this.$model.shift()
             this._del(0, 1)
-            notifySubscribers(this, "index", 0)
+            notifySubscribers(this[subscribers], "index", 0)
             return el //返回被移除的元素
         },
         pop: function() {
@@ -3654,7 +3654,7 @@
             this._stopFireLength = false
             this._.length = this.length
             if (change) {
-                notifySubscribers(this, "index", 0)
+                notifySubscribers(this[subscribers], "index", 0)
             }
             return ret //返回被移除的元素
         },
@@ -3672,7 +3672,7 @@
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
-            notifySubscribers(this, "clear", 0)
+            notifySubscribers(this[subscribers], "clear", 0)
             return this
         },
         removeAll: function(all) { //移除N个元素
@@ -3715,7 +3715,7 @@
                 } else if (target !== val) {
                     this[index] = val
                     this.$model[index] = val
-                    notifySubscribers(this, "set", index, val)
+                    notifySubscribers(this[subscribers], "set", index, val)
                 }
             }
             return this
@@ -3952,7 +3952,7 @@
         var param = data.param || "el", proxy
         var source = {
             $remove: function() {
-                return data.list.removeAt(proxy.$index)
+                return data.$repeat.removeAt(proxy.$index)
             },
             $itemName: param,
             $index: index,
@@ -3976,7 +3976,7 @@
         }
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$watch(param, function(val) {
-            data.list.set(proxy.$index, val)
+            data.$repeat.set(proxy.$index, val)
         })
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
