@@ -6,39 +6,19 @@
         <script src="avalon.js" type="text/javascript"></script>
         <script>
             var model = avalon.define("test", function(vm) {
-                vm.data = {items: []};
-                vm.elements = ['items', "ddd"];
+                vm.array = [1, 2, 3, 4]
+                vm.callback = function(){
+                    console.log(model.array)
+                }
             });
+         
         </script>
     </head>
     <body>
-        <!--          <div ms-if="data[el].length===0">
-                            no number
-                        </div>
-                        <div ms-repeat-number="data[el]">
-                                {{number}}
-                        </div>-->
-        <div id="main">
-            <div ms-controller="test" >
-
-                <div ms-repeat="elements">
-                   <div ms-if="data[el].length===0">
-                            no number
-                        </div>
-                        <div ms-repeat-number="data[el]">
-                                {{number}}
-                        </div>
-                </div>
+        <div ms-controller="test" >
+            <div ms-repeat="array">
+                <input ms-duplex='el' data-duplex-changed='callback'/>{{el}}
             </div>
         </div>
-        <script>
-
-          var  cache = document.getElementById('main').innerHTML;
-
-            setInterval(function() {
-                document.getElementById('main').innerHTML = cache.replace(/bigpic\.jpg/, "bigpic.jpg?" + Date.now());
-                avalon.scan();
-            }, 500);
-        </script>
     </body>
 </html>

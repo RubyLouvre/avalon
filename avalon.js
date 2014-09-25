@@ -418,7 +418,8 @@
         var accessingProperties = {} //监控属性
         var normalProperties = {} //普通属性
         var computedProperties = [] //计算属性
-        var watchProperties = arguments[2] || {} //强制要监听的属性
+        var watchProperties = avalon.mix({},arguments[2] || {}) //强制要监听的属性
+
         var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
             delete scope[name]
@@ -3908,6 +3909,9 @@
             source.$skipArray = [param]
         }
         proxy = modelFactory(source, 0, watchEachOne)
+        proxy.$watch(param, function(val){
+            data.getter().set(proxy.$index,  val)
+        })
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
@@ -3922,6 +3926,7 @@
         ["$index", "$last", "$first"].forEach(function(prop) {
             obj[prop][subscribers].length = 0
         })
+        proxy.$events = {}
         if (proxy[name][subscribers]) {
             proxy[name][subscribers].length = 0;
         }
