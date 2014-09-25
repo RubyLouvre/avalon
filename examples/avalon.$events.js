@@ -425,7 +425,7 @@
             var arr = scope.concat()
             scope.length = 0
             var collection = Collection(scope, $subscribers)
-            collection.push.apply(collection, arr)
+            collection.pushArray(arr)
             return collection
         }
         if (typeof scope.nodeType === "number") {
