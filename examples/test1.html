@@ -14,19 +14,27 @@
                 }
                 vm.$skipArray = ["a"]
             });
-            model.$watch("b", function(a){
-                avalon.log(a+"--------------")
+            model.$watch("b", function(a) {
+                avalon.log(a + "--------------")
             })
-           // console.log(model)
-            setTimeout(function(){
-                model.b = 10
+            // console.log(model)
+            setTimeout(function() {
+
+                model.d = {ddd: "993399"}
+                setTimeout(function() {
+                    console.log(model)
+                    console.log(model.d)
+                }, 1000)
+                // }
+                //  model.b = 10
             }, 1000)
-          
+
         </script>
     </head>
     <body>
         <div ms-controller="test" >
-          {{b}}
+            {{b}}
+            <p>{{d.ddd}}</p>
         </div>
     </body>
 </html>

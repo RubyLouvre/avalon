@@ -493,19 +493,24 @@
                         realAccessor = accessor.$vmodel = modelFactory(newValue)
                         model[name] = realAccessor.$model
                     }
-                    var preValue = model[name]
+                 
+                    var oldValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return
                         }
-                        if (!isEqual(preValue, newValue)) {
-                            newValue = accessor.$vmodel = updateVModel(realAccessor, newValue, valueType)
+                        if (!isEqual(oldValue, newValue)) {
+                            var oldList = vmodel.$events[name]
+                        //    console.log(oldList)
+                            newValue = accessor.$vmodel = updateVModel(realAccessor, newValue, valueType, oldList)
+                          //  console.log(newValue)
+                            
                             var fn = rebindings[newValue.$id]
                             fn && fn() //更新视图
                             var parent = vmodel
                             model[name] = newValue.$model //同步$model
                             notifySubscribers(realAccessor) //通知顶层改变
-                            safeFire(parent, name, model[name], preValue) //触发$watch回调
+                            safeFire(parent, name, model[name], oldValue) //触发$watch回调
                         }
                     } else {
                         return realAccessor
@@ -612,7 +617,7 @@
         }
     }
     //应用于第2种accessor
-    function updateVModel(a, b, valueType) {
+    function updateVModel(a, b, valueType, oldList) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             if (!Array.isArray(b)) {
@@ -623,7 +628,7 @@
             a.push.apply(a, bb)
             return a
         } else {
-            var iterators = a[subscribers] || []
+            var iterators = oldList|| []
             if (withProxyPool[a.$id]) {
                 withProxyCount--
                 delete withProxyPool[a.$id]
@@ -2166,36 +2171,50 @@
     /*********************************************************************
      *                          编译系统                                  *
      **********************************************************************/
-
     var keywords =
             // 关键字
-            "break,case,catch,continue,debugger,default,delete,do,else,false" + ",finally,for,function,if,in,instanceof,new,null,return,switch,this" + ",throw,true,try,typeof,var,void,while,with"
+            "break,case,catch,continue,debugger,default,delete,do,else,false"
+            + ",finally,for,function,if,in,instanceof,new,null,return,switch,this"
+            + ",throw,true,try,typeof,var,void,while,with"
             // 保留字
-            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends" + ",final,float,goto,implements,import,int,interface,long,native" + ",package,private,protected,public,short,static,super,synchronized" + ",throws,transient,volatile"
-
+            + ",abstract,boolean,byte,char,class,const,double,enum,export,extends"
+            + ",final,float,goto,implements,import,int,interface,long,native"
+            + ",package,private,protected,public,short,static,super,synchronized"
+            + ",throws,transient,volatile"
             // ECMA 5 - use strict
             + ",arguments,let,yield"
-
             + ",undefined"
-    var rrexpstr = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'|[\s\t\n]*\.[\s\t\n]*[$\w\.]+/g
-    var rsplit = /[^\w$]+/g
-    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
+    var robjectProperty = /([\w\.\_$])\s*\[['"]([^'"]+)['"]\]/
+    //处理注释及字符串
+    var rstringComment = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'/g
+    //处理加减乘除小括号等运算符
+    var roperator = /[^\w\.$]+/g
+    //处理数字
     var rnumber = /\b\d[^,]*/g
-    var rcomma = /^,+|,+$/g
+    //处理最前面或最后面逗号
+    var rcommaOfFirstOrLast = /^,+|,+$/g
+    //处理位于中间的逗号
+    var rcommaInMiddle = /,+/
+    //去掉所有关键字保留字
+    var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
     var cacheVars = createCache(512)
-    var getVariables = function(code) {
-        var key = "," + code.trim()
+    var getVariables = function(str) {
+        var key = "," + str.trim()
         if (cacheVars[key]) {
             return cacheVars[key]
         }
-        var match = code
-                .replace(rrexpstr, "")
-                .replace(rsplit, ",")
-                .replace(rkeywords, "")
-                .replace(rnumber, "")
-                .replace(rcomma, "")
-                .split(/^$|,+/)
-        return cacheVars(key, uniqSet(match))
+        while (robjectProperty.test(str)) {
+            str = str.replace(robjectProperty, function(match, obj, prop) {
+                return obj + '.' + prop;
+            })
+        }
+        var vars = str.replace(rstringComment, "")
+                .replace(roperator, ",")
+                .replace(rkeywords, ",")
+                .replace(rnumber, ",")
+                .replace(rcommaOfFirstOrLast, "")
+                .split(rcommaInMiddle)
+        return cacheVars(key, uniqSet(vars))
     }
 
     function uniqSet(array) {
@@ -2225,8 +2244,7 @@
 
     function addDeps(scope, prop, data) {
         var obj = scope.$events
-        if (obj) {
-            console.log(data)
+        if (obj ) {
             var arr = obj[prop] || (obj[prop] = [])
             avalon.Array.ensure(arr, data)
         }
@@ -2248,10 +2266,10 @@
     function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " =" + name + "."
-
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
             var flag = inObject(scope, arr)
+            //console.log(arr)
             if (flag) {
                 var prop = arr.shift()
                 addDeps(scope, prop, data)
