@@ -9,10 +9,13 @@
                 vm.a = 1
                 vm.c = 3
                 vm.b = 2
+                vm.d = {
+                    ddd: "222222222"
+                }
                 vm.$skipArray = ["a"]
             });
             model.$watch("b", function(a){
-                console.log(a+"--------------")
+                avalon.log(a+"--------------")
             })
            // console.log(model)
             setTimeout(function(){

@@ -456,7 +456,6 @@
                 accessor = function(newValue) {
                     //  var vmodel = watchProperties.vmodel
                     var $events = vmodel.$events
-
                     var value = model[name],
                             preValue = value
                     if (arguments.length) {
@@ -489,8 +488,12 @@
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
                 accessor = function(newValue) {
-                    var realAccessor = accessor.$vmodel,
-                            preValue = realAccessor.$model
+                    var realAccessor = accessor.$vmodel
+                    if (!realAccessor) {
+                        realAccessor = accessor.$vmodel = modelFactory(newValue)
+                        model[name] = realAccessor.$model
+                    }
+                    var preValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return
@@ -508,8 +511,8 @@
                         return realAccessor
                     }
                 }
-                accessor.$vmodel = val.$model ? val : modelFactory(val, val)
-                model[name] = accessor.$vmodel.$model
+                //  accessor.$vmodel = val.$model ? val : modelFactory(val, val)
+                // model[name] = accessor.$vmodel.$model
             } else {
                 //第3种对应简单的数据类型，自变量，监控属性
                 accessor = function(newValue) {
@@ -1806,7 +1809,7 @@
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
-                   // fn.apply(0, args) //强制重新计算自身
+                    // fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
