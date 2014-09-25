@@ -488,10 +488,11 @@
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
                 accessor = function(newValue) {
-                    var realAccessor = accessor.$vmodel
-                    if (!realAccessor) {
-                        realAccessor = accessor.$vmodel = modelFactory(newValue)
-                        model[name] = realAccessor.$model
+                    var sonVmodel = accessor.son
+                    var parentVmodel = vmodel
+                    if (!sonVmodel) {
+                        sonVmodel = accessor.son = modelFactory(newValue)
+                        model[name] = sonVmodel.$model
                     }
                  
                     var oldValue = model[name]
@@ -500,20 +501,20 @@
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            var oldList = vmodel.$events[name]
+                            var parentList = parentVmodel.$events[name]
                         //    console.log(oldList)
-                            newValue = accessor.$vmodel = updateVModel(realAccessor, newValue, valueType, oldList)
+                            sonVmodel = accessor.son = updateVModel(sonVmodel, newValue, valueType, parentList)
                           //  console.log(newValue)
                             
-                            var fn = rebindings[newValue.$id]
+                            var fn = rebindings[sonVmodel.$id]
                             fn && fn() //更新视图
-                            var parent = vmodel
-                            model[name] = newValue.$model //同步$model
-                            notifySubscribers(realAccessor) //通知顶层改变
-                            safeFire(parent, name, model[name], oldValue) //触发$watch回调
+                         //   var parent = vmodel
+                            newValue =  model[name] = sonVmodel.$model //同步$model
+                          //  notifySubscribers(realAccessor) //通知顶层改变
+                            safeFire(parentVmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
-                        return realAccessor
+                        return sonVmodel
                     }
                 }
                 //  accessor.$vmodel = val.$model ? val : modelFactory(val, val)
