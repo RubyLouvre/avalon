@@ -402,7 +402,7 @@
         return VMODELS[$id] = model
     }
     //一些不需要被监听的属性
-    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray").match(rword)
+    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray," + subscribers).match(rword)
     function isObservable(name, value, $skipArray) {
         if (typeof value === "function" || (value && value.nodeType)) {
             return false
@@ -419,11 +419,12 @@
         }
         return true
     }
-    function modelFactory(scope, model) {
+    function modelFactory(scope, $subscribers) {
+        $subscribers = $subscribers || []
         if (Array.isArray(scope)) {
             var arr = scope.concat()
             scope.length = 0
-            var collection = Collection(scope)
+            var collection = Collection(scope, $subscribers)
             collection.push.apply(collection, arr)
             return collection
         }
@@ -489,12 +490,14 @@
                 //第2种对应子ViewModel或监控数组 
                 accessor = function(newValue) {
                     var sonVmodel = accessor.son
+
                     var parentVmodel = vmodel
+                    var subscribers = parentVmodel.$events[name]
                     if (!sonVmodel) {
-                        sonVmodel = accessor.son = modelFactory(newValue)
+                        sonVmodel = accessor.son = modelFactory(newValue, subscribers)
                         model[name] = sonVmodel.$model
                     }
-                 
+                    //  sonVmodel[subscribers] = parentVmodel.$events[name]
                     var oldValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
@@ -502,15 +505,13 @@
                         }
                         if (!isEqual(oldValue, newValue)) {
                             var parentList = parentVmodel.$events[name]
-                        //    console.log(oldList)
+                            //    console.log(oldList)
                             sonVmodel = accessor.son = updateVModel(sonVmodel, newValue, valueType, parentList)
-                          //  console.log(newValue)
-                            
                             var fn = rebindings[sonVmodel.$id]
                             fn && fn() //更新视图
-                         //   var parent = vmodel
-                            newValue =  model[name] = sonVmodel.$model //同步$model
-                          //  notifySubscribers(realAccessor) //通知顶层改变
+                            //   var parent = vmodel
+                            newValue = model[name] = sonVmodel.$model //同步$model
+                            //  notifySubscribers(realAccessor) //通知顶层改变
                             safeFire(parentVmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
@@ -537,7 +538,7 @@
                 }
                 model[name] = val
             }
-            accessor[subscribers] = [] //订阅者数组
+            // accessor[subscribers] = [] //订阅者数组
             accessingProperties[name] = accessor
         })
 
@@ -556,6 +557,7 @@
         vmodel.$model = model
         vmodel.$events = $events
         vmodel.$id = generateID()
+        vmodel[subscribers] = $subscribers
         for (var i in EventManager) {
             var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -618,7 +620,7 @@
         }
     }
     //应用于第2种accessor
-    function updateVModel(a, b, valueType, oldList) {
+    function updateVModel(a, b, valueType, parentList) {
         //a为原来的VM， b为新数组或新对象
         if (valueType === "array") {
             if (!Array.isArray(b)) {
@@ -629,12 +631,12 @@
             a.push.apply(a, bb)
             return a
         } else {
-            var iterators = oldList|| []
+            var iterators = parentList || []
             if (withProxyPool[a.$id]) {
                 withProxyCount--
                 delete withProxyPool[a.$id]
             }
-            var ret = modelFactory(b)
+            var ret = modelFactory(b, parentList)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -1782,7 +1784,6 @@
 
 
     function notifySubscribers(list, nofire) {
-
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
@@ -1816,7 +1817,7 @@
                     //nothing
                 } else if (typeof fn === "function") {
                     // fn.apply(0, args) //强制重新计算自身
-                } else if (fn.getter) {
+                } else if (fn.list) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
                     var fun = fn.evaluator || noop
@@ -2245,7 +2246,7 @@
 
     function addDeps(scope, prop, data) {
         var obj = scope.$events
-        if (obj ) {
+        if (obj) {
             var arr = obj[prop] || (obj[prop] = [])
             avalon.Array.ensure(arr, data)
         }
@@ -2696,7 +2697,7 @@
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
-                        var last = data.getter().length - 1
+                        var last = data.list.length - 1
                         var spans = []
                         var lastFn = {}
                         for (var i = 0, n = arr.length; i < n; i++) {
@@ -3003,21 +3004,19 @@
             }
         },
         "repeat": function(data, vmodels) {
-            var type = data.type,
-                    list
+            var type = data.type
+
             parseExpr(data.value, vmodels, data)
             if (type !== "repeat") {
                 log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
             var elem = data.callbackElement = data.element //用于判定当前元素是否位于DOM树
-            data.getter = function() {
-                return this.evaluator.apply(0, this.args || [])
-            }
+
             data.proxies = []
             var freturn = true
             try {
-                list = data.getter()
-                var xtype = avalon.type(list)
+                var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
+                var xtype = avalon.type($repeat)
                 if (xtype === "object" || xtype === "array") {
                     freturn = false
                 }
@@ -3075,7 +3074,7 @@
             data.$outer = {}
             var check0 = "$key",
                     check1 = "$val"
-            if (Array.isArray(list)) {
+            if (Array.isArray($repeat)) {
                 check0 = "$first"
                 check1 = "$last"
             }
@@ -3087,27 +3086,30 @@
             }
             node = template.firstChild
             data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
-            list[subscribers] && list[subscribers].push(data)
-            notifySubscribers(list) //强制垃圾回收
-            if (!Array.isArray(list) && type !== "each") {
-                var pool = withProxyPool[list.$id]
+            var subscribers = $repeat[subscribers]
+            if (subscribers) {
+                subscribers.push(data)
+                notifySubscribers(subscribers) //强制垃圾回收
+            }
+            if (!Array.isArray($repeat) && type !== "each") {
+                var pool = withProxyPool[$repeat.$id]
                 if (!pool) {
                     withProxyCount++
-                    pool = withProxyPool[list.$id] = {}
-                    for (var key in list) {
-                        if (list.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                    pool = withProxyPool[$repeat.$id] = {}
+                    for (var key in $repeat) {
+                        if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
                             (function(k, v) {
                                 pool[k] = createWithProxy(k, v, {})
                                 pool[k].$watch("$val", function(val) {
-                                    list[k] = val //#303
+                                    $repeat[k] = val //#303
                                 })
-                            })(key, list[key])
+                            })(key, $repeat[key])
                         }
                     }
                 }
-                data.handler("append", list, pool)
+                data.handler("append", $repeat, pool)
             } else {
-                data.handler("add", 0, list)
+                data.handler("add", 0, $repeat)
             }
         },
         "html": function(data, vmodels) {
@@ -3564,10 +3566,10 @@
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
 
-    function Collection(model) {
+    function Collection(model, subscribers) {
         var array = []
         array.$id = generateID()
-        array[subscribers] = []
+        array[subscribers] = subscribers || []
         array.$model = model // model.concat()
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array._ = modelFactory({
@@ -3950,7 +3952,7 @@
         var param = data.param || "el", proxy
         var source = {
             $remove: function() {
-                return data.getter().removeAt(proxy.$index)
+                return data.list.removeAt(proxy.$index)
             },
             $itemName: param,
             $index: index,
@@ -3974,7 +3976,7 @@
         }
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$watch(param, function(val) {
-            data.getter().set(proxy.$index, val)
+            data.list.set(proxy.$index, val)
         })
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy

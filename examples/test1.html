@@ -9,9 +9,7 @@
                 vm.a = 1
                 vm.c = 3
                 vm.b = 2
-                vm.d = {
-                    ddd: "222222222"
-                }
+                vm.d = {a: "222222222",b: "ddddd", c: 345435 }
                 vm.$skipArray = ["a"]
             });
             model.$watch("b", function(a) {
@@ -20,7 +18,7 @@
             // console.log(model)
             setTimeout(function() {
 
-                model.d = {ddd: "993399"}
+            //    model.d.ddd = 4000
                 setTimeout(function() {
                     console.log(model)
                     console.log(model.d)
@@ -34,7 +32,7 @@
     <body>
         <div ms-controller="test" >
             {{b}}
-            <p>{{d.ddd}}</p>
+            <p ms-repeat="d">{{$key}}=={{$val}}</p>
         </div>
     </body>
 </html>
