@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>avalon入门</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.$events.js" type="text/javascript"></script>
+        <script>
+            var model = avalon.define("test", function(vm) {
+                vm.a = 1
+                vm.c = 3
+                vm.b = 2
+                vm.$skipArray = ["a"]
+            });
+           // console.log(model)
+            setTimeout(function(){
+                model.b = 10
+            }, 1000)
+          
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test" >
+          {{b}}
+        </div>
+    </body>
+</html>
