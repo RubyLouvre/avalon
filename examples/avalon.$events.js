@@ -457,8 +457,7 @@
                 accessor = function(newValue) {
                     //  var vmodel = watchProperties.vmodel
                     var $events = vmodel.$events
-                    var value = model[name],
-                            preValue = value
+                    var oldValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return
@@ -474,13 +473,13 @@
                             newValue = model[name] = getter.call(vmodel) //同步$model
                             withProxyCount && updateWithProxy(vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                             notifySubscribers($events[name]) //通知顶层改变
-                            safeFire(vmodel, name, newValue, preValue) //触发$watch回调
+                            safeFire(vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
                         newValue = model[name] = getter.call(vmodel)
-                        if (!isEqual(value, newValue)) {
+                        if (!isEqual(oldValue, newValue)) {
                             oldArgs = void 0
-                            safeFire(vmodel, name, newValue, preValue)
+                            safeFire(vmodel, name, newValue, oldValue)
                         }
                         return newValue
                     }
@@ -489,56 +488,47 @@
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
                 accessor = function(newValue) {
-                    var sonVmodel = accessor.son
-
                     var parentVmodel = vmodel
-                    var subscribers = parentVmodel.$events[name]
+                    var sonVmodel = accessor.son
+                    var parentList = parentVmodel.$events[name]
                     if (!sonVmodel) {
-                        sonVmodel = accessor.son = modelFactory(newValue, subscribers)
+                        sonVmodel = accessor.son = modelFactory(newValue, parentList)
                         model[name] = sonVmodel.$model
                     }
-                    //  sonVmodel[subscribers] = parentVmodel.$events[name]
                     var oldValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            var parentList = parentVmodel.$events[name]
-                            //    console.log(oldList)
                             sonVmodel = accessor.son = updateVModel(sonVmodel, newValue, valueType, parentList)
                             var fn = rebindings[sonVmodel.$id]
                             fn && fn() //更新视图
-                            //   var parent = vmodel
                             newValue = model[name] = sonVmodel.$model //同步$model
-                            //  notifySubscribers(realAccessor) //通知顶层改变
                             safeFire(parentVmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
                         return sonVmodel
                     }
                 }
-                //  accessor.$vmodel = val.$model ? val : modelFactory(val, val)
-                // model[name] = accessor.$vmodel.$model
+
             } else {
                 //第3种对应简单的数据类型，自变量，监控属性
                 accessor = function(newValue) {
-
-                    var preValue = model[name]
+                    var oldValue = model[name]
                     if (arguments.length) {
-                        if (!isEqual(preValue, newValue)) {
+                        if (!isEqual(oldValue, newValue)) {
                             model[name] = newValue //同步$model
                             withProxyCount && updateWithProxy(vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                             notifySubscribers(vmodel.$events[name]) //通知顶层改变
-                            safeFire(vmodel, name, newValue, preValue) //触发$watch回调
+                            safeFire(vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
-                        return preValue
+                        return oldValue
                     }
                 }
                 model[name] = val
             }
-            // accessor[subscribers] = [] //订阅者数组
             accessingProperties[name] = accessor
         })
 
@@ -1781,8 +1771,6 @@
      *                           依赖调度系统                             *
      **********************************************************************/
 
-
-
     function notifySubscribers(list, nofire) {
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
@@ -1816,7 +1804,7 @@
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
-                    // fn.apply(0, args) //强制重新计算自身
+                    // fn.apply(0, args) //待处理， 强制重新计算自身
                 } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
@@ -1826,7 +1814,6 @@
             }
         }
     }
-
 
 
     /*********************************************************************
@@ -3055,17 +3042,7 @@
                     data.element = data.callbackElement
                 }
             }
-//            var arr = data.value.split(".") || []
-//            if (arr.length > 1) {
-//                arr.pop()
-//                var n = arr[0]
-//                for (var i = 0, v; v = vmodels[i++]; ) {
-//                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
-//                        v[n][subscribers].push(data)
-//                        break
-//                    }
-//                }
-//            }
+
             if (freturn) {
                 return
             }
@@ -3566,10 +3543,11 @@
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
 
-    function Collection(model, subscribers) {
+    function Collection(model, list) {
         var array = []
         array.$id = generateID()
-        array[subscribers] = subscribers || []
+
+        array[subscribers] = list || []
         array.$model = model // model.concat()
         array.$events = {} //VB对象的方法里的this并不指向自身，需要使用bind处理一下
         array._ = modelFactory({
@@ -3940,7 +3918,7 @@
             $key: key,
             $outer: $outer,
             $val: val
-        }, 0, {
+        }, [], {
             $val: 1,
             $key: 1
         })
@@ -3974,7 +3952,7 @@
         if (rcomplexType.test(avalon.type(item))) {
             source.$skipArray = [param]
         }
-        proxy = modelFactory(source, 0, watchEachOne)
+        proxy = modelFactory(source, [], watchEachOne)
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })
@@ -3988,14 +3966,12 @@
         array.length = 0
     }
     function recycleEachProxy(proxy) {
-        var obj = proxy.$accessors, name = proxy.$itemName;
-        ["$index", "$last", "$first"].forEach(function(prop) {
-            obj[prop][subscribers].length = 0
-        })
-        proxy.$events = {}
-        if (proxy[name][subscribers]) {
-            proxy[name][subscribers].length = 0;
+        for (var i in proxy.$events) {
+            if (Array.isArray(proxy.$events[i])) {
+                proxy.$events[i].length = 0
+            }
         }
+        proxy[subscribers].length = 0;
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }
