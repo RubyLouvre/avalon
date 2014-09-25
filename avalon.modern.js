@@ -412,7 +412,7 @@
         var accessingProperties = {} //监控属性
         var normalProperties = {} //普通属性
         var computedProperties = [] //计算属性
-        var watchProperties = arguments[2] || {} //强制要监听的属性
+        var watchProperties = avalon.mix({}, arguments[2] || {}) //强制要监听的属性
         var skipArray = scope.$skipArray //要忽略监控的属性
         for (var i = 0, name; name = skipProperties[i++]; ) {
             delete scope[name]
@@ -1345,7 +1345,7 @@
                             remove = true
                         }
                     }
-                } else if (fn.type === "if" ||  fn.node === null) {
+                } else if (fn.type === "if" || fn.node === null) {
                     remove = true
                 }
                 if (remove) {
@@ -1362,7 +1362,7 @@
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.getter) {
                     fn.handler.apply(fn, args) //强制重新计算自身
-                } else if(fn.node || fn.element){
+                } else if (fn.node || fn.element) {
                     var f = fn.evaluator || noop
                     fn.handler(f.apply(0, fn.args || []), el, fn)
                 }
@@ -2298,7 +2298,7 @@
                             old && old()
                         }
                     }
-                 
+
                     duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
             }
@@ -3127,6 +3127,9 @@
             source.$skipArray = [param]
         }
         proxy = modelFactory(source, 0, watchEachOne)
+        proxy.$watch(param, function(val) {
+            data.getter().set(proxy.$index, val)
+        })
         proxy.$id = "$proxy$" + data.type + Math.random()
         return proxy
     }
@@ -3144,6 +3147,7 @@
         if (proxy[name][subscribers]) {
             proxy[name][subscribers].length = 0;
         }
+        proxy.$events = {}
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }
