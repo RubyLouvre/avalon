@@ -1817,7 +1817,7 @@
                     //nothing
                 } else if (typeof fn === "function") {
                     // fn.apply(0, args) //强制重新计算自身
-                } else if (fn.list) {
+                } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
                     var fun = fn.evaluator || noop
@@ -3055,17 +3055,17 @@
                     data.element = data.callbackElement
                 }
             }
-            var arr = data.value.split(".") || []
-            if (arr.length > 1) {
-                arr.pop()
-                var n = arr[0]
-                for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
-                        v[n][subscribers].push(data)
-                        break
-                    }
-                }
-            }
+//            var arr = data.value.split(".") || []
+//            if (arr.length > 1) {
+//                arr.pop()
+//                var n = arr[0]
+//                for (var i = 0, v; v = vmodels[i++]; ) {
+//                    if (v && v.hasOwnProperty(n) && v[n][subscribers]) {
+//                        v[n][subscribers].push(data)
+//                        break
+//                    }
+//                }
+//            }
             if (freturn) {
                 return
             }
