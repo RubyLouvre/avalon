@@ -3928,17 +3928,13 @@
         array.length = 0
     }
     function breakCircularReference(array) {
-        console.log(array)
-        try {
+       if (Array.isArray(array)) {
             array.forEach(function(el) {
                 if (el.evaluator) {
-                
                     el.evaluator = el.element = el.node = null
                 }
             })
             array.length = 0
-        } catch (e) {
-                console.log("==========")
         }
     }
     function recycleEachProxy(proxy) {
