@@ -1773,15 +1773,16 @@
                 var el = fn.element
                 if (el) {
                     var inTree = avalon.contains(root, el)
-                    var remove = !ifSanctuary.contains(el) && !inTree
-                    var comment = fn.placehoder
-                    if (fn.type === "if" && comment) {
-                        var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
-                        if (recycle) {
-                            breakCircularReference([fn])
-                            remove = true
-                        }
-                    }
+                    var remove = !inTree
+//                    var remove = !ifSanctuary.contains(el) && !inTree
+//                    var comment = fn.placehoder
+//                    if (fn.type === "if" && comment) {
+//                        var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
+//                        if (recycle) {
+//                            breakCircularReference([fn])
+//                            remove = true
+//                        }
+//                    }
                 } else if (fn.type === "if" || fn.node === null) {
                     remove = true
                 }
@@ -2414,9 +2415,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
+//            data.evaluator.toString = function() {
+//                return data.type + " binding to eval(" + code + ")"
+//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -2426,8 +2427,6 @@
 
     var ronduplex = /^(duplex|on)$/
     function executeBinding(data, val) {
-        //   Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-        //   avalon.openComputedCollect = true
         var fn = data.evaluator
         if (fn) { //如果是求值函数
             try {
@@ -2802,25 +2801,26 @@
             })
         },
         "if": function(val, elem, data) {
-            var placehoder = data.placehoder
+
+            // var placehoder = data.placehoder
             if (val) { //插回DOM树
-                if (!data.msInDocument) {
-                    data.msInDocument = true
-                    if (placehoder.parentNode) {
-                        placehoder.parentNode.replaceChild(elem, placehoder)
+                if (elem.nodeType === 8) {
+                    var node = avalon.parseHTML(data.html).firstChild
+                    elem.parentNode.replaceChild(node, elem)
+                    data.element = node
+                    if (rbind.test(data.html.replace(rlt, "<").replace(rgt, ">"))) {
+                        try {
+                            scanAttr(node, data.vmodels)
+                        } catch (e) {
+                            avalon.log(e)
+                        }
                     }
-                }
-                if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
-                if (data.msInDocument) {
-                    data.msInDocument = false
-                    if (elem.parentNode) {
-                        elem.parentNode.replaceChild(placehoder, elem)
-                    }
-                    placehoder.elem = elem
-                    ifSanctuary.appendChild(elem)
+                if (elem.nodeType === 1) {
+                    var node = DOC.createComment("ms-if")
+                    elem.parentNode.replaceChild(node, elem)
+                    data.element = node
                 }
             }
         },
@@ -3086,9 +3086,13 @@
         "if": function(data, vmodels) {
             var elem = data.element
             elem.removeAttribute(data.name)
-            if (!data.placehoder) {
-                data.msInDocument = data.placehoder = DOC.createComment("ms-if")
-            }
+            data.html = elem.outerHTML
+            var child = DOC.createComment("ms-if")
+            elem.parentNode.replaceChild(child, elem)
+            data.element = child
+//            if (!data.placehoder) {
+//                data.msInDocument = data.placehoder = DOC.createComment("ms-if")
+//            }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
         },
@@ -3329,7 +3333,8 @@
                 return false
             }
         })
-        registerSubscriber(data)
+        executeBinding(data)
+        //  registerSubscriber(data)
         var timer = setTimeout(function() {
             if (!firstTigger) {
                 callback.call(element, element.value)
@@ -3421,7 +3426,8 @@
             if (currHTML === innerHTML) {
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                registerSubscriber(data)
+                //   registerSubscriber(data)
+                executeBinding(data)
                 data.changed.call(element, evaluator())
             } else {
                 innerHTML = currHTML
@@ -3969,16 +3975,16 @@
                 if (el.proxies) {//ms-repeat ms-with ms-each
                     el.startRepeat = el.endRepeat = el.callbackElement = el.template = null
                 }
-                if (el.type === "if") {//ms-if
-                    var comment = el.placehoder
-                    if (!el.msInDocument && comment.elem) {
-                        try {
-                            ifSanctuary.removeChild(comment.elem)
-                        } catch (e) {
-                        }
-                    }
-                    el.placehoder = el.msInDocument = comment.elem = null
-                }
+//                if (el.type === "if") {//ms-if
+//                    var comment = el.placehoder
+//                    if (!el.msInDocument && comment.elem) {
+//                        try {
+//                            ifSanctuary.removeChild(comment.elem)
+//                        } catch (e) {
+//                        }
+//                    }
+//                    el.placehoder = el.msInDocument = comment.elem = null
+//                }
             }
         })
         array.length = 0
