@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>avalon入门</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.modern.js" type="text/javascript"></script>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js" type="text/javascript"></script>
         <script>
-            var model = avalon.define("test", function(vm) {
-                vm.array = [1, 2, 3, 4]
-                vm.callback = function(){
-                    console.log(model.array)
-                }
-            });
-         
+            var vmodel = avalon.define({
+                $id: "test",
+                aa: 1,
+                array: [1, 2, 3, 4]
+            })
+
+            setTimeout(function() {
+                vmodel.array.clear()
+            }, 3000)
         </script>
     </head>
-    <body>
-        <div ms-controller="test" >
-            <div ms-repeat="array">
-                <input ms-duplex='el' data-duplex-changed='callback'/>{{el}}
-            </div>
-        </div>
+    <body ms-controller="test">
+        <ul>
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
     </body>
 </html>

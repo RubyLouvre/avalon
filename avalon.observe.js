@@ -2763,12 +2763,20 @@
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
     /*得到某一元素节点或文档碎片对象下的所有注释节点*/
-    var queryComments = function(parent) {
-        var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
-                comment, ret = []
-        while (comment = tw.nextNode()) {
-            ret.push(comment)
+    //得到某一元素节点或文档碎片对象下的所有注释节点
+    var getComments = function(parent, array) {
+        var nodes = parent.childNodes
+        for (var i = 0, el; el = nodes[i++]; ) {
+            if (el.nodeType === 8) {
+                array.push(el)
+            } else if (el.nodeType === 1) {
+                getComments(el, array)
+            }
         }
+    }
+    var queryComments = function(parent) {
+        var ret = []
+        getComments(parent, ret)
         return ret
     }
     var deleteRange = DOC.createRange()
@@ -2916,16 +2924,21 @@
         }
         array.length = 0
     }
-    function recycleEachProxy(proxy) {
-        var obj = proxy.$accessors, name = proxy.$itemName;
-        ["$index", "$last", "$first"].forEach(function(prop) {
-            if (obj[prop]) {
-                obj[prop].length = 0
+    function breakCircularReference(array) {
+        array.forEach(function(el) {
+            if (el.evaluator) {
+                el.evaluator = el.element = el.node = null
             }
         })
-        if (proxy[name]) {
-            proxy[name].length = 0;
-        }
+        array.length = 0
+    }
+    function recycleEachProxy(proxy) {
+        var obj = proxy.$accessors, name = proxy.$itemName;
+        breakCircularReference(obj.$index[subscribers])
+        breakCircularReference(obj.$last[subscribers])
+        breakCircularReference(obj.$first[subscribers])
+        breakCircularReference(obj[name][subscribers])
+        proxy.$events = {}
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }

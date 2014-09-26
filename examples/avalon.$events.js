@@ -428,7 +428,7 @@
             collection.pushArray(arr)
             return collection
         }
-        if (typeof scope.nodeType === "number") {
+        if (scope && typeof scope.nodeType === "number") {
             return scope
         }
         if (!Array.isArray(scope.$skipArray)) {
@@ -440,7 +440,6 @@
         var accessingProperties = {} //监控属性
         var computedProperties = [] //计算属性
         var $events = {}
-
         avalon.each(scope, function(name, val) {
             if (!isObservable(name, val, scope.$skipArray)) {
                 model[name] = val
@@ -455,7 +454,6 @@
                         getter = val.get
                 //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
                 accessor = function(newValue) {
-                    //  var vmodel = watchProperties.vmodel
                     var $events = vmodel.$events
                     var oldValue = model[name]
                     if (arguments.length) {
@@ -491,10 +489,6 @@
                     var parentVmodel = vmodel
                     var sonVmodel = accessor.son
                     var parentList = parentVmodel.$events[name]
-                    if (!sonVmodel) {
-                        sonVmodel = accessor.son = modelFactory(newValue, parentList)
-                        model[name] = sonVmodel.$model
-                    }
                     var oldValue = model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
@@ -511,7 +505,8 @@
                         return sonVmodel
                     }
                 }
-
+                var sonVmodel = accessor.son = modelFactory(val, $events[name])
+                model[name] = sonVmodel.$model
             } else {
                 //第3种对应简单的数据类型，自变量，监控属性
                 accessor = function(newValue) {
@@ -1755,7 +1750,7 @@
             }
         }
     }
-    var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
+    var ravalon = /(\w+)\[(avalonid)="(\S+)"\]/
     var findNode = document.querySelector ? function(str) {
         return  document.querySelector(str)
     } : function(str) {
@@ -1843,7 +1838,11 @@
                     }
                 }, interval)
     }
-
+    function addId(elem, value) {
+        if (typeof elem.getAttribute("avalonid") !== "string") {
+            elem.setAttribute("avalonid", value)
+        }
+    }
 
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
@@ -1866,9 +1865,8 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             var name = node.name
             elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
-
-            elem.setAttribute("avalonctrl", node.value)
-            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
+            addId(elem, node.value)
+            newVmodel.$events.expr = elem.tagName + '[avalonid="' + node.value + '"]'
             avalon(elem).removeClass(name)
 
         }
@@ -2258,7 +2256,6 @@
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
             var flag = inObject(scope, arr)
-            //console.log(arr)
             if (flag) {
                 var prop = arr.shift()
                 addDeps(scope, prop, data)
@@ -2994,6 +2991,7 @@
             var type = data.type
 
             parseExpr(data.value, vmodels, data)
+
             if (type !== "repeat") {
                 log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
             }
@@ -3735,16 +3733,22 @@
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
     //得到某一元素节点或文档碎片对象下的所有注释节点
-    var queryComments = DOC.createTreeWalker ? function(parent) {
-        var tw = DOC.createTreeWalker(parent, NodeFilter.SHOW_COMMENT, null, null),
-                comment, ret = []
-        while (comment = tw.nextNode()) {
-            ret.push(comment)
+    var getComments = function(parent, array) {
+        var nodes = parent.childNodes
+        for (var i = 0, el; el = nodes[i++]; ) {
+            if (el.nodeType === 8) {
+                array.push(el)
+            } else if (el.nodeType === 1) {
+                getComments(el, array)
+            }
         }
-        return ret
-    } : function(parent) {
-        return parent.getElementsByTagName("!")
     }
+    var queryComments = function(parent) {
+        var ret = []
+        getComments(parent, ret)
+        return ret
+    }
+
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
 
     function expelFromSanctuary(parent) {
@@ -3965,13 +3969,21 @@
         }
         array.length = 0
     }
+    function breakCircularReference(array) {
+        array.forEach(function(el) {
+            if (el.evaluator) {
+                el.evaluator = el.element = el.node = null
+            }
+        })
+        array.length = 0
+    }
     function recycleEachProxy(proxy) {
         for (var i in proxy.$events) {
             if (Array.isArray(proxy.$events[i])) {
-                proxy.$events[i].length = 0
+                breakCircularReference(proxy.$events[i])
             }
         }
-        proxy[subscribers].length = 0;
+        breakCircularReference(proxy[subscribers])
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }
