@@ -2080,7 +2080,7 @@
         for (var i = 0, data; data = bindings[i++]; ) {
             data.vmodels = vmodels
             bindingHandlers[data.type](data, vmodels)
-            if (data.evaluator && data.name) { //移除数据绑定，防止被二次解析
+            if (data.evaluator && data.name && data.element && data.element.nodeType === 1) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.name)
             }
@@ -3085,14 +3085,13 @@
         },
         "if": function(data, vmodels) {
             var elem = data.element
-            elem.removeAttribute(data.name)
-            data.html = elem.outerHTML
-            var child = DOC.createComment("ms-if")
-            elem.parentNode.replaceChild(child, elem)
-            data.element = child
-//            if (!data.placehoder) {
-//                data.msInDocument = data.placehoder = DOC.createComment("ms-if")
-//            }
+            if (elem.nodeType === 1) {
+                elem.removeAttribute(data.name)
+                data.html = elem.outerHTML
+                var comment = DOC.createComment("ms-if")
+                elem.parentNode.replaceChild(comment, elem)
+                data.element = comment
+            }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
         },
