@@ -9,27 +9,31 @@
                 vm.a = 1
                 vm.c = 3
                 vm.b = 2
-                vm.d = {a: "222222222",b: "ddddd", c: 345435 }
+                vm.d = {a: "222222222", b: "ddddd", c: 345435}
                 vm.$skipArray = ["a"]
-                vm.array = [1,2,3,4]
+                vm.array = [1, 2, 3, 4]
             });
             model.$watch("b", function(a) {
                 avalon.log(a + "--------------")
             })
             // console.log(model)
             setTimeout(function() {
-               model.d = {
-                   11: 111,
-                   22: 3333,
-                   34:345,
-                   ddd: 465546
-               }
-               model.d.ddd = 4000
-               model.array.push(8)
+                model.d = {
+                    11: 111,
+                    22: 3333,
+                    34: 345,
+                    ddd: 465546
+                }
+                model.d.ddd = 4000
+                model.array.push(8)
                 setTimeout(function() {
-                    model.array = [2,3,4,9]
+                    model.array = [2, 3, 4, 9]
                     console.log(model)
                     console.log(model.d)
+                    setTimeout(function() {
+                        model.array.clear()
+                        model.d = {}
+                    }, 1000)
                 }, 1000)
                 // }
                 //  model.b = 10

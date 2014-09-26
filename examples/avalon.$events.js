@@ -1778,10 +1778,7 @@
                     if (fn.type === "if" && comment) {
                         var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
                         if (recycle) {
-                            if (!fn.msInDocument && comment.elem) {
-                                ifSanctuary.removeChild(comment.elem)
-                            }
-                            fn.placehoder = fn.msInDocument = comment.elem = null
+                            breakCircularReference([fn])
                             remove = true
                         }
                     }
@@ -1789,13 +1786,9 @@
                     remove = true
                 }
                 if (remove) { //如果它没有在DOM树
-                    list.splice(i, 1)
-                    if (fn.proxies) {
-                        recycleEachProxies(fn.proxies)
-                        fn.proxies = fn.callbackElement = fn.template = fn.startRepeat = fn.endRepeat = null
-                    }
+                    var removed = list.splice(i, 1)
                     log("debug: remove " + fn.type)
-                    fn = fn.element = fn.node = fn.evaluator = null
+                    breakCircularReference(removed)
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
@@ -2292,7 +2285,7 @@
         return cache;
     }
     //缓存求值函数，以便多次利用
-    var cacheExprs = createCache(128)
+    var cacheExprs = createCache(124)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -3972,7 +3965,20 @@
     function breakCircularReference(array) {
         array.forEach(function(el) {
             if (el.evaluator) {
-                el.evaluator = el.element = el.node = null
+                el.evaluator = el.element = el.node = el.vmodels = null
+                if (el.proxies) {//ms-repeat ms-with ms-each
+                    el.startRepeat = el.endRepeat = el.callbackElement = el.template = null
+                }
+                if (el.type === "if") {//ms-if
+                    var comment = el.placehoder
+                    if (!el.msInDocument && comment.elem) {
+                        try {
+                            ifSanctuary.removeChild(comment.elem)
+                        } catch (e) {
+                        }
+                    }
+                    el.placehoder = el.msInDocument = comment.elem = null
+                }
             }
         })
         array.length = 0
@@ -3984,6 +3990,15 @@
             }
         }
         breakCircularReference(proxy[subscribers])
+        var name = proxy.$itemName
+        var child = proxy[name]
+        if (child && child.$events) {
+            for (var k in child.$events) {
+                if (Array.isArray(child.$events[k])) {
+                    breakCircularReference(child.$events[k])
+                }
+            }
+        }
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }
