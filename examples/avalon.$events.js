@@ -29,7 +29,7 @@
     var serialize = oproto.toString
     var ap = Array.prototype
     var aslice = ap.slice
-    var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
+  //  var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var head = DOC.getElementsByTagName("head")[0] //HEAD元素
@@ -554,10 +554,10 @@
             return name in vmodel.$model
         }
         for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
-            Registry[expose] = fn
+          //  Registry[expose] = fn
             fn()
             collectSubscribers(fn)
-            delete Registry[expose]
+          //  delete Registry[expose]
         }
         return vmodel
     }
@@ -2488,6 +2488,7 @@
     ifSanctuary.innerHTML = "a"
     try {
         ifSanctuary.contains(ifSanctuary.firstChild)
+        ifSanctuary = null
         avalon.contains = function(a, b) {
             return a.contains(b)
         }
@@ -2694,7 +2695,7 @@
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
                         recycleEachProxies(removed)
-                        expelFromSanctuary(removeView(locatedNode, group, el))
+                   //     expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
@@ -2718,7 +2719,7 @@
                             transation = parent
                         }
                         recycleEachProxies(proxies)
-                        expelFromSanctuary(transation)
+                    //    expelFromSanctuary(transation)
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                         var t = proxies.splice(pos, 1)[0]
@@ -2801,7 +2802,6 @@
             })
         },
         "if": function(val, elem, data) {
-
             // var placehoder = data.placehoder
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
@@ -3749,18 +3749,18 @@
 
     //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
 
-    function expelFromSanctuary(parent) {
-        var comments = queryComments(parent)
-        for (var i = 0, comment; comment = comments[i++]; ) {
-            if (comment.nodeValue === "ms-if") {
-                cinerator.appendChild(comment.elem)
-            }
-        }
-        while (comment = parent.firstChild) {
-            cinerator.appendChild(comment)
-        }
-        cinerator.innerHTML = ""
-    }
+//    function expelFromSanctuary(parent) {
+//        var comments = queryComments(parent)
+//        for (var i = 0, comment; comment = comments[i++]; ) {
+//            if (comment.nodeValue === "ms-if") {
+//                cinerator.appendChild(comment.elem)
+//            }
+//        }
+//        while (comment = parent.firstChild) {
+//            cinerator.appendChild(comment)
+//        }
+//        cinerator.innerHTML = ""
+//    }
 
     function iteratorCallback(args, parent) {
         var callback = getBindingCallback(this.callbackElement, this.callbackName, this.vmodels)
