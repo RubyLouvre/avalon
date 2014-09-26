@@ -1,121 +1,37 @@
-<!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="avalon.js"></script>
-    </head>
-    <body>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="avalon.js" ></script>
         <script>
-            avalon.define("test", function(vm) {
-                vm.array = avalon.range(0, 4000)
+            var vmodel = avalon.define("test", function(vm) {
+                vm.array = [];
             })
+            avalon.scan();
 
-
-            function UrlMatcher(pattern, config) {
-                config = angular.isObject(config) ? config : {};
-
-                // Find all placeholders and create a compiled pattern, using either classic or curly syntax:
-                //   '*' name
-                //   ':' name
-                //   '{' name '}'
-                //   '{' name ':' regexp '}'
-                // The regular expression is somewhat complicated due to the need to allow curly braces
-                // inside the regular expression. The placeholder regexp breaks down as follows:
-                //    ([:*])(\w+)               classic placeholder ($1 / $2)
-                //    \{(\w+)(?:\:( ... ))?\}   curly brace placeholder ($3) with optional regexp ... ($4)
-                //    (?: ... | ... | ... )+    the regexp consists of any number of atoms, an atom being either
-                //    [^{}\\]+                  - anything other than curly braces or backslash
-                //    \\.                       - a backslash escape
-                //    \{(?:[^{}\\]+|\\.)*\}     - a matched set of curly braces containing other atoms
-                var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,
-                        compiled = '^', last = 0, m,
-                        segments = this.segments = [],
-                        params = this.params = {};
-
-                /**
-                 * [Internal] Gets the decoded representation of a value if the value is defined, otherwise, returns the
-                 * default value, which may be the result of an injectable function.
-                 */
-                function $value(value) {
-                    /*jshint validthis: true */
-                    return isDefined(value) ? this.type.decode(value) : $UrlMatcherFactory.$$getDefaultValue(this);
+            for (var i = 0; i < 5; i++) {
+                var aa = {
+                    src: []
                 }
-
-                function addParameter(id, type, config) {
-                    if (!/^\w+(-+\w+)*$/.test(id))
-                        throw new Error("Invalid parameter name '" + id + "' in pattern '" + pattern + "'");
-                    if (params[id])
-                        throw new Error("Duplicate parameter name '" + id + "' in pattern '" + pattern + "'");
-                    params[id] = extend({type: type || new Type(), $value: $value}, config);
+                var arr = [];
+                for (var j = 0; j < 10; j++) {
+                    arr.push("star.jpg");
                 }
-
-                function quoteRegExp(string, pattern, isOptional) {
-                    var result = string.replace(/[\\\[\]\^$*+?.()|{}]/g, "\\$&");
-                    if (!pattern)
-                        return result;
-                    var flag = isOptional ? '?' : '';
-                    return result + flag + '(' + pattern + ')' + flag;
-                }
-
-                function paramConfig(param) {
-                    if (!config.params || !config.params[param])
-                        return {};
-                    var cfg = config.params[param];
-                    return isObject(cfg) ? cfg : {value: cfg};
-                }
-
-                this.source = pattern;
-
-                // Split into static segments separated by path parameter placeholders.
-                // The number of segments is always 1 more than the number of parameters.
-                var id, regexp, segment, type, cfg;
-
-                while ((m = placeholder.exec(pattern))) {
-                    id = m[2] || m[3]; // IE[78] returns '' for unmatched groups instead of null
-                    regexp = m[4] || (m[1] == '*' ? '.*' : '[^/]*');
-                    segment = pattern.substring(last, m.index);
-                    type = this.$types[regexp] || new Type({pattern: new RegExp(regexp)});
-                    cfg = paramConfig(id);
-
-                    if (segment.indexOf('?') >= 0)
-                        break; // we're into the search part
-
-                    compiled += quoteRegExp(segment, type.$subPattern(), isDefined(cfg.value));
-                    addParameter(id, type, cfg);
-                    segments.push(segment);
-                    last = placeholder.lastIndex;
-                }
-                segment = pattern.substring(last);
-
-                // Find any search parameter names and remove them from the last segment
-                var i = segment.indexOf('?');
-
-                if (i >= 0) {
-                    var search = this.sourceSearch = segment.substring(i);
-                    segment = segment.substring(0, i);
-                    this.sourcePath = pattern.substring(0, last + i);
-
-                    // Allow parameters to be separated by '?' as well as '&' to make concat() easier
-                    forEach(search.substring(1).split(/[&?]/), function(key) {
-                        addParameter(key, null, paramConfig(key));
-                    });
-                } else {
-                    this.sourcePath = pattern;
-                    this.sourceSearch = '';
-                }
-
-                compiled += quoteRegExp(segment) + (config.strict === false ? '\/?' : '') + '$';
-                segments.push(segment);
-
-                this.regexp = new RegExp(compiled, config.caseInsensitive ? 'i' : undefined);
-                this.prefix = segments[0];
+                aa.src = arr;
+                vmodel.array.push(aa);
             }
-
+            setTimeout(function() {
+                vmodel.array = []
+            }, 2000)
         </script>
-        <ul ms-controller="test">
-            <li ms-repeat="array" ms-class="odd: $index % 1 == 0" ms-title="$index">{{el}}<input ms-duplex="el"/>{{$index}}</li>
-        </ul>
+    </head>
+    <body >
+        <div ms-controller="test">
+            <div ms-repeat="array">
+                <img ms-repeat-elem="el.src" ms-src="{{elem}}" style="width:150px ; height:150px"/>
+            </div>
+        </div>
+
     </body>
 </html>

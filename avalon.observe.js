@@ -2924,22 +2924,23 @@
         }
         array.length = 0
     }
-    function breakCircularReference(array) {
-        if (Array.isArray(array)) {
-            array.forEach(function(el) {
+     function breakCircularReference(prop, arr) {
+        if (prop && Array.isArray(arr = prop[subscribers])) {
+            arr.forEach(function(el) {
                 if (el.evaluator) {
                     el.evaluator = el.element = el.node = null
                 }
             })
-            array.length = 0
+            arr.length = 0
         }
     }
     function recycleEachProxy(proxy) {
         var obj = proxy.$accessors, name = proxy.$itemName;
-        breakCircularReference(obj.$index[subscribers])
-        breakCircularReference(obj.$last[subscribers])
-        breakCircularReference(obj.$first[subscribers])
-        breakCircularReference(obj[name][subscribers])
+        breakCircularReference(obj.$index)
+        breakCircularReference(obj.$last)
+        breakCircularReference(obj.$first)
+        breakCircularReference(obj[name])
+        breakCircularReference(proxy[name])
         proxy.$events = {}
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
