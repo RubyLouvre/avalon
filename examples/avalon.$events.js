@@ -2710,17 +2710,15 @@
                         }
                         break
                     case "clear":
-                        if (data.startRepeat) {
-                            while (true) {
-                                var node = data.startRepeat.nextSibling
-                                if (node && node !== data.endRepeat) {
-                                    transation.appendChild(node)
-                                } else {
-                                    break
-                                }
+                        var n = ("proxySize" in data ? data.proxySize : proxies.length) * data.group, k = 0
+                        while (true) {
+                            var nextNode = data.element.nextSibling
+                            if (nextNode && k < n) {
+                                parent.removeChild(nextNode)
+                                k++
+                            } else {
+                                break
                             }
-                        } else {
-                            transation = parent
                         }
                         recycleEachProxies(proxies)
                         break
@@ -2748,7 +2746,7 @@
                                 keys.push(key)
                             }
                         }
-                        if (data.sortCallback) { //如果有回调，则让它们排序
+                        if (data.sortedCallback) { //如果有回调，则让它们排序
                             var keys2 = data.sortCallback.call(parent, keys)
                             if (keys2 && Array.isArray(keys2) && keys2.length) {
                                 keys = keys2
@@ -2759,16 +2757,21 @@
                                 shimController(data, transation, pool[key], fragments)
                             }
                         }
-                        lastFn.parent = parent
-                        lastFn.node = data.endRepeat || null
-                        parent.insertBefore(transation, lastFn.node)
-                        for (var i = 0, el; el = spans[i++]; ) {
-                            scanTag(el, data.vmodels)
+                        data.proxySize = keys.length
+                        parent.insertBefore(transation, data.element.nextSibling)
+                        for (var i = 0, fragment; fragment = fragments[i++]; ) {
+                            scanNodeArray(fragment.nodes, fragment.vmodels)
+                            fragment.nodes = fragment.vmodels = null
                         }
-                        spans = null
+
                         break
                 }
-                //   iteratorCallback.call(data, arguments, parent)
+                var callback = data.renderedCallback
+                if (callback) {
+                    checkScan(parent, function() {
+                        callback.apply(parent, arguments)
+                    })
+                }
             }
         },
         "html": function(val, elem, data) {
@@ -2789,7 +2792,7 @@
                     fragment = avalon.parseHTML(val)
                 }
                 nodes = avalon.slice(fragment.childNodes)
-                if(nodes.length == 0){
+                if (nodes.length == 0) {
                     var comment = DOC.createComment("ms-html")
                     fragment.appendChild(comment)
                     nodes = [comment]
@@ -3004,12 +3007,11 @@
             } catch (e) {
             }
             var elem = data.element
-            data.sortCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
+            data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
+            data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
             var comment = data.element = DOC.createComment("ms-repeat")
-
             if (type === "each" || type == "with") {
                 data.template = elem.innerHTML
-
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
                 elem.removeAttribute(data.name)
@@ -3021,7 +3023,7 @@
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
-                var target = data.type == "repeat" ? elem : parentNode
+                var target = data.element = data.type == "repeat" ? elem : parentNode
                 target.setAttribute(data.name, data.value)
                 parentNode.replaceChild(avalon.parseHTML(data.template), elem)
             }
@@ -3618,7 +3620,6 @@
                 change = true
             }
             if (arguments.length > 2) {
-
                 this._add(aslice.call(arguments, 2), a)
                 change = true
             }
@@ -3727,46 +3728,6 @@
     }
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
-    //得到某一元素节点或文档碎片对象下的所有注释节点
-    var getComments = function(parent, array) {
-        var nodes = parent.childNodes
-        for (var i = 0, el; el = nodes[i++]; ) {
-            if (el.nodeType === 8) {
-                array.push(el)
-            } else if (el.nodeType === 1) {
-                getComments(el, array)
-            }
-        }
-    }
-    var queryComments = function(parent) {
-        var ret = []
-        getComments(parent, ret)
-        return ret
-    }
-
-    //将通过ms-if移出DOM树放进ifSanctuary的元素节点移出来，以便垃圾回收
-
-//    function expelFromSanctuary(parent) {
-//        var comments = queryComments(parent)
-//        for (var i = 0, comment; comment = comments[i++]; ) {
-//            if (comment.nodeValue === "ms-if") {
-//                cinerator.appendChild(comment.elem)
-//            }
-//        }
-//        while (comment = parent.firstChild) {
-//            cinerator.appendChild(comment)
-//        }
-//        cinerator.innerHTML = ""
-//    }
-
-    function iteratorCallback(args, parent) {
-        var callback = getBindingCallback(this.callbackElement, this.callbackName, this.vmodels)
-        if (callback) {
-            checkScan(parent, function() {
-                callback.apply(parent, args)
-            })
-        }
-    }
 
     function isVML(src) {
         var nodeName = src.nodeName
