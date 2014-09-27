@@ -448,7 +448,7 @@
         var $model = {} //vmodels.$model属性
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
-        var childrenProperties = []    //能转换为子VM或监控数组的属性
+        var childrenProperties = []  //能转换为子VM或监控数组的属性
         var $events = {}
         avalon.each($scope, function(name, val) {
             if (!isObservable(name, val, $scope.$skipArray)) {
@@ -456,12 +456,12 @@
                 return //过滤所有非监控属性
             }
             //总共产生三种accessor
-            var accessor, oldArgs
+            var accessor
             var valueType = avalon.type(val)
             $events[name] = []
             if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
-                var setter = val.set,
-                        getter = val.get
+                var setter = val.set
+                var getter = val.get
                 //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
                 accessor = function(newValue) {
                     var $events = $vmodel.$events
@@ -476,21 +476,14 @@
                             setter.call($vmodel, newValue)
                             $events[name] = backup
                         }
-                        if (!isEqual(oldArgs, newValue)) {
-                            oldArgs = newValue
-                            newValue = $model[name] = getter.call($vmodel) //同步$model
-                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                            notifySubscribers($events[name]) //通知顶层改变
-                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-                        }
-                    } else {
-                        newValue = $model[name] = getter.call($vmodel)
-                        if (!isEqual(oldValue, newValue)) {
-                            oldArgs = void 0
-                            safeFire($vmodel, name, newValue, oldValue)
-                        }
-                        return newValue
                     }
+                    newValue = $model[name] = getter.call($vmodel) //同步$model
+                    if (!isEqual(oldValue, newValue)) {
+                        withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                        notifySubscribers($events[name]) //通知顶层改变
+                        safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                    }
+                    return newValue
                 }
                 computedProperties.push(function() {
                     var data = {
@@ -1796,6 +1789,27 @@
             avalon.Array.ensure(list, data)
         }
     }
+
+    var ronduplex = /^(duplex|on)$/
+    function registerSubscriber(data, val) {
+        var fn = data.evaluator
+        if (fn) { //如果是求值函数
+            try {
+                var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
+                data.handler(c, data.element, data)
+            } catch (e) {
+                delete data.evaluator
+                if (data.nodeType === 3) {
+                    if (kernel.commentInterpolate) {
+                        data.element.replaceChild(DOC.createComment(data.value), data.node)
+                    } else {
+                        data.node.data = openTag + data.value + closeTag
+                    }
+                }
+                log("warning:evaluator of [" + data.value + "] throws error!")
+            }
+        }
+    }
     function notifySubscribers(list, nofire) {
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
@@ -1804,15 +1818,6 @@
                 if (el) {
                     var inTree = avalon.contains(root, el)
                     var remove = !inTree
-//                    var remove = !ifSanctuary.contains(el) && !inTree
-//                    var comment = fn.placehoder
-//                    if (fn.type === "if" && comment) {
-//                        var recycle = fn.msInDocument ? !inTree : !avalon.contains(root, comment)
-//                        if (recycle) {
-//                            breakCircularReference([fn])
-//                            remove = true
-//                        }
-//                    }
                 } else if (fn.type === "if" || fn.node === null) {
                     remove = true
                 }
@@ -1822,12 +1827,12 @@
                     breakCircularReference(removed)
                 } else if (nofire === true) {
                     //nothing
-                } else if (typeof fn === "function") {
-                    // fn.apply(0, args) //待处理， 强制重新计算自身
-                } else if (fn.$repeat) {
+                }
+                if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.node || fn.element) {
                     var fun = fn.evaluator || noop
+                    // console.log(fun+"")
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
             }
@@ -2443,30 +2448,11 @@
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
-            executeBinding(data)
+            registerSubscriber(data)
         }
     }
 
-    var ronduplex = /^(duplex|on)$/
-    function executeBinding(data, val) {
-        var fn = data.evaluator
-        if (fn) { //如果是求值函数
-            try {
-                var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-                data.handler(c, data.element, data)
-            } catch (e) {
-                delete data.evaluator
-                if (data.nodeType === 3) {
-                    if (kernel.commentInterpolate) {
-                        data.element.replaceChild(DOC.createComment(data.value), data.node)
-                    } else {
-                        data.node.data = openTag + data.value + closeTag
-                    }
-                }
-                log("warning:evaluator of [" + data.value + "] throws error!")
-            }
-        }
-    }
+
     avalon.parseExprProxy = parseExprProxy
     /*********************************************************************
      *                     绑定处理系统                                    *
@@ -2981,7 +2967,7 @@
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
-                parseExpr(data.value, vmodels, data, "duplex")
+                parseExpr(data.value, vmodels, data)
                 if (data.evaluator && data.args) {
                     var form = elem.form
                     if (form && form.msValidate) {
@@ -3331,8 +3317,7 @@
                 return false
             }
         })
-        executeBinding(data)
-        //  registerSubscriber(data)
+        registerSubscriber(data)
         var timer = setTimeout(function() {
             if (!firstTigger) {
                 callback.call(element, element.value)
@@ -3424,8 +3409,7 @@
             if (currHTML === innerHTML) {
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                //   registerSubscriber(data)
-                executeBinding(data)
+                registerSubscriber(data)
                 data.changed.call(element, evaluator())
             } else {
                 innerHTML = currHTML
