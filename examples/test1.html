@@ -10,21 +10,31 @@
                 vm.a = 1
                 vm.c = 3
                 vm.b = 2
-                vm.d = {a: "222222222", b: "ddddd", c: 345435}
-                vm.e = {
-                    d: "4"
+           //     vm.d = {a: "222222222", b: "ddddd", c: 345435}
+                vm.firstName = "ddd"
+                vm.lastName = "fgfg"
+                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
+                    set: function(val) {//里面必须用this指向scope，不能使用scope
+                        var array = (val || "").split(" ");
+                        this.firstName = array[0] || "";
+                        this.lastName = array[1] || "";
+                    },
+                    get: function() {
+                        return this.firstName + " " + this.lastName;
+                    }
                 }
+
                 vm.$skipArray = ["a"]
-                vm.array = [5, 2, 3, 4]
+              //  vm.array = [5, 2, 3, 4]
             });
-            model.$watch("b", function(a) {
-                avalon.log(a + "--------------")
-            })
-            setTimeout(function(){
-                model.array.splice(2,0,9)
-                model.array.sort()
-                 model.array.pop()
-            },1000)
+//            model.$watch("b", function(a) {
+//                avalon.log(a + "--------------")
+//            })
+//            setTimeout(function(){
+//                model.array.splice(2,0,9)
+//                model.array.sort()
+//                 model.array.pop()
+//            },1000)
             // console.log(model)
 //            setTimeout(function() {
 //                model.d = {
@@ -52,9 +62,9 @@
     <body>
         <div ms-controller="test" >
         
-            <ul>
+<!--            <ul>
                 <li ms-repeat="array">{{el}}<strong>{{$index}}</strong></li>
-            </ul>
+            </ul>-->
         </div>
     </body>
 </html>

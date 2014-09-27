@@ -435,21 +435,20 @@
             $scope.length = 0
             var collection = Collection($scope, $parent)
             collection.pushArray(arr)
-
             return collection
         }
-        if ($scope && typeof $scope.nodeType === "number") {
+        if (typeof $scope.nodeType === "number") {
             return $scope
         }
         if (!Array.isArray($scope.$skipArray)) {
             $scope.$skipArray = []
         }
         $scope.$skipArray.$special = $special || {}//强制要监听的属性
-        var vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
+        var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
         var $model = {} //vmodels.$model属性
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
-        var objectProperties = []    //能转换为子VM或监控数组的属性
+        var childrenProperties = []    //能转换为子VM或监控数组的属性
         var $events = {}
         avalon.each($scope, function(name, val) {
             if (!isObservable(name, val, $scope.$skipArray)) {
@@ -460,12 +459,12 @@
             var accessor, oldArgs
             var valueType = avalon.type(val)
             $events[name] = []
-            if (valueType === "object" && isFunction(val.get) && Object.keys(name).length <= 2) {
+            if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
                 var setter = val.set,
                         getter = val.get
                 //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
                 accessor = function(newValue) {
-                    var $events = vmodel.$events
+                    var $events = $vmodel.$events
                     var oldValue = $model[name]
                     if (arguments.length) {
                         if (stopRepeatAssign) {
@@ -474,26 +473,36 @@
                         if (isFunction(setter)) {
                             var backup = $events[name]
                             $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
-                            setter.call(vmodel, newValue)
+                            setter.call($vmodel, newValue)
                             $events[name] = backup
                         }
                         if (!isEqual(oldArgs, newValue)) {
                             oldArgs = newValue
-                            newValue = $model[name] = getter.call(vmodel) //同步$model
-                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                            newValue = $model[name] = getter.call($vmodel) //同步$model
+                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                             notifySubscribers($events[name]) //通知顶层改变
-                            safeFire(vmodel, name, newValue, oldValue) //触发$watch回调
+                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
-                        newValue = $model[name] = getter.call(vmodel)
+                        newValue = $model[name] = getter.call($vmodel)
                         if (!isEqual(oldValue, newValue)) {
                             oldArgs = void 0
-                            safeFire(vmodel, name, newValue, oldValue)
+                            safeFire($vmodel, name, newValue, oldValue)
                         }
                         return newValue
                     }
                 }
-                computedProperties.push(accessor)
+                computedProperties.push(function() {
+                    var data = {
+                        evaluator: accessor,
+                        element: head,
+                        handler: noop
+                    }
+                    var vars = getVariables(getter + "").concat()
+                    if (vars.length) {
+                        addAssign(vars, $vmodel, name, data)
+                    }
+                })
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
                 accessor = function(newValue) {
@@ -504,18 +513,18 @@
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = updateChild(vmodel, name, newValue, valueType)
+                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
                             var fn = rebindings[childVmodel.$id]
                             fn && fn() //更新视图
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            safeFire(vmodel, name, newValue, oldValue) //触发$watch回调
+                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
                         return childVmodel
                     }
                 }
-                objectProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
-                    var childVmodel = accessor.child = modelFactory(val, vmodel)
+                childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
+                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
                     $model[name] = childVmodel.$model
                 })
             } else {
@@ -525,9 +534,9 @@
                     if (arguments.length) {
                         if (!isEqual(oldValue, newValue)) {
                             $model[name] = newValue //同步$model
-                            withProxyCount && updateWithProxy(vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                            notifySubscribers(vmodel.$events[name]) //通知顶层改变
-                            safeFire(vmodel, name, newValue, oldValue) //触发$watch回调
+                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                            notifySubscribers($vmodel.$events[name]) //通知顶层改变
+                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
                         return oldValue
@@ -544,36 +553,35 @@
             delete $model[name]  //这些特殊属性不应该在$model中出现
         })
 
-        vmodel = defineProperties(vmodel, descriptorFactory(watchedProperties), $scope) //生成一个空的ViewModel
+        $vmodel = defineProperties($vmodel, descriptorFactory(watchedProperties), $scope) //生成一个空的ViewModel
         for (var name in $scope) {
             if (!watchedProperties[name]) {
-                vmodel[name] = $scope[name]
+                $vmodel[name] = $scope[name]
             }
         }
-        vmodel.$id = generateID()
-        vmodel.$model = $model
-        vmodel.$events = $events
-        vmodel.$parent = $parent || null
+        //添加$id, $model, $events, $parent, $watch, $unwatch, $fire
+        $vmodel.$id = generateID()
+        $vmodel.$model = $model
+        $vmodel.$events = $events
+        $vmodel.$parent = $parent || null
         for (var i in EventManager) {
             var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
-                fn = fn.bind(vmodel)
+                fn = fn.bind($vmodel)
             }
-            vmodel[i] = fn
+            $vmodel[i] = fn
         }
 
-        vmodel.hasOwnProperty = function(name) {
-            return name in vmodel.$model
+        $vmodel.hasOwnProperty = function(name) {
+            return name in $vmodel.$model
         }
-        objectProperties.forEach(function(convert) {
+        childrenProperties.forEach(function(convert) {//生成子VM
             convert()
         })
-
-        for (var i = 0, fn; fn = computedProperties[i++]; ) { //最后强逼计算属性 计算自己的值
-            fn()
-            collectSubscribers(fn)
-        }
-        return vmodel
+        computedProperties.forEach(function(collect) {//收集依赖
+            collect()
+        })
+        return $vmodel
     }
 
     //比较两个值是否相等
@@ -2196,7 +2204,7 @@
     var rcommaInMiddle = /,+/
     //去掉所有关键字保留字
     var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var cacheVars = createCache(512)
+    var cacheVars = createCache(128)
     var getVariables = function(str) {
         var key = "," + str.trim()
         if (cacheVars[key]) {
@@ -2212,7 +2220,9 @@
                 .replace(rkeywords, ",")
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
-                .split(rcommaInMiddle)
+                .split(rcommaInMiddle).map(function(str) {
+            return str.charAt(0) === "." ? str.slice(1) : str
+        })
         return cacheVars(key, uniqSet(vars))
     }
 
@@ -3875,13 +3885,13 @@
         array.length = 0
     }
     function breakCircularReference(array) {
-        if(!Array.isArray(array))
+        if (!Array.isArray(array))
             return
         array.forEach(function(el) {
             if (el.evaluator) {
                 el.evaluator = el.element = el.node = el.vmodels = null
                 if (el.proxies) {//ms-repeat ms-with ms-each
-                   el.callbackElement = el.template = null
+                    el.callbackElement = el.template = null
                 }
             }
         })
