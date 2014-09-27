@@ -480,7 +480,7 @@
                     newValue = $model[name] = getter.call($vmodel) //同步$model
                     if (!isEqual(oldValue, newValue)) {
                         withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                        notifySubscribers($events[name]) //通知顶层改变
+                        notifySubscribers($events[name]) //同步视图
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                     return newValue
@@ -507,10 +507,10 @@
                         }
                         if (!isEqual(oldValue, newValue)) {
                             childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
-                            var fn = rebindings[childVmodel.$id]
-                            fn && fn() //更新视图
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                            var fn = rebindings[childVmodel.$id]
+                            fn && fn() //同步视图
+                            safeFire($vmodel, name, newValue, oldValue)  //触发$watch回调
                         }
                     } else {
                         return childVmodel
@@ -527,8 +527,8 @@
                     if (arguments.length) {
                         if (!isEqual(oldValue, newValue)) {
                             $model[name] = newValue //同步$model
-                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                            notifySubscribers($vmodel.$events[name]) //通知顶层改变
+                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
+                            notifySubscribers($vmodel.$events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     } else {
@@ -1259,15 +1259,15 @@
             rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
     avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
         if (typeof data === "string") {
-            data = data.trim();
+            data = data.trim()
             if (data) {
                 if (rvalidchars.test(data.replace(rvalidescape, "@")
                         .replace(rvalidtokens, "]")
                         .replace(rvalidbraces, ""))) {
-                    return (new Function("return " + data))();
+                    return (new Function("return " + data))()
                 }
             }
-            avalon.error("Invalid JSON: " + data);
+            avalon.error("Invalid JSON: " + data)
         }
     }
 
@@ -1317,7 +1317,7 @@
         return null
     }
     cssHooks["@:set"] = function(node, name, value) {
-        try { //node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine 在旧式IE下会抛异常
+        try { //node.style.width = NaN;node.style.width = "xxx";node.style.width = undefine 在旧式IE下会抛异常
             node.style[name] = value
         } catch (e) {
         }

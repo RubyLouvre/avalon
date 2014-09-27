@@ -3,8 +3,8 @@
     <head>
         <title>avalon入门</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.$events.js" type="text/javascript"></script>
-        <!--         <script src="../avalon.js" type="text/javascript"></script>-->
+        <!--        <script src="avalon.$events.js" type="text/javascript"></script>-->
+        <script src="../avalon.js" type="text/javascript"></script>
         <script>
             var first = 0;
             var model = avalon.define("test", function(vm) {
@@ -19,6 +19,14 @@
                     get: function() {
                         return this.firstName + " " + this.lastName;
                     }
+                }
+                vm.color = "red",
+                        vm.toggle = true
+                vm.changeToggle = function() {
+                    model.toggle = !model.toggle
+                }
+                vm.switchColor = function() {
+                    model.color = model.color === "red" ? "blue" : "red"
                 }
                 vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
                 vm.selected = ["bbb", "ccc"]
@@ -39,13 +47,26 @@
                     if (!bool) {
                         vm.checkAllbool = false
                     } else {
-                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                        vm.checkAllbool = vm.selected.size() === vm.arr.size()
                     }
                 }
             })
 
 
         </script>
+        <style>
+            .ms-class-test{
+                background:green;
+                width:300px;
+                height:100px;
+            }
+            .c-red{
+                background: red;
+            }
+            .c-blue{
+                background: blue;
+            }
+        </style>
     </head>
     <body>
         <div ms-controller="test">
@@ -57,8 +78,10 @@
                 <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>全选</li>
                 <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}  <strong>{{$index}}</strong></li>
             </ul>
+            <div class="ms-class-test" ms-hover="c-{{color}}:toggle"> </div>
+            <div><button ms-click="switchColor"> 点我改变悬浮时的背景颜色</button>现在悬浮色为{{color}}</div>
+            <div><button ms-click="changeToggle"> 点我{{toggle? "禁止": "开启" }}悬浮变色</button></div>
         </div>
-
 
     </body>
 </html>
