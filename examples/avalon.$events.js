@@ -2757,7 +2757,6 @@
                             scanNodeArray(fragment.nodes, fragment.vmodels)
                             fragment.nodes = fragment.vmodels = null
                         }
-
                         break
                 }
                 var callback = data.renderedCallback
@@ -2824,7 +2823,7 @@
                         }
                     }
                 }
-            } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
+            } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
                     var node = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
@@ -2884,8 +2883,6 @@
     }
 
     var rdash = /\(([^)]*)\)/
-    var rwhitespace = /^\s+$/
-
     function parseDisplay(nodeName, val) {
         //用于取得此类标签的默认display值
         var key = "_" + nodeName
