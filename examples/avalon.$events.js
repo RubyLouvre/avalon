@@ -2686,7 +2686,7 @@
             if (method) {
                 var data = this
                 var group = data.group
-                var parent = data.startRepeat ? data.startRepeat.parentNode : data.callbackElement// //fix  #300 #307
+                var parent = data.elem.parentNode// //fix  #300 #307
                 var proxies = data.proxies
                 var transation = hyperspace.cloneNode(false)
                 if (method === "del" || method === "move") {
@@ -2696,22 +2696,19 @@
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var last = data.$repeat.length - 1
-                        var spans = []
-                        var lastFn = {}
+                        var fragments = []
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
                             var proxy = getEachProxy(ii, arr[i], data, last)
                             proxies.splice(ii, 0, proxy)
-                            lastFn = shimController(data, transation, spans, proxy)
+                            lastFn = shimController(data, transation, proxy, fragments)
                         }
-                        locatedNode = getLocatedNode(parent, data, pos)
-                        lastFn.node = locatedNode
-                        lastFn.parent = parent
                         parent.insertBefore(transation, locatedNode)
-                        for (var i = 0, node; node = spans[i++]; ) {
-                            scanTag(node, data.vmodels)
+                        for (var i = 0, fragment; fragment = fragments[i++]; ) {
+                            scanNodeArray(fragment.nodes, fragment.vmodels)
+                            fragment.nodes = fragment.vmodels = null
                         }
-                        spans = null
+
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
@@ -3002,109 +2999,6 @@
             }
         },
         "repeat": function(data, vmodels) {
-            var type = data.type
-            parseExpr(data.value, vmodels, data)
-
-            var elem = data.callbackElement = data.element //用于判定当前元素是否位于DOM树
-
-            data.proxies = []
-            var freturn = true
-            try {
-                var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
-                var xtype = avalon.type($repeat)
-                if (xtype === "object" || xtype === "array") {
-                    freturn = false
-                }
-            } catch (e) {
-            }
-            var template = hyperspace.cloneNode(false)
-            if (type === "repeat") {
-                var startRepeat = DOC.createComment("ms-repeat-start")
-                var endRepeat = DOC.createComment("ms-repeat-end")
-                data.startRepeat = startRepeat
-                data.endRepeat = endRepeat
-                elem.removeAttribute(data.name)
-                var parent = data.element = elem.parentNode
-                parent.replaceChild(endRepeat, elem)
-                parent.insertBefore(startRepeat, endRepeat)
-                template.appendChild(elem)
-            } else {
-                var node
-                while (node = elem.firstChild) {
-                    if (node.nodeType === 3 && rwhitespace.test(node.data)) {
-                        elem.removeChild(node)
-                    } else {
-                        template.appendChild(node)
-                    }
-                }
-            }
-            data.template = template
-            data.rollback = function() {//只用于list为对象的情况
-                bindingExecutors.repeat.call(data, "clear")
-                var endRepeat = data.endRepeat
-                var parent = data.element
-                parent.insertBefore(data.template, endRepeat || null)
-                if (endRepeat) {
-                    parent.removeChild(endRepeat)
-                    parent.removeChild(data.startRepeat)
-                    data.element = data.callbackElement
-                }
-            }
-
-            if (freturn) {
-                return
-            }
-            data.callbackName = "data-" + type + "-rendered"
-            data.handler = bindingExecutors.repeat
-            data.$outer = {}
-            var check0 = "$key",
-                    check1 = "$val"
-            if (Array.isArray($repeat)) {
-                check0 = "$first"
-                check1 = "$last"
-            }
-            for (var i = 0, p; p = vmodels[i++]; ) {
-                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
-                    data.$outer = p
-                    break
-                }
-            }
-            node = template.firstChild
-            data.fastRepeat = !!node && node.nodeType === 1 && template.lastChild === node && !node.attributes["ms-controller"] && !node.attributes["ms-important"]
-            //  var subscribers = 
-            var $parent = $repeat.$parent, subscribers
-            for (var i in $parent) {
-                if ($parent[i] === $repeat) {
-                    subscribers = $parent.$events[i]
-                    break
-                }
-            }
-            if (subscribers) {
-                subscribers.push(data)
-                notifySubscribers(subscribers) //强制垃圾回收
-            }
-            if (!Array.isArray($repeat) && type !== "each") {
-                var pool = withProxyPool[$repeat.$id]
-                if (!pool) {
-                    withProxyCount++
-                    pool = withProxyPool[$repeat.$id] = {}
-                    for (var key in $repeat) {
-                        if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                            (function(k, v) {
-                                pool[k] = createWithProxy(k, v, {})
-                                pool[k].$watch("$val", function(val) {
-                                    $repeat[k] = val //#303
-                                })
-                            })(key, $repeat[key])
-                        }
-                    }
-                }
-                data.handler("append", $repeat, pool)
-            } else {
-                data.handler("add", 0, $repeat)
-            }
-        },
-        "repeat@events": function(data, vmodels) {
             var type = data.type
             parseExpr(data.value, vmodels, data)
 
@@ -3891,113 +3785,23 @@
             })
         }
     }
-    function getAll(elem) {//VML的getElementsByTagName("*")不能取得所有元素节点
-        var ret = []
-        function get(parent, array) {
-            var nodes = parent.childNodes
-            for (var i = 0, el; el = nodes[i++]; ) {
-                if (el.nodeType === 1) {
-                    array.push(el)
-                    get(el, array)
-                }
-            }
-            return array
-        }
-        return get(elem, ret)
-    }
+
     function isVML(src) {
         var nodeName = src.nodeName
         return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
     }
-    function fixCloneNode(src) {
-        var target = src.cloneNode(true)
-        if (window.VBArray) {//只处理IE
-            var srcAll = getAll(src)
-            var destAll = getAll(target)
-            for (var k = 0, src; src = srcAll[k]; k++) {
-                if (src.nodeType === 1) {
-                    var nodeName = src.nodeName
-                    var dest = destAll[k]
-                    if (nodeName === "INPUT" && /radio|checkbox/.test(src.type)) {
-                        dest.defaultChecked = dest.checked = src.checked
-                        if (dest.value !== src.value) {
-                            dest.value = src.value//IE67复制后，value从on变成""
-                        }
-                    } else if (nodeName === "OBJECT") {
-                        if (dest.parentNode) {//IE6-10拷贝子孙元素失败了
-                            dest.outerHTML = src.outerHTML
-                        }
-                    } else if (nodeName === "OPTION") {
-                        dest.defaultSelected = dest.selected = src.defaultSelected
-                    } else if (nodeName === "INPUT" || nodeName === "TEXTAREA") {
-                        dest.defaultValue = src.defaultValue
-                    } else if (isVML(src)) {
-                        //src.tagUrn === "urn:schemas-microsoft-com:vml"//判定是否为VML元素
-                        var props = {}//处理VML元素
-                        src.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="([^"]+)"/g, function(a, prop, val) {
-                            props[prop] = val
-                        }).replace(/(\w+)='([^']+)'/g, function(a, prop, val) {
-                            props[prop] = val
-                        })
-                        dest.outerHTML.replace(/\s*=\s*/g, "=").replace(/(\w+)="/g, function(a, prop) {
-                            delete props[prop]
-                        }).replace(/(\w+)='/g, function(a, prop) {
-                            delete props[prop]
-                        })
-                        delete props.urn
-                        delete props.implementation
-                        for (var i in props) {
-                            dest.setAttribute(i, props[i])
-                        }
-                        fixVML(dest)
-                    }
-                }
-            }
-        }
-        return target
-    }
 
-    function fixVML(node) {
-        if (node.currentStyle.behavior !== "url(#default#VML)") {
-            node.style.behavior = "url(#default#VML)"
-            node.style.display = "inline-block"
-            node.style.zoom = 1 //hasLayout
-        }
-    }
-
-    //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
-    function shimController(data, transation, spans, proxy) {
-        var tview = fixCloneNode(data.template)
-        var id = proxy.$id
-        var span = tview.firstChild
-        if (!data.fastRepeat) {
-            span = DOC.createElement("msloop")
-            span.style.display = "none"
-            span.appendChild(tview)
-        }
-        span.setAttribute("ms-controller", id)
-        span.removeAttribute(data.callbackName)
-        span.removeAttribute("data-with-sorted")
-        spans.push(span)
-        transation.appendChild(span)
+    function shimController(data, transation, proxy, fragments) {
+        var dom = avalon.parseHTML(data.template)
+        var nodes = avalon.slice(dom.childNodes)
+        transation.appendChild(dom)
         proxy.$outer = data.$outer
-        VMODELS[id] = proxy
-
-        function fn() {
-            delete VMODELS[id]
-            data.group = 1
-            if (!data.fastRepeat) {
-                data.group = span.childNodes.length
-                span.parentNode.removeChild(span)
-                while (span.firstChild) {
-                    transation.appendChild(span.firstChild)
-                }
-                if (fn.node !== void 0) {
-                    fn.parent.insertBefore(transation, fn.node)
-                }
-            }
+        data.group = nodes.length
+        var fragment = {
+            nodes: nodes,
+            vmodes: [proxy].concat(data.vmodes)
         }
-        return span.patchRepeat = fn
+        fragments.push(fragment)
     }
     // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
@@ -4005,19 +3809,14 @@
     // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
 
     function getLocatedNode(parent, data, pos) {
-        if (data.startRepeat) {
-            var ret = data.startRepeat,
-                    end = data.endRepeat
-            pos += 1
-            for (var i = 0; i < pos; i++) {
-                ret = ret.nextSibling
-                if (ret === end)
-                    return end
-            }
-            return ret
-        } else {
-            return parent.childNodes[data.group * pos] || null
+        var ret = data.elem
+        pos += 1
+        for (var i = 0; i < pos; i++) {
+            ret = ret.nextSibling
+            if (ret === null)
+                return null
         }
+        return ret
     }
 
     function removeView(node, group, n) {
@@ -4041,7 +3840,7 @@
             $key: key,
             $outer: $outer,
             $val: val
-        }, [], {
+        }, null, {
             $val: 1,
             $key: 1
         })
@@ -4075,7 +3874,7 @@
         if (rcomplexType.test(avalon.type(item))) {
             source.$skipArray = [param]
         }
-        proxy = modelFactory(source, [], watchEachOne)
+        proxy = modelFactory(source,null, watchEachOne)
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })
