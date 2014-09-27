@@ -1947,8 +1947,7 @@
                     var filters = token.filters
                     var binding = {
                         type: "text",
-                        node: node,
-                        nodeType: 3,
+                        element: node,
                         value: token.value,
                         filters: filters
                     }
@@ -2111,7 +2110,7 @@
         for (var i = 0, data; data = bindings[i++]; ) {
             data.vmodels = vmodels
             bindingHandlers[data.type](data, vmodels)
-            if (data.evaluator && data.name && data.element && data.element.nodeType === 1) { //移除数据绑定，防止被二次解析
+            if (data.evaluator && data.element && data.element.nodeType === 1) { //移除数据绑定，防止被二次解析
                 //chrome使用removeAttributeNode移除不存在的特性节点时会报错 https://github.com/RubyLouvre/avalon/issues/99
                 data.element.removeAttribute(data.name)
             }
@@ -2726,7 +2725,6 @@
                             transation = parent
                         }
                         recycleEachProxies(proxies)
-                        //    expelFromSanctuary(transation)
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                         var t = proxies.splice(pos, 1)[0]
@@ -2781,11 +2779,10 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
-            if (!elem) {
-                elem = data.element = data.node.parentNode
-            }
-            if (data.replaceNodes) {
+            var parent = elem.nodeType == 3 ? elem.parentNode : elem
+            if (elem.nodeType === 3) {
                 var fragment, nodes
+                //将值转换为文档碎片，原值可以为元素节点，文档碎片，NodeList，字符串
                 if (val.nodeType === 11) {
                     fragment = val
                 } else if (val.nodeType === 1 || val.item) {
@@ -2798,23 +2795,22 @@
                     fragment = avalon.parseHTML(val)
                 }
                 var replaceNodes = avalon.slice(fragment.childNodes)
-                elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+                parent.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
                 for (var i = 0, node; node = data.replaceNodes[i++]; ) {
-                    elem.removeChild(node)
+                    parent.removeChild(node)
                 }
                 data.replaceNodes = replaceNodes
             } else {
-                avalon.innerHTML(elem, val)
+                avalon.innerHTML(parent, val)
             }
             avalon.nextTick(function() {
-                scanNodeList(elem, data.vmodels)
+                scanNodeList(parent, data.vmodels)
             })
         },
         "if": function(val, elem, data) {
-            // var placehoder = data.placehoder
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
-                    var node = avalon.parseHTML(data.html).firstChild
+                    var node = avalon.parseHTML(data.template).firstChild
                     elem.parentNode.replaceChild(node, elem)
                     data.element = node
                     if (rbind.test(data.html.replace(rlt, "<").replace(rgt, ">"))) {
@@ -2865,11 +2861,9 @@
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
-            var node = data.node
-            if (data.nodeType === 3) { //绑定在文本节点上
-                data.element = node.parentNode
+            if (elem.nodeType === 3) { //绑定在文本节点上
                 try {//IE对游离于DOM树外的节点赋值会报错
-                    node.data = val
+                    elem.data = val
                 } catch (e) {
                 }
             } else { //绑定在特性节点上
@@ -3072,7 +3066,7 @@
             var elem = data.element
             if (elem.nodeType === 1) {
                 elem.removeAttribute(data.name)
-                data.html = elem.outerHTML
+                data.template = elem.outerHTML
                 var comment = DOC.createComment("ms-if")
                 elem.parentNode.replaceChild(comment, elem)
                 data.element = comment
@@ -3876,6 +3870,9 @@
                 el.evaluator = el.element = el.node = el.vmodels = null
                 if (el.proxies) {//ms-repeat ms-with ms-each
                     el.callbackElement = el.template = null
+                }
+                if (el.replaceNodes) {// {{ str | html}}
+                    el.replaceNodes.length = 0
                 }
             }
         })

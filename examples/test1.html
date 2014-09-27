@@ -20,8 +20,9 @@
                         return this.firstName + " " + this.lastName;
                     }
                 }
-                vm.color = "red",
+                vm.color = "red"
                         vm.toggle = true
+                        vm.html = "<strong>1</strong>2<strong>3</strong>"
                 vm.changeToggle = function() {
                     model.toggle = !model.toggle
                 }
@@ -81,6 +82,7 @@
             <div class="ms-class-test" ms-hover="c-{{color}}:toggle"> </div>
             <div><button ms-click="switchColor"> 点我改变悬浮时的背景颜色</button>现在悬浮色为{{color}}</div>
             <div><button ms-click="changeToggle"> 点我{{toggle? "禁止": "开启" }}悬浮变色</button></div>
+            <div>test{{html | html}}test</div>
         </div>
 
     </body>
