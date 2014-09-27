@@ -1954,7 +1954,7 @@
                     if (filters && filters.indexOf("html") !== -1) {
                         avalon.Array.remove(filters, "html")
                         binding.type = "html"
-                        binding.replaceNodes = [node]
+                        binding.group = 1
                         if (!filters.length) {
                             delete bindings.filters
                         }
@@ -2756,7 +2756,7 @@
                         }
                         for (var i = 0, key; key = keys[i++]; ) {
                             if (key !== "hasOwnProperty") {
-                                shimController(data, transation,  pool[key], fragments)
+                                shimController(data, transation, pool[key], fragments)
                             }
                         }
                         lastFn.parent = parent
@@ -2773,8 +2773,8 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
-            var parent = elem.nodeType == 3 ? elem.parentNode : elem
-            if (elem.nodeType === 3) {
+            var parent = "group" in data ? elem.parentNode : elem
+            if ("group" in data) {
                 var fragment, nodes
                 //将值转换为文档碎片，原值可以为元素节点，文档碎片，NodeList，字符串
                 if (val.nodeType === 11) {
@@ -2788,12 +2788,24 @@
                 } else {
                     fragment = avalon.parseHTML(val)
                 }
-                var replaceNodes = avalon.slice(fragment.childNodes)
-                parent.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
-                for (var i = 0, node; node = data.replaceNodes[i++]; ) {
-                    parent.removeChild(node)
+                nodes = avalon.slice(fragment.childNodes)
+                if(nodes.length == 0){
+                    var comment = DOC.createComment("ms-html")
+                    fragment.appendChild(comment)
+                    nodes = [comment]
                 }
-                data.replaceNodes = replaceNodes
+                parent.insertBefore(fragment, elem) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+                var length = data.group
+                while (elem) {
+                    var nextNode = elem.nextSibling
+                    parent.removeChild(elem)
+                    length--
+                    if (length == 0 || nextNode === null)
+                        break
+                    elem = nextNode
+                }
+                data.element = nodes[0]
+                data.group = nodes.length
             } else {
                 avalon.innerHTML(parent, val)
             }
@@ -2997,7 +3009,7 @@
 
             if (type === "each" || type == "with") {
                 data.template = elem.innerHTML
-                
+
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
                 elem.removeAttribute(data.name)
@@ -3864,9 +3876,6 @@
                 el.evaluator = el.element = el.node = el.vmodels = null
                 if (el.proxies) {//ms-repeat ms-with ms-each
                     el.callbackElement = el.template = null
-                }
-                if (el.replaceNodes) {// {{ str | html}}
-                    el.replaceNodes.length = 0
                 }
             }
         })
