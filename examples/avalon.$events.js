@@ -549,7 +549,7 @@
                 vmodel[name] = $scope[name]
             }
         }
-        vmodel.$id =  generateID()
+        vmodel.$id = generateID()
         vmodel.$model = $model
         vmodel.$events = $events
         vmodel.$parent = $parent || null
@@ -1667,7 +1667,9 @@
         this.clearHTML(node).appendChild(a)
     }
     avalon.clearHTML = function(node) {
-        expelFromSanctuary(node)
+        while (node.firstChild) {
+            node.removeChild(node.firstChild)
+        }
         return node
     }
     /*********************************************************************
@@ -1778,7 +1780,13 @@
     /*********************************************************************
      *                           依赖调度系统                             *
      **********************************************************************/
-
+    function collectSubscribers(scope, prop, data) {
+        var obj = scope.$events
+        if (obj) {
+            var list = obj[prop] || (obj[prop] = [])
+            avalon.Array.ensure(list, data)
+        }
+    }
     function notifySubscribers(list, nofire) {
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
@@ -1880,22 +1888,28 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels) {
+    function scanNodeList(parent, vmodels) {
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
-            var nodeType = node.nodeType
-            if (nodeType === 1) {
-                scanTag(node, vmodels) //扫描元素节点
-            } else if (nodeType === 3 && rexpr.test(node.data)) {
-                scanText(node, vmodels) //扫描文本节点
-            } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-                scanText(node, vmodels) //扫描注释节点
-            }
+            scanNode(node, node.nodeType, vmodels)
             node = nextNode
         }
     }
-
+    function scanNodeArray(nodes, vmodels) {
+        for (var i = 0, node; node = nodes[i++]; ) {
+            scanNode(node, node.nodeType, vmodels)
+        }
+    }
+    function scanNode(node, nodeType, vmodels) {
+        if (nodeType === 1) {
+            scanTag(node, vmodels) //扫描元素节点
+        } else if (nodeType === 3 && rexpr.test(node.data)) {
+            scanText(node, vmodels) //扫描文本节点
+        } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+            scanText(node, vmodels) //扫描注释节点
+        }
+    }
     function scanText(textNode, vmodels) {
         var bindings = []
         if (textNode.nodeType === 8) {
@@ -2025,7 +2039,7 @@
             default:
                 executeBindings(bindings, vmodels)
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanNodes(elem, vmodels) //扫描子孙元素
+                    scanNodeList(elem, vmodels) //扫描子孙元素
                 }
                 break;
         }
@@ -2236,13 +2250,7 @@
         }
     }()
 
-    function addDeps(scope, prop, data) {
-        var obj = scope.$events
-        if (obj) {
-            var arr = obj[prop] || (obj[prop] = [])
-            avalon.Array.ensure(arr, data)
-        }
-    }
+
     function inObject(obj, array) {
         if (!obj.hasOwnProperty(array[0])) {
             return 0
@@ -2265,7 +2273,7 @@
             var flag = inObject(scope, arr)
             if (flag) {
                 var prop = arr.shift()
-                addDeps(scope, prop, data)
+                collectSubscribers(scope, prop, data)
                 ret.push(prop + prefix + prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
@@ -2275,7 +2283,7 @@
                     subscope = subscope[prop]
                     if (subscope && typeof subscope === "object") {
                         prop = arr.shift()
-                        addDeps(subscope, prop, data)
+                        collectSubscribers(subscope, prop, data)
                     } else {
                         break
                     }
@@ -2564,7 +2572,7 @@
                         text = loaded.apply(elem, [text].concat(vmodels))
                     }
                     avalon.innerHTML(elem, text)
-                    scanNodes(elem, vmodels)
+                    scanNodeList(elem, vmodels)
                     rendered && checkScan(elem, function() {
                         rendered.call(elem)
                     })
@@ -2811,7 +2819,7 @@
                 avalon.innerHTML(elem, val)
             }
             avalon.nextTick(function() {
-                scanNodes(elem, data.vmodels)
+                scanNodeList(elem, data.vmodels)
             })
         },
         "if": function(val, elem, data) {
@@ -2995,12 +3003,8 @@
         },
         "repeat": function(data, vmodels) {
             var type = data.type
-
             parseExpr(data.value, vmodels, data)
 
-            if (type !== "repeat") {
-                log("warning:建议使用ms-repeat代替ms-each, ms-with, ms-repeat只占用一个标签并且性能更好")
-            }
             var elem = data.callbackElement = data.element //用于判定当前元素是否位于DOM树
 
             data.proxies = []
@@ -3072,6 +3076,93 @@
             for (var i in $parent) {
                 if ($parent[i] === $repeat) {
                     subscribers = $parent.$events[i]
+                    break
+                }
+            }
+            if (subscribers) {
+                subscribers.push(data)
+                notifySubscribers(subscribers) //强制垃圾回收
+            }
+            if (!Array.isArray($repeat) && type !== "each") {
+                var pool = withProxyPool[$repeat.$id]
+                if (!pool) {
+                    withProxyCount++
+                    pool = withProxyPool[$repeat.$id] = {}
+                    for (var key in $repeat) {
+                        if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                            (function(k, v) {
+                                pool[k] = createWithProxy(k, v, {})
+                                pool[k].$watch("$val", function(val) {
+                                    $repeat[k] = val //#303
+                                })
+                            })(key, $repeat[key])
+                        }
+                    }
+                }
+                data.handler("append", $repeat, pool)
+            } else {
+                data.handler("add", 0, $repeat)
+            }
+        },
+        "repeat@events": function(data, vmodels) {
+            var type = data.type
+            parseExpr(data.value, vmodels, data)
+
+            data.proxies = []
+            var freturn = true
+            try {
+                var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
+                var xtype = avalon.type($repeat)
+                if (xtype === "object" || xtype === "array") {
+                    freturn = false
+                }
+            } catch (e) {
+            }
+
+            var elem = data.element
+            var comment = data.elem = DOC.createComment("ms-repeat")
+
+            if (type === "each" || type == "with") {
+                data.template = elem.parentNode.innerHTML
+                avalon.clearHTML(elem.parentNode).appendChild(comment)
+
+            } else {
+                elem.removeAttribute(data.name)
+                data.template = elem.outerHTML
+                elem.parentNode.replaceChild(comment, elem)
+            }
+
+            data.rollback = function() {//只用于list为对象的情况
+                bindingExecutors.repeat.call(data, "clear")
+                var elem = data.element
+                var parentNode = elem.parentNode
+                var target = data.type == "repeat" ? elem : parentNode
+                target.setAttribute(data.name, data.value)
+                parentNode.replaceChild(avalon.parseHTML(data.template), elem)
+            }
+            if (freturn) {
+                return
+            }
+            data.callbackName = "data-" + type + "-rendered"
+            data.handler = bindingExecutors.repeat
+            data.$outer = {}
+            var check0 = "$key",
+                    check1 = "$val"
+            if (Array.isArray($repeat)) {
+                check0 = "$first"
+                check1 = "$last"
+            }
+            for (var i = 0, p; p = vmodels[i++]; ) {
+                if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+                    data.$outer = p
+                    break
+                }
+            }
+            var $parent = $repeat.$parent, subscribers
+            for (var i in $parent) {
+                if ($parent[i] === $repeat) {
+                    subscribers = $parent.$events[i]
+                    break
                 }
             }
             if (subscribers) {
@@ -3574,14 +3665,14 @@
                 break
             }
         }
-       array._fire = function(method, a, b) {
+        array._fire = function(method, a, b) {
             if (subscribers) {
                 notifySubscribers(subscribers, method, a, b)
             }
         },
-        array._.$watch("length", function(a, b) {
-            array.$fire("length", a, b)
-        })
+                array._.$watch("length", function(a, b) {
+                    array.$fire("length", a, b)
+                })
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
