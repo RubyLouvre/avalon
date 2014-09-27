@@ -29,7 +29,6 @@
     var serialize = oproto.toString
     var ap = Array.prototype
     var aslice = ap.slice
-    //  var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
     var W3C = window.dispatchEvent
     var root = DOC.documentElement
     var head = DOC.getElementsByTagName("head")[0] //HEAD元素
@@ -1799,40 +1798,35 @@
                 data.handler(c, data.element, data)
             } catch (e) {
                 delete data.evaluator
-                if (data.nodeType === 3) {
+                var node = data.element
+                if (node.nodeType === 3) {
+                    var parent = node.parentNode
                     if (kernel.commentInterpolate) {
-                        data.element.replaceChild(DOC.createComment(data.value), data.node)
+                        parent.replaceChild(DOC.createComment(data.value), node)
                     } else {
-                        data.node.data = openTag + data.value + closeTag
+                        node.data = openTag + data.value + closeTag
                     }
                 }
                 log("warning:evaluator of [" + data.value + "] throws error!")
             }
         }
     }
-    function notifySubscribers(list, nofire) {
+    function notifySubscribers(list) {
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
                 if (el) {
-                    var inTree = avalon.contains(root, el)
-                    var remove = !inTree
-                } else if (fn.type === "if" || fn.node === null) {
-                    remove = true
-                }
+                    var remove = !avalon.contains(root, el)
+                } 
                 if (remove) { //如果它没有在DOM树
                     var removed = list.splice(i, 1)
                     log("debug: remove " + fn.type)
                     breakCircularReference(removed)
-                } else if (nofire === true) {
-                    //nothing
-                }
-                if (fn.$repeat) {
+                } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.node || fn.element) {
+                } else if (fn.element) {
                     var fun = fn.evaluator || noop
-                    // console.log(fun+"")
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
             }
