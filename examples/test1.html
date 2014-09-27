@@ -19,6 +19,9 @@
             model.$watch("b", function(a) {
                 avalon.log(a + "--------------")
             })
+            setTimeout(function(){
+                model.array.push(5)
+            },1000)
             // console.log(model)
 //            setTimeout(function() {
 //                model.d = {
@@ -45,9 +48,7 @@
     </head>
     <body>
         <div ms-controller="test" >
-            {{b}}
-            <p ms-repeat="d">{{$key}}=={{$val}}</p>
-            <hr/>
+        
             <ul>
                 <li ms-repeat="array">{{el}}</li>
             </ul>

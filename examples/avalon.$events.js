@@ -435,6 +435,7 @@
             $scope.length = 0
             var collection = Collection($scope, $parent)
             collection.pushArray(arr)
+
             return collection
         }
         if ($scope && typeof $scope.nodeType === "number") {
@@ -2044,15 +2045,15 @@
                 break;
         }
 
-        if (elem.patchRepeat) {
-            elem.patchRepeat()
-            try {
-                elem.patchRepeat = ""
-                elem.removeAttribute("patchRepeat")
-                elem.removeAttribute("avalonctrl")
-            } catch (e) {
-            }
-        }
+//        if (elem.patchRepeat) {
+//            elem.patchRepeat()
+//            try {
+//                elem.patchRepeat = ""
+//                elem.removeAttribute("patchRepeat")
+//                elem.removeAttribute("avalonctrl")
+//            } catch (e) {
+//            }
+//        }
 
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
@@ -2683,10 +2684,21 @@
             }
         },
         "repeat": function(method, pos, el) {
+
+            function getLocatedNode(data, pos) {
+                var ret = data.element
+                pos += 1
+                for (var i = 0; i < pos; i++) {
+                    ret = ret.nextSibling
+                    if (ret === null)
+                        return null
+                }
+                return ret || null
+            }
             if (method) {
                 var data = this
                 var group = data.group
-                var parent = data.elem.parentNode// //fix  #300 #307
+                var parent = data.element.parentNode// //fix  #300 #307
                 var proxies = data.proxies
                 var transation = hyperspace.cloneNode(false)
                 if (method === "del" || method === "move") {
@@ -2701,19 +2713,18 @@
                             var ii = i + pos
                             var proxy = getEachProxy(ii, arr[i], data, last)
                             proxies.splice(ii, 0, proxy)
-                            lastFn = shimController(data, transation, proxy, fragments)
+                            shimController(data, transation, proxy, fragments)
                         }
+                       console.log(locatedNode+"=========")
                         parent.insertBefore(transation, locatedNode)
                         for (var i = 0, fragment; fragment = fragments[i++]; ) {
                             scanNodeArray(fragment.nodes, fragment.vmodels)
                             fragment.nodes = fragment.vmodels = null
                         }
-
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
                         recycleEachProxies(removed)
-                        //     expelFromSanctuary(removeView(locatedNode, group, el))
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
@@ -2785,7 +2796,7 @@
                         spans = null
                         break
                 }
-                iteratorCallback.call(data, arguments, parent)
+                //   iteratorCallback.call(data, arguments, parent)
             }
         },
         "html": function(val, elem, data) {
@@ -3014,7 +3025,7 @@
             }
 
             var elem = data.element
-            var comment = data.elem = DOC.createComment("ms-repeat")
+            var comment = data.element = DOC.createComment("ms-repeat")
 
             if (type === "each" || type == "with") {
                 data.template = elem.parentNode.innerHTML
@@ -3052,17 +3063,7 @@
                     break
                 }
             }
-            var $parent = $repeat.$parent, subscribers
-            for (var i in $parent) {
-                if ($parent[i] === $repeat) {
-                    subscribers = $parent.$events[i]
-                    break
-                }
-            }
-            if (subscribers) {
-                subscribers.push(data)
-                notifySubscribers(subscribers) //强制垃圾回收
-            }
+
             if (!Array.isArray($repeat) && type !== "each") {
                 var pool = withProxyPool[$repeat.$id]
                 if (!pool) {
@@ -3553,20 +3554,22 @@
             length: model.length
         })
         var subscribers
-        for (var i in parent) {
-            if (parent[i] === array) {
-                subscribers = parent.$events[i]
-                break
-            }
-        }
         array._fire = function(method, a, b) {
+            if (!subscribers) {
+                for (var i in parent) {
+                    if (parent[i] === array) {
+                        subscribers = parent.$events[i]
+                        break
+                    }
+                }
+            }
             if (subscribers) {
                 notifySubscribers(subscribers, method, a, b)
             }
-        },
-                array._.$watch("length", function(a, b) {
-                    array.$fire("length", a, b)
-                })
+        }
+        array._.$watch("length", function(a, b) {
+            array.$fire("length", a, b)
+        })
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
@@ -3799,7 +3802,7 @@
         data.group = nodes.length
         var fragment = {
             nodes: nodes,
-            vmodes: [proxy].concat(data.vmodes)
+            vmodels: [proxy].concat(data.vmodels)
         }
         fragments.push(fragment)
     }
@@ -3874,7 +3877,7 @@
         if (rcomplexType.test(avalon.type(item))) {
             source.$skipArray = [param]
         }
-        proxy = modelFactory(source,null, watchEachOne)
+        proxy = modelFactory(source, null, watchEachOne)
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })
