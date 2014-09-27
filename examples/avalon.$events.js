@@ -2045,16 +2045,6 @@
                 break;
         }
 
-//        if (elem.patchRepeat) {
-//            elem.patchRepeat()
-//            try {
-//                elem.patchRepeat = ""
-//                elem.removeAttribute("patchRepeat")
-//                elem.removeAttribute("avalonctrl")
-//            } catch (e) {
-//            }
-//        }
-
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
@@ -2685,16 +2675,7 @@
         },
         "repeat": function(method, pos, el) {
 
-            function getLocatedNode(data, pos) {
-                var ret = data.element
-                pos += 1
-                for (var i = 0; i < pos; i++) {
-                    ret = ret.nextSibling
-                    if (ret === null)
-                        return null
-                }
-                return ret || null
-            }
+
             if (method) {
                 var data = this
                 var group = data.group
@@ -2702,7 +2683,7 @@
                 var proxies = data.proxies
                 var transation = hyperspace.cloneNode(false)
                 if (method === "del" || method === "move") {
-                    var locatedNode = getLocatedNode(parent, data, pos)
+                    var locatedNode = getLocatedNode(data, pos)
                 }
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
@@ -2715,7 +2696,7 @@
                             proxies.splice(ii, 0, proxy)
                             shimController(data, transation, proxy, fragments)
                         }
-                       console.log(locatedNode+"=========")
+                        locatedNode = getLocatedNode(data, pos)
                         parent.insertBefore(transation, locatedNode)
                         for (var i = 0, fragment; fragment = fragments[i++]; ) {
                             scanNodeArray(fragment.nodes, fragment.vmodels)
@@ -2725,6 +2706,7 @@
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
                         recycleEachProxies(removed)
+                        removeView(locatedNode, group, el)
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
@@ -2754,8 +2736,10 @@
                         var t = proxies.splice(pos, 1)[0]
                         if (t) {
                             proxies.splice(el, 0, t)
+
                             transation = removeView(locatedNode, group)
-                            locatedNode = getLocatedNode(parent, data, el)
+
+                            locatedNode = getLocatedNode(data, el)
                             parent.insertBefore(transation, locatedNode)
                         }
                         break
@@ -3640,6 +3624,7 @@
                 change = true
             }
             if (arguments.length > 2) {
+
                 this._add(aslice.call(arguments, 2), a)
                 change = true
             }
@@ -3729,12 +3714,12 @@
                     var remove2 = bbb.splice(index, 1)[0]
                     this._splice(i, 0, remove)
                     bbb.splice(i, 0, remove2)
-                    notifySubscribers(this, "move", index, i)
+                    this._fire("move", index, i)
                 }
             }
             bbb = void 0
             if (sorted) {
-                notifySubscribers(this, "index", 0)
+                this._fire("index", 0)
             }
             return this
         }
@@ -3810,16 +3795,15 @@
     // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
     // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
     // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
-
-    function getLocatedNode(parent, data, pos) {
-        var ret = data.elem
+    function getLocatedNode(data, pos) {
+        var ret = data.element
         pos += 1
         for (var i = 0; i < pos; i++) {
             ret = ret.nextSibling
             if (ret === null)
                 return null
         }
-        return ret
+        return ret || null
     }
 
     function removeView(node, group, n) {
@@ -3891,22 +3875,14 @@
         array.length = 0
     }
     function breakCircularReference(array) {
+        if(!Array.isArray(array))
+            return
         array.forEach(function(el) {
             if (el.evaluator) {
                 el.evaluator = el.element = el.node = el.vmodels = null
                 if (el.proxies) {//ms-repeat ms-with ms-each
-                    el.startRepeat = el.endRepeat = el.callbackElement = el.template = null
+                   el.callbackElement = el.template = null
                 }
-//                if (el.type === "if") {//ms-if
-//                    var comment = el.placehoder
-//                    if (!el.msInDocument && comment.elem) {
-//                        try {
-//                            ifSanctuary.removeChild(comment.elem)
-//                        } catch (e) {
-//                        }
-//                    }
-//                    el.placehoder = el.msInDocument = comment.elem = null
-//                }
             }
         })
         array.length = 0
