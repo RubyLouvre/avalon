@@ -2669,8 +2669,6 @@
             }
         },
         "repeat": function(method, pos, el) {
-
-
             if (method) {
                 var data = this
                 var group = data.group
@@ -2730,9 +2728,7 @@
                         var t = proxies.splice(pos, 1)[0]
                         if (t) {
                             proxies.splice(el, 0, t)
-
                             transation = removeView(locatedNode, group)
-
                             locatedNode = getLocatedNode(data, el)
                             parent.insertBefore(transation, locatedNode)
                         }
@@ -2745,24 +2741,22 @@
                         break
                     case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                         var pool = el
-                        var callback = getBindingCallback(data.callbackElement, "data-with-sorted", data.vmodels)
                         var keys = []
-                        var spans = []
-                        var lastFn = {}
+                        var fragments = []
                         for (var key in pos) { //得到所有键名
                             if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
                                 keys.push(key)
                             }
                         }
-                        if (callback) { //如果有回调，则让它们排序
-                            var keys2 = callback.call(parent, keys)
+                        if (data.sortCallback) { //如果有回调，则让它们排序
+                            var keys2 = data.sortCallback.call(parent, keys)
                             if (keys2 && Array.isArray(keys2) && keys2.length) {
                                 keys = keys2
                             }
                         }
                         for (var i = 0, key; key = keys[i++]; ) {
                             if (key !== "hasOwnProperty") {
-                                lastFn = shimController(data, transation, spans, pool[key])
+                                shimController(data, transation,  pool[key], fragments)
                             }
                         }
                         lastFn.parent = parent
@@ -2997,14 +2991,14 @@
                 }
             } catch (e) {
             }
-
             var elem = data.element
+            data.sortCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
             var comment = data.element = DOC.createComment("ms-repeat")
 
             if (type === "each" || type == "with") {
-                data.template = elem.parentNode.innerHTML
-                avalon.clearHTML(elem.parentNode).appendChild(comment)
-
+                data.template = elem.innerHTML
+                
+                avalon.clearHTML(elem).appendChild(comment)
             } else {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML

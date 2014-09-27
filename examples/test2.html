@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>by 司徒正美</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.$events.js"></script>
+        <style>
+   
+        </style>
+        <script>
+          var model = avalon.define({
+              $id: "test",
+              array: [1,2,3,7]
+          })
+          setTimeout(function(){
+              model.array.unshift(8)
+              model.array.push(0)
+              setTimeout(function(){
+                  model.array.sort()
+              }, 2000)
+          },2000)
+        </script>
+
+    </head>
+    <body>
+        <div ms-controller="test">
+            <ul ms-each="array">
+                <li>{{el}}</li>
+            </ul>
+        </div>
+    </body> 
+</html>
