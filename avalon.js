@@ -2731,6 +2731,13 @@
                         break
                 }
                 iteratorCallback.call(data, arguments, parent)
+                if (data.element.tagName === "SELECT") { // 在通过repeat更新了select元素的options元素之后触发change事件，使得select元素上的ms-duplex可以正常工作
+                    if (W3C) {
+                        W3CFire(data.element, "change")
+                    } else {
+                        data.element.fireEvent("change")
+                    }
+                }
             }
         },
         "html": function(val, elem, data) {
