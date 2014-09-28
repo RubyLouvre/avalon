@@ -55,6 +55,10 @@
                     }
                 }
             })
+            
+            setTimeout(function(){
+                avalon.log(model.hasOwnProperty("fullName"))
+            })
             setTimeout(function() {
                 model.html = "<em>aaa</em>bbb<em>dddd</em>"
             }, 1000)
@@ -81,11 +85,11 @@
     <body>
         <div ms-controller="test">
             <p>First name: <input ms-duplex="firstName" /></p>
-            <p>Last name: <input ms-duplex="lastName"  />{{lastName | html}}</p>
+          <p>Last name: <input ms-duplex="lastName"  /> {{lastName | html}}</p>
             <p>Hello,    <input ms-duplex="fullName"></p>
          
-            <div>这是显示的内容{{firstName +" | "+ lastName | html }}&nbsp;<span style="color:gray">lastName尝试输入&lt;em&gt;test&lt;/em&gt;看看</span></div>
-            <ul>
+            <div>这是显示的内容{{firstName +" | "+ lastName  }}&nbsp;<span style="color:gray">lastName尝试输入&lt;em&gt;test&lt;/em&gt;看看</span></div>
+          <ul>
                 <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>全选<button ms-click="sort" type="button">sort</button></li>
                 <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}  <strong>{{$index}}</strong></li>
             </ul>

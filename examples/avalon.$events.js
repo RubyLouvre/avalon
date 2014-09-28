@@ -494,6 +494,7 @@
                     if (vars.length) {
                         addAssign(vars, $vmodel, name, data)
                     }
+                    accessor()
                 })
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
@@ -517,6 +518,7 @@
                 }
                 childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
                     var childVmodel = accessor.child = modelFactory(val, $vmodel, null, name)
+                    
                     $model[name] = childVmodel.$model
                 })
             } else {
@@ -635,7 +637,7 @@
                 withProxyCount--
                 delete withProxyPool[son.$id]
             }
-            var ret = modelFactory(value, parent)
+            var ret = modelFactory(value, parent, null, name)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -2065,7 +2067,7 @@
         //        window.onload = function() {
         //            var body = document.body
         //            for (var i = 0, el; el = body.children[i++]; ) {
-        //                console.log(el.outerHTML)
+        //                avalon.log(el.outerHTML)
         //            }
         //        }
         //依次输出<SECTION>, </SECTION>
@@ -2219,10 +2221,9 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-
-//                .map(function(str) {
-//            return str.charAt(0) === "." ? str.slice(1) : str
-//        })
+                .map(function(str) {
+                    return str.charAt(0) === "." ? str.slice(1) : str
+                })
         return cacheVars(key, uniqSet(vars))
     }
 
@@ -2269,6 +2270,7 @@
     function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " =" + name + "."
+       
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
             var flag = inObject(scope, arr)
@@ -3632,7 +3634,6 @@
                     locatedNode = locateFragment(data, pos)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
-                        //console.log(fragment.vmodels)
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
@@ -3641,7 +3642,6 @@
                     var removed = proxies.splice(pos, el)
                     var transation = removeFragment(locatedNode, group, el)
                     avalon.clearHTML(transation)
-                    console.log("=========")
                     recycleEachProxies(removed)
                     break
                 case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
