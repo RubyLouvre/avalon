@@ -3751,7 +3751,7 @@
     // 当pos为2时,返回 null
     function getLocatedNode(data, pos) {
         var node = data.element.nextSibling
-        var i = 1
+        var i = 0
         var n = pos * data.group
         while (i < n) {
             if (node) {
@@ -3761,7 +3761,6 @@
                 break
             }
         }
-       // console.log(node)
         return node || null
     }
 
