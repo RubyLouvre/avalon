@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <style>
+            .layer{
+                width:680px;
+                padding:10px 10px 10px 10px;
+                overflow: hidden;
+            }
+
+            .section{
+                width:300px;
+                float:left;
+                margin:10px;
+                background:blueviolet;
+                padding:10px;
+                color:white;
+            }
+
+
+        </style>
+    </head>
+    <body>
+        <div class="layer" style="background: black;color:white;">
+            <h2>披荆斩棘</h2>
+            <div class="section" style="height:258px" >
+                语言底层的修复<br/>
+                String.prototype.trim<br/>
+                Object.keys<br/>
+                Object.defineProperties<br/>
+                Function.prototype.bind<br/>
+                Array.prototype.indexOf<br/>
+                Array.prototype.lastIndexOf<br/>
+                Array.prototype.forEach<br/>
+                Array.prototype.filter<br/>
+                Array.prototype.map<br/>
+                Array.prototype.every<br/>
+                Array.prototype.some<br/>
+                JSON.parse的代替品parseData(未公开)<br/>
+                JSON.stringify的代替品quote(未公开)
+            </div>
+            <div class="section" style="height:258px" >
+                DOM底层的修复<br/>
+                Node.prototype.contains<br/>
+                Element.prototype.classList<br/>
+                HTMLElement.prototype.outerHTML<br/>
+                SVGElement.prototype.innerHTML<br/>
+                SVGElement.prototype.outerHTML
+            </div>
+
+        </div>
+        <div class="layer" style="background:darkred">
+            <h2>青铜时代</h2>
+            <div class="section" style="height:295px">
+                常用工具函数<br/>
+                avalon.type<br/>
+                avalon.isWindow<br/>
+                avalon.isPlainObject<br/>
+                avalon.mix<br/>
+                avalon.slice<br/>
+                avalon.oneObject<br/>
+                avalon.error<br/>
+                avalon.log<br/>
+                avalon.noop<br/>
+                avalon.range<br/>
+                avalon.each<br/>
+                avalon.Array.ensure<br/>
+                avalon.Array.removeAt<br/>
+                avalon.Array.remove<br/>
+                avalon.nextTick
+            </div>
+            <div class="section" style="height:295px">
+                DOM的高级封装<br/>
+                avalon.css<br/>
+                avalon.bind<br/>
+                avalon.unbind<br/>
+                <dl>
+                    <dt>更多事件的支持</dt>
+                    <dd>input</dd>
+                    <dd>mouseener</dd>
+                    <dd>mouseleave</dd>
+                    <dd>mousewheel</dd>
+                    <dd>animationend</dd>
+                </dl>
+                avalon.parseHTML<br/>
+                avalon.innerHTML<br/>
+                avalon.clearHTML<br/>
+                fixCloneNode
+            </div>
+        </div>
+        <div class="layer" style="background:orange;">
+            <h2>光彩年华</h2>
+            <div class="section" style="height:390px">
+                <b>设计模式的应用</b><br/>
+                事件管理系统: EventManager<br/>
+                心跳检测：avalon.tick<br/>
+                缓存系统：createCache<br/>
+                <dl>
+                    <dt>过滤器集</dt>
+                    <dd>uppercase</dd>
+                    <dd>lowercase</dd>
+                    <dd>truncate</dd>
+                    <dd>camelize</dd>
+                    <dd>sanitize</dd>
+                    <dd>escape</dd>
+                    <dd>currency</dd>
+                    <dd>number</dd>
+                    <dd>date</dd>
+                </dl>
+            </div>
+            <div class="section" style="height:390px">
+                <b>DOM的优雅封装<b><br/>
+                avalon.fn.bind<br/>
+                avalon.fn.unbind<br/>
+                avalon.fn.data<br/>
+                avalon.fn.attr<br/>
+                avalon.fn.val<br/>
+                avalon.fn.css<br/>
+                avalon.fn.offset<br/>
+                avalon.fn.offsetParent<br/>
+                avalon.fn.scrollLeft<br/>
+                avalon.fn.scrollTop<br/>     
+                avalon.fn.addClass<br/>
+                avalon.fn.hasClass<br/>
+                avalon.fn.removeClass<br/>
+                avalon.fn.toggleClass<br/>
+                avalon.fn.width<br/>
+                avalon.fn.height<br/>
+                avalon.fn.innerWidth<br/>
+                avalon.fn.innerHeight<br/>
+                avalon.fn.innerWidth<br/>
+                avalon.fn.innerHeight<br/>
+            </div>
+
+        </div>
+        <div class="layer" style="background:gold;">
+            <h2>鼎盛王朝</h2>
+            <div class="section" style="height:356px">
+                <b>数据之域</b><br/>
+                <dl>
+                    <dt>两个VM工厂</dt>
+                    <dd>modelFactory</dd>
+                    <dd>Collection</dd>
+                </dl>
+                <dl>
+                    <dt>三个创建代理VM的作坊 </dt>
+                    <dd>getEachPrxoy</dd>
+                    <dd>getWithProxy</dd>
+                    <dd>recycleEachProxy</dd>
+                </dl>
+                <dl>
+                    <dt>两个池子 </dt>
+                    <dd>eachProxyPool</dd>
+                    <dd>withProxyPool</dd>
+                </dl>
+                <dl>
+                    <dt>依赖调度系统 </dt>
+                    <dd>registerSubscriber</dd>
+                    <dd>notifySubscribers</dd>
+                    <dd>collectSubscribers</dd>
+                </dl>
+            </div>
+            <div class="section" style="height:356px">
+                <b>视图之领</b><br/>
+                <dl>
+                    <dt>扫描系统 </dt>
+                    <dd>avalon.scan</dd>
+                    <dd>scanTag</dd>
+                    <dd>scanAttr</dd>
+                    <dd>scanText</dd>
+                    <dd>scanExpr</dd>
+                    <dd>scanNodes</dd>
+                    <dd>executeBindings</dd>
+                </dl>
+                <dl>
+                    <dt>双向绑定系统</dt>
+                    <dd>avalon.bindingExecutors</dd>
+                    <dd>avalon.bindingHandlers</dd>
+                    <dd>avalon.parseExprProxy</dd>
+                </dl>
+            </div>
+        </div>
+        <div class="layer" style="background:yellow">
+            <h2>天下大同</h2>
+            <div class="section" style="width:640px">
+                <dl>
+                    <dt>编译系统</dt>
+                    <dd>getVariables（抽取用户变量）</dd>
+                    <dd>addAssign（拼接赋值语句）</dd>
+                    <dd>parseExpr（转换为求值函数）</dd>
+                </dl>
+                <dl>
+                    <dt>外挂</dt>
+                    <dd>AMD加载器</dd>
+                    <dd>DOMReady模块</dd>
+                </dl>
+            </div>
+        </div>
+    </body>
+</html>

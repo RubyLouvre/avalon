@@ -8,6 +8,15 @@
             avalon.define("test", function(vm) {
                 vm.o = 0.5
             })
+function isVML(el) {
+    if (el && el.nodeType === 1) {
+        var nodeName = el.nameName
+        //VML元素的nodeName都是小写,并且存在命名空间,并且outerText总为空 
+        return nodeName.toLowerCase() === nodeName && node.scopeName && node.outerText === ""
+    }
+    return false
+}
+
         </script>
         <style>
             .outer{

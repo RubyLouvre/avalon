@@ -7,10 +7,13 @@
 <hr>
 <ul>
     <li>avalon.js 兼容IE6，及标准浏览器</li>
-    <li>avalon.mobile.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>如果想支持触摸屏，请把mobile.js的源码拷贝到avalon.modern.js最后一个})之前，要不会报"Uncaught ReferenceError: W3CFire is not defined mobile.js:313"错误</li>
     <li>想使用路由器，可以用<a href="https://github.com/RubyLouvre/mmRouter">mmRouter</a>，
 想使用动画，可以用<a href="https://github.com/RubyLouvre/mmAnimate">mmAnimate</a>，
-想使用AJAX，可以用<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>
+想使用AJAX，可以用<a href="https://github.com/RubyLouvre/mmRequest">mmRequest</a>，
+想使用各种控件库，可以用<a href="http://hotelued.qunar.com/">去哪儿网前端架构组搞的OniUI库</a>
+
     </li>
     <li>avalon的测试比较庞大，放在独立的仓库中——<a href="https://github.com/RubyLouvre/avalon.test">avalon.test</a>
     </li>
@@ -40,7 +43,7 @@
 <h3>JS文件的压缩</h3>
 ```
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
-java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.js
+java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.js
 ```
 <p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
 
@@ -54,6 +57,7 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
         <script>
+            var first = 0;
             var model = avalon.define("test", function(vm) {
                 vm.firstName = "司徒"
                 vm.lastName = "正美"
@@ -69,18 +73,28 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
                 }
                 vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
                 vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = vm.arr.length === vm.selected.length
+                vm.checkAllbool = false
                 vm.checkAll = function() {
+                    if (!first) {
+                        first++
+                        return
+                    }
                     if (this.checked) {
                         vm.selected = vm.arr
                     } else {
                         vm.selected.clear()
                     }
                 }
+                vm.checkOne = function() {
+                    var bool = this.checked
+                    if (!bool) {
+                        vm.checkAllbool = false
+                    } else {
+                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                    }
+                }
             })
-            model.selected.$watch("length", function(n) {
-                model.checkAllbool = n === model.arr.size()
-            })
+
         </script> 
     </head>
     <body>
@@ -90,11 +104,30 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
             <p>Hello,    <input ms-duplex="fullName"></p>
             <div>{{firstName +" | "+ lastName }}</div>
             <ul>
-                <li><input type="checkbox" ms-click="checkAll" ms-checked="checkAllbool"/>全选</li>
-                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected"/>{{el}}</li>
+                <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>全选</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
             </ul>
         </div>
 
     </body>
 </html>
 ```
+<h3>源码内部的模块划分</h3>
+<p>从上至下，依次是</p>
+- 全局变量及方法
+- avalon的静态方法定义区
+- modelFactory
+- javascript 底层补丁  
+- DOM 底层补丁    
+- 配置系统
+- avalon的原型方法定义区
+- HTML处理(parseHTML, innerHTML, clearHTML)  
+- 自定义事件系统
+- 依赖调度系统  
+- 扫描系统
+- 编译系统
+- 绑定处理系统
+- 监控数组
+- 自带过滤器 
+- AMD加载器
+- DOMReady

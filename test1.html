@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js" type="text/javascript"></script>
+        <script>
+            var vmodel = avalon.define({
+                $id: "test",
+                aa: 1,
+                array: [1, 2, 3, 4]
+            })
+
+            setTimeout(function() {
+                vmodel.array = []
+            }, 3000)
+        </script>
+    </head>
+    <body ms-controller="test">
+        <ul>
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
+    </body>
+</html>

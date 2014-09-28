@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-class</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                array: avalon.range(0, 14)
+            })
+        </script>
+        <style>
+            .zebra-table{
+                border-collapse: collapse;
+                width:400px;
+                border:1px solid black;
+            }
+            .zebra-table td{
+                border:1px solid black;
+                text-indent: 1em;
+            }
+            .zebra-table .even td{
+                background:black;
+                color:white;
+            }
+             .zebra-table .hover td{
+                color: red;
+                font-weight: bolder;
+            }
+        </style>
+    </head>
+    <body ms-controller="test" >
+        <table class="zebra-table">
+            <tr ms-repeat="array" ms-hover="hover" ms-class="even: $index % 2 == 0"><td>{{$index}}</td><td>{{ new Date - 0 | date("yyyy-MM-dd")}}</td></tr>
+        </table>
+    </body>
+</html>

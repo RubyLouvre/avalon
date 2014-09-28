@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js">
+        </script>
+        <style>
+            .dialog{
+                position: absolute;
+                border: 1px solid black;
+                background: rgb(202,225,238);
+                padding:4px ;
+            }
+            .dialog h2 {
+                position: relative;
+                background: rgb(99,177, 225);
+                margin: 0px;
+                padding:2px;
+            }
+            .dialog h2 .close{
+                position: absolute;
+                top: 4px;
+                right: 4px;
+            }
+        </style>
+        <script>
+            var dialogWrapper
+            avalon.templateCache[""] = ""
+            var vmodel = avalon.define({
+                $id: "test",
+                dialogUrl: "",
+                dialogTitle: "",
+                openDialog: function(url, title, w, h) {
+                    if (!dialogWrapper) {
+                        var div = avalon.parseHTML("<div class='dialog'><h2>{{dialogTitle|html}}" +
+                                "<input class=close type=button ms-click=closeDialog value='x'></h2>" +
+                                "<div ms-include-src='dialogUrl' ></div></div>").firstChild
+                        document.body.appendChild(div)
+                        dialogWrapper = div
+                    }
+                    var winWidth = avalon(window).width()
+                    var winHeight = avalon(window).height()
+                    w = w || 400
+                    h = h || 300
+
+                    avalon(dialogWrapper).css({
+                        top: (winHeight - h) / 2 + avalon(document).scrollTop(),
+                        left: (winWidth - w) / 2 + avalon(document).scrollLeft(),
+                        width: w,
+                        height: h
+                    })
+                    vmodel.dialogUrl = url
+                    vmodel.dialogTitle = title || ""
+                    avalon.scan(dialogWrapper, vmodel)
+                },
+                closeDialog: function() {
+                    if (dialogWrapper) {
+                        document.body.removeChild(dialogWrapper)
+                        dialogWrapper = null
+                    }
+                }
+            })
+        </script>
+    </head>
+    <body  ms-controller="test">
+        <div>TODO write content</div>
+        <button type="button" ms-click="openDialog('dialog1.html', '标题', 200, 200)">open1</button>
+        <button type="button" ms-click="openDialog('dialog2.html', '标题', 400, 300)">open2</button>
+    </body>
+</html>

@@ -7,15 +7,15 @@
         <script src="../avalon.js"></script>
         <script>
             avalon.define("test", function(vm) {
+                vm.a = ""
                 vm.fn1 = function(e) {
-                    avalon.log(e)
-                    avalon.log(this.value)
+                    vm.a = this.value
                 }
             })
         </script>
     </head>
 
     <body ms-controller="test">
-        <input ms-input="fn1" >
+        <input ms-input="fn1" >{{a}}
     </body>
 </html>

@@ -1,0 +1,14 @@
+<form ms-controller='dialog2'>
+    <div><input ms-duplex='username'>{{username}}</div>
+    <div><input ms-duplex='password'>{{password}}</div>
+    <script>
+        if (!avalon.vmodels.dialog2) {
+            avalon.define({
+                $id: "dialog2",
+                username: "司徒正美",
+                password: "123456"
+            })
+        }
+        
+    </script>
+</form>

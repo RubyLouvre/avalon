@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>demo</title>
+        <meta charset="UTF-8">
+        <script type="text/javascript" src="avalon.js"></script>
+
+        <script type="text/javascript">
+            avalon.ready(function() {
+                var el = document.getElementById("aaa")
+            
+              var a =  avalon.define({
+                    $id: "test",
+                    arr: [1,2,3,4]
+                })
+                console.log(a.arr.length)
+                console.log(a.arr.removeAt(1))
+                console.log(a.arr.length)
+                avalon.scan()
+
+            })
+        </script>
+        <style>
+            span{
+                border:2px solid red;
+            }
+        </style>
+    </head>
+    <body ms-controller="test" >
+        <span id="aaa">dddd</span>
+        <div ms-repeat="arr"><input ms-duplex="el">{{el}} {{$index}}</div>
+
+
+    </body>
+</html>

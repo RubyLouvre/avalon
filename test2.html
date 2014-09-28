@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="examples/avalon.$events.js" ></script>
+        <script>
+            var vmodel = avalon.define("test", function(vm) {
+                vm.array = [];
+            })
+            avalon.scan();
+
+            for (var i = 0; i < 5; i++) {
+                var aa = {
+                    src: []
+                }
+                var arr = [];
+                for (var j = 0; j < 10; j++) {
+                    arr.push("star.jpg");
+                }
+                aa.src = arr;
+                vmodel.array.push(aa);
+            }
+            setTimeout(function() {
+                vmodel.array = []
+            }, 6000)
+        </script>
+    </head>
+    <body >
+        <div ms-controller="test">
+            <div ms-repeat="array">
+                <img ms-repeat-elem="el.src" ms-src="{{elem}}" style="width:150px ; height:150px"/>
+            </div>
+        </div>
+
+    </body>
+</html>
