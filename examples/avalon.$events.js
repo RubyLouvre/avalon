@@ -428,11 +428,11 @@
         }
         return true
     }
-    function modelFactory($scope, $parent, $special) {
+    function modelFactory($scope, $parent, $special, name) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
             $scope.length = 0
-            var collection = Collection($scope, $parent)
+            var collection = Collection($scope, $parent, name)
             collection.pushArray(arr)
             return collection
         }
@@ -516,7 +516,7 @@
                     }
                 }
                 childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
-                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
+                    var childVmodel = accessor.child = modelFactory(val, $vmodel, null, name)
                     $model[name] = childVmodel.$model
                 })
             } else {
@@ -2218,9 +2218,11 @@
                 .replace(rkeywords, ",")
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
-                .split(rcommaInMiddle).map(function(str) {
-            return str.charAt(0) === "." ? str.slice(1) : str
-        })
+                .split(rcommaInMiddle)
+                
+//                .map(function(str) {
+//            return str.charAt(0) === "." ? str.slice(1) : str
+//        })
         return cacheVars(key, uniqSet(vars))
     }
 
@@ -2881,7 +2883,7 @@
         "repeat": function(data, vmodels) {
             var type = data.type
             parseExpr(data.value, vmodels, data)
-
+var clone = vmodels.concat()
             data.proxies = []
             var freturn = true
             try {
@@ -2891,6 +2893,9 @@
                     freturn = false
                 }
             } catch (e) {
+                console.log(clone)
+                console.log(data.evaluator)
+                avalon.log("warning:"+data.value +"应该对应一个数组")
             }
             var elem = data.element
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
@@ -3410,7 +3415,7 @@
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
 
-    function Collection(model, parent) {
+    function Collection(model, parent, name) {
         var array = []
         array.$id = generateID() //它在父VM中的名字
         array.$parent = parent //父VM
@@ -3419,16 +3424,18 @@
         array._ = modelFactory({
             length: model.length
         })
-        var subscribers
+        var subscribers = parent.$events[name]
+        
         array._fire = function(method, a, b) {
-            if (!subscribers) {
-                for (var i in parent) {
-                    if (parent[i] === array) {
-                        subscribers = parent.$events[i]
-                        break
-                    }
-                }
-            }
+//            if (!subscribers) {
+//                for (var i in parent) {
+//                    if (parent[i] === array) {
+//                        console.log("=================")
+//                        subscribers = parent.$events[i]
+//                        break
+//                    }
+//                }
+//            }
             if (subscribers) {
                 notifySubscribers(subscribers, method, a, b)
             }
@@ -3638,6 +3645,7 @@
                     locatedNode = locateFragment(data, pos)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
+                        //console.log(fragment.vmodels)
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
@@ -3646,6 +3654,7 @@
                     var removed = proxies.splice(pos, el)
                     var transation = removeFragment(locatedNode, group, el)
                     avalon.clearHTML(transation)
+                    console.log("=========")
                     recycleEachProxies(removed)
                     break
                 case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
