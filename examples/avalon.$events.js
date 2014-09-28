@@ -1818,7 +1818,7 @@
                 var el = fn.element
                 if (el) {
                     var remove = !avalon.contains(root, el)
-                } 
+                }
                 if (remove) { //如果它没有在DOM树
                     var removed = list.splice(i, 1)
                     log("debug: remove " + fn.type)
@@ -2662,111 +2662,6 @@
                 elem.setAttribute(key, String(val))
             }
         },
-        "repeat": function(method, pos, el) {
-            if (method) {
-                var data = this
-                var group = data.group
-                var parent = data.element.parentNode// //fix  #300 #307
-                var proxies = data.proxies
-                var transation = hyperspace.cloneNode(false)
-                if (method === "del" || method === "move") {
-                    var locatedNode = getLocatedNode(data, pos)
-                }
-                switch (method) {
-                    case "add": //在pos位置后添加el数组（pos为数字，el为数组）
-                        var arr = el
-                        var last = data.$repeat.length - 1
-                        var fragments = []
-                        for (var i = 0, n = arr.length; i < n; i++) {
-                            var ii = i + pos
-                            var proxy = getEachProxy(ii, arr[i], data, last)
-                            proxies.splice(ii, 0, proxy)
-                            shimController(data, transation, proxy, fragments)
-                        }
-                        locatedNode = getLocatedNode(data, pos)
-                        parent.insertBefore(transation, locatedNode)
-                        for (var i = 0, fragment; fragment = fragments[i++]; ) {
-                            scanNodeArray(fragment.nodes, fragment.vmodels)
-                            fragment.nodes = fragment.vmodels = null
-                        }
-                        break
-                    case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                        var removed = proxies.splice(pos, el)
-                        recycleEachProxies(removed)
-                        removeView(locatedNode, group, el)
-                        break
-                    case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
-                        var last = proxies.length - 1
-                        for (; el = proxies[pos]; pos++) {
-                            el.$index = pos
-                            el.$first = pos === 0
-                            el.$last = pos === last
-                        }
-                        break
-                    case "clear":
-                        var n = ("proxySize" in data ? data.proxySize : proxies.length) * data.group, k = 0
-                        while (true) {
-                            var nextNode = data.element.nextSibling
-                            if (nextNode && k < n) {
-                                parent.removeChild(nextNode)
-                                k++
-                            } else {
-                                break
-                            }
-                        }
-                        recycleEachProxies(proxies)
-                        break
-                    case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-                        var t = proxies.splice(pos, 1)[0]
-                        if (t) {
-                            proxies.splice(el, 0, t)
-                            transation = removeView(locatedNode, group)
-                            locatedNode = getLocatedNode(data, el)
-                            parent.insertBefore(transation, locatedNode)
-                        }
-                        break
-                    case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
-                        var proxy = proxies[pos]
-                        if (proxy) {
-                            proxy[proxy.$itemName] = el
-                        }
-                        break
-                    case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
-                        var pool = el
-                        var keys = []
-                        var fragments = []
-                        for (var key in pos) { //得到所有键名
-                            if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                                keys.push(key)
-                            }
-                        }
-                        if (data.sortedCallback) { //如果有回调，则让它们排序
-                            var keys2 = data.sortCallback.call(parent, keys)
-                            if (keys2 && Array.isArray(keys2) && keys2.length) {
-                                keys = keys2
-                            }
-                        }
-                        for (var i = 0, key; key = keys[i++]; ) {
-                            if (key !== "hasOwnProperty") {
-                                shimController(data, transation, pool[key], fragments)
-                            }
-                        }
-                        data.proxySize = keys.length
-                        parent.insertBefore(transation, data.element.nextSibling)
-                        for (var i = 0, fragment; fragment = fragments[i++]; ) {
-                            scanNodeArray(fragment.nodes, fragment.vmodels)
-                            fragment.nodes = fragment.vmodels = null
-                        }
-                        break
-                }
-                var callback = data.renderedCallback
-                if (callback) {
-                    checkScan(parent, function() {
-                        callback.apply(parent, arguments)
-                    })
-                }
-            }
-        },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
             var parent = "group" in data ? elem.parentNode : elem
@@ -3004,6 +2899,8 @@
             if (type === "each" || type == "with") {
                 data.template = elem.innerHTML
                 avalon.clearHTML(elem).appendChild(comment)
+                console.log("============")
+                console.log(elem)
             } else {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML
@@ -3718,6 +3615,115 @@
         return val
     }
 
+
+    bindingExecutors.repeat = function(method, pos, el) {
+        if (method) {
+            var data = this
+            var group = data.group
+            var parent = data.element.parentNode// //fix  #300 #307
+            var proxies = data.proxies
+            var transation = hyperspace.cloneNode(false)
+            if (method === "del" || method === "move") {
+                console.log(pos)
+                var locatedNode = getLocatedNode(data, pos)
+            }
+            switch (method) {
+                case "add": //在pos位置后添加el数组（pos为数字，el为数组）
+                    var arr = el
+                    var last = data.$repeat.length - 1
+                    var fragments = []
+                    for (var i = 0, n = arr.length; i < n; i++) {
+                        var ii = i + pos
+                        var proxy = getEachProxy(ii, arr[i], data, last)
+                        proxies.splice(ii, 0, proxy)
+                        shimController(data, transation, proxy, fragments)
+                    }
+                    locatedNode = getLocatedNode(data, pos)
+                    parent.insertBefore(transation, locatedNode)
+                    for (var i = 0, fragment; fragment = fragments[i++]; ) {
+                        scanNodeArray(fragment.nodes, fragment.vmodels)
+                        fragment.nodes = fragment.vmodels = null
+                    }
+                    break
+                case "del": //将pos后的el个元素删掉(pos, el都是数字)
+                    var count = el
+                    var removed = proxies.splice(pos, count)
+                    console.log(locatedNode,pos, count)
+                    removeView(locatedNode, group, count)
+                    break
+                case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
+                    var last = proxies.length - 1
+                    for (; el = proxies[pos]; pos++) {
+                        el.$index = pos
+                        el.$first = pos === 0
+                        el.$last = pos === last
+                    }
+                    break
+                case "clear":
+                    var n = ("proxySize" in data ? data.proxySize : proxies.length) * data.group, k = 0
+                    while (true) {
+                        var nextNode = data.element.nextSibling
+                        if (nextNode && k < n) {
+                            parent.removeChild(nextNode)
+                            k++
+                        } else {
+                            break
+                        }
+                    }
+                    recycleEachProxies(proxies)
+                    break
+                case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
+                    var t = proxies.splice(pos, 1)[0]
+                    if (t) {
+                        proxies.splice(el, 0, t)
+                        transation = removeView(locatedNode, group)
+                        locatedNode = getLocatedNode(data, el)
+                        parent.insertBefore(transation, locatedNode)
+                    }
+                    break
+                case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
+                    var proxy = proxies[pos]
+                    if (proxy) {
+                        proxy[proxy.$itemName] = el
+                    }
+                    break
+                case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
+                    var pool = el
+                    var keys = []
+                    var fragments = []
+                    for (var key in pos) { //得到所有键名
+                        if (pos.hasOwnProperty(key) && key !== "hasOwnProperty") {
+                            keys.push(key)
+                        }
+                    }
+                    if (data.sortedCallback) { //如果有回调，则让它们排序
+                        var keys2 = data.sortCallback.call(parent, keys)
+                        if (keys2 && Array.isArray(keys2) && keys2.length) {
+                            keys = keys2
+                        }
+                    }
+                    for (var i = 0, key; key = keys[i++]; ) {
+                        if (key !== "hasOwnProperty") {
+                            shimController(data, transation, pool[key], fragments)
+                        }
+                    }
+                    data.proxySize = keys.length
+                    parent.insertBefore(transation, data.element.nextSibling)
+                    for (var i = 0, fragment; fragment = fragments[i++]; ) {
+                        scanNodeArray(fragment.nodes, fragment.vmodels)
+                        fragment.nodes = fragment.vmodels = null
+                    }
+                    break
+            }
+            var callback = data.renderedCallback
+            if (callback) {
+                checkScan(parent, function() {
+                    callback.apply(parent, arguments)
+                })
+            }
+        }
+    }
+
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
 
     function isVML(src) {
@@ -3728,6 +3734,7 @@
     function shimController(data, transation, proxy, fragments) {
         var dom = avalon.parseHTML(data.template)
         var nodes = avalon.slice(dom.childNodes)
+
         transation.appendChild(dom)
         proxy.$outer = data.$outer
         data.group = nodes.length
@@ -3737,32 +3744,41 @@
         }
         fragments.push(fragment)
     }
-    // 取得用于定位的节点。在绑定了ms-each, ms-with属性的元素里，它的整个innerHTML都会视为一个子模板先行移出DOM树，
-    // 然后如果它的元素有多少个（ms-each）或键值对有多少双（ms-with），就将它复制多少份(多少为N)，再经过扫描后，重新插入该元素中。
-    // 这时该元素的孩子将分为N等分，每等份的第一个节点就是这个用于定位的节点，
-    // 方便我们根据它算出整个等分的节点们，然后整体移除或移动它们。
+    // 取得用于定位的节点。比如data.group = 3,  结构为
+    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/></div>
+    // 当pos为0时,返回 br#first
+    // 当pos为1时,返回 br#second
+    // 当pos为2时,返回 null
     function getLocatedNode(data, pos) {
-        var ret = data.element
-        pos += 1
-        for (var i = 0; i < pos; i++) {
-            ret = ret.nextSibling
-            if (ret === null)
-                return null
+        var node = data.element.nextSibling
+        var i = 1
+        var n = pos * data.group
+        while (i < n) {
+            if (node) {
+                i++
+                node = node.nextSibling
+            } else {
+                break
+            }
         }
-        return ret || null
+       // console.log(node)
+        return node || null
     }
 
     function removeView(node, group, n) {
         var length = group * (n || 1)
-        var view = hyperspace//.cloneNode(false)//???
-        while (--length >= 0) {
-            var nextSibling = node.nextSibling
-            view.appendChild(node)
-            node = nextSibling
-            if (!node) {
-                break
+        var nodes = [node]
+        var view = hyperspace
+        while (nodes.length < length) {
+            node = node.nextSibling
+            if (node) {
+                nodes.push(node)
             }
         }
+        for (var i = 0, n = nodes.length; i < n; i++ ) {
+            view.appendChild(nodes[i])
+        }
+        console.log(avalon.slice(view.childNodes))
         return view
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
