@@ -488,12 +488,14 @@
                     var data = {
                         evaluator: accessor,
                         element: head,
-                        handler: noop
+                        handler: noop,
+                        args: []
                     }
                     var vars = getVariables(getter + "").concat()
-                    if (vars.length) {
+                    if (vars.length) {//计算依赖
                         addAssign(vars, $vmodel, name, data)
                     }
+                    accessor()//强逼计算自身
                 })
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
@@ -635,7 +637,7 @@
                 withProxyCount--
                 delete withProxyPool[son.$id]
             }
-            var ret = modelFactory(value, parent)
+            var ret = modelFactory(value, parent, null, name)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -2065,7 +2067,7 @@
         //        window.onload = function() {
         //            var body = document.body
         //            for (var i = 0, el; el = body.children[i++]; ) {
-        //                console.log(el.outerHTML)
+        //                avalon.log(el.outerHTML)
         //            }
         //        }
         //依次输出<SECTION>, </SECTION>
@@ -2219,10 +2221,9 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-                
-//                .map(function(str) {
-//            return str.charAt(0) === "." ? str.slice(1) : str
-//        })
+                .map(function(str) {
+                    return str.charAt(0) === "." ? str.slice(1) : str
+                })
         return cacheVars(key, uniqSet(vars))
     }
 
@@ -2269,6 +2270,7 @@
     function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " =" + name + "."
+       
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
             var flag = inObject(scope, arr)
@@ -2883,19 +2885,15 @@
         "repeat": function(data, vmodels) {
             var type = data.type
             parseExpr(data.value, vmodels, data)
-var clone = vmodels.concat()
             data.proxies = []
-            var freturn = true
             try {
                 var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
                 var xtype = avalon.type($repeat)
-                if (xtype === "object" || xtype === "array") {
-                    freturn = false
+                if (xtype !== "object" && xtype !== "array") {
+                    return avalon.log("warning:" + data.value + "对应类型不正确")
                 }
             } catch (e) {
-                console.log(clone)
-                console.log(data.evaluator)
-                avalon.log("warning:"+data.value +"应该对应一个数组")
+                return avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
@@ -2918,9 +2916,7 @@ var clone = vmodels.concat()
                 target.setAttribute(data.name, data.value)
                 parentNode.replaceChild(avalon.parseHTML(data.template), elem)
             }
-            if (freturn) {
-                return
-            }
+
             data.callbackName = "data-" + type + "-rendered"
             data.handler = bindingExecutors.repeat
             data.$outer = {}
@@ -3424,21 +3420,14 @@ var clone = vmodels.concat()
         array._ = modelFactory({
             length: model.length
         })
-        var subscribers = parent.$events[name]
-        
+        var subscribers
+        try {
+            subscribers = parent.$events[name]
+        } catch (e) {
+            subscribers = []
+        }
         array._fire = function(method, a, b) {
-//            if (!subscribers) {
-//                for (var i in parent) {
-//                    if (parent[i] === array) {
-//                        console.log("=================")
-//                        subscribers = parent.$events[i]
-//                        break
-//                    }
-//                }
-//            }
-            if (subscribers) {
-                notifySubscribers(subscribers, method, a, b)
-            }
+            notifySubscribers(subscribers, method, a, b)
         }
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
@@ -3645,7 +3634,6 @@ var clone = vmodels.concat()
                     locatedNode = locateFragment(data, pos)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
-                        //console.log(fragment.vmodels)
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
@@ -3654,7 +3642,6 @@ var clone = vmodels.concat()
                     var removed = proxies.splice(pos, el)
                     var transation = removeFragment(locatedNode, group, el)
                     avalon.clearHTML(transation)
-                    console.log("=========")
                     recycleEachProxies(removed)
                     break
                 case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -3703,7 +3690,7 @@ var clone = vmodels.concat()
                         }
                     }
                     if (data.sortedCallback) { //如果有回调，则让它们排序
-                        var keys2 = data.sortCallback.call(parent, keys)
+                        var keys2 = data.sortedCallback.call(parent, keys)
                         if (keys2 && Array.isArray(keys2) && keys2.length) {
                             keys = keys2
                         }
