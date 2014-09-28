@@ -1,11 +1,10 @@
-
 <!doctype html>
 <html lang="cn">
     <head>
         <meta charset="utf-8">
         <title>avalon • TodoMVC</title>
         <link rel="stylesheet" href="http://todomvc.com/architecture-examples/react/bower_components/todomvc-common/base.css">
-        <script src="avalon.js"></script>
+        <script src="avalon.$events.js"></script>
         <style>
             .ms-controller{
                 visibility: hidden;
@@ -13,7 +12,7 @@
         </style>
         <script>
             avalon.filters.capitalize = function(a) {
-                return a.charAt(0).toUpperCase() + a.slice(1)
+                return a.charAt(0).toUpperCase()  + a.slice(1)
             }
             var model = avalon.define({
                 $id: "todo",
@@ -47,9 +46,11 @@
                 },
                 allChecked: false,
                 checkOne: function() {//点击UI列表的checkbox时
+                     model.$unwatch()
                     model.allChecked = model.todos.every(function(val) {
                         return  val.completed
                     })
+                     model.$watch()
                     updateCount()
                 },
                 state: "all",
@@ -79,10 +80,6 @@
 
             model.todos.$watch("length", updateCount)
 
-
-
-
-
         </script>
     </head>
     <body ms-controller="todo" class="ms-controller">
@@ -103,7 +100,7 @@
                             <label ms-dblclick="editTodo($index)">{{todo.title}}</label>
                             <button class="destroy" ms-click="$remove"></button>
                         </div>
-                        <form>
+                        <form action="javascript:void(0)" ms-submit="doneEditing">
                             <input class="edit" ms-duplex="todo.title"  ms-blur="doneEditing" >
                         </form>
                     </li>
@@ -116,7 +113,7 @@
                 </span>
                 <ul id="filters">
                     <li ms-repeat="status">
-                        <a ms-class="selected: state == el" href="#/{{el}}" >{{ el | capitalize }}</a>
+                        <a ms-class="selected: state == el" ms-href="#/{{el}}" >{{ el | capitalize }}</a>
                     </li>
                 </ul>
                 <button id="clear-completed" ms-visible="completedCount" ms-click="removeCompleted">

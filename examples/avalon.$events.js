@@ -444,7 +444,7 @@
         }
         $scope.$skipArray.$special = $special || {}//强制要监听的属性
         var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
-        var $model = {} //vmodels.$model属性
+        var $model = {}  //vmodels.$model属性
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
         var childrenProperties = []  //能转换为子VM或监控数组的属性
