@@ -488,13 +488,14 @@
                     var data = {
                         evaluator: accessor,
                         element: head,
-                        handler: noop
+                        handler: noop,
+                        args: []
                     }
                     var vars = getVariables(getter + "").concat()
-                    if (vars.length) {
+                    if (vars.length) {//计算依赖
                         addAssign(vars, $vmodel, name, data)
                     }
-                    accessor()
+                    accessor()//强逼计算自身
                 })
             } else if (rcomplexType.test(valueType)) {
                 //第2种对应子ViewModel或监控数组 
@@ -518,7 +519,6 @@
                 }
                 childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
                     var childVmodel = accessor.child = modelFactory(val, $vmodel, null, name)
-                    
                     $model[name] = childVmodel.$model
                 })
             } else {
