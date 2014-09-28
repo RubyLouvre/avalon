@@ -2899,8 +2899,6 @@
             if (type === "each" || type == "with") {
                 data.template = elem.innerHTML
                 avalon.clearHTML(elem).appendChild(comment)
-                console.log("============")
-                console.log(elem)
             } else {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML
@@ -3624,8 +3622,7 @@
             var proxies = data.proxies
             var transation = hyperspace.cloneNode(false)
             if (method === "del" || method === "move") {
-                console.log(pos)
-                var locatedNode = getLocatedNode(data, pos)
+                var locatedNode = locateFragment(data, pos)
             }
             switch (method) {
                 case "add": //在pos位置后添加el数组（pos为数字，el为数组）
@@ -3638,7 +3635,7 @@
                         proxies.splice(ii, 0, proxy)
                         shimController(data, transation, proxy, fragments)
                     }
-                    locatedNode = getLocatedNode(data, pos)
+                    locatedNode = locateFragment(data, pos)
                     parent.insertBefore(transation, locatedNode)
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
                         scanNodeArray(fragment.nodes, fragment.vmodels)
@@ -3646,10 +3643,10 @@
                     }
                     break
                 case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                    var count = el
-                    var removed = proxies.splice(pos, count)
-                    console.log(locatedNode,pos, count)
-                    removeView(locatedNode, group, count)
+                    var removed = proxies.splice(pos, el)
+                    var transation = removeFragment(locatedNode, group, el)
+                    avalon.clearHTML(transation)
+                    recycleEachProxies(removed)
                     break
                 case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                     var last = proxies.length - 1
@@ -3676,8 +3673,8 @@
                     var t = proxies.splice(pos, 1)[0]
                     if (t) {
                         proxies.splice(el, 0, t)
-                        transation = removeView(locatedNode, group)
-                        locatedNode = getLocatedNode(data, el)
+                        transation = removeFragment(locatedNode, group)
+                        locatedNode = locateFragment(data, el)
                         parent.insertBefore(transation, locatedNode)
                     }
                     break
@@ -3749,13 +3746,10 @@
     // 当pos为0时,返回 br#first
     // 当pos为1时,返回 br#second
     // 当pos为2时,返回 null
-    function getLocatedNode(data, pos) {
+    function locateFragment(data, pos) {
         var node = data.element.nextSibling
-        var i = 0
-        var n = pos * data.group
-        while (i < n) {
+        for (var i = 0, n = pos * data.group; i < n; i++) {
             if (node) {
-                i++
                 node = node.nextSibling
             } else {
                 break
@@ -3764,20 +3758,19 @@
         return node || null
     }
 
-    function removeView(node, group, n) {
-        var length = group * (n || 1)
-        var nodes = [node]
+    function removeFragment(node, group, pos) {
+        var n = group * (pos || 1)
+        var nodes = [node], i = 1
         var view = hyperspace
-        while (nodes.length < length) {
+        while (i < n) {
             node = node.nextSibling
             if (node) {
-                nodes.push(node)
+                nodes[i++] = node
             }
         }
-        for (var i = 0, n = nodes.length; i < n; i++ ) {
-            view.appendChild(nodes[i])
+        for (var i = 0; node = nodes[i++]; ) {
+            view.appendChild(node)
         }
-        console.log(avalon.slice(view.childNodes))
         return view
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
