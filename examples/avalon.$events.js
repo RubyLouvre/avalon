@@ -2219,7 +2219,7 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-                
+
 //                .map(function(str) {
 //            return str.charAt(0) === "." ? str.slice(1) : str
 //        })
@@ -2883,19 +2883,15 @@
         "repeat": function(data, vmodels) {
             var type = data.type
             parseExpr(data.value, vmodels, data)
-var clone = vmodels.concat()
             data.proxies = []
-            var freturn = true
             try {
                 var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
                 var xtype = avalon.type($repeat)
-                if (xtype === "object" || xtype === "array") {
-                    freturn = false
+                if (xtype !== "object" && xtype !== "array") {
+                    return avalon.log("warning:" + data.value + "对应类型不正确")
                 }
             } catch (e) {
-                console.log(clone)
-                console.log(data.evaluator)
-                avalon.log("warning:"+data.value +"应该对应一个数组")
+                return avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
@@ -2918,9 +2914,7 @@ var clone = vmodels.concat()
                 target.setAttribute(data.name, data.value)
                 parentNode.replaceChild(avalon.parseHTML(data.template), elem)
             }
-            if (freturn) {
-                return
-            }
+
             data.callbackName = "data-" + type + "-rendered"
             data.handler = bindingExecutors.repeat
             data.$outer = {}
@@ -3424,21 +3418,14 @@ var clone = vmodels.concat()
         array._ = modelFactory({
             length: model.length
         })
-        var subscribers = parent.$events[name]
-        
+        var subscribers
+        try {
+            subscribers = parent.$events[name]
+        } catch (e) {
+            subscribers = []
+        }
         array._fire = function(method, a, b) {
-//            if (!subscribers) {
-//                for (var i in parent) {
-//                    if (parent[i] === array) {
-//                        console.log("=================")
-//                        subscribers = parent.$events[i]
-//                        break
-//                    }
-//                }
-//            }
-            if (subscribers) {
-                notifySubscribers(subscribers, method, a, b)
-            }
+            notifySubscribers(subscribers, method, a, b)
         }
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
@@ -3703,7 +3690,7 @@ var clone = vmodels.concat()
                         }
                     }
                     if (data.sortedCallback) { //如果有回调，则让它们排序
-                        var keys2 = data.sortCallback.call(parent, keys)
+                        var keys2 = data.sortedCallback.call(parent, keys)
                         if (keys2 && Array.isArray(keys2) && keys2.length) {
                             keys = keys2
                         }
