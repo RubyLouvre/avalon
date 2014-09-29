@@ -1800,7 +1800,7 @@
                 var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
                 data.handler(c, data.element, data)
             } catch (e) {
-                avalon.log(e+"")
+                avalon.log(e + "")
                 delete data.evaluator
                 var node = data.element
                 if (node.nodeType === 3) {
@@ -2895,8 +2895,10 @@
                 return avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
+
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
+
             var comment = data.element = DOC.createComment("ms-repeat")
             if (type === "each" || type == "with") {
                 data.template = elem.innerHTML
@@ -2911,9 +2913,10 @@
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
-                var target = data.element = data.type == "repeat" ? elem : parentNode
+                var content = avalon.parseHTML(data.template).firstChild
+                parentNode.replaceChild(content, elem)
+                var target = data.element = data.type === "repeat" ? content : parentNode
                 target.setAttribute(data.name, data.value)
-                parentNode.replaceChild(avalon.parseHTML(data.template), elem)
             }
 
             data.callbackName = "data-" + type + "-rendered"
