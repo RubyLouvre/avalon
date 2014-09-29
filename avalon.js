@@ -3965,10 +3965,13 @@
      *                             自带过滤器                            *
      **********************************************************************/
     var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
-    var raimg = /^<(a|img)\s/i
     var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
     var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
-    var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
+    var rsanitize = {
+        a: /\b(href)\=("javascript[^"]*"|'javascript[^']*')/ig,
+        img: /\b(src)\=("javascript[^"]*"|'javascript[^']*')/ig,
+        form: /\b(action)\=("javascript[^"]*"|'javascript[^']*')/ig
+    }
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
     var filters = avalon.filters = {
@@ -3992,9 +3995,16 @@
         //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
         //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
         sanitize: function(str) {
-            return str.replace(rscripts, "").replace(ropen, function(a, b) {
-                if (raimg.test(a)) {
-                    a = a.replace(rjavascripturl, " $1=''")//移除javascript伪协议
+             return str.replace(rscripts, "").replace(ropen, function(a, b) {
+                var match = a.toLowerCase().match(/<(\w+)\s/)
+                if (match) {//处理a标签的href属性，img标签的src属性，form标签的action属性
+                    var reg = rsanitize[match[1]]
+                    if (reg) {
+                        a = a.replace(reg, function(s, name, value) {
+                            var quote = value.charAt(0)
+                            return  name + "=" + quote + "javascript:void(0)" + quote
+                        })
+                    }
                 }
                 return a.replace(ron, " ").replace(/\s+/g, " ")//移除onXXX事件
             })
