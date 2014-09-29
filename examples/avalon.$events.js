@@ -428,6 +428,7 @@
         }
         return true
     }
+    var rthis = /\bthis\./g
     function modelFactory($scope, $parent, $special, name) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
@@ -491,7 +492,7 @@
                         handler: noop,
                         args: []
                     }
-                    var vars = getVariables(getter + "").concat()
+                    var vars = getVariables(getter.toString().replace(rthis, "")).concat()
                     if (vars.length) {//计算依赖
                         addAssign(vars, $vmodel, name, data)
                     }
@@ -2221,9 +2222,6 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-                .map(function(str) {
-                    return str.charAt(0) === "." ? str.slice(1) : str
-                })
         return cacheVars(key, uniqSet(vars))
     }
 
