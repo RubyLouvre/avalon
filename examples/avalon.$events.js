@@ -1800,6 +1800,7 @@
                 var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
                 data.handler(c, data.element, data)
             } catch (e) {
+                avalon.log(e+"")
                 delete data.evaluator
                 var node = data.element
                 if (node.nodeType === 3) {
@@ -2712,7 +2713,7 @@
                     var node = avalon.parseHTML(data.template).firstChild
                     elem.parentNode.replaceChild(node, elem)
                     data.element = node
-                    if (rbind.test(data.html.replace(rlt, "<").replace(rgt, ">"))) {
+                    if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
                         try {
                             scanAttr(node, data.vmodels)
                         } catch (e) {
@@ -3896,7 +3897,7 @@
                     if (reg) {
                         a = a.replace(reg, function(s, name, value) {
                             var quote = value.charAt(0)
-                            return  name + "=" + quote + "void(0)" + quote
+                            return  name + "=" + quote + "javascript:void(0)" + quote
                         })
                     }
                 }
