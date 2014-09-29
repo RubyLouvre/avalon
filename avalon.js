@@ -2735,7 +2735,7 @@
                     if (W3C) {
                         W3CFire(data.element, "change")
                     } else {
-                        data.element.fireEvent("change")
+                        data.element.fireEvent("onchange")
                     }
                 }
             }
