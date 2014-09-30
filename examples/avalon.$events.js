@@ -450,10 +450,11 @@
         var computedProperties = []  //计算属性
         var childrenProperties = []  //能转换为子VM或监控数组的属性
         var $events = {}
-        avalon.each($scope, function(name, val) {
+        Object.keys($scope).forEach(function(name) {
+            var val = $scope[name]
             if (!isObservable(name, val, $scope.$skipArray)) {
                 $model[name] = val
-                return //过滤所有非监控属性
+                return  //过滤所有非监控属性
             }
             //总共产生三种accessor
             var accessor
@@ -2271,7 +2272,6 @@
                 prefix = " =" + name + "."
 
         for (var i = vars.length, path; path = vars[--i]; ) {
-            console.log(path)
             var arr = path.split(".")
             var flag = inObject(scope, arr)
             if (flag) {
@@ -2288,17 +2288,17 @@
                     subscope = subscope[prop]
                     if (subscope && typeof subscope === "object") {
                         prop = arr.shift()
-                        if (prop === undefined) {
+                        if (prop === void 0 && Array.isArray(subscope)) {
                             var sonEvents = subscope.$events
-                            var sonList = sonEvents["undefined"]
+                            var sonList = sonEvents[subscribers]
                             if (sonList !== parentList) {
-                                //avalon.log("reset!" + parentName)
                                 if (sonList && sonList.length) {
                                     for (var j = 0, fn; fn = sonList[j++]; ) {
                                         avalon.Array.ensure(parentList, fn)
                                     }
                                 }
-                                sonEvents["undefined"] = parentList
+                                sonEvents[subscribers] = parentList
+                                prop = subscribers
                             }
                         }
                         collectSubscribers(subscope, prop, data)
@@ -3434,14 +3434,14 @@
         array.$id = generateID() //它在父VM中的名字
         array.$parent = parent //父VM
         array.$model = model   //数据模型
-        array.$events = {
-            undefined: []
-        }    //在监控数组中，它没有用处，只是基于VM的规范全部统一添加
+        array.$events = {}
+        array.$events[subscribers] = []
+        //在监控数组中，它没有用处，只是基于VM的规范全部统一添加
         array._ = modelFactory({
             length: model.length
         })
         array._fire = function(method, a, b) {
-            notifySubscribers(array.$events["undefined"], method, a, b)
+            notifySubscribers(array.$events[subscribers], method, a, b)
         }
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
@@ -3583,7 +3583,6 @@
                 } else if (target !== val) {
                     this[index] = val
                     this.$model[index] = val
-                    console.log("======")
                     this._fire("set", index, val)
                 }
             }
@@ -3619,7 +3618,7 @@
 
     function convert(val) {
         if (rcomplexType.test(avalon.type(val))) {
-            val = val.$id ? val : modelFactory(val, val)
+            val = val.$id ? val : modelFactory(val, null)
         }
         return val
     }
