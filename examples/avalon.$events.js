@@ -3438,12 +3438,12 @@
         array.$events[subscribers] = []
         //在监控数组中，它没有用处，只是基于VM的规范全部统一添加
         array._ = modelFactory({
-            length: model.length
+            size: model.length
         })
         array._fire = function(method, a, b) {
             notifySubscribers(array.$events[subscribers], method, a, b)
         }
-        array._.$watch("length", function(a, b) {
+        array._.$watch("size", function(a, b) {
             array.$fire("length", a, b)
         })
         for (var i in EventManager) {
@@ -3466,7 +3466,7 @@
             _splice.apply(this, [pos, 0].concat(added))
             this._fire("add", pos, added)
             if (!this._stopFireLength) {
-                return this._.length = this.length
+                return this._.size = this.length
             }
         },
         _del: function(pos, n) { //在第pos个位置上，删除N个元素
@@ -3474,7 +3474,7 @@
             if (ret.length) {
                 this._fire("del", pos, n)
                 if (!this._stopFireLength) {
-                    this._.length = this.length
+                    this._.size = this.length
                 }
             }
             return ret
@@ -3520,7 +3520,7 @@
                 change = true
             }
             this._stopFireLength = false
-            this._.length = this.length
+            this._.size = this.length
             if (change) {
                 this._fire("index", 0)
             }
@@ -3530,7 +3530,7 @@
             return this.indexOf(el) !== -1
         },
         size: function() { //取得数组长度，这个函数可以同步视图，length不能
-            return this._.length
+            return this._.size
         },
         remove: function(el) { //移除第一个等于给定值的元素
             return this.removeAt(this.indexOf(el))
@@ -3539,7 +3539,7 @@
             return index >= 0 ? this.splice(index, 1) : []
         },
         clear: function() {
-            this.$model.length = this.length = this._.length = 0 //清空数组
+            this.$model.length = this.length = this._.size = 0 //清空数组
             this._fire("clear", 0)
             return this
         },
