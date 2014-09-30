@@ -429,11 +429,11 @@
         return true
     }
     var rthis = /\bthis\./g
-    function modelFactory($scope, $parent, $special, name) {
+    function modelFactory($scope, $parent, $special) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
             $scope.length = 0
-            var collection = Collection($scope, $parent, name)
+            var collection = Collection($scope, $parent)
             collection.pushArray(arr)
             return collection
         }
@@ -519,7 +519,7 @@
                     }
                 }
                 childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
-                    var childVmodel = accessor.child = modelFactory(val, $vmodel, null, name)
+                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
                     $model[name] = childVmodel.$model
                 })
             } else {
@@ -638,7 +638,7 @@
                 withProxyCount--
                 delete withProxyPool[son.$id]
             }
-            var ret = modelFactory(value, parent, null, name)
+            var ret = modelFactory(value, parent)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -2271,6 +2271,7 @@
                 prefix = " =" + name + "."
 
         for (var i = vars.length, path; path = vars[--i]; ) {
+            console.log(path)
             var arr = path.split(".")
             var flag = inObject(scope, arr)
             if (flag) {
@@ -2282,9 +2283,24 @@
                 }
                 var subscope = scope
                 do {//处理子对象
+                    var parentList = scope.$events[prop]
+                    var parentName = prop
                     subscope = subscope[prop]
                     if (subscope && typeof subscope === "object") {
                         prop = arr.shift()
+                        if (prop === undefined) {
+                            var sonEvents = subscope.$events
+                            var sonList = sonEvents["undefined"]
+                            if (sonList !== parentList) {
+                                //avalon.log("reset!" + parentName)
+                                if (sonList && sonList.length) {
+                                    for (var j = 0, fn; fn = sonList[j++]; ) {
+                                        avalon.Array.ensure(parentList, fn)
+                                    }
+                                }
+                                sonEvents["undefined"] = parentList
+                            }
+                        }
                         collectSubscribers(subscope, prop, data)
                     } else {
                         break
@@ -3413,23 +3429,19 @@
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
 
-    function Collection(model, parent, name) {
+    function Collection(model, parent) {
         var array = []
         array.$id = generateID() //它在父VM中的名字
         array.$parent = parent //父VM
         array.$model = model   //数据模型
-        array.$events = {}    //在监控数组中，它没有用处，只是基于VM的规范全部统一添加
+        array.$events = {
+            undefined: []
+        }    //在监控数组中，它没有用处，只是基于VM的规范全部统一添加
         array._ = modelFactory({
             length: model.length
         })
-        var subscribers
-        try {
-            subscribers = parent.$events[name]
-        } catch (e) {
-            subscribers = []
-        }
         array._fire = function(method, a, b) {
-            notifySubscribers(subscribers, method, a, b)
+            notifySubscribers(array.$events["undefined"], method, a, b)
         }
         array._.$watch("length", function(a, b) {
             array.$fire("length", a, b)
@@ -3571,6 +3583,7 @@
                 } else if (target !== val) {
                     this[index] = val
                     this.$model[index] = val
+                    console.log("======")
                     this._fire("set", index, val)
                 }
             }
