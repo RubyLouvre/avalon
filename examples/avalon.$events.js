@@ -3440,9 +3440,6 @@
         array._ = modelFactory({
             size: model.length
         })
-        array._fire = function(method, a, b) {
-            notifySubscribers(array.$events[subscribers], method, a, b)
-        }
         array._.$watch("size", function(a, b) {
             array.$fire("length", a, b)
         })
@@ -3456,6 +3453,9 @@
     var _splice = ap.splice
     var CollectionPrototype = {
         _splice: _splice,
+        _fire: function(method, a, b) {
+            notifySubscribers(this.$events[subscribers], method, a, b)
+        },
         _add: function(arr, pos) { //在第pos个位置上，添加一组元素
             var oldLength = this.length
             pos = typeof pos === "number" ? pos : oldLength
