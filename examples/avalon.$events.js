@@ -3627,13 +3627,13 @@
     bindingExecutors.repeat = function(method, pos, el) {
         if (method) {
             var data = this
-            var group = data.group
-            var parent = data.element.parentNode// //fix  #300 #307
+            var parent = data.element.parentNode
             var proxies = data.proxies
             var transation = hyperspace.cloneNode(false)
             if (method === "del" || method === "move") {
                 var locatedNode = locateFragment(data, pos)
             }
+            var group = data.group
             switch (method) {
                 case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                     var arr = el
@@ -3757,13 +3757,19 @@
     // 当pos为1时,返回 br#second
     // 当pos为2时,返回 null
     function locateFragment(data, pos) {
-        var node = data.element.nextSibling
-        for (var i = 0, n = pos * data.group; i < n; i++) {
-            if (node) {
-                node = node.nextSibling
-            } else {
-                break
+        if (data.type == "repeat") {//ms-repeat，data.group为1
+            var node = data.element.nextSibling
+            for (var i = 0, n = pos; i < n; i++) {
+                if (node) {
+                    node = node.nextSibling
+                } else {
+                    break
+                }
             }
+        } else {
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            data.group = nodes.length / data.proxies.length
+            node = nodes[data.group * pos]
         }
         return node || null
     }
