@@ -3742,10 +3742,10 @@
                     }
                     break
             }
-            var callback = data.renderedCallback
+            var callback = data.renderedCallback, args = arguments
             if (callback) {
                 checkScan(parent, function() {
-                    callback.apply(parent, arguments)
+                    callback.apply(parent, args)
                 })
             }
         }
