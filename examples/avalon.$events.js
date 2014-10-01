@@ -412,8 +412,13 @@
     }
     //一些不需要被监听的属性
     var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$parent").match(rword)
-    function isObservable(name, value, $skipArray) {
-        if (isFunction(value) || (value && value.nodeType)) {
+    function isObservable(name, value, $skipArray, functionProperties) {
+        if (isFunction(value)) {
+            value.avalonName = name
+            functionProperties.push(value)
+            return false
+        }
+        if (isFunction(value)) {
             return false
         }
         if ($skipArray.indexOf(name) !== -1) {
@@ -429,6 +434,7 @@
         return true
     }
     var rthis = /\bthis\./g
+    var rvariable = /[$\w][$\w]*\./g
     function modelFactory($scope, $parent, $special) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
@@ -449,10 +455,11 @@
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
         var childrenProperties = []  //能转换为子VM或监控数组的属性
+        var functionProperties = []  //函数
         var $events = {}
         Object.keys($scope).forEach(function(name) {
             var val = $scope[name]
-            if (!isObservable(name, val, $scope.$skipArray)) {
+            if (!isObservable(name, val, $scope.$skipArray, functionProperties)) {
                 $model[name] = val
                 return  //过滤所有非监控属性
             }
@@ -576,6 +583,20 @@
         })
         computedProperties.forEach(function(collect) {//收集依赖
             collect()
+        })
+        functionProperties.forEach(function(fn) {
+            var data = {
+                evaluator: function() {
+                    notifySubscribers($vmodel.$events[fn.avalonName])
+                },
+                element: head,
+                handler: noop,
+                args: []
+            }
+            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
+            if (vars.length) {//计算依赖
+                addAssign(vars, $vmodel, name, data)
+            }
         })
         return $vmodel
     }
