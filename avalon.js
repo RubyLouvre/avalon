@@ -2082,7 +2082,7 @@
         //        window.onload = function() {
         //            var body = document.body
         //            for (var i = 0, el; el = body.children[i++]; ) {
-        //                console.log(el.outerHTML)
+        //                avalon.log(el.outerHTML)
         //            }
         //        }
         //依次输出<SECTION>, </SECTION>

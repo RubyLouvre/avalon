@@ -2291,7 +2291,6 @@
     function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " =" + name + "."
-
         for (var i = vars.length, path; path = vars[--i]; ) {
             var arr = path.split(".")
             var flag = inObject(scope, arr)
@@ -2327,7 +2326,7 @@
                         break
                     }
                 } while (arr.length);
-                if (flag === 2)
+                if (flag > 0)
                     vars.splice(i, 1)
             }
         }
@@ -2420,6 +2419,7 @@
             try {
                 fn = Function.apply(noop, names.concat(_body))
                 data.evaluator = cacheExprs(exprId, fn)
+
             } catch (e) {
                 log("debug: parse error," + e.message)
             }
@@ -2599,9 +2599,7 @@
                 }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
-                        avalon.nextTick(function() {
-                            scanTemplate(cacheTmpls[val])
-                        })
+                        scanTemplate(cacheTmpls[val])
                     } else {
                         var xhr = getXHR()
                         xhr.onreadystatechange = function() {
@@ -3672,6 +3670,7 @@
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
+
                     break
                 case "del": //将pos后的el个元素删掉(pos, el都是数字)
                     var removed = proxies.splice(pos, el)
