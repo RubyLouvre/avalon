@@ -3044,7 +3044,7 @@
         var param = data.param || "el", proxy
         var source = {
             $remove: function() {
-                return data.getter().removeAt(proxy.$index)
+                return data.$repeat.removeAt(proxy.$index)
             },
             $itemName: param,
             $index: index,
@@ -3069,7 +3069,7 @@
         }
         proxy = modelFactory(source, 0, watchEachOne)
         proxy.$watch(param, function(val) {
-            data.getter().set(proxy.$index, val)
+            data.$repeat.set(proxy.$index, val)
         })
         proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
         return proxy
