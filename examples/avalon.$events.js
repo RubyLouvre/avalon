@@ -2352,7 +2352,7 @@
 
     function parseExpr(code, scopes, data) {
         var dataType = data.type
-        var filters = dataType === "html" || dataType === "text" ? data.filters : ""
+        var filters =  data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
@@ -3821,7 +3821,7 @@
             $val: 1,
             $key: 1
         })
-        proxy.$id = "$proxy$with" + Math.random()
+        proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./,"")
         return proxy
     }
     var eachProxyPool = []
@@ -3855,7 +3855,7 @@
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })
-        proxy.$id = "$proxy$" + data.type + Math.random()
+        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./,"")
         return proxy
     }
     function recycleEachProxies(array) {

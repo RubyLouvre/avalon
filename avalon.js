@@ -2278,7 +2278,7 @@
 
     function parseExpr(code, scopes, data) {
         var dataType = data.type
-        var filters = dataType === "html" || dataType === "text" ? data.filters : ""
+        var filters = data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
@@ -3896,7 +3896,7 @@
             $val: 1,
             $key: 1
         })
-        proxy.$id = "$proxy$with" + Math.random()
+        proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
         return proxy
     }
     var eachProxyPool = []
@@ -3930,7 +3930,7 @@
         proxy.$watch(param, function(val) {
             data.getter().set(proxy.$index, val)
         })
-        proxy.$id = "$proxy$" + data.type + Math.random()
+        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
         return proxy
     }
     function recycleEachProxies(array) {
@@ -3995,7 +3995,7 @@
         //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
         //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
         sanitize: function(str) {
-             return str.replace(rscripts, "").replace(ropen, function(a, b) {
+            return str.replace(rscripts, "").replace(ropen, function(a, b) {
                 var match = a.toLowerCase().match(/<(\w+)\s/)
                 if (match) {//处理a标签的href属性，img标签的src属性，form标签的action属性
                     var reg = rsanitize[match[1]]
