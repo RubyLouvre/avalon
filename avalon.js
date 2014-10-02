@@ -1779,11 +1779,13 @@
                 data.handler(c, data.element, data)
             } catch (e) {
                 delete data.evaluator
-                if (data.nodeType === 3) {
+                var node = data.element
+                if (node.nodeType === 3) {
+                    var parent = node.parentNode
                     if (kernel.commentInterpolate) {
-                        data.element.replaceChild(DOC.createComment(data.value), data.node)
+                        parent.replaceChild(DOC.createComment(data.value), node)
                     } else {
-                        data.node.data = openTag + data.value + closeTag
+                        node.data = openTag + data.value + closeTag
                     }
                 }
                 log("warning:evaluator of [" + data.value + "] throws error!")
@@ -1944,15 +1946,14 @@
                     var filters = token.filters
                     var binding = {
                         type: "text",
-                        node: node,
-                        nodeType: 3,
+                        element: node,
                         value: token.value,
                         filters: filters
                     }
                     if (filters && filters.indexOf("html") !== -1) {
                         avalon.Array.remove(filters, "html")
                         binding.type = "html"
-                        binding.replaceNodes = [node]
+                        binding.group = 1
                         if (!filters.length) {
                             delete bindings.filters
                         }
@@ -2735,11 +2736,10 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
-            if (!elem) {
-                elem = data.element = data.node.parentNode
-            }
-            if (data.replaceNodes) {
+            var parent = "group" in data ? elem.parentNode : elem
+            if ("group" in data) {
                 var fragment, nodes
+                //将值转换为文档碎片，原值可以为元素节点，文档碎片，NodeList，字符串
                 if (val.nodeType === 11) {
                     fragment = val
                 } else if (val.nodeType === 1 || val.item) {
@@ -2751,17 +2751,29 @@
                 } else {
                     fragment = avalon.parseHTML(val)
                 }
-                var replaceNodes = avalon.slice(fragment.childNodes)
-                elem.insertBefore(fragment, data.replaceNodes[0] || null) //fix IE6-8 insertBefore的第2个参数只能为节点或null
-                for (var i = 0, node; node = data.replaceNodes[i++]; ) {
-                    elem.removeChild(node)
+                nodes = avalon.slice(fragment.childNodes)
+                if (nodes.length == 0) {
+                    var comment = DOC.createComment("ms-html")
+                    fragment.appendChild(comment)
+                    nodes = [comment]
                 }
-                data.replaceNodes = replaceNodes
+                parent.insertBefore(fragment, elem) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+                var length = data.group
+                while (elem) {
+                    var nextNode = elem.nextSibling
+                    parent.removeChild(elem)
+                    length--
+                    if (length == 0 || nextNode === null)
+                        break
+                    elem = nextNode
+                }
+                data.element = nodes[0]
+                data.group = nodes.length
             } else {
-                avalon.innerHTML(elem, val)
+                avalon.innerHTML(parent, val)
             }
             avalon.nextTick(function() {
-                scanNodes(elem, data.vmodels)
+                scanNodeList(parent, data.vmodels)
             })
         },
         "if": function(val, elem, data) {
@@ -2818,11 +2830,9 @@
         },
         "text": function(val, elem, data) {
             val = val == null ? "" : val //不在页面上显示undefined null
-            var node = data.node
-            if (data.nodeType === 3) { //绑定在文本节点上
-                data.element = node.parentNode
+            if (elem.nodeType === 3) { //绑定在文本节点上
                 try {//IE对游离于DOM树外的节点赋值会报错
-                    node.data = val
+                    elem.data = val
                 } catch (e) {
                 }
             } else { //绑定在特性节点上
