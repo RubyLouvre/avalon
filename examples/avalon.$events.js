@@ -69,7 +69,7 @@
         return result
     }
 
-    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+//生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
     function generateID() {
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
     }
@@ -133,7 +133,7 @@
             return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
     }
-    //与jQuery.extend方法，可用于浅拷贝，深拷贝
+//与jQuery.extend方法，可用于浅拷贝，深拷贝
     avalon.mix = avalon.fn.mix = function() {
         var options, name, src, copy, copyIsArray, clone,
                 target = arguments[0] || {},
@@ -148,19 +148,19 @@
             i++
         }
 
-        //确保接受方为一个复杂的数据类型
+//确保接受方为一个复杂的数据类型
         if (typeof target !== "object" && !isFunction(target)) {
             target = {}
         }
 
-        //如果只有一个参数，那么新成员添加于mix所在的对象上
+//如果只有一个参数，那么新成员添加于mix所在的对象上
         if (i === length) {
             target = this
             i--
         }
 
         for (; i < length; i++) {
-            //只处理非空参数
+//只处理非空参数
             if ((options = arguments[i]) != null) {
                 for (name in options) {
                     src = target[name]
@@ -1843,7 +1843,7 @@
                 var el = fn.element
                 if (el) {
                     var remove = typeof el.sourceIndex === "number" ?
-                    el.sourceIndex == 0 : !avalon.contains(root, el)
+                            el.sourceIndex == 0 : !avalon.contains(root, el)
                 }
                 if (remove) { //如果它没有在DOM树
                     var removed = list.splice(i, 1)
@@ -2352,7 +2352,7 @@
 
     function parseExpr(code, scopes, data) {
         var dataType = data.type
-        var filters =  data.filters ? data.filters.join("") : ""
+        var filters = data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
         }) + code + dataType + filters
@@ -3312,6 +3312,7 @@
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
+                console.log("--------")
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
                     element.oldValue = val + ""
@@ -3742,12 +3743,13 @@
                     }
                     break
             }
-            var callback = data.renderedCallback, args = arguments
-            if (callback) {
-                checkScan(parent, function() {
-                    callback.apply(parent, args)
-                })
-            }
+            var callback = data.renderedCallback || noop, args = arguments
+            checkScan(parent, function() {
+                callback.call(parent, args)
+                if (parent.tagName === "SELECT" && method == "index") {//fix #503
+                    avalon(parent).val(parent.oldValue.split(","))
+                }
+            })
         }
     }
 
@@ -3821,7 +3823,7 @@
             $val: 1,
             $key: 1
         })
-        proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./,"")
+        proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
         return proxy
     }
     var eachProxyPool = []
@@ -3855,7 +3857,7 @@
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })
-        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./,"")
+        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
         return proxy
     }
     function recycleEachProxies(array) {
