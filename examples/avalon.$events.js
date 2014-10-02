@@ -3748,7 +3748,7 @@
             }
             var callback = data.renderedCallback || noop, args = arguments
             checkScan(parent, function() {
-                callback.call(parent, args)
+                callback.apply(parent, args)
                 if (parent.tagName === "SELECT" && method == "index") {//fix #503
                     avalon(parent).val(parent.oldValue.split(","))
                 }
