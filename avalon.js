@@ -2772,25 +2772,24 @@
             })
         },
         "if": function(val, elem, data) {
-            var placehoder = data.placehoder
             if (val) { //插回DOM树
-                if (!data.msInDocument) {
-                    data.msInDocument = true
-                    if (placehoder.parentNode) {
-                        placehoder.parentNode.replaceChild(elem, placehoder)
+                if (elem.nodeType === 8) {
+                    var node = avalon.parseHTML(data.template).firstChild
+                    elem.parentNode.replaceChild(node, elem)
+                    data.element = node
+                    if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
+                        try {
+                            scanAttr(node, data.vmodels)
+                        } catch (e) {
+                            avalon.log(e)
+                        }
                     }
                 }
-                if (rbind.test(elem.outerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanAttr(elem, data.vmodels)
-                }
-            } else { //移出DOM树，放进ifSanctuary DIV中，并用注释节点占据原位置
-                if (data.msInDocument) {
-                    data.msInDocument = false
-                    if (elem.parentNode) {
-                        elem.parentNode.replaceChild(placehoder, elem)
-                    }
-                    placehoder.elem = elem
-                    ifSanctuary.appendChild(elem)
+            } else { //移出DOM树，并用注释节点占据原位置
+                if (elem.nodeType === 1) {
+                    var node = DOC.createComment("ms-if")
+                    elem.parentNode.replaceChild(node, elem)
+                    data.element = node
                 }
             }
         },
@@ -3063,9 +3062,12 @@
         },
         "if": function(data, vmodels) {
             var elem = data.element
-            elem.removeAttribute(data.name)
-            if (!data.placehoder) {
-                data.msInDocument = data.placehoder = DOC.createComment("ms-if")
+            if (elem.nodeType === 1) {
+                elem.removeAttribute(data.name)
+                data.template = elem.outerHTML
+                var comment = DOC.createComment("ms-if")
+                elem.parentNode.replaceChild(comment, elem)
+                data.element = comment
             }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
