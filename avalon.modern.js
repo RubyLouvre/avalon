@@ -1130,43 +1130,72 @@
             tr: DOC.createElement("tbody"),
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
-            "*": DOC.createElement("div")
+            "*": DOC.createElement("div"),
+            "text": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
         })
         this.optgroup = this.option
         this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
         this.th = this.td
+        //处理SVG
+        this.circle = this.ellipse = this.line = this.path =
+                this.polygon = this.polyline = this.rect = this.text
     }
 
     avalon.clearHTML = function(node) {
-        node.textContent = ""
+        //  node.textContent = ""
+        while (node.firstChild) {
+            node.removeChild(node.firstChild)
+        }
         return node
     }
+
+    var rtagName = /<([\w:]+)/
+    //取得其tagName
+    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+    //需要处理套嵌关系的标签
+    var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
+    //parseHTML的辅助变量
+    var tagHooks = {
+        area: [1, "<map>"],
+        param: [1, "<object>"],
+        col: [2, "<table><tbody></tbody><colgroup>", "</table>"],
+        legend: [1, "<fieldset>"],
+        option: [1, "<select multiple='multiple'>"],
+        thead: [1, "<table>", "</table>"],
+        tr: [2, "<table><tbody>"],
+        td: [3, "<table><tbody><tr>"],
+        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
+        //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
+        _default: [0, ""]  //div可以不用闭合
+    }
+
+    tagHooks.optgroup = tagHooks.option
+    tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
+    tagHooks.th = tagHooks.td
+//处理SVG
+    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
+            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
             html = html + ""
         }
         html = html.replace(rxhtml, "<$1></$2>").trim()
-        if (deleteRange.createContextualFragment && !rnest.test(html) && !/<script/i.test(html)) {
-            var range = DOC.createRange()
-            range.selectNodeContents(root)
-            return range.createContextualFragment(html)
-        }
-        var fragment = hyperspace.cloneNode(false)
-        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
-        if (!(tag in tagHooks)) {
-            tag = "*"
-        }
-        var parent = tagHooks[tag]
-        parent.innerHTML = html
-        var els = parent.getElementsByTagName("script"),
+        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
+                //取得其标签名
+                wrap = tagHooks[tag] || tagHooks._default,
+                fragment = hyperspace.cloneNode(false),
+                wrapper = cinerator,
                 firstChild, neo
+
+        wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
+        var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
-                        if (attr) {
+                        if (attr && attr.specified) {
                             neo[attr.name] = attr.value //复制其属性
                         }
                     })
@@ -1175,7 +1204,11 @@
                 }
             }
         }
-        while (firstChild = parent.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+        //移除我们为了符合套嵌关系而添加的标签
+        for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
+        }
+
+        while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
         return fragment
@@ -1897,7 +1930,9 @@
                     var attr = attrs[attrName]
                     var isInnate = attr && attr.expando === false
                 }
+
                 if (isInnate) {
+
                     elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)
@@ -2142,12 +2177,14 @@
         "if": function(val, elem, data) {
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
-                    var node = avalon.parseHTML(data.template).firstChild
-                    elem.parentNode.replaceChild(node, elem)
-                    data.element = node
+                    var content = avalon.parseHTML(data.template)
+                    var target = content.firstChild
+                    //console.log(target+"")
+                    elem.parentNode.replaceChild(content, elem)
+                    data.element = target
                     if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
                         try {
-                            scanAttr(node, data.vmodels)
+                            scanAttr(target, data.vmodels)
                         } catch (e) {
                             avalon.log(e)
                         }
@@ -2964,7 +3001,6 @@
     }
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
-    var deleteRange = DOC.createRange()
     //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
     function shimController(data, transation, proxy, fragments) {
         var dom = avalon.parseHTML(data.template)

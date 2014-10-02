@@ -1591,13 +1591,17 @@
         thead: [1, "<table>", "</table>"],
         tr: [2, "<table><tbody>"],
         td: [3, "<table><tbody><tr>"],
+        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
         _default: W3C ? [0, ""] : [1, "X<div>"] //div可以不用闭合
     }
+
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-
+//处理SVG
+    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
+            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
@@ -2779,14 +2783,14 @@
         "if": function(val, elem, data) {
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
-                    var node = avalon.parseHTML(data.template).firstChild
-                    elem.parentNode.replaceChild(node, elem)
-                    data.element = node
+                    var content = avalon.parseHTML(data.template).firstChild
+                    elem.parentNode.replaceChild(content, elem)
+                    data.element = content
                     if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
                         try {
-                            scanAttr(node, data.vmodels)
+                            scanAttr(content, data.vmodels)
                         } catch (e) {
-                            avalon.log(e)
+                            avalon.log(e + "!")
                         }
                     }
                 }
