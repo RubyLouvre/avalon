@@ -1899,7 +1899,7 @@
         scanAttr(elem, vmodels) //扫描特性节点
     }
 
-    function scanNodes(parent, vmodels) {
+    function scanNodeList(parent, vmodels) {
         var node = parent.firstChild
         while (node) {
             var nextNode = node.nextSibling
@@ -2051,7 +2051,7 @@
             default:
                 executeBindings(bindings, vmodels)
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanNodes(elem, vmodels) //扫描子孙元素
+                    scanNodeList(elem, vmodels) //扫描子孙元素
                 }
                 break;
         }
@@ -2512,7 +2512,7 @@
                         text = loaded.apply(elem, [text].concat(vmodels))
                     }
                     avalon.innerHTML(elem, text)
-                    scanNodes(elem, vmodels)
+                    scanNodeList(elem, vmodels)
                     rendered && checkScan(elem, function() {
                         rendered.call(elem)
                     })
