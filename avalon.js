@@ -1656,6 +1656,7 @@
         this.clearHTML(node).appendChild(a)
     }
     avalon.clearHTML = function(node) {
+        node.textContent = ""
         while (node.firstChild) {
             node.removeChild(node.firstChild)
         }
@@ -1822,14 +1823,14 @@
                         recycleEachProxies(fn.proxies)
                     }
                     log("debug: remove " + fn.type)
-                    fn = fn.element = fn.node = fn.evaluator = null
+                    fn = fn.element = fn.evaluator = null
                 } else if (nofire === true) {
                     //nothing
                 } else if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.node || fn.element) {
+                } else if (fn.element) {
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
@@ -2643,17 +2644,14 @@
                             proxies.splice(ii, 0, proxy)
                             shimController(data, transation, proxy, fragments)
                         }
-                        if (pos === 0) {
-                            parent.appendChild(transation)
-                        } else {
-                            locatedNode = locateFragment(data, pos)
-                            parent.insertBefore(transation, locatedNode)
-                        }
+
+                        locatedNode = locateFragment(data, pos)
+                        parent.insertBefore(transation, locatedNode)
                         for (var i = 0, fragment; fragment = fragments[i++]; ) {
                             scanNodeArray(fragment.nodes, fragment.vmodels)
                             fragment.nodes = fragment.vmodels = null
                         }
-                        getGroup(data)
+                        calculateFragmentGroup(data)
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
@@ -2723,7 +2721,7 @@
                             scanNodeArray(fragment.nodes, fragment.vmodels)
                             fragment.nodes = fragment.vmodels = null
                         }
-                        getGroup(data)
+                        calculateFragmentGroup(data)
                         break
                 }
                 var callback = data.renderedCallback || noop, args = arguments
@@ -2842,7 +2840,6 @@
     }
 
     var rdash = /\(([^)]*)\)/
-    var rwhitespace = /^\s+$/
 
     function parseDisplay(nodeName, val) {
         //用于取得此类标签的默认display值
@@ -2967,11 +2964,12 @@
 
             var comment = data.element = DOC.createComment("ms-repeat")
             if (type === "each" || type == "with") {
-                data.template = elem.innerHTML
+                data.template = elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
                 elem.removeAttribute(data.name)
-                data.template = elem.outerHTML
+                data.template = elem.outerHTML.trim()
+                data.group = 1
                 elem.parentNode.replaceChild(comment, elem)
             }
 
@@ -3720,7 +3718,9 @@
                 }
             }
         } else {
-            node = nodes[data.group * pos]
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var group = data.group || nodes.length / data.proxies.length
+            node = nodes[group * pos]
         }
         return node || null
     }
@@ -3739,6 +3739,14 @@
             view.appendChild(node)
         }
         return view
+    }
+
+    function calculateFragmentGroup(data) {
+        if (typeof data.group !== "number") {
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var n = "proxySize" in data ? data.proxySize : data.proxies.length
+            data.group = nodes.length / n
+        }
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
     var watchEachOne = oneObject("$index,$first,$last")
@@ -3789,13 +3797,7 @@
         proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
         return proxy
     }
-    function getGroup(data) {
-        if (typeof data.group !== "number") {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            var n = "proxySize" in data ? data.proxySize : data.proxies.length
-            data.group = nodes.length / n
-        }
-    }
+
     function recycleEachProxies(array) {
         for (var i = 0, el; el = array[i++]; ) {
             recycleEachProxy(el)

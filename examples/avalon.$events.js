@@ -2936,11 +2936,12 @@
 
             var comment = data.element = DOC.createComment("ms-repeat")
             if (type === "each" || type == "with") {
-                data.template = elem.innerHTML
+                data.template = elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
                 elem.removeAttribute(data.name)
-                data.template = elem.outerHTML
+                data.template = elem.outerHTML.trim()
+                data.group = 1
                 elem.parentNode.replaceChild(comment, elem)
             }
 
@@ -3664,18 +3665,15 @@
                         proxies.splice(ii, 0, proxy)
                         shimController(data, transation, proxy, fragments)
                     }
-                    if (pos === 0) {
 
-                        parent.appendChild(transation)
-                    } else {
-                        locatedNode = locateFragment(data, pos)
-                        parent.insertBefore(transation, locatedNode)
-                    }
+                    locatedNode = locateFragment(data, pos)
+                    parent.insertBefore(transation, locatedNode)
+
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
-                    getGroup(data)
+                    calculateFragmentGroup(data)
                     break
                 case "del": //将pos后的el个元素删掉(pos, el都是数字)
                     var removed = proxies.splice(pos, el)
@@ -3745,7 +3743,7 @@
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
-                    getGroup(data)
+                    calculateFragmentGroup(data)
                     break
             }
             var callback = data.renderedCallback || noop, args = arguments
@@ -3784,7 +3782,7 @@
     function locateFragment(data, pos) {
         if (data.type == "repeat") {//ms-repeat，data.group为1
             var node = data.element.nextSibling
-            for (var i = 0, n = pos; i < n; i++) {
+            for (var i = 0, n = pos ; i < n; i++) {
                 if (node) {
                     node = node.nextSibling
                 } else {
@@ -3792,7 +3790,9 @@
                 }
             }
         } else {
-            node = nodes[data.group * pos]
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var group = data.group || nodes.length / data.proxies.length
+            node = nodes[group * pos]
         }
         return node || null
     }
@@ -3812,7 +3812,7 @@
         }
         return view
     }
-    function getGroup(data) {
+    function calculateFragmentGroup(data) {
         if (typeof data.group !== "number") {
             var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
