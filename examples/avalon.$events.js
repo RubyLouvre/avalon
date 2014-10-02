@@ -2948,13 +2948,13 @@
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
-                var content = avalon.parseHTML(data.template).firstChild
+                var content = avalon.parseHTML(data.template)
+                var target = content.firstChild
                 parentNode.replaceChild(content, elem)
-                var target = data.element = data.type === "repeat" ? content : parentNode
+                target = data.element = data.type === "repeat" ? target : parentNode
                 target.setAttribute(data.name, data.value)
             }
 
-            data.callbackName = "data-" + type + "-rendered"
             data.handler = bindingExecutors.repeat
             data.$outer = {}
             var check0 = "$key",
@@ -3312,7 +3312,6 @@
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
-                console.log("--------")
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
                     element.oldValue = val + ""
@@ -3665,13 +3664,18 @@
                         proxies.splice(ii, 0, proxy)
                         shimController(data, transation, proxy, fragments)
                     }
-                    locatedNode = locateFragment(data, pos)
-                    parent.insertBefore(transation, locatedNode)
+                    if (pos === 0) {
+
+                        parent.appendChild(transation)
+                    } else {
+                        locatedNode = locateFragment(data, pos)
+                        parent.insertBefore(transation, locatedNode)
+                    }
                     for (var i = 0, fragment; fragment = fragments[i++]; ) {
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
-
+                    getGroup(data)
                     break
                 case "del": //将pos后的el个元素删掉(pos, el都是数字)
                     var removed = proxies.splice(pos, el)
@@ -3741,6 +3745,7 @@
                         scanNodeArray(fragment.nodes, fragment.vmodels)
                         fragment.nodes = fragment.vmodels = null
                     }
+                    getGroup(data)
                     break
             }
             var callback = data.renderedCallback || noop, args = arguments
@@ -3763,10 +3768,8 @@
     function shimController(data, transation, proxy, fragments) {
         var dom = avalon.parseHTML(data.template)
         var nodes = avalon.slice(dom.childNodes)
-
         transation.appendChild(dom)
         proxy.$outer = data.$outer
-        data.group = nodes.length
         var fragment = {
             nodes: nodes,
             vmodels: [proxy].concat(data.vmodels)
@@ -3789,8 +3792,6 @@
                 }
             }
         } else {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            data.group = nodes.length / data.proxies.length
             node = nodes[data.group * pos]
         }
         return node || null
@@ -3810,6 +3811,13 @@
             view.appendChild(node)
         }
         return view
+    }
+    function getGroup(data) {
+        if (typeof data.group !== "number") {
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var n = "proxySize" in data ? data.proxySize : data.proxies.length
+            data.group = nodes.length / n
+        }
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
     var watchEachOne = oneObject("$index,$first,$last")
@@ -3871,10 +3879,7 @@
             return
         array.forEach(function(el) {
             if (el.evaluator) {
-                el.evaluator = el.element = el.node = el.vmodels = null
-                if (el.proxies) {//ms-repeat ms-with ms-each
-                    el.callbackElement = el.template = null
-                }
+                el.evaluator = el.element = el.vmodels = null
             }
         })
         array.length = 0
