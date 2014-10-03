@@ -496,6 +496,7 @@
                     var data = {
                         evaluator: accessor,
                         element: head,
+                        type: "computed::" + name,
                         handler: noop,
                         args: []
                     }
@@ -591,6 +592,7 @@
                 evaluator: function() {
                     notifySubscribers($vmodel.$events[fn.avalonName])
                 },
+                type: "function::" + name,
                 element: head,
                 handler: noop,
                 args: []
@@ -1852,10 +1854,8 @@
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (el) {
-                    var remove = typeof el.sourceIndex === "number" ?
-                            el.sourceIndex == 0 : !avalon.contains(root, el)
-                }
+                var remove = el ? (typeof el.sourceIndex === "number" ?
+                        el.sourceIndex == 0 : !avalon.contains(root, el)) : false
                 if (remove) { //如果它没有在DOM树
                     var removed = list.splice(i, 1)
                     log("debug: remove " + fn.type)

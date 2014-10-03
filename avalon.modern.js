@@ -1365,9 +1365,7 @@
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (el) {
-                    var remove = !avalon.contains(root, el)
-                }
+                var remove = fn.element ? !avalon.contains(root, el) : false
                 if (remove) { //如果它没有在DOM树
                     list.splice(i, 1)
                     if (fn.proxies) {
