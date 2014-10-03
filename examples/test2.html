@@ -8,6 +8,8 @@
         <select ms-duplex="x">
             <option ms-value="el" ms-repeat="arr">{{el}}</option>
         </select>
+        <div ms-each="arr"><p>{{el}}</p><hr/></div>
+        <button ms-click="add">add</button>
         <button ms-click="f1">测试</button>
 
         <script src="avalon.$events.js"></script>
@@ -15,10 +17,11 @@
 var model = avalon.define('test', function(vm) {
     vm.arr = [1, 2, 3]
     vm.x = 1
+    vm.add = function(){
+        vm.arr.push(4,5)
+    }
     vm.f1 = function() {
         model.arr = [4, 5, 1]
-
-
     }
 });
         </script>

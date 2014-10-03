@@ -2634,7 +2634,7 @@
                 if (method === "del" || method === "move") {
                     var locatedNode = locateFragment(data, pos)
                 }
-                var group = data.group
+                var group = data.element.group
 
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
@@ -2671,7 +2671,7 @@
                         }
                         break
                     case "clear":
-                        var n = ("proxySize" in data ? data.proxySize : proxies.length) * data.group, k = 0
+                        var n = ("proxySize" in data ? data.proxySize : proxies.length) * group, k = 0
                         while (true) {
                             var nextNode = data.element.nextSibling
                             if (nextNode && k < n) {
@@ -2981,7 +2981,7 @@
             } else {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML.trim()
-                data.group = 1
+                comment.group = 1
                 elem.parentNode.replaceChild(comment, elem)
             }
 
@@ -3714,14 +3714,15 @@
         }
         fragments.push(fragment)
     }
-    // 取得用于定位的节点。比如data.group = 3,  结构为
+    // 取得用于定位的节点。比如group = 3,  结构为
     // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/></div>
     // 当pos为0时,返回 br#first
     // 当pos为1时,返回 br#second
     // 当pos为2时,返回 null
     function locateFragment(data, pos) {
-        if (data.type == "repeat") {//ms-repeat，data.group为1
-            var node = data.element.nextSibling
+        var comment = data.element
+        if (data.type == "repeat") {//ms-repeat，group为1
+            var node = comment.nextSibling
             for (var i = 0, n = pos; i < n; i++) {
                 if (node) {
                     node = node.nextSibling
@@ -3730,8 +3731,8 @@
                 }
             }
         } else {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            var group = data.group || nodes.length / data.proxies.length
+            var nodes = avalon.slice(comment.parentNode.childNodes, 1)
+            var group = comment.group || nodes.length / data.proxies.length
             node = nodes[group * pos]
         }
         return node || null
@@ -3757,7 +3758,7 @@
         if (typeof data.group !== "number") {
             var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
-            data.group = nodes.length / n
+            data.element.group = nodes.length / n
         }
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
