@@ -583,20 +583,22 @@
         computedProperties.forEach(function(collect) {//收集依赖
             collect()
         })
-        functionProperties.forEach(function(fn) {
-            var data = {
-                evaluator: function() {
-                    notifySubscribers($vmodel.$events[fn.avalonName])
-                },
-                element: head,
-                handler: noop,
-                args: []
-            }
-            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
-            if (vars.length) {//计算依赖
-                addAssign(vars, $vmodel, name, data)
-            }
-        })
+//        functionProperties.forEach(function(fn) {
+//            var data = {
+//                evaluator: function() {
+//                    notifySubscribers($vmodel.$events[fn.avalonName])
+//                },
+//                element: head,
+//                handler: noop,
+//                args: []
+//            }
+//            console.log(fn.avalonName)
+//            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
+//            console.log(vars)
+//            if (vars.length) {//计算依赖
+//                addAssign(vars, $vmodel, name, data)
+//            }
+//        })
         return $vmodel
     }
 
@@ -1350,9 +1352,9 @@
             if (!node || !node.style) {
                 throw new Error("getComputedStyle要求传入一个节点 " + node)
             }
-            var ret, styles = getComputedStyle(node, null)
-            if (styles) {
-                ret = name === "filter" ? styles.getPropertyValue(name) : styles[name]
+            var ret, computed = getComputedStyle(node, null)
+            if (computed) {
+                ret = name === "filter" ? computed.getPropertyValue(name) : computed[name]
                 if (ret === "") {
                     ret = node.style[name] //其他浏览器需要我们手动取内联样式
                 }
@@ -1627,13 +1629,15 @@
         thead: [1, "<table>", "</table>"],
         tr: [2, "<table><tbody>"],
         td: [3, "<table><tbody><tr>"],
+        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
         _default: W3C ? [0, ""] : [1, "X<div>"] //div可以不用闭合
     }
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-
+    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path = //处理SVG
+            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
@@ -2310,6 +2314,8 @@
                         prop = arr.shift()
                         if (prop === void 0 && Array.isArray(subscope)) {
                             var sonEvents = subscope.$events
+                            if (!sonEvents)
+                                continue
                             var sonList = sonEvents[subscribers]
                             if (sonList !== parentList) {
                                 if (sonList && sonList.length) {
@@ -3782,7 +3788,7 @@
     function locateFragment(data, pos) {
         if (data.type == "repeat") {//ms-repeat，data.group为1
             var node = data.element.nextSibling
-            for (var i = 0, n = pos ; i < n; i++) {
+            for (var i = 0, n = pos; i < n; i++) {
                 if (node) {
                     node = node.nextSibling
                 } else {
