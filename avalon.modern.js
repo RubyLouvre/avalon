@@ -2029,7 +2029,7 @@
                 if (method === "del" || method === "move") {
                     var locatedNode = locateFragment(data, pos)
                 }
-                var group = data.element.group
+                var group = data.group
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
@@ -2359,7 +2359,7 @@
             } else {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML.trim()
-                comment.group = 1
+                data.group = 1
                 elem.parentNode.replaceChild(comment, elem)
             }
 
@@ -2371,6 +2371,7 @@
                 var target = content.firstChild
                 parentNode.replaceChild(content, elem)
                 target = data.element = data.type === "repeat" ? target : parentNode
+                data.group = 1
                 target.setAttribute(data.name, data.value)
             }
             var arr = data.value.split(".") || []
@@ -3015,9 +3016,8 @@
     // 当pos为1时,返回 br#second
     // 当pos为2时,返回 null
     function locateFragment(data, pos) {
-        var comment = data.element
         if (data.type == "repeat") {//ms-repeat，group为1
-            var node = comment.nextSibling
+            var node = data.element.nextSibling
             for (var i = 0, n = pos; i < n; i++) {
                 if (node) {
                     node = node.nextSibling
@@ -3026,8 +3026,8 @@
                 }
             }
         } else {
-            var nodes = avalon.slice(comment.parentNode.childNodes, 1)
-            var group = comment.group || nodes.length / data.proxies.length
+            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var group = data.group || nodes.length / data.proxies.length
             node = nodes[group * pos]
         }
         return node || null
@@ -3050,10 +3050,10 @@
     }
 
     function calculateFragmentGroup(data) {
-        if (typeof data.element.group !== "number") {
+        if (typeof data.group !== "number") {
             var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
-            data.element.group = nodes.length / n
+            data.group = nodes.length / n
         }
     }
 
