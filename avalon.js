@@ -3818,7 +3818,7 @@
         if (prop && Array.isArray(arr = prop[subscribers])) {
             arr.forEach(function(el) {
                 if (el.evaluator) {
-                    el.evaluator = el.element = el.node = null
+                    el.evaluator = el.element =  null
                 }
             })
             arr.length = 0
