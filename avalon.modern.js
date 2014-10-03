@@ -176,9 +176,6 @@
         slice: function(nodes, start, end) {
             return aslice.call(nodes, start, end)
         },
-        contains: function(a, b) {
-            return a.contains(b)
-        },
         eventHooks: {},
         bind: function(el, type, fn, phase) {
             var hooks = avalon.eventHooks
@@ -300,6 +297,16 @@
         Node.prototype.contains = function(arg) {
             return !!(this.compareDocumentPosition(arg) & 16)
         }
+    }
+    avalon.contains =  function(a, b) {
+        if (b) {
+            while ((b = b.parentNode)) {
+                if (b === a) {
+                    return true;
+                }
+            }
+        }
+        return false
     }
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
