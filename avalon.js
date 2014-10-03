@@ -413,6 +413,9 @@
         if (typeof scope.nodeType === "number") {
             return scope
         }
+        if (scope.$id && scope.$model && scope.$events) {//fix IE6-8 createWithProxy $val: val引发的BUG
+            return scope
+        }
         var vmodel = {} //要返回的对象
         model = model || {} //放置$model上的属性
         var accessingProperties = {} //监控属性
@@ -2634,7 +2637,7 @@
                 if (method === "del" || method === "move") {
                     var locatedNode = locateFragment(data, pos)
                 }
-                var group = data.element.group
+                var group = data.group
 
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
