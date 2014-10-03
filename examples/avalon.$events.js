@@ -445,6 +445,9 @@
         if (typeof $scope.nodeType === "number") {
             return $scope
         }
+        if ($scope.$id && $scope.$model && $scope.$events) {//fix IE6-8 createWithProxy $val: val引发的BUG
+            return $scope
+        }
         if (!Array.isArray($scope.$skipArray)) {
             $scope.$skipArray = []
         }
@@ -1834,7 +1837,7 @@
                 var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
                 data.handler(c, data.element, data)
             } catch (e) {
-                avalon.log(e + "")
+                log("warning:exception throwed in [registerSubscriber] " + e)
                 delete data.evaluator
                 var node = data.element
                 if (node.nodeType === 3) {
@@ -1845,7 +1848,6 @@
                         node.data = openTag + data.value + closeTag
                     }
                 }
-                log("warning:evaluator of [" + data.value + "] throws error!")
             }
         }
     }
