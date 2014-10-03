@@ -929,9 +929,9 @@
         if (!node || !node.style) {
             throw new Error("getComputedStyle要求传入一个节点 " + node)
         }
-        var ret, styles = getComputedStyle(node, null)
-        if (styles) {
-            ret = styles.getPropertyValue(name)
+        var ret, computed = getComputedStyle(node, null)
+        if (computed) {
+            ret = name === "filter" ? computed.getPropertyValue(name) : computed[name]
             if (ret === "") {
                 ret = node.style[name] //其他浏览器需要我们手动取内联样式
             }
@@ -1932,7 +1932,6 @@
                 }
 
                 if (isInnate) {
-
                     elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)
@@ -2179,7 +2178,6 @@
                 if (elem.nodeType === 8) {
                     var content = avalon.parseHTML(data.template)
                     var target = content.firstChild
-                    //console.log(target+"")
                     elem.parentNode.replaceChild(content, elem)
                     data.element = target
                     if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
