@@ -583,22 +583,29 @@
         computedProperties.forEach(function(collect) {//收集依赖
             collect()
         })
-//        functionProperties.forEach(function(fn) {
-//            var data = {
-//                evaluator: function() {
-//                    notifySubscribers($vmodel.$events[fn.avalonName])
-//                },
-//                element: head,
-//                handler: noop,
-//                args: []
-//            }
-//            console.log(fn.avalonName)
-//            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
-//            console.log(vars)
-//            if (vars.length) {//计算依赖
-//                addAssign(vars, $vmodel, name, data)
-//            }
-//        })
+        functionProperties.forEach(function(fn) {
+            var name = fn.avalonName
+            if (name === "hasOwnProperty" || $$skipArray.indexOf(name) > -1)
+                return
+            var data = {
+                evaluator: function() {
+                    notifySubscribers($vmodel.$events[fn.avalonName])
+                },
+                element: head,
+                handler: noop,
+                args: []
+            }
+            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
+            if (vars.length) {//计算依赖
+                vars = vars.filter(function(name) {
+                    var test = name.split(".")[0]
+                    if ($vmodel.hasOwnProperty(test)) {
+                        return  (typeof $vmodel[test] != "object") && (typeof $vmodel[test] != "function")
+                    }
+                })
+                addAssign(vars, $vmodel, name, data)
+            }
+        })
         return $vmodel
     }
 
