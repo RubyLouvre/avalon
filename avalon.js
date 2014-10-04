@@ -88,6 +88,17 @@
                 typeof obj
     }
 
+    avalon.isFunction = typeof document.getElementById === "object" ? function(fn) {
+        try {
+            return /^\s*\bfunction\b/.test("" + fn);
+        } catch (x) {
+            return false
+        }
+    } : function(fn) {
+        return serialize.call(fn) == "[object Function]"
+    }
+
+
     avalon.isWindow = function(obj) {
         if (!obj)
             return false
@@ -3818,7 +3829,7 @@
         if (prop && Array.isArray(arr = prop[subscribers])) {
             arr.forEach(function(el) {
                 if (el.evaluator) {
-                    el.evaluator = el.element =  null
+                    el.evaluator = el.element = null
                 }
             })
             arr.length = 0

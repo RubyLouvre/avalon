@@ -412,12 +412,7 @@
     //一些不需要被监听的属性
     var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$parent").match(rword)
     function isObservable(name, value, $skipArray, functionProperties) {
-        if (isFunction(value)) {
-            value.avalonName = name
-            functionProperties.push(value)
-            return false
-        }
-        if (isFunction(value)) {
+        if (value && value.nodeType) {
             return false
         }
         if ($skipArray.indexOf(name) !== -1) {
@@ -428,6 +423,11 @@
         }
         var $special = $skipArray.$special
         if (name && name.charAt(0) === "$" && !$special[name]) {
+            return false
+        }
+        if (isFunction(value)) {
+            value.avalonName = name
+            functionProperties.push(value)
             return false
         }
         return true
@@ -605,7 +605,7 @@
                 vars = vars.filter(function(name) {
                     var test = name.split(".")[0]
                     if ($vmodel.hasOwnProperty(test)) {
-                        return  (typeof $vmodel[test] != "object") && (typeof $vmodel[test] != "function")
+                        return  (typeof $vmodel[test] != "object") && !isFunction($vmodel[test])
                     }
                 })
                 addAssign(vars, $vmodel, name, data)

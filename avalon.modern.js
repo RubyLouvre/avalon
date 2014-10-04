@@ -61,7 +61,9 @@
         this[0] = this.element = el
     }
     avalon.fn = avalon.prototype = avalon.init.prototype
-
+    avalon.isFunction = function(fn) {
+        return typeof fn === "function"
+    }
     /*取得目标类型*/
     avalon.type = function(obj) {
         if (obj == null) {
@@ -298,7 +300,7 @@
             return !!(this.compareDocumentPosition(arg) & 16)
         }
     }
-    avalon.contains =  function(a, b) {
+    avalon.contains = function(a, b) {
         if (b) {
             while ((b = b.parentNode)) {
                 if (b === a) {
