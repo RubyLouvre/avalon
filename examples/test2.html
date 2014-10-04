@@ -5,20 +5,18 @@
         <title>测试用例</title>
     </head>
     <body ms-controller="test">
-        <select ms-duplex="x">
-            <option ms-value="el" ms-repeat="arr">{{el}}</option>
-        </select>
-        <div ms-each="arr"><p>{{el}}</p><hr/></div>
+
+        <div ms-repeat="arr" ms-click="$remove">{{el}}</div>
         <button ms-click="add">add</button>
         <button ms-click="f1">测试</button>
 
         <script src="avalon.$events.js"></script>
         <script>
 var model = avalon.define('test', function(vm) {
-    vm.arr = [1, 2, 3]
+    vm.arr = [0,1, 2, 3, 4,5,6,7,8,9]
     vm.x = 1
-    vm.add = function(){
-        vm.arr.push(4,5)
+    vm.add = function() {
+        vm.arr.push(4)
     }
     vm.f1 = function() {
         model.arr = [4, 5, 1]

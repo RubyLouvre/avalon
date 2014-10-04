@@ -3899,12 +3899,8 @@
         breakCircularReference(proxy[subscribers])
         var name = proxy.$itemName
         var child = proxy[name]
-        if (child && child.$events) {
-            for (var k in child.$events) {
-                if (Array.isArray(child.$events[k])) {
-                    breakCircularReference(child.$events[k])
-                }
-            }
+        if (child) {
+            recycleEachProxy(child)
         }
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
