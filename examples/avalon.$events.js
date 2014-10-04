@@ -589,7 +589,7 @@
         })
         functionProperties.forEach(function(fn) {
             var name = fn.avalonName
-            if (name === "hasOwnProperty" || $$skipArray.indexOf(name) > -1)
+            if (name === "hasOwnProperty")
                 return
             var data = {
                 evaluator: function() {
