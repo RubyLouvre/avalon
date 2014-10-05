@@ -23,6 +23,9 @@
                 background: red;
                 color: white;
             }
+            .green{
+                 background: green;
+            }
         </style>
         <script type="text/javascript">
             var model = avalon.define({
@@ -32,6 +35,13 @@
                 bottom: true,
                 num: "00",
                 className: "点我",
+                array: [],
+                add: function(){
+                    model.array.push(1)
+                },
+                remove: function(){
+                    model.array.pop()
+                },
                 changeClassName: function() {
                     model.num = (100 * Math.random()).toFixed(0);
                     model.className = this.className
@@ -48,5 +58,8 @@
             <input data-duplex-event="change" ms-duplex="h">
         </div>
         <p><button type="button" ms-class="test{{num}}" ms-click="changeClassName">{{className}}</button></p>
+        <div ms-class="green: array.length">
+            <button ms-click="add" type="button">add</button><button ms-click="remove" type="button">remove</button>
+        </div>
     </body>
 </html>
