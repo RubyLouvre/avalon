@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.5 2014.9.15
+ avalon 1.4 2014.10.5
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -197,7 +197,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.35,
+        version: 1.4,
         ui: {},
         log: log,
         slice: W3C ? function(nodes, start, end) {
@@ -1821,14 +1821,32 @@
     /*********************************************************************
      *                           依赖调度系统                             *
      **********************************************************************/
+    var $$subscribers = [] //用于放置所有bindings对象
     function collectSubscribers(scope, prop, data) {
         var obj = scope.$events
         if (obj) {
             var list = obj[prop] || (obj[prop] = [])
+            $$subscribers.push({
+                data: data, list: list
+            })
             avalon.Array.ensure(list, data)
         }
     }
 
+    function removeSubscribers() {
+        for (var i = $$subscribers.length, obj; obj = $$subscribers[--i]; ) {
+            var data = obj.data
+            var el = data.element
+            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+            if (remove) { //如果它没有在DOM树
+                $$subscribers.splice(i, 1)
+                avalon.Array.remove(obj.list, data)
+                // log("debug: remove " + data.type)
+                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+            }
+        }
+    }
     var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data, val) {
         var fn = data.evaluator
@@ -1851,22 +1869,25 @@
             }
         }
     }
+
+    var beginTime = new Date(), removeID
     function notifySubscribers(list) {
+        var currentTime = new Date()
+        clearTimeout(removeID)
+        if (currentTime - beginTime > 300) {
+            removeSubscribers()
+            beginTime = currentTime
+        } else {
+            removeID = setTimeout(removeSubscribers, 300)
+        }
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.element
-                var remove = el ? (typeof el.sourceIndex === "number" ?
-                        el.sourceIndex == 0 : !avalon.contains(root, el)) : false
-                if (remove) { //如果它没有在DOM树
-                    var removed = list.splice(i, 1)
-                    log("debug: remove " + fn.type)
-                    breakCircularReference(removed)
-                } else if (fn.$repeat) {
+                if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.element) {
                     var fun = fn.evaluator || noop
-                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                    fn.handler(fun.apply(0, fn.args || []), fn.element, fn)
                 }
             }
         }
@@ -3279,6 +3300,12 @@
         }
     }
 
+
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
+            TimerID = setInterval(ticker, 60)
+        }
+    }
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
@@ -3288,12 +3315,6 @@
         }
         if (!ribbon.length) {
             clearInterval(TimerID)
-        }
-    }
-
-    avalon.tick = function(fn) {
-        if (ribbon.push(fn) === 1) {
-            TimerID = setInterval(ticker, 30)
         }
     }
 
@@ -3880,27 +3901,12 @@
         }
         array.length = 0
     }
-    function breakCircularReference(array) {
-        if (!Array.isArray(array))
-            return
-        array.forEach(function(el) {
-            if (el.evaluator) {
-                el.evaluator = el.element = el.vmodels = null
-            }
-        })
-        array.length = 0
-    }
+
     function recycleEachProxy(proxy) {
         for (var i in proxy.$events) {
             if (Array.isArray(proxy.$events[i])) {
-                breakCircularReference(proxy.$events[i])
+                proxy.$events[i].length = 0
             }
-        }
-        breakCircularReference(proxy[subscribers])
-        var name = proxy.$itemName
-        var child = proxy[name]
-        if (child) {
-            recycleEachProxy(child)
         }
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()

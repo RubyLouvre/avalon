@@ -142,7 +142,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: 1.35,
+        version: 1.36,
         ui: {},
         log: log,
         noop: noop,
@@ -1892,7 +1892,6 @@
         }
     }
     var cacheTmpls = avalon.templateCache = {}
-    var ifSanctuary = DOC.createElement("div")
     var bools = "autofocus,autoplay,async,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
             "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
     var boolMap = {}
@@ -2684,7 +2683,11 @@
             W3CFire(this, "input")
         }
     }
-
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
+            TimerID = setInterval(ticker, 60)
+        }
+    }
     function ticker() {
         for (var n = ribbon.length - 1; n >= 0; n--) {
             var el = ribbon[n]
@@ -2696,10 +2699,45 @@
             clearInterval(TimerID)
         }
     }
+    if (window.requestAnimationFrame) {
+        avalon.tick = function(fn) {
+            if (ribbon.push(fn) === 1) {
+                TimerID = requestAnimationFrame(ticker)
+            }
+        }
+        ticker = function() {
+            for (var n = ribbon.length - 1; n >= 0; n--) {
+                var el = ribbon[n]
+                if (el() === false) {
+                    ribbon.splice(n, 1)
+                }
+            }
+            cancelAnimationFrame(TimerID)
+            TimerID = null
+            if (ribbon.length) {
+                TimerID = requestAnimationFrame(ticker)
+            }
+        }
+    }
 
-    avalon.tick = function(fn) {
-        if (ribbon.push(fn) === 1) {
-            TimerID = setInterval(ticker, 30)
+    if (window.requestAnimationFrame) {
+        avalon.tick = function(fn) {
+            if (ribbon.push(fn) === 1) {
+                TimerID = requestAnimationFrame(ticker)
+            }
+        }
+        ticker = function() {
+            for (var n = ribbon.length - 1; n >= 0; n--) {
+                var el = ribbon[n]
+                if (el() === false) {
+                    ribbon.splice(n, 1)
+                }
+            }
+            cancelAnimationFrame(TimerID)
+            TimerID = null
+            if (ribbon.length) {
+                TimerID = requestAnimationFrame(ticker)
+            }
         }
     }
 

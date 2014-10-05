@@ -2463,6 +2463,11 @@ p//==================================================
                 }
             }
 
+            avalon.tick = function(fn) {
+                if (ribbon.push(fn) === 1) {
+                    TimerID = requestAnimationFrame(ticker)
+                }
+            }
             function ticker() {
                 for (var n = ribbon.length - 1; n >= 0; n--) {
                     var el = ribbon[n]
@@ -2470,14 +2475,10 @@ p//==================================================
                         ribbon.splice(n, 1)
                     }
                 }
-                if (!ribbon.length) {
-                    clearInterval(TimerID)
-                }
-            }
-
-            avalon.tick = function(fn) {
-                if (ribbon.push(fn) === 1) {
-                    TimerID = setInterval(ticker, 30)
+                cancelAnimationFrame(TimerID)
+                TimerID = null
+                if (ribbon.length) {
+                    TimerID = requestAnimationFrame(ticker)
                 }
             }
 
