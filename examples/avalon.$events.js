@@ -411,8 +411,8 @@
     }
     //一些不需要被监听的属性
     var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$parent").match(rword)
-    function isObservable(name, value, $skipArray, functionProperties) {
-        if (value && value.nodeType) {
+    function isObservable(name, value, $skipArray) {
+        if (isFunction(value) || value && value.nodeType) {
             return false
         }
         if ($skipArray.indexOf(name) !== -1) {
@@ -425,15 +425,10 @@
         if (name && name.charAt(0) === "$" && !$special[name]) {
             return false
         }
-        if (isFunction(value)) {
-            value.avalonName = name
-            functionProperties.push(value)
-            return false
-        }
         return true
     }
     var rthis = /\bthis\./g
-    var rvariable = /[$\w][$\w]*\./g
+
     function modelFactory($scope, $parent, $special) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
@@ -457,11 +452,10 @@
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
         var childrenProperties = []  //能转换为子VM或监控数组的属性
-        var functionProperties = []  //函数
         var $events = {}
         Object.keys($scope).forEach(function(name) {
             var val = $scope[name]
-            if (!isObservable(name, val, $scope.$skipArray, functionProperties)) {
+            if (!isObservable(name, val, $scope.$skipArray)) {
                 $model[name] = val
                 return  //过滤所有非监控属性
             }
@@ -586,30 +580,6 @@
         })
         computedProperties.forEach(function(collect) {//收集依赖
             collect()
-        })
-        functionProperties.forEach(function(fn) {
-            var name = fn.avalonName
-            if (name === "hasOwnProperty")
-                return
-            var data = {
-                evaluator: function() {
-                    notifySubscribers($vmodel.$events[fn.avalonName])
-                },
-                type: "function::" + name,
-                element: head,
-                handler: noop,
-                args: []
-            }
-            var vars = getVariables(fn.toString().replace(rvariable, "")).concat()
-            if (vars.length) {//计算依赖
-                vars = vars.filter(function(name) {
-                    var test = name.split(".")[0]
-                    if ($vmodel.hasOwnProperty(test)) {
-                        return  (typeof $vmodel[test] != "object") && !isFunction($vmodel[test])
-                    }
-                })
-                addAssign(vars, $vmodel, name, data)
-            }
         })
         return $vmodel
     }
@@ -1842,7 +1812,7 @@
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
-                // log("debug: remove " + data.type)
+                log("debug: remove " + data.type)
                 obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
             }
         }
@@ -2322,6 +2292,7 @@
         return 2
     }
     /*添加赋值语句*/
+    var rvariable = /[$\w][$\w]*\./g
     function addAssign(vars, scope, name, data) {
         var ret = [],
                 prefix = " = " + name + "."
@@ -2330,7 +2301,12 @@
             var flag = inObject(scope, arr)
             if (flag) {
                 var prop = arr.shift()
-                collectSubscribers(scope, prop, data)
+                if (typeof scope[prop] === "function") {
+                    var _vars = getVariables(scope[prop].toString().replace(rvariable, "")).concat()
+                    addAssign(_vars, scope, name, data)
+                } else {
+                    collectSubscribers(scope, prop, data)
+                }
                 ret.push(prop + prefix + prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
@@ -2342,7 +2318,7 @@
                     subscope = subscope[prop]
                     if (subscope && typeof subscope === "object") {
                         prop = arr.shift()
-                        if ((prop === void 0 || prop === "length")&& Array.isArray(subscope)) {
+                        if ((prop === void 0 || prop === "length") && Array.isArray(subscope)) {
                             var sonEvents = subscope.$events
                             if (!sonEvents)
                                 continue
