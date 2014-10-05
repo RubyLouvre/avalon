@@ -2342,7 +2342,7 @@
                     subscope = subscope[prop]
                     if (subscope && typeof subscope === "object") {
                         prop = arr.shift()
-                        if (prop === void 0 && Array.isArray(subscope)) {
+                        if ((prop === void 0 || prop === "length")&& Array.isArray(subscope)) {
                             var sonEvents = subscope.$events
                             if (!sonEvents)
                                 continue
