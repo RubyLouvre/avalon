@@ -689,7 +689,7 @@
             rbind = new RegExp(o + ".*?" + c + "|\\sms-")
         }
     }
-    kernel.dettachVModels = kernel.debug = true
+    kernel.debug = true
     kernel.plugins = plugins
     kernel.plugins['interpolate'](["{{", "}}"])
     kernel.paths = {}
@@ -2202,14 +2202,9 @@
             }
         },
         "on": function(callback, elem, data) {
-            var vmodels = data.vmodels
             var fn = data.evaluator
             callback = function(e) {
                 return fn.apply(this, data.args.concat(e))
-            }
-            if (!avalon.config.dettachVModels) {
-                elem.$vmodel = vmodels[0]
-                elem.$vmodels = vmodels
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
             if (eventType === "scan") {
