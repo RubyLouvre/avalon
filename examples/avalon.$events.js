@@ -341,9 +341,8 @@
             /*只有当前数组不存在此元素时只添加它*/
             ensure: function(target, item) {
                 if (target.indexOf(item) === -1) {
-                    target.push(item)
+                    return target.push(item)
                 }
-                return target
             },
             /*移除数组中指定位置的元素，返回布尔表示成功与否*/
             removeAt: function(target, index) {
@@ -1796,10 +1795,11 @@
         var obj = scope.$events
         if (obj) {
             var list = obj[prop] || (obj[prop] = [])
-            $$subscribers.push({
-                data: data, list: list
-            })
-            avalon.Array.ensure(list, data)
+            if (avalon.Array.ensure(list, data)) {
+                $$subscribers.push({
+                    data: data, list: list
+                })
+            }
         }
     }
 
