@@ -995,6 +995,93 @@
     }
 
     /*********************************************************************
+     *                   LRU缓存工厂，代替之前的createCache               *
+     **********************************************************************/
+    var avalonCaches = {}
+    function cacheFactory(cacheId, capacity) {
+        if (cacheId in avalonCaches) {
+            throw Error(cacheId + "已经存在")
+        }
+        var size = 0,
+                data = {},
+                capacity = typeof capacity === "number" ? capacity : Number.MAX_VALUE,
+                lruHash = {},
+                freshEnd = null,
+                staleEnd = null
+        //生成一个LRU缓体实体
+        return avalonCaches[cacheId] = {
+            set: function(key, value) {
+                if (capacity < Number.MAX_VALUE) {
+                    var lruEntry = lruHash[key] || (lruHash[key] = {key: key})
+                    refresh(lruEntry)
+                }
+
+                if (value === void 0)
+                    return
+                if (!(key in data))
+                    size++
+                data[key] = value
+                if (size > capacity) {
+                    this.remove(staleEnd.key)
+                }
+
+                return value
+            },
+            get: function(key) {
+                if (capacity < Number.MAX_VALUE) {
+                    var lruEntry = lruHash[key]
+                    if (!lruEntry)
+                        return
+                    refresh(lruEntry)
+                }
+
+                return data[key]
+            },
+            remove: function(key) {
+                if (capacity < Number.MAX_VALUE) {
+                    var lruEntry = lruHash[key]
+                    if (!lruEntry)
+                        return
+                    if (lruEntry == freshEnd)
+                        freshEnd = lruEntry.p
+                    if (lruEntry == staleEnd)
+                        staleEnd = lruEntry.n
+                    link(lruEntry.n, lruEntry.p)
+                    delete lruHash[key]
+                }
+
+                delete data[key]
+                size--
+            }
+        };
+
+        function refresh(entry) {
+            if (entry != freshEnd) {
+                if (!staleEnd) {
+                    staleEnd = entry
+                } else if (staleEnd == entry) {
+                    staleEnd = entry.n
+                }
+
+                link(entry.n, entry.p)
+                link(entry, freshEnd)
+                freshEnd = entry
+                freshEnd.n = null
+            }
+        }
+
+        function link(nextEntry, prevEntry) {
+            if (nextEntry != prevEntry) {
+                if (nextEntry)
+                    nextEntry.p = prevEntry //p stands for previous, 'prev' didn't minify
+                if (prevEntry)
+                    prevEntry.n = nextEntry //n stands for next, 'next' didn't minify
+            }
+        }
+    }
+
+
+    /*********************************************************************
      *                           配置系统                                 *
      **********************************************************************/
     function kernel(settings) {
@@ -1298,7 +1385,7 @@
     })
 
     function getWindow(node) {
-        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
+        return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false
     }
     //=============================css相关=======================
     var cssHooks = avalon.cssHooks = {}
@@ -1463,8 +1550,8 @@
             return ret
         }
         cssHooks[method + "&get"] = function(node) {
-            var hidden = [];
-            showHidden(node, hidden);
+            var hidden = []
+            showHidden(node, hidden)
             var val = cssHooks[method + ":get"](node)
             for (var i = 0, obj; obj = hidden[i++]; ) {
                 node = obj.node
@@ -1474,7 +1561,7 @@
                     }
                 }
             }
-            return val;
+            return val
         }
         avalon.fn[method] = function(value) { //会忽视其display
             var node = this[0]
@@ -2078,14 +2165,14 @@
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanNodeList(elem, vmodels) //扫描子孙元素
                 }
-                break;
+                break
         }
 
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
     if (!"1" [0]) {
-        var cacheAttrs = createCache(512)
+        var cacheAttrs = cacheFactory("attrs",256)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
@@ -2108,9 +2195,10 @@
             var str = html.match(rtag)[0]
             var attributes = [],
                     match,
-                    k, v;
-            if (cacheAttrs[str]) {
-                return cacheAttrs[str]
+                    k, v
+            var has = cacheAttrs.get(str)
+            if (has !== void 0) {
+                return has
             }
             while (k = rattrs.exec(str)) {
                 v = k[2]
@@ -2126,7 +2214,7 @@
                 }
                 attributes.push(binding)
             }
-            return cacheAttrs(str, attributes)
+            return cacheAttrs.set(str, attributes)
         }
     }
 
@@ -2232,15 +2320,16 @@
     var rcommaInMiddle = /,+/
     //去掉所有关键字保留字
     var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var cacheVars = createCache(128)
+    var cacheVars = cacheFactory("vars",128)
     var getVariables = function(str) {
         var key = "," + str.trim()
-        if (cacheVars[key]) {
-            return cacheVars[key]
+        var has = cacheVars.get(key)
+        if (has !== void 0) {
+            return has
         }
         while (robjectProperty.test(str)) {
             str = str.replace(robjectProperty, function(match, obj, prop) {
-                return obj + '.' + prop;
+                return obj + '.' + prop
             })
         }
         var vars = str.replace(rstringComment, "")
@@ -2249,7 +2338,7 @@
                 .replace(rnumber, ",")
                 .replace(rcommaOfFirstOrLast, "")
                 .split(rcommaInMiddle)
-        return cacheVars(key, uniqSet(vars))
+        return cacheVars.set(key, uniqSet(vars))
     }
 
     function uniqSet(array) {
@@ -2337,7 +2426,7 @@
                     } else {
                         break
                     }
-                } while (arr.length);
+                } while (arr.length)
                 if (flag > 0)
                     vars.splice(i, 1)
             }
@@ -2346,18 +2435,18 @@
     }
 
 
-    function createCache(maxLength) {
-        var keys = []
-        function cache(key, value) {
-            if (keys.push(key) > maxLength) {
-                delete cache[keys.shift()]
-            }
-            return cache[key] = value;
-        }
-        return cache;
-    }
+//    function createCache(maxLength) {
+//        var keys = []
+//        function cache(key, value) {
+//            if (keys.push(key) > maxLength) {
+//                delete cache[keys.shift()]
+//            }
+//            return cache[key] = value
+//        }
+//        return cache
+//    }
     //缓存求值函数，以便多次利用
-    var cacheExprs = createCache(124)
+    var cacheExprs = cacheFactory("epxrs", 124)
     //取得求值函数及其传参
     var rduplex = /\w\[.*\]|\w\.\w/
     var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -2392,7 +2481,7 @@
         }
         data.args = args
         //---------------cache----------------
-        var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
+        var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
         if (fn) {
             data.evaluator = fn
             return
@@ -2430,7 +2519,7 @@
                     "= vvv;\n} "
             try {
                 fn = Function.apply(noop, names.concat(_body))
-                data.evaluator = cacheExprs(exprId, fn)
+                data.evaluator = cacheExprs.set(exprId, fn)
 
             } catch (e) {
                 log("debug: parse error," + e.message)
@@ -2453,7 +2542,7 @@
         }
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-            data.evaluator = cacheExprs(exprId, fn)
+            data.evaluator = cacheExprs.set(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
@@ -2472,9 +2561,9 @@
     };
     var quote = window.JSON && JSON.stringify || function(str) {
         return   '"' + str.replace(/[\\\"\x00-\x1f]/g, function(a) {
-            var c = meta[a];
+            var c = meta[a]
             return typeof c === 'string' ? c :
-                    '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                    '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4)
         }) + '"'
     }
     //parseExpr的智能引用代理
@@ -2690,7 +2779,7 @@
                             })
                             data.hasBindEvent = true
                         }
-                        break;
+                        break
                 }
             }
         },
