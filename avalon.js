@@ -1343,6 +1343,7 @@
     } else {
         var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i
         var rposition = /^(top|right|bottom|left)$/
+        var ralpha = /alpha\([^)]*\)/i
         var ie8 = !!window.XDomainRequest
         var salpha = "DXImageTransform.Microsoft.Alpha"
         var border = {
@@ -1381,8 +1382,22 @@
             return ret === "" ? "auto" : border[ret] || ret
         }
         cssHooks["opacity:set"] = function(node, name, value) {
-            node.style.filter = 'alpha(opacity=' + value * 100 + ')'
-            node.style.zoom = 1
+            var style = node.style,
+                    currentStyle = node.currentStyle,
+                    opacity = "alpha(opacity=" + value * 100 + ")",
+                    filter = currentStyle && currentStyle.filter || style.filter || ""
+            style.zoom = 1
+            if ((value >= 1 || value === "") &&
+                    filter.replace(ralpha, "").trim() === "" &&
+                    style.removeAttribute) {
+                style.removeAttribute("filter")
+                if (value === "" || currentStyle && !currentStyle.filter) {
+                    return
+                }
+            }
+            style.filter = ralpha.test(filter) ?
+                    filter.replace(ralpha, opacity) :
+                    filter + " " + opacity
         }
         cssHooks["opacity:get"] = function(node) {
             //这是最快的获取IE透明值的方式，不需要动用正则了！
