@@ -1746,11 +1746,28 @@
                     el.parentNode.removeChild(el)
                 }
             }
+            for (els = wrapper.all, i = 0; el = els[i++]; ) {//fix VML
+                if (isVML(el)) {
+                    fixVML(el)
+                }
+            }
         }
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
         return fragment
+    }
+
+    function isVML(src) {
+        var nodeName = src.nodeName
+        return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
+    }
+    function fixVML(node) {
+        if (node.currentStyle.behavior !== "url(#default#VML)") {
+            node.style.behavior = "url(#default#VML)"
+            node.style.display = "inline-block"
+            node.style.zoom = 1 //hasLayout
+        }
     }
     avalon.innerHTML = function(node, html) {
         if (!W3C && (!rcreate.test(html) && !rnest.test(html))) {
@@ -2172,7 +2189,7 @@
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
     if (!"1" [0]) {
-        var cacheAttrs = cacheFactory("attrs",256)
+        var cacheAttrs = cacheFactory("attrs", 256)
         var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
                 rquote = /^['"]/,
                 rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
@@ -2320,7 +2337,7 @@
     var rcommaInMiddle = /,+/
     //去掉所有关键字保留字
     var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-    var cacheVars = cacheFactory("vars",128)
+    var cacheVars = cacheFactory("vars", 128)
     var getVariables = function(str) {
         var key = "," + str.trim()
         var has = cacheVars.get(key)
@@ -3849,12 +3866,6 @@
     }
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
-
-    function isVML(src) {
-        var nodeName = src.nodeName
-        return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
-    }
-
     function shimController(data, transation, proxy, fragments) {
         var dom = avalon.parseHTML(data.template)
         var nodes = avalon.slice(dom.childNodes)

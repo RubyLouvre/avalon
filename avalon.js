@@ -344,7 +344,7 @@
             /*只有当前数组不存在此元素时只添加它*/
             ensure: function(target, item) {
                 if (target.indexOf(item) === -1) {
-                   return target.push(item)
+                    return target.push(item)
                 }
             },
             /*移除数组中指定位置的元素，返回布尔表示成功与否*/
@@ -1655,11 +1655,27 @@
                     el.parentNode.removeChild(el)
                 }
             }
+            for (els = wrapper.all, i = 0; el = els[i++]; ) {//fix VML
+                if (isVML(el)) {
+                    fixVML(el)
+                }
+            }
         }
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
         return fragment
+    }
+    function isVML(src) {
+        var nodeName = src.nodeName
+        return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
+    }
+    function fixVML(node) {
+        if (node.currentStyle.behavior !== "url(#default#VML)") {
+            node.style.behavior = "url(#default#VML)"
+            node.style.display = "inline-block"
+            node.style.zoom = 1 //hasLayout
+        }
     }
     avalon.innerHTML = function(node, html) {
         if (!W3C && (!rcreate.test(html) && !rnest.test(html))) {
@@ -3720,12 +3736,6 @@
     }
 
     //============ each/repeat/with binding 用到的辅助函数与对象 ======================
-
-
-    function isVML(src) {
-        var nodeName = src.nodeName
-        return  nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ""
-    }
 
     //为ms-each, ms-with, ms-repeat要循环的元素外包一个msloop临时节点，ms-controller的值为代理VM的$id
     function shimController(data, transation, proxy, fragments) {
