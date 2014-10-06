@@ -1862,11 +1862,11 @@
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 300) {
+        if (currentTime - beginTime > 333) {
             removeSubscribers()
             beginTime = currentTime
         } else {
-            removeID = setTimeout(removeSubscribers, 300)
+            removeID = setTimeout(removeSubscribers, 333)
         }
         var list = accessor[subscribers]
         if (list && list.length) {
@@ -2099,16 +2099,6 @@
                     scanNodeList(elem, vmodels) //扫描子孙元素
                 }
                 break;
-        }
-
-        if (elem.patchRepeat) {
-            elem.patchRepeat()
-            try {
-                elem.patchRepeat = ""
-                elem.removeAttribute("patchRepeat")
-                elem.removeAttribute("avalonctrl")
-            } catch (e) {
-            }
         }
 
     }

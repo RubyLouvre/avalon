@@ -40,8 +40,8 @@
 
     var isFunction = typeof document.getElementById === "object" ? function(fn) {
         try {
-            return /^\s*\bfunction\b/.test("" + fn);
-        } catch (x) {
+            return /^\s*\bfunction\b/.test(fn+"")
+        } catch (e) {
             return false
         }
     } : function(fn) {
@@ -1955,11 +1955,11 @@
     function notifySubscribers(list) {
         var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 300) {
+        if (currentTime - beginTime > 333) {
             removeSubscribers()
             beginTime = currentTime
         } else {
-            removeID = setTimeout(removeSubscribers, 300)
+            removeID = setTimeout(removeSubscribers, 333)
         }
         if (list && list.length) {
             var args = aslice.call(arguments, 1)

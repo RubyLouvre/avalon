@@ -90,8 +90,8 @@
 
     avalon.isFunction = typeof document.getElementById === "object" ? function(fn) {
         try {
-            return /^\s*\bfunction\b/.test("" + fn);
-        } catch (x) {
+            return /^\s*\bfunction\b/.test(fn+"")
+        } catch (e) {
             return false
         }
     } : function(fn) {
@@ -2108,15 +2108,6 @@
                 break;
         }
 
-        if (elem.patchRepeat) {
-            elem.patchRepeat()
-            try {
-                elem.patchRepeat = ""
-                elem.removeAttribute("patchRepeat")
-                elem.removeAttribute("avalonctrl")
-            } catch (e) {
-            }
-        }
 
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
