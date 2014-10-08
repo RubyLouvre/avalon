@@ -2880,8 +2880,9 @@
             }
         },
         "on": function(callback, elem, data) {
-            var fn = data.evaluator
+            data.type = "on"
             callback = function(e) {
+                var fn = data.evaluator || noop
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.5 2014.9.15
+ avalon 1.3.6 2014.9.15
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -2835,8 +2835,9 @@
             }
         },
         "on": function(callback, elem, data) {
-            var fn = data.evaluator
+            data.type = "on"
             callback = function(e) {
+                var fn = data.evaluator || noop
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
