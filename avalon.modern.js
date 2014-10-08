@@ -1359,15 +1359,40 @@
         if (Registry[expose]) {
             var list = accessor[subscribers]
             if (list) {
-                avalon.Array.ensure(list, Registry[expose]) //只有数组不存在此元素才push进去
-                setTimeout(function() {
-                    notifySubscribers(accessor, true)
-                })
+                var data = Registry[expose]
+                avalon.Array.ensure(list, data) //只有数组不存在此元素才push进去
+                if (data.element)
+                    $$subscribers.push({
+                        data: data, list: list
+                    })
             }
         }
     }
-
-    function notifySubscribers(accessor, nofire) { //通知依赖于这个访问器的订阅者更新自身
+    var $$subscribers = []
+    function removeSubscribers() {
+        for (var i = $$subscribers.length, obj; obj = $$subscribers[--i]; ) {
+            var data = obj.data
+            var el = data.element
+            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+            if (remove) { //如果它没有在DOM树
+                $$subscribers.splice(i, 1)
+                avalon.Array.remove(obj.list, data)
+                log("debug: remove " + data.type)
+                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+            }
+        }
+    }
+    var beginTime = new Date(), removeID
+    function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
+        var currentTime = new Date()
+        clearTimeout(removeID)
+        if (currentTime - beginTime > 300) {
+            removeSubscribers()
+            beginTime = currentTime
+        } else {
+            removeID = setTimeout(removeSubscribers, 300)
+        }
         var list = accessor[subscribers]
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
@@ -1387,7 +1412,7 @@
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.element) {
+                } else if (fn.element && fn.type !== "on") {
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
@@ -2185,12 +2210,12 @@
                     var target = content.firstChild
                     elem.parentNode.replaceChild(content, elem)
                     data.element = target
-                    if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
-                        try {
-                            scanAttr(target, data.vmodels)
-                        } catch (e) {
-                            avalon.log(e)
-                        }
+                }
+                if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
+                    try {
+                        scanAttr(data.element, data.vmodels)
+                    } catch (e) {
+                        avalon.log(e)
                     }
                 }
             } else { //移出DOM树，并用注释节点占据原位置
@@ -2202,9 +2227,9 @@
             }
         },
         "on": function(callback, elem, data) {
-            data.type= "on"
+            data.type = "on"
             callback = function(e) {
-                var fn =  data.evaluator || noop
+                var fn = data.evaluator || noop
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
@@ -2222,7 +2247,6 @@
                     avalon.unbind(elem, data.param, removeFn)
                 }
             }
-            data.evaluator = data.handler = noop
         },
         "text": function(val, elem) {
             val = val == null ? "" : val //不在页面上显示undefined null
@@ -2405,9 +2429,13 @@
                     break
                 }
             }
-
-            $repeat[subscribers] && $repeat[subscribers].push(data)
-            notifySubscribers($repeat) //强制垃圾回收
+            var $list = $repeat[subscribers]
+            if ($list) {
+                $list.push(data)
+                $$subscribers.push({
+                    data: data, list: $list
+                })
+            }
             if (!Array.isArray($repeat) && type !== "each") {
                 var pool = withProxyPool[$repeat.$id]
                 if (!pool) {
@@ -2437,9 +2465,6 @@
             if (elem.nodeType === 1) {
                 elem.removeAttribute(data.name)
                 data.template = elem.outerHTML
-                var comment = DOC.createComment("ms-if")
-                elem.parentNode.replaceChild(comment, elem)
-                data.element = comment
             }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
