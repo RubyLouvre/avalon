@@ -2350,7 +2350,7 @@
                 avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
-
+            elem.removeAttribute(data.name)
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
@@ -2359,7 +2359,6 @@
                 data.template = elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
-                elem.removeAttribute(data.name)
                 data.template = elem.outerHTML.trim()
                 data.group = 1
                 elem.parentNode.replaceChild(comment, elem)
