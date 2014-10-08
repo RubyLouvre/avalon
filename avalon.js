@@ -1862,6 +1862,9 @@
                 avalon.Array.remove(obj.list, data)
                 log("debug: remove " + data.type)
                 obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+                if(data.type === "if" && data.template){
+                    head.removeChild(data.template)
+                }
             }
         }
     }
@@ -2814,22 +2817,22 @@
         "if": function(val, elem, data) {
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
-                    var content = avalon.parseHTML(data.template).firstChild
-                    elem.parentNode.replaceChild(content, elem)
-                    data.element = content
+                    elem.parentNode.replaceChild(data.template, elem)
+                    data.element = data.template
+                    data.template = null
                 }
-                if (rbind.test(data.template.replace(rlt, "<").replace(rgt, ">"))) {
-                    try {
-                        scanAttr(data.element, data.vmodels)
-                    } catch (e) {
-                        avalon.log("warning: ms-if "+ e)
-                    }
+                try {
+                    scanAttr(data.element, data.vmodels)
+                } catch (e) {
+                    avalon.log("warning: ms-if " + e)
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
                     var node = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
                     data.element = node
+                    head.appendChild(elem)
+                    data.template = elem
                 }
             }
         },
@@ -3000,7 +3003,7 @@
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
             var comment = data.element = DOC.createComment("ms-repeat")
-            if (type === "each" || type == "with") {
+            if (type === "each" || type === "with") {
                 data.template = elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
@@ -3084,7 +3087,6 @@
             var elem = data.element
             if (elem.nodeType === 1) {
                 elem.removeAttribute(data.name)
-                data.template = elem.outerHTML
             }
             data.vmodels = vmodels
             parseExprProxy(data.value, vmodels, data)
