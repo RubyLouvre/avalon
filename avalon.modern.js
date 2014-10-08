@@ -2088,17 +2088,20 @@
                         }
                         break
                     case "clear":
-                        var n = ("proxySize" in data ? data.proxySize : proxies.length) * group, k = 0
-                        while (true) {
-                            var nextNode = data.element.nextSibling
-                            if (nextNode && k < n) {
-                                parent.removeChild(nextNode)
-                                k++
-                            } else {
-                                break
+                        var size = "proxySize" in data ? data.proxySize : proxies.length
+                        if (size) {
+                            var n = size * group, k = 0
+                            while (true) {
+                                var nextNode = data.element.nextSibling
+                                if (nextNode && k < n) {
+                                    parent.removeChild(nextNode)
+                                    k++
+                                } else {
+                                    break
+                                }
                             }
+                            recycleEachProxies(proxies)
                         }
-                        recycleEachProxies(proxies)
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                         var t = proxies.splice(pos, 1)[0]
@@ -3096,7 +3099,7 @@
     }
 
     function calculateFragmentGroup(data) {
-        if (typeof data.group !== "number") {
+        if (!isFinite(data.group)) {
             var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
             data.group = nodes.length / n
