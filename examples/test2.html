@@ -1,56 +1,31 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>by 司徒正美</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <title>测试用例</title>
         <script src="avalon.$events.js"></script>
-        <style>
-
-        </style>
         <script>
-            var model = avalon.define({
-                $id: "test",
-                array: [1, 2, 3, 7],
-                object: {
-                    a: 1,
-                    b: 2,
-                    c: 3
+            var model = avalon.define('test', function(vm) {
+                vm.arr = [{aa: {d: 1}, text: 1}, {aa: {d: 1}, text: 2}, {aa: {d: 1}, text: 22}, {aa: {d: 1}, text: 5}, {aa: {d: 1}, text: 6}]
+                vm.x = 1
+                vm.add = function() {
+                    model.arr.push({aa: {d: 4}, text: 5})
                 }
-            })
-            setTimeout(function() {
-                model.array.unshift(8)
-                model.array.push(0)
-                model.object = {
-                    x: 4,
-                    y: 5,
-                    z: 6
+                vm.f1 = function() {
+                    model.arr = [4, 5, 1]
                 }
-                setTimeout(function() {
-                    model.array.sort()
-                    model.object = {
-                        x: 1,
-                        y: 2,
-                        z: 3
-                    }
-                    setTimeout(function() {
-                        model.array = []
-                    }, 2000)
-                }, 2000)
-            }, 2000)
+            });
         </script>
-
     </head>
-    <body>
-        <div ms-controller="test">
-            <ul ms-each="array">
-                <li>{{el}}</li>
-            </ul>
-            <table>
-                <tr ms-with="object">
-                    <td>{{$key}}</td><td>{{$val}}</td>
-                </tr>
-            </table>
+    <body ms-controller="test">
+
+        <div ms-repeat="arr" ms-click="$remove">{{$index}}
+            <div>
+                {{el.aa.d}}<strong>{{el.text}}</strong>
+            </div>
+         
+            <button ms-click="f1">测试</button>
         </div>
-    </body> 
+   <button ms-click="add">add</button>
+    </body>
 </html>
