@@ -38,7 +38,7 @@
         class2type["[object " + name + "]"] = name.toLowerCase()
     })
 
-    var isFunction = typeof document.getElementById === "object" ? function(fn) {
+    var isFunction = typeof alert === "object" ? function(fn) {
         try {
             return /^\s*\bfunction\b/.test(fn+"")
         } catch (e) {

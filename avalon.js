@@ -88,7 +88,7 @@
                 typeof obj
     }
 
-    avalon.isFunction = typeof document.getElementById === "object" ? function(fn) {
+    avalon.isFunction = typeof alert === "object" ? function(fn) {
         try {
             return /^\s*\bfunction\b/.test(fn+"")
         } catch (e) {
