@@ -1397,24 +1397,13 @@
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
-                var el = fn.element
-                var remove = fn.element ? !avalon.contains(root, el) : false
-                if (remove) { //如果它没有在DOM树
-                    list.splice(i, 1)
-                    if (fn.proxies) {
-                        recycleEachProxies(fn.proxies)
-                    }
-                    log("debug: remove " + fn.type)
-                    fn = fn.element = fn.evaluator = null
-                } else if (nofire === true) {
-                    //nothing
-                } else if (typeof fn === "function") {
+                if (typeof fn === "function") {
                     fn.apply(0, args) //强制重新计算自身
                 } else if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
                 } else if (fn.element && fn.type !== "on") {
                     var fun = fn.evaluator || noop
-                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                    fn.handler(fun.apply(0, fn.args || []), fn.element, fn)
                 }
             }
         }
