@@ -1861,10 +1861,10 @@
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
                 log("debug: remove " + data.type)
-                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
                 if (data.type === "if" && data.template) {
                     head.removeChild(data.template)
                 }
+                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
             }
         }
     }
@@ -2818,13 +2818,12 @@
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
                     elem.parentNode.replaceChild(data.template, elem)
-                    data.element = data.template
+                    elem = data.element = data.template
                     data.template = null
                 }
-                try {
-                    scanAttr(data.element, data.vmodels)
-                } catch (e) {
-                    avalon.log("warning: ms-if " + e)
+                if (elem.getAttribute(data.name)) {
+                    elem.removeAttribute(data.name)
+                    scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
@@ -3083,14 +3082,6 @@
         "html": function(data, vmodels) {
             parseExprProxy(data.value, vmodels, data)
         },
-        "if": function(data, vmodels) {
-            var elem = data.element
-            if (elem.nodeType === 1) {
-                elem.removeAttribute(data.name)
-            }
-            data.vmodels = vmodels
-            parseExprProxy(data.value, vmodels, data)
-        },
         "on": function(data, vmodels) {
             var value = data.value
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
@@ -3188,7 +3179,7 @@
     "with,each".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.repeat
     })
-    bindingHandlers.data = bindingHandlers.text = bindingHandlers.html
+    bindingHandlers["if"] = bindingHandlers.data = bindingHandlers.text = bindingHandlers.html
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
