@@ -1365,9 +1365,13 @@
             })
         }
     }
-    var $$subscribers = []
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 300
     function removeSubscribers() {
-        for (var i = $$subscribers.length, obj; obj = $$subscribers[--i]; ) {
+        for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
+            var obj = $$subscribers[i]
+            if (!obj) {
+                break
+            }
             var data = obj.data
             var el = data.element
             var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
@@ -1380,18 +1384,26 @@
                     head.removeChild(data.template)
                 }
                 obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+                i--
+                n--
             }
+        }
+        obj = $$subscribers[i]
+        if (obj) {
+            $startIndex = n
+        } else {
+            $startIndex = 0
         }
     }
     var beginTime = new Date(), removeID
     function notifySubscribers(accessor) { //通知依赖于这个访问器的订阅者更新自身
         var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 300) {
+        if (currentTime - beginTime > 333) {
             removeSubscribers()
-            beginTime = currentTime
+            beginTime = new Date()
         } else {
-            removeID = setTimeout(removeSubscribers, 300)
+            removeID = setTimeout(removeSubscribers, 333)
         }
         var list = accessor[subscribers]
         if (list && list.length) {

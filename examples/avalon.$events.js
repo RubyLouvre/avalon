@@ -1907,36 +1907,7 @@
     /*********************************************************************
      *                           依赖调度系统                             *
      **********************************************************************/
-    var $$subscribers = [] //用于放置所有bindings对象
-    function collectSubscribers(scope, prop, data) {
-        var obj = scope.$events
-        if (obj) {
-            var list = obj[prop] || (obj[prop] = [])
-            if (avalon.Array.ensure(list, data) && data.element) {
-                $$subscribers.push({
-                    data: data, list: list
-                })
-            }
-        }
-    }
 
-    function removeSubscribers() {
-        for (var i = $$subscribers.length, obj; obj = $$subscribers[--i]; ) {
-            var data = obj.data
-            var el = data.element
-            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-            if (remove) { //如果它没有在DOM树
-                $$subscribers.splice(i, 1)
-                avalon.Array.remove(obj.list, data)
-                log("debug: remove " + data.type)
-                if (data.type === "if" && data.template) {
-                    head.removeChild(data.template)
-                }
-                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
-            }
-        }
-    }
     var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data, val) {
         var fn = data.evaluator
@@ -1960,13 +1931,57 @@
         }
     }
 
+    function collectSubscribers(scope, prop, data) {//收集依赖于这个访问器的订阅者
+        var obj = scope.$events
+        if (obj) {
+            var list = obj[prop] || (obj[prop] = [])
+            if (avalon.Array.ensure(list, data) && data.element) {
+                $$subscribers.push({
+                    data: data, list: list
+                })
+            }
+        }
+    }
+
+
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 300
+    function removeSubscribers() {
+        for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
+            var obj = $$subscribers[i]
+            if (!obj) {
+                break
+            }
+            var data = obj.data
+            var el = data.element
+            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+            if (remove) { //如果它没有在DOM树
+                $$subscribers.splice(i, 1)
+                avalon.Array.remove(obj.list, data)
+                log("debug: remove " + data.type)
+                if (data.type === "if" && data.template) {
+                    head.removeChild(data.template)
+                }
+                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+                i--
+                n--
+            }
+        }
+        obj = $$subscribers[i]
+        if (obj) {
+            $startIndex = n
+        } else {
+            $startIndex = 0
+        }
+    }
+
     var beginTime = new Date(), removeID
     function notifySubscribers(list) {
         var currentTime = new Date()
         clearTimeout(removeID)
         if (currentTime - beginTime > 333) {
             removeSubscribers()
-            beginTime = currentTime
+            beginTime = new Date()
         } else {
             removeID = setTimeout(removeSubscribers, 333)
         }
@@ -1982,7 +1997,6 @@
             }
         }
     }
-
 
     /*********************************************************************
      *                           扫描系统                                 *
