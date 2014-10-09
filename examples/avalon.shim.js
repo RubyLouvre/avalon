@@ -44,11 +44,17 @@
     function noop() {
     }
 
-    function log(a) {
+    function log() {
         if (window.console && avalon.config.debug) {
-            console.log(W3C ? a : a + "")
+            try {
+                console.log.apply(console, arguments)
+            } catch (e) {
+                // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+                Function.apply.call(console.log, console, arguments)
+            }
         }
     }
+
 
     function oneObject(array, val) {
         if (typeof array === "string") {

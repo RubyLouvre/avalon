@@ -44,9 +44,14 @@
     function noop() {
     }
 
-    function log(a) {
+    function log() {
         if (window.console && avalon.config.debug) {
-            console.log(W3C ? a : a + "")
+            try {
+                console.log.apply(console, arguments)
+            } catch (e) {
+                // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+                Function.apply.call(console.log, console, arguments)
+            }
         }
     }
 
@@ -2426,7 +2431,7 @@
         '\r': '\\r',
         '"': '\\"',
         '\\': '\\\\'
-    };
+    }
     var quote = window.JSON && JSON.stringify || function(str) {
         return   '"' + str.replace(/[\\\"\x00-\x1f]/g, function(a) {
             var c = meta[a];

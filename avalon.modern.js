@@ -31,9 +31,10 @@
     function noop() {
     }
 
-    function log(a) {
+    function log() {
         if (avalon.config.debug) {
-            console.log(a)
+            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+            console.log.apply(console, arguments)
         }
     }
     function oneObject(array, val) {

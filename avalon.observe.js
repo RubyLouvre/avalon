@@ -7,7 +7,6 @@
 // Element.prototype.remove 、  Comment.prototype.remove 
 //==================================================
 (function(DOC) {
-    var prefix = "ms-"
     var expose = Date.now()
     var subscribers = "$" + expose
     var window = this || (0, eval)('this')
@@ -33,11 +32,13 @@
     function noop() {
     }
 
-    function log(a) {
-        if (avalon.config.debug) {
-            console.log(a)
+    function log() {
+        if (window.console && avalon.config.debug) {
+            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+            console.log.apply(console, arguments)
         }
     }
+
 
     function oneObject(array, val) {
         if (typeof array === "string") {
@@ -78,6 +79,9 @@
 
     avalon.isPlainObject = function(obj) {
         return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
+    }
+    avalon.isFunction = function(fn) {
+        return typeof fn === "function"
     }
 
     avalon.mix = avalon.fn.mix = function() {
@@ -342,7 +346,7 @@
                     withProxyCount && updateWithProxy(host.$id, name, newValue) //同步循环绑定中的代理VM
                 }
                 host.$fire(name, newValue, oldValue)
-                notifySubscribers(host.$accessors, name)
+                notifySubscribers(host.$events, name)
             }
         })
     }
@@ -406,8 +410,6 @@
         })
         scope.$events = scope.$events || {}
         scope.$id = generateID()
-        scope.$accessors = {}
-        scope[subscribers] = []
         for (var i in EventManager) {
             scope[i] = EventManager[i]
         }
@@ -419,7 +421,7 @@
                 get: function() {
                     var obj = {}
                     for (var i in this) {
-                        if (skipProperties.indexOf(i) === -1) {
+                        if ($$skipArray.indexOf(i) === -1) {
                             var val = this[i]
                             obj[i] = (Array.isArray(val) && val.$model) ? val.$model : val
                         }
@@ -440,7 +442,7 @@
         Object.observe(scope, observeCallback)
         return scope
     }
-    var skipProperties = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
+    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
@@ -1183,9 +1185,9 @@
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后        
-        var a = elem.getAttribute(prefix + "skip")
-        var b = elem.getAttributeNode(prefix + "important")
-        var c = elem.getAttributeNode(prefix + "controller")
+        var a = elem.getAttribute("ms-skip")
+        var b = elem.getAttributeNode("ms-important")
+        var c = elem.getAttributeNode("ms-controller")
         if (typeof a === "string") {
             return
         } else if (node = b || c) {

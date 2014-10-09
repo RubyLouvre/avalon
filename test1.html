@@ -6,32 +6,8 @@
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js" type="text/javascript"></script>
         <script>
-
-            vmodel = avalon.define({
-                $id: "test",
-                a: 1,
-                b: 2,
-                fn: function() {
-                    return  (parseFloat(vmodel.a) || 0) + (parseFloat(vmodel.b) || 0)
-                }
-            })
-            var setIEOpacity = function(el, value) {
-                if (!el.currentStyle.hasLayout) {
-                    el.style.zoom = 1;//让元素获得hasLayout
-                }
-                if (el.filters.alpha) {
-                    //必须已经定义过透明滤镜才能使用以下便捷方式
-                    el.filters.alpha.opacity = value * 100;
-                } else {
-                    el.style.filter += "alpha(opacity=" + value * 100 + ")";
-                }
-                return el;
-            };
-            window.onload = function() {
-                var el = document.getElementById("aaa")
-                setIEOpacity(el, 0.40)
-            }
-
+avalon.log(undefined)
+         // avalon.log(1,2,3)
         </script>
         <style>
             #aaa{
