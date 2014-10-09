@@ -2439,6 +2439,7 @@
                 var prop = arr.shift()
                 if (typeof scope[prop] === "function") {
                     var _vars = getVariables(scope[prop].toString().replace(rvariable, "")).concat()
+                    avalon.Array.remove(_vars, prop)
                     addAssign(_vars, scope, name, data)
                 } else {
                     collectSubscribers(scope, prop, data)
