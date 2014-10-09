@@ -6,8 +6,18 @@
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js" type="text/javascript"></script>
         <script>
-avalon.log(undefined)
-         // avalon.log(1,2,3)
+            var model = avalon.define("test", function(vm) {
+                vm.data = {}
+            })
+            setTimeout(function() {
+                var data = {
+                    a: 1,
+                    b: 2,
+                    c: 3
+                }
+              model.data = data //这样正常
+             // avalon.mix(model.data, data) //这样会报错
+            }, 1000)
         </script>
         <style>
             #aaa{
@@ -18,9 +28,6 @@ avalon.log(undefined)
         </style>
     </head>
     <body ms-controller="test">
-        <P id="aaa">xxx</P>
-        <div><input ms-duplex="a"/>{{a}}</div>
-        <div><input ms-duplex="b"/>{{b}}</div>
-        <div>{{fn()}}</div>
+       <input ms-duplex="data.a"/>
     </body>
 </html>

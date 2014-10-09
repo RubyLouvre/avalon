@@ -1355,18 +1355,14 @@
         delete Registry[expose]
     }
 
-    /*收集依赖于这个访问器的订阅者*/
-    function collectSubscribers(accessor) {
-        if (Registry[expose]) {
-            var list = accessor[subscribers]
-            if (list) {
-                var data = Registry[expose]
-                avalon.Array.ensure(list, data) //只有数组不存在此元素才push进去
-                if (data.element)
-                    $$subscribers.push({
-                        data: data, list: list
-                    })
-            }
+
+    function collectSubscribers(accessor) { //收集依赖于这个访问器的订阅者
+        var list = accessor[subscribers]
+        var data = Registry[expose]
+        if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
+            $$subscribers.push({
+                data: data, list: list
+            })
         }
     }
     var $$subscribers = []

@@ -1912,7 +1912,7 @@
         var obj = scope.$events
         if (obj) {
             var list = obj[prop] || (obj[prop] = [])
-            if (avalon.Array.ensure(list, data)) {
+            if (avalon.Array.ensure(list, data) && data.element) {
                 $$subscribers.push({
                     data: data, list: list
                 })
