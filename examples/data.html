@@ -4,7 +4,7 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.$events.js"></script>
+        <script src="../avalon.js"></script>
         <script>
             avalon.define({
                 $id: "test",
@@ -22,7 +22,7 @@
                 },
                 show: function() {
                     var elem = avalon(this)
-                    console.log(
+                    avalon.log(
                             elem.data("number"), elem.data("number2"),
                             elem.data("bool"), elem.data("bool2"),
                             elem.data("null"), elem.data("void"),
