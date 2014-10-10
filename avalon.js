@@ -1405,9 +1405,9 @@
             var style = node.style
             var filter = style.filter || ""
             if (filter.indexOf(salpha) === -1) {
-                style.filter += "progid:"+salpha+"(opacity=100)"
+                style.filter += "progid:" + salpha + "(opacity=100)"
             }
-            var alpha =  node.filters[salpha] || {}
+            var alpha = node.filters[salpha] || {}
             if (value <= 1 && isFinite(value)) {
                 alpha.enabled = true
                 alpha.opacity = value * 100
@@ -1884,10 +1884,13 @@
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
                 //log("debug: remove " + data.type)
-                if (data.type === "if" && data.template) {
+                if (data.type === "if" && data.template && data.template.parentNode === head) {
                     head.removeChild(data.template)
                 }
-                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+                for (var key in data) {
+                    data[key] = null
+                }
+                obj.data = obj.list = null
                 i--
                 n--
             }
@@ -2845,7 +2848,6 @@
                 if (elem.nodeType === 8) {
                     elem.parentNode.replaceChild(data.template, elem)
                     elem = data.element = data.template
-                    data.template = null
                 }
                 if (elem.getAttribute(data.name)) {
                     elem.removeAttribute(data.name)
@@ -2853,11 +2855,10 @@
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
-                    var node = DOC.createComment("ms-if")
+                    var node = data.element = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
-                    data.element = node
+                    data.template = elem //元素节点
                     head.appendChild(elem)
-                    data.template = elem
                 }
             }
         },

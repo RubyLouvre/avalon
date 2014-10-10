@@ -430,11 +430,11 @@
     }
     var rthis = /\bthis\./g
 
-    function modelFactory($scope, $parent, $special) {
+    function modelFactory($scope, $special) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
             $scope.length = 0
-            var collection = Collection($scope, $parent)
+            var collection = Collection($scope)
             collection.pushArray(arr)
             return collection
         }
@@ -523,7 +523,7 @@
                             return childVmodel
                         }
                     }
-                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
+                    var childVmodel = accessor.child = modelFactory(val)
                     childVmodel.$events[subscribers] = $events[name]
                     $model[name] = childVmodel.$model
                 } else {
@@ -561,7 +561,7 @@
         $vmodel.$id = generateID()
         $vmodel.$model = $model
         $vmodel.$events = $events
-        $vmodel.$parent = $parent || null
+      //  $vmodel.$parent = $parent || null
         for (var i in EventManager) {
             var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -638,7 +638,7 @@
                 withProxyCount--
                 delete withProxyPool[son.$id]
             }
-            var ret = modelFactory(value, parent)
+            var ret = modelFactory(value)
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -2453,16 +2453,17 @@
                             var sonEvents = subscope.$events
                             if (!sonEvents)
                                 continue
-                            var sonList = sonEvents[subscribers]
-                            if (sonList !== parentList) {
-                                if (sonList && sonList.length) {
-                                    for (var j = 0, fn; fn = sonList[j++]; ) {
-                                        avalon.Array.ensure(parentList, fn)
-                                    }
-                                }
-                                sonEvents[subscribers] = parentList
-                                prop = subscribers
-                            }
+//                            var sonList = sonEvents[subscribers]
+//                            if (sonList !== parentList) {
+//                                if (sonList && sonList.length) {
+//                                    for (var j = 0, fn; fn = sonList[j++]; ) {
+//                                        avalon.Array.ensure(parentList, fn)
+//                                    }
+//                                }
+//                                sonEvents[subscribers] = parentList
+//                                prop = subscribers
+//                            }
+                              prop = subscribers
                         }
                         collectSubscribers(subscope, prop, data)
                     } else {
@@ -2618,9 +2619,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
+//            data.evaluator.toString = function() {
+//                return data.type + " binding to eval(" + code + ")"
+//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -2900,6 +2901,7 @@
             data.type = "on"
             callback = function(e) {
                 var fn = data.evaluator || noop
+                console.log(data.evaluator+"")
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
@@ -3563,7 +3565,7 @@
     function Collection(model, parent) {
         var array = []
         array.$id = generateID() //它在父VM中的名字
-        array.$parent = parent //父VM
+     //   array.$parent = parent //父VM
         array.$model = model   //数据模型
         array.$events = {}
         array.$events[subscribers] = []
@@ -3643,6 +3645,7 @@
                     ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
+                console.log("splice", a, removed.length)
                 ret = this._del(a, removed.length)
                 change = true
             }
@@ -3749,7 +3752,7 @@
 
     function convert(val) {
         if (rcomplexType.test(avalon.type(val))) {
-            val = val.$id ? val : modelFactory(val, null)
+            val = val.$id ? val : modelFactory(val)
         }
         return val
     }
@@ -3935,7 +3938,7 @@
             $key: key,
             $outer: $outer,
             $val: val
-        }, null, {
+        },{
             $val: 1,
             $key: 1
         })
@@ -3947,6 +3950,7 @@
         var param = data.param || "el", proxy
         var source = {
             $remove: function() {
+                console.log("$remove")
                 return data.$repeat.removeAt(proxy.$index)
             },
             $itemName: param,
@@ -3969,7 +3973,7 @@
         if (rcomplexType.test(avalon.type(item))) {
             source.$skipArray = [param]
         }
-        proxy = modelFactory(source, null, watchEachOne)
+        proxy = modelFactory(source, watchEachOne)
         proxy.$watch(param, function(val) {
             data.$repeat.set(proxy.$index, val)
         })

@@ -4,26 +4,29 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="avalon.js" type="text/javascript"></script>
+        <script src="examples/avalon.$events.js" type="text/javascript"></script>
         <script>
-            var model = avalon.define("test", function(vm) {
-                vm.data = {}
+            var vmodel = avalon.define("test", function(vm) {
+                vm.array = [{
+                        a: 1
+                    }, {
+                        a: 2
+                    }, {
+                        a: 3
+                    }]
+                vm.add = function() {
+                    vmodel.array.push({
+                        a: 4
+                    })
+                }
             })
-            setTimeout(function() {
-                var data = {
-                    a: 1,
-                    b: 2,
-                    c: 3
-                }
-                model.data = data //这样正常
-            }, 1000)
-
-            setTimeout(function() {
-                var data = {
-                    a: 44
-                }
-                model.data = data //这样正常
-            }, 4000)
+//
+//            setTimeout(function() {
+//                var data = {
+//                    a: 44
+//                }
+//                model.data = data //这样正常
+//            }, 4000)
         </script>
         <style>
             #aaa{
@@ -34,6 +37,9 @@
         </style>
     </head>
     <body ms-controller="test">
-        <input ms-duplex="data.a"/>{{data.a}}
+        <ul>
+            <li ms-repeat="array" ms-click="$remove"><input ms-duplex="el.a">{{el.a}}</li>
+        </ul>
+        <button ms-click="add" type="button">add</button>
     </body>
 </html>
