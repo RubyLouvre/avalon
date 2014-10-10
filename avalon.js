@@ -11,7 +11,6 @@
     /*********************************************************************
      *                    全局变量及方法                                  *
      **********************************************************************/
-    var prefix = "ms-"
     var expose = new Date - 0
     var subscribers = "$" + expose
     //http://addyosmani.com/blog/understanding-mvvm-a-guide-for-javascript-developers/
@@ -1938,13 +1937,13 @@
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
         //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
-        var a = elem.getAttribute(prefix + "skip")
+        var a = elem.getAttribute("ms-skip")
         //#360 在旧式IE中 Object标签在引入Flash等资源时,可能出现没有getAttributeNode,innerHTML的情形
         if (!elem.getAttributeNode) {
             return log("warning " + elem.tagName + " no getAttributeNode method")
         }
-        var b = elem.getAttributeNode(prefix + "important")
-        var c = elem.getAttributeNode(prefix + "controller")
+        var b = elem.getAttributeNode("ms-important")
+        var c = elem.getAttributeNode("ms-controller")
         if (typeof a === "string") {
             return
         } else if (node = b || c) {
@@ -3063,8 +3062,7 @@
                 }
             }
             var $list = ($repeat.$events || {})[subscribers]
-            if ($list) {
-                $list.push(data)
+            if ($list && avalon.Array.ensure($list, data)) {
                 $$subscribers.push({
                     data: data, list: $list
                 })
