@@ -1442,6 +1442,7 @@
     } else {
         var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i
         var rposition = /^(top|right|bottom|left)$/
+        var ralpha = /alpha\([^)]*\)/i
         var ie8 = !!window.XDomainRequest
         var salpha = "DXImageTransform.Microsoft.Alpha"
         var border = {
@@ -1480,14 +1481,17 @@
             return ret === "" ? "auto" : border[ret] || ret
         }
         cssHooks["opacity:set"] = function(node, name, value) {
-            if (!node.currentStyle.hasLayout) {
-                node.style.zoom = 1//让元素获得hasLayout
-            }
-            if (node.filters.alpha) {
-                //必须已经定义过透明滤镜才能使用以下便捷方式
-                node.filters.alpha.opacity = value * 100
-            } else {
-                node.style.filter += "alpha(opacity=" + value * 100 + ")"
+            var style = node.style
+            var opacity = isFinite(value) && value <= 1 ? "alpha(opacity=" + value * 100 + ")" : ""
+            var filter = style.filter || "";
+            style.zoom = 1
+            //不能使用以下方式设置透明度
+            //node.filters.alpha.opacity = value * 100
+            style.filter = (ralpha.test(filter) ?
+                    filter.replace(ralpha, opacity) :
+                    filter + " " + opacity).trim()
+            if (!style.filter) {
+                style.removeAttribute("filter")
             }
         }
         cssHooks["opacity:get"] = function(node) {
