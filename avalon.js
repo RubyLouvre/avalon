@@ -3268,11 +3268,10 @@
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     var array = evaluator()
-                    if (Array.isArray(array)) {
-                        avalon.Array[method](array, element.value)
-                    } else {
-                        avalon.error("ms-duplex位于checkbox时要求对应一个数组")
+                    if (!Array.isArray(array)) {
+                        array = [array]
                     }
+                    avalon.Array[method](array, element.value)
                     callback.call(element, array)
                 }
             }
