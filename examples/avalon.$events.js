@@ -1953,10 +1953,13 @@
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
                 // log("debug: remove " + data.type)
-                if (data.type === "if" && data.template) {
+                if (data.type === "if" && data.template && data.template.parentNode === head) {
                     head.removeChild(data.template)
                 }
-                obj.data = obj.list = data.evaluator = data.element = data.vmodels = null
+                for(var key in data){
+                    data[key] = null
+                }
+                obj.data = obj.list = null
                 i--
                 n--
             }
@@ -2433,7 +2436,11 @@
                 var prop = arr.shift()
                 if (typeof scope[prop] === "function") {
                     var _vars = getVariables(scope[prop].toString().replace(rvariable, "")).concat()
+               //     avalon.log(scope[prop]+"")
                     avalon.Array.remove(_vars, prop)
+//                    avalon.Array.remove(_vars, "removeAt")
+//                    avalon.Array.remove(_vars, "$index")
+//                    avalon.log(_vars)
                     addAssign(_vars, scope, name, data)
                 } else {
                     collectSubscribers(scope, prop, data)
@@ -2881,7 +2888,6 @@
                 if (elem.nodeType === 8) {
                     elem.parentNode.replaceChild(data.template, elem)
                     elem = data.element = data.template
-                    data.template = null
                 }
                 if (elem.getAttribute(data.name)) {
                     elem.removeAttribute(data.name)
@@ -2889,11 +2895,10 @@
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
-                    var node = DOC.createComment("ms-if")
+                    var node = data.element = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
-                    data.element = node
-                    head.appendChild(elem)
                     data.template = elem
+                    head.appendChild(elem)        
                 }
             }
         },
@@ -2901,7 +2906,6 @@
             data.type = "on"
             callback = function(e) {
                 var fn = data.evaluator || noop
-                console.log(data.evaluator+"")
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
@@ -3645,7 +3649,6 @@
                     ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
-                console.log("splice", a, removed.length)
                 ret = this._del(a, removed.length)
                 change = true
             }
@@ -3793,7 +3796,7 @@
                     var removed = proxies.splice(pos, el)
                     var transation = removeFragment(locatedNode, group, el)
                     avalon.clearHTML(transation)
-                    recycleEachProxies(removed)
+                  recycleEachProxies(removed)
                     break
                 case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                     var last = proxies.length - 1
@@ -3950,7 +3953,6 @@
         var param = data.param || "el", proxy
         var source = {
             $remove: function() {
-                console.log("$remove")
                 return data.$repeat.removeAt(proxy.$index)
             },
             $itemName: param,
