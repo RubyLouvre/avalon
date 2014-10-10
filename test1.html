@@ -15,9 +15,15 @@
                     b: 2,
                     c: 3
                 }
-              model.data = data //这样正常
-             // avalon.mix(model.data, data) //这样会报错
+                model.data = data //这样正常
             }, 1000)
+
+            setTimeout(function() {
+                var data = {
+                    a: 44
+                }
+                model.data = data //这样正常
+            }, 4000)
         </script>
         <style>
             #aaa{
@@ -28,6 +34,6 @@
         </style>
     </head>
     <body ms-controller="test">
-       <input ms-duplex="data.a"/>
+        <input ms-duplex="data.a"/>{{data.a}}
     </body>
 </html>

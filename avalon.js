@@ -1401,6 +1401,20 @@
                 style.removeAttribute("filter")
             }
         }
+        cssHooks["opacity:set"] = function(node, name, value) {
+            var style = node.style
+            var filter = style.filter || ""
+            if (filter.indexOf(salpha) === -1) {
+                style.filter += "progid:"+salpha+"(opacity=100)"
+            }
+            var alpha =  node.filters[salpha] || {}
+            if (value <= 1 && isFinite(value)) {
+                alpha.enabled = true
+                alpha.opacity = value * 100
+            } else {
+                alpha.enabled = false
+            }
+        }
         cssHooks["opacity:get"] = function(node) {
             //这是最快的获取IE透明值的方式，不需要动用正则了！
             var alpha = node.filters.alpha || node.filters[salpha],

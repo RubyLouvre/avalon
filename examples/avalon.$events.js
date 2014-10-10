@@ -53,12 +53,8 @@
 
     function log() {
         if (window.console && avalon.config.debug) {
-            try {
-                console.log.apply(console, arguments)
-            } catch (e) {
-                // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
-                Function.apply.call(console.log, console, arguments)
-            }
+            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+            Function.apply.call(console.log, console, arguments)
         }
     }
 
@@ -456,102 +452,99 @@
         var $model = {}  //vmodels.$model属性
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
-        var childrenProperties = []  //能转换为子VM或监控数组的属性
         var $events = {}
-        Object.keys($scope).forEach(function(name) {
-            var val = $scope[name]
-            if (!isObservable(name, val, $scope.$skipArray)) {
+        for (var i in $scope) {
+            (function(name, val) {
                 $model[name] = val
-                return  //过滤所有非监控属性
-            }
-            //总共产生三种accessor
-            var accessor
-            var valueType = avalon.type(val)
-            $events[name] = []
-            if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
-                var setter = val.set
-                var getter = val.get
-                //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
-                accessor = function(newValue) {
-                    var $events = $vmodel.$events
-                    var oldValue = $model[name]
-                    if (arguments.length) {
-                        if (stopRepeatAssign) {
-                            return
-                        }
-                        if (isFunction(setter)) {
-                            var backup = $events[name]
-                            $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
-                            setter.call($vmodel, newValue)
-                            $events[name] = backup
-                        }
-                    }
-                    newValue = $model[name] = getter.call($vmodel) //同步$model
-                    if (!isEqual(oldValue, newValue)) {
-                        withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                        notifySubscribers($events[name]) //同步视图
-                        safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-                    }
-                    return newValue
+                if (!isObservable(name, val, $scope.$skipArray)) {
+                    return  //过滤所有非监控属性
                 }
-                computedProperties.push(function() {
-                    var data = {
-                        evaluator: accessor,
-                        element: head,
-                        type: "computed::" + name,
-                        handler: noop,
-                        args: []
-                    }
-                    var vars = getVariables(getter.toString().replace(rthis, "")).concat()
-                    if (vars.length) {//计算依赖
-                        addAssign(vars, $vmodel, name, data)
-                    }
-                    accessor()//强逼计算自身
-                })
-            } else if (rcomplexType.test(valueType)) {
-                //第2种对应子ViewModel或监控数组 
-                accessor = function(newValue) {
-                    var childVmodel = accessor.child
-                    var oldValue = $model[name]
-                    if (arguments.length) {
-                        if (stopRepeatAssign) {
-                            return
+                //总共产生三种accessor
+                var accessor
+                var valueType = avalon.type(val)
+                $events[name] = []
+                if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
+                    var setter = val.set
+                    var getter = val.get
+                    //第1种对应计算属性， 因变量，通过其他监控属性触发其改变
+                    accessor = function(newValue) {
+                        var $events = $vmodel.$events
+                        var oldValue = $model[name]
+                        if (arguments.length) {
+                            if (stopRepeatAssign) {
+                                return
+                            }
+                            if (isFunction(setter)) {
+                                var backup = $events[name]
+                                $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                                setter.call($vmodel, newValue)
+                                $events[name] = backup
+                            }
                         }
+                        newValue = $model[name] = getter.call($vmodel) //同步$model
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
-                            newValue = $model[name] = childVmodel.$model //同步$model
-                            var fn = rebindings[childVmodel.$id]
-                            fn && fn() //同步视图
-                            safeFire($vmodel, name, newValue, oldValue)  //触发$watch回调
-                        }
-                    } else {
-                        return childVmodel
-                    }
-                }
-                childrenProperties.push(function() {//必须等到vmodel已经转换成VM，才开始转换子VM
-                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
-                    $model[name] = childVmodel.$model
-                })
-            } else {
-                //第3种对应简单的数据类型，自变量，监控属性
-                accessor = function(newValue) {
-                    var oldValue = $model[name]
-                    if (arguments.length) {
-                        if (!isEqual(oldValue, newValue)) {
-                            $model[name] = newValue //同步$model
-                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
-                            notifySubscribers($vmodel.$events[name]) //同步视图
+                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                            notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
-                    } else {
-                        return oldValue
+                        return newValue
+                    }
+                    computedProperties.push(function() {
+                        var data = {
+                            evaluator: accessor,
+                            element: head,
+                            type: "computed::" + name,
+                            handler: noop,
+                            args: []
+                        }
+                        var vars = getVariables(getter.toString().replace(rthis, "")).concat()
+                        if (vars.length) {//计算依赖
+                            addAssign(vars, $vmodel, name, data)
+                        }
+                        accessor()//强逼计算自身
+                    })
+                } else if (rcomplexType.test(valueType)) {
+                    //第2种对应子ViewModel或监控数组 
+                    accessor = function(newValue) {
+                        var childVmodel = accessor.child
+                        var oldValue = $model[name]
+                        if (arguments.length) {
+                            if (stopRepeatAssign) {
+                                return
+                            }
+                            if (!isEqual(oldValue, newValue)) {
+                                childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
+                                newValue = $model[name] = childVmodel.$model //同步$model
+                                var fn = rebindings[childVmodel.$id]
+                                fn && fn() //同步视图
+                                safeFire($vmodel, name, newValue, oldValue)  //触发$watch回调
+                            }
+                        } else {
+                            return childVmodel
+                        }
+                    }
+                    var childVmodel = accessor.child = modelFactory(val, $vmodel)
+                    childVmodel.$events[subscribers] = $events[name]
+                    $model[name] = childVmodel.$model
+                } else {
+                    //第3种对应简单的数据类型，自变量，监控属性
+                    accessor = function(newValue) {
+                        var oldValue = $model[name]
+                        if (arguments.length) {
+                            if (!isEqual(oldValue, newValue)) {
+                                $model[name] = newValue //同步$model
+                                withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
+                                notifySubscribers($vmodel.$events[name]) //同步视图
+                                safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                            }
+                        } else {
+                            return oldValue
+                        }
                     }
                 }
-                $model[name] = val
-            }
-            watchedProperties[name] = accessor
-        })
-
+                watchedProperties[name] = accessor
+            })(i, $scope[i])
+        }
 
         $$skipArray.forEach(function(name) {
             $scope[name] = true //为用户定义的对象再添加一些特殊属性
@@ -580,9 +573,6 @@
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
         }
-        childrenProperties.forEach(function(convert) {//生成子VM
-            convert()
-        })
         computedProperties.forEach(function(collect) {//收集依赖
             collect()
         })
@@ -1962,7 +1952,7 @@
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
-                log("debug: remove " + data.type)
+                // log("debug: remove " + data.type)
                 if (data.type === "if" && data.template) {
                     head.removeChild(data.template)
                 }
@@ -2927,7 +2917,6 @@
                     avalon.unbind(elem, eventType, removeFn)
                 }
             }
-            data.evaluator = data.handler = noop
         },
         "text": function(val, elem) {
             val = val == null ? "" : val //不在页面上显示undefined null
