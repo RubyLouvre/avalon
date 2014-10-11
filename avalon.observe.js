@@ -924,18 +924,10 @@
     }
     var valHooks = {
         "select:get": function(node, value) {
-            var option, options = node.options,
-                    index = node.selectedIndex,
-                    one = node.type === "select-one" || index < 0,
-                    values = one ? null : [],
-                    max = one ? index + 1 : options.length,
-                    i = index < 0 ? max : one ? index : 0
-            for (; i < max; i++) {
-                option = options[i]
-                //旧式IE在reset后不会改变selected，需要改用i === index判定
-                //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
-                //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
-                if ((option.selected || i === index) && !option.disabled) {
+            var one = node.multiple
+            var values = one ? null : []
+            for (var i = 0, option; option = node.options[i++]; ) {
+                if (option.selected && !option.disabled) {
                     value = option.value
                     if (one) {
                         return value
@@ -944,7 +936,7 @@
                     values.push(value)
                 }
             }
-            return values
+            return  values
         },
         "select:set": function(node, values, optionSet) {
             values = [].concat(values) //强制转换为数组
@@ -1135,47 +1127,94 @@
      **********************************************************************/
     var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data) {
-        try {
-            var c = ronduplex.test(data.type) ? data : data.evaluator.apply(0, data.args)
-            data.handler(c, data.element, data)
-        } catch (e) {
-            delete data.evaluator
-            if (data.nodeType === 3) {
-                if (kernel.commentInterpolate) {
-                    data.element.replaceChild(DOC.createComment(data.value), data.node)
-                } else {
-                    data.node.data = openTag + data.value + closeTag
+        Registry[expose] = data //暴光此函数,方便collectSubscribers收集
+        avalon.openComputedCollect = true
+        var fn = data.evaluator
+        if (fn) { //如果是求值函数
+            try {
+                var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
+                data.handler(c, data.element, data)
+            } catch (e) {
+                log("warning:exception throwed in [registerSubscriber] " + e)
+                delete data.evaluator
+                var node = data.element
+                if (node.nodeType === 3) {
+                    var parent = node.parentNode
+                    if (kernel.commentInterpolate) {
+                        parent.replaceChild(DOC.createComment(data.value), node)
+                    } else {
+                        node.data = openTag + data.value + closeTag
+                    }
                 }
             }
-            log("warning:evaluator of [" + data.value + "] throws error!")
         }
+        avalon.openComputedCollect = false
+        delete Registry[expose]
     }
 
-    /*通知依赖于这个访问器的订阅者更新自身*/
-    function notifySubscribers(accessor, name) {
-        var list = Array.isArray(accessor) ? accessor[subscribers] : accessor[name]
+    function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
+        var data = Registry[expose]
+        if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
+            $$subscribers.push({
+                data: data, list: list
+            })
+        }
+    }
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 200
+    function removeSubscribers() {
+        for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
+            var obj = $$subscribers[i]
+            if (!obj) {
+                break
+            }
+            var data = obj.data
+            var el = data.element
+            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+            if (remove) { //如果它没有在DOM树
+                $$subscribers.splice(i, 1)
+                avalon.Array.remove(obj.list, data)
+                //log("debug: remove " + data.type)
+                if (data.type === "if" && data.template && data.template.parentNode === head) {
+                    head.removeChild(data.template)
+                }
+                for (var key in data) {
+                    data[key] = null
+                }
+                obj.data = obj.list = null
+                i--
+                n--
+            }
+        }
+        obj = $$subscribers[i]
+        if (obj) {
+            $startIndex = n
+        } else {
+            $startIndex = 0
+        }
+    }
+    var beginTime = Date.now(), removeID
+    function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
+        clearTimeout(removeID)
+        if (Date.now() - beginTime > 333) {
+            removeSubscribers()
+            beginTime = Date.now()
+        } else {
+            removeID = setTimeout(removeSubscribers, 333)
+        }
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (el && !ifSanctuary.contains(el) && (!root.contains(el))) {
-                    list.splice(i, 1)
-                    if (fn.proxies) {
-                        recycleEachProxies(fn.proxies)
-                        fn.proxies = fn.callbackElement = fn.template = fn.startRepeat = fn.endRepeat = null
-                    }
-                    fn.element = fn.node = null
-                    log("debug: remove " + fn.name)
-                } else if (fn.getter) {
-                    fn.handler.apply(fn, args) //强制重新计算自身
-                } else {
-                    fn.handler(fn.evaluator.apply(0, fn.args || []), el, fn)
+                if (fn.$repeat) {
+                    fn.handler.apply(fn, args) //处理监控数组的方法
+                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
+                    var fun = fn.evaluator || noop
+                    fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
             }
         }
     }
-
-
     /*********************************************************************
      *                            扫描系统                                *
      **********************************************************************/
@@ -2576,6 +2615,9 @@
     var _splice = ap.splice
     var CollectionPrototype = {
         _splice: _splice,
+        _fire: function(method, a, b) {
+            notifySubscribers(this.$events[subscribers], method, a, b)
+        },
         _add: function(arr, pos) {
             var oldLength = this.length
             pos = typeof pos === "number" ? pos : oldLength
@@ -2585,7 +2627,7 @@
             }
             _splice.apply(this, [pos, 0].concat(added))
 
-            notifySubscribers(this, "add", pos, added)
+            this._fire( "add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
             }
@@ -2593,7 +2635,7 @@
         _del: function(pos, n) {
             var ret = this._splice(pos, n)
             if (ret.length) {
-                notifySubscribers(this, "del", pos, n)
+                this._fire( "del", pos, n)
                 if (!this._stopFireLength) {
                     this._.length = this.length
                 }
@@ -2603,7 +2645,7 @@
         push: function() {
             ap.push.apply(this.$model, arguments)
             var n = this._add(arguments)
-            notifySubscribers(this, "index", n > 2 ? n - 2 : 0)
+            this._fire( "index", n > 2 ? n - 2 : 0)
             return n
         },
         pushArray: function(array) {
@@ -2612,13 +2654,13 @@
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
-            notifySubscribers(this, "index", arguments.length)
+            this._fire( "index", arguments.length)
             return ret
         },
         shift: function() {
             var el = this.$model.shift()
             this._del(0, 1)
-            notifySubscribers(this, "index", 0)
+            this._fire( "index", 0)
             return el //返回被移除的元素
         },
         pop: function() {
@@ -2645,7 +2687,7 @@
             this._stopFireLength = false
             this._.length = this.length
             if (change) {
-                notifySubscribers(this, "index", 0)
+                this._fire( "index", 0)
             }
             return ret //返回被移除的元素
         },
@@ -2663,7 +2705,7 @@
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
-            notifySubscribers(this, "clear", 0)
+            this._fire( "clear", 0)
             return this
         },
         removeAll: function(all) { //移除N个元素
@@ -2706,7 +2748,7 @@
                 } else if (target !== val) {
                     this[index] = val
                     this.$model[index] = val
-                    notifySubscribers(this, "set", index, val)
+                    this._fire( "set", index, val)
                 }
             }
             return this
@@ -2728,12 +2770,12 @@
                     var remove2 = bbb.splice(index, 1)[0]
                     this._splice(i, 0, remove)
                     bbb.splice(i, 0, remove2)
-                    notifySubscribers(this, "move", index, i)
+                    this._fire( "move", index, i)
                 }
             }
             bbb = void 0
             if (sorted) {
-                notifySubscribers(this, "index", 0)
+                this._fire( "index", 0)
             }
             return this
         }
@@ -2742,7 +2784,7 @@
     function convert(val) {
         var type = avalon.type(val)
         if (rcomplextype.test(type)) {
-            val = val.$id ? val : modelFactory(val, val)
+            val = val.$id ? val : modelFactory(val)
         }
         return val
     }
