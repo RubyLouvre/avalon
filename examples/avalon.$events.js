@@ -1987,7 +1987,7 @@
             for (var i = list.length, fn; fn = list[--i]; ) {
                 if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.element) {
+                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), fn.element, fn)
                 }
@@ -2436,11 +2436,7 @@
                 var prop = arr.shift()
                 if (typeof scope[prop] === "function") {
                     var _vars = getVariables(scope[prop].toString().replace(rvariable, "")).concat()
-               //     avalon.log(scope[prop]+"")
                     avalon.Array.remove(_vars, prop)
-//                    avalon.Array.remove(_vars, "removeAt")
-//                    avalon.Array.remove(_vars, "$index")
-//                    avalon.log(_vars)
                     addAssign(_vars, scope, name, data)
                 } else {
                     collectSubscribers(scope, prop, data)
@@ -2485,16 +2481,6 @@
     }
 
 
-//    function createCache(maxLength) {
-//        var keys = []
-//        function cache(key, value) {
-//            if (keys.push(key) > maxLength) {
-//                delete cache[keys.shift()]
-//            }
-//            return cache[key] = value
-//        }
-//        return cache
-//    }
     //缓存求值函数，以便多次利用
     var cacheExprs = cacheFactory("epxrs", 124)
     //取得求值函数及其传参

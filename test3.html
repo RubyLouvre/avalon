@@ -17,12 +17,12 @@
                 //    el.style.filter  += "progid:DXImageTransform.Microsoft.Alpha(opacity=100)"
                 //   el.filters.item("DXImageTransform.Microsoft.Alpha").opacity = 10;
                 avalon(el).css("opacity", 0.1)
-                setTimeout(function(){
-                      avalon(el).css("opacity", 0.6)
-                }, 2000)
-                   setTimeout(function(){
-                      avalon(el).css("opacity", 8)
-                }, 5000)
+                console.log(avalon(el).css("opacity"))
+                avalon(el).css("opacity", 0.6)
+                console.log(avalon(el).css("opacity"))
+
+                avalon(el).css("opacity", 8)
+                console.log(avalon(el).css("opacity"))
                 avalon.scan()
 
             })
