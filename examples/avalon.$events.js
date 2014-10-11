@@ -1470,24 +1470,24 @@
             }
             return ret === "" ? "auto" : border[ret] || ret
         }
-        cssHooks["opacity:set"] = function(node, name, value) {
+              cssHooks["opacity:set"] = function(node, name, value) {
             var style = node.style
-            var opacity = isFinite(value) && value <= 1 ? "alpha(opacity=" + value * 100 + ")" : ""
-            var filter = style.filter || "";
-            style.zoom = 1
-            //不能使用以下方式设置透明度
-            //node.filters.alpha.opacity = value * 100
-            style.filter = (ralpha.test(filter) ?
-                    filter.replace(ralpha, opacity) :
-                    filter + " " + opacity).trim()
-            if (!style.filter) {
-                style.removeAttribute("filter")
+            var filter = style.filter || ""
+            if (filter.indexOf(salpha) === -1) {
+                style.filter += "progid:" + salpha + "(opacity=100)"
+            }
+            var alpha = node.filters[salpha] || {}
+            if (value <= 1 && isFinite(value)) {
+                style.zoom = alpha.enabled = 1
+                alpha.opacity = value * 100
+            } else {
+                alpha.enabled = 0
             }
         }
-        cssHooks["opacity:get"] = function(node) {
+       cssHooks["opacity:get"] = function(node) {
             //这是最快的获取IE透明值的方式，不需要动用正则了！
             var alpha = node.filters.alpha || node.filters[salpha],
-                    op = alpha ? alpha.opacity : 100
+                    op = alpha && alpha.enabled ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
     }

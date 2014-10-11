@@ -287,7 +287,7 @@
         }
         return false
     }
-    avalon.isArrayLike = isArrayLike
+
     /*视浏览器情况采用最快的异步回调*/
     avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
         setTimeout(callback, 0)

@@ -415,7 +415,7 @@
     //一些不需要被监听的属性
     var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray").match(rword)
     function isObservable(name, value, $skipArray) {
-        if (avalon.isFunction(value) || value && value.nodeType) {
+        if (isFunction(value) || value && value.nodeType) {
             return false
         }
         if ($skipArray.indexOf(name) !== -1) {
@@ -835,7 +835,7 @@
     }
     if (!Array.isArray) {
         Array.isArray = function(a) {
-            return a && avalon.type(a) === "array"
+            return serialize.call(a) === "[object Array]"
         }
     }
 
@@ -1401,24 +1401,10 @@
                 style.removeAttribute("filter")
             }
         }
-        cssHooks["opacity:set"] = function(node, name, value) {
-            var style = node.style
-            var filter = style.filter || ""
-            if (filter.indexOf(salpha) === -1) {
-                style.filter += "progid:" + salpha + "(opacity=100)"
-            }
-            var alpha = node.filters[salpha] || {}
-            if (value <= 1 && isFinite(value)) {
-                alpha.enabled = true
-                alpha.opacity = value * 100
-            } else {
-                alpha.enabled = false
-            }
-        }
         cssHooks["opacity:get"] = function(node) {
             //这是最快的获取IE透明值的方式，不需要动用正则了！
             var alpha = node.filters.alpha || node.filters[salpha],
-                    op = alpha ? alpha.opacity : 100
+                    op = alpha && alpha.enabled ? alpha.opacity : 100
             return (op / 100) + "" //确保返回的是字符串
         }
     }
@@ -1918,7 +1904,7 @@
                 var el = fn.element
                 if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-               } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
+                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), el, fn)
                 }
