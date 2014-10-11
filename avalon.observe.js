@@ -353,6 +353,9 @@
             }
         })
     }
+
+    var $$skipArray = "$id,$watch,$unwatch,$fire,$events,$model,$skipArray".match(rword)
+
     function isObservable(name, value, $skipArray) {
         if (isFunction(value) || value && value.nodeType) {
             return false
@@ -453,7 +456,6 @@
         Object.observe($scope, observeCallback)
         return $scope
     }
-    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$accessors," + subscribers).match(rword)
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
@@ -725,6 +727,7 @@
         }
         return data
     }
+
     avalon.each({
         scrollLeft: "pageXOffset",
         scrollTop: "pageYOffset"
@@ -1001,9 +1004,7 @@
                 if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
                     neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
-                        if (attr && attr.specified) {
-                            neo[attr.name] = attr.value //复制其属性
-                        }
+                        neo[attr.name] = attr.value //复制其属性
                     })
                     neo.text = el.text //必须指定,因为无法在attributes中遍历出来
                     el.parentNode.replaceChild(neo, el) //替换节点
@@ -1434,9 +1435,7 @@
 
     var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
             r11a = /\|\|/g,
-            r11b = /U2hvcnRDaXJjdWl0/g,
-            rlt = /&lt;/g,
-            rgt = /&gt;/g
+            r11b = /U2hvcnRDaXJjdWl0/g
     function trimFilter(value, leach) {
         if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
             value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
@@ -1770,7 +1769,7 @@
         }
     }
     var cacheTmpls = avalon.templateCache = {}
-    var ifSanctuary = DOC.createElement("div")
+
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
@@ -2092,7 +2091,6 @@
     }
 
     var rdash = /\(([^)]*)\)/
-    var rwhitespace = /^\s+$/
     function parseDisplay(nodeName, val) {
         //用于取得此类标签的默认display值
         var key = "_" + nodeName
@@ -2627,7 +2625,7 @@
             }
             _splice.apply(this, [pos, 0].concat(added))
 
-            this._fire( "add", pos, added)
+            this._fire("add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
             }
@@ -2635,7 +2633,7 @@
         _del: function(pos, n) {
             var ret = this._splice(pos, n)
             if (ret.length) {
-                this._fire( "del", pos, n)
+                this._fire("del", pos, n)
                 if (!this._stopFireLength) {
                     this._.length = this.length
                 }
@@ -2645,7 +2643,7 @@
         push: function() {
             ap.push.apply(this.$model, arguments)
             var n = this._add(arguments)
-            this._fire( "index", n > 2 ? n - 2 : 0)
+            this._fire("index", n > 2 ? n - 2 : 0)
             return n
         },
         pushArray: function(array) {
@@ -2654,13 +2652,13 @@
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             var ret = this._add(arguments, 0) //返回长度
-            this._fire( "index", arguments.length)
+            this._fire("index", arguments.length)
             return ret
         },
         shift: function() {
             var el = this.$model.shift()
             this._del(0, 1)
-            this._fire( "index", 0)
+            this._fire("index", 0)
             return el //返回被移除的元素
         },
         pop: function() {
@@ -2687,7 +2685,7 @@
             this._stopFireLength = false
             this._.length = this.length
             if (change) {
-                this._fire( "index", 0)
+                this._fire("index", 0)
             }
             return ret //返回被移除的元素
         },
@@ -2705,7 +2703,7 @@
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
-            this._fire( "clear", 0)
+            this._fire("clear", 0)
             return this
         },
         removeAll: function(all) { //移除N个元素
@@ -2748,7 +2746,7 @@
                 } else if (target !== val) {
                     this[index] = val
                     this.$model[index] = val
-                    this._fire( "set", index, val)
+                    this._fire("set", index, val)
                 }
             }
             return this
@@ -2770,12 +2768,12 @@
                     var remove2 = bbb.splice(index, 1)[0]
                     this._splice(i, 0, remove)
                     bbb.splice(i, 0, remove2)
-                    this._fire( "move", index, i)
+                    this._fire("move", index, i)
                 }
             }
             bbb = void 0
             if (sorted) {
-                this._fire( "index", 0)
+                this._fire("index", 0)
             }
             return this
         }
