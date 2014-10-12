@@ -929,15 +929,15 @@
 
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
-        var svg = document.createElementNS(svgns, "svg")
-        svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
+        var svg = DOC.createElementNS(svgns, "svg")
+        svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
         if (!rsvg.test(svg.firstChild)) {// #409
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
                     for (var i = 0, el; el = nodes[i++]; ) {
                         if (el.tagName) {
-                            var svg = document.createElementNS(svgns,
+                            var svg = DOC.createElementNS(svgns,
                                     el.tagName.toLowerCase())
                             ap.forEach.call(el.attributes, function(attr) {
                                 svg.setAttribute(attr.name, attr.value)//复制属性
@@ -963,7 +963,7 @@
                             par.insertBefore(frag, this)
                             // svg节点的子节点类似
                         } else {
-                            var newFrag = document.createDocumentFragment()
+                            var newFrag = DOC.createDocumentFragment()
                             enumerateNode(frag, newFrag)
                             par.insertBefore(newFrag, this)
                         }
@@ -1786,7 +1786,7 @@
                             }
                         }
                     }
-                    var nodes = document.getElementsByTagName("*")//实现节点排序
+                    var nodes = DOC.getElementsByTagName("*")//实现节点排序
                     var alls = []
                     Array.prototype.forEach.call(nodes, function(el) {
                         if (el._avalon) {
@@ -1806,11 +1806,11 @@
         }
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
-    var findNode = document.querySelector ? function(str) {
-        return  document.querySelector(str)
+    var findNode = DOC.querySelector ? function(str) {
+        return  DOC.querySelector(str)
     } : function(str) {
         var match = str.match(ravalon)
-        var all = document.getElementsByTagName(match[1])
+        var all = DOC.getElementsByTagName(match[1])
         for (var i = 0, el; el = all[i++]; ) {
             if (el.getAttribute(match[2]) === match[3]) {
                 return el
@@ -1962,7 +1962,6 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             var name = node.name
             elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
-
             elem.setAttribute("avalonctrl", node.value)
             newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
             avalon(elem).removeClass(name)
@@ -3561,7 +3560,7 @@
         }
     })
     //针对IE6-8修正input
-    if (!("oninput" in document.createElement("input"))) {
+    if (!("oninput" in DOC.createElement("input"))) {
         eventHooks.input = {
             type: "propertychange",
             deel: function(elem, fn) {
@@ -3574,13 +3573,13 @@
             }
         }
     }
-    if (document.onmousewheel === void 0) {
+    if (DOC.onmousewheel === void 0) {
         /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
          firefox DOMMouseScroll detail 下3 上-3
          firefox wheel detlaY 下3 上-3
          IE9-11 wheel deltaY 下40 上-40
          chrome wheel deltaY 下100 上-100 */
-        var fixWheelType = document.onwheel !== void 0 ? "wheel" : "DOMMouseScroll"
+        var fixWheelType = DOC.onwheel !== void 0 ? "wheel" : "DOMMouseScroll"
         var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
         eventHooks.mousewheel = {
             type: fixWheelType,

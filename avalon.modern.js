@@ -312,15 +312,15 @@
     }
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
-        var svg = document.createElementNS(svgns, "svg")
-        svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="yellow" />'
+        var svg = DOC.createElementNS(svgns, "svg")
+        svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
         if (!rsvg.test(svg.firstChild)) {// #409
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
                     for (var i = 0, el; el = nodes[i++]; ) {
                         if (el.tagName) {
-                            var svg = document.createElementNS(svgns,
+                            var svg = DOC.createElementNS(svgns,
                                     el.tagName.toLowerCase())
                             // copy attrs
                             ap.forEach.call(el.attributes, function(attr) {
@@ -349,7 +349,7 @@
                             par.insertBefore(frag, this)
                             // svg节点的子节点类似
                         } else {
-                            var newFrag = document.createDocumentFragment()
+                            var newFrag = DOC.createDocumentFragment()
                             enumerateNode(frag, newFrag)
                             par.insertBefore(newFrag, this)
                         }
@@ -1317,7 +1317,7 @@
                             }
                         }
                     }
-                    var nodes = document.querySelectorAll("[avalonctrl]")//实现节点排序
+                    var nodes = DOC.querySelectorAll("[avalonctrl]")//实现节点排序
                     var alls = []
                     Array.prototype.forEach.call(nodes, function(el) {
                         if (el._avalon) {
@@ -1338,7 +1338,7 @@
     }
 
     function findNode(str) {
-        return  document.querySelector(str)
+        return  DOC.querySelector(str)
     }
     /*********************************************************************
      *                       依赖调度系统                                 *
@@ -2908,7 +2908,7 @@
             }
         }
     })
-    if (document.onmousewheel === void 0) {
+    if (DOC.onmousewheel === void 0) {
         /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
          firefox DOMMouseScroll detail 下3 上-3
          firefox wheel detlaY 下3 上-3
