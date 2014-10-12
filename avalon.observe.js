@@ -349,7 +349,7 @@
                     withProxyCount && updateWithProxy(host.$id, name, newValue) //同步循环绑定中的代理VM
                 }
                 host.$fire(name, newValue, oldValue)
-                notifySubscribers(host.$events, name)
+                notifySubscribers(host.$events[name])
             }
         })
     }
@@ -390,11 +390,13 @@
             $scope.$skipArray = []
         }
         $scope.$skipArray.$special = $special || {}
+        var $events = {}
         for (var i in $scope) {
             (function(key, val) {
                 if (!isObservable(key, val, $scope.$skipArray)) {
                     return //过滤所有非监控属性
                 }
+                $events[key] = []
                 var valueType = avalon.type(val)
                 if (valueType === "object" && typeof val.get === "function" && Object.keys(val).length <= 2) {
                     var userGet = val.get // 将计算属性转为真正的访问器属性,并重写set方法
@@ -424,7 +426,7 @@
         }
         //添加$id, $events, $watch, $unwatch, $fire, $model,
         $scope.$id = generateID()
-        $scope.$events = {}
+        $scope.$events = $events
         for (var i in EventManager) {
             $scope[i] = EventManager[i]
         }
@@ -879,11 +881,7 @@
                     return node["inner" + name]
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
-                    var doc = node.documentElement
-                    //FF chrome    html.scrollHeight< body.scrollHeight
-                    //IE 标准模式 : html.scrollHeight> body.scrollHeight
-                    //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
-                    return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
+                    return  node.documentElement[scrollProp]
                 }
                 return cssHooks[method + "&get"](node)
             } else {
@@ -1128,8 +1126,6 @@
      **********************************************************************/
     var ronduplex = /^(duplex|on)$/
     function registerSubscriber(data) {
-        Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-        avalon.openComputedCollect = true
         var fn = data.evaluator
         if (fn) { //如果是求值函数
             try {
@@ -1149,16 +1145,17 @@
                 }
             }
         }
-        avalon.openComputedCollect = false
-        delete Registry[expose]
     }
-
-    function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
-        var data = Registry[expose]
-        if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
-            $$subscribers.push({
-                data: data, list: list
-            })
+    
+    function collectSubscribers(scope, prop, data) {//收集依赖于这个访问器的订阅者
+        var obj = scope.$events
+        if (obj) {
+            var list = obj[prop] || (obj[prop] = [])
+            if (avalon.Array.ensure(list, data) && data.element) {
+                $$subscribers.push({
+                    data: data, list: list
+                })
+            }
         }
     }
     var $$subscribers = [], $startIndex = 0, $maxIndex = 200

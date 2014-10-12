@@ -1974,9 +1974,8 @@
 
     var beginTime = new Date(), removeID
     function notifySubscribers(list) {
-        var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 333) {
+        if (new Date() - beginTime > 333) {
             removeSubscribers()
             beginTime = new Date()
         } else {
@@ -1987,7 +1986,7 @@
             for (var i = list.length, fn; fn = list[--i]; ) {
                 if (fn.$repeat) {
                     fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
+                } else if (fn.element ) {//事件绑定只能由用户触发,不能由程序触发//&& fn.type !== "on"
                     var fun = fn.evaluator || noop
                     fn.handler(fun.apply(0, fn.args || []), fn.element, fn)
                 }
@@ -2612,9 +2611,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-//            data.evaluator.toString = function() {
-//                return data.type + " binding to eval(" + code + ")"
-//            }
+            data.evaluator.toString = function() {
+                return data.type + " binding to eval(" + code + ")"
+            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -2890,8 +2889,9 @@
         },
         "on": function(callback, elem, data) {
             data.type = "on"
+            var fn = data.evaluator || noop
             callback = function(e) {
-                var fn = data.evaluator || noop
+              //  var fn = data.evaluator || noop
                 return fn.apply(this, data.args.concat(e))
             }
             var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
@@ -2909,6 +2909,7 @@
                     avalon.unbind(elem, eventType, removeFn)
                 }
             }
+             data.evaluator = data.handler = noop
         },
         "text": function(val, elem) {
             val = val == null ? "" : val //不在页面上显示undefined null
@@ -3264,7 +3265,9 @@
         if (type === "radio") {
             data.handler = function() {
                 //IE6是通过defaultChecked来实现打勾效果
-                element.defaultChecked = (element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator())
+                var bool = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator()
+                console.log(bool)
+                element.defaultChecked = (element.checked = bool)
             }
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -3277,7 +3280,8 @@
                     } else {
                         val = !element.defaultChecked
                         evaluator(val)
-                        element.checked = val
+                        console.log(val+"!")
+                       // element.checked = val
                     }
                     callback.call(element, val)
                 }

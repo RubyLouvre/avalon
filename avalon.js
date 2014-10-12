@@ -3227,7 +3227,7 @@
                 updateVModel = function() {
                     if (composing)
                         return
-                    var val = element.oldValue = element.value
+                    var val = getTypeValue(data, element.value)
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
                         callback.call(element, val)
@@ -3237,7 +3237,8 @@
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
-            val = val == null ? "" : val + ""
+            val = val == null ? "" : val 
+            setTypeValue(data, val)
             if (val !== element.value) {
                 element.value = val
             }
@@ -3247,27 +3248,40 @@
             type = "radio"
         }
         if (type === "radio") {
-            data.handler = function() {
-                //IE6是通过defaultChecked来实现打勾效果
-                element.defaultChecked = (element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator())
-            }
+            var IE6 = !window.XMLHttpRequest
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var val = element.value
                     if (fixType === "text") {
-                        evaluator(val)
+                        evaluator(getTypeValue(data, val))
                     } else if (fixType === "bool") {
                         val = val === "true"
                         evaluator(val)
                     } else {
-                        val = !element.defaultChecked
+                        val = !element.oldValue
                         evaluator(val)
-                        element.checked = val
                     }
                     callback.call(element, val)
                 }
             }
-            bound(fixType ? "click" : "mousedown", updateVModel)
+            data.handler = function() {
+                var val = evaluator()
+                setTypeValue(data, val)
+                var checked = /bool|text/.test(fixType) ? val + "" === element.value : !!val
+                element.oldValue = checked
+                if (IE6) {
+                    setTimeout(function() {
+                        //IE8 checkbox, radio是使用defaultChecked控制选中状态，
+                        //并且要先设置defaultChecked后设置checked
+                        //并且必须设置延迟
+                        element.defaultChecked = checked
+                        element.checked = checked
+                    }, 100)
+                } else {
+                    element.checked = checked
+                }
+            }
+            bound(IE6 ? "mouseup" : "click", updateVModel)
         } else if (type === "checkbox") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -3340,6 +3354,23 @@
             clearTimeout(timer)
         }, 31)
     }
+    function getTypeValue(data, val) {
+        switch (data.msType) {
+            case "boolean":
+                return val == "true"
+            case "number":
+                return isFinite(val) ? Number(val) : val
+            default:
+                return val + ""
+        }
+    }
+    function setTypeValue(data, val) {
+        if (!data.msType) {
+            var type = typeof val
+            data.msType = type === "boolean" || type === "number" ? type : "string"
+        }
+    }
+
     var TimerID, ribbon = [],
             launch = noop
     function W3CFire(el, name, detail) {
@@ -3401,9 +3432,15 @@
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
+                if (Array.isArray(val)) {
+                    val = val.map(function(v) {
+                        return getTypeValue(data, v)
+                    })
+                } else {
+                    val = getTypeValue(data, val)
+                }
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
-                    element.oldValue = val + ""
                 }
                 data.changed.call(element, val)
             }
@@ -3411,6 +3448,34 @@
         data.handler = function() {
             var curValue = evaluator()
             curValue = curValue && curValue.$model || curValue
+
+            if (!data.msType) {
+                var values = []
+                for (var i = 0, el; el = element.options[i++]; ) {
+                    values.push(avalon(el).val())
+                }
+                var maybeType = "string"
+                if (values.every(function(val) {
+                    return isFinite(val)
+                })) {
+                    maybeType = "number"
+                } else if (values.every(function(val) {
+                    return val === "true" || val === "false"
+                })) {
+                    maybeType = "boolean"
+                }
+                if (!Array.isArray(curValue)) {
+                    data.msType = typeof curValue === maybeType ? maybeType : "string"
+                } else {
+                    var check0 = typeof curValue[0] === maybeType
+                    var check1 = curValue.length > 1 ? typeof curValue[1] === maybeType : true
+                    var check2 = curValue.length > 2 ? typeof curValue[2] === maybeType : true
+                    var check3 = curValue.length > 3 ? typeof curValue[3] === maybeType : true
+                    var check4 = curValue.length > 4 ? typeof curValue[4] === maybeType : true
+                    data.msType = check0 && check1 && check2 && check3 && check4 ? maybeType : "string"
+                }
+            }
+            //必须变成字符串后才能比较
             curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
             if (curValue + "" !== element.oldValue) {
                 $elem.val(curValue)

@@ -4,22 +4,23 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="examples/avalon.$events.js" type="text/javascript"></script>
+        <script src="avalon.js" type="text/javascript"></script>
         <script>
             var vmodel = avalon.define("test", function(vm) {
-                vm.array = [{
-                        a: 1
-                    }, {
-                        a: 2
-                    }, {
-                        a: 3
-                    }]
-                vm.add = function() {
-                    vmodel.array.push({
-                        a: 4
-                    })
-                }
+                vm.aaa = 222
+                vm.bbb = 111
+                vm.ccc = false
+                vm.$watch("aaa", function(a) {
+                    console.log(a)
+                })
+                vm.$watch("bbb", function(a) {
+                    console.log(a)
+                })
+                vm.$watch("ccc", function(a) {
+                    console.log( a)
+                })
             })
+
 //
 //            setTimeout(function() {
 //                var data = {
@@ -37,9 +38,29 @@
         </style>
     </head>
     <body ms-controller="test">
-        <ul>
-            <li ms-repeat="array" ms-click="$remove"><input ms-duplex="el.a">{{el.a}}</li>
-        </ul>
+        <input ms-duplex="aaa"/>{{aaa}}
+        <select ms-duplex="bbb">
+            <option>
+                111
+            </option>
+            <option>
+                222
+            </option>
+            <option>
+                333
+            </option>
+            <option>
+                444
+            </option>
+        </select>
+        <select ms-duplex="ccc">
+            <option>
+                true
+            </option>
+            <option>
+                false
+            </option>
+        </select>
         <button ms-click="add" type="button">add</button>
     </body>
 </html>
