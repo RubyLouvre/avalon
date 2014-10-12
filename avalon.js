@@ -3239,6 +3239,7 @@
             var val = evaluator()
             val = val == null ? "" : val 
             setTypeValue(data, val)
+            val += ""
             if (val !== element.value) {
                 element.value = val
             }
@@ -3446,8 +3447,8 @@
             }
         }
         data.handler = function() {
-            var curValue = evaluator()
-            curValue = curValue && curValue.$model || curValue
+            var val = evaluator()
+            val = val && val.$model || val
 
             if (!data.msType) {
                 var values = []
@@ -3464,22 +3465,22 @@
                 })) {
                     maybeType = "boolean"
                 }
-                if (!Array.isArray(curValue)) {
-                    data.msType = typeof curValue === maybeType ? maybeType : "string"
+                if (!Array.isArray(val)) {
+                    data.msType = typeof val === maybeType ? maybeType : "string"
                 } else {
-                    var check0 = typeof curValue[0] === maybeType
-                    var check1 = curValue.length > 1 ? typeof curValue[1] === maybeType : true
-                    var check2 = curValue.length > 2 ? typeof curValue[2] === maybeType : true
-                    var check3 = curValue.length > 3 ? typeof curValue[3] === maybeType : true
-                    var check4 = curValue.length > 4 ? typeof curValue[4] === maybeType : true
+                    var check0 = typeof val[0] === maybeType
+                    var check1 = val.length > 1 ? typeof val[1] === maybeType : true
+                    var check2 = val.length > 2 ? typeof val[2] === maybeType : true
+                    var check3 = val.length > 3 ? typeof val[3] === maybeType : true
+                    var check4 = val.length > 4 ? typeof val[4] === maybeType : true
                     data.msType = check0 && check1 && check2 && check3 && check4 ? maybeType : "string"
                 }
             }
             //必须变成字符串后才能比较
-            curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
-            if (curValue + "" !== element.oldValue) {
-                $elem.val(curValue)
-                element.oldValue = curValue + ""
+            val = Array.isArray(val) ? val.map(String) : val + ""
+            if (val + "" !== element.oldValue) {
+                $elem.val(val)
+                element.oldValue = val + ""
             }
         }
         data.bound("change", updateVModel)
