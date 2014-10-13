@@ -2659,13 +2659,24 @@
                     if (!Array.isArray(array)) {
                         array = [array]
                     }
-                    avalon.Array[method](array, element.value)
+                    avalon.Array[method](array, getTypeValue(data, element.value))
                     callback.call(element, array)
                 }
             }
             data.handler = function() {
                 var array = [].concat(evaluator()) //强制转换为数组
-                element.checked = array.indexOf(element.value) >= 0
+                var types = array.map(function(val) {
+                    var type = typeof val
+                    return type === "number" || type === "boolean" ? type : "string"
+                })
+                var maybeType = types[0]
+                if (types.some(function(type) {
+                    return type !== maybeType
+                })) {
+                    maybeType = "string"
+                }
+                data.msType = maybeType
+                element.checked = array.indexOf(getTypeValue(data, element.value)) >= 0
             }
             bound("change", updateVModel)
         } else {
@@ -2699,7 +2710,7 @@
     function getTypeValue(data, val) {
         switch (data.msType) {
             case "boolean":
-                return val == "true"
+                return val === "true"
             case "number":
                 return isFinite(val) ? Number(val) : val
             default:
