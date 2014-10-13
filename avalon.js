@@ -3237,14 +3237,11 @@
                         if ($elem.data("duplex-focus")) {
                             avalon.nextTick(function() {
                                 element.focus()
-                                try {//iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
-                                    element.selectionStart = element.selectionEnd = n
-                                } catch (e) {
-                                    try {//旧式IE下没有setSelectionRange方法
-                                        element.setSelectionRange(n, n)
-                                    } catch (e) {//最后方案
-                                        element.value = element.value
-                                    }
+                                if (element.setSelectionRange) {
+                                    //https://github.com/RubyLouvre/avalon/issues/254
+                                    //iOS 7, date datetime等控件使用以下方式赋值会抛错
+                                    //element.selectionStart = element.selectionEnd = n
+                                    element.setSelectionRange(n, n)
                                 }
                             })
                         }

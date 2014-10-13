@@ -377,11 +377,77 @@
         }
         return false
     }
-    /*视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)*/
-    avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
-        setTimeout(callback, 0) //IE10-11 or W3C
-    }
+    //from Q.js
+    avalon.nextTick = (function() {
+        // linked list of tasks (single, with head node)
+        var head = {task: void 0, next: null};
+        var tail = head;
+        var flushing = false;
+        var requestTick = void 0;
 
+        function flush() {
+            while (head.next) {
+                head = head.next
+                var task = head.task
+                head.task = void 0
+
+                try {
+                    task()
+                } catch (e) {
+
+                    // In browsers, uncaught exceptions are not fatal.
+                    // Re-throw them asynchronously to avoid slow-downs.
+                    setTimeout(function() {
+                        throw e
+                    }, 0)
+                }
+            }
+            flushing = false
+        }
+
+        nextTick = function(task) {
+            tail = tail.next = {
+                task: task,
+                next: null
+            }
+            if (!flushing) {
+                flushing = true
+                requestTick()
+            }
+        };
+
+        if (typeof setImmediate === "function") {
+            requestTick = setImmediate.bind(window, flush);
+        } else if (typeof MessageChannel !== "undefined") {
+            // modern browsers
+            // http://www.nonblocking.io/2011/06/windownexttick.html
+            var channel = new MessageChannel();
+            // At least Safari Version 6.0.5 (8536.30.1) intermittently cannot create
+            // working message ports the first time a page loads.
+            channel.port1.onmessage = function() {
+                requestTick = requestPortTick;
+                channel.port1.onmessage = flush;
+                flush();
+            };
+            var requestPortTick = function() {
+                // Opera requires us to provide a message payload, regardless of
+                // whether we use it.
+                channel.port2.postMessage(0);
+            };
+            requestTick = function() {
+                setTimeout(flush, 0);
+                requestPortTick();
+            };
+
+        } else {
+            // old browsers
+            requestTick = function() {
+                setTimeout(flush, 0);
+            };
+        }
+
+        return nextTick;
+    })();
     /*********************************************************************
      *                           modelFactory                             *
      **********************************************************************/
@@ -3251,14 +3317,11 @@
                         if ($elem.data("duplex-focus")) {
                             avalon.nextTick(function() {
                                 element.focus()
-                                try {//iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
-                                    element.selectionStart = element.selectionEnd = n
-                                } catch (e) {
-                                    try {//旧式IE下没有setSelectionRange方法
-                                        element.setSelectionRange(n, n)
-                                    } catch (e) {//最后方案
-                                        element.value = element.value
-                                    }
+                                if (element.setSelectionRange) {
+                                    //https://github.com/RubyLouvre/avalon/issues/254
+                                    //iOS 7, date datetime等控件使用以下方式赋值会抛错
+                                    //element.selectionStart = element.selectionEnd = n
+                                    element.setSelectionRange(n, n)
                                 }
                             })
                         }
@@ -4818,33 +4881,6 @@
     })
 
     avalon.ready(function() {
-        //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
-        if (window.VBArray && !window.setImmediate) {
-            var handlerQueue = []
-
-            function drainQueue() {
-                var fn = handlerQueue.shift()
-                if (fn) {
-                    fn()
-                    if (handlerQueue.length) {
-                        avalon.nextTick()
-                    }
-                }
-            }
-            avalon.nextTick = function(callback) {
-                if (typeof callback === "function") {
-                    handlerQueue.push(callback)
-                }
-                var node = DOC.createElement("script")
-                node.onreadystatechange = function() {
-                    drainQueue() //在interactive阶段就触发
-                    node.onreadystatechange = null
-                    head.removeChild(node)
-                    node = null
-                }
-                head.appendChild(node)
-            }
-        }
         avalon.scan(DOC.body)
     })
 })(document)
