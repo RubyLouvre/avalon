@@ -2605,12 +2605,20 @@
                 },
                 //当value变化时改变model的值
                 updateVModel = function() {
-                    if (composing)
+                    if (composing)//处理中文输入法在minlengh下引发的BUG
                         return
-                    var val = element.oldValue = element.value
+                    var val = element.oldValue = element.value //防止递归调用形成死循环
+                    var n = val.length
+                    val = getTypeValue(data, val)               //尝式转换为正确的格式
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
                         callback.call(element, val)
+                        if ($elem.data("duplex-focus")) {
+                            avalon.nextTick(function() {
+                                element.focus()
+                                element.setSelectionRange(n, n)
+                            })
+                        }
                     }
                 }
 

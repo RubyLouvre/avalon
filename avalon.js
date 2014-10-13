@@ -3226,12 +3226,28 @@
                 },
                 //当value变化时改变model的值
                 updateVModel = function() {
-                    if (composing)
+                    if (composing)//处理中文输入法在minlengh下引发的BUG
                         return
-                    var val = getTypeValue(data, element.value)
+                    var val = element.oldValue = element.value //防止递归调用形成死循环
+                    var n = val.length
+                    val = getTypeValue(data, val)               //尝式转换为正确的格式
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
                         callback.call(element, val)
+                        if ($elem.data("duplex-focus")) {
+                            avalon.nextTick(function() {
+                                element.focus()
+                                try {//iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
+                                    element.selectionStart = element.selectionEnd = n
+                                } catch (e) {
+                                    try {//旧式IE下没有setSelectionRange方法
+                                        element.setSelectionRange(n, n)
+                                    } catch (e) {//最后方案
+                                        element.value = element.value
+                                    }
+                                }
+                            })
+                        }
                     }
                 }
 
