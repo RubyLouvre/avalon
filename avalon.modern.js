@@ -573,8 +573,8 @@
             enumerable: false,
             configurable: true
         })
-        computedProperties.forEach(function(collect) {//收集依赖
-            collect()
+        computedProperties.forEach(function(collect) {
+            collect()//收集依赖
         })
         return $vmodel
     }
@@ -2608,7 +2608,6 @@
                     if (composing)//处理中文输入法在minlengh下引发的BUG
                         return
                     var val = element.oldValue = element.value //防止递归调用形成死循环
-                    var n = val.length
                     val = getTypeValue(data, val)               //尝式转换为正确的格式
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
@@ -2616,7 +2615,6 @@
                         if ($elem.data("duplex-focus")) {
                             avalon.nextTick(function() {
                                 element.focus()
-                                element.setSelectionRange(n, n)
                             })
                         }
                     }

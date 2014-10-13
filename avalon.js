@@ -3229,7 +3229,6 @@
                     if (composing)//处理中文输入法在minlengh下引发的BUG
                         return
                     var val = element.oldValue = element.value //防止递归调用形成死循环
-                    var n = val.length
                     val = getTypeValue(data, val)               //尝式转换为正确的格式
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
@@ -3237,12 +3236,6 @@
                         if ($elem.data("duplex-focus")) {
                             avalon.nextTick(function() {
                                 element.focus()
-                                if (element.setSelectionRange) {
-                                    //https://github.com/RubyLouvre/avalon/issues/254
-                                    //iOS 7, date datetime等控件使用以下方式赋值会抛错
-                                    //element.selectionStart = element.selectionEnd = n
-                                    element.setSelectionRange(n, n)
-                                }
                             })
                         }
                     }
@@ -4692,33 +4685,6 @@
     })
 
     avalon.ready(function() {
-        //IE6-9下这个通常只要1ms,而且没有副作用，不会发出请求，setImmediate如果只执行一次，与setTimeout一样要140ms上下
-        if (window.VBArray && !window.setImmediate) {
-            var handlerQueue = []
-
-            function drainQueue() {
-                var fn = handlerQueue.shift()
-                if (fn) {
-                    fn()
-                    if (handlerQueue.length) {
-                        avalon.nextTick()
-                    }
-                }
-            }
-            avalon.nextTick = function(callback) {
-                if (typeof callback === "function") {
-                    handlerQueue.push(callback)
-                }
-                var node = DOC.createElement("script")
-                node.onreadystatechange = function() {
-                    drainQueue() //在interactive阶段就触发
-                    node.onreadystatechange = null
-                    head.removeChild(node)
-                    node = null
-                }
-                head.appendChild(node)
-            }
-        }
         avalon.scan(DOC.body)
     })
 })(document)

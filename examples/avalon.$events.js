@@ -638,8 +638,8 @@
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
         }
-        computedProperties.forEach(function(collect) {//收集依赖
-            collect()
+        computedProperties.forEach(function(collect) {
+            collect()//收集依赖
         })
         return $vmodel
     }
@@ -3309,7 +3309,6 @@
                     if (composing)//处理中文输入法在minlengh下引发的BUG
                         return
                     var val = element.oldValue = element.value //防止递归调用形成死循环
-                    var n = val.length
                     val = getTypeValue(data, val)               //尝式转换为正确的格式
                     if ($elem.data("duplex-observe") !== false) {
                         evaluator(val)
@@ -3317,12 +3316,6 @@
                         if ($elem.data("duplex-focus")) {
                             avalon.nextTick(function() {
                                 element.focus()
-                                if (element.setSelectionRange) {
-                                    //https://github.com/RubyLouvre/avalon/issues/254
-                                    //iOS 7, date datetime等控件使用以下方式赋值会抛错
-                                    //element.selectionStart = element.selectionEnd = n
-                                    element.setSelectionRange(n, n)
-                                }
                             })
                         }
                     }
