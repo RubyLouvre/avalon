@@ -411,7 +411,7 @@
         return VMODELS[$id] = model
     }
     //一些不需要被监听的属性
-    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$parent").match(rword)
+    var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray").match(rword)
     function isObservable(name, value, $skipArray) {
         if (isFunction(value) || value && value.nodeType) {
             return false
@@ -557,11 +557,10 @@
                 $vmodel[name] = $scope[name]
             }
         }
-        //添加$id, $model, $events, $parent, $watch, $unwatch, $fire
+        //添加$id, $model, $events, $watch, $unwatch, $fire
         $vmodel.$id = generateID()
         $vmodel.$model = $model
         $vmodel.$events = $events
-        //  $vmodel.$parent = $parent || null
         for (var i in EventManager) {
             var fn = EventManager [i]
             if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -3646,7 +3645,6 @@
     function Collection(model, parent) {
         var array = []
         array.$id = generateID() //它在父VM中的名字
-        //   array.$parent = parent //父VM
         array.$model = model   //数据模型
         array.$events = {}
         array.$events[subscribers] = []
