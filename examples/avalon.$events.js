@@ -380,21 +380,19 @@
     //from Q.js
     avalon.nextTick = (function() {
         // linked list of tasks (single, with head node)
-        var head = {task: void 0, next: null};
-        var tail = head;
-        var flushing = false;
-        var requestTick = void 0;
+        var head = {task: void 0, next: null}
+        var tail = head
+        var flushing = false
+        var requestTick = void 0
 
         function flush() {
             while (head.next) {
                 head = head.next
                 var task = head.task
                 head.task = void 0
-
                 try {
                     task()
                 } catch (e) {
-
                     // In browsers, uncaught exceptions are not fatal.
                     // Re-throw them asynchronously to avoid slow-downs.
                     setTimeout(function() {
@@ -414,40 +412,42 @@
                 flushing = true
                 requestTick()
             }
-        };
-
-        if (typeof setImmediate === "function") {
-            requestTick = setImmediate.bind(window, flush);
-        } else if (typeof MessageChannel !== "undefined") {
-            // modern browsers
+        }
+        if (typeof setImmediate === "function") {//IE10-11
+            requestTick = setImmediate.bind(window, flush)
+        } else if (typeof MessageChannel !== "undefined") { // W3C
             // http://www.nonblocking.io/2011/06/windownexttick.html
             var channel = new MessageChannel();
-            // At least Safari Version 6.0.5 (8536.30.1) intermittently cannot create
-            // working message ports the first time a page loads.
             channel.port1.onmessage = function() {
-                requestTick = requestPortTick;
-                channel.port1.onmessage = flush;
-                flush();
-            };
+                requestTick = requestPortTick
+                channel.port1.onmessage = flush
+                flush()
+            }
             var requestPortTick = function() {
-                // Opera requires us to provide a message payload, regardless of
-                // whether we use it.
                 channel.port2.postMessage(0);
-            };
+            }
             requestTick = function() {
-                setTimeout(flush, 0);
-                requestPortTick();
-            };
-
-        } else {
-            // old browsers
+                setTimeout(flush, 0)
+                requestPortTick()
+            }
+        } else if (window.VBArray) {//IE6-9
             requestTick = function() {
-                setTimeout(flush, 0);
-            };
+                var node = DOC.createElement("script")
+                node.onreadystatechange = function() {
+                    flush() //在interactive阶段就触发
+                    node.onreadystatechange = null
+                    head.removeChild(node)
+                    node = null
+                }
+                head.appendChild(node)
+            }
+        } else { // old W3C
+            requestTick = function() {
+                setTimeout(flush, 0)
+            }
         }
-
-        return nextTick;
-    })();
+        return nextTick
+    })()
     /*********************************************************************
      *                           modelFactory                             *
      **********************************************************************/
