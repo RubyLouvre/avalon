@@ -900,16 +900,18 @@
     /*********************************************************************
      *                           DOM 底层补丁                             *
      **********************************************************************/
-    function fixContains(a, b) {
-        if (b) {
-            while ((b = b.parentNode)) {
-                if (b === a) {
+
+    function fixContains(root, el) {
+        try {
+            while ((el = el.parentNode))
+                if (el === root)
                     return true;
-                }
-            }
+            return false
+        } catch (e) {
+            return false
         }
-        return false
     }
+
     //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
     if (!root.contains) {
         Node.prototype.contains = function(arg) {
@@ -3290,7 +3292,7 @@
                     if (!Array.isArray(array)) {
                         array = [array]
                     }
-                    avalon.Array[method](array, getTypeValue(data,element.value))
+                    avalon.Array[method](array, getTypeValue(data, element.value))
                     callback.call(element, array)
                 }
             }
@@ -3301,13 +3303,13 @@
                     return type === "number" || type === "boolean" ? type : "string"
                 })
                 var maybeType = types[0]
-                if(types.some(function(type){
+                if (types.some(function(type) {
                     return type !== maybeType
-                })){
+                })) {
                     maybeType = "string"
                 }
                 data.msType = maybeType
-                element.checked = array.indexOf(getTypeValue(data,element.value)) >= 0
+                element.checked = array.indexOf(getTypeValue(data, element.value)) >= 0
             }
 
             bound(W3C ? "change" : "click", updateVModel)

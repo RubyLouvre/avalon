@@ -300,15 +300,15 @@
             return !!(this.compareDocumentPosition(arg) & 16)
         }
     }
-    avalon.contains = function(a, b) {
-        if (b) {
-            while ((b = b.parentNode)) {
-                if (b === a) {
+    avalon.contains = function(root, el) {
+        try {
+            while ((el = el.parentNode))
+                if (el === root)
                     return true;
-                }
-            }
+            return false
+        } catch (e) {
+            return false
         }
-        return false
     }
     if (window.SVGElement) {
         var svgns = "http://www.w3.org/2000/svg"
