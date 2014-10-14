@@ -2712,9 +2712,9 @@
             case "boolean":
                 return val === "true"
             case "number":
-                return isFinite(val) ? parseFloat(val) : val
+                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
             default:
-                return val + ""
+                return val 
         }
     }
 
@@ -2831,6 +2831,15 @@
         data.handler = function() {
             var val = evaluator()
             val = val && val.$model || val
+            if (Array.isArray(val)) {
+                if (!element.multiple) {
+                    log("ms-duplex在<select multiple=true>上要求对应一个数组")
+                }
+            } else {
+                if (element.multiple) {
+                    log("ms-duplex在<select multiple=false>不能对应一个数组")
+                }
+            }
             //必须变成字符串后才能比较
             val = Array.isArray(val) ? val.map(String) : val + ""
             if (val + "" !== element.oldValue) {

@@ -5,7 +5,6 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <title>ms-duplex</title>
         <script src="../avalon.js" type="text/javascript"></script>
-
         <script>
             var model = avalon.define({
                 $id: "test",
@@ -13,7 +12,8 @@
                 bbb: false,
                 ccc: [222],
                 ddd: [true],
-                eee: []
+                eee: [],
+                fff: 222
             })
             model.$watch("aaa", function(a) {
                 console.log(a)
@@ -26,6 +26,9 @@
             })
             model.eee.$watch("length", function(a) {
                 console.log(model.eee)
+            })
+            model.$watch("fff", function(a) {
+                console.log(a)
             })
         </script>
     </head>
@@ -57,17 +60,16 @@
                 <input ms-duplex-string="eee" value="女"type="checkbox">
                 根据其value属性设置其checked，要求应用于复数个控件，类型转换为string</p>
         </fieldset>
-           <fieldset><legend>text,texteara, password</legend>
-            <p><input ms-duplex-radio="bbb" type="checkbox">根据当前checked属性取反设置其checked，只应用于单个控件</p>
-            <p><input ms-duplex-number="ccc" value="111" type="checkbox">
-                <input ms-duplex-number="ccc" value="222"type="checkbox">
-                根据其value属性设置其checked，要求应用于复数个控件，类型转换为number</p>
-            <p><input ms-duplex-boolean="ddd" value="true" type="checkbox">
-                <input ms-duplex-boolean="ddd" value="false"type="checkbox">
-                根据其value属性设置其checked，要求应用于复数个控件，类型转换为boolean</p>
-            <p><input ms-duplex-string="eee" value="男" type="checkbox">
-                <input ms-duplex-string="eee" value="女"type="checkbox">
-                根据其value属性设置其checked，要求应用于复数个控件，类型转换为string</p>
+        <fieldset><legend>text,texteara, password</legend>
+            <p><input ms-duplex-number="aaa">{{typeof aaa}}</p>
+            <p><input ms-duplex-boolean="bbb">{{typeof bbb}}</p>
+        </fieldset>
+        <fieldset><legend>select</legend>
+            <select ms-duplex-number="fff">
+                <option>111</option>
+                <option>222</option>
+                <option>333</option>
+            </select>
         </fieldset>
     </body>
 </html>
