@@ -1080,10 +1080,10 @@
         }
         var size = 0,
                 data = {},
-                capacity = typeof capacity === "number" ? capacity : Number.MAX_VALUE,
                 lruHash = {},
                 freshEnd = null,
                 staleEnd = null
+         capacity = typeof capacity === "number" ? capacity : Number.MAX_VALUE
         //生成一个LRU缓体实体
         return avalonCaches[cacheId] = {
             set: function(key, value) {
@@ -4289,6 +4289,33 @@
             paddedZone += padNumber(Math[zone > 0 ? "floor" : "ceil"](zone / 60), 2) + padNumber(Math.abs(zone % 60), 2)
             return paddedZone
         }
+        function getFirstThursdayOfYear(year) {
+            // 0 = index of January
+            var dayOfWeekOnFirst = (new Date(year, 0, 1)).getDay();
+            // 4 = index of Thursday (+1 to account for 1st = 5)
+            // 11 = index of *next* Thursday (+1 account for 1st = 12)
+            return new Date(year, 0, ((dayOfWeekOnFirst <= 4) ? 5 : 12) - dayOfWeekOnFirst);
+        }
+
+        function getThursdayThisWeek(datetime) {
+            return new Date(datetime.getFullYear(), datetime.getMonth(),
+                    // 4 = index of Thursday
+                    datetime.getDate() + (4 - datetime.getDay()));
+        }
+
+        function weekGetter(size) {
+            return function(date) {
+                var firstThurs = getFirstThursdayOfYear(date.getFullYear()),
+                        thisThurs = getThursdayThisWeek(date);
+
+                var diff = +thisThurs - +firstThurs,
+                        result = 1 + Math.round(diff / 6.048e8); // 6.048e8 ms per week
+
+                return padNumber(result, size);
+            };
+        }
+
+
         //取得上午下午
 
         function ampmGetter(date, formats) {
@@ -4316,10 +4343,12 @@
             EEEE: dateStrGetter("Day"),
             EEE: dateStrGetter("Day", true),
             a: ampmGetter,
-            Z: timeZoneGetter
+            Z: timeZoneGetter,
+            ww: weekGetter(2),
+            w: weekGetter(1)
         }
-        var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
-                NUMBER_STRING = /^\d+$/
+        var DATE_FORMATS_SPLIT =/((?:[^yMdHhmsaZEw']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z|w+))(.*)/,
+                NUMBER_STRING =  /^\-?\d+$/;
         var R_ISO8601_STR = /^(\d{4})-?(\d\d)-?(\d\d)(?:T(\d\d)(?::?(\d\d)(?::?(\d\d)(?:\.(\d+))?)?)?(Z|([+-])(\d\d):?(\d\d))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
@@ -4347,7 +4376,7 @@
         }
         var rfixFFDate = /^(\d+)-(\d+)-(\d{4})$/
         var rfixIEDate = /^(\d+)\s+(\d+),(\d{4})$/
-        filters.date = function(date, format) {
+        filters.date = function(date, format, timezone) {
             var locate = filters.date.locate,
                     text = "",
                     parts = [],
@@ -4381,6 +4410,10 @@
                     parts.push(format)
                     format = null
                 }
+            }
+            if (timezone && timezone === 'UTC') {
+                date = new Date(date.getTime());
+                date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
             }
             parts.forEach(function(value) {
                 fn = DATE_FORMATS[value]
