@@ -546,7 +546,7 @@
             })(i, $scope[i])
         }
         $$skipArray.forEach(function(name) {
-            $scope[name] = true //为用户定义的对象再添加一些特殊属性
+            delete $scope[name]
             delete $model[name]  //这些特殊属性不应该在$model中出现
         })
 
@@ -564,7 +564,6 @@
             var fn = EventManager [i]
             $vmodel[i] = fn
         }
-
         Object.defineProperty($vmodel, "hasOwnProperty", {
             value: function(name) {
                 return name in $vmodel.$model

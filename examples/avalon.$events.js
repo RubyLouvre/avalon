@@ -623,7 +623,7 @@
         }
 
         $$skipArray.forEach(function(name) {
-            $scope[name] = true //为用户定义的对象再添加一些特殊属性
+            delete $scope[name]
             delete $model[name]  //这些特殊属性不应该在$model中出现
         })
 
@@ -815,6 +815,11 @@
                     buffer.push("\tPublic [" + name + "]")
                 }
             }
+            $$skipArray.forEach(function(name) {
+                if (!accessors.hasOwnProperty(name)) {
+                    buffer.push("\tPublic [" + name + "]")
+                }
+            })
             buffer.push("\tPublic [" + 'hasOwnProperty' + "]")
             //添加访问器属性 
             for (name in accessors) {
