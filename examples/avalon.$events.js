@@ -3423,7 +3423,7 @@
                     bound("input", updateVModel)
                     bound("compositionstart", compositionStart)
                     bound("compositionend", compositionEnd)
-                    if (DOC.onselectionchange) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
+                    if ("onselectionchange"in DOC) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
                         function selectionchange(e) {
                             if (e.type === "focus") {
                                 DOC.addEventListener("selectionchange", updateVModel, false);
