@@ -3419,10 +3419,21 @@
             if (event === "change") {
                 bound("change", updateVModel)
             } else {
-                if (W3C && DOC.documentMode !== 9) { //IE10+, W3C
+                if (W3C) { //IE9+, W3C
                     bound("input", updateVModel)
                     bound("compositionstart", compositionStart)
                     bound("compositionend", compositionEnd)
+                    if (DOC.onselectionchange) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
+                        function selectionchange(e) {
+                            if (e.type === "focus") {
+                                DOC.addEventListener("selectionchange", updateVModel, false);
+                            } else {
+                                DOC.removeEventListener("selectionchange", updateVModel, false);
+                            }
+                        }
+                        bound("focus", selectionchange)
+                        bound("blur", selectionchange)
+                    }
                 } else {
                     var events = ["keyup", "paste", "cut", "change"]
 
