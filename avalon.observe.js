@@ -475,9 +475,9 @@
     function updateChild(parent, name, value, valueType) {
         //a为原来的VM， b为新数组或新对象
         var son = parent[name]
-        if (valueType === "array") {
+        if (valueType === "array" || son === parent) {
             if (!Array.isArray(value)) {
-                return parent //fix https://github.com/RubyLouvre/avalon/issues/261
+                return son //fix https://github.com/RubyLouvre/avalon/issues/261
             }
             son.clear()
             son.pushArray(value.concat())
