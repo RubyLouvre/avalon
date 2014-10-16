@@ -1083,7 +1083,7 @@
                 lruHash = {},
                 freshEnd = null,
                 staleEnd = null
-         capacity = typeof capacity === "number" ? capacity : Number.MAX_VALUE
+        capacity = typeof capacity === "number" ? capacity : Number.MAX_VALUE
         //生成一个LRU缓体实体
         return avalonCaches[cacheId] = {
             set: function(key, value) {
@@ -2853,6 +2853,12 @@
                     val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
                 }
                 elem[method] = val
+                if (window.chrome && elem.tagName === "EMBED") {
+                    var parent = elem.parentNode//#525  chrome1-37下embed标签动态设置src不能发生请求
+                    var comment = document.createComment("ms-src")
+                    parent.replaceChild(comment, elem)
+                    parent.replaceChild(elem, comment)
+                }
             }
         },
         "class": function(val, elem, data) {
@@ -4347,8 +4353,8 @@
             ww: weekGetter(2),
             w: weekGetter(1)
         }
-        var DATE_FORMATS_SPLIT =/((?:[^yMdHhmsaZEw']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z|w+))(.*)/,
-                NUMBER_STRING =  /^\-?\d+$/;
+        var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZEw']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z|w+))(.*)/,
+                NUMBER_STRING = /^\-?\d+$/;
         var R_ISO8601_STR = /^(\d{4})-?(\d\d)-?(\d\d)(?:T(\d\d)(?::?(\d\d)(?::?(\d\d)(?:\.(\d+))?)?)?(Z|([+-])(\d\d):?(\d\d))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 

@@ -2015,6 +2015,12 @@
                 }
             } else {
                 elem[method] = val
+                if (window.chrome && elem.tagName === "EMBED") {
+                    var parent = elem.parentNode//#525  chrome1-37下embed标签动态设置src不能发生请求
+                    var comment = document.createComment("ms-src")
+                    parent.replaceChild(comment, elem)
+                    parent.replaceChild(elem, comment)
+                }
             }
         },
         "class": function(val, elem, data) {
@@ -2713,7 +2719,7 @@
             case "number":
                 return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
             default:
-                return val 
+                return val
         }
     }
 
