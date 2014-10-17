@@ -425,7 +425,7 @@
         return true
     }
 
-    function modelFactory($scope, $special) {
+    function modelFactory($scope, $special, $model) {
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
             $scope.length = 0
@@ -444,7 +444,7 @@
         }
         $scope.$skipArray.$special = $special || {}//强制要监听的属性
         var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
-        var $model = {}  //vmodels.$model属性
+        $model = $model || {}  //vmodels.$model属性
         var $events = {} //vmodel.$events属性
         var watchedProperties = {} //监控属性
         var computedProperties = []  //计算属性
@@ -522,9 +522,8 @@
                             return childVmodel
                         }
                     }
-                    var childVmodel = accessor.child = modelFactory(val)
+                    var childVmodel = accessor.child = modelFactory(val, 0, $model[name] )
                     childVmodel.$events[subscribers] = $events[name]
-                    $model[name] = childVmodel.$model
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {
@@ -2955,7 +2954,7 @@
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i])
+                added[i] = convert(arr[i],this.$model[i])
             }
             _splice.apply(this, [pos, 0].concat(added))
             this._fire("add", pos, added)
@@ -3112,10 +3111,10 @@
         }
     })
 
-    function convert(val) {
+    function convert(val, $model) {
         var type = avalon.type(val)
         if (rcomplexType.test(type)) {
-            val = val.$id ? val : modelFactory(val)
+            val = val.$id ? val : modelFactory(val, 0, $model)
         }
         return val
     }
