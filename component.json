@@ -1,0 +1,9 @@
+{
+    "name": "avalon",
+    "version": "1.3.6",
+    "main": "avalon.js",
+    "author": "司徒正美 <1669866773@qq.com>",
+    "description": "a lightweight、high-performance and easy-to-follow javascript MVVM framework",
+    "keywords": ["mvvm", "framework", "data binding"],
+    "license": "MIT"
+}
