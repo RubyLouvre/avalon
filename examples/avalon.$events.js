@@ -112,11 +112,11 @@
     if (isWindow(window)) {
         avalon.isWindow = isWindow
     }
-    var tra
-    for (tra in avalon({})) {
+    var enu
+    for (enu in avalon({})) {
         break
     }
-    var IEtraverseBUG = tra !== "0"//IE6下为true, 其他为false
+    var enumerateBUG = enu !== "0"//IE6下为true, 其他为false
     /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
     avalon.isPlainObject = function(obj, key) {
         if (!obj || avalon.type(obj) !== "object" || obj.nodeType || avalon.isWindow(obj)) {
@@ -131,14 +131,14 @@
         } catch (e) {//IE8 9会在这里抛错
             return false;
         }
-        if (IEtraverseBUG) {
+        if (enumerateBUG) {
             for (key in obj) {
                 return ohasOwn.call(obj, key)
             }
         }
         for (key in obj) {
         }
-        return key === undefined || ohasOwn.call(obj, key);
+        return key === void 0 || ohasOwn.call(obj, key);
     }
     if (rnative.test(Object.getPrototypeOf)) {
         avalon.isPlainObject = function(obj) {
