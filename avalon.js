@@ -167,7 +167,11 @@
             if ((options = arguments[i]) != null) {
                 for (name in options) {
                     src = target[name]
-                    copy = options[name]
+                    try {
+                        copy = options[name]//当options为VBS对象时报错
+                    } catch (e) {
+                        continue
+                    }
 
                     // 防止环引用
                     if (target === copy) {
@@ -2538,7 +2542,6 @@
                         return elem[bool] = !!val
                     }
                 }
-                console.log(attrName)
                 var toRemove = (val === false) || (val === null) || (val === void 0)
                 if (!W3C && propMap[attrName]) {//旧式IE下需要进行名字映射
                     attrName = propMap[attrName]
