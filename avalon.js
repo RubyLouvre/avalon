@@ -530,7 +530,6 @@
                     }
                     var childVmodel = accessor.child = modelFactory(val, 0, $model[name])
                     childVmodel.$events[subscribers] = $events[name]
-                    //   childVmodel.$model = $model[name] 
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {
