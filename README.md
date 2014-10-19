@@ -21,8 +21,8 @@
 <h3>优势</h3>
 <ul>
     <li>使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！</li>
-    <li>兼容到IE6(其他mvvm框架， knockoutjs IE6, angularjs IE8, emberjs IE8, winJS IE9 )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中</li>
-    <li>没有任何依赖，不到4000行，压缩后不到50KB</li>
+    <li>兼容到IE6(其他MVVM框架，KnockoutJS(IE6), AngularJS(IE9), EmberJS(IE8), WinJS(IE9) )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中</li>
+    <li>没有任何依赖，不到4000行，压缩后不到50KiB</li>
     <li>支持管道符风格的过滤函数，方便格式化输出</li>
     <li>局部刷新的颗粒度已细化到一个文本节点，特性节点</li>
     <li>要操作的节点，在第一次扫描就与视图刷新函数相绑定，并缓存起来，因此没有选择器出场的余地。</li>
@@ -39,7 +39,7 @@
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
 <h3>运行github中的示例</h3>
-<p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
 <p><img src="https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg"/></p>
 <h3>JS文件的压缩</h3>
@@ -119,7 +119,7 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 - 全局变量及方法
 - avalon的静态方法定义区
 - modelFactory
-- javascript 底层补丁  
+- JavaScript 底层补丁  
 - DOM 底层补丁    
 - 配置系统
 - avalon的原型方法定义区
