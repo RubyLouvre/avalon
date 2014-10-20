@@ -1778,10 +1778,9 @@
             var callbacks = events[type] || []
             var all = events.$all || []
             var args = aslice.call(arguments, 1)
-            var eventValue = true   //事件传播的返回值，默认为true
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 if (isFunction(callback))
-                    eventValue = callback.apply(this, args) && eventValue
+                    callback.apply(this, args)
             }
             for (var i = 0, callback; callback = all[i++]; ) {
                 if (isFunction(callback))
@@ -1803,7 +1802,7 @@
                                 var ok = special === "all" ? 1 : //全局广播
                                         special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element)//向上冒泡
-                                if (ok && document.body.contains(node)) {
+                                if (ok) {
                                     alls.push([node, v])
                                 }
                             }
@@ -1816,13 +1815,11 @@
                     if (special === "up") {
                         alls.reverse()
                     }
-                    alls.every(function(v) {
-                        return v[1].$fire.apply(v[1], detail) !== false
+                    alls.forEach(function(v) {
+                        v[1].$fire.apply(v[1], detail)
                     })
                 }
             }
-            return eventValue
-
         }
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
