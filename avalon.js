@@ -1778,9 +1778,10 @@
             var callbacks = events[type] || []
             var all = events.$all || []
             var args = aslice.call(arguments, 1)
+            var eventValue = true   //事件传播的返回值，默认为true
             for (var i = 0, callback; callback = callbacks[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(this, args)
+                    eventValue = callback.apply(this, args) && eventValue
             }
             for (var i = 0, callback; callback = all[i++]; ) {
                 if (isFunction(callback))
@@ -1789,6 +1790,7 @@
             var element = events.expr && findNode(events.expr)
             if (element) {
                 var detail = [type].concat(args)
+                var alls = []
                 if (special === "up" || special === "down" || special === "all") {
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
@@ -1801,29 +1803,26 @@
                                 var ok = special === "all" ? 1 : //全局广播
                                         special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element)//向上冒泡
-                                if (ok) {
-                                    node._avalon = v//符合条件的加一个标识
+                                if (ok && document.body.contains(node)) {
+                                    alls.push([node, v])
                                 }
                             }
                         }
                     }
                     var nodes = DOC.getElementsByTagName("*")//实现节点排序
-                    var alls = []
-                    Array.prototype.forEach.call(nodes, function(el) {
-                        if (el._avalon) {
-                            alls.push(el._avalon)
-                            el._avalon = ""
-                            el.removeAttribute("_avalon")
-                        }
+                    alls.sort(function(a, b) {
+                        return Array.prototype.indexOf.call(nodes, a[0]) - Array.prototype.indexOf.call(nodes, b[0])
                     })
                     if (special === "up") {
                         alls.reverse()
                     }
-                    alls.forEach(function(v) {
-                        v.$fire.apply(v, detail)
+                    alls.every(function(v) {
+                        return v[1].$fire.apply(v[1], detail) !== false
                     })
                 }
             }
+            return eventValue
+
         }
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
