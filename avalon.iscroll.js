@@ -52,7 +52,7 @@ define(["avalon"], function() {
                     if (k === 0) {
                         return 0;
                     }
-                    if (k == 1) {
+                    if (k === 1) {
                         return 1;
                     }
 
@@ -205,8 +205,8 @@ define(["avalon"], function() {
         ep = this.options.eventPassthrough = Passthrough[ep]
 
         // 默认情况下scrollY为true, scrollX为false，因此只出现纵向滚动条，想出现横向滚动条，需要设置scrollX = true
-        this.options.scrollY = ep == "vertical" ? false : !!this.options.scrollY
-        this.options.scrollX = ep == "horizontal" ? false : !!this.options.scrollX
+        this.options.scrollY = ep === "vertical" ? false : !!this.options.scrollY
+        this.options.scrollX = ep === "horizontal" ? false : !!this.options.scrollX
 
         this.options.preventDefault = !this.options.eventPassthrough && !!this.options.preventDefault;
 
@@ -217,7 +217,7 @@ define(["avalon"], function() {
         this.options.freeScroll = !!(this.options.freeScroll && !this.options.eventPassthrough);
         this.options.directionLockThreshold = this.options.eventPassthrough ? 0 : this.options.directionLockThreshold;
 
-        this.options.bounceEasing = typeof this.options.bounceEasing == 'string' ? utils.ease[this.options.bounceEasing] || utils.ease.circular : this.options.bounceEasing;
+        this.options.bounceEasing = typeof this.options.bounceEasing === 'string' ? utils.ease[this.options.bounceEasing] || utils.ease.circular : this.options.bounceEasing;
 
         this.options.resizePolling = this.options.resizePolling === void 0 ? 60 : this.options.resizePolling;
 
@@ -345,7 +345,7 @@ define(["avalon"], function() {
             this._execEvent('destroy');
         },
         _transitionEnd: function(e) {
-            if (e.target != this.scroller || !this.isInTransition) {
+            if (e.target !== this.scroller || !this.isInTransition) {
                 return;
             }
 
@@ -559,19 +559,19 @@ define(["avalon"], function() {
                 }
             }
 
-            if (this.directionLocked == 'h') {
-                if (this.options.eventPassthrough == 'vertical') {
+            if (this.directionLocked === 'h') {
+                if (this.options.eventPassthrough === 'vertical') {
                     e.preventDefault();
-                } else if (this.options.eventPassthrough == 'horizontal') {
+                } else if (this.options.eventPassthrough === 'horizontal') {
                     this.initiated = false;
                     return;
                 }
 
                 deltaY = 0;
-            } else if (this.directionLocked == 'v') {
-                if (this.options.eventPassthrough == 'horizontal') {
+            } else if (this.directionLocked === 'v') {
+                if (this.options.eventPassthrough === 'horizontal') {
                     e.preventDefault();
-                } else if (this.options.eventPassthrough == 'vertical') {
+                } else if (this.options.eventPassthrough === 'vertical') {
                     this.initiated = false;
                     return;
                 }
@@ -664,7 +664,7 @@ define(["avalon"], function() {
 
 // INSERT POINT: _end
 
-            if (newX != this.x || newY != this.y) {
+            if (newX !== this.x || newY !== this.y) {
                 // change easing function when scroller goes out of the boundaries
                 if (newX > 0 || newX < this.maxScrollX || newY > 0 || newY < this.maxScrollY) {
                     easing = utils.ease.quadratic;
@@ -779,7 +779,7 @@ define(["avalon"], function() {
                 y = this.maxScrollY;
             }
 
-            if (x == this.x && y == this.y) {
+            if (x === this.x && y === this.y) {
                 return false;
             }
 
@@ -935,7 +935,7 @@ define(["avalon"], function() {
         _initSnap: function() {
             this.currentPage = {};
 
-            if (typeof this.options.snap == 'string') {
+            if (typeof this.options.snap === 'string') {
                 this.options.snap = this.scroller.querySelectorAll(this.options.snap);
             }
 
@@ -1084,7 +1084,7 @@ define(["avalon"], function() {
                 }
             }
 
-            if (i == this.currentPage.pageX) {
+            if (i === this.currentPage.pageX) {
                 i += this.directionX;
 
                 if (i < 0) {
@@ -1096,7 +1096,7 @@ define(["avalon"], function() {
                 x = this.pages[i][0].x;
             }
 
-            if (m == this.currentPage.pageY) {
+            if (m === this.currentPage.pageY) {
                 m += this.directionY;
 
                 if (m < 0) {
@@ -1173,6 +1173,6 @@ define(["avalon"], function() {
             }
 
             this.goToPage(x, y, time, easing);
-        },
+        }
     }
 })

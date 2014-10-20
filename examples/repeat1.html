@@ -4,7 +4,7 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../avalon.js" ></script>
+        <script src="../avalon.modern.js" ></script>
         <script>
             var vmodel = avalon.define("test", function(vm) {
                 vm.first = {
@@ -35,7 +35,7 @@
     </head>
     <body ms-controller="test">
         <p>要循环的数组位于一个对象上，然后对这个数组进行重新赋值</p>
-        <fieldset>
+       <fieldset>
             <legend>ms-repeat</legend>
             <table width="100%">
                 <tr>
@@ -55,10 +55,10 @@
         <fieldset>
             <legend>ms-each</legend>
             <ul ms-each="first.array">
-                <li>{{el}}</li>
+                <li>{{el}}</li><li>-----</li>
             </ul>
         </fieldset>
-        <fieldset>
+      <fieldset>
             <legend>ms-with</legend>
             <ul ms-with="first.object">
                 <li>{{$key}}: {{$val}}</li>

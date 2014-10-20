@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-attr-*</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.$events.js"></script>
+
+        <script>
+            avalon.config({
+                interpolate:["<!--","-->"]
+            })
+            avalon.define("test", function(vm) {
+                vm.aaa = 888
+            })
+
+        </script>
+
+
+    </head>
+    <body>
+       
+        <div ms-controller="test">
+            <!--aaa--> <!--bbb-->
+        </div>
+    </body>
+</html>

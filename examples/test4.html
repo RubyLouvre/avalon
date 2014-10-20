@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>ms-duplex</title>
+        <script src="../avalon.js" type="text/javascript"></script>
+        <script>
+            var model = avalon.define({
+                $id: "test",
+                aaa: "111",
+                bbb: false,
+                ccc: [222],
+                ddd: [true],
+                eee: [],
+                fff: 222
+            })
+            model.$watch("aaa", function(a) {
+                console.log(a)
+            })
+            model.ccc.$watch("length", function(a) {
+                console.log(model.ccc)
+            })
+            model.ddd.$watch("length", function(a) {
+                console.log(model.ddd)
+            })
+            model.eee.$watch("length", function(a) {
+                console.log(model.eee)
+            })
+            model.$watch("fff", function(a) {
+                console.log(a)
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <fieldset><legend>radio</legend>
+            <p><input ms-duplex="aaa" type="radio">根据当前checked属性取反设置其checked，只应用于单个控件</p>
+            <p><input ms-duplex-string="aaa" value="111" type="radio">
+                <input ms-duplex-string="aaa" value="222"type="radio">
+                根据其value属性设置其checked</p>
+            <p><input ms-duplex-number="aaa" value="111" type="radio">
+                <input ms-duplex-number="aaa" value="222"type="radio">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为number</p>
+            <p><input ms-duplex-boolean="bbb" value="true" type="radio">
+                <input ms-duplex-boolean="bbb" value="false"type="radio">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为boolean，原来的ms-duplex-bool</p>
+            <p><input ms-duplex-string="bbb" value="true" type="radio">
+                <input ms-duplex-string="bbb" value="false"type="radio">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为string，原来的ms-duplex-text</p>
+        </fieldset>
+        <fieldset><legend>checkbox</legend>
+            <p><input ms-duplex-radio="bbb" type="checkbox">根据当前checked属性取反设置其checked，只应用于单个控件</p>
+            <p><input ms-duplex-number="ccc" value="111" type="checkbox">
+                <input ms-duplex-number="ccc" value="222"type="checkbox">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为number</p>
+            <p><input ms-duplex-boolean="ddd" value="true" type="checkbox">
+                <input ms-duplex-boolean="ddd" value="false"type="checkbox">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为boolean</p>
+            <p><input ms-duplex-string="eee" value="男" type="checkbox">
+                <input ms-duplex-string="eee" value="女"type="checkbox">
+                根据其value属性设置其checked，要求应用于复数个控件，类型转换为string</p>
+        </fieldset>
+        <fieldset><legend>text,texteara, password</legend>
+            <p><input ms-duplex-number="aaa">{{typeof aaa}}</p>
+            <p><input ms-duplex-boolean="bbb">{{typeof bbb}}</p>
+        </fieldset>
+        <fieldset><legend>select</legend>
+            <select ms-duplex-number="fff">
+                <option>111</option>
+                <option>222</option>
+                <option>333</option>
+            </select>
+        </fieldset>
+    </body>
+</html>

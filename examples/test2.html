@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>测试用例</title>
+        <script src="../avalon.js"></script>
+        <script>
+            var model = avalon.define('test', function(vm) {
+                vm.arr = [{aa: {d: 1}, text: 1}, {aa: {d: 1}, text: 2}, {aa: {d: 1}, text: 22}, {aa: {d: 1}, text: 5}, {aa: {d: 1}, text: 6}]
+                vm.x = 1
+                vm.add = function() {
+                    model.arr.push({aa: {d: 4}, text: 5})
+                }
+                vm.f1 = function() {
+                    model.arr = [4, 5, 1]
+                }
+            });
+        </script>
+    </head>
+    <body ms-controller="test">
+
+        <div ms-repeat="arr" ms-click="$remove">{{$index}}
+            <div>
+                {{el.aa.d}}<strong>{{el.text}}</strong>
+            </div>
+         
+            <button ms-click="f1">测试</button>
+        </div>
+   <button ms-click="add">add</button>
+    </body>
+</html>

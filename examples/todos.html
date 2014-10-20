@@ -118,7 +118,7 @@
                 box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0 0;
             }
         </style>
-        <script src="../avalon.js" ></script>
+        
         <script>
 
             avalon.define("todos", function(a) {
@@ -143,12 +143,12 @@
                     }
                 };
 
-                a.checkIt = function() {
-                    this.$vmodel.post.done = this.checked;
+                a.checkIt = function(post) {
+                    post.done = this.checked;
                     a.left = getLeft();
                 };
-                a.removeIt = function() {
-                    this.$vmodel.$remove();
+                a.removeIt = function(perish) {
+                    perish();
                     a.left = getLeft();
                 };
                 a.removeThem = function() {
@@ -169,14 +169,13 @@
                     a.left = len;
                 })
 
-                a.editIt = function() {//让那条评论可编辑
-                    a.posts.forEach(function(post) {
-                        post.edit = false;
+                a.editIt = function(post) {//让那条评论可编辑
+                    a.posts.forEach(function(el) {
+                        el.edit = false;
                     });
-                    this.$vmodel.post.edit = true;
+                    post.edit = true;
                 };
-                a.updateIt = function() {
-                    var post = this.$vmodel.post;
+                a.updateIt = function(post) {
                     post.text = this.value;
                     post.edit = false;
                 };
@@ -195,12 +194,12 @@
                 <label for="toggle-all">Mark all as complete</label>
                 <ul class="todo-list" ms-each-post="posts">
                     <li  ms-class-done="post.done" ms-hover="hover" >
-                        <div ms-visible="!post.edit" ms-dblclick="editIt">
-                            <input type="checkbox"  ms-checked="post.done" ms-click="checkIt" width="10px"  />
+                        <div ms-visible="!post.edit" ms-dblclick="editIt(post)">
+                            <input type="checkbox"  ms-checked="post.done" ms-click="checkIt(post)" width="10px"  />
                             <label>{{post.text}}</label>
-                            <a href="###" ms-click="removeIt" class="destroy">●</a>
+                            <a href="###" ms-click="removeIt($remove)" class="destroy">●</a>
                         </div>
-                        <input class="editing" ms-visible="post.edit" ms-value="post.text" ms-blur="updateIt" />
+                        <input class="editing" ms-visible="post.edit" ms-value="post.text" ms-blur="updateIt(post)" />
                     </li>
                 </ul>
             </div>

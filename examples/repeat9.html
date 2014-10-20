@@ -4,7 +4,7 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../avalon.js" ></script>
+        <script src="avalon.$events.js" ></script>
         <script>
             var model = avalon.define("test", function(vm) {
                 vm.arr = ["a", "b", "c", "d", "e", "f", "g", "h"]
@@ -53,6 +53,7 @@
                     }
                 ]
             });
+
             setTimeout(function() {
                 model.object = {
                     a1: 4444,
@@ -99,7 +100,7 @@
         </table>
         <h3>ms-each实现数组双重循环</h3>
         <table border="1" style="background:green" width="400px">
-            <tbody  ms-each="dbarray">
+            <tbody ms-each="dbarray">
                 <tr ms-each-elem="el.array"><td>{{elem}}</td></tr>
             </tbody>
         </table>
