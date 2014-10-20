@@ -1779,11 +1779,11 @@
             var all = events.$all || []
             var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
-                if (isFunction(callback))
+                if (isFunction(callback) && !special)
                     callback.apply(this, args)
             }
             for (var i = 0, callback; callback = all[i++]; ) {
-                if (isFunction(callback))
+                if (isFunction(callback) && !special)
                     callback.apply(this, arguments)
             }
             var element = events.expr && findNode(events.expr)
@@ -1819,6 +1819,7 @@
                     if (special === "up") {
                         alls.reverse()
                     }
+                    console.log(alls)
                     alls.forEach(function(v) {
                         v.$fire.apply(v, detail)
                     })

@@ -522,7 +522,7 @@
                             return childVmodel
                         }
                     }
-                    var childVmodel = accessor.child = modelFactory(val, 0, $model[name] )
+                    var childVmodel = accessor.child = modelFactory(val, 0, $model[name])
                     childVmodel.$events[subscribers] = $events[name]
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
@@ -1290,11 +1290,11 @@
             var all = events.$all || []
             var args = aslice.call(arguments, 1)
             for (var i = 0, callback; callback = callbacks[i++]; ) {
-                if (isFunction(callback))
+                if (isFunction(callback) && !special)
                     callback.apply(this, args)
             }
             for (var i = 0, callback; callback = all[i++]; ) {
-                if (isFunction(callback))
+                if (isFunction(callback) && !special)
                     callback.apply(this, arguments)
             }
             var element = events.expr && findNode(events.expr)
@@ -2954,7 +2954,7 @@
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i],this.$model[i])
+                added[i] = convert(arr[i], this.$model[i])
             }
             _splice.apply(this, [pos, 0].concat(added))
             this._fire("add", pos, added)
