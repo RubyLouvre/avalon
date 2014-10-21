@@ -870,7 +870,7 @@
 
 
     if (root.dataset) {
-        avalon.data = function(name, val) {
+        avalon.fn.data = function(name, val) {
             var dataset = this[0].dataset
             switch (arguments.length) {
                 case 2:

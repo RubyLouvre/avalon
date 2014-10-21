@@ -1,80 +1,5 @@
 
 
-
-/*****************
- Constants
- *****************/
-
-var DURATION_DEFAULT = 400,
-        EASING_DEFAULT = "swing";
-
-/*************
- State
- *************/
-
-/* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. */
-/* Note: Alias the lowercase and uppercase variants of "velocity" to minimize user confusion due to the lowercase nature of the $.fn extension. */
-var mmAnimate = {
-    /* Container for page-wide Velocity state data. */
-    State: {
-        /* Detect mobile devices to determine if mobileHA should be turned on. */
-        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-        /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
-        isAndroid: /Android/i.test(navigator.userAgent),
-        isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-        isChrome: window.chrome,
-        isFirefox: /Firefox/i.test(navigator.userAgent),
-        /* Create a cached element for re-use when checking for CSS property prefixes. */
-        prefixElement: document.createElement("div"),
-        /* Cache every prefix match to avoid repeating lookups. */
-        prefixMatches: {},
-        /* Cache the anchor used for animating window scrolling. */
-        scrollAnchor: null,
-        /* Cache the property names associated with the scroll anchor. */
-        scrollPropertyLeft: null,
-        scrollPropertyTop: null,
-        /* Keep track of whether our RAF tick is running. */
-        isTicking: false,
-        /* Container for every in-progress call to Velocity. */
-        calls: []
-    },
-    /* Velocity's custom CSS stack. Made global for unit testing. */
-    CSS: { /* Defined below. */},
-    /* Defined by Velocity's optional jQuery shim. */
-    Utilities: $,
-    /* Container for the user's custom animation redirects that are referenced by name in place of a properties map object. */
-    Redirects: { /* Manually registered by the user. */},
-    Easings: { /* Defined below. */},
-    /* Attempt to use ES6 Promises by default. Users can override this with a third-party promises library. */
-    Promise: window.Promise,
-    /* Page-wide option defaults, which can be overriden by the user. */
-    defaults: {
-        queue: "",
-        duration: DURATION_DEFAULT,
-        easing: EASING_DEFAULT,
-        begin: undefined,
-        complete: undefined,
-        progress: undefined,
-        display: undefined,
-        visibility: undefined,
-        loop: false,
-        delay: false,
-        mobileHA: true,
-        /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
-        _cacheValues: true
-    },
-    /* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying.
-     Accordingly, each element has a data cache instantiated on it. */
-
-    /* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
-    hook: null, /* Defined below. */
-    /* Velocity-wide animation time remapping for testing purposes. */
-    mock: false,
-    version: {major: 1, minor: 1, patch: 0},
-    /* Set to 1 or 2 (most verbose) to output debug info to console. */
-    debug: false
-};
-
 avalon.init = function(el) {
     this[0] = this.element = el
     avalon.mix(this, {
@@ -93,120 +18,8 @@ avalon.init = function(el) {
         transformCache: {}
     })
 
-
 }
 
-/* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
-if (window.pageYOffset !== undefined) {
-    mmAnimate.State.scrollAnchor = window;
-    mmAnimate.State.scrollPropertyLeft = "pageXOffset";
-    mmAnimate.State.scrollPropertyTop = "pageYOffset";
-} else {
-    mmAnimate.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-    mmAnimate.State.scrollPropertyLeft = "scrollLeft";
-    mmAnimate.State.scrollPropertyTop = "scrollTop";
-}
-
-/* Shorthand alias for jQuery's $.data() utility. */
-function Data(element) {
-    /* Hardcode a reference to the plugin name. */
-    var response = $.data(element, "velocity");
-
-    /* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
-    return response === null ? undefined : response;
-}
-;
-
-/* Custom */
-
-var Data = {
-    uuid: 1
-}
-
-var $ = mmAnimate = function() {
-}
-var getUid = !window.VBArray ? function(obj) { //IE9+,标准浏览器
-    return obj.uniqueNumber || (obj.uniqueNumber = Data.uuid++);
-} : function(obj) {
-    if (obj.nodeType !== 1) { //如果是普通对象，文档对象，window对象
-        return obj.uniqueNumber || (obj.uniqueNumber = Data.uuid++);
-    } //注：旧式IE的XML元素不能通过el.xxx = yyy 设置自定义属性
-    var uid = obj.getAttribute("uniqueNumber");
-    if (!uid) {
-        uid = Data.uuid++;
-        obj.setAttribute("uniqueNumber", uid);
-    }
-    return +uid; //确保返回数字
-}
-var cache = {}
-$.data = function(node, key, value) {
-    /* $.getData() */
-    var id = getUid(node)
-    //getter
-    if (arguments.length === 3) {
-        var store = id && cache[id];
-        if (key === undefined) {
-            return store;
-        } else if (store) {
-            if (key in store) {
-                return store[key];
-            }
-        }
-        //setter
-    } else {
-        cache[id] = cache[id] || {};
-        cache[id][key] = value;
-        return value;
-    }
-};
-
-/* jQuery 1.4.3 */
-$.queue = function(elem, type, data) {
-    if (!elem) {
-        return;
-    }
-
-    type = (type || "fx") + "queue";
-
-    var q = $.data(elem, type);
-
-    if (!data) {
-        return q || [];
-    }
-
-    if (!q || Array.isArray(data)) {
-        q = $.data(elem, type, data.concat());
-    } else {
-        q.push(data);
-    }
-
-    return q;
-};
-
-/* jQuery 1.4.3 */
-$.dequeue = function(elems, type) {
-    /* Custom: Embed element iteration. */
-    $.each(elems.nodeType ? [elems] : elems, function(i, elem) {
-        type = type || "fx";
-
-        var queue = $.queue(elem, type),
-                fn = queue.shift();
-
-        if (fn === "inprogress") {
-            fn = queue.shift();
-        }
-
-        if (fn) {
-            if (type === "fx") {
-                queue.unshift("inprogress");
-            }
-
-            fn.call(elem, function() {
-                $.dequeue(elem, type);
-            });
-        }
-    });
-};
 
 /* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
 var rAFShim = (function() {
@@ -228,6 +41,300 @@ var rAFShim = (function() {
 })();
 
 
+
+
+avalon.fn.animate = function(propertiesMap, options) {
+    //=====================处理options参数==========================
+    //将多余的参数合并到options对象上
+    // animate(propertiesMap [, duration] [, easing] [, complete])
+    if (propertiesMap !== "stop" && !avalon.isPlainObject(options)) {
+        options = {}
+        for (var i = 1; i < arguments.length; i++) {
+            var option = arguments[i]
+            if (!Array.isArray(option) && (/^(fast|normal|slow)$/i.test(option) || /^\d/.test(option))) {
+                options.duration = option//动画时长
+            } else if (typeof option === "string" || Array.isArray(option)) {
+                options.easing = option //缓动公式
+            } else if (avalon.isFunction(option)) {
+                options.complete = option //动画完成时的回调函数
+            }
+        }
+    }
+    var promiseData = {
+        promise: null,
+        resolver: null,
+        rejecter: null
+    }
+    var element = this[0]
+
+
+    promiseData.promise = new Promise(function(resolve, reject) {
+        promiseData.resolver = resolve
+        promiseData.rejecter = reject
+    })
+
+//=====================处理propertiesMap参数==========================
+    var action;
+
+    switch (propertiesMap) {
+        case "scroll":
+            action = "scroll";
+            break;
+
+        case "reverse":
+            action = "reverse";
+            break;
+
+        case "stop":
+            /*******************
+             Action: Stop
+             *******************/
+            var elemData = Data(element), delayTimer
+            if (elemData && (delayTimer = elemData.delayTimer)) {
+                clearTimeout(delayTimer.setTimeout);
+                if (delayTimer.next) {
+                    delayTimer.next();
+                }
+
+                delete elemData.delayTimer;
+            }
+
+
+            var callsToStop = [];
+
+            Velocity.State.calls.forEach(function(activeCall, i) {
+                /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+                if (activeCall) {
+                    /* Iterate through the active call's targeted elements. */
+                    activeCall[1].forEach(function(activeElement, k) {
+                        var queueName = typeof options == "string" ? options : "";
+
+                        if (options !== undefined && activeCall[2].queue !== queueName) {
+                            return true;
+                        }
+
+                        if (element === activeElement) {
+                            if (options !== undefined) {
+                                avalon.queue(element, queueName).forEach(function(item) {
+                                    if (avalon.isFunction(item)) {
+                                        item(null, true);
+                                    }
+                                })
+
+                                avalon.queue(element, queueName, []);
+                            }
+
+                            if (elemData && queueName === "") {
+                                //遍历tweensContainer这个对象
+                                avalon.each(elemData.tweensContainer, function(m, activeTween) {
+                                    activeTween.endValue = activeTween.currentValue;
+                                });
+                            }
+
+                            callsToStop.push(i);
+                        }
+                    });
+                }
+            });
+
+            /* Prematurely call completeCall() on each matched active call, passing an additional flag to indicate
+             that the complete callback and display:none setting should be skipped since we're completing prematurely. */
+            callsToStop.forEach(function(el) {
+                completeCall(el, true);
+            });
+            if (promiseData.promise) {
+                promiseData.resolver(element);
+            }
+            return promiseData.promise
+
+        default:
+            /* Treat a non-empty plain object as a literal properties map. */
+            if (avalon.isPlainObject(propertiesMap) && !Velocity.isEmptyObject(propertiesMap)) {
+                action = "start";
+
+                /****************
+                 Redirects
+                 ****************/
+
+                /* Check if a string matches a registered redirect (see Redirects above). */
+            } else if (typeof propertiesMap === "string" && Velocity.Redirects[propertiesMap]) {
+                var opts = avalon.mix({}, options),
+                        durationOriginal = opts.duration,
+                        delayOriginal = opts.delay || 0;
+
+
+                var elements = [element]
+                var elementsLength = elements.length
+                /* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
+                avalon.each(elements, function(elementIndex, element) {
+                    /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
+                    if (parseFloat(opts.stagger)) {
+                        opts.delay = delayOriginal + (parseFloat(opts.stagger) * elementIndex);
+                    } else if (avalon.isFunction(opts.stagger)) {
+                        opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
+                    }
+
+                    /* If the drag option was passed in, successively increase/decrease (depending on the presense of opts.backwards)
+                     the duration of each element's animation, using floors to prevent producing very short durations. */
+                    if (opts.drag) {
+                        /* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
+                        opts.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : 400);
+
+                        /* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
+                         B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
+                         The end result is a baseline of 75% of the redirect's duration that increases/decreases as the end of the element set is approached. */
+                        opts.duration = Math.max(opts.duration * (opts.backwards ? 1 - elementIndex / elementsLength : (elementIndex + 1) / elementsLength), opts.duration * 0.75, 200);
+                    }
+
+                    /* Pass in the call's opts object so that the redirect can optionally extend it. It defaults to an empty object instead of null to
+                     reduce the opts checking logic required inside the redirect. */
+                    Velocity.Redirects[propertiesMap].call(element, element, opts || {}, elementIndex, elementsLength, elements, promiseData.promise ? promiseData : undefined);
+                });
+
+                /* Since the animation logic resides within the redirect's own code, abort the remainder of this call.
+                 (The performance overhead up to this point is virtually non-existant.) */
+                /* Note: The jQuery call chain is kept intact by returning the complete element set. */
+                return promiseData.promise
+            } else {
+                var abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
+
+                if (promiseData.promise) {
+                    promiseData.rejecter(new Error(abortError));
+                } else {
+                    avalon.log(abortError);
+                }
+                return promiseData.promise
+            }
+    }
+}
+
+var Velocity = avalon.fn.animate
+avalon.mix(Velocity, {
+    State: {
+        /*  如果是移动设备，将会打开mobileHA开关 */
+        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        /* 判定是否安卓系统 */
+        isAndroid: /Android/i.test(navigator.userAgent),
+        /* gingerbread（姜饼）是安卓系统的一个新的版本，版本号为2.3（ 2.3.3-2.3.7）。此时会关闭mobileHA开关*/
+        isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+        isChrome: window.chrome,
+        isFirefox: /Firefox/i.test(navigator.userAgent),
+        /* Create a cached element for re-use when checking for CSS property prefixes. */
+        prefixElement: document.createElement("div"),
+        /* Cache every prefix match to avoid repeating lookups. */
+        prefixMatches: {},
+        /* Cache the anchor used for animating window scrolling. */
+        scrollAnchor: null,
+        /* Cache the property names associated with the scroll anchor. */
+        scrollPropertyLeft: null,
+        scrollPropertyTop: null,
+        /* Keep track of whether our RAF tick is running. */
+        isTicking: false,
+        /* Container for every in-progress call to Velocity. */
+        calls: []
+    },
+    defaults: {
+        queue: "",
+        duration: 400,
+        easing: "swing",
+        begin: undefined,
+        complete: undefined,
+        progress: undefined,
+        display: undefined,
+        visibility: undefined,
+        loop: false,
+        delay: false,
+        mobileHA: true,
+        /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
+        _cacheValues: true
+    },
+    isEmptyObject: function(variable) {
+        for (var name in variable) {
+            return false;
+        }
+        return true;
+    }
+})
+
+
+
+/************************************************************************
+ *                 Data, data, queue, dequeue                            *
+ ************************************************************************/
+function Data(element) {
+    var response = $.data(element, "velocity");
+    return response === null ? void 0 : response;
+}
+Data.uuid = 1
+var getDataID = !window.VBArray ? function(obj) { //IE9+,标准浏览器
+    return obj.uniqueNumber || (obj.uniqueNumber = Data.uuid++);
+} : function(obj) {
+    if (obj.nodeType !== 1) { //如果是普通对象，文档对象，window对象
+        return obj.uniqueNumber || (obj.uniqueNumber = Data.uuid++);
+    } //注：旧式IE的XML元素不能通过el.xxx = yyy 设置自定义属性
+    var uid = obj.getAttribute("uniqueNumber");
+    if (!uid) {
+        uid = Data.uuid++;
+        obj.setAttribute("uniqueNumber", uid);
+    }
+    return +uid; //确保返回数字
+}
+//avalon.data基于JS对象的数据缓存系统，avalon.fn.data是基于DOM的数据缓存系统
+var avalonData = {}
+avalon.data = function(node, key, value) {
+    var id = getDataID(node)
+    if (arguments.length === 3) {//getter
+        var store = id && avalonData[id];
+        if (key === undefined) {
+            return store;
+        } else if (store) {
+            if (key in store) {
+                return store[key];
+            }
+        }
+    } else { //setter
+        store = avalonData[id] = avalonData[id] || {}
+        store[key] = value;
+        return value;
+    }
+};
+
+avalon.queue = function(elem, type, data) {
+    if (!elem) {
+        return;
+    }
+    type = (type || "fx") + "queue";
+    var q = avalon.data(elem, type);
+    if (!data) {
+        return q || [];
+    }
+    if (!q || Array.isArray(data)) {
+        q = avalon.data(elem, type, data.concat());
+    } else {
+        q.push(data);
+    }
+
+    return q
+};
+
+avalon.dequeue = function(elem, type) {
+    /* Custom: Embed element iteration. */
+    type = type || "fx"
+    var queue = avalon.queue(elem, type),
+            fn = queue.shift();
+
+    if (fn === "inprogress") {
+        fn = queue.shift();
+    }
+    if (fn) {
+        if (type === "fx") {
+            queue.unshift("inprogress");
+        }
+        fn.call(elem, function() {
+            avalon.dequeue(elem, type);
+        });
+    }
+};
 
 /*********************************************************************
  *                 缓动公式                              *
@@ -513,7 +620,7 @@ avalon.each(
             ["easeOutCirc", [0.075, 0.82, 0.165, 1]],
             ["easeInOutCirc", [0.785, 0.135, 0.15, 0.86]]
         ], function(i, easingArray) {
-    mmAnimate.Easings[easingArray[0]] = generateBezier.apply(null, easingArray[1]);
+    Velocity.Easings[easingArray[0]] = generateBezier.apply(null, easingArray[1]);
 });
 
 /* Determine the appropriate easing type given an easing input. */
@@ -544,178 +651,12 @@ function getEasing(value, duration) {
     /* Revert to the Velocity-wide default easing type, or fall back to "swing" (which is also jQuery's default)
      if the Velocity-wide default has been incorrectly modified. */
     if (easing === false) {
-        if (mmAnimate.Easings[mmAnimate.defaults.easing]) {
-            easing = mmAnimate.defaults.easing;
+        if (Velocity.Easings[Velocity.defaults.easing]) {
+            easing = Velocity.defaults.easing;
         } else {
-            easing = EASING_DEFAULT;
+            easing = "swing";
         }
     }
 
     return easing;
-}
-
-avalon.fn.animate = function(propertiesMap, options) {
-    //将多余的参数合并到options对象上
-    //  animate(propertiesMap [, duration] [, easing] [, complete])
-    if (propertiesMap !== "stop" && !avalon.isPlainObject(options)) {
-        options = {}
-        for (var i = 1; i < arguments.length; i++) {
-            var option = arguments[i]
-            if (!Array.isArray(option) && (/^(fast|normal|slow)$/i.test(option) || /^\d/.test(option))) {
-                options.duration = option//动画时长
-            } else if (typeof option === "string" || Array.isArray(option)) {
-                options.easing = option //缓动公式
-            } else if (avalon.isFunction(option)) {
-                options.complete = option //动画完成时的回调函数
-            }
-        }
-    }
-    var promiseData = {
-        promise: null,
-        resolver: null,
-        rejecter: null
-    }
-    var element = this[0]
-
-
-    promiseData.promise = new Promise(function(resolve, reject) {
-        promiseData.resolver = resolve
-        promiseData.rejecter = reject
-    })
-
-
-    var action;
-
-    switch (propertiesMap) {
-        case "scroll":
-            action = "scroll";
-            break;
-
-        case "reverse":
-            action = "reverse";
-            break;
-
-        case "stop":
-            /*******************
-             Action: Stop
-             *******************/
-
-            if (Data(element) && Data(element).delayTimer) {
-                clearTimeout(Data(element).delayTimer.setTimeout);
-                if (Data(element).delayTimer.next) {
-                    Data(element).delayTimer.next();
-                }
-
-                delete Data(element).delayTimer;
-            }
-
-
-            var callsToStop = [];
-
-            Velocity.State.calls.forEach(function(activeCall, i) {
-                /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
-                if (activeCall) {
-                    /* Iterate through the active call's targeted elements. */
-                    activeCall[1].forEach(function(activeElement, k) {
-                        var queueName = typeof options == "string" ? options : "";
-
-                        if (options !== undefined && activeCall[2].queue !== queueName) {
-                            return true;
-                        }
-
-                        if (element === activeElement) {
-                            if (options !== undefined) {
-                                $.each($.queue(element, queueName), function(_, item) {
-                                    if (avalon.isFunction(item)) {
-                                        item(null, true);
-                                    }
-                                });
-
-                                $.queue(element, queueName, []);
-                            }
-
-                            if (Data(element) && queueName === "") {
-                                $.each(Data(element).tweensContainer, function(m, activeTween) {
-                                    activeTween.endValue = activeTween.currentValue;
-                                });
-                            }
-
-                            callsToStop.push(i);
-                        }
-                    });
-                }
-            });
-
-            /* Prematurely call completeCall() on each matched active call, passing an additional flag to indicate
-             that the complete callback and display:none setting should be skipped since we're completing prematurely. */
-            $.each(callsToStop, function(i, j) {
-                completeCall(j, true);
-            });
-            if (promiseData.promise) {
-                promiseData.resolver(element);
-            }
-            return getChain();
-
-        default:
-            /* Treat a non-empty plain object as a literal properties map. */
-            if ($.isPlainObject(propertiesMap) && !Type.isEmptyObject(propertiesMap)) {
-                action = "start";
-
-                /****************
-                 Redirects
-                 ****************/
-
-                /* Check if a string matches a registered redirect (see Redirects above). */
-            } else if (Type.isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
-                var opts = $.extend({}, options),
-                        durationOriginal = opts.duration,
-                        delayOriginal = opts.delay || 0;
-
-
-                var elements = [element]
-                /* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
-                $.each(elements, function(elementIndex, element) {
-                    /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
-                    if (parseFloat(opts.stagger)) {
-                        opts.delay = delayOriginal + (parseFloat(opts.stagger) * elementIndex);
-                    } else if (Type.isFunction(opts.stagger)) {
-                        opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
-                    }
-
-                    /* If the drag option was passed in, successively increase/decrease (depending on the presense of opts.backwards)
-                     the duration of each element's animation, using floors to prevent producing very short durations. */
-                    if (opts.drag) {
-                        /* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-                        opts.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : DURATION_DEFAULT);
-
-                        /* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
-                         B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
-                         The end result is a baseline of 75% of the redirect's duration that increases/decreases as the end of the element set is approached. */
-                        opts.duration = Math.max(opts.duration * (opts.backwards ? 1 - elementIndex / elementsLength : (elementIndex + 1) / elementsLength), opts.duration * 0.75, 200);
-                    }
-
-                    /* Pass in the call's opts object so that the redirect can optionally extend it. It defaults to an empty object instead of null to
-                     reduce the opts checking logic required inside the redirect. */
-                    Velocity.Redirects[propertiesMap].call(element, element, opts || {}, elementIndex, elementsLength, elements, promiseData.promise ? promiseData : undefined);
-                });
-
-                /* Since the animation logic resides within the redirect's own code, abort the remainder of this call.
-                 (The performance overhead up to this point is virtually non-existant.) */
-                /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                return getChain();
-            } else {
-                var abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
-
-                if (promiseData.promise) {
-                    promiseData.rejecter(new Error(abortError));
-                } else {
-                    console.log(abortError);
-                }
-
-                return getChain();
-            }
-    }
-}
-avalon.fn.animate.defaults = {
-    duration: 400,
 }
