@@ -248,6 +248,10 @@ avalon.mix(Velocity, {
         /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
         _cacheValues: true
     },
+    CSS: { /* Defined below. */},
+    /* Container for the user's custom animation redirects that are referenced by name in place of a properties map object. */
+    Redirects: { /* Manually registered by the user. */},
+    Easings: { /* Defined below. */},
     isEmptyObject: function(variable) {
         for (var name in variable) {
             return false;
@@ -255,8 +259,86 @@ avalon.mix(Velocity, {
         return true;
     }
 })
+//注册一些常用特效
+/* slideUp, slideDown */
+"Down,Up".replace(avalon.rword, function(direction) {
+    Velocity.Redirects["slide" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
+        var opts = avalon.mix({}, options),
+                begin = opts.begin,
+                complete = opts.complete,
+                computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: ""},
+        inlineValues = {};
 
+        if (opts.display === undefined) {
+            /* Show the element before slideDown begins and hide the element after slideUp completes. */
+            /* Note: Inline elements cannot have dimensions animated, so they're reverted to inline-block. */
+            opts.display = (direction === "Down" ? (Velocity.CSS.Values.getDisplayType(element) === "inline" ? "inline-block" : "block") : "none");
+        }
 
+        opts.begin = function() {
+            /* If the user passed in a begin callback, fire it now. */
+            begin && begin.call(elements, elements);
+
+            /* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
+            for (var property in computedValues) {
+                /* Cache all inline values, we reset to upon animation completion. */
+                inlineValues[property] = element.style[property];
+
+                /* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
+                 use forcefeeding to start from computed values and animate down to 0. */
+                var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+                computedValues[property] = (direction === "Down") ? [propertyValue, 0] : [0, propertyValue];
+            }
+
+            /* Force vertical overflow content to clip so that sliding works as expected. */
+            inlineValues.overflow = element.style.overflow;
+            element.style.overflow = "hidden";
+        }
+
+        opts.complete = function() {
+            /* Reset element to its pre-slide inline values once its slide animation is complete. */
+            for (var property in inlineValues) {
+                element.style[property] = inlineValues[property];
+            }
+
+            /* If the user passed in a complete callback, fire it now. */
+            complete && complete.call(elements, elements);
+            promiseData && promiseData.resolver(elements);
+        };
+
+        Velocity(element, computedValues, opts);
+    };
+});
+
+/* fadeIn, fadeOut */
+"In,Out".replace(avalon.rword, function(direction) {
+    Velocity.Redirects["fade" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
+        var opts = avalon.mix({}, options),
+                propertiesMap = {opacity: (direction === "In") ? 1 : 0},
+        originalComplete = opts.complete;
+
+        /* Since redirects are triggered individually for each element in the animated set, avoid repeatedly triggering
+         callbacks by firing them only when the final element has been reached. */
+        if (elementsIndex !== elementsSize - 1) {
+            opts.complete = opts.begin = null;
+        } else {
+            opts.complete = function() {
+                if (originalComplete) {
+                    originalComplete.call(elements, elements);
+                }
+
+                promiseData && promiseData.resolver(elements);
+            }
+        }
+
+        /* If a display was passed in, use it. Otherwise, default to "none" for fadeOut or the element-specific default for fadeIn. */
+        /* Note: We allow users to pass in "null" to skip display setting altogether. */
+        if (opts.display === undefined) {
+            opts.display = (direction === "In" ? "auto" : "none");
+        }
+        Velocity(this, propertiesMap, opts);
+    };
+});
 
 /************************************************************************
  *                 Data, data, queue, dequeue                            *
