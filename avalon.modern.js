@@ -1159,10 +1159,10 @@
         this.optgroup = this.option
         this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
         this.th = this.td
-        //处理SVG
-        this.circle = this.ellipse = this.line = this.path =
-                this.polygon = this.polyline = this.rect = this.text
     }
+    "g,circle,ellipse,line,path,polygon,polyline,text".replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.text//处理SVG
+    })
 
     avalon.clearHTML = function(node) {
         //  node.textContent = ""

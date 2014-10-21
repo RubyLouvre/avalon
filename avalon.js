@@ -1650,9 +1650,9 @@
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-//处理SVG
-    tagHooks.g=tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
-            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
+    "g,circle,ellipse,line,path,polygon,polyline,text".replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.text//处理SVG
+    })
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
@@ -3663,7 +3663,7 @@
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i], this.$model[pos+i])
+                added[i] = convert(arr[i], this.$model[pos + i])
             }
             _splice.apply(this, [pos, 0].concat(added))
             this._fire("add", pos, added)
@@ -4196,8 +4196,8 @@
                     date = toInt(date)
                 } else {
                     var trimDate = date.trim()
-                    var date = trimDate.replace(rfixYMD, function(a,b,c,d){
-                        var array = d.length === 4 ? [d, b, c]: [b,c,d]
+                    var date = trimDate.replace(rfixYMD, function(a, b, c, d) {
+                        var array = d.length === 4 ? [d, b, c] : [b, c, d]
                         return array.join("/")
                     })
                     date = jsonStringToDate(date)

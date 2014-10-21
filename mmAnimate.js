@@ -671,8 +671,8 @@ avalon.fn.animate = function(propertiesMap, options) {
                         durationOriginal = opts.duration,
                         delayOriginal = opts.delay || 0;
 
-    
 
+                var elements = [element]
                 /* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
                 $.each(elements, function(elementIndex, element) {
                     /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
