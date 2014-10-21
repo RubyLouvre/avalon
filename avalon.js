@@ -1651,7 +1651,7 @@
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
 //处理SVG
-    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
+    tagHooks.g=tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
             tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
