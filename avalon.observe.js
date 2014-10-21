@@ -1146,7 +1146,7 @@
             }
         }
     }
-    
+
     function collectSubscribers(scope, prop, data) {//收集依赖于这个访问器的订阅者
         var obj = scope.$events
         if (obj) {
@@ -2618,7 +2618,7 @@
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i])
+                added[i] = convert(arr[i], this.$model[pos + i])
             }
             _splice.apply(this, [pos, 0].concat(added))
 
