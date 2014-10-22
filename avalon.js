@@ -657,6 +657,7 @@
                 delete withProxyPool[son.$id]
             }
             var ret = modelFactory(value)
+            ret.$events[subscribers] = iterators
             rebindings[ret.$id] = function(data) {
                 while (data = iterators.shift()) {
                     (function(el) {
@@ -1873,9 +1874,24 @@
     function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
         var data = Registry[expose]
         if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
-            $$subscribers.push({
-                data: data, list: list
-            })
+            add$$subscribers(data, list)
+        }
+    }
+    function add$$subscribers(data, list) {
+        data.$uuid = data.$uuid || generateID()
+        list.$uuid = list.$uuid || generateID()
+        var obj = {
+            data: data,
+            list: list,
+            toString: function() {
+                return data.$uuid + " " + list.$uuid
+            }
+        }
+        var has = $$subscribers.some(function(el) {
+            return  el.toString() == obj.toString()
+        })
+        if (!has) {
+            $$subscribers.push(obj)
         }
     }
     var $$subscribers = [], $startIndex = 0, $maxIndex = 200
@@ -1887,21 +1903,24 @@
             }
             var data = obj.data
             var el = data.element
-            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+            var remove = (data === null || el === null) ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
                     el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
-                avalon.Array.remove(obj.list, data)
-                //log("debug: remove " + data.type)
-                if (data.type === "if" && data.template && data.template.parentNode === head) {
-                    head.removeChild(data.template)
+                if (data) {
+                    avalon.Array.remove(obj.list, data)
+                    //log("debug: remove " + data.type)
+                    if (data.type === "if" && data.template && data.template.parentNode === head) {
+                        head.removeChild(data.template)
+                    }
+                    for (var key in data) {
+                        data[key] = null
+                    }
+                    obj.data = obj.list = null
                 }
-                for (var key in data) {
-                    data[key] = null
-                }
-                obj.data = obj.list = null
                 i--
                 n--
+
             }
         }
         obj = $$subscribers[i]
@@ -2786,6 +2805,7 @@
                                 keys.push(key)
                             }
                         }
+                        transation = transation.cloneNode(false)
                         if (data.sortedCallback) { //如果有回调，则让它们排序
                             var keys2 = data.sortedCallback.call(parent, keys)
                             if (keys2 && Array.isArray(keys2) && keys2.length) {
@@ -3058,10 +3078,10 @@
 
             var comment = data.element = DOC.createComment("ms-repeat")
             if (type === "each" || type === "with") {
-                data.template = elem.innerHTML.trim()
+                data.template = data.template || elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(comment)
             } else {
-                data.template = elem.outerHTML.trim()
+                data.template = data.template || elem.outerHTML.trim()
                 data.group = 1
                 elem.parentNode.replaceChild(comment, elem)
             }
@@ -3109,10 +3129,9 @@
                 }
             }
             var $list = ($repeat.$events || {})[subscribers]
+
             if ($list && avalon.Array.ensure($list, data)) {
-                $$subscribers.push({
-                    data: data, list: $list
-                })
+                add$$subscribers(data, $list)
             }
             if (!Array.isArray($repeat) && type !== "each") {
                 var pool = withProxyPool[$repeat.$id]

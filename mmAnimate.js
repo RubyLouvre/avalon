@@ -148,7 +148,7 @@ avalon.fn.animate = function(propertiesMap, options) {
             return promiseData.promise
 
         default:
-            /* Treat a non-empty plain object as a literal properties map. */
+            //如果第一个参数为一个朴素的JS对象,并且不为空对象
             if (avalon.isPlainObject(propertiesMap) && !Velocity.isEmptyObject(propertiesMap)) {
                 action = "start";
 
@@ -206,6 +206,23 @@ avalon.fn.animate = function(propertiesMap, options) {
                 return promiseData.promise
             }
     }
+
+    var callUnitConversionData = {
+        lastParent: null,
+        lastPosition: null,
+        lastFontSize: null,
+        lastPercentToPxWidth: null,
+        lastPercentToPxHeight: null,
+        lastEmToPx: null,
+        remToPx: null,
+        vwToPx: null,
+        vhToPx: null
+    };
+    
+      var call = [];
+      (function (){
+          
+      })()
 }
 
 var Velocity = avalon.fn.animate
@@ -306,7 +323,7 @@ avalon.mix(Velocity, {
             promiseData && promiseData.resolver(elements);
         };
 
-        Velocity(element, computedValues, opts);
+        avalon(this).animate(propertiesMap, opts);
     };
 });
 
@@ -336,7 +353,7 @@ avalon.mix(Velocity, {
         if (opts.display === undefined) {
             opts.display = (direction === "In" ? "auto" : "none");
         }
-        Velocity(this, propertiesMap, opts);
+        avalon(this).animate(propertiesMap, opts);
     };
 });
 
