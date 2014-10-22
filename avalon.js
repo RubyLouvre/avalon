@@ -1770,14 +1770,15 @@
             return this
         },
         $fire: function(type) {
-            var special
+            var special, element
             if (/^(\w+)!(\S+)$/.test(type)) {
                 special = RegExp.$1
                 type = RegExp.$2
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            if (!special) {
+            var flag = special === "up" || special === "down" || special === "all"
+            if (!flag) {
                 var callbacks = events[type] || []
                 var all = events.$all || []
                 for (var i = 0, callback; callback = callbacks[i++]; ) {
@@ -1788,44 +1789,41 @@
                     if (isFunction(callback))
                         callback.apply(this, arguments)
                 }
-            }
-            var element = events.expr && findNode(events.expr)
-            if (element) {
+            } else if (element = events.expr && findNode(events.expr)) {
                 var detail = [type].concat(args)
-                if (special === "up" || special === "down" || special === "all") {
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        if (v && v.$events && v.$events.expr) {
-                            if (v !== this) {
-                                var node = findNode(v.$events.expr)
-                                if (!node) {
-                                    continue
-                                }
-                                var ok = special === "all" ? 1 : //全局广播
-                                        special === "down" ? element.contains(node) : //向下捕获
-                                        node.contains(element)//向上冒泡
-                                if (ok) {
-                                    node._avalon = v//符合条件的加一个标识
-                                }
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v && v.$events && v.$events.expr) {
+                        if (v !== this) {
+                            var node = findNode(v.$events.expr)
+                            if (!node) {
+                                continue
+                            }
+                            var ok = special === "all" ? 1 : //全局广播
+                                    special === "down" ? element.contains(node) : //向下捕获
+                                    node.contains(element)//向上冒泡
+                            if (ok) {
+                                node._avalon = v//符合条件的加一个标识
                             }
                         }
                     }
-                    var nodes = DOC.getElementsByTagName("*")//实现节点排序
-                    var alls = []
-                    Array.prototype.forEach.call(nodes, function(el) {
-                        if (el._avalon) {
-                            alls.push(el._avalon)
-                            el._avalon = ""
-                            el.removeAttribute("_avalon")
-                        }
-                    })
-                    if (special === "up") {
-                        alls.reverse()
-                    }
-                    alls.forEach(function(v) {
-                        v.$fire.apply(v, detail)
-                    })
                 }
+                var nodes = DOC.getElementsByTagName("*")//实现节点排序
+                var alls = []
+                Array.prototype.forEach.call(nodes, function(el) {
+                    if (el._avalon) {
+                        alls.push(el._avalon)
+                        el._avalon = ""
+                        el.removeAttribute("_avalon")
+                    }
+                })
+                if (special === "up") {
+                    alls.reverse()
+                }
+                alls.forEach(function(v) {
+                    v.$fire.apply(v, detail)
+                })
+
             }
         }
     }
