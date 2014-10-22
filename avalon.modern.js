@@ -2133,19 +2133,13 @@
                         }
                         break
                     case "clear":
-                        var size = "proxySize" in data ? data.proxySize : proxies.length
-                        if (size) {
-                            var n = size * group, k = 0
-                            while (true) {
-                                var nextNode = data.element.nextSibling
-                                if (nextNode && k < n) {
-                                    parent.removeChild(nextNode)
-                                    k++
-                                } else {
-                                    break
-                                }
+                        while (true) {
+                            var node = data.element.nextSibling
+                            if (node && node !== data.endRepeat) {
+                                parent.removeChild(node)
+                            } else {
+                                break
                             }
-                            recycleEachProxies(proxies)
                         }
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
@@ -2430,13 +2424,18 @@
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
             var comment = data.element = DOC.createComment("ms-repeat")
+            var endRepeat = data.endRepeat = DOC.createComment("ms-repeat-end")
+
+            hyperspace.appendChild(comment)
+            hyperspace.appendChild(endRepeat)
+
             if (type === "each" || type === "with") {
-                data.template = data.template || elem.innerHTML.trim()
-                avalon.clearHTML(elem).appendChild(comment)
+                data.template = elem.innerHTML.trim()
+                avalon.clearHTML(elem).appendChild(hyperspace)
             } else {
-                data.template = data.template || elem.outerHTML.trim()
+                data.template = elem.outerHTML.trim()
+                elem.parentNode.replaceChild(hyperspace, elem)
                 data.group = 1
-                elem.parentNode.replaceChild(comment, elem)
             }
 
             data.rollback = function() {//只用于list为对象的情况
@@ -2446,10 +2445,9 @@
                 var content = avalon.parseHTML(data.template)
                 var target = content.firstChild
                 parentNode.replaceChild(content, elem)
+                parentNode.removeChild(data.endRepeat)
                 target = data.element = data.type === "repeat" ? target : parentNode
-                data.group = 1
-                target.setAttribute(data.name, data.value)
-                //  console.log(target.innerHTML.trim())
+                data.group = target.setAttribute(data.name, data.value)
             }
             var arr = data.value.split(".") || []
             if (arr.length > 1) {
@@ -3148,29 +3146,28 @@
         }
         fragments.push(fragment)
     }
+    //如果ms-repeat紧挨着ms-repeat-end，那么就返回ms-repeat-end
     // 取得用于定位的节点。比如group = 3,  结构为
-    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/></div>
+    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/><!--ms-repeat-end--></div>
     // 当pos为0时,返回 br#first
     // 当pos为1时,返回 br#second
-    // 当pos为2时,返回 null
+    // 当pos为2时,返回 ms-repeat-end
     function locateFragment(data, pos) {
-        if (data.type == "repeat") {//ms-repeat，group为1
-            var node = data.element.nextSibling
-            for (var i = 0, n = pos; i < n; i++) {
-                if (node) {
-                    node = node.nextSibling
+        var startRepeat = data.element
+        var endRepeat = data.endRepeat
+        var nodes = []
+        var node = startRepeat.nextSibling
+        if (node !== endRepeat) {
+            do {
+                if (node !== endRepeat) {
+                    nodes.push(node)
                 } else {
                     break
                 }
-            }
-        } else {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            var group = data.group || nodes.length / data.proxies.length
-            node = nodes[group * pos]
+            } while (node = node.nextSibling)
         }
-        return node || null
+        return nodes[data.group * pos] || endRepeat
     }
-
     function removeFragment(node, group, pos) {
         var n = group * (pos || 1)
         var nodes = [node], i = 1
@@ -3189,9 +3186,10 @@
 
     function calculateFragmentGroup(data) {
         if (!isFinite(data.group)) {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var nodes = data.element.parentNode.childNodes
+            var length = nodes.length - 2 //去掉两个注释节点
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
-            data.group = nodes.length / n
+            data.group = length / n
         }
     }
 

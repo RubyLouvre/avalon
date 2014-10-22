@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>取得光标的位置</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <meta http-equiv="X-UA-Compatible" content="IE=9" />
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define("xxx", function(vm) {
+                vm.array = []
+                vm.add = function() {
+                    vm.array.push(1, 2, 3, 4)
+                }
+                vm.clear = function() {
+                    vm.array.clear()
+                }
+            })
+
+        </script>
+
+    </head>
+    <body ms-controller="xxx">
+        <h2>确保新添加的元素都在ms-repeat-end注释节点之前</h2>
+        <ul ms-each="array" id="aaa">
+            <li>{{el}}</li>
+        </ul>
+        <button ms-click="add" type="button">xxx</button>
+        <button ms-click="clear" type="button">xxx</button>
+    </body>
+</html>
