@@ -1874,10 +1874,10 @@
     function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
         var data = Registry[expose]
         if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
-            add$$subscribers(data, list)
+            addSubscribers(data, list)
         }
     }
-    function add$$subscribers(data, list) {
+    function addSubscribers(data, list) {
         data.$uuid = data.$uuid || generateID()
         list.$uuid = list.$uuid || generateID()
         var obj = {
@@ -1887,10 +1887,8 @@
                 return data.$uuid + " " + list.$uuid
             }
         }
-        var has = $$subscribers.some(function(el) {
-            return  el.toString() == obj.toString()
-        })
-        if (!has) {
+        if (!$$subscribers[obj]) {
+            $$subscribers[obj] = 1
             $$subscribers.push(obj)
         }
     }
@@ -1903,21 +1901,21 @@
             }
             var data = obj.data
             var el = data.element
-            var remove = (data === null || el === null) ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
                     el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
-                if (data) {
-                    avalon.Array.remove(obj.list, data)
-                    //log("debug: remove " + data.type)
-                    if (data.type === "if" && data.template && data.template.parentNode === head) {
-                        head.removeChild(data.template)
-                    }
-                    for (var key in data) {
-                        data[key] = null
-                    }
-                    obj.data = obj.list = null
+                delete $$subscribers[obj]
+                avalon.Array.remove(obj.list, data)
+                //log("debug: remove " + data.type)
+                if (data.type === "if" && data.template && data.template.parentNode === head) {
+                    head.removeChild(data.template)
                 }
+                for (var key in data) {
+                    data[key] = null
+                }
+                obj.data = obj.list = null
+
                 i--
                 n--
 
@@ -2805,7 +2803,6 @@
                                 keys.push(key)
                             }
                         }
-                        transation = transation.cloneNode(false)
                         if (data.sortedCallback) { //如果有回调，则让它们排序
                             var keys2 = data.sortedCallback.call(parent, keys)
                             if (keys2 && Array.isArray(keys2) && keys2.length) {
@@ -3129,9 +3126,8 @@
                 }
             }
             var $list = ($repeat.$events || {})[subscribers]
-
             if ($list && avalon.Array.ensure($list, data)) {
-                add$$subscribers(data, $list)
+                addSubscribers(data, $list)
             }
             if (!Array.isArray($repeat) && type !== "each") {
                 var pool = withProxyPool[$repeat.$id]
