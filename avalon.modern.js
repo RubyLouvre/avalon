@@ -3498,7 +3498,7 @@
                     date = toInt(date)
                 } else {
                     var trimDate = date.trim()
-                    var date = trimDate.replace(rfixYMD, function(a, b, c, d) {
+                    date = trimDate.replace(rfixYMD, function(a, b, c, d) {
                         var array = d.length === 4 ? [d, b, c] : [b, c, d]
                         return array.join("/")
                     })

@@ -146,7 +146,7 @@
     avalon.mix({
         rword: rword,
         subscribers: subscribers,
-        version: "1.34observe",
+        version: "1.36observe",
         ui: {},
         log: log,
         noop: noop,
@@ -1069,7 +1069,8 @@
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            if (!special) {
+            var flag = special === "up" || special === "down" || special === "all"
+            if (!flag) {
                 var callbacks = events[type] || []
                 var all = events.$all || []
                 for (var i = 0, callback; callback = callbacks[i++]; ) {
@@ -1080,48 +1081,47 @@
                     if (isFunction(callback))
                         callback.apply(this, arguments)
                 }
-            }
-            var element = events.expr && findNode(events.expr)
-            if (element) {
+            } else {
+                var element = events.expr && document.querySelector(events.expr)
+                if (!element)
+                    return
                 var detail = [type].concat(args)
-                if (special === "up" || special === "down" || special === "all") {
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        if (v && v.$events && v.$events.expr) {
-                            if (v !== this) {
-                                var node = findNode(v.$events.expr)
-                                var ok = special === "all" ? 1 : //全局广播
-                                        special === "down" ? element.contains(node) : //向下捕获
-                                        node.contains(element)//向上冒泡
-                                if (ok) {
-                                    node._avalon = v//符合条件的加一个标识
-                                }
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v && v.$events && v.$events.expr) {
+                        if (v !== this) {
+                            var node = findNode(v.$events.expr)
+                            if (!node) {
+                                continue
+                            }
+                            var ok = special === "all" ? 1 : //全局广播
+                                    special === "down" ? element.contains(node) : //向下捕获
+                                    node.contains(element)//向上冒泡
+                            if (ok) {
+                                node._avalon = v//符合条件的加一个标识
                             }
                         }
                     }
-                    var nodes = document.querySelectorAll("[avalonctrl]")//实现节点排序
-                    var alls = []
-                    Array.prototype.forEach.call(nodes, function(el) {
-                        if (el._avalon) {
-                            alls.push(el._avalon)
-                            el._avalon = ""
-                            el.removeAttribute("_avalon")
-                        }
-                    })
-                    if (special === "up") {
-                        alls.reverse()
-                    }
-                    alls.forEach(function(v) {
-                        v.$fire.apply(v, detail)
-                    })
                 }
+                var nodes = DOC.getElementsByTagName("*")//实现节点排序
+                var alls = []
+                Array.prototype.forEach.call(nodes, function(el) {
+                    if (el._avalon) {
+                        alls.push(el._avalon)
+                        el._avalon = ""
+                        el.removeAttribute("_avalon")
+                    }
+                })
+                if (special === "up") {
+                    alls.reverse()
+                }
+                alls.forEach(function(v) {
+                    v.$fire.apply(v, detail)
+                })
             }
         }
     }
 
-    function findNode(str) {
-        return  document.querySelector(str)
-    }
 
     /*********************************************************************
      *                         依赖收集与触发                             *
@@ -1149,14 +1149,27 @@
         }
     }
 
+    function addSubscribers(data, list) {
+        data.$uuid = data.$uuid || generateID()
+        list.$uuid = list.$uuid || generateID()
+        var obj = {
+            data: data,
+            list: list,
+            toString: function() {
+                return data.$uuid + " " + list.$uuid
+            }
+        }
+        if (!$$subscribers[obj]) {
+            $$subscribers[obj] = 1
+            $$subscribers.push(obj)
+        }
+    }
     function collectSubscribers(scope, prop, data) {//收集依赖于这个访问器的订阅者
         var obj = scope.$events
         if (obj) {
             var list = obj[prop] || (obj[prop] = [])
             if (avalon.Array.ensure(list, data) && data.element) {
-                $$subscribers.push({
-                    data: data, list: list
-                })
+                addSubscribers(data, list)
             }
         }
     }
@@ -2197,19 +2210,23 @@
                 avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
-
+            elem.removeAttribute(data.name)
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
             var comment = data.element = DOC.createComment("ms-repeat")
-            if (type === "each" || type == "with") {
+            var endRepeat = data.endRepeat = DOC.createComment("ms-repeat-end")
+
+            hyperspace.appendChild(comment)
+            hyperspace.appendChild(endRepeat)
+
+            if (type === "each" || type === "with") {
                 data.template = elem.innerHTML.trim()
-                avalon.clearHTML(elem).appendChild(comment)
+                avalon.clearHTML(elem).appendChild(hyperspace)
             } else {
-                elem.removeAttribute(data.name)
                 data.template = elem.outerHTML.trim()
+                elem.parentNode.replaceChild(hyperspace, elem)
                 data.group = 1
-                elem.parentNode.replaceChild(comment, elem)
             }
 
             data.rollback = function() {//只用于list为对象的情况
@@ -2219,6 +2236,7 @@
                 var content = avalon.parseHTML(data.template)
                 var target = content.firstChild
                 parentNode.replaceChild(content, elem)
+                parentNode.removeChild(data.endRepeat)
                 target = data.element = data.type === "repeat" ? target : parentNode
                 target.setAttribute(data.name, data.value)
             }
@@ -2799,29 +2817,28 @@
         }
         fragments.push(fragment)
     }
+    //如果ms-repeat紧挨着ms-repeat-end，那么就返回ms-repeat-end
     // 取得用于定位的节点。比如group = 3,  结构为
-    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/></div>
+    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/><!--ms-repeat-end--></div>
     // 当pos为0时,返回 br#first
     // 当pos为1时,返回 br#second
-    // 当pos为2时,返回 null
+    // 当pos为2时,返回 ms-repeat-end
     function locateFragment(data, pos) {
-        if (data.type == "repeat") {//ms-repeat，group为1
-            var node = data.element.nextSibling
-            for (var i = 0, n = pos; i < n; i++) {
-                if (node) {
-                    node = node.nextSibling
+        var startRepeat = data.element
+        var endRepeat = data.endRepeat
+        var nodes = []
+        var node = startRepeat.nextSibling
+        if (node !== endRepeat) {
+            do {
+                if (node !== endRepeat) {
+                    nodes.push(node)
                 } else {
                     break
                 }
-            }
-        } else {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            var group = data.group || nodes.length / data.proxies.length
-            node = nodes[group * pos]
+            } while (node = node.nextSibling)
         }
-        return node || null
+        return nodes[data.group * pos] || endRepeat
     }
-
     function removeFragment(node, group, pos) {
         var n = group * (pos || 1)
         var nodes = [node], i = 1
@@ -2917,10 +2934,13 @@
      *                  文本绑定里默认可用的过滤器                        *
      **********************************************************************/
     var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
-    var raimg = /^<(a|img)\s/i
     var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
     var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
-    var rjavascripturl = /\s+(src|href)(?:=("javascript[^"]*"|'javascript[^']*'))?/ig
+    var rsanitize = {
+        a: /\b(href)\=("javascript[^"]*"|'javascript[^']*')/ig,
+        img: /\b(src)\=("javascript[^"]*"|'javascript[^']*')/ig,
+        form: /\b(action)\=("javascript[^"]*"|'javascript[^']*')/ig
+    }
     var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     var rnoalphanumeric = /([^\#-~| |!])/g;
     var filters = avalon.filters = {
@@ -2938,8 +2958,15 @@
         },
         sanitize: window.toStaticHTML ? toStaticHTML.bind(window) : function(str) {
             return str.replace(rscripts, "").replace(ropen, function(a, b) {
-                if (raimg.test(a)) {
-                    a = a.replace(rjavascripturl, " $1=''")//移除javascript伪协议//移除javascript伪协议
+                var match = a.toLowerCase().match(/<(\w+)\s/)
+                if (match) {//处理a标签的href属性，img标签的src属性，form标签的action属性
+                    var reg = rsanitize[match[1]]
+                    if (reg) {
+                        a = a.replace(reg, function(s, name, value) {
+                            var quote = value.charAt(0)
+                            return  name + "=" + quote + "javascript:void(0)" + quote
+                        })
+                    }
                 }
                 return a.replace(ron, " ").replace(/\s+/g, " ")//移除onXXX事件
             })
@@ -3127,8 +3154,7 @@
             }
             return string
         }
-        var rfixFFDate = /^(\d+)-(\d+)-(\d{4})$/
-        var rfixIEDate = /^(\d+)\s+(\d+),(\d{4})$/
+        var rfixYMD = /^(\d+)\D(\d+)\D(\d+)/
         filters.date = function(date, format) {
             var locate = filters.date.locate,
                     text = "",
@@ -3141,9 +3167,10 @@
                     date = toInt(date)
                 } else {
                     var trimDate = date.trim()
-                    if (trimDate.match(rfixFFDate) || trimDate.match(rfixIEDate)) {
-                        date = RegExp.$3 + "/" + RegExp.$1 + "/" + RegExp.$2
-                    }
+                    date = trimDate.replace(rfixYMD, function(a, b, c, d) {
+                        var array = d.length === 4 ? [d, b, c] : [b, c, d]
+                        return array.join("/")
+                    })
                     date = jsonStringToDate(date)
                 }
                 date = new Date(date)
