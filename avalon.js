@@ -2094,6 +2094,9 @@
     function bindingSorter(a, b) {
         return a.priority - b.priority
     }
+    function abandon(type) {
+        log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+    }
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
         var attributes = getAttributes ? getAttributes(elem) : avalon.slice(elem.attributes)
@@ -2113,11 +2116,13 @@
                         param = type
                         type = "on"
                     } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        abandon(type)
                         type = "disabled"
                         value = "!(" + value + ")"
                     }
                     //吃掉以下几个绑定,用ms-attr-*绑定代替
                     if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
+                        abandon(type)
                         param = type
                         type = "attr"
                         elem.removeAttribute(name)

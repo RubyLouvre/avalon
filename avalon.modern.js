@@ -925,7 +925,7 @@
 
     //=============================css相关==================================
     var cssHooks = avalon.cssHooks = {}
-    var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
+    var prefixes = ["", "-webkit-", "-moz-", "-ms-"]//去掉opera-15的支持
     var cssMap = {
         "float": "cssFloat",
         background: "backgroundColor"

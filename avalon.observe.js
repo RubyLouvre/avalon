@@ -1375,20 +1375,7 @@
                     if (ons[type]) {
                         param = type
                         type = "on"
-                    } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
-                        type = "disabled"
-                        value = "!(" + value + ")"
-                    }
-                    //吃掉以下几个绑定,用ms-attr-*绑定代替
-                    if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
-                        param = type
-                        type = "attr"
-                        elem.removeAttribute(name)
-                        name = "ms-attr-" + param
-                        elem.setAttribute(name, value)
-                        match = [name]
-                        msData[name] = value
-                    }
+                    } 
                     if (typeof bindingHandlers[type] === "function") {
                         var binding = {
                             type: type,
@@ -1411,7 +1398,7 @@
                 }
             }
         }
-        if (msData["ms-checked"] && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
             log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
         }
         bindings.sort(function(a, b) {
@@ -2379,7 +2366,7 @@
     //============================= string preperty binding =======================
     //与href绑定器 用法差不多的其他字符串属性的绑定器
     //建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
-    "title,alt,src,value,css,include,href".replace(rword, function(name) {
+    "src,css,include,href".replace(rword, function(name) {
         bindingHandlers[name] = bindingHandlers.attr
     })
     //============================= model binding =======================
