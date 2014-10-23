@@ -1770,7 +1770,7 @@
             return this
         },
         $fire: function(type) {
-            var special, element
+            var special
             if (/^(\w+)!(\S+)$/.test(type)) {
                 special = RegExp.$1
                 type = RegExp.$2
@@ -1789,7 +1789,10 @@
                     if (isFunction(callback))
                         callback.apply(this, arguments)
                 }
-            } else if (element = events.expr && findNode(events.expr)) {
+            } else {
+                var element = events.expr && findNode(events.expr)
+                if (!element)
+                    return
                 var detail = [type].concat(args)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
@@ -1823,7 +1826,6 @@
                 alls.forEach(function(v) {
                     v.$fire.apply(v, detail)
                 })
-
             }
         }
     }
