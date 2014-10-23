@@ -1630,7 +1630,7 @@
             //取得其tagName
             rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
             rcreate = W3C ? /[^\d\D]/ : /(<(?:script|link|style|meta|noscript))/ig,
-            scriptTypes = oneObject("text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript", "text/vbscript"),
+            scriptTypes = oneObject(["","text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"]),
             //需要处理套嵌关系的标签
             rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
     //parseHTML的辅助变量
@@ -1673,16 +1673,21 @@
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
-                if (!el.type || scriptTypes[el.type]) { //如果script节点的MIME能让其执行脚本
+                var parent = el.parentNode
+                var next = el.nextSibling
+                var text = el.text
+                parent.removeChild(el)
+                //IE直接通过移除节点，重赋text属性，再插回原位就恢复执行脚本功能
+                if (!window.VBArray && scriptTypes[el.type]) {
+                    // 其他浏览器则需要以偷龙转凤方式恢复此功能
                     neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
-                        if (attr && attr.specified) {
-                            neo[attr.name] = attr.value //复制其属性
-                        }
+                        neo.setAttribute(attr.name, attr.value)
                     })
-                    neo.text = el.text //必须指定,因为无法在attributes中遍历出来
-                    el.parentNode.replaceChild(neo, el) //替换节点
+                    el = neo
                 }
+                el.text = text
+                parent.insertBefore(el, next)
             }
         }
         //移除我们为了符合套嵌关系而添加的标签
@@ -2094,9 +2099,7 @@
     function bindingSorter(a, b) {
         return a.priority - b.priority
     }
-    function abandon(type) {
-        log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
-    }
+
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
         var attributes = getAttributes ? getAttributes(elem) : avalon.slice(elem.attributes)
@@ -2115,14 +2118,12 @@
                     if (events[type]) {
                         param = type
                         type = "on"
-                    } else if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
-                        abandon(type)
-                        type = "disabled"
-                        value = "!(" + value + ")"
-                    }
-                    //吃掉以下几个绑定,用ms-attr-*绑定代替
-                    if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
-                        abandon(type)
+                    } else if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
+                        log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+                        if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                            type = "disabled"
+                            value = "!(" + value + ")"
+                        }
                         param = type
                         type = "attr"
                         elem.removeAttribute(name)
