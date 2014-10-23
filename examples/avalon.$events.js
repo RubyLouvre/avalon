@@ -2014,14 +2014,26 @@
         if (obj) {
             var list = obj[prop] || (obj[prop] = [])
             if (avalon.Array.ensure(list, data) && data.element) {
-                $$subscribers.push({
-                    data: data, list: list
-                })
+               addSubscribers(data, list)
             }
         }
     }
 
-
+    function addSubscribers(data, list) {
+        data.$uuid = data.$uuid || generateID()
+        list.$uuid = list.$uuid || generateID()
+        var obj = {
+            data: data,
+            list: list,
+            toString: function() {
+                return data.$uuid + " " + list.$uuid
+            }
+        }
+        if (!$$subscribers[obj]) {
+            $$subscribers[obj] = 1
+            $$subscribers.push(obj)
+        }
+    }
     var $$subscribers = [], $startIndex = 0, $maxIndex = 300
     function removeSubscribers() {
         for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
@@ -2035,6 +2047,7 @@
                     el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
+                delete $$subscribers[obj]
                 avalon.Array.remove(obj.list, data)
                 // log("debug: remove " + data.type)
                 if (data.type === "if" && data.template && data.template.parentNode === head) {
@@ -3945,20 +3958,15 @@
                     }
                     break
                 case "clear":
-                    var size = "proxySize" in data ? data.proxySize : proxies.length
-                    if (size) {
-                        var n = size * group, k = 0
-                        while (true) {
-                            var nextNode = data.element.nextSibling
-                            if (nextNode && k < n) {
-                                parent.removeChild(nextNode)
-                                k++
-                            } else {
-                                break
-                            }
+                    while (true) {
+                        var node = data.element.nextSibling
+                        if (node && node !== data.endRepeat) {
+                            parent.removeChild(node)
+                        } else {
+                            break
                         }
-                        recycleEachProxies(proxies)
                     }
+                    recycleEachProxies(proxies)
                     break
                 case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                     var t = proxies.splice(pos, 1)[0]
@@ -4026,27 +4034,27 @@
         }
         fragments.push(fragment)
     }
+    //如果ms-repeat紧挨着ms-repeat-end，那么就返回ms-repeat-end
     // 取得用于定位的节点。比如group = 3,  结构为
-    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/></div>
+    // <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/><!--ms-repeat-end--></div>
     // 当pos为0时,返回 br#first
     // 当pos为1时,返回 br#second
-    // 当pos为2时,返回 null
+    // 当pos为2时,返回 ms-repeat-end
     function locateFragment(data, pos) {
-        if (data.type == "repeat") {//ms-repeat，group为1
-            var node = data.element.nextSibling
-            for (var i = 0, n = pos; i < n; i++) {
-                if (node) {
-                    node = node.nextSibling
+        var startRepeat = data.element
+        var endRepeat = data.endRepeat
+        var nodes = []
+        var node = startRepeat.nextSibling
+        if (node !== endRepeat) {
+            do {
+                if (node !== endRepeat) {
+                    nodes.push(node)
                 } else {
                     break
                 }
-            }
-        } else {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
-            var group = data.group || nodes.length / data.proxies.length
-            node = nodes[group * pos]
+            } while (node = node.nextSibling)
         }
-        return node || null
+        return nodes[data.group * pos] || endRepeat
     }
 
     function removeFragment(node, group, pos) {
@@ -4064,11 +4072,13 @@
         }
         return view
     }
+
     function calculateFragmentGroup(data) {
         if (!isFinite(data.group)) {
-            var nodes = avalon.slice(data.element.parentNode.childNodes, 1)
+            var nodes = data.element.parentNode.childNodes
+            var length = nodes.length - 2 //去掉两个注释节点
             var n = "proxySize" in data ? data.proxySize : data.proxies.length
-            data.group = nodes.length / n
+            data.group = length / n
         }
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
