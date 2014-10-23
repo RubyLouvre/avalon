@@ -2744,8 +2744,8 @@
         propMap[name.toLowerCase()] = name
     })
 
-    var cssText = "<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
-    head.insertBefore(avalon.parseHTML(cssText), head.firstChild) //避免IE6 base标签BUG
+    var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
+    ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
     var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
     var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
 
@@ -2772,7 +2772,6 @@
     })
 
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
-    var ifGroup = head.appendChild(document.createElement("avalon"))
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
             var method = data.type,

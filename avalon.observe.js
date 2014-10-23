@@ -1756,7 +1756,9 @@
      *绑定模块（实现“操作数据即操作DOM”的关键，将DOM操作放逐出前端开发人员的视野，让它交由框架自行处理，开发人员专致于业务本身） *                                 *
      **********************************************************************/
 
-    head.insertAdjacentHTML("afterBegin", '<style id="avalonStyle">.avalonHide{ display: none!important }</style>')
+   
+    head.insertAdjacentHTML("afterBegin", '<avalon><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
+    var ifGroup = head.firstChild
     var getBindingCallback = function(elem, name, vmodels) {
         var callback = elem.getAttribute(name)
         if (callback) {
@@ -2086,7 +2088,6 @@
         },
         "widget": noop
     }
-    var ifGroup = head.appendChild(DOC.createElement("avalon"))
     var rdash = /\(([^)]*)\)/
     function parseDisplay(nodeName, val) {
         //用于取得此类标签的默认display值
