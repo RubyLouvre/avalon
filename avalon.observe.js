@@ -990,12 +990,11 @@
         html = html.replace(rxhtml, "<$1></$2>").trim()
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
                 //取得其标签名
-                wrap = tagHooks[tag] || tagHooks._default,
+                wrapper = tagHooks[tag] || tagHooks._default,
                 fragment = hyperspace.cloneNode(false),
-                wrapper = cinerator,
                 firstChild, neo
 
-        wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
+        wrapper.innerHTML = html 
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
@@ -1009,10 +1008,7 @@
                 }
             }
         }
-        //移除我们为了符合套嵌关系而添加的标签
-        for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
-        }
-
+   
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
