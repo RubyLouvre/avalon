@@ -1188,8 +1188,8 @@
                 $$subscribers.splice(i, 1)
                 avalon.Array.remove(obj.list, data)
                 //log("debug: remove " + data.type)
-                if (data.type === "if" && data.template && data.template.parentNode === head) {
-                    head.removeChild(data.template)
+                if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
+                    ifGroup.removeChild(data.template)
                 }
                 for (var key in data) {
                     data[key] = null
