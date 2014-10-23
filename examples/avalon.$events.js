@@ -2772,6 +2772,7 @@
     })
 
     //这里的函数每当VM发生改变后，都会被执行（操作方为notifySubscribers）
+    var ifGroup = head.appendChild(document.createElement("avalon"))
     var bindingExecutors = avalon.bindingExecutors = {
         "attr": function(val, elem, data) {
             var method = data.type,
@@ -2991,7 +2992,7 @@
                     var node = data.element = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
                     data.template = elem
-                    head.appendChild(elem)
+                    ifGroup.appendChild(elem)
                 }
             }
         },

@@ -2047,7 +2047,7 @@
                     var node = data.element = DOC.createComment("ms-if")
                     elem.parentNode.replaceChild(node, elem)
                     data.template = elem
-                    head.appendChild(elem)
+                    ifGroup.appendChild(elem)
                 }
             }
         },
@@ -2086,7 +2086,7 @@
         },
         "widget": noop
     }
-
+    var ifGroup = head.appendChild(DOC.createElement("avalon"))
     var rdash = /\(([^)]*)\)/
     function parseDisplay(nodeName, val) {
         //用于取得此类标签的默认display值
