@@ -2379,6 +2379,10 @@
                         form.msValidate(elem)
                     }
                     data.msType = data.param || ""
+                    if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && data.param === "radio")) {
+                        log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
+                        data.msType = "checked"
+                    }
                     if (data.msType === "bool") {
                         data.msType = "boolean"
                         log("ms-duplex-bool已经更名为ms-duplex-boolean")
@@ -2386,11 +2390,8 @@
                         data.msType = "string"
                         log("ms-duplex-text已经更名为ms-duplex-string")
                     }
-                    if (data.msType === "radio") {
-                        log("ms-duplex-radio将在2.0废掉，请尽量不要用")
-                    }
-                    if (!/boolean|string|number/.test(data.msType)) {
-                        data.msType = ""
+                    if (!/boolean|number|checked/.test(data.msType)) {
+                        data.msType = "string"
                     }
                     data.bound = function(type, callback) {
                         elem.addEventListener(type, callback)
@@ -2662,22 +2663,18 @@
                 element.value = val
             }
         }
-        if (type === "checkbox" && data.param === "radio") {
-            type = "radio"
-        }
-        if (type === "radio") {
-
+        if (data.msType === "checked" || element.type === "radio") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var val = element.value
-                    var typedValue = data.msType ? getTypedValue(data, val) : !element.oldValue
+                    var typedValue = data.msType === "checked" ? !element.oldValue : getTypedValue(data, val)
                     evaluator(typedValue)
                     callback.call(element, typedValue)
                 }
             }
             data.handler = function() {
                 var val = evaluator()
-                var checked = data.msType ? val + "" === element.value : !!val
+                var checked = data.msType === "checked" ? !!val : val + "" === element.value
                 element.checked = element.oldValue = checked
             }
             bound(data.msType ? "change" : "click", updateVModel)
