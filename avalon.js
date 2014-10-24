@@ -45,7 +45,7 @@
 
     function log() {
         if (window.console && avalon.config.debug) {
-            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+// http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
             Function.apply.call(console.log, console, arguments)
         }
     }
@@ -183,7 +183,7 @@
                         continue
                     }
 
-                    // 防止环引用
+// 防止环引用
                     if (target === copy) {
                         continue
                     }
@@ -3033,8 +3033,12 @@
                         data.msType = "string"
                         log("ms-duplex-text已经更名为ms-duplex-string")
                     }
-                    if (!/boolean|number|checked/.test(data.msType)) {
+                    if (!/boolean|number|checked|mask/.test(data.msType)) {
                         data.msType = "string"
+                    }
+                    var hook = data.hook = avalon.duplexHooks[data.msType]
+                    if (typeof hook.init === "function") {
+                        hook.init(data)
                     }
                     data.bound = function(type, callback) {
                         if (elem.addEventListener) {
@@ -3268,12 +3272,195 @@
     var duplexBinding = bindingHandlers.duplex
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
+
+
+    function Mask(element, mask) {
+        this.options = avalon.getWidgetData(element, "duplexMask")
+        var t = {}
+        try {
+            t = new Function("return " + this.options.translation)()
+        } catch (e) {
+        }
+        this.element = element
+        this.mask = mask
+        this.invalid = []
+        this.translations = avalon.mix({
+            '0': {pattern: /\d/},
+            '9': {pattern: /\d/, optional: true},
+            '#': {pattern: /\d/, recursive: true},
+            'A': {pattern: /[a-zA-Z0-9]/},
+            'S': {pattern: /[a-zA-Z]/}
+        }, t)
+
+
+    }
+    Mask.prototype = {
+        getMaskString: function(skipMaskChars) {
+            var mask = this.mask
+            var options = this.options
+            var buf = [],
+                    value = this.element.value,
+                    m = 0, maskLen = mask.length,
+                    v = 0, valLen = value.length,
+                    offset = 1, addMethod = "push",
+                    resetPos = -1,
+                    lastMaskChar,
+                    check;
+            if (options.reverse) {
+                addMethod = "unshift";
+                offset = -1;
+                lastMaskChar = 0;
+                m = maskLen - 1;
+                v = valLen - 1;
+                check = function() {
+                    return m > -1 && v > -1;
+                };
+            } else {
+                lastMaskChar = maskLen - 1;
+                check = function() {
+                    return m < maskLen && v < valLen;
+                };
+            }
+
+            while (check()) {
+                var maskDigit = mask.charAt(m),
+                        valDigit = value.charAt(v),
+                        translation = this.translations[maskDigit];
+                if (translation) {
+                    if (valDigit.match(translation.pattern)) {
+                        buf[addMethod](valDigit);
+                        if (translation.recursive) {
+                            if (resetPos === -1) {
+                                resetPos = m;
+                            } else if (m === lastMaskChar) {
+                                m = resetPos - offset;
+                            }
+
+                            if (lastMaskChar === resetPos) {
+                                m -= offset;
+                            }
+                        }
+                        m += offset;
+                    } else if (translation.optional) {
+                        m += offset;
+                        v -= offset;
+                    } else if (translation.fallback) {
+                        buf[addMethod](translation.fallback);
+                        m += offset;
+                        v -= offset;
+                    } else {
+                        this.invalid.push({p: v, v: valDigit, e: translation.pattern});
+                    }
+                    v += offset;
+                } else {
+                    if (!skipMaskChars) {
+                        buf[addMethod](maskDigit);
+                    }
+
+                    if (valDigit === maskDigit) {
+                        v += offset;
+                    }
+
+                    m += offset;
+                }
+            }
+
+            var lastMaskCharDigit = mask.charAt(lastMaskChar);
+            if (maskLen === valLen + 1 && !this.translations[lastMaskCharDigit]) {
+                buf.push(lastMaskCharDigit);
+            }
+
+            return buf.join("");
+        },
+        getMaskRegExp: function() {
+            var mask = this.mask
+            var translations = this.translations
+            var maskChunks = [], translation, pattern, optional, recursive, oRecursive, r;
+            for (var i = 0; i < mask.length; i++) {
+                translation = translations[mask[i]];
+                if (translation) {
+
+                    pattern = translation.pattern.toString().replace(/.{1}$|^.{1}/g, "");
+                    optional = translation.optional;
+                    recursive = translation.recursive;
+                    if (recursive) {
+                        maskChunks.push(mask[i]);
+                        oRecursive = {digit: mask[i], pattern: pattern};
+                    } else {
+                        maskChunks.push(!optional && !recursive ? pattern : (pattern + "?"));
+                    }
+
+                } else {
+                    maskChunks.push(mask[i].replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                }
+            }
+
+            r = maskChunks.join("");
+            if (oRecursive) {
+                r = r.replace(new RegExp("(" + oRecursive.digit + "(.*" + oRecursive.digit + ")?)"), "($1)?")
+                        .replace(new RegExp(oRecursive.digit, "g"), oRecursive.pattern);
+            }
+
+            return  new RegExp(r);
+        }
+    }
+
+    function fixNull(val) {
+        return val == null ? "" : val
+    }
+    avalon.duplexHooks = {
+        checked: {
+            get: function(val, data) {
+                return !data.element.oldValue
+            }
+        },
+        string: {
+            get: function(val) {//同步到VM
+      
+                return val
+            },
+            set: fixNull
+        },
+        boolean: {
+            get: function(val) {
+                return val === "true"
+            },
+            set: fixNull
+        },
+        number: {
+            get: function(val) {
+                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
+            },
+            set: fixNull
+        },
+        mask: {
+            init: function(data) {
+                var el = data.element
+                var maskText = el.getAttribute("data-duplex-mask")
+                if (data.msType === "mask") {
+                    if (maskText) {
+                        data.msMask = new Mask(el, maskText)
+                    } else {
+                        throw ("请指定data-duplex-mask")
+                    }
+                }
+            },
+            get: function(val, data) {
+                return data.msMask.getMaskString()
+            },
+            set: function(val, data) {
+                return data.msMask.getMaskString()
+            }
+        }
+    }
+
     duplexBinding.INPUT = function(element, evaluator, data) {
         var type = element.type,
                 bound = data.bound,
                 $elem = avalon(element),
                 firstTigger = false,
-                composing = false
+                composing = false,
+                hook = data.hook
         function callback(value) {
             firstTigger = true
             data.changed.call(this, value)
@@ -3289,7 +3476,7 @@
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
-            var typedVal = getTypedValue(data, val)               //尝式转换为正确的格式
+            var typedVal = hook.get(val, data)       //尝式转换为正确的格式
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(typedVal)
                 callback.call(element, typedVal)
@@ -3304,7 +3491,7 @@
         //当model变化时,它就会改变value的值
         data.handler = function() {
             var val = evaluator()
-            val = val == null ? "" : val + ""
+            val = hook.set(val, data)
             if (val !== element.value) {
                 element.value = val
             }
@@ -3315,7 +3502,7 @@
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var val = element.value
-                    var typedValue = data.msType === "checked" ? !element.oldValue : getTypedValue(data, val)
+                    var typedValue = hook.get(val, data)
                     evaluator(typedValue)
                     callback.call(element, typedValue)
                 }
@@ -3346,15 +3533,14 @@
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    var typedValue = getTypedValue(data, element.value)
-                    avalon.Array[method](array, typedValue)
+                    avalon.Array[method](array, hook.get(element.value, data))
                     callback.call(element, array)
                 }
             }
 
             data.handler = function() {
                 var array = [].concat(evaluator()) //强制转换为数组
-                element.checked = array.indexOf(getTypedValue(data, element.value)) >= 0
+                element.checked = array.indexOf(hook.get(element.value, data)) >= 0
             }
 
             bound(W3C ? "change" : "click", updateVModel)
@@ -3427,17 +3613,6 @@
         }, 31)
     }
 
-    function getTypedValue(data, val) {
-        switch (data.msType) {
-            case "boolean":
-                return val === "true"
-            case "number":
-                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
-            default:
-                return val
-        }
-    }
-
     var TimerID, ribbon = [],
             launch = noop
     function W3CFire(el, name, detail) {
@@ -3496,15 +3671,16 @@
 
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
+        var hook = data.hook
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
                 if (Array.isArray(val)) {
                     val = val.map(function(v) {
-                        return getTypedValue(data, v)
+                        return hook.get(v, data)
                     })
                 } else {
-                    val = getTypedValue(data, val)
+                    val = hook.get(val, data)
                 }
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
