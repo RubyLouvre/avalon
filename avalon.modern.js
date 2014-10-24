@@ -1,6 +1,12 @@
-//==================================================
-// avalon.modern 2014.10.10注意： 只能用于IE10及高版本的标准浏览器
-//==================================================
+/*==================================================
+ Copyright (c) 2013-2014 司徒正美 and other contributors
+ http://www.cnblogs.com/rubylouvre/
+ https://github.com/RubyLouvre
+ http://weibo.com/jslouvre/
+ 
+ Released under the MIT license
+ avalon 1.3.6 2014.10.24 support IE10 and other latest browsers
+ ==================================================*/
 (function(DOC) {
     var expose = Date.now()
     var subscribers = "$" + expose
