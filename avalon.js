@@ -3299,11 +3299,15 @@
         getMaskedVal: function(skipMask) {
             var mask = this.mask
             var value = this.value || ""
-            this.impurity = {}
+
             var valueArray = value.split("")
             var maskArray = mask.split("")
             var translations = this.translations
             var buf = []
+            var caretIndex = -1 //光标的插入位置
+            var isValid = true
+            var impurityIndex = 0
+            this.impurity = {}
             if (value === "" || value === mask) {
                 //如果不存在或一致，那么先将元字符转换为占位符,比如
                 //将00/00/0000转换为__/__/____
@@ -3316,13 +3320,12 @@
                     }
                 }
             }
-            var pos = -1
-            var complete = true
-            var maskIndex = 0
+
             while (maskArray.length) {
                 var m = maskArray.shift()
-                if (complete)
-                    pos++//得控位获得焦点时,光标应该定位的位置
+                if (isValid) {//得控位获得焦点时,光标应该定位的位置
+                    caretIndex++
+                }
                 if (translations[m]) {
                     var el = valueArray.shift()//123456
                     var translation = translations[m]
@@ -3330,13 +3333,13 @@
                     if (el && el.match(pattern)) {
                         buf.push(el)
                     } else {
-                        complete = false
+                        isValid = false
                         if (!translation.optional && !skipMask) {
                             buf.push(translation.placehoder || this.placehoder)
                         }
                     }
                 } else {
-                    this.impurity[maskIndex] = true//收集杂质的位置
+                    this.impurity[impurityIndex] = true//收集杂质的位置
                     if (valueArray[0] === m) {// 当__/__/____遇到12/34/____时，/要去掉
                         valueArray.shift()
                     }
@@ -3344,17 +3347,11 @@
                         buf.push(m)
                     }
                 }
-                maskIndex++
+                impurityIndex++
             }
-            this.complete = complete
+            this.isValid = isValid
+            this.caretStart = caretIndex
             var ret = buf.join("")
-            if (!skipMask && !this.inited) {
-                this.inited = true
-                var element = this.element
-                setTimeout(function() {
-                    setCaret(element, pos, pos + 1)
-                }, 400)
-            }
             return ret
         }
     }
@@ -3474,12 +3471,28 @@
                 }
             },
             get: function(val, data) {
-                data.msMask.value = val
-                return data.msMask.getMaskedVal(true)
+                var mask = data.msMask
+                mask.getValue = mask.value = val
+                avalon.log("getter")
+                return mask.getMaskedVal(true)
             },
             set: function(val, data) {
-                data.msMask.value = val
-                return data.msMask.getMaskedVal()
+                avalon.log("setter")
+                var mask = data.msMask
+                mask.value = val
+                var masked = mask.getMaskedVal()
+                mask.value = masked
+                mask.value = mask.getMaskedVal(true)
+                var masked2 = mask.getMaskedVal()
+                avalon.log(data.msMask.getValue, masked2)
+                if (mask.getValue != masked2) {
+                    var pos = mask.caretStart
+                    setTimeout(function() {
+                        setCaret(data.element, pos, pos + 1)
+                    })
+                    avalon.log(data.msMask.caretStart)
+                }
+                return masked2
             }
         }
     }
@@ -3498,7 +3511,7 @@
             end = el.selectionEnd;
         } else {
             range = document.selection.createRange();
-
+avalon.log("IE get caret")
             if (range && range.parentElement() === el) {
                 len = el.value.length;
                 normalizedValue = el.value.replace(/\r\n/g, "\n");
