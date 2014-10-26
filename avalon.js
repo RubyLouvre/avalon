@@ -3292,35 +3292,39 @@
         avalon.mix(this, options)
         this.element = element
         this.mask = mask
+
         this.value = ""
     }
     Mask.prototype = {
         getMaskedVal: function(skipMask) {
             var mask = this.mask
             var value = this.value || ""
+            this.impurity = {}
             var valueArray = value.split("")
             var maskArray = mask.split("")
             var translations = this.translations
-
             var buf = []
             if (value.length === 0 || value === mask) {
+                //如果不存在或一致，那么先将元字符转换为占位符,比如
+                //将00/00/0000转换为__/__/____
                 for (var i = 0, n = maskArray.length; i < n; i++) {
                     var m = maskArray[i]
-                    if (translations[m]) {//如果不存在或一致，那么先将元字符转换为占位符
+                    if (translations[m]) {
                         valueArray[i] = translations[m].placehoder || "_"
                     } else {
                         valueArray[i] = m
                     }
                 }
             }
+
             var pos = 0
             var complete = true
-            console.log("xxxxxx " + value)
+            var maskIndex = 0
             while (maskArray.length) {
-                var m = maskArray.shift()  //00/00/0000
+                var m = maskArray.shift() 
+                
                 if (complete)
-                    pos++
-                console.log(m)
+                    pos++//得控位获得焦点时,光标应该定位的位置
                 if (translations[m]) {
                     var el = valueArray.shift()//123456
                     var translation = translations[m]
@@ -3329,20 +3333,23 @@
                         buf.push(el)
                     } else {
                         if (!translation.optional && !skipMask) {
-                            buf.push(translation.placehoder || "_")
+                            buf.push(translation.placehoder || this.placehoder)
                             complete = false
                         }
-
                     }
                 } else {
+                    this.impurity[maskIndex] = true//收集杂质的位置
+                    if (valueArray[0] === m) {// 当__/__/____遇到12/34/____时，/要去掉
+                        valueArray.shift()
+                    }
                     if (!skipMask) {
                         buf.push(m)
                     }
                 }
+                maskIndex++
             }
             this.complete = complete
             var ret = buf.join("")
-            console.log("ret  " + ret)
             if (!skipMask && !this.inited) {
                 this.inited = true
                 var element = this.element
@@ -3393,18 +3400,31 @@
                             if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
                                 return
                             var caret = getCaret(el)
+                            var impurity = data.msMask.impurity || {}
+                            console.log(impurity)
                             var pos
+                            //   console.log(caret.start)
                             if (k === 37 || k == 38) {//向左向上移动光标
-                                pos = caret.start - 1
+                                pos = caret.start-1
+                                avalon.log(pos+"向左")
+                                if (impurity[pos]) {
+                                    pos -= 1
+                                }
+                               // pos -= 1
                             } else if (k === 39 || k == 40) {//向右向下移动光标
                                 pos = caret.end//只操作end
+                                  avalon.log(pos+"向右")
+                                if (impurity[pos]) {
+                                    pos++
+                                }
                             } else if (k && k !== 13) {//如果是在光标高亮处直接键入字母
                                 pos = caret.start
                             }
                             if (typeof pos === "number") {
                                 if (pos >= el.value.length) {//start与end一致
                                     pos = pos - 1
-                                } else if (pos < 1) {
+                                } else if (pos < 1 ) {
+                                   // console.log("-----------"+ pos+impurity[pos])
                                     pos = 0
                                 }
                                 if (e.preventDefault) {
@@ -3413,7 +3433,7 @@
                                     e.returnValue = false
                                 }
                                 setTimeout(function() {
-                                    avalon.log(pos, pos + 1)
+                                    // avalon.log(pos, pos + 1)
                                     setCaret(el, pos, pos + 1)
                                 })
                             }
