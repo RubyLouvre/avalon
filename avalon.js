@@ -1969,7 +1969,7 @@
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea".toUpperCase())
 
     //确保元素的内容被完全扫描渲染完毕才调用回调
-    var interval = W3C ? 15 : 50
+    var interval = W3C ? 30 : 50
 
     function checkScan(elem, callback) {
         var innerHTML = NaN,
@@ -3304,13 +3304,13 @@
             var maskArray = mask.split("")
             var translations = this.translations
             var buf = []
-            if (value.length === 0 || value === mask) {
+            if (value === "" || value === mask) {
                 //如果不存在或一致，那么先将元字符转换为占位符,比如
                 //将00/00/0000转换为__/__/____
                 for (var i = 0, n = maskArray.length; i < n; i++) {
                     var m = maskArray[i]
                     if (translations[m]) {
-                        valueArray[i] = translations[m].placehoder || "_"
+                        valueArray[i] = translations[m].placehoder || this.placehoder
                     } else {
                         valueArray[i] = m
                     }
@@ -3321,8 +3321,8 @@
             var complete = true
             var maskIndex = 0
             while (maskArray.length) {
-                var m = maskArray.shift() 
-                
+                var m = maskArray.shift()
+
                 if (complete)
                     pos++//得控位获得焦点时,光标应该定位的位置
                 if (translations[m]) {
@@ -3400,40 +3400,56 @@
                             if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
                                 return
                             var caret = getCaret(el)
-                            var impurity = data.msMask.impurity || {}
-                            console.log(impurity)
-                            var pos
-                            //   console.log(caret.start)
-                            if (k === 37 || k == 38) {//向左向上移动光标
-                                pos = caret.start-1
-                                avalon.log(pos+"向左")
-                                if (impurity[pos]) {
-                                    pos -= 1
+                            var impurity = data.msMask.impurity
+                            avalon.log(impurity)
+                            function getPos(i, left, n) {
+                                var step = left ? -1 : +1
+                                var old = i
+                                while (i >= -1 && i < n) {
+                                    i = i + step
+                                    if (!impurity[i] && i !== -1 && i !== n) {
+                                        return i
+                                    }
+                                    if (i === -1) {
+                                        return  old + 1
+                                    }
+                                    if (i === n) {
+                                        return  old - 1
+                                    }
                                 }
-                               // pos -= 1
+                            }
+                            var n = el.value.length - 1
+                            var pos
+                            if (k === 37 || k == 38) {//向左向上移动光标
+                                pos = caret.start - 1
+                                if (pos < 1) {
+                                    pos = 0
+                                }
+                                if (impurity[pos]) {
+                                    pos = getPos(pos, true, n)
+                                }
                             } else if (k === 39 || k == 40) {//向右向下移动光标
                                 pos = caret.end//只操作end
-                                  avalon.log(pos+"向右")
+                                avalon.log(pos + "向右")
+                                if (pos >= n) {
+                                    pos -= 1
+                                }
                                 if (impurity[pos]) {
-                                    pos++
+                                    pos = getPos(pos, false, n)
                                 }
                             } else if (k && k !== 13) {//如果是在光标高亮处直接键入字母
                                 pos = caret.start
+                                if (impurity[pos]) {
+                                    pos -= 1
+                                }
                             }
                             if (typeof pos === "number") {
-                                if (pos >= el.value.length) {//start与end一致
-                                    pos = pos - 1
-                                } else if (pos < 1 ) {
-                                   // console.log("-----------"+ pos+impurity[pos])
-                                    pos = 0
-                                }
                                 if (e.preventDefault) {
                                     e.preventDefault()
                                 } else {
                                     e.returnValue = false
                                 }
                                 setTimeout(function() {
-                                    // avalon.log(pos, pos + 1)
                                     setCaret(el, pos, pos + 1)
                                 })
                             }
@@ -3441,15 +3457,12 @@
                         data.bound("keyup", keyCallback)
                         data.bound("blur", function() {
                             if (data.msMask.clearifnotmatch) {
-                                avalon.log(data.msMask.complete)
                                 if (!data.msMask.complete) {
-                                    //  data.msMask.inited = data.msMask.value = el.value = ""
                                 }
                             }
                         })
                         data.bound("focus", function() {
                             if (!data.msMask.complete) {
-                                // data.msMask.value = el.value
                             }
                         })
                     } else {
