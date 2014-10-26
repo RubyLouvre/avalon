@@ -2572,6 +2572,7 @@
                 if (boolMap[attrName]) {
                     var bool = boolMap[attrName]
                     if (typeof elem[bool] === "boolean") {
+                        // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
                         return elem[bool] = !!val
                     }
                 }
@@ -3511,7 +3512,7 @@
             end = el.selectionEnd;
         } else {
             range = document.selection.createRange();
-avalon.log("IE get caret")
+            avalon.log("IE get caret")
             if (range && range.parentElement() === el) {
                 len = el.value.length;
                 normalizedValue = el.value.replace(/\r\n/g, "\n");
