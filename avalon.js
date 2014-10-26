@@ -3036,10 +3036,6 @@
                     if (!/boolean|number|checked|mask/.test(data.msType)) {
                         data.msType = "string"
                     }
-                    var hook = data.hook = avalon.duplexHooks[data.msType]
-                    if (typeof hook.init === "function") {
-                        hook.init(data)
-                    }
                     data.bound = function(type, callback) {
                         if (elem.addEventListener) {
                             elem.addEventListener(type, callback, false)
@@ -3051,6 +3047,10 @@
                             avalon.unbind(elem, type, callback)
                             old && old()
                         }
+                    }
+                    var hook = data.hook = avalon.duplexHooks[data.msType]
+                    if (typeof hook.init === "function") {
+                        hook.init(data)
                     }
                     duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
@@ -3275,133 +3275,82 @@
 
 
     function Mask(element, mask) {
-        this.options = avalon.getWidgetData(element, "duplexMask")
+        var options = avalon.getWidgetData(element, "duplexMask")
         var t = {}
         try {
-            t = new Function("return " + this.options.translation)()
+            t = new Function("return " + options.translations)()
         } catch (e) {
         }
-        this.element = element
-        this.mask = mask
-        this.invalid = []
-        this.translations = avalon.mix({
+        this.placehoder = "_"
+        options.translations = avalon.mix({
             '0': {pattern: /\d/},
             '9': {pattern: /\d/, optional: true},
             '#': {pattern: /\d/, recursive: true},
             'A': {pattern: /[a-zA-Z0-9]/},
             'S': {pattern: /[a-zA-Z]/}
         }, t)
-
-
+        avalon.mix(this, options)
+        this.element = element
+        this.mask = mask
+        this.value = ""
     }
     Mask.prototype = {
-        getMaskString: function(skipMaskChars) {
+        getMaskedVal: function(skipMask) {
             var mask = this.mask
-            var options = this.options
-            var buf = [],
-                    value = this.element.value,
-                    m = 0, maskLen = mask.length,
-                    v = 0, valLen = value.length,
-                    offset = 1, addMethod = "push",
-                    resetPos = -1,
-                    lastMaskChar,
-                    check;
-            if (options.reverse) {
-                addMethod = "unshift";
-                offset = -1;
-                lastMaskChar = 0;
-                m = maskLen - 1;
-                v = valLen - 1;
-                check = function() {
-                    return m > -1 && v > -1;
-                };
-            } else {
-                lastMaskChar = maskLen - 1;
-                check = function() {
-                    return m < maskLen && v < valLen;
-                };
-            }
-
-            while (check()) {
-                var maskDigit = mask.charAt(m),
-                        valDigit = value.charAt(v),
-                        translation = this.translations[maskDigit];
-                if (translation) {
-                    if (valDigit.match(translation.pattern)) {
-                        buf[addMethod](valDigit);
-                        if (translation.recursive) {
-                            if (resetPos === -1) {
-                                resetPos = m;
-                            } else if (m === lastMaskChar) {
-                                m = resetPos - offset;
-                            }
-
-                            if (lastMaskChar === resetPos) {
-                                m -= offset;
-                            }
-                        }
-                        m += offset;
-                    } else if (translation.optional) {
-                        m += offset;
-                        v -= offset;
-                    } else if (translation.fallback) {
-                        buf[addMethod](translation.fallback);
-                        m += offset;
-                        v -= offset;
-                    } else {
-                        this.invalid.push({p: v, v: valDigit, e: translation.pattern});
-                    }
-                    v += offset;
-                } else {
-                    if (!skipMaskChars) {
-                        buf[addMethod](maskDigit);
-                    }
-
-                    if (valDigit === maskDigit) {
-                        v += offset;
-                    }
-
-                    m += offset;
-                }
-            }
-
-            var lastMaskCharDigit = mask.charAt(lastMaskChar);
-            if (maskLen === valLen + 1 && !this.translations[lastMaskCharDigit]) {
-                buf.push(lastMaskCharDigit);
-            }
-
-            return buf.join("");
-        },
-        getMaskRegExp: function() {
-            var mask = this.mask
+            var value = this.value || ""
+            var valueArray = value.split("")
+            var maskArray = mask.split("")
             var translations = this.translations
-            var maskChunks = [], translation, pattern, optional, recursive, oRecursive, r;
-            for (var i = 0; i < mask.length; i++) {
-                translation = translations[mask[i]];
-                if (translation) {
 
-                    pattern = translation.pattern.toString().replace(/.{1}$|^.{1}/g, "");
-                    optional = translation.optional;
-                    recursive = translation.recursive;
-                    if (recursive) {
-                        maskChunks.push(mask[i]);
-                        oRecursive = {digit: mask[i], pattern: pattern};
+            var buf = []
+            if (value.length === 0 || value === mask) {
+                for (var i = 0, n = maskArray.length; i < n; i++) {
+                    var m = maskArray[i]
+                    if (translations[m]) {//如果不存在或一致，那么先将元字符转换为占位符
+                        valueArray[i] = translations[m].placehoder || "_"
                     } else {
-                        maskChunks.push(!optional && !recursive ? pattern : (pattern + "?"));
+                        valueArray[i] = m
                     }
-
-                } else {
-                    maskChunks.push(mask[i].replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
                 }
             }
+            var pos = 0
+            var complete = true
+            console.log("xxxxxx " + value)
+            while (maskArray.length) {
+                var m = maskArray.shift()  //00/00/0000
+                if (complete)
+                    pos++
+                console.log(m)
+                if (translations[m]) {
+                    var el = valueArray.shift()//123456
+                    var translation = translations[m]
+                    var pattern = translation.pattern
+                    if (el && el.match(pattern)) {
+                        buf.push(el)
+                    } else {
+                        if (!translation.optional && !skipMask) {
+                            buf.push(translation.placehoder || "_")
+                            complete = false
+                        }
 
-            r = maskChunks.join("");
-            if (oRecursive) {
-                r = r.replace(new RegExp("(" + oRecursive.digit + "(.*" + oRecursive.digit + ")?)"), "($1)?")
-                        .replace(new RegExp(oRecursive.digit, "g"), oRecursive.pattern);
+                    }
+                } else {
+                    if (!skipMask) {
+                        buf.push(m)
+                    }
+                }
             }
-
-            return  new RegExp(r);
+            this.complete = complete
+            var ret = buf.join("")
+            console.log("ret  " + ret)
+            if (!skipMask && !this.inited) {
+                this.inited = true
+                var element = this.element
+                setTimeout(function() {
+                    setCaret(element, pos - 1, pos)
+                }, 400)
+            }
+            return ret
         }
     }
 
@@ -3416,7 +3365,6 @@
         },
         string: {
             get: function(val) {//同步到VM
-      
                 return val
             },
             set: fixNull
@@ -3440,17 +3388,131 @@
                 if (data.msType === "mask") {
                     if (maskText) {
                         data.msMask = new Mask(el, maskText)
+                        function keyCallback(e) {
+                            var k = e.which || e.keyCode
+                            if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
+                                return
+                            var caret = getCaret(el)
+                            var pos
+                            if (k === 37 || k == 38) {//向左向上移动光标
+                                pos = caret.start - 1
+                            } else if (k === 39 || k == 40) {//向右向下移动光标
+                                pos = caret.end//只操作end
+                            } else if (k && k !== 13) {//如果是在光标高亮处直接键入字母
+                                pos = caret.start
+                            }
+                            if (typeof pos === "number") {
+                                if (pos >= el.value.length) {//start与end一致
+                                    pos = pos - 1
+                                } else if (pos < 1) {
+                                    pos = 0
+                                }
+                                if (e.preventDefault) {
+                                    e.preventDefault()
+                                } else {
+                                    e.returnValue = false
+                                }
+                                setTimeout(function() {
+                                    avalon.log(pos, pos + 1)
+                                    setCaret(el, pos, pos + 1)
+                                })
+                            }
+                        }
+                        data.bound("keyup", keyCallback)
+                        data.bound("blur", function() {
+                            if (data.msMask.clearifnotmatch) {
+                                avalon.log(data.msMask.complete)
+                                if (!data.msMask.complete) {
+                                    //  data.msMask.inited = data.msMask.value = el.value = ""
+                                }
+                            }
+                        })
+                        data.bound("focus", function() {
+                            if (!data.msMask.complete) {
+                                // data.msMask.value = el.value
+                            }
+                        })
                     } else {
                         throw ("请指定data-duplex-mask")
                     }
                 }
             },
             get: function(val, data) {
-                return data.msMask.getMaskString()
+                data.msMask.value = val
+                return data.msMask.getMaskedVal(true)
             },
             set: function(val, data) {
-                return data.msMask.getMaskString()
+                data.msMask.value = val
+                return data.msMask.getMaskedVal()
             }
+        }
+    }
+
+
+    function getCaret(el) {
+        var start = 0,
+                end = 0,
+                normalizedValue,
+                range,
+                textInputRange,
+                len,
+                endRange;
+        if (typeof el.selectionStart === "number" && typeof el.selectionEnd === "number") {
+            start = el.selectionStart;
+            end = el.selectionEnd;
+        } else {
+            range = document.selection.createRange();
+
+            if (range && range.parentElement() === el) {
+                len = el.value.length;
+                normalizedValue = el.value.replace(/\r\n/g, "\n");
+
+                // Create a working TextRange that lives only in the input
+                textInputRange = el.createTextRange();
+                textInputRange.moveToBookmark(range.getBookmark());
+
+                // Check if the start and end of the selection are at the very end
+                // of the input, since moveStart/moveEnd doesn't return what we want
+                // in those cases
+                endRange = el.createTextRange();
+                endRange.collapse(false);
+
+                if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+                    start = end = len;
+                } else {
+                    start = -textInputRange.moveStart("character", -len);
+                    start += normalizedValue.slice(0, start).split("\n").length - 1;
+
+                    if (textInputRange.compareEndPoints("EndToEnd", endRange) > -1) {
+                        end = len;
+                    } else {
+                        end = -textInputRange.moveEnd("character", -len);
+                        end += normalizedValue.slice(0, end).split("\n").length - 1;
+                    }
+                }
+            }
+        }
+        return {
+            start: start,
+            end: end
+        };
+    }
+    function setCaret(ctrl, start, end) {
+        if (!ctrl.value || ctrl.readOnly)
+            return
+        if (!end) {
+            end = start
+        }
+        if (ctrl.setSelectionRange) {
+            ctrl.selectionStart = start
+            ctrl.selectionEnd = end
+            ctrl.focus()
+        } else {
+            var range = ctrl.createTextRange()
+            range.collapse(true);
+            range.moveStart("character", start)
+            range.moveEnd("character", end - start)
+            range.select()
         }
     }
 
@@ -3461,6 +3523,7 @@
                 firstTigger = false,
                 composing = false,
                 hook = data.hook
+
         function callback(value) {
             firstTigger = true
             data.changed.call(this, value)
