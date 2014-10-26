@@ -3316,13 +3316,11 @@
                     }
                 }
             }
-
-            var pos = 0
+            var pos = -1
             var complete = true
             var maskIndex = 0
             while (maskArray.length) {
                 var m = maskArray.shift()
-
                 if (complete)
                     pos++//得控位获得焦点时,光标应该定位的位置
                 if (translations[m]) {
@@ -3332,9 +3330,9 @@
                     if (el && el.match(pattern)) {
                         buf.push(el)
                     } else {
+                        complete = false
                         if (!translation.optional && !skipMask) {
                             buf.push(translation.placehoder || this.placehoder)
-                            complete = false
                         }
                     }
                 } else {
@@ -3354,7 +3352,7 @@
                 this.inited = true
                 var element = this.element
                 setTimeout(function() {
-                    setCaret(element, pos - 1, pos)
+                    setCaret(element, pos, pos + 1)
                 }, 400)
             }
             return ret
@@ -3439,19 +3437,24 @@
                                 }
                             } else if (k && k !== 13) {//如果是在光标高亮处直接键入字母
                                 pos = caret.start
-                                if (impurity[pos]) {
+                                if (pos >= n) {
                                     pos -= 1
+                                }
+                                if (impurity[pos]) {
+                                    pos = getPos(pos, false, n)
                                 }
                             }
                             if (typeof pos === "number") {
-                                if (e.preventDefault) {
-                                    e.preventDefault()
-                                } else {
-                                    e.returnValue = false
-                                }
+                                data.msMask.pos = pos
                                 setTimeout(function() {
+                                    avalon.log([pos, pos + 1])
                                     setCaret(el, pos, pos + 1)
                                 })
+                            }
+                            if (e.preventDefault) {
+                                e.preventDefault()
+                            } else {
+                                e.returnValue = false
                             }
                         }
                         data.bound("keyup", keyCallback)
