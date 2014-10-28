@@ -3283,33 +3283,33 @@
         } catch (e) {
         }
         this.placehoder = "_"
+        this.clearIfInvalid = false //如果它不匹配就会在失去焦点时清空value
+        this.clearIfPristine = true //如果它没有改动过就会在失去焦点时清空value
         options.translations = avalon.mix({
-            '0': {pattern: /\d/},
-            '9': {pattern: /\d/, optional: true},
-            '#': {pattern: /\d/, recursive: true},
-            'A': {pattern: /[a-zA-Z0-9]/},
-            'S': {pattern: /[a-zA-Z]/}
+            0: {pattern: /\d/},
+            9: {pattern: /\d/, optional: true},
+            A: {pattern: /[a-zA-Z0-9]/},
+            S: {pattern: /[a-zA-Z]/}
         }, t)
-        avalon.mix(this, options)
-        this.element = element
-        this.mask = mask
 
-        this.value = ""
+        avalon.mix(this, options)
+        this.mask = mask
+        this.element = element
+        this.oldValue = this.value = ""
     }
     Mask.prototype = {
         getMaskedVal: function(skipMask) {
             var mask = this.mask
-            var value = this.value || ""
-
+            var value = this.value
             var valueArray = value.split("")
             var maskArray = mask.split("")
             var translations = this.translations
             var buf = []
             var caretIndex = -1 //光标的插入位置
-            var isValid = true
+            var valid = true
             var impurityIndex = 0
             this.impurity = {}
-            if (value === "" || value === mask) {
+            if (value === mask) {
                 //如果不存在或一致，那么先将元字符转换为占位符,比如
                 //将00/00/0000转换为__/__/____
                 for (var i = 0, n = maskArray.length; i < n; i++) {
@@ -3320,21 +3320,23 @@
                         valueArray[i] = m
                     }
                 }
+                this.validMask = valueArray.join("")
             }
 
             while (maskArray.length) {
                 var m = maskArray.shift()
-                if (isValid) {//得控位获得焦点时,光标应该定位的位置
+                if (valid) {//得控位获得焦点时,光标应该定位的位置
                     caretIndex++
                 }
                 if (translations[m]) {
                     var el = valueArray.shift()//123456
                     var translation = translations[m]
                     var pattern = translation.pattern
+
                     if (el && el.match(pattern)) {
                         buf.push(el)
                     } else {
-                        isValid = false
+                        valid = false
                         if (!translation.optional && !skipMask) {
                             buf.push(translation.placehoder || this.placehoder)
                         }
@@ -3350,10 +3352,9 @@
                 }
                 impurityIndex++
             }
-            this.isValid = isValid
+            this.valid = valid
             this.caretStart = caretIndex
-            var ret = buf.join("")
-            return ret
+            return  buf.join("")
         }
     }
 
@@ -3397,7 +3398,6 @@
                                 return
                             var caret = getCaret(el)
                             var impurity = data.msMask.impurity
-                            avalon.log(impurity)
                             function getPos(i, left, n) {
                                 var step = left ? -1 : +1
                                 var old = i
@@ -3426,7 +3426,6 @@
                                 }
                             } else if (k === 39 || k == 40) {//向右向下移动光标
                                 pos = caret.end//只操作end
-                                avalon.log(pos + "向右")
                                 if (pos >= n) {
                                     pos -= 1
                                 }
@@ -3443,9 +3442,7 @@
                                 }
                             }
                             if (typeof pos === "number") {
-                                data.msMask.pos = pos
                                 setTimeout(function() {
-                                    avalon.log([pos, pos + 1])
                                     setCaret(el, pos, pos + 1)
                                 })
                             }
@@ -3457,13 +3454,19 @@
                         }
                         data.bound("keyup", keyCallback)
                         data.bound("blur", function() {
-                            if (data.msMask.clearifnotmatch) {
-                                if (!data.msMask.complete) {
-                                }
+                            var mask = data.msMask
+                            if ((mask.clearIfInvalid && !mask.valid) ||
+                                    (mask.clearIfPristine && mask.value === mask.validMask)) {
+                                avalon.log("clear")
+                                this.value = mask.oldValue = mask.masked = ""
                             }
                         })
                         data.bound("focus", function() {
-                            if (!data.msMask.complete) {
+                            var mask = data.msMask
+                            if (!mask.masked) { //如果里面没有,
+                                mask.masked = true
+                                this.value = avalon.duplexHooks.mask.set(mask.value || mask.mask, data)
+                                avalon.log("focus")
                             }
                         })
                     } else {
@@ -3473,27 +3476,34 @@
             },
             get: function(val, data) {
                 var mask = data.msMask
-                mask.getValue = mask.value = val
-                avalon.log("getter")
-                return mask.getMaskedVal(true)
+                if (mask.masked) {
+
+                    avalon.log(mask.oldValue, val)
+                    avalon.log("getter")
+                    mask.oldValue = mask.value = val
+                    return mask.getMaskedVal(true)
+                } else {
+                    return val
+                }
             },
             set: function(val, data) {
-                avalon.log("setter")
                 var mask = data.msMask
-                mask.value = val
-                var masked = mask.getMaskedVal()
-                mask.value = masked
-                mask.value = mask.getMaskedVal(true)
-                var masked2 = mask.getMaskedVal()
-                avalon.log(data.msMask.getValue, masked2)
-                if (mask.getValue != masked2) {
-                    var pos = mask.caretStart
-                    setTimeout(function() {
-                        setCaret(data.element, pos, pos + 1)
-                    })
-                    avalon.log(data.msMask.caretStart)
+                if (mask.masked) {
+                    avalon.log("setter")
+                    mask.value = val
+                    mask.value = mask.getMaskedVal()
+                    mask.value = mask.getMaskedVal(true) //得到上一次的maskValue,并对数据进行清洗
+                    var newValue = mask.getMaskedVal()    //得到第二次的maskValue
+                    if (mask.oldValue !== newValue) {
+                        var pos = mask.caretStart
+                        setTimeout(function() {
+                            setCaret(data.element, pos, pos + 1)
+                        }, 50)
+                    }
+                    return newValue
+                } else {
+                    return val
                 }
-                return masked2
             }
         }
     }
@@ -3501,43 +3511,33 @@
 
     function getCaret(el) {
         var start = 0,
-                end = 0,
-                normalizedValue,
-                range,
-                textInputRange,
-                len,
-                endRange;
+                end = 0
         if (typeof el.selectionStart === "number" && typeof el.selectionEnd === "number") {
             start = el.selectionStart;
             end = el.selectionEnd;
         } else {
-            range = document.selection.createRange();
-            avalon.log("IE get caret")
+            var range = document.selection.createRange()
             if (range && range.parentElement() === el) {
-                len = el.value.length;
-                normalizedValue = el.value.replace(/\r\n/g, "\n");
+                var len = el.value.length;
+                var normalizedValue = el.value.replace(/\r?\n/g, "\n")
 
-                // Create a working TextRange that lives only in the input
-                textInputRange = el.createTextRange();
-                textInputRange.moveToBookmark(range.getBookmark());
+                var textInputRange = el.createTextRange()
+                textInputRange.moveToBookmark(range.getBookmark())
 
-                // Check if the start and end of the selection are at the very end
-                // of the input, since moveStart/moveEnd doesn't return what we want
-                // in those cases
-                endRange = el.createTextRange();
+                var endRange = el.createTextRange();
                 endRange.collapse(false);
 
                 if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
-                    start = end = len;
+                    start = end = len
                 } else {
-                    start = -textInputRange.moveStart("character", -len);
-                    start += normalizedValue.slice(0, start).split("\n").length - 1;
+                    start = -textInputRange.moveStart("character", -len)
+                    start += normalizedValue.slice(0, start).split("\n").length - 1
 
                     if (textInputRange.compareEndPoints("EndToEnd", endRange) > -1) {
-                        end = len;
+                        end = len
                     } else {
-                        end = -textInputRange.moveEnd("character", -len);
-                        end += normalizedValue.slice(0, end).split("\n").length - 1;
+                        end = -textInputRange.moveEnd("character", -len)
+                        end += normalizedValue.slice(0, end).split("\n").length - 1
                     }
                 }
             }
@@ -3585,10 +3585,15 @@
             composing = false
         }
         //当value变化时改变model的值
-        function updateVModel() {
+        function updateVModel(e) {
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
-            var val = element.oldValue = element.value //防止递归调用形成死循环
+            if (element.oldValue != element.value) {
+                var val = element.oldValue = element.value //防止递归调用形成死循环
+            } else {
+                return
+            }
+          //  avalon.log("updateModel" + e.type)
             var typedVal = hook.get(val, data)       //尝式转换为正确的格式
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(typedVal)
@@ -3671,19 +3676,19 @@
                     bound("input", updateVModel)
                     bound("compositionstart", compositionStart)
                     bound("compositionend", compositionEnd)
-                    if ("onselectionchange"in DOC) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
-                        function selectionchange(e) {
-                            if (e.type === "focus") {
-                                DOC.addEventListener("selectionchange", updateVModel, false);
-                            } else {
-                                DOC.removeEventListener("selectionchange", updateVModel, false);
-                            }
-                        }
-                        bound("focus", selectionchange)
-                        bound("blur", selectionchange)
-                    }
+                   // if (DOC.documentMode === 9) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
+//                        function selectionchange(e) {
+//                            if (e.type === "focus") {
+//                                DOC.addEventListener("selectionchange", updateVModel, false);
+//                            } else {
+//                                DOC.removeEventListener("selectionchange", updateVModel, false);
+//                            }
+//                        }
+//                        bound("focus", selectionchange)
+//                        bound("blur", selectionchange)
+                 //   }
                 } else {
-                    var events = ["keyup", "paste", "cut", "change"]
+                    var events = ["keyup", "paste", "cut","change"]//, 
 
                     function removeFn(e) {
                         var key = e.keyCode
@@ -3778,6 +3783,7 @@
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
+        avalon.log("hijack element.value")
     } catch (e) {
         launch = avalon.tick
     }
