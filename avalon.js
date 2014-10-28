@@ -3393,9 +3393,14 @@
                     if (maskText) {
                         data.msMask = new Mask(el, maskText)
                         function keyCallback(e) {
+
                             var k = e.which || e.keyCode
+                            if (e.type == "click") {
+                                k = 100
+                            }
                             if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
                                 return
+
                             var caret = getCaret(el)
                             var impurity = data.msMask.impurity
                             function getPos(i, left, n) {
@@ -3453,20 +3458,19 @@
                             }
                         }
                         data.bound("keyup", keyCallback)
+                        data.bound("click", keyCallback)
                         data.bound("blur", function() {
                             var mask = data.msMask
                             if ((mask.clearIfInvalid && !mask.valid) ||
                                     (mask.clearIfPristine && mask.value === mask.validMask)) {
-                                avalon.log("clear")
-                                this.value = mask.oldValue = mask.masked = ""
+                                el.value = mask.oldValue = mask.masked = ""//注意IE6-8下，this不指向element
                             }
                         })
                         data.bound("focus", function() {
                             var mask = data.msMask
                             if (!mask.masked) { //如果里面没有,
                                 mask.masked = true
-                                this.value = avalon.duplexHooks.mask.set(mask.value || mask.mask, data)
-                                avalon.log("focus")
+                                el.value = avalon.duplexHooks.mask.set(mask.value || mask.mask, data)
                             }
                         })
                     } else {
@@ -3477,9 +3481,6 @@
             get: function(val, data) {
                 var mask = data.msMask
                 if (mask.masked) {
-
-                    avalon.log(mask.oldValue, val)
-                    avalon.log("getter")
                     mask.oldValue = mask.value = val
                     return mask.getMaskedVal(true)
                 } else {
@@ -3489,7 +3490,6 @@
             set: function(val, data) {
                 var mask = data.msMask
                 if (mask.masked) {
-                    avalon.log("setter")
                     mask.value = val
                     mask.value = mask.getMaskedVal()
                     mask.value = mask.getMaskedVal(true) //得到上一次的maskValue,并对数据进行清洗
@@ -3585,15 +3585,10 @@
             composing = false
         }
         //当value变化时改变model的值
-        function updateVModel(e) {
+        function updateVModel(event) {
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
-            if (element.oldValue != element.value) {
-                var val = element.oldValue = element.value //防止递归调用形成死循环
-            } else {
-                return
-            }
-          //  avalon.log("updateModel" + e.type)
+            var val = element.oldValue = element.value //防止递归调用形成死循环
             var typedVal = hook.get(val, data)       //尝式转换为正确的格式
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(typedVal)
@@ -3676,41 +3671,23 @@
                     bound("input", updateVModel)
                     bound("compositionstart", compositionStart)
                     bound("compositionend", compositionEnd)
-                   // if (DOC.documentMode === 9) {//fix IE9 http://www.matts411.com/post/internet-explorer-9-oninput/
-//                        function selectionchange(e) {
-//                            if (e.type === "focus") {
-//                                DOC.addEventListener("selectionchange", updateVModel, false);
-//                            } else {
-//                                DOC.removeEventListener("selectionchange", updateVModel, false);
-//                            }
-//                        }
-//                        bound("focus", selectionchange)
-//                        bound("blur", selectionchange)
-                 //   }
-                } else {
-                    var events = ["keyup", "paste", "cut","change"]//, 
-
-                    function removeFn(e) {
-                        var key = e.keyCode
-                        //    command            modifiers                   arrows
-                        if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
-                            return
-                        if (e.type === "cut") {
-                            avalon.nextTick(updateVModel)
-                        } else {
-                            updateVModel()
+                    //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+                    //http://www.matts411.com/post/internet-explorer-9-oninput/
+                    if (DOC.documentMode === 9) {
+                        function delay(e) {
+                            setTimeout(function() {
+                                updateVModel(e)
+                            })
                         }
+                        bound("paste", delay)
+                        bound("cut", delay)
                     }
-
-                    events.forEach(function(type) {
-                        element.attachEvent("on" + type, removeFn)
+                } else {
+                    bound("propertychange", function(e) {
+                        if (e.properyName === "value") {
+                            updateVModel(e)
+                        }
                     })
-
-                    data.rollback = function() {
-                        events.forEach(function(type) {
-                            element.detachEvent("on" + type, removeFn)
-                        })
-                    }
                 }
             }
         }
@@ -3783,7 +3760,6 @@
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
-        avalon.log("hijack element.value")
     } catch (e) {
         launch = avalon.tick
     }
