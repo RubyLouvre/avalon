@@ -684,6 +684,7 @@
     function escapeRegExp(target) {
         return (target + "").replace(rregexp, "\\$&")
     }
+    var innerRequire = noop
     var plugins = {
         loader: function(builtin) {
             window.define = builtin ? innerRequire.define : otherDefine
@@ -3580,8 +3581,6 @@
     /*********************************************************************
      *                     AMD加载器                                  *
      **********************************************************************/
-
-    var innerRequire
     var modules = avalon.modules = {
         "ready!": {
             exports: avalon

@@ -1041,6 +1041,7 @@
         //将字符串安全格式化为正则表达式的源码
         return (target + "").replace(rregexp, "\\$&")
     }
+    var innerRequire = noop 
     var plugins = {
         loader: function(builtin) {
             window.define = builtin ? innerRequire.define : otherDefine
@@ -3376,7 +3377,7 @@
             },
             set: fixNull
         },
-        boolean: {
+        "boolean": {
             get: function(val) {
                 return val === "true"
             },
@@ -3397,9 +3398,15 @@
                         data.msMask = new Mask(elem, maskText)
                         function keyCallback(e) {
                             var k = e.which || e.keyCode
-                            if (e.type == "click") {
+                            if (e.type === "click") {
                                 k = 100
                             }
+                            var valueLength = elem.value.length
+                            if (valueLength && (data.msMask.validMask.length !== valueLength)) {
+                                data.msMask.masked = false
+                            }
+
+                            // console.log(k)
                             if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
                                 return
 
@@ -3453,6 +3460,7 @@
                                     setCaret(elem, pos, pos + 1)
                                 })
                             }
+
                             if (e.preventDefault) {
                                 e.preventDefault()
                             } else {
@@ -4578,12 +4586,9 @@
         filters.date.locate = locate
     }
 
-
     /*********************************************************************
      *                      AMD加载器                                   *
      **********************************************************************/
-
-    var innerRequire
     var modules = avalon.modules = {
         "ready!": {
             exports: avalon
