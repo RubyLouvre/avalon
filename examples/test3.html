@@ -1,56 +1,50 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>by 司徒正美</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="avalon.$events.js"></script>
-        <style>
-
-        </style>
-        <script>
-            var model = avalon.define({
-                $id: "test",
-                array: [1, 2, 3, 7],
-                dbarray: [
-                    {
-                        array: ["a", "b", "c"]
-                    },
-                    {
-                        array: ["e", "f", "d"]
-                    }
-                ]
-
-            })
-
-            setTimeout(function() {
-                model.dbarray.push({
-                    array: ["hh", "jj", "ii"]
-                },
-                {
-                    array: ["777", "888", "909"]
-                })
-            }, 1000)
-        </script>
-
+        <title>测试用例</title>
     </head>
-    <body>
-        <div ms-controller="test">
-            <ul ms-each="array">
-                <li ms-click="$remove">{{el}}</li>
-                <li>{{Math.random()}}</li>
-            </ul>
-            <h3>ms-repeat实现数组双重循环</h3>
-            <table border="1" style="background:yellow" width="400px">
-                <tr ms-repeat="dbarray"><td ms-repeat-elem="el.array">{{elem}}</td></tr>
-            </table>
-            <h3>ms-each实现数组双重循环</h3>
-            <table border="1" style="background:green" width="400px">
-                <tbody  ms-each="dbarray">
-                    <tr ms-each-item="el.array"><td>{{item}}</td></tr>
-                </tbody>
-            </table>
+    <body ms-controller="xxx">
 
-        </div>
-    </body> 
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.ready(function() {
+                var expect = function(a) {
+                    return {
+                        to: {
+                            be: function(b) {
+                                if (a === b) {
+                                    console.log(true)
+                                } else {
+                                    console.log(a + " !== " + b)
+                                }
+                            }
+                        }
+                    }
+                }
+                var model = avalon.define('test', function(vm) {
+                    vm.aaa = false
+                })
+                var body = document.body
+                var div = document.createElement("div")
+                div.innerHTML = ['<input ms-duplex-bool="aaa" type="radio" value="true">',
+                    '<input ms-duplex-bool="aaa" type="radio" value="false">'
+                ].join("")
+                body.appendChild(div)
+                avalon.scan(div, model)
+
+                setTimeout(function() {
+                    var inputs = div.getElementsByTagName("input")
+
+                    expect(inputs[0].checked).to.be(false)
+                    expect(inputs[1].checked).to.be(true)
+                    inputs[0].click()
+                    expect(inputs[0].checked).to.be(true)
+                    expect(model.aaa).to.be(true)
+                    //    body.removeChild(div)
+                    //   done()
+                }, 100)
+            })
+        </script>
+    </body>
 </html>

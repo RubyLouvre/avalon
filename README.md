@@ -7,7 +7,7 @@
 <hr>
 <ul>
     <li>avalon.js 兼容IE6，及标准浏览器</li>
-    <li>avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器</li>
+    <li>avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器,主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游)</li>
     <li>如果想支持触摸屏，请把mobile.js的源码拷贝到avalon.modern.js最后一个})之前，要不会报"Uncaught ReferenceError: W3CFire is not defined mobile.js:313"错误</li>
     <li>想使用路由器，可以用<a href="https://github.com/RubyLouvre/mmRouter">mmRouter</a>，
 想使用动画，可以用<a href="https://github.com/RubyLouvre/mmAnimate">mmAnimate</a>，
@@ -21,8 +21,8 @@
 <h3>优势</h3>
 <ul>
     <li>使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！</li>
-    <li>兼容到IE6(其他mvvm框架， knockoutjs IE6, angularjs IE8, emberjs IE8, winJS IE9 )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中</li>
-    <li>没有任何依赖，不到4000行，压缩后不到50KB</li>
+    <li>兼容到IE6(其他MVVM框架，KnockoutJS(IE6), AngularJS(IE9), EmberJS(IE8), WinJS(IE9) )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中</li>
+    <li>没有任何依赖，不到4000行，压缩后不到50KiB</li>
     <li>支持管道符风格的过滤函数，方便格式化输出</li>
     <li>局部刷新的颗粒度已细化到一个文本节点，特性节点</li>
     <li>要操作的节点，在第一次扫描就与视图刷新函数相绑定，并缓存起来，因此没有选择器出场的余地。</li>
@@ -33,11 +33,13 @@
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
 <div><img src="https://raw2.github.com/RubyLouvre/avalon/master/examples/images/ecosphere.jpg" width="400" height="640"></div>
-<p>相关学习教程: <a href="http://limodou.github.io/avalon-learning/zh_CN/index.html">《avalon-learning 教程》</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→<a href="http://rubylouvre.github.io/mvvm/">官网</a>→
+<h3>学习教程</h3>
+<p><a href="http://www.html-js.com/article/column/234"> avalon学习教程</a></p>
+<p>其他教程: <a href="http://limodou.github.io/avalon-learning/zh_CN/index.html">《avalon-learning 教程》</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→
 <a href="http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475">HTML5交流会有关avalon的PPT</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3385373.html">《avalon最佳实践》</a>
 </p>
 <h3>运行github中的示例</h3>
-<p>将项目下载到本地，里面有一个叫server.exe的.NET小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
 <p><img src="https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg"/></p>
 <h3>JS文件的压缩</h3>
@@ -117,7 +119,7 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 - 全局变量及方法
 - avalon的静态方法定义区
 - modelFactory
-- javascript 底层补丁  
+- JavaScript 底层补丁  
 - DOM 底层补丁    
 - 配置系统
 - avalon的原型方法定义区

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>duplexHooks</title>
+          <meta http-equiv="X-UA-Compatible" content="IE=8" />
+        <script src="avalon.js"></script>
+        <style>
+            table {
+                border-collapse:collapse;
+            }
+            td {
+                border:1px solid #ddd;
+            }
+            .selected {
+                background: red;
+            }
+        </style>
+        <script>
+           var a = avalon.define({
+                $id: "test",
+              //aaa: "1237",
+                aaa: "",
+                textModel: "text",
+                passwordModel: "password",
+                radioModel: true,
+                checkRadio: true
+            })
+            a.$watch("aaa", function(v){
+               // console.log(v)
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+<!--        <input ms-duplex="textModel" ms-data-duplex-observe="radioModel"/>-->
+        <input ms-duplex-mask="aaa"
+               data-duplex-mask="((00/00其他字符0000)"
+               data-duplex-mask-clear-if-pristine="false"
+               data-duplex-mask-translations ="{
+               A: {pattern: /[A-Za-z0-9]/}, 
+               S: {pattern: /[A-Za-z]/},  
+               Y: {pattern: /[0-9]/}
+               }"
+
+               />
+    </body>
+</html>
