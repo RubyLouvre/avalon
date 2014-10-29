@@ -3034,7 +3034,7 @@
                         data.msType = "string"
                         log("ms-duplex-text已经更名为ms-duplex-string")
                     }
-                    if (!/boolean|number|checked|mask/.test(data.msType)) {
+                    if (!avalon.duplexHooks[data.msType]) {
                         data.msType = "string"
                     }
                     data.bound = function(type, callback) {
@@ -3283,8 +3283,11 @@
         } catch (e) {
         }
         this.placehoder = "_"
-        this.clearIfInvalid = false //如果它不匹配就会在失去焦点时清空value
-        this.clearIfPristine = true //如果它没有改动过就会在失去焦点时清空value
+        this.hideIfInvalid = false //如果它不匹配就会在失去焦点时清空value
+        this.hideIfPristine = true //如果它没有改动过就会在失去焦点时清空value
+        this.showIfHover = false
+        this.showIfFocus = true
+        this.showAlways = false
         options.translations = avalon.mix({
             0: {pattern: /\d/},
             9: {pattern: /\d/, optional: true},
@@ -3387,13 +3390,12 @@
         },
         mask: {
             init: function(data) {
-                var el = data.element
-                var maskText = el.getAttribute("data-duplex-mask")
+                var elem = data.element
+                var maskText = elem.getAttribute("data-duplex-mask")
                 if (data.msType === "mask") {
                     if (maskText) {
-                        data.msMask = new Mask(el, maskText)
+                        data.msMask = new Mask(elem, maskText)
                         function keyCallback(e) {
-
                             var k = e.which || e.keyCode
                             if (e.type == "click") {
                                 k = 100
@@ -3401,7 +3403,7 @@
                             if (e.ctrlKey || e.altKey || e.metaKey || k < 32) //Ignore
                                 return
 
-                            var caret = getCaret(el)
+                            var caret = getCaret(elem)
                             var impurity = data.msMask.impurity
                             function getPos(i, left, n) {
                                 var step = left ? -1 : +1
@@ -3419,7 +3421,7 @@
                                     }
                                 }
                             }
-                            var n = el.value.length - 1
+                            var n = elem.value.length - 1
                             var pos
                             if (k === 37 || k == 38) {//向左向上移动光标
                                 pos = caret.start - 1
@@ -3448,7 +3450,7 @@
                             }
                             if (typeof pos === "number") {
                                 setTimeout(function() {
-                                    setCaret(el, pos, pos + 1)
+                                    setCaret(elem, pos, pos + 1)
                                 })
                             }
                             if (e.preventDefault) {
@@ -3459,20 +3461,31 @@
                         }
                         data.bound("keyup", keyCallback)
                         data.bound("click", keyCallback)
-                        data.bound("blur", function() {
-                            var mask = data.msMask
+                        var mask = data.msMask
+                        function showMask(e) {
+                            if (!e || !mask.masked) {
+                                mask.masked = true
+                                elem.value = avalon.duplexHooks.mask.set(mask.value || mask.mask, data)
+                            }
+                        }
+                        function hideMask() {
                             if ((mask.clearIfInvalid && !mask.valid) ||
                                     (mask.clearIfPristine && mask.value === mask.validMask)) {
-                                el.value = mask.oldValue = mask.masked = ""//注意IE6-8下，this不指向element
+                                elem.value = mask.oldValue = mask.masked = ""//注意IE6-8下，this不指向element
                             }
-                        })
-                        data.bound("focus", function() {
-                            var mask = data.msMask
-                            if (!mask.masked) { //如果里面没有,
-                                mask.masked = true
-                                el.value = avalon.duplexHooks.mask.set(mask.value || mask.mask, data)
+                        }
+                        if (mask.showAlways) {
+                            showMask()
+                        } else {
+                            if (mask.showIfFocus) {
+                                data.bound("focus", showMask)
+                                data.bound("blur", hideMask)
                             }
-                        })
+                            if (mask.showIfHover) {
+                                data.bound("mouserover", showMask)
+                                data.bound("mouseout", hideMask)
+                            }
+                        }
                     } else {
                         throw ("请指定data-duplex-mask")
                     }
