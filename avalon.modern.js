@@ -2683,27 +2683,25 @@
 
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var val = evaluator()
-            val = val == null ? "" : val + ""
+            var val = pipe(evaluator(), data, "set")
             if (val !== element.value) {
                 element.value = val
             }
         }
-        if (data.msType === "checked" || element.type === "radio") {
+        if (data.isChecked || element.type === "radio") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    var val = element.value
-                    var typedValue = data.msType === "checked" ? !element.oldValue : getTypedValue(data, val)
+                    var typedValue = pipe(element.value, data, "get")
                     evaluator(typedValue)
                     callback.call(element, typedValue)
                 }
             }
             data.handler = function() {
                 var val = evaluator()
-                var checked = data.msType === "checked" ? !!val : val + "" === element.value
+                var checked = data.isChecked ? !!val : val + "" === element.value
                 element.checked = element.oldValue = checked
             }
-            bound(data.msType ? "change" : "click", updateVModel)
+            bound(element.type === "checkbox" ? "change" : "click", updateVModel)
         } else if (type === "checkbox") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -2713,14 +2711,14 @@
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    var typedValue = getTypedValue(data, element.value)
+                    var typedValue = pipe(element.value, data, "get")
                     avalon.Array[method](array, typedValue)
                     callback.call(element, array)
                 }
             }
             data.handler = function() {
                 var array = [].concat(evaluator()) //强制转换为数组
-                element.checked = array.indexOf(getTypedValue(data, element.value)) >= 0
+                element.checked = array.indexOf(pipe(element.value, data, "get")) >= 0
             }
             bound("change", updateVModel)
         } else {
@@ -2750,18 +2748,53 @@
             clearTimeout(timer)
         }, 31)
     }
-
-    function getTypedValue(data, val) {
-        switch (data.msType) {
-            case "boolean":
-                return val === "true"
-            case "number":
-                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
-            default:
-                return val
-        }
+    function fixNull(val) {
+        return val == null ? "" : val
     }
 
+    avalon.duplexHooks = {
+        checked: {
+            get: function(val, data) {
+                return !data.element.oldValue
+            }
+        },
+        string: {
+            get: function(val) {//同步到VM
+                return val
+            },
+            set: fixNull
+        },
+        "boolean": {
+            get: function(val) {
+                return val === "true"
+            },
+            set: fixNull
+        },
+        number: {
+            get: function(val) {
+                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
+            },
+            set: fixNull
+        }
+    }
+    //data-duplex-trim="expr" //只能用于text, textarea
+    //data-duplex-min="expr" min
+    //data-duplex-max="expr" max
+    //data-duplex-pattern="expr" pattern
+    //data-duplex-required="expr" required
+    //data-duplex-mask="expr" 
+    //data-duplex-order="trim, min, max, mask"
+    //data-duplex-focus
+    //data-duplex-event
+    function pipe(val, data, action) {
+        data.param.replace(rword, function(name) {
+            var hook = avalon.duplexHooks[name]
+            if (hook && typeof hook[action] === "function") {
+                val = hook[action](val, data)
+            }
+        })
+        return val
+    }
     var TimerID, ribbon = [],
             launch = noop
 
@@ -2861,10 +2894,10 @@
                 var val = $elem.val() //字符串或字符串数组
                 if (Array.isArray(val)) {
                     val = val.map(function(v) {
-                        return getTypedValue(data, v)
+                        return pipe(v, data, "get")
                     })
                 } else {
-                    val = getTypedValue(data, val)
+                    val = pipe(val, data, "get")
                 }
                 if (val + "" !== element.oldValue) {
                     evaluator(val)

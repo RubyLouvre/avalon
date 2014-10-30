@@ -3334,7 +3334,6 @@
             },
             set: fixNull
         }
-
     }
 
     //data-duplex-trim="expr" //只能用于text, textarea
@@ -3392,8 +3391,7 @@
 
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var val = evaluator()
-            val = pipe(val, data, "set")
+            var val = pipe(evaluator(), data, "set")
             if (val !== element.value) {
                 element.value = val
             }
