@@ -2656,7 +2656,7 @@
                 composing = false
         function callback(value) {
             firstTigger = true
-            data.changed.call(this, value)
+            data.changed.call(this, value, data)
         }
         function compositionStart() {
             composing = true
@@ -2669,10 +2669,10 @@
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
-            var typedVal = getTypedValue(data, val)               //尝式转换为正确的格式
+            var lastValue = getTypedValue(data, val)               //尝式转换为正确的格式
             if ($elem.data("duplex-observe") !== false) {
-                evaluator(typedVal)
-                callback.call(element, typedVal)
+                evaluator(lastValue)
+                callback.call(element, lastValue, data)
                 if ($elem.data("duplex-focus")) {
                     avalon.nextTick(function() {
                         element.focus()
@@ -2691,9 +2691,9 @@
         if (data.isChecked || element.type === "radio") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    var typedValue = pipe(element.value, data, "get")
-                    evaluator(typedValue)
-                    callback.call(element, typedValue)
+                    var lastValue = pipe(element.value, data, "get")
+                    evaluator(lastValue)
+                    callback.call(element, lastValue)
                 }
             }
             data.handler = function() {
@@ -2701,7 +2701,7 @@
                 var checked = data.isChecked ? !!val : val + "" === element.value
                 element.checked = element.oldValue = checked
             }
-            bound(element.type === "checkbox" ? "change" : "click", updateVModel)
+            bound("click", updateVModel)
         } else if (type === "checkbox") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -2711,8 +2711,8 @@
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    var typedValue = pipe(element.value, data, "get")
-                    avalon.Array[method](array, typedValue)
+                    var lastValue = pipe(element.value, data, "get")
+                    avalon.Array[method](array, lastValue)
                     callback.call(element, array)
                 }
             }
@@ -2902,7 +2902,7 @@
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
                 }
-                data.changed.call(element, val)
+                data.changed.call(element, val, data)
             }
         }
         data.handler = function() {

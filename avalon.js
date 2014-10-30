@@ -3364,7 +3364,7 @@
 
         function callback(value) {
             firstTigger = true
-            data.changed.call(this, value)
+            data.changed.call(this, value, data)
         }
         function compositionStart() {
             composing = true
@@ -3377,10 +3377,10 @@
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
-            var typedVal = pipe(val, data, "get")      //尝式转换为正确的格式
+            var lastValue = pipe(val, data, "get")      //尝式转换为正确的格式
             if ($elem.data("duplex-observe") !== false) {
-                evaluator(typedVal)
-                callback.call(element, typedVal)
+                evaluator(lastValue)
+                callback.call(element, lastValue, data)
                 if ($elem.data("duplex-focus")) {
                     avalon.nextTick(function() {
                         element.focus()
@@ -3402,9 +3402,9 @@
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var val = element.value
-                    var typedValue = pipe(val, data, "get")
-                    evaluator(typedValue)
-                    callback.call(element, typedValue)
+                    var lastValue = pipe(val, data, "get")
+                    evaluator(lastValue)
+                    callback.call(element, lastValue)
                 }
             }
             data.handler = function() {
@@ -3567,7 +3567,7 @@
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
                 }
-                data.changed.call(element, val)
+                data.changed.call(element, val, data)
             }
         }
         data.handler = function() {
@@ -3597,7 +3597,7 @@
                 clearInterval(id)
                 //先等到select里的option元素被扫描后，才根据model设置selected属性  
                 registerSubscriber(data)
-                data.changed.call(element, evaluator())
+                data.changed.call(element, evaluator(), data)
             } else {
                 innerHTML = currHTML
             }
