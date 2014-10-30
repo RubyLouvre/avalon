@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.10.24 support IE6+ and other browsers
+ avalon 1.3.6 2014.10.30 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -3275,8 +3275,6 @@
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
 
-
-
     function fixNull(val) {
         return val == null ? "" : val
     }
@@ -3306,8 +3304,7 @@
         }
 
     }
-    avalon.validateHooks = {
-    }
+
     //data-duplex-trim="expr" //只能用于text, textarea
     //data-duplex-min="expr" min
     //data-duplex-max="expr" max
@@ -3317,12 +3314,6 @@
     //data-duplex-order="trim, min, max, mask"
     //data-duplex-focus
     //data-duplex-event
-    function pipeFactory(param) {
-
-    }
-
-
-
 
     duplexBinding.INPUT = function(element, evaluator, data) {
         var type = element.type,
