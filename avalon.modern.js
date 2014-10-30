@@ -1963,17 +1963,6 @@
             var method = data.type,
                     attrName = data.param
 
-            function scanTemplate(text) {
-                if (loaded) {
-                    text = loaded.apply(elem, [text].concat(vmodels))
-                }
-                avalon.innerHTML(elem, text)
-                scanNodeList(elem, vmodels)
-                rendered && checkScan(elem, function() {
-                    rendered.call(elem)
-                })
-            }
-
             if (method === "css") {
                 avalon(elem).css(attrName, val)
             } else if (method === "attr") {
@@ -2004,9 +1993,29 @@
 
             } else if (method === "include" && val) {
                 var vmodels = data.vmodels
-                var rendered = getBindingCallback(elem, "data-include-rendered", vmodels)
-                var loaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-
+                var rendered = data.includeRendered
+                var loaded = data.includeLoaded
+                var replace = data.includeReplaced
+                var target = replace ? elem.parentNode : elem
+                function scanTemplate(text) {
+                    if (loaded) {
+                        text = loaded.apply(target, [text].concat(vmodels))
+                    }
+                    while (true) {
+                        var node = data.startInclude.nextSibling
+                        if (node && node !== data.endInclude) {
+                            target.removeChild(node)
+                        } else {
+                            break
+                        }
+                    }
+                    var dom = avalon.parseHTML(text)
+                    target.insertBefore(dom, data.endInclude)
+                    scanNodeList(dom, vmodels)
+                    rendered && checkScan(target, function() {
+                        rendered.call(target)
+                    })
+                }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
                         avalon.nextTick(function() {
@@ -2325,6 +2334,22 @@
                 if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
                     simple = true
                     text = RegExp.$1
+                }
+            }
+            if (data.type === "include") {
+                var elem = data.element
+                data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
+                data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
+                var outer = data.includeReplaced = !!avalon(elem).data("includeReplace")
+                data.startInclude = DOC.createComment("ms-include")
+                data.endInclude = DOC.createComment("ms-include-end")
+                if (outer) {
+                    data.element = data.startInclude
+                    elem.parentNode.insertBefore(data.startInclude, elem)
+                    elem.parentNode.insertBefore(data.endInclude, elem.nextSibling)
+                } else {
+                    elem.insertBefore(data.startInclude, elem.firstChild)
+                    elem.appendChild(data.endInclude)
                 }
             }
             data.handlerName = "attr" //handleName用于处理多种绑定共用同一种bindingExecutor的情况

@@ -2610,7 +2610,7 @@
                     if (loaded) {
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
-                 
+
                     while (true) {
                         var node = data.startInclude.nextSibling
                         if (node && node !== data.endInclude) {
