@@ -3050,6 +3050,7 @@
                     var params = []
                     var casting = oneObject("string,number,boolean,checked")
                     var hasCast
+                    data.error = {}
                     data.param.replace(rword, function(name) {
                         if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && name === "radio")) {
                             log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
@@ -3309,7 +3310,6 @@
     function fixNull(val) {
         return val == null ? "" : val
     }
-
     avalon.duplexHooks = {
         checked: {
             get: function(val, data) {
@@ -3329,22 +3329,18 @@
             set: fixNull
         },
         number: {
-            get: function(val) {
-                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
+            get: function(val, data) {
+                delete data.error.number
+                if (isFinite(val)) {
+                    return parseFloat(val) || 0
+                } else {
+                    data.error.number = true
+                    return val
+                }
             },
             set: fixNull
         }
     }
-
-    //data-duplex-trim="expr" //只能用于text, textarea
-    //data-duplex-min="expr" min
-    //data-duplex-max="expr" max
-    //data-duplex-pattern="expr" pattern
-    //data-duplex-required="expr" required
-    //data-duplex-mask="expr" 
-    //data-duplex-order="trim, min, max, mask"
-    //data-duplex-focus
-    //data-duplex-event
     function pipe(val, data, action) {
         data.param.replace(rword, function(name) {
             var hook = avalon.duplexHooks[name]

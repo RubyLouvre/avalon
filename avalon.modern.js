@@ -2400,25 +2400,32 @@
                 //由于情况特殊，不再经过parseExprProxy
                 parseExpr(data.value, vmodels, data)
                 if (data.evaluator && data.args) {
-                    var form = elem.form
-                    if (form && form.msValidate) {
-                        form.msValidate(elem)
+                    var params = []
+                    var casting = oneObject("string,number,boolean,checked")
+                    var hasCast
+                    data.error = {}
+                    data.param.replace(rword, function(name) {
+                        if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && name === "radio")) {
+                            log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
+                            name = "checked"
+                            data.isChecked = true
+                        }
+                        if (name === "bool") {
+                            name = "boolean"
+                            log("ms-duplex-bool已经更名为ms-duplex-boolean")
+                        } else if (name === "text") {
+                            name = "string"
+                            log("ms-duplex-text已经更名为ms-duplex-string")
+                        }
+                        if (casting[name]) {
+                            hasCast = true
+                        }
+                        avalon.Array.ensure(params, name)
+                    })
+                    if (!hasCast) {
+                        params.push("string")
                     }
-                    data.msType = data.param || ""
-                    if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && data.param === "radio")) {
-                        log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
-                        data.msType = "checked"
-                    }
-                    if (data.msType === "bool") {
-                        data.msType = "boolean"
-                        log("ms-duplex-bool已经更名为ms-duplex-boolean")
-                    } else if (data.msType === "text") {
-                        data.msType = "string"
-                        log("ms-duplex-text已经更名为ms-duplex-string")
-                    }
-                    if (!/boolean|number|checked/.test(data.msType)) {
-                        data.msType = "string"
-                    }
+                    data.param = params.join("-")
                     data.bound = function(type, callback) {
                         elem.addEventListener(type, callback)
                         var old = data.rollback
@@ -2427,7 +2434,7 @@
                             old && old()
                         }
                     }
-
+                    pipe(null, data, "init")
                     duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
             }
@@ -2771,8 +2778,14 @@
             set: fixNull
         },
         number: {
-            get: function(val) {
-                return isFinite(val) || val === "" ? parseFloat(val) || 0 : val
+            get: function(val, data) {
+                delete data.error.number
+                if (isFinite(val)) {
+                    return parseFloat(val) || 0
+                } else {
+                    data.error.number = true
+                    return val
+                }
             },
             set: fixNull
         }
