@@ -3361,8 +3361,7 @@
                 bound = data.bound,
                 $elem = avalon(element),
                 firstTigger = false,
-                composing = false,
-                hook = data.hook
+                composing = false
 
         function callback(value) {
             firstTigger = true
@@ -3548,7 +3547,8 @@
         Object.getOwnPropertyNames(inputProto)//故意引发IE6-8等浏览器报错
         var oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
-            set: newSetter
+            set: newSetter,
+            configurable: true
         })
     } catch (e) {
         launch = avalon.tick
@@ -3556,7 +3556,6 @@
 
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
-        var hook = data.hook
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
