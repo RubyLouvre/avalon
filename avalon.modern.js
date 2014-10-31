@@ -2010,8 +2010,9 @@
                         }
                     }
                     var dom = avalon.parseHTML(text)
+                    var nodes = avalon.slice(dom.childNodes)
                     target.insertBefore(dom, data.endInclude)
-                    scanNodeList(dom, vmodels)
+                    scanNodeArray(nodes, vmodels)
                     rendered && checkScan(target, function() {
                         rendered.call(target)
                     })
