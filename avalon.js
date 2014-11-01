@@ -3357,12 +3357,9 @@
         var type = element.type,
                 bound = data.bound,
                 $elem = avalon(element),
-                firstTigger = false,
-                composing = false,
-                hook = data.hook
+                composing = false
 
         function callback(value) {
-            firstTigger = true
             data.changed.call(this, value, data)
         }
         function compositionStart() {
@@ -3483,12 +3480,7 @@
             }
         })
         registerSubscriber(data)
-        var timer = setTimeout(function() {
-            if (!firstTigger) {
-                callback.call(element, element.value)
-            }
-            clearTimeout(timer)
-        }, 31)
+        callback.call(element, element.value)
     }
 
     var TimerID, ribbon = [],
