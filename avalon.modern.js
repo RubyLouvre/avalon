@@ -2654,6 +2654,51 @@
     //============================= model binding =======================
     //将模型中的字段与input, textarea的value值关联在一起
     var duplexBinding = bindingHandlers.duplex
+    function fixNull(val) {
+        return val == null ? "" : val
+    }
+
+    avalon.duplexHooks = {
+        checked: {
+            get: function(val, data) {
+                return !data.element.oldValue
+            }
+        },
+        string: {
+            get: function(val) {//同步到VM
+                return val
+            },
+            set: fixNull
+        },
+        "boolean": {
+            get: function(val) {
+                return val === "true"
+            },
+            set: fixNull
+        },
+        number: {
+            get: function(val, data) {
+                delete data.error.number
+                if (isFinite(val)) {
+                    return parseFloat(val) || 0
+                } else {
+                    data.error.number = true
+                    return val
+                }
+            },
+            set: fixNull
+        }
+    }
+
+    function pipe(val, data, action) {
+        data.param.replace(rword, function(name) {
+            var hook = avalon.duplexHooks[name]
+            if (hook && typeof hook[action] === "function") {
+                val = hook[action](val, data)
+            }
+        })
+        return val
+    }
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     duplexBinding.INPUT = function(element, evaluator, data) {
@@ -2677,10 +2722,10 @@
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
-            var lastValue = getTypedValue(data, val)               //尝式转换为正确的格式
+            var lastValue = pipe(val, data, "get")   
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(lastValue)
-                callback.call(element, lastValue, data)
+                callback.call(element, lastValue)
                 if ($elem.data("duplex-focus")) {
                     avalon.nextTick(function() {
                         element.focus()
@@ -2756,59 +2801,7 @@
             clearTimeout(timer)
         }, 31)
     }
-    function fixNull(val) {
-        return val == null ? "" : val
-    }
 
-    avalon.duplexHooks = {
-        checked: {
-            get: function(val, data) {
-                return !data.element.oldValue
-            }
-        },
-        string: {
-            get: function(val) {//同步到VM
-                return val
-            },
-            set: fixNull
-        },
-        "boolean": {
-            get: function(val) {
-                return val === "true"
-            },
-            set: fixNull
-        },
-        number: {
-            get: function(val, data) {
-                delete data.error.number
-                if (isFinite(val)) {
-                    return parseFloat(val) || 0
-                } else {
-                    data.error.number = true
-                    return val
-                }
-            },
-            set: fixNull
-        }
-    }
-    //data-duplex-trim="expr" //只能用于text, textarea
-    //data-duplex-min="expr" min
-    //data-duplex-max="expr" max
-    //data-duplex-pattern="expr" pattern
-    //data-duplex-required="expr" required
-    //data-duplex-mask="expr" 
-    //data-duplex-order="trim, min, max, mask"
-    //data-duplex-focus
-    //data-duplex-event
-    function pipe(val, data, action) {
-        data.param.replace(rword, function(name) {
-            var hook = avalon.duplexHooks[name]
-            if (hook && typeof hook[action] === "function") {
-                val = hook[action](val, data)
-            }
-        })
-        return val
-    }
     var TimerID, ribbon = [],
             launch = noop
 
