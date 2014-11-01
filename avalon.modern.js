@@ -2750,7 +2750,7 @@
                 }
             }
             data.handler = function() {
-                var val = pipe(evaluator(), data, "set")
+                var val = evaluator()
                 var checked = data.isChecked ? !!val : val + "" === element.value
                 element.checked = element.oldValue = checked
             }
