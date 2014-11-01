@@ -3393,7 +3393,7 @@
             }
         }
 
-        if (data.msType === "checked" || element.type === "radio") {
+        if (data.isChecked || element.type === "radio") {
             var IE6 = !window.XMLHttpRequest
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
@@ -3404,7 +3404,7 @@
             }
             data.handler = function() {
                 var val = evaluator()
-                var checked = data.msType === "checked" ? !!val : val + "" === element.value
+                var checked = data.isChecked ? !!val : val + "" === element.value
                 element.oldValue = checked
                 if (IE6) {
                     setTimeout(function() {

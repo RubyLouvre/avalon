@@ -2750,7 +2750,7 @@
                 }
             }
             data.handler = function() {
-                var val = evaluator()
+                var val = pipe(evaluator(), data, "set")
                 var checked = data.isChecked ? !!val : val + "" === element.value
                 element.checked = element.oldValue = checked
             }
@@ -2764,8 +2764,7 @@
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    var lastValue = pipe(element.value, data, "get")
-                    avalon.Array[method](array, lastValue)
+                    avalon.Array[method](array, pipe(element.value, data, "get"))
                     callback.call(element, array)
                 }
             }
