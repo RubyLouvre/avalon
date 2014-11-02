@@ -1966,9 +1966,11 @@
                     if (special === "up") {
                         alls.reverse()
                     }
-                    alls.forEach(function(v) {
-                        v.$fire.apply(v, detail)
-                    })
+                    for (var i = 0, el; el = all[i++]; ) {
+                        if (el.$fire.apply(el, detail) === false) {
+                            break
+                        }
+                    }
                 }
             }
         }

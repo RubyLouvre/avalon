@@ -994,7 +994,7 @@
                 fragment = hyperspace.cloneNode(false),
                 firstChild, neo
 
-        wrapper.innerHTML = html 
+        wrapper.innerHTML = html
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
@@ -1008,7 +1008,7 @@
                 }
             }
         }
-   
+
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
@@ -1111,9 +1111,11 @@
                 if (special === "up") {
                     alls.reverse()
                 }
-                alls.forEach(function(v) {
-                    v.$fire.apply(v, detail)
-                })
+                for (var i = 0, el; el = all[i++]; ) {
+                    if (el.$fire.apply(el, detail) === false) {
+                        break
+                    }
+                }
             }
         }
     }
@@ -1752,7 +1754,7 @@
      *绑定模块（实现“操作数据即操作DOM”的关键，将DOM操作放逐出前端开发人员的视野，让它交由框架自行处理，开发人员专致于业务本身） *                                 *
      **********************************************************************/
 
-   
+
     head.insertAdjacentHTML("afterBegin", '<avalon><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
     var ifGroup = head.firstChild
     var getBindingCallback = function(elem, name, vmodels) {
@@ -2157,12 +2159,25 @@
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
-                parseExpr(data.value, vmodels, data, "duplex")
+                parseExpr(data.value, vmodels, data)
                 if (data.evaluator && data.args) {
-                    var form = elem.form
-                    if (form && form.msValidate) {
-                        form.msValidate(elem)
+                    var params = []
+                    var casting = oneObject("string,number,boolean,checked")
+                    var hasCast
+                    data.error = {}
+                    data.param.replace(rword, function(name) {
+                        if (name = "checked" && /radio|checkbox/.test(elem.type)) {
+                            data.isChecked = true
+                        }
+                        if (casting[name]) {
+                            hasCast = true
+                        }
+                        avalon.Array.ensure(params, name)
+                    })
+                    if (!hasCast) {
+                        params.push("string")
                     }
+                    data.param = params.join("-")
                     data.bound = function(type, callback) {
                         elem.addEventListener(type, callback)
                         var old = data.rollback
@@ -2171,6 +2186,7 @@
                             old && old()
                         }
                     }
+                    pipe(null, data, "init")
                     duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
                 }
             }
@@ -2367,88 +2383,129 @@
         bindingHandlers[name] = bindingHandlers.attr
     })
     //============================= model binding =======================
+    var duplexBinding = bindingHandlers.duplex
     //将模型中的字段与input, textarea的value值关联在一起
     var duplexBinding = bindingHandlers.duplex
+    function fixNull(val) {
+        return val == null ? "" : val
+    }
+
+    avalon.duplexHooks = {
+        checked: {
+            get: function(val, data) {
+                return !data.element.oldValue
+            }
+        },
+        string: {
+            get: function(val) {//同步到VM
+                return val
+            },
+            set: fixNull
+        },
+        "boolean": {
+            get: function(val) {
+                return val === "true"
+            },
+            set: fixNull
+        },
+        number: {
+            get: function(val, data) {
+                delete data.error.number
+                if (isFinite(val)) {
+                    return parseFloat(val) || 0
+                } else {
+                    data.error.number = true
+                    return val
+                }
+            },
+            set: fixNull
+        }
+    }
+
+    function pipe(val, data, action) {
+        data.param.replace(rword, function(name) {
+            var hook = avalon.duplexHooks[name]
+            if (hook && typeof hook[action] === "function") {
+                val = hook[action](val, data)
+            }
+        })
+        return val
+    }
+
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
     duplexBinding.INPUT = function(element, evaluator, data) {
-        var fixType = data.param,
+        var type = element.type,
                 bound = data.bound,
-                type = element.type,
                 $elem = avalon(element),
-                firstTigger = false,
-                composing = false,
-                callback = function(value) {
-                    firstTigger = true
-                    data.changed.call(this, value)
-                },
-                compositionStart = function() {
-                    composing = true
-                },
-                compositionEnd = function() {
-                    composing = false
-                },
-                //当value变化时改变model的值
-                updateVModel = function() {
-                    if (composing)
-                        return
-                    var val = element.oldValue = element.value
-                    if ($elem.data("duplex-observe") !== false) {
-                        evaluator(val)
-                        callback.call(element, val)
-                    }
+                composing = false
+        function callback(value) {
+            data.changed.call(this, value, data)
+        }
+        function compositionStart() {
+            composing = true
+        }
+        function compositionEnd() {
+            composing = false
+        }
+        //当value变化时改变model的值
+        function updateVModel() {
+            if (composing)//处理中文输入法在minlengh下引发的BUG
+                return
+            var val = element.oldValue = element.value //防止递归调用形成死循环
+            var lastValue = pipe(val, data, "get")
+            if ($elem.data("duplex-observe") !== false) {
+                evaluator(lastValue)
+                callback.call(element, lastValue)
+                if ($elem.data("duplex-focus")) {
+                    avalon.nextTick(function() {
+                        element.focus()
+                    })
                 }
+            }
+        }
 
         //当model变化时,它就会改变value的值
         data.handler = function() {
-            var curValue = evaluator()
-            if (curValue !== element.value) {
-                element.value = curValue
+            var val = pipe(evaluator(), data, "set")
+            if (val !== element.value) {
+                element.value = val
             }
         }
-        if (type === "checkbox" && fixType === "radio") {
-            type = "radio"
-        }
-        if (type === "radio") {
-            data.handler = function() {
-                element.oldChecked = element.checked = /bool|text/.test(fixType) ? evaluator() + "" === element.value : !!evaluator()
-            }
+        if (data.isChecked || element.type === "radio") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    var val = element.value
-                    if (fixType === "text") {
-                        evaluator(val)
-                    } else if (fixType === "bool") {
-                        val = val === "true"
-                        evaluator(val)
-                    } else {
-                        val = !element.oldChecked
-                        evaluator(val)
-                        element.checked = val
-                    }
-                    callback.call(element, val)
+                    var lastValue = pipe(element.value, data, "get")
+                    evaluator(lastValue)
+                    callback.call(element, lastValue)
                 }
             }
-            bound(fixType ? "change" : "mousedown", updateVModel)
+            data.handler = function() {
+                var val = evaluator()
+                var checked = data.isChecked ? !!val : val + "" === element.value
+                element.checked = element.oldValue = checked
+            }
+            bound("click", updateVModel)
         } else if (type === "checkbox") {
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     var array = evaluator()
                     if (!Array.isArray(array)) {
+                        log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    avalon.Array[method](array, element.value)
+                    avalon.Array[method](array, pipe(element.value, data, "get"))
                     callback.call(element, array)
                 }
             }
             data.handler = function() {
                 var array = [].concat(evaluator()) //强制转换为数组
-                element.checked = array.indexOf(element.value) >= 0
+                element.checked = array.indexOf(pipe(element.value, data, "get")) >= 0
             }
             bound("change", updateVModel)
         } else {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
+            var event = element.attributes["data-duplex-event"] || {}
             event = event.value
             if (event === "change") {
                 bound("change", updateVModel)
@@ -2467,12 +2524,7 @@
             }
         })
         registerSubscriber(data)
-        var timer = setTimeout(function() {
-            if (!firstTigger) {
-                callback.call(element, element.value)
-            }
-            clearTimeout(timer)
-        }, 31)
+        callback.call(element, element.value)
     }
     var TimerID, ribbon = [],
             launch = noop
@@ -2532,20 +2584,36 @@
         function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
+                if (Array.isArray(val)) {
+                    val = val.map(function(v) {
+                        return pipe(v, data, "get")
+                    })
+                } else {
+                    val = pipe(val, data, "get")
+                }
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
-                    element.oldValue = val + ""
                 }
-                data.changed.call(element, val)
+                data.changed.call(element, val, data)
             }
         }
         data.handler = function() {
-            var curValue = evaluator()
-            curValue = curValue && curValue.$model || curValue
-            curValue = Array.isArray(curValue) ? curValue.map(String) : curValue + ""
-            if (curValue + "" !== element.oldValue) {
-                $elem.val(curValue)
-                element.oldValue = curValue + ""
+            var val = evaluator()
+            val = val && val.$model || val
+            if (Array.isArray(val)) {
+                if (!element.multiple) {
+                    log("ms-duplex在<select multiple=true>上要求对应一个数组")
+                }
+            } else {
+                if (element.multiple) {
+                    log("ms-duplex在<select multiple=false>不能对应一个数组")
+                }
+            }
+            //必须变成字符串后才能比较
+            val = Array.isArray(val) ? val.map(String) : val + ""
+            if (val + "" !== element.oldValue) {
+                $elem.val(val)
+                element.oldValue = val + ""
             }
         }
         data.bound("change", updateVModel)
