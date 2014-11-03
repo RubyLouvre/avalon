@@ -2829,48 +2829,7 @@
             clearInterval(TimerID)
         }
     }
-    if (window.requestAnimationFrame) {
-        avalon.tick = function(fn) {
-            if (ribbon.push(fn) === 1) {
-                TimerID = requestAnimationFrame(ticker)
-            }
-        }
-        ticker = function() {
-            for (var n = ribbon.length - 1; n >= 0; n--) {
-                var el = ribbon[n]
-                if (el() === false) {
-                    ribbon.splice(n, 1)
-                }
-            }
-            cancelAnimationFrame(TimerID)
-            TimerID = null
-            if (ribbon.length) {
-                TimerID = requestAnimationFrame(ticker)
-            }
-        }
-    }
-
-    if (window.requestAnimationFrame) {
-        avalon.tick = function(fn) {
-            if (ribbon.push(fn) === 1) {
-                TimerID = requestAnimationFrame(ticker)
-            }
-        }
-        ticker = function() {
-            for (var n = ribbon.length - 1; n >= 0; n--) {
-                var el = ribbon[n]
-                if (el() === false) {
-                    ribbon.splice(n, 1)
-                }
-            }
-            cancelAnimationFrame(TimerID)
-            TimerID = null
-            if (ribbon.length) {
-                TimerID = requestAnimationFrame(ticker)
-            }
-        }
-    }
-
+  
     function newSetter(newValue) {
         oldSetter.call(this, newValue)
         if (newValue !== this.oldValue) {
