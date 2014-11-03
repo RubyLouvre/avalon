@@ -455,4 +455,5 @@ define(["avalon"], function(avalon) {
         validationHooks: {}
     }
 //http://bootstrapvalidator.com/
+//https://github.com/rinh/jvalidator/blob/master/src/index.js
 })
