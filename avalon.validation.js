@@ -396,16 +396,35 @@ define(["avalon"], function(avalon) {
             }
         },
         required: {
-            get: function(val, data) {
-                delete data.error.required
-                if (!val || !String(val).length) {
-                    data.error.required = true
-                }
+            get: function(val, data, next) {
+                next(!val || !String(val).length)
+                return val
+            }
+        },
+        minlength: {
+            get: function(val, data, next) {
+                var elem = data.element
+                var a = parseInt(elem.getAttribute("minlength"), 10)
+                var b = parseInt(elem.getAttribute("data-duplex-minlength"), 10)
+                var num = a || b
+                next(val.length >= num)
+                return val
+            }
+        },
+        pattern: {
+            get: function(val, data, next) {
+                var elem = data.element
+                var h5pattern = elem.getAttribute("pattern")
+                var mspattern = elem.getAttribute("data-duplex-pattern")
+                var pattern = h5pattern || mspattern
+                var re = new RegExp('^(?:' + pattern + ')$')
+                next(re.test(val))
                 return val
             }
         }
     })
-
+//<input type="number" max=x min=y step=z/> <input type="range" max=x min=y step=z/>
+//
     var widget = avalon.ui.validation = function(element, data, vmodels) {
         var options = data.validationOptions
 
@@ -426,19 +445,32 @@ define(["avalon"], function(avalon) {
             vm.pipe = function(val, data, action) {
                 var inwardHooks = vmodel.validationHooks
                 var globalHooks = avalon.duplexHooks
+                var stack = []
+                var elem = data.element
                 data.param.replace(/\w+/g, function(name) {
                     var hook = inwardHooks[name] || globalHooks[name]
                     if (hook && typeof hook[action] === "function") {
-                        val = hook[action](val, data)
+                        function next(a) {
+                            if (!elem.disabled) {
+                                stack.push([a, hook])
+                            }
+                        }
+                        val = hook[action](val, data, next)
                     }
                 })
+                if (stack.length) {//如果stack不为空，说明经过验证拦截器
+                    //stack为一个二维数组，子数组有两个元素，
+                    //第一个表示结果（true, false 或 thenable对象），第二个为hook对象
+                    console.log(stack)
+                }
+               // console.log(stack)
                 return val
             }
             vm.$watch("init-ms-duplex", function(data) {
                 if (typeof data.pipe !== "function" && avalon.contains(element, data.element)) {
                     data.pipe = vm.pipe
                     vm.elements.push(data)
-                    avalon.log(data)
+                   // avalon.log(data)
                     return false
                 }
 

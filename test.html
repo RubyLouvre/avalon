@@ -14,10 +14,6 @@
                     validation: function(){
                         
                     }
-                    
-                })
-                vmodel.$watch("aaa", function(a) {
-                    console.log(a+"!")
                 })
                 avalon.scan()
             })
@@ -26,7 +22,7 @@
     </head>
     <body>
         <div ms-controller="test" ms-widget="validation">
-            <input ms-duplex-trim="aaa"/>
+            <input ms-duplex-minlength-pattern="aaa" minlength="2" pattern="\w+"/>
         </div>
     </body>
 </html>
