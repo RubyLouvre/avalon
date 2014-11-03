@@ -391,8 +391,22 @@ define(["avalon"], function(avalon) {
             get: function(val, data) {
                 var elem = data.element
                 var trim = elem.getAttribute("data-duplex-trim")
-                if (elem.type !== 'password' && (!trim || trim !== 'false')) {
+                if (elem.type !== "password" && (!trim || trim === "true")) {
                     val = String(val || "").trim()
+                }
+                return val
+            }
+        },
+        required: {
+            get: function(val, data) {
+                var elem = data.element
+                var h5Required = !!elem.getAttribute("required")
+                var msRequired = elem.getAttribute("data-duplex-required") === "true"
+                if (h5Required || msRequired) {
+                    delete data.error.required
+                    if (!val || !String(val).length) {
+                        data.error.required = true
+                    }
                 }
                 return val
             }
