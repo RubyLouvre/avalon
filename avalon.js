@@ -3437,7 +3437,7 @@
 
             data.handler = function() {
                 var array = [].concat(evaluator()) //强制转换为数组
-                element.checked = array.indexOf(pipet(element.value, data, "get")) >= 0
+                element.checked = array.indexOf(pipe(element.value, data, "get")) >= 0
             }
             bound(W3C ? "change" : "click", updateVModel)
         } else {
