@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js"></script>
+        <script>
+            require(["avalon.validation"], function() {
+                var vmodel = avalon.define({
+                    $id: "test",
+                    aaa: 111,
+                    $skipArray:["validation"],
+                    validation: function(){
+                        
+                    }
+                    
+                })
+                vmodel.$watch("aaa", function(a) {
+                    console.log(a+"!")
+                })
+                avalon.scan()
+            })
+
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test" ms-widget="validation">
+            <input ms-duplex-trim="aaa"/>
+        </div>
+    </body>
+</html>
