@@ -1678,7 +1678,7 @@
                 var text = el.text
                 parent.removeChild(el)
                 //IE直接通过移除节点，重赋text属性，再插回原位就恢复执行脚本功能
-                if (!window.VBArray && scriptTypes[el.type]) {
+                if (scriptTypes[el.type]) {
                     // 其他浏览器则需要以偷龙转凤方式恢复此功能
                     neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
