@@ -133,3 +133,7 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 - 自带过滤器 
 - AMD加载器
 - DOMReady
+
+<h3>LOGO来历</h3>
+
+http://tieba.baidu.com/p/1350048586

@@ -470,7 +470,7 @@ define(["avalon"], function(avalon) {
 //
     var widget = avalon.ui.validation = function(element, data, vmodels) {
         var options = data.validationOptions
-
+        var onSubmitCallback
         var vmodel = avalon.define(data.validationId, function(vm) {
             avalon.mix(vm, options)
             vm.$skipArray = ["widgetElement", "elements", "validationHooks"]
@@ -479,36 +479,83 @@ define(["avalon"], function(avalon) {
             vm.$init = function() {
                 element.setAttribute("novalidate", "novalidate");
                 avalon.scan(element, [vmodel].concat(vmodels))
+                onSubmitCallback = avalon.bind(element, "submit", function(e) {
+                    e.preventDefault()
+                    vm.validateAll(options.callback)
+                })
                 avalon.log("avalon validation init")
                 if (typeof options.onInit === "function") {
                     //vmodels是不包括vmodel的
                     options.onInit.call(element, vmodel, options, vmodels)
                 }
             }
+            vm.$destory = function() {
+                vm.elements = []
+                avalon.unbind(element, "submit", onSubmitCallback)
+                element.textContent = element.innerHTML = ""
+            }
             //重写框架内部的pipe方法
-            vm.pipe = function(val, data, action) {
+            vm.pipe = function(val, data, action, validate) {
                 var inwardHooks = vmodel.validationHooks
+
                 var globalHooks = avalon.duplexHooks
-                var stack = []
+                var promises = []
                 var elem = data.element
                 data.param.replace(/\w+/g, function(name) {
                     var hook = inwardHooks[name] || globalHooks[name]
                     if (hook && typeof hook[action] === "function") {
-                        function next(a) {
-                            if (!elem.disabled) {
-                                stack.push([a, name])
+                        if (!elem.disabled && hook.message) {
+                            var resolve, reject
+                            promises.push(new Promise(function(a, b) {
+                                resolve = a
+                                reject = b
+                            }))
+                            var next = function(a) {
+                                if (a) {
+                                    resolve(true)
+                                } else {
+                                    var reason = {}
+                                    for(var i in data){
+                                        if(typeof data[i] !== "function"){
+                                            reason[i] = data
+                                        }
+                                    }
+                                    reason.message = hook.message
+                                    reason.validateRule = name
+                                    reject(reason)
+                                }
                             }
+                        } else {
+                            var next = avalon.noop
                         }
                         val = hook[action](val, data, next)
                     }
                 })
-                if (stack.length) {//如果stack不为空，说明经过验证拦截器
-                    //stack为一个二维数组，子数组有两个元素，
-                    //第一个表示结果（true, false 或 thenable对象），第二个为验证规则
-                    console.log(stack)
+                if (promises.length) {//如果stack不为空，说明经过验证拦截器
+                  var lastPromise =  Promise.all(promises).then(function() {
+                        console.log("成功?")
+                        //callback(true, [])//这里只放置未通过验证的组件
+                    }, function() {
+                        console.log(arguments)
+                        console.log("失败")
+                        // callback(false, data)
+                    })
+                    if(validate){
+                        return lastPromise
+                    }
                 }
-                // console.log(stack)
                 return val
+            }
+            vm.validateAll = function(callback) {
+                var data = vm.elements
+                var promise = vm.elements.map(function(el) {
+                    return  vm.pipe(avalon(el).val(), el, "get", "validate")
+                })
+                Promise.all.apply(Promise, promise).then(function() {
+                    callback(true, [])//这里只放置未通过验证的组件
+                }, function() {
+                    callback(false, data)
+                })
             }
             vm.$watch("init-ms-duplex", function(data) {
                 if (typeof data.pipe !== "function" && avalon.contains(element, data.element)) {
@@ -519,10 +566,7 @@ define(["avalon"], function(avalon) {
                 }
 
             })
-            vm.$destory = function() {
-                vm.elements = []
-                element.textContent = element.innerHTML = ""
-            }
+
         })
 
         return vmodel
