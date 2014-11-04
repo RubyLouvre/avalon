@@ -362,14 +362,8 @@ define(["avalon"], function(avalon) {
                     set: fixNull
                 },
                 number: {
-                    get: function(val, data) {
-                        delete data.error.number
-                        if (isFinite(val)) {
-                            return parseFloat(val) || 0
-                        } else {
-                            data.error.number = true
-                            return val
-                        }
+                    get: function(val) {
+                        return isFinite(val) ? parseFloat(val) || 0 : val
                     },
                     set: fixNull
                 }
@@ -386,6 +380,7 @@ define(["avalon"], function(avalon) {
         })(document, window.dispatchEvent)
     }
     //==========================avalon.validation的专有逻辑========================
+
     avalon.mix(avalon.duplexHooks, {
         trim: {
             get: function(val, data) {
@@ -396,18 +391,66 @@ define(["avalon"], function(avalon) {
             }
         },
         required: {
+            message: '必须填写',
             get: function(val, data, next) {
-                next(!val || !String(val).length)
+                next(val !== "")
                 return val
             }
         },
         minlength: {
+            message: '最少输入%argu个字',
             get: function(val, data, next) {
                 var elem = data.element
                 var a = parseInt(elem.getAttribute("minlength"), 10)
                 var b = parseInt(elem.getAttribute("data-duplex-minlength"), 10)
                 var num = a || b
                 next(val.length >= num)
+                return val
+            }
+        },
+        maxlength: {
+            message: '最多输入%argu个字',
+            get: function(val, data, next) {
+                var elem = data.element
+                var a = parseInt(elem.getAttribute("maxlength"), 10)
+                var b = parseInt(elem.getAttribute("data-duplex-maxlength"), 10)
+                var num = a || b
+                next(val.length <= num)
+                return val
+            }
+        },
+        "int": {
+            message: "必须是整数",
+            get: function(val, data, next) {
+                next(/^\-?\d+$/.test(val))
+                return val
+            }
+        },
+        email: {
+            message: "邮件地址错误",
+            get: function(val, data, next) {
+                next(/^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i.test(val))
+                return val
+            }
+        },
+        url: {
+            message: "URL格式错误",
+            get: function(val, data, next) {
+                next(/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val))
+                return val
+            }
+        },
+        date: {
+            message: '必须符合日期格式 YYYY-MM-DD',
+            get: function(val, data, next) {
+                next(/^\d\d\d\d\-\d\d\-\d\d$/.test(val))
+                return val
+            }
+        },
+        passport: {
+            message: '护照格式错误或过长',
+            get: function(val, data, next) {
+                next(/^[a-zA-Z0-9]{0,20}$/i.test(val))
                 return val
             }
         },
@@ -427,58 +470,103 @@ define(["avalon"], function(avalon) {
 //
     var widget = avalon.ui.validation = function(element, data, vmodels) {
         var options = data.validationOptions
-
+        var onSubmitCallback
         var vmodel = avalon.define(data.validationId, function(vm) {
             avalon.mix(vm, options)
             vm.$skipArray = ["widgetElement", "elements", "validationHooks"]
             vm.widgetElement = element
             vm.elements = []
             vm.$init = function() {
+                element.setAttribute("novalidate", "novalidate");
                 avalon.scan(element, [vmodel].concat(vmodels))
+                onSubmitCallback = avalon.bind(element, "submit", function(e) {
+                    e.preventDefault()
+                    vm.validateAll(options.callback)
+                })
                 avalon.log("avalon validation init")
                 if (typeof options.onInit === "function") {
                     //vmodels是不包括vmodel的
                     options.onInit.call(element, vmodel, options, vmodels)
                 }
             }
+            vm.$destory = function() {
+                vm.elements = []
+                avalon.unbind(element, "submit", onSubmitCallback)
+                element.textContent = element.innerHTML = ""
+            }
             //重写框架内部的pipe方法
-            vm.pipe = function(val, data, action) {
+            vm.pipe = function(val, data, action, validate) {
                 var inwardHooks = vmodel.validationHooks
+
                 var globalHooks = avalon.duplexHooks
-                var stack = []
+                var promises = []
                 var elem = data.element
                 data.param.replace(/\w+/g, function(name) {
                     var hook = inwardHooks[name] || globalHooks[name]
                     if (hook && typeof hook[action] === "function") {
-                        function next(a) {
-                            if (!elem.disabled) {
-                                stack.push([a, hook])
+                        if (!elem.disabled && hook.message) {
+                            var resolve, reject
+                            promises.push(new Promise(function(a, b) {
+                                resolve = a
+                                reject = b
+                            }))
+                            var next = function(a) {
+                                if (a) {
+                                    resolve(true)
+                                } else {
+                                    var reason = {}
+                                    for(var i in data){
+                                        if(typeof data[i] !== "function"){
+                                            reason[i] = data
+                                        }
+                                    }
+                                    reason.message = hook.message
+                                    reason.validateRule = name
+                                    reject(reason)
+                                }
                             }
+                        } else {
+                            var next = avalon.noop
                         }
                         val = hook[action](val, data, next)
                     }
                 })
-                if (stack.length) {//如果stack不为空，说明经过验证拦截器
-                    //stack为一个二维数组，子数组有两个元素，
-                    //第一个表示结果（true, false 或 thenable对象），第二个为hook对象
-                    console.log(stack)
+                if (promises.length) {//如果stack不为空，说明经过验证拦截器
+                  var lastPromise =  Promise.all(promises).then(function() {
+                        console.log("成功?")
+                        //callback(true, [])//这里只放置未通过验证的组件
+                    }, function() {
+                        console.log(arguments)
+                        console.log("失败")
+                        // callback(false, data)
+                    })
+                    if(validate){
+                        return lastPromise
+                    }
                 }
-               // console.log(stack)
                 return val
+            }
+            vm.validateAll = function(callback) {
+                var data = vm.elements
+                var promise = vm.elements.map(function(el) {
+                    return  vm.pipe(avalon(el).val(), el, "get", "validate")
+                })
+                Promise.all.apply(Promise, promise).then(function() {
+                    callback(true, [])//这里只放置未通过验证的组件
+                }, function() {
+                    callback(false, data)
+                })
             }
             vm.$watch("init-ms-duplex", function(data) {
                 if (typeof data.pipe !== "function" && avalon.contains(element, data.element)) {
                     data.pipe = vm.pipe
                     vm.elements.push(data)
-                   // avalon.log(data)
+                    // avalon.log(data)
                     return false
                 }
 
             })
-            vm.$destory = function() {
-                vm.elements = []
-                element.textContent = element.innerHTML = ""
-            }
+
         })
 
         return vmodel

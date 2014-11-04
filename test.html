@@ -8,21 +8,34 @@
         <script>
             require(["avalon.validation"], function() {
                 var vmodel = avalon.define({
+                    xxx: "ppp",
                     $id: "test",
                     aaa: 111,
-                    $skipArray:["validation"],
-                    validation: function(){
-                        
+                    $skipArray: ["validation"],
+                    validation: {
+                        validationHooks: {
+                            async: {
+                                get: function(val, data, next) {
+                                    setTimeout(function() {
+                                        next(true)
+                                    })
+                                    return val
+                                }
+                            }
+                        }
+
                     }
                 })
                 avalon.scan()
+
             })
 
         </script>
     </head>
     <body>
         <div ms-controller="test" ms-widget="validation">
-            <input ms-duplex-minlength-pattern="aaa" minlength="2" pattern="\w+"/>
+            <input ms-attr-placeholder="xxx"/>
+            <input ms-duplex-minlength-pattern-async="aaa" minlength="2" pattern="\w+"/>
         </div>
     </body>
 </html>
