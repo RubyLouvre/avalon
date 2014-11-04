@@ -1,0 +1,37 @@
+<html>
+	<head>
+		<title>nihao</title>
+		<script src="../avalon.js"></script>
+		<script src="../mobile/avalon.shake.js"></script>
+	</head>
+	<body>
+		<div ms-controller="test">
+			<a href="#" 
+			   ms-click="hehe" 
+			   ms-mouseenter="haha">trigger test</a>
+		</div>
+		<script>
+			var i = 0
+			avalon.define('test', function(vm) {
+				vm.hehe = function() {
+					var e = document.createEvent("Events"), type = "devicemotion"
+					e.accelerationIncludingGravity = {
+						x: 1000 * i,
+						y: 1000 * i,
+						z:1000 * i
+					}
+					i++
+					e.initEvent(type, false, true)
+					window.dispatchEvent(e)
+					return false
+				}
+				vm.haha = function() {
+					// console.log(2)
+				}
+			})
+			avalon.bind(window, 'shake', function(e) {
+				alert("shaked")
+			})
+		</script>
+	</body>
+</html>
