@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.10.24 support IE10 and other latest browsers
+ avalon 1.3.6 2014.11.4 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -1336,7 +1336,7 @@
                 if (special === "up") {
                     alls.reverse()
                 }
-                for (var i = 0, el; el = all[i++]; ) {
+                for (var i = 0, el; el = alls[i++]; ) {
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
@@ -2685,13 +2685,7 @@
         },
         number: {
             get: function(val, data) {
-                delete data.error.number
-                if (isFinite(val)) {
-                    return parseFloat(val) || 0
-                } else {
-                    data.error.number = true
-                    return val
-                }
+                return isFinite(val) ? parseFloat(val) || 0: val
             },
             set: fixNull
         }

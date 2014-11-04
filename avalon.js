@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.10.30 support IE6+ and other browsers
+ avalon 1.3.6 2014.11.4 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -1828,7 +1828,7 @@
                 if (special === "up") {
                     alls.reverse()
                 }
-                for (var i = 0, el; el = all[i++]; ) {
+                for (var i = 0, el; el = alls[i++]; ) {
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
@@ -3053,7 +3053,6 @@
                     var params = []
                     var casting = oneObject("string,number,boolean,checked")
                     var hasCast
-                    data.error = {}
                     data.param.replace(/\w+/g, function(name) {
                         if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && name === "radio")) {
                             log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
@@ -3334,14 +3333,8 @@
             set: fixNull
         },
         number: {
-            get: function(val, data) {
-                delete data.error.number
-                if (isFinite(val)) {
-                    return parseFloat(val) || 0
-                } else {
-                    data.error.number = true
-                    return val
-                }
+            get: function(val) {
+               return isFinite(val) ? parseFloat(val) || 0: val
             },
             set: fixNull
         }
