@@ -10,12 +10,24 @@
                 var vmodel = avalon.define({
                     $id: "test",
                     aaa: 111,
-                    $skipArray:["validation"],
-                    validation: function(){
-                        
+                    $skipArray: ["validation"],
+                    validation: function() {
+
                     }
                 })
                 avalon.scan()
+
+                var A = function() {
+                    console.log("A")
+                };
+
+                avalon.define('test', function(vm) {
+                    vm.value = {
+                        get: function() {
+                            return new A();
+                        }
+                    };
+                });
             })
 
         </script>

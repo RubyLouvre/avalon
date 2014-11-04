@@ -1002,7 +1002,7 @@
                         return  s.replace(ropen, "").replace(rclose, "")
                     },
                     set: function(html) {
-                        if (avalon.clearHTM) {
+                        if (avalon.clearHTML) {
                             avalon.clearHTML(this)
                             var frag = avalon.parseHTML(html)
                             enumerateNode(frag, this)

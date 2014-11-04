@@ -362,14 +362,8 @@ define(["avalon"], function(avalon) {
                     set: fixNull
                 },
                 number: {
-                    get: function(val, data) {
-                        delete data.error.number
-                        if (isFinite(val)) {
-                            return parseFloat(val) || 0
-                        } else {
-                            data.error.number = true
-                            return val
-                        }
+                    get: function(val) {
+                        return isFinite(val) ? parseFloat(val) || 0 : val
                     },
                     set: fixNull
                 }
@@ -483,7 +477,7 @@ define(["avalon"], function(avalon) {
             vm.widgetElement = element
             vm.elements = []
             vm.$init = function() {
-                element.setAttribute( "novalidate", "novalidate" );
+                element.setAttribute("novalidate", "novalidate");
                 avalon.scan(element, [vmodel].concat(vmodels))
                 avalon.log("avalon validation init")
                 if (typeof options.onInit === "function") {
