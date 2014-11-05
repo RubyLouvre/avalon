@@ -2017,7 +2017,7 @@
     }
 
     function createSignalTower(elem, vmodel) {
-        var id = vmodel.$id
+        var id = elem.getAttribute("avalonctrl") ||  vmodel.$id
         elem.setAttribute("avalonctrl", id)
         vmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
     }
