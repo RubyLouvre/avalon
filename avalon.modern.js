@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.4 support IE10 and other latest browsers
+ avalon 1.3.6 2014.11.5 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -1500,10 +1500,17 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
+            createSignalTower(elem, newVmodel)
             elem.setAttribute("avalonctrl", node.value)
             newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
         }
         scanAttr(elem, vmodels) //扫描特性节点
+    }
+    
+    function createSignalTower(elem, vmodel) {
+        var id = vmodel.$id
+        elem.setAttribute("avalonctrl", id)
+        vmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
     }
 
     function scanNodeList(parent, vmodels) {
@@ -2615,7 +2622,11 @@
                 data[widget + "Id"] = args[1]
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")
-                var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
+                var vmodel = constructor(elem, data, vmodels) || {}//防止组件不返回VM
+                if (vmodel.$id) {
+                    createSignalTower(elem, vmodel)
+                    elem.msData["ms-widget-id"] = vmodel.$id
+                }
                 data.evaluator = noop
                 elem.msData["ms-widget-id"] = vmodel.$id || ""
                 if (vmodel.hasOwnProperty("$init")) {
@@ -2685,7 +2696,7 @@
         },
         number: {
             get: function(val, data) {
-                return isFinite(val) ? parseFloat(val) || 0: val
+                return isFinite(val) ? parseFloat(val) || 0 : val
             },
             set: fixNull
         }

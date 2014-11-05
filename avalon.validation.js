@@ -315,3 +315,25 @@ define(["avalon"], function(avalon) {
 //http://bootstrapvalidator.com/
 //https://github.com/rinh/jvalidator/blob/master/src/index.js
 })
+
+var hash = {}
+function permissionFilter(str){
+   var  context = avalon.parseHTML(str)
+   
+   var nodes = typeof context.getElementsByTagName !== "undefined" ?
+			context.getElementsByTagName( "*" ) :
+			typeof context.querySelectorAll !== "undefined" ?
+				context.querySelectorAll(  "*" ) : []
+    for(var i = 0, node ; node = nodes[i++];){
+        if(node.nodeType == 1 && node.getAttribute("data-uri") ){
+            avalon(node).addClass("hide-permissio-area")
+            hash[ node.getAttribute("data-uri")] = false
+        }
+    }
+    var div = document.createElement("div")
+    div.appendChild(context)
+    return div.innerHTML
+}
+
+avalon.templateCache.xxx = permissionFilter(require("./template"))
+
