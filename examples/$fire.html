@@ -38,9 +38,41 @@
                     vm.$fire("up!aaa", "bubble")
                 }
             })
+
+            function checkControllersDomReady(callback, max) {
+                max = max || 20
+                var index = 0
+                var id = setInterval(function() {
+                    index++
+                    if (_checkExprReady()) {
+                        clearInterval(id)
+                        callback()
+                    } else {
+                        if (index > max) {
+                            clearInterval(id)
+                        }
+                    }
+
+                }, 50)
+
+                function _checkControllersDomReady() {
+                    var ok = true
+                    var all = avalon.vmodels
+                    for (var i in all) {
+                        if (all[i].$init) {
+                            continue
+                        }
+                        if (!all[i].$events.expr) {
+                            return false
+                        }
+
+                    }
+                    return ok
+                }
+            }
         </script>
         <style>
- 
+
         </style>
     </head>
     <body class="ms-controller"   ms-controller="ancestor">

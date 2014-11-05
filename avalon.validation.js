@@ -203,6 +203,10 @@ define(["avalon"], function(avalon) {
                     if (hook && typeof hook[action] === "function") {
                         data.data = {}
                         if (!elem.disabled && hook.message) {
+                            if (!data.bindValidateReset) {
+                                data.bindValidateReset = avalon.bind(elem, "focus", vm.onReset)
+                            }
+
                             var resolve, reject
                             promises.push(new Promise(function(a, b) {
                                 resolve = a
@@ -264,6 +268,16 @@ define(["avalon"], function(avalon) {
                     callback(!reasons.length, reasons)//这里只放置未通过验证的组件
                 })
             }
+            vm.resetAll = function(callback) {
+                vm.forEach.map(function(el) {
+                    try {
+                        el.element.focus()
+                    } catch (e) {
+                    }
+                })
+                var fn = callback || vm.onResetAll
+                fn.call(vm)
+            }
             //收集下方表单元素的数据
             vm.$watch("init-ms-duplex", function(data) {
                 if (typeof data.pipe !== "function" && avalon.contains(element, data.element)) {
@@ -292,6 +306,10 @@ define(["avalon"], function(avalon) {
         onComplete: function() {
         },
         onValidateAll: function() {
+        },
+        onReset: function() {
+        },
+        onResetAll: function() {
         }
     }
 //http://bootstrapvalidator.com/
