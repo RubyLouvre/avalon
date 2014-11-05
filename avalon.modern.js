@@ -2624,6 +2624,7 @@
                 elem.removeAttribute("ms-widget")
                 var vmodel = constructor(elem, data, vmodels) || {}//防止组件不返回VM
                 if (vmodel.$id) {
+                    avalon.vmodels[vmodel.$id] = vmodel
                     createSignalTower(elem, vmodel)
                     elem.msData["ms-widget-id"] = vmodel.$id
                 }
