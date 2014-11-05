@@ -1506,7 +1506,7 @@
         }
         scanAttr(elem, vmodels) //扫描特性节点
     }
-    
+
     function createSignalTower(elem, vmodel) {
         var id = elem.getAttribute("avalonctrl") || vmodel.$id
         elem.setAttribute("avalonctrl", id)
@@ -2785,15 +2785,22 @@
             }
             bound("change", updateVModel)
         } else {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
-            event = event.value
-            if (event === "change") {
-                bound("change", updateVModel)
-            } else {
-                bound("input", updateVModel)
-                bound("compositionstart", compositionStart)
-                bound("compositionend", compositionEnd)
+            var events = element.getAttribute("data-duplex-event") || element.getAttribute("data-event") || "input"
+            if (element.attributes["data-event"]) {
+                log("data-event指令已经废弃，请改用data-duplex-event")
             }
+            events.replace(rword, function(name) {
+                switch (name) {
+                    case "input":
+                        bound("input", updateVModel)
+                        bound("compositionstart", compositionStart)
+                        bound("compositionend", compositionEnd)
+                        break
+                    default:
+                        bound(name, updateVModel)
+                        break
+                }
+            })
         }
         element.oldValue = element.value
         launch(function() {
