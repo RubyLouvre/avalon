@@ -2017,7 +2017,7 @@
     }
 
     function createSignalTower(elem, vmodel) {
-        var id = elem.getAttribute("avalonctrl") ||  vmodel.$id
+        var id = elem.getAttribute("avalonctrl") || vmodel.$id
         elem.setAttribute("avalonctrl", id)
         vmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
     }
@@ -3447,37 +3447,41 @@
             }
             bound(W3C ? "change" : "click", updateVModel)
         } else {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
+            var events = element.getAttribute("data-duplex-event") || element.getAttribute("data-event") || "input"
             if (element.attributes["data-event"]) {
                 log("data-event指令已经废弃，请改用data-duplex-event")
             }
-            event = event.value
-            if (event === "change") {
-                bound("change", updateVModel)
-            } else {
-                if (W3C) { //IE9+, W3C
-                    bound("input", updateVModel)
-                    bound("compositionstart", compositionStart)
-                    bound("compositionend", compositionEnd)
-                    //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
-                    //http://www.matts411.com/post/internet-explorer-9-oninput/
-                    if (DOC.documentMode === 9) {
-                        function delay(e) {
-                            setTimeout(function() {
-                                updateVModel(e)
+            events.replace(rword, function(name) {
+                switch (name) {
+                    case "input":
+                        if (W3C) { //IE9+, W3C
+                            bound("input", updateVModel)
+                            bound("compositionstart", compositionStart)
+                            bound("compositionend", compositionEnd)
+                            //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+                            //http://www.matts411.com/post/internet-explorer-9-oninput/
+                            if (DOC.documentMode === 9) {
+                                function delay(e) {
+                                    setTimeout(function() {
+                                        updateVModel(e)
+                                    })
+                                }
+                                bound("paste", delay)
+                                bound("cut", delay)
+                            }
+                        } else {
+                            bound("propertychange", function(e) {
+                                if (e.properyName === "value") {
+                                    updateVModel(e)
+                                }
                             })
                         }
-                        bound("paste", delay)
-                        bound("cut", delay)
-                    }
-                } else {
-                    bound("propertychange", function(e) {
-                        if (e.properyName === "value") {
-                            updateVModel(e)
-                        }
-                    })
+                        break
+                    default:
+                        bound(name, updateVModel)
+                        break
                 }
-            }
+            })
         }
         element.oldValue = element.value
         launch(function() {
