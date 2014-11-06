@@ -387,7 +387,7 @@ void function() {
                 touchProxy.fire = function(name, detail) {
                     W3CFire(this.el, name, detail)
                 }
-                // 多指情况不触发tab
+                // 多指情况不触发tap
                 var touches = e.touches
                 if(touches.length > 1) {
                     // clear longTap
