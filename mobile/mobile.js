@@ -34,8 +34,6 @@ void function() {
                 doubleIndex = 0, //用于决定何时重置doubleStartTime
                 doubleStartTime, //双击开始时间,
                 startTime, // 单击开始时间
-                rotateThreshold = 15, // 判断方向的角度
-                pinchThreshold = 10; // 判定 pinch 的位移偏移量
                 touchStartX,
                 touchStartY
         function resetState() {
@@ -253,7 +251,9 @@ void function() {
             var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
                     now, firstTouch, _isPointerType, delta, deltaX = 0,
                     deltaY = 0,
-                    touchNames = []
+                    touchNames = [],
+                    rotateThreshold = 15, // 判断方向的角度
+                    pinchThreshold = 10 // 判定 pinch 的位移偏移量
             function W3CFire(el, name, detail) {
                 var event = DOC.createEvent("Events")
                 event.initEvent(name, true, true)
@@ -357,12 +357,12 @@ void function() {
             }
 
             function compute(e, len) {
-                var len = e.touches.length,
-                    otherTouch = e.touches[Math.ceil((len - 1) / 2)], // 取对面的那个手指来算位移
+                var touches = e.touches,
+                    len = touches.length,
+                    firstTouch = touches[0],
+                    otherTouch = touches[1],
                     disX = firstTouch.clientX - otherTouch.clientX,
-                    disY = firstTouch.clientY - otherTouch.clientY,
-                    centerX = (firstTouch.clientX + otherTouch.clientX) / 2,
-                    centerY = (firstTouch.clientY + otherTouch.clientY) / 2
+                    disY = firstTouch.clientY - otherTouch.clientY
 
                 return {
                     distance: computeDistance(disX, disY),
@@ -393,6 +393,7 @@ void function() {
                     // clear longTap
                     cancelHold()
                     touchProxy.status = touches.length > 2 ? "pinch" : "other"
+                    e.preventDefault() // 防止多指操作的时候页面抖动，造成计算不准
                     var changeInfo = compute(e, touches.length)
                     touchProxy.distance = changeInfo.distance
                     touchProxy.initialAngle = changeInfo.angel
@@ -413,8 +414,9 @@ void function() {
                 touchProxy.y2 = firstTouch.pageY
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
                 deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
-                if(e.touches.length > 1 && this.status.match(/other|pinch/g)) {
-                    var changeInfo = compute(e), changes = touchProxy.distance - changeInfo.distance
+                if(e.touches.length > 1 && touchProxy.status && touchProxy.status.match(/other|pinch/g)) {
+                    var changeInfo = compute(e), 
+                        changes = touchProxy.distance - changeInfo.distance
                     if (touchProxy.status === "pinch" || Math.abs(changes) > pinchThreshold) {
                         touchProxy.pinch = true
                     }
@@ -427,20 +429,22 @@ void function() {
                                 direction: direction
                             })
                         })
+                        touchProxy.distance = changeInfo.distance
                     }
-                    if(touchProxy.status === "other" && Math.abs(changeInfo.rotation) > rotateThreshold) {
+                    if(touchProxy.status === "other" && Math.abs(changeInfo.rotation) > 5) {
                         touchProxy.rotate = true
                     }
                     if(touchProxy.rotate) {
-                        direction = touchProxy.rotation > 0 ? "cw" : "ccw"
+                        direction = changeInfo.rotation > 0 ? "cw" : "ccw"
                         avalon.each(["rotate", "rotate" + direction], function(i, item) {
                             touchProxy.fire(item, {
-                                deflection: touchProxy.rotate,
+                                deflection: changeInfo.rotation,
                                 direction: direction
                             })
                         })
+                        touchProxy.rotation = changeInfo.rotation
+                        touchProxy.initialAngle = changeInfo.angel
                     }
-                    avalon.mix(touchProxy, changeInfo)
                 }
             })
 
@@ -452,7 +456,6 @@ void function() {
                 // rotate
                 var status = touchProxy.status
                 if(status === "other" || status === "pinch") {
-                    
                     touchProxy = {}
                 // swipe
                 } else if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||

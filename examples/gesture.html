@@ -63,7 +63,9 @@
     <body ms-controller="test" 
           ms-on-tap="tap" 
           ms-on-doubleTap="doubleTap" 
-          ms-on-hold="hold">
+          ms-on-hold="hold" 
+          ms-on-squeeze="squeeze"
+          ms-on-splay="splay">
         <div id="log">
         	<p 
         	   ms-repeat-item="log" 
@@ -83,12 +85,12 @@
         		</li>
         	</ul>
         </div>
-        <div class="type">
-        	<div class="box" 
-        	     ms-on-doubletap="pinch2"
-        	     ms-on-pinch="pinch" style="width:200px;height:200px;background:red;" 
-        	     ms-css-transform="'scale('+scale+')'">
+        <div class="type"
+    	     ms-on-doubletap="pinch2"
+    	     ms-on-pinch="pinch">
         		pinch{{pinchLog}}
+        	<div class="box" style="width:200px;height:200px;background:red;" 
+        	     ms-css-transform="'scale('+scale+')'">
         	</div>
         </div>
         <div class="type">
@@ -135,9 +137,17 @@
             	vm.pinchLog = " pinch me"
             	vm.scale = 1
             	vm.pinch = function(e) {
-            		vm.pinchLog = "pinched " + index++
-            		vm.scale = (vm.scale * e.scale).toFixed(2)
-            		__log(vm.scale)
+            		vm.pinchLog = " pinched " + e.detail.direction + " " + index++
+            		vm.scale = (vm.scale * e.detail.scale).toFixed(2)
+            		// __log(e.detail.scale)
+            	}
+            	vm.splay = function(e) {
+            		vm.pinch(e)
+            		__log("splay: " + e.detail.scale)
+            	}
+            	vm.squeeze = function(e) {
+            		vm.pinch(e)
+            		__log("squeeze: " + e.detail.scale)
             	}
             	vm.pinch2 = function(e) {
             		vm.scale = vm.scale * 2
@@ -146,8 +156,8 @@
             	vm.transform = 0
             	vm.rotate = function(e) {
             		vm.rotateLog = " rotated" + index++
-            		vm.transform = (parseInt(e.deflection) + vm.transform) % 360
-            		__log(vm.transform)
+            		vm.transform = (parseInt(e.detail.deflection) + vm.transform) % 360
+            		__log(e.detail.deflection)
             	}
             })
 			window.__log = function(log) {
