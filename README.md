@@ -32,7 +32,6 @@
     <li><strong>操作数据即操作DOM</strong>，对ViewModel的操作都会同步到View与Model去。</li>
     <li>自带AMD模块加载器，省得与其他加载器进行整合。</li>
 </ul>
-<div><img src="https://raw2.github.com/RubyLouvre/avalon/master/examples/images/ecosphere.jpg" width="400" height="640"></div>
 <h3>学习教程</h3>
 <p><a href="http://www.html-js.com/article/column/234"> avalon学习教程</a></p>
 <p>其他教程: <a href="http://limodou.github.io/avalon-learning/zh_CN/index.html">《avalon-learning 教程》</a>→<a href="http://www.cnblogs.com/rubylouvre/p/3181291.html">《入门教程》</a>→
