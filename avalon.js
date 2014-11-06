@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.4 support IE6+ and other browsers
+ avalon 1.3.6 2014.11.5 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -2009,12 +2009,17 @@
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
             var name = node.name
             elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
-            elem.setAttribute("avalonctrl", node.value)
-            newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
+            createSignalTower(elem, newVmodel)
             avalon(elem).removeClass(name)
 
         }
         scanAttr(elem, vmodels) //扫描特性节点
+    }
+
+    function createSignalTower(elem, vmodel) {
+        var id = elem.getAttribute("avalonctrl") || vmodel.$id
+        elem.setAttribute("avalonctrl", id)
+        vmodel.$events.expr = elem.tagName + '[avalonctrl="' + id + '"]'
     }
 
     function scanNodeList(parent, vmodels) {
@@ -3266,8 +3271,12 @@
                 data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")
                 var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
+                if (vmodel.$id) {
+                    avalon.vmodels[vmodel.$id] = vmodel
+                    createSignalTower(elem, vmodel)
+                    elem.msData["ms-widget-id"] = vmodel.$id
+                }
                 data.evaluator = noop
-                elem.msData["ms-widget-id"] = vmodel.$id || ""
                 if (vmodel.hasOwnProperty("$init")) {
                     vmodel.$init()
                 }
@@ -3334,7 +3343,7 @@
         },
         number: {
             get: function(val) {
-               return isFinite(val) ? parseFloat(val) || 0: val
+                return isFinite(val) ? parseFloat(val) || 0 : val
             },
             set: fixNull
         }
@@ -3368,8 +3377,8 @@
             composing = false
         }
         //当value变化时改变model的值
-        function updateVModel(event) {
-            if (composing)//处理中文输入法在minlengh下引发的BUG
+        function updateVModel(e) {
+            if (composing )//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
             var lastValue = data.pipe(val, data, "get")
@@ -3438,37 +3447,41 @@
             }
             bound(W3C ? "change" : "click", updateVModel)
         } else {
-            var event = element.attributes["data-duplex-event"] || element.attributes["data-event"] || {}
+            var events = element.getAttribute("data-duplex-event") || element.getAttribute("data-event") || "input"
             if (element.attributes["data-event"]) {
                 log("data-event指令已经废弃，请改用data-duplex-event")
             }
-            event = event.value
-            if (event === "change") {
-                bound("change", updateVModel)
-            } else {
-                if (W3C) { //IE9+, W3C
-                    bound("input", updateVModel)
-                    bound("compositionstart", compositionStart)
-                    bound("compositionend", compositionEnd)
-                    //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
-                    //http://www.matts411.com/post/internet-explorer-9-oninput/
-                    if (DOC.documentMode === 9) {
-                        function delay(e) {
-                            setTimeout(function() {
-                                updateVModel(e)
+            events.replace(rword, function(name) {
+                switch (name) {
+                    case "input":
+                        if (W3C) { //IE9+, W3C
+                            bound("input", updateVModel)
+                            bound("compositionstart", compositionStart)
+                            bound("compositionend", compositionEnd)
+                            //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+                            //http://www.matts411.com/post/internet-explorer-9-oninput/
+                            if (DOC.documentMode === 9) {
+                                function delay(e) {
+                                    setTimeout(function() {
+                                        updateVModel(e)
+                                    })
+                                }
+                                bound("paste", delay)
+                                bound("cut", delay)
+                            }
+                        } else {
+                            bound("propertychange", function(e) {
+                                if (e.propertyName === "value") {
+                                    updateVModel(e)
+                                }
                             })
                         }
-                        bound("paste", delay)
-                        bound("cut", delay)
-                    }
-                } else {
-                    bound("propertychange", function(e) {
-                        if (e.properyName === "value") {
-                            updateVModel(e)
-                        }
-                    })
+                        break
+                    default:
+                        bound(name, updateVModel)
+                        break
                 }
-            }
+            })
         }
         element.oldValue = element.value
         launch(function() {

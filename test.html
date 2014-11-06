@@ -13,7 +13,15 @@
                     aaa: 111,
                     $skipArray: ["validation"],
                     validation: {
+                        onSuccess: function() {
+                            console.log("success")
+                        },
+                        onError: function(a, b) {
+                            console.log(b)
+                            console.log("error")
+                        },
                         validationHooks: {
+                            message: "等等",
                             async: {
                                 get: function(val, data, next) {
                                     setTimeout(function() {
@@ -35,7 +43,7 @@
     <body>
         <div ms-controller="test" ms-widget="validation">
             <input ms-attr-placeholder="xxx"/>
-            <input ms-duplex-minlength-pattern-async="aaa" minlength="2" pattern="\w+"/>
+            <input ms-duplex-minlength-int-async="aaa" minlength="4"/>
         </div>
     </body>
 </html>
