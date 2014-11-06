@@ -10,7 +10,7 @@
 (function(DOC) {
     var expose = Date.now()
     var subscribers = "$" + expose
-    //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
+    //http://stackoverflow.com/questions/3277182/how-to-get-the-global-object-in-javascript
     var window = this || Function("return this")()
     var otherRequire = window.require
     var otherDefine = window.define
