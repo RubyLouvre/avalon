@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>shake</title>
+		<meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport" />
+        <script src="../avalon.modern.js"></script>
+        <script>
+        	window.onerror = function(e) {
+        		alert(JSON.stringify(e))
+        	}
+        </script>
+		<script src="../mobile/avalon.shake.js"></script>
+        <style type="text/css">
+        	*{
+        		padding: 0;
+        		margin: 0;
+        	}
+			#log{
+				position: fixed;
+				right: 0;
+				top:0;
+				width:200px;
+				height: 100px;
+				overflow-y: scroll;
+				overflow-x: hidden;
+				background: green;
+				z-index: 1000;
+			}
+        </style>
+	</head>
+	<body
+		 ms-controller="test">
+        <div id="log">
+        	<p 
+        	   ms-repeat-item="log">{{item}}</p>
+        </div>
+		<div>
+			<a href="#" 
+			   ms-click="hehe" 
+			   ms-mouseenter="haha">trigger test</a>
+		</div>
+		<script>
+			var i = 0, index = 0
+			var model = avalon.define('test', function(vm) {
+				vm.hehe = function() {
+					var e = document.createEvent("Events"), type = "devicemotion"
+					e.accelerationIncludingGravity = {
+						x: 1000 * i,
+						y: 1000 * i,
+						z:1000 * i
+					}
+					i++
+					e.initEvent(type, false, true)
+					window.dispatchEvent(e)
+					return false
+				}
+				vm.haha = function() {
+					// console.log(2)
+				}
+				vm.log = []
+			})
+			window.__log = function(log) {
+				model.log.unshift(log)
+			}
+			avalon.bind(window, 'shake', function(e) {
+				__log("shaked " + e.direction + " " + index++)
+			})
+		</script>
+	</body>
+</html>

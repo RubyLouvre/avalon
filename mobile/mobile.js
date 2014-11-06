@@ -251,8 +251,17 @@ void function() {
             var touchProxy = {}, touchTimeout, tapTimeout, swipeTimeout, holdTimeout,
                     now, firstTouch, _isPointerType, delta, deltaX = 0,
                     deltaY = 0,
-                    touchNames = []
-
+                    touchNames = [],
+                    rotateThreshold = 15, // 判断方向的角度
+                    pinchThreshold = 10 // 判定 pinch 的位移偏移量
+            function W3CFire(el, name, detail) {
+                var event = DOC.createEvent("Events")
+                event.initEvent(name, true, true)
+                if (detail) {
+                    event.detail = detail
+                }
+                el.dispatchEvent(event)
+            }
             function swipeDirection(x1, x2, y1, y2) {
                 return Math.abs(x1 - x2) >=
                         Math.abs(y1 - y2) ? (x1 - x2 > 0 ? "left" : "right") : (y1 - y2 > 0 ? "up" : "down")
@@ -276,6 +285,58 @@ void function() {
                 clearTimeout(holdTimeout)
                 touchProxy = {}
             }
+            // 获取方向
+            function getDirection(offsetX, offsetY) {
+                var ret = [],
+                    absX = Math.abs(offsetX),
+                    absY = Math.abs(offsetY),
+                    proportion = Math.tan(rotateThreshold / 180 * Math.PI),
+                    transverse = absX > absY;
+
+                if (absX > 0 || absY > 0) {
+                    ret.push(transverse ? offsetX > 0 ? 'right' : 'left' : offsetY > 0 ? 'down' : 'up');
+                    if (transverse && absY / absX > proportion) {
+                        ret.push(offsetY > 0 ? 'down' : 'up');
+                    } else if (!transverse && absX / absY > proportion) {
+                        ret.push(offsetX > 0 ? 'right' : 'left');
+                    }
+                }
+
+                return ret;
+            }
+
+            // 计算距离
+            function computeDistance(offsetX, offsetY) {
+                return Math.sqrt(Math.pow(offsetX, 2) + Math.pow(offsetY, 2));
+            }
+
+            // 计算角度
+            function computeDegree(offsetX, offsetY) {
+                var degree = Math.atan2(offsetY, offsetX) / Math.PI * 180;
+                return degree < 0 ? degree + 360 : degree;
+            }
+
+            // 计算角度，返回（0-180）
+            function computeDegree180(offsetX, offsetY) {
+                var degree = Math.atan(offsetY * -1 / offsetX) / Math.PI * 180;
+                return degree < 0 ? degree + 180 : degree;
+            }
+
+            // 获取偏转角
+            var rotation = 0
+            function getAngleDiff(offsetX, offsetY) {
+                var diff = touchProxy.initialAngle - computeDegree180(offsetX, offsetY);
+
+                while (Math.abs(diff - rotation) > 90) {
+                    if (rotation < 0) {
+                        diff -= 180;
+                    } else {
+                        diff += 180;
+                    }
+                }
+                rotation = diff;
+                return rotation;
+            }
             //touchNames = ["mousedown", "mousemove", "mouseup", ""]
             if (IE11touch) { //IE11 与 W3C
                 touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
@@ -295,6 +356,20 @@ void function() {
                         e.type.toLowerCase() === "mspointer" + type)
             }
 
+            function compute(e, len) {
+                var touches = e.touches,
+                    len = touches.length,
+                    firstTouch = touches[0],
+                    otherTouch = touches[1],
+                    disX = firstTouch.clientX - otherTouch.clientX,
+                    disY = firstTouch.clientY - otherTouch.clientY
+
+                return {
+                    distance: computeDistance(disX, disY),
+                    angel: computeDegree180(disX, disY),
+                    rotation: len == 2 ? getAngleDiff(disX, disY) : 0 // 3个手指以上不计算旋转
+                }
+            }
             DOC.addEventListener(touchNames[0], function(e) {
                 if ((_isPointerType = isPointerEventType(e, "down")) && !isPrimaryTouch(e))
                     return
@@ -309,8 +384,20 @@ void function() {
                 clearTimeout(touchTimeout)
                 touchProxy.x1 = firstTouch.pageX
                 touchProxy.y1 = firstTouch.pageY
-                touchProxy.fire = function(name) {
-                    W3CFire(this.el, name)
+                touchProxy.fire = function(name, detail) {
+                    W3CFire(this.el, name, detail)
+                }
+                // 多指情况不触发tab
+                var touches = e.touches
+                if(touches.length > 1) {
+                    // clear longTap
+                    cancelHold()
+                    touchProxy.status = touches.length > 2 ? "pinch" : "other"
+                    e.preventDefault() // 防止多指操作的时候页面抖动，造成计算不准
+                    var changeInfo = compute(e, touches.length)
+                    touchProxy.distance = changeInfo.distance
+                    touchProxy.initialAngle = changeInfo.angel
+                    return
                 }
                 if (delta > 0 && delta <= 250) { //双击
                     touchProxy.isDoubleTap = true
@@ -327,19 +414,59 @@ void function() {
                 touchProxy.y2 = firstTouch.pageY
                 deltaX += Math.abs(touchProxy.x1 - touchProxy.x2)
                 deltaY += Math.abs(touchProxy.y1 - touchProxy.y2)
+                if(e.touches.length > 1 && touchProxy.status && touchProxy.status.match(/other|pinch/g)) {
+                    var changeInfo = compute(e), 
+                        changes = touchProxy.distance - changeInfo.distance
+                    if (touchProxy.status === "pinch" || Math.abs(changes) > pinchThreshold) {
+                        touchProxy.pinch = true
+                    }
+                    if(touchProxy.pinch) {
+                        var direction = changes > 0 ? "in" : "out",
+                            name = touchProxy.status !== "pinch" ? ["pinch", "pinch" + direction] : [changes > 0 ? "splay" : "squeeze"] 
+                        avalon.each(name, function(i, item) {
+                            touchProxy.fire(item, {
+                                scale: changeInfo.distance / touchProxy.distance,
+                                direction: direction
+                            })
+                        })
+                        touchProxy.distance = changeInfo.distance
+                    }
+                    if(touchProxy.status === "other" && Math.abs(changeInfo.rotation) > 5) {
+                        touchProxy.rotate = true
+                    }
+                    if(touchProxy.rotate) {
+                        direction = changeInfo.rotation > 0 ? "cw" : "ccw"
+                        avalon.each(["rotate", "rotate" + direction], function(i, item) {
+                            touchProxy.fire(item, {
+                                deflection: changeInfo.rotation,
+                                direction: direction
+                            })
+                        })
+                        touchProxy.rotation = changeInfo.rotation
+                        touchProxy.initialAngle = changeInfo.angel
+                    }
+                }
             })
 
             DOC.addEventListener(touchNames[2], function(e) {
                 if ((_isPointerType = isPointerEventType(e, "up")) && !isPrimaryTouch(e))
                     return
                 cancelHold()
+                // pinch
+                // rotate
+                var status = touchProxy.status
+                if(status === "other" || status === "pinch") {
+                    touchProxy = {}
                 // swipe
-                if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
+                } else if ((touchProxy.x2 && Math.abs(touchProxy.x1 - touchProxy.x2) > 30) ||
                         (touchProxy.y2 && Math.abs(touchProxy.y1 - touchProxy.y2) > 30)) {
                     //如果是滑动，根据最初与最后的位置判定其滑动方向
                     swipeTimeout = setTimeout(function() {
-                        touchProxy.fire("swipe")
-                        touchProxy.fire("swipe" + (swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)))
+                        var direction = swipeDirection(touchProxy.x1, touchProxy.x2, touchProxy.y1, touchProxy.y2)
+                        touchProxy.fire("swipe", {
+                            direction: direction
+                        })
+                        touchProxy.fire("swipe" + direction)
                         touchProxy = {}
                     }, 0)
                     // normal tap 
@@ -360,6 +487,8 @@ void function() {
                     } else {
                         touchProxy = {}
                     }
+                } else {
+                    touchProxy = {}
                 }
                 deltaX = deltaY = 0
             })
