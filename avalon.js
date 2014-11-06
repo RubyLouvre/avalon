@@ -3377,8 +3377,8 @@
             composing = false
         }
         //当value变化时改变model的值
-        function updateVModel(event) {
-            if (composing)//处理中文输入法在minlengh下引发的BUG
+        function updateVModel(e) {
+            if (composing )//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
             var lastValue = data.pipe(val, data, "get")
@@ -3471,7 +3471,7 @@
                             }
                         } else {
                             bound("propertychange", function(e) {
-                                if (e.properyName === "value") {
+                                if (e.propertyName === "value") {
                                     updateVModel(e)
                                 }
                             })
