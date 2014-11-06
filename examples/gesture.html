@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>gesture</title>
+        <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.modern.js"></script>
+        <script>
+        	window.onerror = function(e) {
+        		alert(JSON.stringify(e))
+        	}
+        </script>
+        <style type="text/css">
+        	*{
+        		padding: 0;
+        		margin: 0;
+        	}
+			.type{
+				border: 1px solid #ccc;
+				width: 300px;
+				margin:10px auto;
+				height: 300px;
+				position: relative;
+				overflow: hidden;
+			}
+			.type .box{
+				border: 1px solid #c00;
+				width: 100px;
+				height: 100px;
+				margin: 20px auto;
+				text-align: center;
+			}
+			.list{
+				position: absolute;
+				top:20px;
+				width: 500%;
+				border-top: 1px solid #c00;
+				border-bottom: 1px solid #c00;
+				transition: all 0.5s;
+			}
+			.item{
+				width: 20%;
+				text-align: center;
+				line-height: 150px;
+				height: 150px;
+				list-style: none;
+				float: left;
+			}
+			#log{
+				position: fixed;
+				right: 0;
+				top:0;
+				width:200px;
+				height: 100px;
+				overflow-y: scroll;
+				overflow-x: hidden;
+				background: green;
+				z-index: 1000;
+			}
+        </style>
+		<script src="../mobile/mobile.js"></script>
+    </head>
+    <body ms-controller="test" 
+          ms-on-tap="tap" 
+          ms-on-doubleTap="doubleTap" 
+          ms-on-hold="hold" 
+          ms-on-squeeze="squeeze"
+          ms-on-splay="splay">
+        <div id="log">
+        	<p 
+        	   ms-repeat-item="log" 
+        	   ms-on-touchstart="stop" 
+        	   ms-on-touchmove="stop"
+        	   ms-on-touchend="stop">{{item}}</p>
+        </div>
+        <div class="type" 
+             ms-on-swipeLeft="swipeLeft" 
+             ms-on-swipeRight="swipeRight"
+             ms-on-swipe="swipe">
+        	<ul class="list" 
+        	    ms-css-left="-100*index+'%'">
+        		<li class="item" 
+        		    ms-repeat-dataItem="[1,2,3,4,5]">
+        			swip-{{$index+1}}{{swipeLog}}
+        		</li>
+        	</ul>
+        </div>
+        <div class="type"
+    	     ms-on-doubletap="pinch2"
+    	     ms-on-pinch="pinch">
+        		pinch{{pinchLog}}
+        	<div class="box" style="width:200px;height:200px;background:red;" 
+        	     ms-css-transform="'scale('+scale+')'">
+        	</div>
+        </div>
+        <div class="type">
+        	<div class="box" 
+        	     ms-on-rotate="rotate" style="width:200px;height:200px;margin-top:50px;" 
+        	     ms-css-transform="'rotate('+ transform + 'deg)'">
+        		rotate{{rotateLog}}
+        	</div>
+        </div>
+        <script>
+        	var index = 0
+            var model = avalon.define("test", function(vm){
+            	vm.index = 0
+            	vm.log = []
+            	vm.stop = function(e) {
+            		e.stopPropagation()
+            	}
+            	vm.tap = function(e) {
+            		vm.log.unshift("taped " + index++)
+            	}
+            	vm.doubleTap = function(e) {
+            		vm.log.unshift("doubleTaped " + index++)
+            	}
+            	vm.hold = function(e) {
+            		vm.log.unshift("holded" + index++)
+            	}
+            	vm.doubleTap = function(e) {
+            		vm.log.unshift("doubleTaped " + index++)
+            	}
+            	vm.swipeLog = ""
+            	vm.swipe = function(e) {
+            		vm.swipeLog = "-haha, swipe me " + index++
+            	}
+            	vm.swipeLeft = function(e) {
+            		if(vm.index !== 4) {
+            			vm.index++
+            		}
+            	}
+            	vm.swipeRight = function(e) {
+            		if(vm.index !== 0) {
+            			vm.index--
+            		}
+            	}
+            	vm.pinchLog = " pinch me"
+            	vm.scale = 1
+            	vm.pinch = function(e) {
+            		vm.pinchLog = " pinched " + e.detail.direction + " " + index++
+            		vm.scale = (vm.scale * e.detail.scale).toFixed(2)
+            		// __log(e.detail.scale)
+            	}
+            	vm.splay = function(e) {
+            		vm.pinch(e)
+            		__log("splay: " + e.detail.scale)
+            	}
+            	vm.squeeze = function(e) {
+            		vm.pinch(e)
+            		__log("squeeze: " + e.detail.scale)
+            	}
+            	vm.pinch2 = function(e) {
+            		vm.scale = vm.scale * 2
+            	}
+            	vm.rotateLog = " rotate me"
+            	vm.transform = 0
+            	vm.rotate = function(e) {
+            		vm.rotateLog = " rotated" + index++
+            		vm.transform = (parseInt(e.detail.deflection) + vm.transform) % 360
+            		__log(e.detail.deflection)
+            	}
+            })
+			window.__log = function(log) {
+				model.log.unshift(log)
+			}
+        </script>
+    </body>
+</html>
