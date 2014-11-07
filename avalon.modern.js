@@ -1410,8 +1410,7 @@
             }
             var data = obj.data
             var el = data.element
-            var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-                    el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+            var remove = el === null ? 1 :  !avalon.contains(root, el)
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
                 delete $$subscribers[obj]
