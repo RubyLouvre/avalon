@@ -11,7 +11,7 @@
     var expose = Date.now()
     var subscribers = "$" + expose
     //http://stackoverflow.com/questions/3277182/how-to-get-the-global-object-in-javascript
-    var window = this || Function("return this")()
+    var window = Function("return this")()
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false

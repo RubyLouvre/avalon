@@ -14,7 +14,7 @@
     var expose = new Date - 0
     var subscribers = "$" + expose
     //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-    var window = this || Function("return this")()
+    var window = Function("return this")()
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
