@@ -1899,7 +1899,7 @@
             $$subscribers.push(obj)
         }
     }
-    var $$subscribers = [], $startIndex = 0, $maxIndex = 200
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 200, beginTime = new Date(), removeID
     function removeSubscribers() {
         for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
             var obj = $$subscribers[i]
@@ -1933,14 +1933,13 @@
         } else {
             $startIndex = 0
         }
+        beginTime = new Date()
     }
-    var beginTime = new Date(), removeID
+  
     function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-        var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 333) {
+        if (new Date() - beginTime > 333) {
             removeSubscribers()
-            beginTime = new Date()
         } else {
             removeID = setTimeout(removeSubscribers, 333)
         }
@@ -1948,11 +1947,13 @@
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (fn.$repeat) {
-                    fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
-                    var fun = fn.evaluator || noop
-                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                if (el && el.parentNode) {
+                    if (fn.$repeat) {
+                        fn.handler.apply(fn, args) //处理监控数组的方法
+                    } else if (fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
+                        var fun = fn.evaluator || noop
+                        fn.handler(fun.apply(0, fn.args || []), el, fn)
+                    }
                 }
             }
         }
@@ -2896,16 +2897,13 @@
         },
         "if": function(val, elem, data) {
             if (val) { //插回DOM树
-                try {
-                    if (elem.nodeType === 8) {
-                        elem.parentNode.replaceChild(data.template, elem)
-                        elem = data.element = data.template //这时可能为null
-                    }
-                    if (elem.getAttribute(data.name)) {
-                        elem.removeAttribute(data.name)
-                        scanAttr(elem, data.vmodels)
-                    }
-                } catch (e) {
+                if (elem.nodeType === 8) {
+                    elem.parentNode.replaceChild(data.template, elem)
+                    elem = data.element = data.template //这时可能为null
+                }
+                if (elem.getAttribute(data.name)) {
+                    elem.removeAttribute(data.name)
+                    scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {

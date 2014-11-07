@@ -6,44 +6,36 @@
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
         <script>
-            require(["avalon.validation"], function() {
-                var vmodel = avalon.define({
-                    xxx: "ppp",
+            avalon.ready(function() {
+                var deptRole = {name: "111", value: "222"};
+                var viewModel = avalon.define({
                     $id: "test",
-                    aaa: 111,
-                    $skipArray: ["validation"],
-                    validation: {
-                        onSuccess: function() {
-                            console.log("success")
-                        },
-                        onError: function(a, b) {
-                            console.log(b)
-                            console.log("error")
-                        },
-                        validationHooks: {
-                            message: "等等",
-                            async: {
-                                get: function(val, data, next) {
-                                    setTimeout(function() {
-                                        next(true)
-                                    })
-                                    return val
-                                }
-                            }
-                        }
-
+                    selectedDeptRole: [{name: "555", value: "666"}],
+                    select: function(deptRole) {
+                        // console.log(deptRole)
+                        //移除再添加
+                        viewModel.selectedDeptRole.splice(0, 1, deptRole);
+                    },
+                    add: function(){
+                            viewModel.select(avalon.mix(true, {}, deptRole));
                     }
-                })
-                avalon.scan()
+                });
+                avalon.scan();
 
-            })
+                viewModel.select(avalon.mix(true, {}, deptRole));
+                viewModel.select(avalon.mix(true, {}, deptRole));
+                viewModel.select(avalon.mix(true, {}, deptRole));
 
+
+            });
         </script>
     </head>
-    <body>
-        <div ms-controller="test" ms-widget="validation">
-            <input ms-attr-placeholder="xxx"/>
-            <input ms-duplex-minlength-int-async="aaa" minlength="4"/>
-        </div>
+    <body ms-controller="test" >
+
+        <select size="7" style="width: 220px; height: 95px;">
+            <option ms-if-loop="selectedDeptRole.length>0" ms-value="el.value" ms-repeat="selectedDeptRole">{{el.name}}</option>
+        </select>
+        
+        <button type="button" ms-click="add">llllllll</button>
     </body>
 </html>
