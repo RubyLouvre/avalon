@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.5 support IE6+ and other browsers
+ avalon 1.3.6 2014.11.7 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -14,7 +14,7 @@
     var expose = new Date - 0
     var subscribers = "$" + expose
     //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-    var window = this ||  Function("return this")()
+    var window = this || Function("return this")()
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -3377,11 +3377,11 @@
             composing = false
         }
         //当value变化时改变model的值
-        function updateVModel(e) {
+        function updateVModel() {
             if (composing)//处理中文输入法在minlengh下引发的BUG
                 return
             var val = element.oldValue = element.value //防止递归调用形成死循环
-            var lastValue = data.pipe(val, data, "get", e)
+            var lastValue = data.pipe(val, data, "get")
             if ($elem.data("duplex-observe") !== false) {
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -3403,9 +3403,9 @@
 
         if (data.isChecked || element.type === "radio") {
             var IE6 = !window.XMLHttpRequest
-            updateVModel = function(e) {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
-                    var lastValue = data.pipe(element.value, data, "get", e)
+                    var lastValue = data.pipe(element.value, data, "get")
                     evaluator(lastValue)
                     callback.call(element, lastValue)
                 }
@@ -3428,7 +3428,7 @@
             }
             bound(IE6 ? "mouseup" : "click", updateVModel)
         } else if (type === "checkbox") {
-            updateVModel = function(e) {
+            updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var method = element.checked ? "ensure" : "remove"
                     var array = evaluator()
@@ -3436,7 +3436,7 @@
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
                     }
-                    avalon.Array[method](array, data.pipe(element.value, data, "get", e))
+                    avalon.Array[method](array, data.pipe(element.value, data, "get"))
                     callback.call(element, array)
                 }
             }
@@ -3470,14 +3470,10 @@
                                 bound("cut", delay)
                             }
                         } else {//onpropertychange事件无法区分是程序触发还是用户触发
-                            bound("keydown", function(e) {
-                                var key = e.keyCode
-                                if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
-                                    return;
-                                delay(e)
+                            bound("propertychange", function(e) {
+                                if (e.propertyName === "value")
+                                    updateVModel()
                             })
-                            bound("paste", delay)
-                            bound("cut", delay)
                         }
                         break
                     default:
@@ -3510,14 +3506,15 @@
         el.dispatchEvent(event)
     }
 
-    function onTree() { //disabled状态下改动不触发input事件
-        if (!this.disabled && this.oldValue !== this.value) {
+    function onTree(value) { //disabled状态下改动不触发input事件
+        var newValue = arguments.length ? value : this.value
+        if (!this.disabled && this.oldValue !== newValue) {
+            var type = this.getAttribute("data-duplex-event") || "input"
+            type = type.match(rword).shift()
             if (W3C) {
-                W3CFire(this, "input")
+                W3CFire(this, type)
             } else {
-                var e = document.createEventObject()
-                e.isTrusted = false //isTrusted在W3C中表示程序触发
-                this.fireEvent("onkeydown", e)
+                this.fireEvent("on" + type)
             }
         }
     }
@@ -3540,16 +3537,14 @@
         }
     }
 
-    function newSetter(newValue) {
-        oldSetter.call(this, newValue)
-        if (newValue !== this.oldValue) {
-            W3CFire(this, "input")
-        }
+    function newSetter(value) {
+        onSetter.call(this, value)
+        onTree.call(this, value)
     }
     try {
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto)//故意引发IE6-8等浏览器报错
-        var oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
+        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
@@ -3559,15 +3554,15 @@
 
     duplexBinding.SELECT = function(element, evaluator, data) {
         var $elem = avalon(element)
-        function updateVModel(e) {
+        function updateVModel() {
             if ($elem.data("duplex-observe") !== false) {
                 var val = $elem.val() //字符串或字符串数组
                 if (Array.isArray(val)) {
                     val = val.map(function(v) {
-                        return data.pipe(v, data, "get", e)
+                        return data.pipe(v, data, "get")
                     })
                 } else {
-                    val = data.pipe(val, data, "get", e)
+                    val = data.pipe(val, data, "get")
                 }
                 if (val + "" !== element.oldValue) {
                     evaluator(val)
