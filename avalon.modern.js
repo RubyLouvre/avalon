@@ -2405,7 +2405,7 @@
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
-                    tagName = elem.tagName
+                    tagName = elem.tagName, hasCast
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
@@ -2413,10 +2413,12 @@
                 if (data.evaluator && data.args) {
                     var params = []
                     var casting = oneObject("string,number,boolean,checked")
-                    var hasCast
+                    if (elem.type === "radio" && data.param === "") {
+                        data.param = "checked"
+                    }
                     data.param.replace(/\w+/g, function(name) {
-                        if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && name === "radio")) {
-                            log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
+                        if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                            log("ms-duplex-radio已经更名为ms-duplex-checked")
                             name = "checked"
                             data.isChecked = true
                         }

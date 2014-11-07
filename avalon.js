@@ -1922,7 +1922,6 @@
                     data[key] = null
                 }
                 obj.data = obj.list = null
-
                 i--
                 n--
 
@@ -2897,13 +2896,16 @@
         },
         "if": function(val, elem, data) {
             if (val) { //插回DOM树
-                if (elem.nodeType === 8) {
-                    elem.parentNode.replaceChild(data.template, elem)
-                    elem = data.element = data.template
-                }
-                if (elem.getAttribute(data.name)) {
-                    elem.removeAttribute(data.name)
-                    scanAttr(elem, data.vmodels)
+                try {
+                    if (elem.nodeType === 8) {
+                        elem.parentNode.replaceChild(data.template, elem)
+                        elem = data.element = data.template //这时可能为null
+                    }
+                    if (elem.getAttribute(data.name)) {
+                        elem.removeAttribute(data.name)
+                        scanAttr(elem, data.vmodels)
+                    }
+                } catch (e) {
                 }
             } else { //移出DOM树，并用注释节点占据原位置
                 if (elem.nodeType === 1) {
