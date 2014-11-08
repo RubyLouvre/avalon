@@ -1938,10 +1938,10 @@
   
     function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
         clearTimeout(removeID)
-        if (new Date() - beginTime > 333) {
+        if (new Date() - beginTime > 444) {
             removeSubscribers()
         } else {
-            removeID = setTimeout(removeSubscribers, 333)
+            removeID = setTimeout(removeSubscribers, 444)
         }
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
