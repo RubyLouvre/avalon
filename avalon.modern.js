@@ -1410,7 +1410,7 @@
             }
             var data = obj.data
             var el = data.element
-            var remove = el === null ? 1 :  !avalon.contains(root, el)
+            var remove = el === null ? 1 : !avalon.contains(root, el)
             if (remove) { //如果它没有在DOM树
                 $$subscribers.splice(i, 1)
                 delete $$subscribers[obj]
@@ -1615,7 +1615,7 @@
                     if (events[type]) {
                         param = type
                         type = "on"
-                    } else if (type === "enabled" || type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
+                    } else if (/^(checked|selected|disabled|readonly|enabled)$/.test(type)) {
                         log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                         if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
                             type = "disabled"
