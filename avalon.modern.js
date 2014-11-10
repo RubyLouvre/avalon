@@ -2707,7 +2707,7 @@
     }
 
     function pipe(val, data, action) {
-        data.param.replace(rword, function(name) {
+        data.param.replace(/\w+/g, function(name) {
             var hook = avalon.duplexHooks[name]
             if (hook && typeof hook[action] === "function") {
                 val = hook[action](val, data)
