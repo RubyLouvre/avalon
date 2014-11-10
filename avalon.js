@@ -1935,7 +1935,7 @@
         }
         beginTime = new Date()
     }
-  
+
     function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
         clearTimeout(removeID)
         if (new Date() - beginTime > 444) {
@@ -3996,7 +3996,7 @@
         source[param] = item
         for (var i = 0, n = eachProxyPool.length; i < n; i++) {
             var proxy = eachProxyPool[i]
-            if (proxy.hasOwnProperty(param)) {
+            if (proxy.hasOwnProperty(param) && (avalon.type(proxy[param]) === avalon.type(item))) {
                 for (var k in source) {
                     proxy[k] = source[k]
                 }
