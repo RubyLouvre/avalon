@@ -1401,7 +1401,7 @@
         }
     }
 
-    var $$subscribers = [], $startIndex = 0, $maxIndex = 200, beginTime = Data.now(), removeID
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 200, beginTime = Date.now(), removeID
     function removeSubscribers() {
         for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
             var obj = $$subscribers[i]
@@ -1433,11 +1433,11 @@
         } else {
             $startIndex = 0
         }
-        beginTime = Data.now()
+        beginTime = Date.now()
     }
     function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
         clearTimeout(removeID)
-        if (Data.now() - beginTime > 444) {
+        if (Date.now() - beginTime > 444) {
             removeSubscribers()
         } else {
             removeID = setTimeout(removeSubscribers, 444)
