@@ -3973,7 +3973,7 @@
         proxy.$outer = data.$outer
         var ov = data.vmodels
         var nv = [proxy].concat(ov)
-        nv.cn = ov.cb
+        nv.cb = ov.cb
         var fragment = {
             nodes: nodes,
             vmodels: nv
