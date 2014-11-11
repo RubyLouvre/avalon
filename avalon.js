@@ -3517,7 +3517,10 @@
             if (W3C) {
                 W3CFire(this, type)
             } else {
-                this.fireEvent("on" + type)
+                try {
+                    this.fireEvent("on" + type)
+                } catch (e) {
+                }
             }
         }
     }
