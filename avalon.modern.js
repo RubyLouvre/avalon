@@ -1163,14 +1163,14 @@
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
             "*": DOC.createElement("div"),
-            "text": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
+            "9": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
         })
         this.optgroup = this.option
         this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
         this.th = this.td
     }
-    "g,circle,ellipse,line,path,polygon,polyline,text".replace(rword, function(tag) {
-        tagHooks[tag] = tagHooks.text//处理SVG
+    "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.g//处理SVG
     })
 
     avalon.clearHTML = function(node) {

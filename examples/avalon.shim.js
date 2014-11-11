@@ -5,7 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.5 support IE6+ and other browsers
+ avalon 1.3.6 2014.11.7 support IE6+ and other browsers
+ shim版,没有ready模块与模块加载器模块
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -14,7 +15,7 @@
     var expose = new Date - 0
     var subscribers = "$" + expose
     //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-    var window = this || Function("return this")()
+    var window = Function("return this")()
     var otherRequire = window.require
     var otherDefine = window.define
     var stopRepeatAssign = false
@@ -1643,7 +1644,7 @@
         thead: [1, "<table>", "</table>"],
         tr: [2, "<table><tbody>"],
         td: [3, "<table><tbody><tr>"],
-        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
+        g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
         _default: W3C ? [0, ""] : [1, "X<div>"] //div可以不用闭合
     }
@@ -1651,8 +1652,8 @@
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-    "g,circle,ellipse,line,path,polygon,polyline,text".replace(rword, function(tag) {
-        tagHooks[tag] = tagHooks.text//处理SVG
+    "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.g//处理SVG
     })
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
@@ -1899,7 +1900,7 @@
             $$subscribers.push(obj)
         }
     }
-    var $$subscribers = [], $startIndex = 0, $maxIndex = 200
+    var $$subscribers = [], $startIndex = 0, $maxIndex = 200, beginTime = new Date(), removeID
     function removeSubscribers() {
         for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
             var obj = $$subscribers[i]
@@ -1922,7 +1923,6 @@
                     data[key] = null
                 }
                 obj.data = obj.list = null
-
                 i--
                 n--
 
@@ -1934,26 +1934,27 @@
         } else {
             $startIndex = 0
         }
+        beginTime = new Date()
     }
-    var beginTime = new Date(), removeID
+
     function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-        var currentTime = new Date()
         clearTimeout(removeID)
-        if (currentTime - beginTime > 333) {
+        if (new Date() - beginTime > 444) {
             removeSubscribers()
-            beginTime = new Date()
         } else {
-            removeID = setTimeout(removeSubscribers, 333)
+            removeID = setTimeout(removeSubscribers, 444)
         }
         if (list && list.length) {
             var args = aslice.call(arguments, 1)
             for (var i = list.length, fn; fn = list[--i]; ) {
                 var el = fn.element
-                if (fn.$repeat) {
-                    fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.element && fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
-                    var fun = fn.evaluator || noop
-                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                if (el && el.parentNode) {
+                    if (fn.$repeat) {
+                        fn.handler.apply(fn, args) //处理监控数组的方法
+                    } else if (fn.type !== "on") {//事件绑定只能由用户触发,不能由程序触发
+                        var fun = fn.evaluator || noop
+                        fn.handler(fun.apply(0, fn.args || []), el, fn)
+                    }
                 }
             }
         }
@@ -2125,7 +2126,7 @@
                     if (events[type]) {
                         param = type
                         type = "on"
-                    } else if (type === "checked" || type === "selected" || type === "disabled" || type === "readonly") {
+                    } else if (/^(checked|selected|disabled|readonly|enabled)$/.test(type)) {
                         log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                         if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
                             type = "disabled"
@@ -2899,7 +2900,7 @@
             if (val) { //插回DOM树
                 if (elem.nodeType === 8) {
                     elem.parentNode.replaceChild(data.template, elem)
-                    elem = data.element = data.template
+                    elem = data.element = data.template //这时可能为null
                 }
                 if (elem.getAttribute(data.name)) {
                     elem.removeAttribute(data.name)
@@ -3049,7 +3050,7 @@
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
-                    tagName = elem.tagName
+                    tagName = elem.tagName, hasCast
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
                 //由于情况特殊，不再经过parseExprProxy
@@ -3057,10 +3058,13 @@
                 if (data.evaluator && data.args) {
                     var params = []
                     var casting = oneObject("string,number,boolean,checked")
-                    var hasCast
+                    if (elem.type === "radio" && data.param === "") {
+                        data.param = "checked"
+                    }
                     data.param.replace(/\w+/g, function(name) {
-                        if ((elem.type === "radio" && data.param === "") || (elem.type === "checkbox" && name === "radio")) {
-                            log(elem.type + "控件如果想通过checked属性同步VM,请改用ms-duplex-checked，以后ms-duplex默认是使用value属性同步VM")
+                        if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                            if (name === "radio")
+                                log("ms-duplex-radio已经更名为ms-duplex-checked")
                             name = "checked"
                             data.isChecked = true
                         }
@@ -3350,7 +3354,7 @@
     }
 
     function pipe(val, data, action, e) {
-        data.param.replace(rword, function(name) {
+        data.param.replace(/\w+/g, function(name) {
             var hook = avalon.duplexHooks[name]
             if (hook && typeof hook[action] === "function") {
                 val = hook[action](val, data)
@@ -3506,8 +3510,9 @@
         el.dispatchEvent(event)
     }
 
-    function onTree() { //disabled状态下改动不触发input事件
-        if (!this.disabled && this.oldValue !== this.value) {
+    function onTree(value) { //disabled状态下改动不触发input事件
+        var newValue = arguments.length ? value : this.value
+        if (!this.disabled && this.oldValue !== newValue) {
             var type = this.getAttribute("data-duplex-event") || "input"
             type = type.match(rword).shift()
             if (W3C) {
@@ -3536,16 +3541,14 @@
         }
     }
 
-    function newSetter(newValue) {
-        oldSetter.call(this, newValue)
-        if (newValue !== this.oldValue) {
-            W3CFire(this, "input")
-        }
+    function newSetter(value) {
+        onSetter.call(this, value)
+        onTree.call(this, value)
     }
     try {
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto)//故意引发IE6-8等浏览器报错
-        var oldSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
+        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
@@ -3994,7 +3997,7 @@
         source[param] = item
         for (var i = 0, n = eachProxyPool.length; i < n; i++) {
             var proxy = eachProxyPool[i]
-            if (proxy.hasOwnProperty(param)) {
+            if (proxy.hasOwnProperty(param) && (avalon.type(proxy[param]) === avalon.type(item))) {
                 for (var k in source) {
                     proxy[k] = source[k]
                 }
@@ -4357,9 +4360,15 @@
      *                     END                                  *
      **********************************************************************/
     avalon.ready = noop
-    avalon.bind(window, "load", function() {
-        avalon.scan(DOC.body)
-    })
+    if (W3C) {
+        DOC.addEventListener("DOMContentLoaded", function() {
+            avalon.scan(DOC.body)
+        })
+    } else {
+        avalon.bind(window, "load", function() {
+            avalon.scan(DOC.body)
+        })
+    }
     avalon.config({
         loader: false
     })
