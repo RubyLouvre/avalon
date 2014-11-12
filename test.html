@@ -24,46 +24,28 @@
                 color: white;
             }
             .green{
-                 background: green;
+                background: green;
             }
         </style>
         <script type="text/javascript">
-            avalon.scanAll(function(){
-                console.log("ok")
-            })
+
             var model = avalon.define({
                 $id: "test",
-                w: 500,
-                h: 200,
-                bottom: true,
-                num: "00",
-                className: "点我",
-                array: [],
-                add: function(){
-                    model.array.push(1)
-                },
-                remove: function(){
-                    model.array.pop()
-                },
-                changeClassName: function() {
-                    model.num = (100 * Math.random()).toFixed(0);
-                    model.className = this.className
+                a: true,
+                d: false,
+                cn: function(a) {
+                    console.log(a)
                 }
             })
-            
+
         </script>
     </head>
     <body ms-controller="test" class="ms-class">
-        <div ms-active="active" >测试:active</div>
-        <div ms-hover="hover" >测试:hover</div>
-        <div ms-class="bgRed width{{w}} height{{h}}" ms-css-width="h">
-            类名通过插值表达式生成<br/>
-            {{w}} * {{h}}<br/>
-            <input data-duplex-event="change" ms-duplex="h">
-        </div>
-        <p><button type="button" ms-class="test{{num}}" ms-click="changeClassName">{{className}}</button></p>
-        <div ms-class="green: array.length">
-            <button ms-click="add" type="button">add</button><button ms-click="remove" type="button">remove</button>
-        </div>
+        <button ms-if="a">xxx</button>
+        <select ms-if="!a">
+            <option>sddd</option>
+        </select>
+        <input type="checkbox" ms-duplex-radio="d"  value="1" data-duplex-changed="cn"/>
+<!--        <input type="checkbox" ms-duplex-radio="d"  value="2" data-duplex-changed="cn"/>-->
     </body>
 </html>
