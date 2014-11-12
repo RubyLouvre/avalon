@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>ms-include、 html filter and scanCallback</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+        <script src="../avalon.js"></script>
+        <style>
+            .bp{
+                border: 1px  solid green;
+            }
+            .contain{
+                border: 1px solid red;
+            }
+        </style>
+        <script>
+            avalon.scanCallback(function() {
+                avalon.log(document.body.innerHTML)
+            })
+            avalon.scanCallback(function() {
+                avalon.log(document.body.innerHTML)
+            })
+            var a = avalon.define({
+                $id: "test",
+                title: "测试scanCallback",
+                a: false,
+                b: '<p><a href="avalon.validation.ex3.html">自带验证规则maxlength,minlength,lt,gt,eq,equal</a></p>'
+            })
+
+        </script>
+        <script id="aaa" type="avalon">
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h1>{{title}}</h1>
+        <div>{{b|html }}</div>
+        <div ms-include="'aaa'" ></div>
+        <div ms-visible="a">{{title}}</div>
+        <div>{{title}}</div>
+    </body>
+</html>
