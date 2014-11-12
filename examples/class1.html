@@ -28,8 +28,9 @@
             }
         </style>
         <script type="text/javascript">
-            avalon.scanAll(function(){
-                console.log("ok")
+            avalon.scanCallback(function(){
+                console.log("============")
+               // console.log(document.body.innerHTML)
             })
             var model = avalon.define({
                 $id: "test",

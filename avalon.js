@@ -1786,23 +1786,16 @@
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            var flag = special === "up" || special === "down" || special === "all"
-            if (!flag) {
-                var callbacks = events[type] || []
-                var all = events.$all || []
-                for (var i = 0, callback; callback = callbacks[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, args)
+            var detail = [type].concat(args)
+            if (special === "all") {
+                for (var i in avalon.vmodels) {
+                    var el = avalon.vmodels[i]
+                    el.$fire.apply(el, detail)
                 }
-                for (var i = 0, callback; callback = all[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, arguments)
-                }
-            } else {
+            } else if (special === "up" || special === "down") {
                 var element = events.expr && findNode(events.expr)
                 if (!element)
                     return
-                var detail = [type].concat(args)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
                     if (v && v.$events && v.$events.expr) {
@@ -1836,6 +1829,17 @@
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
+                }
+            } else {
+                var callbacks = events[type] || []
+                var all = events.$all || []
+                for (var i = 0, callback; callback = callbacks[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, args)
+                }
+                for (var i = 0, callback; callback = all[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, arguments)
                 }
             }
         }
@@ -1992,7 +1996,7 @@
             scanIndex += i
             dirty = true
             setTimeout(function() {
-                if (!scanIndex && !scanAll) {
+                if (scanIndex <= 0 && !scanAll) {
                     scanAll = true
                     while (fn = array.shift()) {
                         fn()
@@ -3154,7 +3158,7 @@
                     }
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
-                        v.$fire("init-ms-duplex", data)
+                        v.$fire("avalon-ms-duplex-init", data)
                     }
                     var cpipe = data.pipe || (data.pipe = pipe)
                     cpipe(null, data, "init")
