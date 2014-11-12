@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <title>avalon • TodoMVC</title>
 <!--        <link rel="stylesheet" href="http://todomvc.com/architecture-examples/react/bower_components/todomvc-common/base.css">-->
-        <script src="../avalon.js"></script>
+        <script src="../avalon.modern.js"></script>
         <style>
             .ms-controller{
                 visibility: hidden;
@@ -12,7 +12,7 @@
         </style>
         <script>
              avalon.scanCallback(function(){
-                console.log(document.body.innerHTML)
+                avalon.log(document.body.innerHTML)
             })
             avalon.filters.capitalize = function(a) {
                 return a.charAt(0).toUpperCase()  + a.slice(1)

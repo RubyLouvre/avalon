@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.7 support IE6+ and other browsers
+ avalon 1.3.7 2014.11.7 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -1789,8 +1789,10 @@
             var detail = [type].concat(args)
             if (special === "all") {
                 for (var i in avalon.vmodels) {
-                    var el = avalon.vmodels[i]
-                    el.$fire.apply(el, detail)
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        v.$fire.apply(v, detail)
+                    }
                 }
             } else if (special === "up" || special === "down") {
                 var element = events.expr && findNode(events.expr)
@@ -1798,14 +1800,13 @@
                     return
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    if (v && v.$events && v.$events.expr) {
-                        if (v !== this) {
+                    if (v !== this) {
+                        if (v.$events.expr) {
                             var node = findNode(v.$events.expr)
                             if (!node) {
                                 continue
                             }
-                            var ok = special === "all" ? 1 : //全局广播
-                                    special === "down" ? element.contains(node) : //向下捕获
+                            var ok =  special === "down" ? element.contains(node) : //向下捕获
                                     node.contains(element) //向上冒泡
                             if (ok) {
                                 node._avalon = v //符合条件的加一个标识

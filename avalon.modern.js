@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.6 2014.11.5 support IE10 and other latest browsers
+ avalon 1.3.7 2014.11.5 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -39,7 +39,7 @@
 
     function log() {
         if (avalon.config.debug) {
-            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+// http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
             console.log.apply(console, arguments)
         }
     }
@@ -77,7 +77,7 @@
         if (obj == null) {
             return String(obj)
         }
-        // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
+// 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
         return typeof obj === "object" || typeof obj === "function" ?
                 class2type[serialize.call(obj)] || "object" :
                 typeof obj
@@ -1294,38 +1294,35 @@
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            var flag = special === "up" || special === "down" || special === "all"
-            if (!flag) {
-                var callbacks = events[type] || []
-                var all = events.$all || []
-                for (var i = 0, callback; callback = callbacks[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, args)
+            var detail = [type].concat(args)
+            if (special === "all") {
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        v.$fire.apply(v, detail)
+                    }
                 }
-                for (var i = 0, callback; callback = all[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, arguments)
-                }
-            } else {
+            } else if (special === "up" || special === "down") {
                 var element = events.expr && findNode(events.expr)
                 if (!element)
                     return
-                var detail = [type].concat(args)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    if (v && v.$events && v.$events.expr) {
-                        if (v !== this) {
+                    if (v !== this) {
+                        if (v.$events.expr) {
                             var node = findNode(v.$events.expr)
-                            var ok = special === "all" ? 1 : //全局广播
-                                    special === "down" ? element.contains(node) : //向下捕获
-                                    node.contains(element)//向上冒泡
+                            if (!node) {
+                                continue
+                            }
+                            var ok = special === "down" ? element.contains(node) : //向下捕获
+                                    node.contains(element) //向上冒泡
                             if (ok) {
-                                node._avalon = v//符合条件的加一个标识
+                                node._avalon = v //符合条件的加一个标识
                             }
                         }
                     }
                 }
-                var nodes = DOC.querySelectorAll("[avalonctrl]")//实现节点排序
+                var nodes = DOC.getElementsByTagName("*") //实现节点排序
                 var alls = []
                 Array.prototype.forEach.call(nodes, function(el) {
                     if (el._avalon) {
@@ -1341,6 +1338,17 @@
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
+                }
+            } else {
+                var callbacks = events[type] || []
+                var all = events.$all || []
+                for (var i = 0, callback; callback = callbacks[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, args)
+                }
+                for (var i = 0, callback; callback = all[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, arguments)
                 }
             }
         }
@@ -1461,10 +1469,41 @@
     /*********************************************************************
      *                            扫描系统                                *
      **********************************************************************/
-    avalon.scan = function(elem, vmodel) {
+    var scanObject = {}
+    avalon.scanCallback = function(fn, group) {
+        group = group || "$all"
+        var array = scanObject[group] || (scanObject[group] = [])
+        array.push(fn)
+    }
+    avalon.scan = function(elem, vmodel, group) {
         elem = elem || root
+        group = group || "$all"
+        var array = scanObject[group] || []
         var vmodels = vmodel ? [].concat(vmodel) : []
+        var scanIndex = 0;
+        var scanAll = false
+        var fn
+        var dirty = false
+        function cb(i) {
+            scanIndex += i
+            dirty = true
+            setTimeout(function() {
+                if (scanIndex <= 0 && !scanAll) {
+                    scanAll = true
+                    while (fn = array.shift()) {
+                        fn()
+                    }
+                }
+            })
+        }
+        vmodels.cb = cb
         scanTag(elem, vmodels)
+        //html, include, widget
+        if (!dirty) {
+            while (fn = array.shift()) {
+                fn()
+            }
+        }
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
@@ -1499,7 +1538,9 @@
                 return
             }
             //ms-important不包含父VM，ms-controller相反
+            var cb = vmodels.cb
             vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
+            vmodels.cb = cb
             elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
             elem.classList.remove(node.name)
             createSignalTower(elem, newVmodel)
@@ -1674,6 +1715,8 @@
     }
 
     function executeBindings(bindings, vmodels) {
+        if (bindings.length)
+            vmodels.cb(bindings.length)
         for (var i = 0, data; data = bindings[i++]; ) {
             data.vmodels = vmodels
             bindingHandlers[data.type](data, vmodels)
@@ -1925,14 +1968,15 @@
     }
 
     /*parseExpr的智能引用代理*/
-    function parseExprProxy(code, scopes, data, tokens) {
+    function parseExprProxy(code, scopes, data, tokens, noregister) {
+        scopes.cb(-1)
         if (Array.isArray(tokens)) {
             code = tokens.map(function(el) {
                 return el.expr ? "(" + el.value + ")" : JSON.stringify(el.value)
             }).join(" + ")
         }
         parseExpr(code, scopes, data)
-        if (data.evaluator) {
+        if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
             data.evaluator.toString = function() {
                 return data.type + " binding to eval(" + code + ")"
@@ -2407,10 +2451,9 @@
         "duplex": function(data, vmodels) {
             var elem = data.element,
                     tagName = elem.tagName, hasCast
+            parseExprProxy(data.value, vmodels, data, 0, 1)
             if (typeof duplexBinding[tagName] === "function") {
                 data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
-                //由于情况特殊，不再经过parseExprProxy
-                parseExpr(data.value, vmodels, data)
                 if (data.evaluator && data.args) {
                     var params = []
                     var casting = oneObject("string,number,boolean,checked")
@@ -2449,7 +2492,7 @@
                     }
                     for (var i in avalon.vmodels) {
                         var v = avalon.vmodels[i]
-                        v.$fire("init-ms-duplex", data)
+                        v.$fire("avalon-ms-duplex-init", data)
                     }
                     var cpipe = data.pipe || (data.pipe = pipe)
                     cpipe(null, data, "init")
@@ -2459,7 +2502,7 @@
         },
         "repeat": function(data, vmodels) {
             var type = data.type
-            parseExpr(data.value, vmodels, data)
+            parseExprProxy(data.value, vmodels, data, 0, 1)
             data.proxies = []
             var freturn = false
             try {
@@ -3181,9 +3224,12 @@
         var nodes = avalon.slice(dom.childNodes)
         transation.appendChild(dom)
         proxy.$outer = data.$outer
+        var ov = data.vmodels
+        var nv = [proxy].concat(ov)
+        nv.cb = ov.cb
         var fragment = {
             nodes: nodes,
-            vmodels: [proxy].concat(data.vmodels)
+            vmodels: nv
         }
         fragments.push(fragment)
     }
