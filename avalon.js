@@ -1806,7 +1806,7 @@
                             if (!node) {
                                 continue
                             }
-                            var ok =  special === "down" ? element.contains(node) : //向下捕获
+                            var ok = special === "down" ? element.contains(node) : //向下捕获
                                     node.contains(element) //向上冒泡
                             if (ok) {
                                 node._avalon = v //符合条件的加一个标识
@@ -2686,10 +2686,14 @@
                     var nodes = avalon.slice(dom.childNodes)
                     target.insertBefore(dom, data.endInclude)
                     scanNodeArray(nodes, vmodels)
-                    rendered && checkScan(target, function() {
-                        rendered.call(target)
+                    if (rendered) {
+                        checkScan(target, function() {
+                            rendered.call(target)
+                            vmodels.cb(-1)
+                        })
+                    } else {
                         vmodels.cb(-1)
-                    })
+                    }
                 }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
@@ -3346,7 +3350,7 @@
                     if (vmodel.hasOwnProperty("$init")) {
                         vmodel.$init(function() {
                             var nv = [vmodel].concat(vmodels)
-                            nv.cn = vmodels.cb
+                            nv.cb = vmodels.cb
                             avalon.scan(elem, nv)
                             if (typeof options.onInit === "function") {
                                 options.onInit.call(elem, vmodel, options, vmodels)
