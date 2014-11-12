@@ -1973,33 +1973,41 @@
     /*********************************************************************
      *                           扫描系统                                 *
      **********************************************************************/
-    var scanFns = []
-    avalon.scanAll = function(fn, id) {
-        fn.id = id
-        scanFns.push(fn)
+    var scanObject = {}
+    avalon.scanCallback = function(fn, group) {
+        group = group || "$all"
+        var array = scanObject[group] || (scanObject[group] = [])
+        array.push(fn)
     }
-    avalon.scan = function(elem, vmodel) {
+    avalon.scan = function(elem, vmodel, group) {
         elem = elem || root
+        group = group || "$all"
+        var array = scanObject[group] || []
         var vmodels = vmodel ? [].concat(vmodel) : []
         var scanIndex = 0;
         var scanAll = false
+        var fn
+        var dirty = false
         function cb(i) {
             scanIndex += i
+            dirty = true
             setTimeout(function() {
                 if (!scanIndex && !scanAll) {
                     scanAll = true
-                    for (var i = scanFns.length; i >= 0; i--) {
-                        var fn = scanFns[i]
-                        if (fn.id ? avalon.vmodels[fn.id] : true) {
-                            fn()
-                            scanFns.splice(i, 1);
-                        }
+                    while (fn = array.shift()) {
+                        fn()
                     }
                 }
             })
         }
         vmodels.cb = cb
         scanTag(elem, vmodels)
+        //html, include, widget
+        if (!dirty) {
+            while (fn = array.shift()) {
+                fn()
+            }
+        }
     }
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
@@ -2216,10 +2224,8 @@
                 if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
                     scanNodeList(elem, vmodels) //扫描子孙元素
                 }
-                break;
+                break
         }
-
-
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
     //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面

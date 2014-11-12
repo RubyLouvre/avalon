@@ -4,7 +4,7 @@
     <head>
         <title>ms-class</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="avalon.shim.js"></script>
+        <script src="../avalon.js"></script>
         <style>
             .ms-class div{
                 display:inline-block;
@@ -28,6 +28,9 @@
             }
         </style>
         <script type="text/javascript">
+            avalon.scanAll(function(){
+                console.log("ok")
+            })
             var model = avalon.define({
                 $id: "test",
                 w: 500,
