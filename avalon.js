@@ -3374,7 +3374,7 @@
                         }
                     }
                 } else {
-                    avalon.scan(elem, vmodel)
+                    avalon.scan(elem, vmodels)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
