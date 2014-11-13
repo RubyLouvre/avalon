@@ -2673,7 +2673,11 @@
                     if (loaded) {
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
-
+                    if (rendered) {
+                        avalon.scanCallback(function(){
+                           rendered.call(target)
+                        })
+                    }
                     while (true) {
                         var node = data.startInclude.nextSibling
                         if (node && node !== data.endInclude) {
@@ -2686,14 +2690,8 @@
                     var nodes = avalon.slice(dom.childNodes)
                     target.insertBefore(dom, data.endInclude)
                     scanNodeArray(nodes, vmodels)
-                    if (rendered) {
-                        checkScan(target, function() {
-                            rendered.call(target)
-                            vmodels.cb(-1)
-                        })
-                    } else {
-                        vmodels.cb(-1)
-                    }
+                    vmodels.cb(-1)
+                    
                 }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
@@ -3375,7 +3373,7 @@
                         }
                     }
                 } else {
-                    avalon.scan(elem, vmodel)
+                    avalon.scan(elem, vmodels)
                 }
             } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
                 elem.vmodels = vmodels
