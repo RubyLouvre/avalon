@@ -308,6 +308,9 @@
             name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
+                if(name === "background"){
+                    name = "backgroundColor"
+                }
                 var val = fn(node, name)
                 return value === true ? parseFloat(val) || 0 : val
             } else if (value === "") { //请除样式
@@ -1334,8 +1337,7 @@
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
     var cssMap = {
-        "float": "cssFloat",
-        background: "backgroundColor"
+        "float": "cssFloat"
     }
     avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
@@ -2673,7 +2675,11 @@
                     if (loaded) {
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
-
+                   if (rendered) {
+                        avalon.scanCallback(function(){
+                           rendered.call(target)
+                        })
+                    }
                     while (true) {
                         var node = data.startInclude.nextSibling
                         if (node && node !== data.endInclude) {
@@ -2686,14 +2692,7 @@
                     var nodes = avalon.slice(dom.childNodes)
                     target.insertBefore(dom, data.endInclude)
                     scanNodeArray(nodes, vmodels)
-                    if (rendered) {
-                        checkScan(target, function() {
-                            rendered.call(target)
-                            vmodels.cb(-1)
-                        })
-                    } else {
-                        vmodels.cb(-1)
-                    }
+                    vmodels.cb(-1)
                 }
                 if (data.param === "src") {
                     if (cacheTmpls[val]) {
