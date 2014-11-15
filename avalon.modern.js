@@ -215,7 +215,7 @@
             name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
-                if(name === "background"){
+                if (name === "background") {
                     name = "backgroundColor"
                 }
                 var val = fn(node, name)
@@ -1511,20 +1511,6 @@
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea".toUpperCase())
 
-    /*确保元素的内容被完全扫描渲染完毕才调用回调*/
-    function checkScan(elem, callback) {
-        var innerHTML = NaN,
-                id = setInterval(function() {
-                    var currHTML = elem.innerHTML
-                    if (currHTML === innerHTML) {
-                        clearInterval(id)
-                        callback()
-                    } else {
-                        innerHTML = currHTML
-                    }
-                }, 15)
-    }
-
 
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
@@ -2059,10 +2045,11 @@
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
                     if (rendered) {
-                        avalon.scanCallback(function(){
-                           rendered.call(target)
+                        avalon.scanCallback(function() {
+                            rendered.call(target)
                         })
                     }
+                    avalon.scan(target)
                     while (true) {
                         var node = data.startInclude.nextSibling
                         if (node && node !== data.endInclude) {
@@ -2261,12 +2248,13 @@
                         break
                 }
                 var callback = data.renderedCallback || noop, args = arguments
-                checkScan(parent, function() {
+                avalon.scanCallback(function() {
                     callback.apply(parent, args)
                     if (parent.oldValue && parent.tagName === "SELECT" && method === "index") {//fix #503
                         avalon(parent).val(parent.oldValue.split(","))
                     }
                 })
+                avalon.scan(parent)
             }
         },
         "html": function(val, elem, data) {
@@ -2966,17 +2954,11 @@
             }
         }
         data.bound("change", updateVModel)
-        var innerHTML = NaN
-        var id = setInterval(function() {
-            var currHTML = element.innerHTML
-            if (currHTML === innerHTML) {
-                clearInterval(id)
-                //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                registerSubscriber(data)
-            } else {
-                innerHTML = currHTML
-            }
-        }, 20)
+        avalon.scanCallback(function() {
+            registerSubscriber(data)
+            data.changed.call(element, evaluator(), data)
+        })
+        avalon.scan(element)
     }
     duplexBinding.TEXTAREA = duplexBinding.INPUT
     //========================= event binding ====================
