@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7 2014.11.5 support IE10 and other latest browsers
+ avalon 1.3.7 2014.11.15 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
