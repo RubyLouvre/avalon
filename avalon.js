@@ -1630,13 +1630,7 @@
     /************************************************************************
      *            HTML处理(parseHTML, innerHTML, clearHTML)                  *
      ************************************************************************/
-    var rtagName = /<([\w:]+)/,
-            //取得其tagName
-            rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-            rcreate = W3C ? /[^\d\D]/ : /(<(?:script|link|style|meta|noscript))/ig,
-            scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"]),
-            //需要处理套嵌关系的标签
-            rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
+
     //parseHTML的辅助变量
     var tagHooks = {
         area: [1, "<map>"],
@@ -1658,6 +1652,11 @@
     String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
         tagHooks[tag] = tagHooks.g //处理SVG
     })
+    var rtagName = /<([\w:]+)/  //取得其tagName
+    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+    var rcreate = W3C ? /[^\d\D]/ : /(<(?:script|link|style|meta|noscript))/ig
+    var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
+    var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关系的标签
     var script = DOC.createElement("script")
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
@@ -1745,6 +1744,7 @@
         }
         return node
     }
+
     /*********************************************************************
      *                            事件管理器                            *
      **********************************************************************/

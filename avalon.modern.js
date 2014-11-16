@@ -1148,12 +1148,7 @@
     /************************************************************************
      *              HTML处理(parseHTML, innerHTML, clearHTML)                 *
      **************************************************************************/
-    var rtagName = /<([\w:]+)/,
-            //取得其tagName
-            rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-            scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"]),
-            //需要处理套嵌关系的标签
-            rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
+
     //parseHTML的辅助变量
     var tagHooks = new function() {
         avalon.mix(this, {
@@ -1165,51 +1160,25 @@
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
             "*": DOC.createElement("div"),
-            "9": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
+            "g": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
         })
         this.optgroup = this.option
         this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
         this.th = this.td
     }
-    "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".replace(rword, function(tag) {
-        tagHooks[tag] = tagHooks.g//处理SVG
-    })
-
-    avalon.clearHTML = function(node) {
-        //  node.textContent = ""
-        while (node.firstChild) {
-            node.removeChild(node.firstChild)
-        }
-        return node
-    }
-
-    var rtagName = /<([\w:]+)/
-    //取得其tagName
-    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
-    //需要处理套嵌关系的标签
-    var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
-    //parseHTML的辅助变量
-    var tagHooks = {
-        area: [1, "<map>"],
-        param: [1, "<object>"],
-        col: [2, "<table><tbody></tbody><colgroup>", "</table>"],
-        legend: [1, "<fieldset>"],
-        option: [1, "<select multiple='multiple'>"],
-        thead: [1, "<table>", "</table>"],
-        tr: [2, "<table><tbody>"],
-        td: [3, "<table><tbody><tr>"],
-        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
-        //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
-        _default: [0, ""]  //div可以不用闭合
-    }
 
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-//处理SVG
-    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
-            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
+
+    String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.g //处理SVG
+    })
+    var rtagName = /<([\w:]+)/
+    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+    var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
     var script = DOC.createElement("script")
+
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
             html = html + ""
@@ -1220,14 +1189,13 @@
                 wrap = tagHooks[tag] || tagHooks._default,
                 fragment = hyperspace.cloneNode(false),
                 wrapper = cinerator,
-                firstChild, neo
-
+                firstChild
         wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
                 if (scriptTypes[el.type]) {
-                    neo = script.cloneNode(false) //FF不能省略参数
+                    var neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
                         neo.setAttribute(attr.name, attr.value)
                     })
@@ -1237,7 +1205,7 @@
             }
         }
         //移除我们为了符合套嵌关系而添加的标签
-        for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
+        for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
         }
 
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
@@ -1245,13 +1213,18 @@
         }
         return fragment
     }
+
     avalon.innerHTML = function(node, html) {
-        if (!/<script/i.test(html) && !rnest.test(html)) {
-            node.innerHTML = html
-        } else {
-            var a = this.parseHTML(html)
-            this.clearHTML(node).appendChild(a)
+        var a = this.parseHTML(html)
+        this.clearHTML(node).appendChild(a)
+    }
+
+    avalon.clearHTML = function(node) {
+        node.textContent = ""
+        while (node.firstChild) {
+            node.removeChild(node.firstChild)
         }
+        return node
     }
     /*********************************************************************
      *                        事件管理器                                *
