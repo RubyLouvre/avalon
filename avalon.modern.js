@@ -1594,7 +1594,7 @@
     }
 
     var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+    var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
         var attributes = elem.hasAttributes() ? avalon.slice(elem.attributes) : []
@@ -1613,7 +1613,7 @@
                     if (events[type]) {
                         param = type
                         type = "on"
-                    } else if (/^(checked|selected|disabled|readonly|enabled)$/.test(type)) {
+                    } else if (obsoleteAttrs[type]) {
                         log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                         if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
                             type = "disabled"
@@ -1997,7 +1997,7 @@
                     var isInnate = attr && attr.expando === false
                 }
 
-                if (isInnate) {
+                if (isInnate || obsoleteAttrs[attrName]) {
                     elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)

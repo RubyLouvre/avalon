@@ -26,6 +26,7 @@
                 vm.changeToggle = function() {
                     model.toggle = !model.toggle
                 }
+                vm.v = "111111111111"
                 vm.switchColor = function() {
                     model.color = model.color === "red" ? "blue" : "red"
                 }
@@ -85,6 +86,7 @@
     </head>
     <body>
         <div ms-controller="test">
+            <input ms-attr-value="v" value="2222222222"/>{{v}}
             <p>First name: <input ms-duplex="firstName" /></p>
             <p>Last name: <input ms-duplex="lastName"  /> {{lastName | html}}</p>
             <p>Hello,    <input ms-duplex="fullName"></p>

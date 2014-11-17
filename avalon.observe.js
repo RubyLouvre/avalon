@@ -102,7 +102,7 @@
         }
 
         //确保接受方为一个复杂的数据类型
-        if (typeof target !== "object" && avalon.type(target) !== "function") {
+        if (typeof target !== "object" && isFunction(target) !== "function") {
             target = {}
         }
 
@@ -214,6 +214,9 @@
             name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
+                if (name === "background") {
+                    name = "backgroundColor"
+                }
                 var val = fn(node, name)
                 return value === true ? parseFloat(val) || 0 : val
             } else if (value === "") { //请除样式
@@ -756,8 +759,7 @@
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
     var cssMap = {
-        "float": "cssFloat",
-        background: "backgroundColor"
+        "float": "cssFloat"
     }
     avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
@@ -812,7 +814,7 @@
 
     function showHidden(node, array) {
         //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
-        if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+        if (node.offsetWidth === 0) {
             var styles = getComputedStyle(node, null)
             if (rdisplayswap.test(styles["display"])) {
                 var obj = {
@@ -842,21 +844,15 @@
                 boxSizing = override
             }
             which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
-            var ret = node[offsetProp]   // border-box 0
-            if (boxSizing === 2) {       // margin-box 2
-                return ret
-                        + avalon.css(node, "margin" + which[0], true)
-                        + avalon.css(node, "margin" + which[1], true)
+            var ret = node[offsetProp] // border-box 0
+            if (boxSizing === 2) { // margin-box 2
+                return ret + avalon.css(node, "margin" + which[0], true) + avalon.css(node, "margin" + which[1], true)
             }
-            if (boxSizing < 0) {        // padding-box  -2
-                ret = ret
-                        - avalon.css(node, "border" + which[0] + "Width", true)
-                        - avalon.css(node, "border" + which[1] + "Width", true)
+            if (boxSizing < 0) { // padding-box  -2
+                ret = ret - avalon.css(node, "border" + which[0] + "Width", true) - avalon.css(node, "border" + which[1] + "Width", true)
             }
-            if (boxSizing === -4) {     // content-box -4
-                ret = ret
-                        - avalon.css(node, "padding" + which[0], true)
-                        - avalon.css(node, "padding" + which[1], true)
+            if (boxSizing === -4) { // content-box -4
+                ret = ret - avalon.css(node, "padding" + which[0], true) - avalon.css(node, "padding" + which[1], true)
             }
             return ret
         }
@@ -877,11 +873,15 @@
         avalon.fn[method] = function(value) { //会忽视其display
             var node = this[0]
             if (arguments.length === 0) {
-                if (node.setTimeout) { //取得窗口尺寸,IE9后可以用window.innerWidth /innerHeight代替
-                    return node["inner" + name]
+                if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
+                    return node["inner" + name] 
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
-                    return  node.documentElement[scrollProp]
+                    var doc = node.documentElement
+                    //FF chrome    html.scrollHeight< body.scrollHeight
+                    //IE 标准模式 : html.scrollHeight> body.scrollHeight
+                    //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
+                    return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
                 return cssHooks[method + "&get"](node)
             } else {
@@ -1005,7 +1005,7 @@
             }
             return this
         },
-        $fire: function(type) {
+         $fire: function(type) {
             var special
             if (/^(\w+)!(\S+)$/.test(type)) {
                 special = RegExp.$1
@@ -1013,41 +1013,35 @@
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            var flag = special === "up" || special === "down" || special === "all"
-            if (!flag) {
-                var callbacks = events[type] || []
-                var all = events.$all || []
-                for (var i = 0, callback; callback = callbacks[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, args)
-                }
-                for (var i = 0, callback; callback = all[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, arguments)
-                }
-            } else {
-                var element = events.expr && document.querySelector(events.expr)
-                if (!element)
-                    return
-                var detail = [type].concat(args)
+            var detail = [type].concat(args)
+            if (special === "all") {
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    if (v && v.$events && v.$events.expr) {
-                        if (v !== this) {
+                    if (v !== this) {
+                        v.$fire.apply(v, detail)
+                    }
+                }
+            } else if (special === "up" || special === "down") {
+                var element = events.expr && findNode(events.expr)
+                if (!element)
+                    return
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        if (v.$events.expr) {
                             var node = findNode(v.$events.expr)
                             if (!node) {
                                 continue
                             }
-                            var ok = special === "all" ? 1 : //全局广播
-                                    special === "down" ? element.contains(node) : //向下捕获
-                                    node.contains(element)//向上冒泡
+                            var ok = special === "down" ? element.contains(node) : //向下捕获
+                                    node.contains(element) //向上冒泡
                             if (ok) {
-                                node._avalon = v//符合条件的加一个标识
+                                node._avalon = v //符合条件的加一个标识
                             }
                         }
                     }
                 }
-                var nodes = DOC.getElementsByTagName("*")//实现节点排序
+                var nodes = DOC.getElementsByTagName("*") //实现节点排序
                 var alls = []
                 Array.prototype.forEach.call(nodes, function(el) {
                     if (el._avalon) {
@@ -1059,10 +1053,21 @@
                 if (special === "up") {
                     alls.reverse()
                 }
-                for (var i = 0, el; el = all[i++]; ) {
+                for (var i = 0, el; el = alls[i++]; ) {
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
+                }
+            } else {
+                var callbacks = events[type] || []
+                var all = events.$all || []
+                for (var i = 0, callback; callback = callbacks[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, args)
+                }
+                for (var i = 0, callback; callback = all[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, arguments)
                 }
             }
         }
