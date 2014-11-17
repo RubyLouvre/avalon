@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7 2014.11.15 support IE10 and other latest browsers
+ avalon 1.3.7 2014.11.17 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -1991,13 +1991,9 @@
                 if (toRemove) {
                     return elem.removeAttribute(attrName)
                 }
-                if (window.VBArray && !rsvg.test(elem)) {//IE下需要区分固有属性与自定义属性
-                    var attrs = elem.attributes || {}
-                    var attr = attrs[attrName]
-                    var isInnate = attr && attr.expando === false
-                }
-
-                if (isInnate || obsoleteAttrs[attrName]) {
+                //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
+                var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
+                if (isInnate) {
                     elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)

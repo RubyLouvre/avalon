@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7 2014.11.15 support IE6+ and other browsers
+ avalon 1.3.7 2014.11.17 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -1676,21 +1676,18 @@
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
-                var parent = el.parentNode
-                var next = el.nextSibling
-                var text = el.text
-                parent.removeChild(el)
-                //IE直接通过移除节点，重赋text属性，再插回原位就恢复执行脚本功能
                 if (scriptTypes[el.type]) {
-                    // 其他浏览器则需要以偷龙转凤方式恢复此功能
+                    //以偷龙转凤方式恢复执行脚本功能
                     neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
-                        neo.setAttribute(attr.name, attr.value)
+                        if (attr && attr.specified) {
+                            neo[attr.name] = attr.value //复制其属性
+                            neo.setAttribute(attr.name, attr.value)
+                        }
                     })
-                    el = neo
+                    neo.text = el.text
+                    el.parentNode.replaceChild(neo, el) //替换节点
                 }
-                el.text = text
-                parent.insertBefore(el, next)
             }
         }
         //移除我们为了符合套嵌关系而添加的标签
@@ -2627,23 +2624,16 @@
                     }
                 }
                 var toRemove = (val === false) || (val === null) || (val === void 0)
+
                 if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
                     attrName = propMap[attrName]
-                    var isInnate = true
                 }
                 if (toRemove) {
                     return elem.removeAttribute(attrName)
                 }
-                if (window.VBArray && !isInnate) { //IE下需要区分固有属性与自定义属性
-                    if (isVML(elem)) {
-                        isInnate = true
-                    } else if (!rsvg.test(elem)) {
-                        var attrs = elem.attributes || {}
-                        var attr = attrs[attrName]
-                        isInnate = attr ? attr.expando === false : attr === null
-                    }
-                }
-                if (isInnate || obsoleteAttrs[attrName]) {
+                //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
+                var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
+                if (isInnate) {
                     elem[attrName] = val
                 } else {
                     elem.setAttribute(attrName, val)
