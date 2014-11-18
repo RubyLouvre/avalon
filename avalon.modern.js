@@ -2419,54 +2419,54 @@
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
-                    tagName = elem.tagName, hasCast
+                    hasCast
             parseExprProxy(data.value, vmodels, data, 0, 1)
-            if (typeof duplexBinding[tagName] === "function") {
-                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
-                if (data.evaluator && data.args) {
-                    var params = []
-                    var casting = oneObject("string,number,boolean,checked")
-                    if (elem.type === "radio" && data.param === "") {
-                        data.param = "checked"
-                    }
-                    data.param.replace(/\w+/g, function(name) {
-                        if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                            log("ms-duplex-radio已经更名为ms-duplex-checked")
-                            name = "checked"
-                            data.isChecked = true
-                        }
-                        if (name === "bool") {
-                            name = "boolean"
-                            log("ms-duplex-bool已经更名为ms-duplex-boolean")
-                        } else if (name === "text") {
-                            name = "string"
-                            log("ms-duplex-text已经更名为ms-duplex-string")
-                        }
-                        if (casting[name]) {
-                            hasCast = true
-                        }
-                        avalon.Array.ensure(params, name)
-                    })
-                    if (!hasCast) {
-                        params.push("string")
-                    }
-                    data.param = params.join("-")
-                    data.bound = function(type, callback) {
-                        elem.addEventListener(type, callback)
-                        var old = data.rollback
-                        data.rollback = function() {
-                            elem.removeEventListener(type, callback)
-                            old && old()
-                        }
-                    }
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        v.$fire("avalon-ms-duplex-init", data)
-                    }
-                    var cpipe = data.pipe || (data.pipe = pipe)
-                    cpipe(null, data, "init")
-                    duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
+
+            data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
+            if (data.evaluator && data.args) {
+                var params = []
+                var casting = oneObject("string,number,boolean,checked")
+                if (elem.type === "radio" && data.param === "") {
+                    data.param = "checked"
                 }
+                data.param.replace(/\w+/g, function(name) {
+                    if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                        log("ms-duplex-radio已经更名为ms-duplex-checked")
+                        name = "checked"
+                        data.isChecked = true
+                    }
+                    if (name === "bool") {
+                        name = "boolean"
+                        log("ms-duplex-bool已经更名为ms-duplex-boolean")
+                    } else if (name === "text") {
+                        name = "string"
+                        log("ms-duplex-text已经更名为ms-duplex-string")
+                    }
+                    if (casting[name]) {
+                        hasCast = true
+                    }
+                    avalon.Array.ensure(params, name)
+                })
+                if (!hasCast) {
+                    params.push("string")
+                }
+                data.param = params.join("-")
+                data.bound = function(type, callback) {
+                    elem.addEventListener(type, callback)
+                    var old = data.rollback
+                    data.rollback = function() {
+                        elem.removeEventListener(type, callback)
+                        old && old()
+                    }
+                }
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    v.$fire("avalon-ms-duplex-init", data)
+                }
+                var cpipe = data.pipe || (data.pipe = pipe)
+                cpipe(null, data, "init")
+                var tagName = elem.tagName
+                duplexBinding[tagName] && duplexBinding[tagName](elem, data.evaluator.apply(null, data.args), data)
             }
         },
         "repeat": function(data, vmodels) {
