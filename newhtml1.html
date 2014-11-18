@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src='avalon.observe.js'></script>
+        <script>
+            window.onload = function() {
+                var node = avalon.parseHTML("<script>alert(1)<\/script>")
+                document.body.appendChild(node)
+
+                var g = '<g stroke="green" fill="white" stroke-width="5">\
+    <circle cx="25" cy="25" r="15" />\
+    <circle cx="40" cy="25" r="15" />\
+    <circle cx="55" cy="25" r="15" />\
+    <circle cx="70" cy="25" r="15" />\
+  </g>'
+                var node = avalon.parseHTML(g)
+                console.log(node)
+                var el = avalon.parseHTML("<col width=120><tr><td></td></tr>")
+                console.log(el)
+            }
+
+            //console.log(wrapper)
+        </script>
+    </head>
+    <body>
+        <div>TODO write content</div>
+    </body>
+</html>

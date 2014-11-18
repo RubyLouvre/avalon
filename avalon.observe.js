@@ -874,7 +874,7 @@
             var node = this[0]
             if (arguments.length === 0) {
                 if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
-                    return node["inner" + name] 
+                    return node["inner" + name]
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
                     var doc = node.documentElement
@@ -956,9 +956,38 @@
      *        HTML处理(parseHTML, innerHTML, clearHTML)                    *
      ****************************************************************************/
     !function(t) {
+        var rtagName = /<([\w:]+)/
+        var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+
+        var tagHooks = {
+            col: [2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
+            g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
+            //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
+            _default: [0, "", ""]  //div可以不用闭合
+        }
+
+
+        String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
+            tagHooks[tag] = tagHooks.g //处理SVG
+        })
+
         avalon.parseHTML = function(html) {
-            t.innerHTML = html + ""
-            return t.content
+            html = html.replace(rxhtml, "<$1></$2>").trim()
+            var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
+            var wrap = tagHooks[tag] || tagHooks._default
+            t.innerHTML = wrap[1] + html + wrap[2]
+            var wrapper = t.content
+            if (wrap[0]) {
+                console.log(wrapper)
+//                var fragment = wrapper.cloneNode(false), firstChild
+//                for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
+//                }
+//                while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+//                    fragment.appendChild(firstChild)
+//                }
+//                return fragment
+            }
+            return wrapper
         }
         avalon.clearHTML = function(node) {
             node.textContent = ""
@@ -1005,7 +1034,7 @@
             }
             return this
         },
-         $fire: function(type) {
+        $fire: function(type) {
             var special
             if (/^(\w+)!(\S+)$/.test(type)) {
                 special = RegExp.$1
