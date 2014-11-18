@@ -3287,6 +3287,9 @@
                     proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
+                proxy.$watch(param, function(val) {
+                    data.$repeat.set(proxy.$index, val)
+                })
                 return proxy
             }
         }

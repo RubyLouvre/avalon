@@ -1694,9 +1694,10 @@
         for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
         }
         if (!W3C) { //fix IE
-            for (els = avalon.slice(wrapper["getElementsByTagName"]("br")), i = 0; el = els[i++]; ) {
+            for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
                 if (el.className && el.className === "msNoScope") {
                     el.parentNode.removeChild(el)
+                    i--
                 }
             }
             for (els = wrapper.all, i = 0; el = els[i++]; ) { //fix VML
@@ -1705,10 +1706,11 @@
                 }
             }
             if (tag === "tr") {
-                for (els = avalon.slice(wrapper.children), i = 0; el = els[i++]; ) {
+                for (els = wrapper.children, i = 0; el = els[i++]; ) {
                     // IE6-8,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
-                    if (el.nodeName == "") {
+                    if (el.nodeName === "") {
                         el.parentNode.removeChild(el)
+                        i--
                     }
                 }
             }
@@ -2024,7 +2026,17 @@
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea".toUpperCase())
-
+    function checkScan(elem, callback, innerHTML) {
+        var id = setTimeout(function() {
+            var currHTML = elem.innerHTML
+            clearTimeout(id)
+            if (currHTML === innerHTML) {
+                callback()
+            } else {
+                checkScan(elem, callback, currHTML)
+            }
+        })
+    }
 
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
@@ -2658,11 +2670,10 @@
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
                     if (rendered) {
-                        avalon.scanCallback(function() {
+                        checkScan(target, function() {
                             rendered.call(target)
-                        })
+                        }, NaN)
                     }
-                    avalon.scan(target)
                     while (true) {
                         var node = data.startInclude.nextSibling
                         if (node && node !== data.endInclude) {
@@ -2889,13 +2900,13 @@
                 }
                 var callback = data.renderedCallback || noop,
                         args = arguments
-                avalon.scanCallback(function() {
+
+                checkScan(parent, function() {
                     callback.apply(parent, args)
                     if (parent.oldValue && parent.tagName === "SELECT" && method === "index") { //fix #503
                         avalon(parent).val(parent.oldValue.split(","))
                     }
-                })
-                avalon.scan(parent)
+                }, NaN)
             }
         },
         "html": function(val, elem, data) {
@@ -3663,12 +3674,11 @@
             }
         }
         data.bound("change", updateVModel)
-        avalon.scanCallback(function() {
+        checkScan(element, function() {
             //先等到select里的option元素被扫描后，才根据model设置selected属性  
             registerSubscriber(data)
             data.changed.call(element, evaluator(), data)
-        })
-        avalon.scan(element)
+        }, NaN)
     }
     duplexBinding.TEXTAREA = duplexBinding.INPUT
     //============================= event binding =======================
@@ -4074,6 +4084,9 @@
                     proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
+                proxy.$watch(param, function(val) {
+                    data.$repeat.set(proxy.$index, val)
+                })
                 return proxy
             }
         }

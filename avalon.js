@@ -1708,7 +1708,7 @@
             if (tag === "tr") {
                 for (els = wrapper.children, i = 0; el = els[i++]; ) {
                     // IE6-8,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
-                    if (el.nodeName == "") {
+                    if (el.nodeName === "") {
                         el.parentNode.removeChild(el)
                         i--
                     }
@@ -3674,7 +3674,7 @@
             }
         }
         data.bound("change", updateVModel)
-        checkScan(element,function() {
+        checkScan(element, function() {
             //先等到select里的option元素被扫描后，才根据model设置selected属性  
             registerSubscriber(data)
             data.changed.call(element, evaluator(), data)
@@ -4084,6 +4084,9 @@
                     proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
+                proxy.$watch(param, function(val) {
+                    data.$repeat.set(proxy.$index, val)
+                })
                 return proxy
             }
         }
