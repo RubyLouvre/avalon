@@ -6,14 +6,14 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../avalon.js"></script>
         <script>
-            avalon.define("test", function(vm) {
-                vm.fn1 = function(e) {
-                    console.log(e)
+            avalon.define({
+                $id: "test",
+                fn1: function(e) {
+                    console.log(e.type)
                     console.log(this)
-
-                }
-                vm.fn2 = function(e) {
-                    console.log(e)
+                },
+                fn2: function(e) {
+                    console.log(e.type)
                     console.log(this)
                 }
             })

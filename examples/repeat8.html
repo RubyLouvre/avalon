@@ -3,7 +3,7 @@
 <html>
     <head>
         <title></title>
-        <script src="../avalon.js"></script>
+        <script src="avalon.$events.js"></script>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script>
             avalon.ready(function() {
@@ -39,8 +39,6 @@
                     vm.$watch("firstSelected", function(a) {
                         vm.second = map[a].concat()
                         vm.secondSelected = vm.second[0]
-
-
                     })
                     vm.$watch("secondSelected", function(a) {
                         vm.third = map[a].concat()

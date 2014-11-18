@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-attr-*</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js"></script>
+
+        <script>
+            avalon.define("ms-attr-*", function(vm) {
+                vm.aaa = true
+                vm.click = function() {
+                    vm.aaa = !vm.aaa
+                }
+                vm.bbb = "@@@"
+                vm.ccc = "&&&"
+                vm.active = "active"
+            })
+            var nextTick = (function() {
+                // linked list of tasks (single, with head node)
+                var head = {task: void 0, next: null};
+                var tail = head;
+                var flushing = false;
+                var requestTick = void 0;
+           
+                function flush() {
+                    while (head.next) {
+                        head = head.next;
+                        var task = head.task;
+                        head.task = void 0;
+                       
+                        try {
+                            task();
+
+                        } catch (e) {
+
+                            // In browsers, uncaught exceptions are not fatal.
+                            // Re-throw them asynchronously to avoid slow-downs.
+                            setTimeout(function() {
+                                throw e;
+                            }, 0);
+
+                        }
+                    }
+
+                    flushing = false;
+                }
+
+                nextTick = function(task) {
+                    tail = tail.next = {
+                        task: task,
+                        next: null
+                    };
+
+                    if (!flushing) {
+                        flushing = true;
+                        requestTick();
+                    }
+                };
+
+                if (typeof setImmediate === "function") {
+                   
+                        requestTick = setImmediate.bind(window, flush);
+                  
+                } else if (typeof MessageChannel !== "undefined") {
+                    // modern browsers
+                    // http://www.nonblocking.io/2011/06/windownexttick.html
+                    var channel = new MessageChannel();
+                    // At least Safari Version 6.0.5 (8536.30.1) intermittently cannot create
+                    // working message ports the first time a page loads.
+                    channel.port1.onmessage = function() {
+                        requestTick = requestPortTick;
+                        channel.port1.onmessage = flush;
+                        flush();
+                    };
+                    var requestPortTick = function() {
+                        // Opera requires us to provide a message payload, regardless of
+                        // whether we use it.
+                        channel.port2.postMessage(0);
+                    };
+                    requestTick = function() {
+                        setTimeout(flush, 0);
+                        requestPortTick();
+                    };
+
+                } else {
+                    // old browsers
+                    requestTick = function() {
+                        setTimeout(flush, 0);
+                    };
+                }
+
+                return nextTick;
+            })();
+        </script>
+        <style>
+            .active {
+                background: goldenrod;
+            }
+            .readonly{
+                border:1px solid blueviolet;
+            }
+        </style>
+
+    </head>
+    <body>
+        <form method="get" action="aaa.html" ms-controller="ms-attr-*">
+            <input ms-enabled="aaa" name="a1" value="12345"/>
+            <input ms-disabled="aaa" name="a2" value="67890"/>
+            <input ms-readonly="aaa" name="a3" ms-class="readonly: aaa" value="readonly" />
+
+            <input ms-duplex-radio="aaa" type="checkbox" value="checkbox" name="a4"/>
+            <select name="a5">
+                <option>222</option>
+                <option ms-selected="aaa">555</option>
+            </select>
+            <p>
+                <input ms-attr-value="其他内容  {{ccc}}" name="a6" value="改"/>
+                <input ms-attr-value="'其他内容 '+ccc" name="a7" value="改" />
+                <input ms-value="其他内容  {{ccc}}" name="a8" value="改"/>
+            </p>
+            <button type="button" ms-click="click" ms-attr-class="active">
+                点我
+            </button>
+            <input type="submit" value="提交" />
+            <svg width="100" height="100">
+            <circle ms-attr-cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+            </svg>
+        </form>
+    </body>
+</html>

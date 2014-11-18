@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.$events.js"></script>
+        <script>
+            avalon.define("xxx", function(vm) {
+                vm.data = [{checked: false}, {checked: false}, {checked: false}, {checked: false}]
+                vm.allchecked = false
+                vm.$one = "yyyyyyyyyyy"
+                vm.checkAll = function() {
+
+                    var vmodel = avalon.vmodels.xxx
+                    var bool = vmodel.allchecked = this.checked
+                    vmodel.data.forEach(function(el) {
+                        el.checked = bool
+                    })
+                }
+                vm.click = function() {
+                    vm.data.splice(1, 0, {checked: true})
+                }
+                vm.click2 = function() {
+                    vm.object = {bbb: "4444444444"}
+                }
+                vm.object = {
+                    aaa: "111111"
+                }
+                vm.checkOne = function($index) {
+                    var vmodel = avalon.vmodels.xxx
+                    avalon.bind("click", this, function() {
+                        setTimeout(function() {
+
+                            if (!this.checked) {
+                                vmodel.allchecked = false
+                            } else {
+                                vmodel.allchecked = vmodel.data.every(function(el) {
+                                    return el.checked
+                                })
+                            }
+                        })
+                    })
+
+                }
+            })
+        </script>
+    </head>
+    <body  ms-controller="xxx" >
+        <ul ms-each="data">
+            <li>{{el.checked}}</li>
+        </ul>
+        <div>
+            <ul >
+                <li ms-repeat="object">{{$key}}</li>
+            </ul>
+        </div>
+        <ol >
+            <li ms-repeat="object">{{$key}}</li>
+        </ol>
+        <table border="1">
+            <tr>
+                <td><input type="checkbox" ms-duplex-radio="allchecked" data-duplex-changed="checkAll"/>全选{{$one}}</td>
+            </tr>
+            <tr ms-repeat="data">
+                <td><input type="checkbox"  ms-duplex-radio="el.checked" data-duplex-changed="checkOne(el,$index)"/>xxxxxxxxxxxx</td>
+            </tr>
+        </table>
+        <button type="button" ms-click="click">add</button> <button type="button" ms-click="click2">add</button>
+    </body>
+</html>

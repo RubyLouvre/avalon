@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>by 司徒正美</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js"></script>
+     
+        <script>
+            avalon.define({
+                $id: "grid",
+              
+                array: [{
+                        name: 1,
+                        toggle: true
+                },{
+                        name: 1,
+                        toggle: true
+                },{
+                        name: 3,
+                        toggle: false
+                },{
+                        name: 1,
+                        toggle: true
+                }]
+            })
+
+        
+        </script>
+
+    </head>
+    <body>
+        <div ms-controller="grid">
+            <ul>
+                <li ms-repeat="array" ms-if-loop="el.toggle"><input ms-duplex="el.name">{{el.name}}</li>
+            </ul>
+            
+        </div>
+    </body> 
+</html>

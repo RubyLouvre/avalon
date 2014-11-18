@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="../avalon.js" ></script>
+        <script>
+            var model = avalon.define({
+                $id: "test",
+                aaa: "2",
+                bbb: "2",
+                $ccc: "1",
+                ddd: "1",
+                $skipArray: ["ddd"],
+                click: function(a) {
+                    model[a] = new Date - 0
+                }
+            })
+            model.$watch("aaa", function(a, b) {
+                console.log("aaa", a, b)
+            })
+            model.$watch("bbb", function(a, b) {
+                console.log("bbb", a, b)
+            })
+            model.$watch("$ccc", function(a, b) {
+                console.log("$ccc", a, b)
+            })
+            model.$watch("ddd", function(a, b) {
+                console.log("ddd", a, b)
+            })
+        </script>
+        <style>
+            .ms-hover div:hover{
+                background:yellowgreen;
+            }
+        </style>
+    </head>
+    <body ms-controller="test" class='ms-hover'>
+        <div ms-click="click('aaa')">{{aaa}}</div>
+        <div ms-click="click('bbb')">{{bbb}}</div>
+        <div ms-click="click('$ccc')">{{$ccc}}</div>
+        <div ms-click="click('ddd')">{{ddd}}</div>
+    </body>
+</html>
