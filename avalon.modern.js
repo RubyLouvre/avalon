@@ -2637,6 +2637,7 @@
                 var widgetData = avalon.getWidgetData(elem, widget)
                 data.value = [widget, id, optName].join(",")
                 data[widget + "Id"] = id
+                elem.msData["ms-widget-id"] = id
                 data.evaluator = noop
                 var options = data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")

@@ -3335,6 +3335,7 @@
                 data.value = [widget, id, optName].join(",")
                 data[widget + "Id"] = id
                 data.evaluator = noop
+                elem.msData["ms-widget-id"] = id
                 var options = data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")
                 var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
