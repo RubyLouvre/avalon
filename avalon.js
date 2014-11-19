@@ -1122,9 +1122,10 @@
             }
         },
         _remove: function(cls) {
-            this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+            this._set((" " + this + " ").replace(" " + cls + " ", " "))
         },
         __set: function(cls) {
+            cls = cls.trim()
             var node = this.node
             if (typeof node.className === "string") {
                 node.className = cls
