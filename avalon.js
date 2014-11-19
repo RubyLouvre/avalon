@@ -1640,7 +1640,8 @@
         legend: [1, "<fieldset>"],
         option: [1, "<select multiple='multiple'>"],
         thead: [1, "<table>", "</table>"],
-        tr: [2, "<table><tbody>"],
+        //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
+        tr: [2, "<table><tbody>","</tbody></table>"],
         td: [3, "<table><tbody><tr>"],
         g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
@@ -1707,15 +1708,7 @@
                 }
             }
         }
-        if (DOC.createStyleSheet && tag === "tr") {
-            for (els = wrapper.children, i = 0; el = els[i++]; ) {
-                // IE6-9,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
-                if (el.nodeName === "") {
-                    el.parentNode.removeChild(el)
-                    i--
-                }
-            }
-        }
+
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
