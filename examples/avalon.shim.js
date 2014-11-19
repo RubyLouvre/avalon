@@ -1639,7 +1639,7 @@
         col: [2, "<table><tbody></tbody><colgroup>", "</table>"],
         legend: [1, "<fieldset>"],
         option: [1, "<select multiple='multiple'>"],
-        thead: [1, "<table>", "</table>"],
+        thead: [1, "<table>","</table>"],
         //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
         tr: [2, "<table><tbody>", "</tbody></table>"],
         td: [3, "<table><tbody><tr>"],
