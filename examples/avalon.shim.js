@@ -1122,9 +1122,10 @@
             }
         },
         _remove: function(cls) {
-            this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+            this._set((" " + this + " ").replace(" " + cls + " ", " "))
         },
         __set: function(cls) {
+            cls = cls.trim()
             var node = this.node
             if (typeof node.className === "string") {
                 node.className = cls
@@ -1705,13 +1706,13 @@
                     fixVML(el)
                 }
             }
-            if (tag === "tr") {
-                for (els = wrapper.children, i = 0; el = els[i++]; ) {
-                    // IE6-8,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
-                    if (el.nodeName === "") {
-                        el.parentNode.removeChild(el)
-                        i--
-                    }
+        }
+        if (DOC.createStyleSheet && tag === "tr") {
+            for (els = wrapper.children, i = 0; el = els[i++]; ) {
+                // IE6-9,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
+                if (el.nodeName === "") {
+                    el.parentNode.removeChild(el)
+                    i--
                 }
             }
         }
