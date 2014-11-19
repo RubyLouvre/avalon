@@ -2026,6 +2026,7 @@
 
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,script,style,textarea".toUpperCase())
+
     function checkScan(elem, callback, innerHTML) {
         var id = setTimeout(function() {
             var currHTML = elem.innerHTML
@@ -2403,6 +2404,7 @@
         for (var i = vars.length, prop; prop = vars[--i]; ) {
             if (scope.hasOwnProperty(prop)) {
                 ret.push(prop + prefix + prop)
+                data.vars.push(prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
                 }
@@ -2410,7 +2412,6 @@
             }
         }
         return ret
-
     }
 
     function uniqSet(array) {
@@ -2448,7 +2449,7 @@
         var dataType = data.type
         var filters = data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
-            return el.$id.replace(rproxy, "$1")
+            return String(el.$id).replace(rproxy, "$1")
         }) + code + dataType + filters
         var vars = getVariables(code).concat(),
                 assigns = [],
@@ -2457,6 +2458,7 @@
                 prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
         scopes = uniqSet(scopes)
+        data.vars = []
         for (var i = 0, sn = scopes.length; i < sn; i++) {
             if (vars.length) {
                 var name = "vm" + expose + "_" + i
@@ -2467,6 +2469,22 @@
         }
         if (!assigns.length && dataType === "duplex") {
             return
+        }
+        if (dataType !== "duplex") {
+            //https://github.com/RubyLouvre/avalon/issues/583
+            data.vars.forEach(function(v) {
+                var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
+                code = code.replace(reg, function(_) {
+                    var c = _.charAt(v.length)
+                    if (c === "." || c === "[") {
+                        var name = "var" + String(Math.random()).replace(/^0\./, "")
+                        assigns.push(name + " = " + _)
+                        return name
+                    } else {
+                        return _
+                    }
+                })
+            })
         }
         //---------------args----------------
         if (filters) {
@@ -2570,9 +2588,12 @@
         parseExpr(code, scopes, data)
         if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
+            if (data.type === "if") {
+                console.log(data.evaluator + "")
             }
+//            data.evaluator.toString = function() {
+//                return data.type + " binding to eval(" + code + ")"
+//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -2900,7 +2921,6 @@
                 }
                 var callback = data.renderedCallback || noop,
                         args = arguments
-
                 checkScan(parent, function() {
                     callback.apply(parent, args)
                     if (parent.oldValue && parent.tagName === "SELECT" && method === "index") { //fix #503
@@ -3109,60 +3129,59 @@
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
-                    tagName = elem.tagName,
                     hasCast
             parseExprProxy(data.value, vmodels, data, 0, 1)
-            if (typeof duplexBinding[tagName] === "function") {
-                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
-                if (data.evaluator && data.args) {
-                    var params = []
-                    var casting = oneObject("string,number,boolean,checked")
-                    if (elem.type === "radio" && data.param === "") {
-                        data.param = "checked"
-                    }
-                    data.param.replace(/\w+/g, function(name) {
-                        if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                            if (name === "radio")
-                                log("ms-duplex-radio已经更名为ms-duplex-checked")
-                            name = "checked"
-                            data.isChecked = true
-                        }
-                        if (name === "bool") {
-                            name = "boolean"
-                            log("ms-duplex-bool已经更名为ms-duplex-boolean")
-                        } else if (name === "text") {
-                            name = "string"
-                            log("ms-duplex-text已经更名为ms-duplex-string")
-                        }
-                        if (casting[name]) {
-                            hasCast = true
-                        }
-                        avalon.Array.ensure(params, name)
-                    })
-                    if (!hasCast) {
-                        params.push("string")
-                    }
-                    data.param = params.join("-")
-                    data.bound = function(type, callback) {
-                        if (elem.addEventListener) {
-                            elem.addEventListener(type, callback, false)
-                        } else {
-                            elem.attachEvent("on" + type, callback)
-                        }
-                        var old = data.rollback
-                        data.rollback = function() {
-                            avalon.unbind(elem, type, callback)
-                            old && old()
-                        }
-                    }
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        v.$fire("avalon-ms-duplex-init", data)
-                    }
-                    var cpipe = data.pipe || (data.pipe = pipe)
-                    cpipe(null, data, "init")
-                    duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
+
+            data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
+            if (data.evaluator && data.args) {
+                var params = []
+                var casting = oneObject("string,number,boolean,checked")
+                if (elem.type === "radio" && data.param === "") {
+                    data.param = "checked"
                 }
+                data.param.replace(/\w+/g, function(name) {
+                    if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                        if (name === "radio")
+                            log("ms-duplex-radio已经更名为ms-duplex-checked")
+                        name = "checked"
+                        data.isChecked = true
+                    }
+                    if (name === "bool") {
+                        name = "boolean"
+                        log("ms-duplex-bool已经更名为ms-duplex-boolean")
+                    } else if (name === "text") {
+                        name = "string"
+                        log("ms-duplex-text已经更名为ms-duplex-string")
+                    }
+                    if (casting[name]) {
+                        hasCast = true
+                    }
+                    avalon.Array.ensure(params, name)
+                })
+                if (!hasCast) {
+                    params.push("string")
+                }
+                data.param = params.join("-")
+                data.bound = function(type, callback) {
+                    if (elem.addEventListener) {
+                        elem.addEventListener(type, callback, false)
+                    } else {
+                        elem.attachEvent("on" + type, callback)
+                    }
+                    var old = data.rollback
+                    data.rollback = function() {
+                        avalon.unbind(elem, type, callback)
+                        old && old()
+                    }
+                }
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    v.$fire("avalon-ms-duplex-init", data)
+                }
+                var cpipe = data.pipe || (data.pipe = pipe)
+                cpipe(null, data, "init")
+                var tagName = elem.tagName
+                duplexBinding[tagName] && duplexBinding[tagName](elem, data.evaluator.apply(null, data.args), data)
             }
         },
         "repeat": function(data, vmodels) {
@@ -3335,6 +3354,7 @@
                 data.value = [widget, id, optName].join(",")
                 data[widget + "Id"] = id
                 data.evaluator = noop
+                elem.msData["ms-widget-id"] = id
                 var options = data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")
                 var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
@@ -4148,7 +4168,7 @@
         //https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
         //    <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 
         //    <a href="data:text/html;base64, PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==">chrome</a>
-        //    <a href="jav  ascript:alert('XSS');">IE67chrome</a>
+        //    <a href="jav	ascript:alert('XSS');">IE67chrome</a>
         //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
         //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
         sanitize: function(str) {
@@ -4187,10 +4207,10 @@
         },
         number: function(number, decimals, dec_point, thousands_sep) {
             //与PHP的number_format完全兼容
-            //number    必需，要格式化的数字
-            //decimals  可选，规定多少个小数位。
-            //dec_point 可选，规定用作小数点的字符串（默认为 . ）。
-            //thousands_sep 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+            //number	必需，要格式化的数字
+            //decimals	可选，规定多少个小数位。
+            //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
+            //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
             // http://kevin.vanzonneveld.net
             number = (number + "").replace(/[^0-9+\-Ee.]/g, "")
             var n = !isFinite(+number) ? 0 : +number,
@@ -4440,6 +4460,7 @@
         locate.SHORTMONTH = locate.MONTH
         filters.date.locate = locate
     }
+
     /*********************************************************************
      *                     END                                  *
      **********************************************************************/

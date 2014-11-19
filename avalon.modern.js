@@ -1840,6 +1840,7 @@
 
     function parseExpr(code, scopes, data) {
         var dataType = data.type
+        var isDuplex = dataType === "duplex"
         var filters = data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
             return el.$id.replace(rproxy, "$1")
@@ -1860,23 +1861,25 @@
                 assigns.push.apply(assigns, addAssign(vars, scopes[i], name, data))
             }
         }
-        if (!assigns.length && dataType === "duplex") {
+        if (!assigns.length && isDuplex) {
             return
         }
-        //https://github.com/RubyLouvre/avalon/issues/583
-        data.vars.forEach(function(v) {
-            var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
-            code = code.replace(reg, function(_) {
-                var c = _.charAt(v.length)
-                if (c === "." || c === "[") {
-                    var name = "var" + String(Math.random()).replace(/^0\./, "")
-                    assigns.push(name + " = " + _)
-                    return name
-                } else {
-                    return _
-                }
+        if (!isDuplex) {
+            //https://github.com/RubyLouvre/avalon/issues/583
+            data.vars.forEach(function(v) {
+                var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
+                code = code.replace(reg, function(_) {
+                    var c = _.charAt(v.length)
+                    if (c === "." || c === "[") {
+                        var name = "var" + String(Math.random()).replace(/^0\./, "")
+                        assigns.push(name + " = " + _)
+                        return name
+                    } else {
+                        return _
+                    }
+                })
             })
-        })
+        }
         //---------------args----------------
         if (filters) {
             args.push(avalon.filters)
@@ -1912,7 +1915,7 @@
             code = textBuffer.join("")
             code += "\nreturn ret" + expose
             names.push("filters" + expose)
-        } else if (dataType === "duplex") { //双工绑定
+        } else if (isDuplex) { //双工绑定
             var _body = "'use strict';\nreturn function(vvv){\n\t" +
                     prefix +
                     ";\n\tif(!arguments.length){\n\t\treturn " +
@@ -1947,7 +1950,7 @@
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
-             vars = textBuffer = names = null //释放内存
+            vars = textBuffer = names = null //释放内存
         }
     }
 
@@ -1962,9 +1965,6 @@
         parseExpr(code, scopes, data)
         if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
