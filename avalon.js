@@ -4868,7 +4868,7 @@
     })
 
     avalon.ready(function() {
-       // avalon.scan(DOC.body)
+        avalon.scan(DOC.body)
     })
 })(document)
 /**
