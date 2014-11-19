@@ -1798,6 +1798,7 @@
         for (var i = vars.length, prop; prop = vars[--i]; ) {
             if (scope.hasOwnProperty(prop)) {
                 ret.push(prop + prefix + prop)
+                data.vars.push(prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
                 }
@@ -1848,6 +1849,7 @@
                 names = [],
                 args = [],
                 prefix = ""
+        data.vars = []
         //args 是一个对象数组， names 是将要生成的求值函数的参数
         scopes = uniqSet(scopes)
         for (var i = 0, sn = scopes.length; i < sn; i++) {
@@ -1861,6 +1863,20 @@
         if (!assigns.length && dataType === "duplex") {
             return
         }
+        //https://github.com/RubyLouvre/avalon/issues/583
+        data.vars.forEach(function(v) {
+            var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
+            code = code.replace(reg, function(_) {
+                var c = _.charAt(v.length)
+                if (c === "." || c === "[") {
+                    var name = "var" + String(Math.random()).replace(/^0\./, "")
+                    assigns.push(name + " = " + _)
+                    return name
+                } else {
+                    return _
+                }
+            })
+        })
         //---------------args----------------
         if (filters) {
             args.push(avalon.filters)
@@ -1931,7 +1947,7 @@
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
-            vars = textBuffer = names = null //释放内存
+             vars = textBuffer = names = null //释放内存
         }
     }
 
