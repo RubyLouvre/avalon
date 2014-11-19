@@ -960,7 +960,6 @@
         var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 
         var tagHooks = {
-            col: [2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
             g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
             //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
             _default: [0, "", ""]  //div可以不用闭合
@@ -978,14 +977,13 @@
             t.innerHTML = wrap[1] + html + wrap[2]
             var wrapper = t.content
             if (wrap[0]) {
-                console.log(wrapper)
-//                var fragment = wrapper.cloneNode(false), firstChild
-//                for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
-//                }
-//                while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
-//                    fragment.appendChild(firstChild)
-//                }
-//                return fragment
+                var fragment = wrapper.cloneNode(false), firstChild
+                for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
+                }
+                while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+                    fragment.appendChild(firstChild)
+                }
+                return fragment
             }
             return wrapper
         }
