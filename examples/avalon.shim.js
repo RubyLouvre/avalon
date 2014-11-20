@@ -1639,7 +1639,7 @@
         col: [2, "<table><tbody></tbody><colgroup>", "</table>"],
         legend: [1, "<fieldset>"],
         option: [1, "<select multiple='multiple'>"],
-        thead: [1, "<table>","</table>"],
+        thead: [1, "<table>", "</table>"],
         //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
         tr: [2, "<table><tbody>", "</tbody></table>"],
         td: [3, "<table><tbody><tr>"],
@@ -2463,14 +2463,25 @@
         if (!assigns.length && dataType === "duplex") {
             return
         }
-        if (dataType !== "duplex") {
+        if (dataType !== "duplex" && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
             //https://github.com/RubyLouvre/avalon/issues/583
             data.vars.forEach(function(v) {
                 var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
                 code = code.replace(reg, function(_) {
                     var c = _.charAt(v.length)
-                    if (c === "." || c === "[") {
+                    var method = /^\s*\(/.test(RegExp.rightContext)
+                    if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
                         var name = "var" + String(Math.random()).replace(/^0\./, "")
+                        if (method) {//array.size()
+                            var array = _.split(".")
+                            if (array.length > 2) {
+                                var last = array.pop()
+                                assigns.push(name + " = " + array.join("."))
+                                return name + "." + last
+                            } else {
+                                return _
+                            }
+                        }
                         assigns.push(name + " = " + _)
                         return name
                     } else {
@@ -2581,12 +2592,6 @@
         parseExpr(code, scopes, data)
         if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            if (data.type === "if") {
-                console.log(data.evaluator + "")
-            }
-//            data.evaluator.toString = function() {
-//                return data.type + " binding to eval(" + code + ")"
-//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表

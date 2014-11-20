@@ -1864,7 +1864,7 @@
         if (!assigns.length && isDuplex) {
             return
         }
-        if (!isDuplex) {
+        if (!isDuplex && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
             //https://github.com/RubyLouvre/avalon/issues/583
             data.vars.forEach(function(v) {
                 var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")

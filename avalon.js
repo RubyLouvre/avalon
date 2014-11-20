@@ -1874,7 +1874,6 @@
                 var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
                 data.handler(c, data.element, data)
             } catch (e) {
-                console.log(fn + "")
                 log("warning:exception throwed in [registerSubscriber] " + e)
                 delete data.evaluator
                 var node = data.element
@@ -2465,7 +2464,7 @@
         if (!assigns.length && dataType === "duplex") {
             return
         }
-        if (dataType !== "duplex") {
+        if (dataType !== "duplex" && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
             //https://github.com/RubyLouvre/avalon/issues/583
             data.vars.forEach(function(v) {
                 var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
