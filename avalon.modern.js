@@ -1870,8 +1870,19 @@
                 var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
                 code = code.replace(reg, function(_) {
                     var c = _.charAt(v.length)
-                    if (c === "." || c === "[") {
+                    var method = /^\s*\(/.test(RegExp.rightContext)
+                    if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
                         var name = "var" + String(Math.random()).replace(/^0\./, "")
+                        if (method) {//array.size()
+                            var array = _.split(".")
+                            if (array.length > 2) {
+                                var last = array.pop()
+                                assigns.push(name + " = " + array.join("."))
+                                return name + "." + last
+                            } else {
+                                return _
+                            }
+                        }
                         assigns.push(name + " = " + _)
                         return name
                     } else {
@@ -3024,9 +3035,7 @@
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
-        array.size = function() { //取得数组长度，这个函数可以同步视图，length不能
-            return array._.length
-        }
+
         avalon.mix(array, CollectionPrototype)
         return array
     }
@@ -3037,6 +3046,9 @@
         _splice: _splice,
         _fire: function(method, a, b) {
             notifySubscribers(this.$events[subscribers], method, a, b)
+        },
+        size: function() { //取得数组长度，这个函数可以同步视图，length不能
+            return this._.length
         },
         _add: function(arr, pos) {
             var oldLength = this.length
