@@ -1641,7 +1641,7 @@
         option: [1, "<select multiple='multiple'>"],
         thead: [1, "<table>", "</table>"],
         //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
-        tr: [2, "<table><tbody>","</tbody></table>"],
+        tr: [2, "<table><tbody>", "</tbody></table>"],
         td: [3, "<table><tbody><tr>"],
         g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
@@ -1874,6 +1874,7 @@
                 var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
                 data.handler(c, data.element, data)
             } catch (e) {
+                console.log(fn + "")
                 log("warning:exception throwed in [registerSubscriber] " + e)
                 delete data.evaluator
                 var node = data.element
@@ -3809,6 +3810,9 @@
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
+        array.size = function() { //取得数组长度，这个函数可以同步视图，length不能
+            return array._.length
+        }
         avalon.mix(array, CollectionPrototype)
         return array
     }
@@ -3892,9 +3896,6 @@
         },
         contains: function(el) { //判定是否包含
             return this.indexOf(el) !== -1
-        },
-        size: function() { //取得数组长度，这个函数可以同步视图，length不能
-            return this._.length
         },
         remove: function(el) { //移除第一个等于给定值的元素
             return this.removeAt(this.indexOf(el))

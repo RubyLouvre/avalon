@@ -3024,6 +3024,9 @@
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
+        array.size = function() { //取得数组长度，这个函数可以同步视图，length不能
+            return array._.length
+        }
         avalon.mix(array, CollectionPrototype)
         return array
     }
@@ -3109,9 +3112,6 @@
         },
         contains: function(el) { //判定是否包含
             return this.indexOf(el) !== -1
-        },
-        size: function() { //取得数组长度，这个函数可以同步视图，length不能
-            return this._.length
         },
         remove: function(el) { //移除第一个等于给定值的元素
             return this.removeAt(this.indexOf(el))
