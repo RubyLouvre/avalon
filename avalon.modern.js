@@ -3550,12 +3550,12 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var R_ISO8601_STR = /^(\d{4})-?(\d\d)-?(\d\d)(?:T(\d\d)(?::?(\d\d)(?::?(\d\d)(?:\.(\d+))?)?)?(Z|([+-])(\d\d):?(\d\d))?)?$/
+        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {
             var match
-            if (match = string.match(R_ISO8601_STR)) {
+            if (match = string.match(riso8601)) {
                 var date = new Date(0),
                         tzHour = 0,
                         tzMin = 0,
@@ -3590,7 +3590,7 @@
                     var trimDate = date.trim()
                     date = trimDate.replace(rfixYMD, function(a, b, c, d) {
                         var array = d.length === 4 ? [d, b, c] : [b, c, d]
-                        return array.join("/")
+                        return array.join("-")
                     })
                     date = jsonStringToDate(date)
                 }
