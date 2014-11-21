@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head>  
+<meta http-equiv="X-UA-Compatible" content="IE=7" /> 
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" /> 
+<title>Qunar.com</title> 
+<meta name="Robots" content="index,follow,NOODP" /> 
+<meta http-equiv="cache-control" content="no-cache" /> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+<script src="jquery.js"></script>
+<script src="http://gist.corp.qunar.com/hao.lin/jvalidator/demo/jvalidator.min.js"></script>
+<style>
+input { outline:none; border:1px solid #000; }
+</style>
+<script>
+    $.jvalidator.addPattern('must',{
+        message : '必须写成12345' , 
+        validate : function( value , done ) {
+            done( value == "12345" ); 
+        }
+    });
+    function initForm( formSelector , options ) {
+        var jv = $(formSelector).jvalidator();
+        options = options || {};
+        
+        $(formSelector).find('input:button').bind('click',function(evt){
+            jv.validateAll(function( result , elements ){
+                if( result ) {
+                      console.log(elements)
+                    alert('验证通过.');
+                } else {
+                    var msg = ['验证未通过.']
+                    console.log(elements)
+                    for(var i=0; i<elements.length; i++){
+                        msg.push( elements[i].getMessage() )
+                    }
+                    alert( msg.join('\n') );
+                }
+            });
+        });
+        if( options.events ) {
+            jv.when( options.events );
+            jv.success(function($event, errors){
+                 console.log($event)
+                console.log(errors)
+                $(this.element).css('border','1px solid #000');
+            });
+            jv.fail(function( $event , errors ){
+                console.log($event)
+                console.log(errors)
+                $(this.element).css('border','1px solid #f00');
+            });
+        }
+        return jv;
+    }
+</script>
+</head> 
+<body style="padding:10px;">
+	
+    <h2>简单表单验证</h2>
+
+    <form id="form1">
+        <pre>required</pre>
+        <input name="name" data-jvalidator-pattern="numeric&min_length[3]" />
+        <input type="button" value="验证" />
+    </form>
+
+    <form id="form2">
+        <pre>numeric</pre>
+        <input name="name" data-jvalidator-pattern="numeric" />
+        <input type="button" value="验证" />
+    </form>
+
+    <form id="form3">
+        <pre>numeric&greater_than[5] 必须大于5才可以</pre>
+        <input name="name" data-jvalidator-pattern="numeric&greater_than[5]" />
+        <input type="button" value="验证" />
+    </form>
+
+    <form id="form4">
+        <pre>non-required|numeric|alpha</pre>
+        <input name="name" data-jvalidator-pattern="non-required|numeric|alpha" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        initForm('#form1');
+        initForm('#form2');
+        initForm('#form3');
+        initForm('#form4');
+    </script>
+
+    <h2>单框验证事件</h2>
+
+    <form id="form5">
+        <pre>numeric|alpha，<i>blur</i> 时触发</pre>
+        <input name="name" data-jvalidator-pattern="numeric|alpha" />
+    </form>
+
+    <script>
+        var f = initForm('#form5',{
+            events : ['blur']
+        });
+    </script>
+
+    <form id="form6">
+        <pre>numeric|alpha，<i>keypress</i> 时触发</pre>
+        <input name="name" data-jvalidator-pattern="numeric|alpha" />
+    </form>
+
+    <script>
+        var f = initForm('#form6',{
+            events : ['keyup']
+        });
+    </script>
+
+    <form id="form6_1">
+        <pre>自定义规则：值必须为<i>12345</i></pre>
+        <input name="name" data-jvalidator-pattern="must" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form6_1');
+    </script>    
+
+    <h2>高级验证规则</h2>
+
+    <form id="form7">
+        <pre>重复密码</pre>
+        <input name="pass" data-jvalidator-cname="密码" data-jvalidator-pattern="alpha_numeric" />
+        <input name="repass" data-jvalidator-pattern="match[@pass]" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form7');
+    </script>
+
+    <form id="form8">
+        <pre>重复密码，单框验证</pre>
+        <input name="pass" data-jvalidator-pattern="alpha_numeric" />
+        <input name="repass" data-jvalidator-pattern="match[@pass]" />
+    </form>
+
+    <script>
+        var f = initForm('#form8',{
+            events : ['keyup','blur']
+        });
+    </script>
+
+    <h2>不仅是 input</h2>
+
+    <form id="form9">
+        <pre>select, checkbox, radiobox, textarea</pre>
+        <select data-jvalidator-pattern="match[aaa]">
+            <option value="aaa">aaa</option>
+            <option value="bbb">bbb</option>
+        </select> 必须选择 aaa
+        <br />
+        <label><input name="chk" type="checkbox" value="1" data-jvalidator-pattern="contain[1]|contain[2]" />1</label>
+        <label><input name="chk" type="checkbox" value="2" />2</label>
+        <label><input name="chk" type="checkbox" value="3" />3</label>
+        <label><input name="chk" type="checkbox" value="4" />4</label>
+        <label><input name="chk" type="checkbox" value="5" />5</label>
+        必须包含 1 或 2
+        <br />
+        <label><input name="rdo" type="radio" value="1" data-jvalidator-pattern="match[1]|match[2]" />1</label>
+        <label><input name="rdo" type="radio" value="2" />2</label>
+        <label><input name="rdo" type="radio" value="3" />3</label>
+        <label><input name="rdo" type="radio" value="4" />4</label>
+        <label><input name="rdo" type="radio" value="5" />5</label>
+        必须选择 1 或 2
+        <br />
+        <textarea data-jvalidator-pattern="required"></textarea>
+        必须有内容
+        <br />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form9');
+    </script>
+
+
+    <form id="form10">
+        <pre>组合验证 1： a.第一个框必须是字母或数字 b.判断第二个框是否与第一个相同</pre>
+        <input name="pwd" type="password" data-jvalidator-pattern="alpha_numeric" />
+        <input name="repwd" type="password" data-jvalidator-pattern="match[@pwd]" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form10');
+    </script>
+
+
+    <form id="form11">
+        <pre>组合验证 2： input中必须包含select选择的内容</pre>
+        <select name="name">
+            <option value="aaa">aaa</option>
+            <option value="bbb">bbb</option>
+        </select>
+        <input data-jvalidator-pattern="contain[@name]" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form11');
+    </script>
+
+    <form id="form12">
+        <pre>组合验证 3： 如果select选择的是aaa，那么input必须是111. 如果select选择的是bbb，那么input必须是222. </pre>
+        <em>城市：</em>
+        <select data-jvalidator-cname="城市" name="name">
+            <option value="aaa">aaa</option>
+            <option value="bbb">bbb</option>
+        </select>
+        <input data-jvalidator-pattern="(@name[aaa]&match[111])|(@name[bbb]&match[222])" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form12');
+    </script>
+
+    <form id="form13">
+        <pre>组合规则 4： 如果选择身份证，则按身份证规则校验。 如果选择护照，则按护照规则校验（0到20位字母或数字）</pre>
+        <label><input name="type" type="radio" value="idcard" checked="checked" />身份证</label>
+        <label><input name="type" type="radio" value="passport" />护照</label>
+        <br />
+        <input data-jvalidator-pattern="(@type[idcard]&idcard)|(@type[passport]&passport)" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form13');
+    </script>
+
+
+    <h2>提示信息</h2>
+
+    <form id="form14">
+        <pre>默认提示信息</pre>
+        <input data-jvalidator-pattern="required&numeric" /><em></em>
+        <br />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form14');
+        f.setMessage( 'required' , '亲，你必须写点儿内容。' )
+        f.setMessage( 'numeric' , '亲，你不能填写%val的，这里必须是数字哦。' )
+    </script>
+
+    <form id="form16">
+        <pre>使用自定义提示信息变量</pre>
+        <select name="city" data-jvalidator-cname="城市">
+            <option value="北京">北京</option>
+            <option value="上海">上海</option>
+        </select>
+        姓名：<input name="name" data-jvalidator-cname="姓名" data-jvalidator-pattern="required" />
+        护照：<input name="passport" data-jvalidator-pattern="required" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form16');
+        f.setMessage( '@name' , 'required' , '(required提示) %cname(%name)字段必须写哦，而且我也知道你选的@city是=@city哦。' )
+        f.setMessage( '@passport' , 'required' , '(required提示) 护照必须填的亲！' )
+    </script>
+
+    <h2>其它</h2>
+
+    <form id="form17">
+        <pre>关于placeholder. 正确：随便输入点儿什么</pre>
+        <input data-jvalidator-placeholder="请输入文字" value="请输入文字" data-jvalidator-pattern="required" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form17');
+    </script>
+
+
+    <form id="form17_1">
+        <pre>异步验证：必须是数字，且等3秒才会验证成功</pre>
+        <input data-jvalidator-pattern="numeric&checked" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form17_1');
+        $.jvalidator.addPattern('checked',{
+            message : "异步验证" , 
+            validate : function( value , done ){
+                setTimeout(function(){
+                    done(true)
+                },3000)
+            }
+        });
+    </script>
+
+    <form id="form18">
+        <pre>异步+组合验证. 正确：输入身份证或`北京`</pre>
+        <label><input name="type" type="radio" value="idcard" checked="checked" />身份证</label>
+        <label><input name="type" type="radio" value="beijing" />ip北京</label>
+        <br />
+        <input data-jvalidator-pattern="(@type[idcard]&idcard)|(@type[beijing]&beijing)" />
+        <input type="button" value="验证" />
+    </form>
+
+    <script>
+        var f = initForm('#form18');
+        $.jvalidator.addPattern('beijing',{
+            message : "当前位置必须是在北京" , 
+            validate : function( value , done ){
+                $.ajax({
+                    url : "http://ws.qunar.com/ips.jcp" , 
+                    dataType : "jsonp" , 
+                    jsonpCallback : "callback" , 
+                    success : function( data, textStatus, jqXHR  ){
+                        done( data.city == value );
+                    }
+                });
+            }
+        });
+    </script>
+
+
+    
+</body>
+</html> 

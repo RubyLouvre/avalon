@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>ms-include、 html filter and scanCallback</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+        <script src="../avalon.js"></script>
+        <style>
+            .bp{
+                border: 1px  solid green;
+            }
+            .contain{
+                border: 1px solid red;
+            }
+        </style>
+        <script>
+    
+                    var vmodel = avalon.define({
+                        $id: "test",
+                        title: "测试scanCallback",
+                        a: 3,
+                        temp: "aaa",
+                        repeatcb: function(a){
+                            console.log(a)
+                        },
+                        array: [1,2,3,4,5,6],
+                        render: function(){
+                            console.log(this.innerHTML)
+                        },
+                        click: function() {
+vmodel.array.push(new Date -0 )
+                            //vmodel.temp = vmodel.temp === "aaa" ? "bbb" : "aaa"
+                        },
+                        b: '<p><a href="avalon.validation.ex3.html">自带验证规则maxlength,minlength,lt,gt,eq,equal</a></p>'
+                    })
+
+        </script>
+        <script id="aaa" type="avalon">
+           xxxxxxxxxxxxx
+        </script>
+        <script id="bbb" type="avalon">
+                {{b|html}}
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h1>{{title}}</h1>
+        <div>{{b|html }}</div>
+        <div ms-include="temp" data-include-rendered="render" ></div>
+        <div ms-visible="a">{{title}}</div>
+        <button type="button" ms-click="click">change temp</button>
+        <div ms-repeat="array" data-repeat-rendered="repeatcb">{{el}}</div>
+        <select ms-duplex="a">
+            <option ms-repeat="array">{{el}}</option>
+        </select>
+    </body>
+</html>
