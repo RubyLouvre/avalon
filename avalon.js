@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7 2014.11.17 support IE6+ and other browsers
+ avalon 1.3.7.2 2014.11.19 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -1122,9 +1122,10 @@
             }
         },
         _remove: function(cls) {
-            this._set((" " + this + " ").replace(" " + cls + " ", " ").trim())
+            this._set((" " + this + " ").replace(" " + cls + " ", " "))
         },
         __set: function(cls) {
+            cls = cls.trim()
             var node = this.node
             if (typeof node.className === "string") {
                 node.className = cls
@@ -1639,7 +1640,8 @@
         legend: [1, "<fieldset>"],
         option: [1, "<select multiple='multiple'>"],
         thead: [1, "<table>", "</table>"],
-        tr: [2, "<table><tbody>"],
+        //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
+        tr: [2, "<table><tbody>", "</tbody></table>"],
         td: [3, "<table><tbody><tr>"],
         g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
@@ -1705,16 +1707,8 @@
                     fixVML(el)
                 }
             }
-            if (tag === "tr") {
-                for (els = wrapper.children, i = 0; el = els[i++]; ) {
-                    // IE6-8,如果动态生成tr元素，必须会在后面添加早已废弃caption的标签，其nodeName,innerHTML都为""
-                    if (el.nodeName == "") {
-                        el.parentNode.removeChild(el)
-                        i--
-                    }
-                }
-            }
         }
+
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
@@ -2404,6 +2398,7 @@
         for (var i = vars.length, prop; prop = vars[--i]; ) {
             if (scope.hasOwnProperty(prop)) {
                 ret.push(prop + prefix + prop)
+                data.vars.push(prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
                 }
@@ -2411,7 +2406,6 @@
             }
         }
         return ret
-
     }
 
     function uniqSet(array) {
@@ -2449,7 +2443,7 @@
         var dataType = data.type
         var filters = data.filters ? data.filters.join("") : ""
         var exprId = scopes.map(function(el) {
-            return el.$id.replace(rproxy, "$1")
+            return String(el.$id).replace(rproxy, "$1")
         }) + code + dataType + filters
         var vars = getVariables(code).concat(),
                 assigns = [],
@@ -2458,6 +2452,7 @@
                 prefix = ""
         //args 是一个对象数组， names 是将要生成的求值函数的参数
         scopes = uniqSet(scopes)
+        data.vars = []
         for (var i = 0, sn = scopes.length; i < sn; i++) {
             if (vars.length) {
                 var name = "vm" + expose + "_" + i
@@ -2468,6 +2463,33 @@
         }
         if (!assigns.length && dataType === "duplex") {
             return
+        }
+        if (dataType !== "duplex" && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
+            //https://github.com/RubyLouvre/avalon/issues/583
+            data.vars.forEach(function(v) {
+                var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
+                code = code.replace(reg, function(_) {
+                    var c = _.charAt(v.length)
+                    var method = /^\s*\(/.test(RegExp.rightContext)
+                    if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
+                        var name = "var" + String(Math.random()).replace(/^0\./, "")
+                        if (method) {//array.size()
+                            var array = _.split(".")
+                            if (array.length > 2) {
+                                var last = array.pop()
+                                assigns.push(name + " = " + array.join("."))
+                                return name + "." + last
+                            } else {
+                                return _
+                            }
+                        }
+                        assigns.push(name + " = " + _)
+                        return name
+                    } else {
+                        return _
+                    }
+                })
+            })
         }
         //---------------args----------------
         if (filters) {
@@ -2571,9 +2593,6 @@
         parseExpr(code, scopes, data)
         if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -3109,60 +3128,59 @@
         },
         "duplex": function(data, vmodels) {
             var elem = data.element,
-                    tagName = elem.tagName,
                     hasCast
             parseExprProxy(data.value, vmodels, data, 0, 1)
-            if (typeof duplexBinding[tagName] === "function") {
-                data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
-                if (data.evaluator && data.args) {
-                    var params = []
-                    var casting = oneObject("string,number,boolean,checked")
-                    if (elem.type === "radio" && data.param === "") {
-                        data.param = "checked"
-                    }
-                    data.param.replace(/\w+/g, function(name) {
-                        if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                            if (name === "radio")
-                                log("ms-duplex-radio已经更名为ms-duplex-checked")
-                            name = "checked"
-                            data.isChecked = true
-                        }
-                        if (name === "bool") {
-                            name = "boolean"
-                            log("ms-duplex-bool已经更名为ms-duplex-boolean")
-                        } else if (name === "text") {
-                            name = "string"
-                            log("ms-duplex-text已经更名为ms-duplex-string")
-                        }
-                        if (casting[name]) {
-                            hasCast = true
-                        }
-                        avalon.Array.ensure(params, name)
-                    })
-                    if (!hasCast) {
-                        params.push("string")
-                    }
-                    data.param = params.join("-")
-                    data.bound = function(type, callback) {
-                        if (elem.addEventListener) {
-                            elem.addEventListener(type, callback, false)
-                        } else {
-                            elem.attachEvent("on" + type, callback)
-                        }
-                        var old = data.rollback
-                        data.rollback = function() {
-                            avalon.unbind(elem, type, callback)
-                            old && old()
-                        }
-                    }
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        v.$fire("avalon-ms-duplex-init", data)
-                    }
-                    var cpipe = data.pipe || (data.pipe = pipe)
-                    cpipe(null, data, "init")
-                    duplexBinding[elem.tagName](elem, data.evaluator.apply(null, data.args), data)
+
+            data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
+            if (data.evaluator && data.args) {
+                var params = []
+                var casting = oneObject("string,number,boolean,checked")
+                if (elem.type === "radio" && data.param === "") {
+                    data.param = "checked"
                 }
+                data.param.replace(/\w+/g, function(name) {
+                    if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                        if (name === "radio")
+                            log("ms-duplex-radio已经更名为ms-duplex-checked")
+                        name = "checked"
+                        data.isChecked = true
+                    }
+                    if (name === "bool") {
+                        name = "boolean"
+                        log("ms-duplex-bool已经更名为ms-duplex-boolean")
+                    } else if (name === "text") {
+                        name = "string"
+                        log("ms-duplex-text已经更名为ms-duplex-string")
+                    }
+                    if (casting[name]) {
+                        hasCast = true
+                    }
+                    avalon.Array.ensure(params, name)
+                })
+                if (!hasCast) {
+                    params.push("string")
+                }
+                data.param = params.join("-")
+                data.bound = function(type, callback) {
+                    if (elem.addEventListener) {
+                        elem.addEventListener(type, callback, false)
+                    } else {
+                        elem.attachEvent("on" + type, callback)
+                    }
+                    var old = data.rollback
+                    data.rollback = function() {
+                        avalon.unbind(elem, type, callback)
+                        old && old()
+                    }
+                }
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    v.$fire("avalon-ms-duplex-init", data)
+                }
+                var cpipe = data.pipe || (data.pipe = pipe)
+                cpipe(null, data, "init")
+                var tagName = elem.tagName
+                duplexBinding[tagName] && duplexBinding[tagName](elem, data.evaluator.apply(null, data.args), data)
             }
         },
         "repeat": function(data, vmodels) {
@@ -3335,6 +3353,7 @@
                 data.value = [widget, id, optName].join(",")
                 data[widget + "Id"] = id
                 data.evaluator = noop
+                elem.msData["ms-widget-id"] = id
                 var options = data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
                 elem.removeAttribute("ms-widget")
                 var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
@@ -3356,7 +3375,7 @@
                             if (!elem.msRetain && !root.contains(elem)) {
                                 vmodel.$remove()
                                 elem.msData = {}
-                                delete VMODELS[vmodel.$id]
+                                delete avalon.vmodels[vmodel.$id]
                                 return false
                             }
                         }
@@ -3674,7 +3693,7 @@
             }
         }
         data.bound("change", updateVModel)
-        checkScan(element,function() {
+        checkScan(element, function() {
             //先等到select里的option元素被扫描后，才根据model设置selected属性  
             registerSubscriber(data)
             data.changed.call(element, evaluator(), data)
@@ -3840,6 +3859,9 @@
             this._fire("index", n > 2 ? n - 2 : 0)
             return n
         },
+        size: function() { //取得数组长度，这个函数可以同步视图，length不能
+            return this._.length
+        },
         pushArray: function(array) {
             return this.push.apply(this, array)
         },
@@ -3884,9 +3906,6 @@
         },
         contains: function(el) { //判定是否包含
             return this.indexOf(el) !== -1
-        },
-        size: function() { //取得数组长度，这个函数可以同步视图，length不能
-            return this._.length
         },
         remove: function(el) { //移除第一个等于给定值的元素
             return this.removeAt(this.indexOf(el))
@@ -4084,6 +4103,9 @@
                     proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
+                proxy.$watch(param, function(val) {
+                    data.$repeat.set(proxy.$index, val)
+                })
                 return proxy
             }
         }
@@ -4320,12 +4342,12 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var R_ISO8601_STR = /^(\d{4})-?(\d\d)-?(\d\d)(?:T(\d\d)(?::?(\d\d)(?::?(\d\d)(?:\.(\d+))?)?)?(Z|([+-])(\d\d):?(\d\d))?)?$/
+        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {
             var match
-            if (match = string.match(R_ISO8601_STR)) {
+            if (match = string.match(riso8601)) {
                 var date = new Date(0),
                         tzHour = 0,
                         tzMin = 0,
@@ -4360,7 +4382,7 @@
                     var trimDate = date.trim()
                     date = trimDate.replace(rfixYMD, function(a, b, c, d) {
                         var array = d.length === 4 ? [d, b, c] : [b, c, d]
-                        return array.join("/")
+                        return array.join("-")
                     })
                     date = jsonStringToDate(date)
                 }
