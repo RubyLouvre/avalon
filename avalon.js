@@ -3375,7 +3375,7 @@
                             if (!elem.msRetain && !root.contains(elem)) {
                                 vmodel.$remove()
                                 elem.msData = {}
-                                delete VMODELS[vmodel.$id]
+                                delete avalon.vmodels[vmodel.$id]
                                 return false
                             }
                         }
