@@ -1775,64 +1775,85 @@
                 type = RegExp.$2
             }
             var events = this.$events
-            var callbacks = events[type] || []
-            var all = events.$all || []
             var args = aslice.call(arguments, 1)
-            for (var i = 0, callback; callback = callbacks[i++]; ) {
-                if (isFunction(callback))
-                    callback.apply(this, args)
-            }
-            for (var i = 0, callback; callback = all[i++]; ) {
-                if (isFunction(callback))
-                    callback.apply(this, arguments)
-            }
-            var element = events.expr && findNode(events.expr)
-            if (element) {
-                var detail = [type].concat(args)
-                var alls = []
-                if (special === "up" || special === "down" || special === "all") {
-                    for (var i in avalon.vmodels) {
-                        var v = avalon.vmodels[i]
-                        if (v && v.$events && v.$events.expr) {
-                            if (v !== this) {
-                                var node = findNode(v.$events.expr)
-                                if (!node) {
-                                    continue
-                                }
-                                var ok = special === "all" ? 1 : //全局广播
-                                        special === "down" ? element.contains(node) : //向下捕获
-                                        node.contains(element)//向上冒泡
-                                if (ok) {
-                                    alls.push([node, v])
-                                }
+            var detail = [type].concat(args)
+            if (special === "all") {
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        v.$fire.apply(v, detail)
+                    }
+                }
+            } else if (special === "up" || special === "down") {
+                var elements = events.expr && findNodes(events.expr)
+                if (elements.length === 0)
+                    return
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        if (v.$events.expr) {
+                            var eventNodes = findNodes(v.$events.expr)
+                            if (eventNodes.length === 0) {
+                                continue
                             }
+                            //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
+                            avalon.each(eventNodes, function(i, node) {
+                                avalon.each(elements, function(j, element) {
+                                    var ok = special === "down" ? element.contains(node) : //向下捕获
+                                        node.contains(element) //向上冒泡
+
+                                    if (ok) {
+                                        node._avalon = v //符合条件的加一个标识
+                                    }
+                                });
+                            })
                         }
                     }
-                    var nodes = DOC.getElementsByTagName("*")//实现节点排序
-                    alls.sort(function(a, b) {
-                        return Array.prototype.indexOf.call(nodes, a[0]) - Array.prototype.indexOf.call(nodes, b[0])
-                    })
-                    if (special === "up") {
-                        alls.reverse()
+                }
+                var nodes = DOC.getElementsByTagName("*") //实现节点排序
+                var alls = []
+                Array.prototype.forEach.call(nodes, function(el) {
+                    if (el._avalon) {
+                        alls.push(el._avalon)
+                        el._avalon = ""
+                        el.removeAttribute("_avalon")
                     }
-                    alls.forEach(function(v) {
-                        v[1].$fire.apply(v[1], detail)
-                    })
+                })
+                if (special === "up") {
+                    alls.reverse()
+                }
+                for (var i = 0, el; el = alls[i++]; ) {
+                    if (el.$fire.apply(el, detail) === false) {
+                        break
+                    }
+                }
+            } else {
+                var callbacks = events[type] || []
+                var all = events.$all || []
+                for (var i = 0, callback; callback = callbacks[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, args)
+                }
+                for (var i = 0, callback; callback = all[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, arguments)
                 }
             }
         }
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
-    var findNode = DOC.querySelector ? function(str) {
-        return  DOC.querySelector(str)
+    var findNodes = DOC.querySelector ? function(str) {
+        return DOC.querySelector(str)
     } : function(str) {
         var match = str.match(ravalon)
         var all = DOC.getElementsByTagName(match[1])
+        var nodes = []
         for (var i = 0, el; el = all[i++]; ) {
             if (el.getAttribute(match[2]) === match[3]) {
-                return el
+                nodes.push(el)
             }
         }
+        return nodes
     }
     /*********************************************************************
      *                           依赖调度系统                             *
