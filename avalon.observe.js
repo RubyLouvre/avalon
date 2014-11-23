@@ -977,11 +977,10 @@
             t.innerHTML = wrap[1] + html + wrap[2]
             var wrapper = t.content
             if (wrap[0]) {
-                var fragment = wrapper.cloneNode(false), firstChild
-                for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
-                }
-                while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
-                    fragment.appendChild(firstChild)
+                var fragment = wrapper.cloneNode(false)
+                wrapper = wrapper.lastChild
+                while (tag = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+                    fragment.appendChild(tag)
                 }
                 return fragment
             }

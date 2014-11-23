@@ -325,6 +325,7 @@
         var svg = DOC.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
         if (!rsvg.test(svg.firstChild)) {// #409
+          
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
