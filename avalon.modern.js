@@ -1621,7 +1621,7 @@
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
-                    msData[name] = value
+                    msData[name.replace(/(\-[$\w]+)/g,"")] = value
                     if (events[type]) {
                         param = type
                         type = "on"
