@@ -2169,7 +2169,7 @@
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
-                    msData[name.replace(/(\-[$\w]+)/g,"")] = value
+                    msData[name] = value
                     if (events[type]) {
                         param = type
                         type = "on"
@@ -3136,6 +3136,9 @@
                 var casting = oneObject("string,number,boolean,checked")
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
+                }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
                 }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {

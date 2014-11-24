@@ -325,7 +325,7 @@
         var svg = DOC.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
         if (!rsvg.test(svg.firstChild)) {// #409
-          
+
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
@@ -1621,7 +1621,7 @@
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
-                    msData[name.replace(/(\-[$\w]+)/g,"")] = value
+                    msData[name] = value
                     if (events[type]) {
                         param = type
                         type = "on"
@@ -1661,8 +1661,8 @@
                 }
             }
         }
-        if (msData["ms-checked"] && msData["ms-duplex"]) {
-            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
+            log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
         bindings.sort(function(a, b) {
             return a.priority - b.priority
@@ -2457,9 +2457,13 @@
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
                 }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
+                }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                        log("ms-duplex-radio已经更名为ms-duplex-checked")
+                        if (name === "radio")
+                            log("ms-duplex-radio已经更名为ms-duplex-checked")
                         name = "checked"
                         data.isChecked = true
                     }
@@ -3551,7 +3555,7 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
+        var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {

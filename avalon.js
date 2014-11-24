@@ -1813,7 +1813,7 @@
                             avalon.each(eventNodes, function(i, node) {
                                 avalon.each(elements, function(j, element) {
                                     var ok = special === "down" ? element.contains(node) : //向下捕获
-                                        node.contains(element) //向上冒泡
+                                            node.contains(element) //向上冒泡
 
                                     if (ok) {
                                         node._avalon = v //符合条件的加一个标识
@@ -2178,7 +2178,7 @@
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
-                    msData[name.replace(/(\-[$\w]+)/g,"")] = value
+                    msData[name] = value
                     if (events[type]) {
                         param = type
                         type = "on"
@@ -2219,8 +2219,8 @@
             }
         }
         bindings.sort(bindingSorter)
-        if (msData["ms-checked"] && msData["ms-duplex"]) {
-            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
+            log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
         var firstBinding = bindings[0] || {}
 
@@ -3145,6 +3145,9 @@
                 var casting = oneObject("string,number,boolean,checked")
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
+                }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
                 }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
@@ -4350,7 +4353,7 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
+        var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {
