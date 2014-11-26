@@ -1798,7 +1798,7 @@
                     }
                 }
             } else if (special === "up" || special === "down") {
-                var elements = events.expr && findNodes(events.expr)
+                var elements = events.expr ? findNodes(events.expr) : []
                 if (elements.length === 0)
                     return
                 for (var i in avalon.vmodels) {

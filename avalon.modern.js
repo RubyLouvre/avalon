@@ -1275,22 +1275,28 @@
                     }
                 }
             } else if (special === "up" || special === "down") {
-                var element = events.expr && findNode(events.expr)
-                if (!element)
+                var elements = events.expr ? findNode(events.expr) : []
+                if (!elements.length)
                     return
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
                     if (v !== this) {
                         if (v.$events.expr) {
-                            var node = findNode(v.$events.expr)
-                            if (!node) {
+                            var eventNodes = findNodes(v.$events.expr)
+                            if (!eventNodes.length) {
                                 continue
                             }
-                            var ok = special === "down" ? element.contains(node) : //向下捕获
-                                    node.contains(element) //向上冒泡
-                            if (ok) {
-                                node._avalon = v //符合条件的加一个标识
-                            }
+                            //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
+                            avalon.each(eventNodes, function(i, node) {
+                                avalon.each(elements, function(j, element) {
+                                    var ok = special === "down" ? element.contains(node) : //向下捕获
+                                            node.contains(element) //向上冒泡
+
+                                    if (ok) {
+                                        node._avalon = v //符合条件的加一个标识
+                                    }
+                                });
+                            })
                         }
                     }
                 }
@@ -1326,7 +1332,7 @@
         }
     }
 
-    function findNode(str) {
+    function findNodes(str) {
         return  DOC.querySelector(str)
     }
     /*********************************************************************
