@@ -2222,25 +2222,22 @@
         if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
             log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
-        var gotoScan = true
-        for (var i = 0, binding; binding = bindings.shift(); ) {
-            switch (binding.type) {
-                case "if":
-                case "repeat":
-                case "widget":
-                    executeBindings([binding], vmodels)
-                    gotoScan = false
-                    break
-                case "data":
-                    executeBindings([binding], vmodels)
-                    break
+        var scanChild = true
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+            var type = binding.type
+            if (type === "if" || type == "widget") {
+                executeBindings([binding], vmodels)
+                break
+            } else if (type === "data") {
+                executeBindings([binding], vmodels)
+            } else {
+                executeBindings(bindings.slice(i), vmodels)
+                bindings = []
+                scanChild = binding.type !== "repeat"
             }
         }
-        if (gotoScan) {
-            executeBindings(bindings, vmodels)
-            if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                scanNodeList(elem, vmodels) //扫描子孙元素
-            }
+        if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+            scanNodeList(elem, vmodels) //扫描子孙元素
         }
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
@@ -2993,6 +2990,7 @@
                 }
                 if (elem.getAttribute(data.name)) {
                     elem.removeAttribute(data.name)
+
                     scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，并用注释节点占据原位置
