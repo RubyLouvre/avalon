@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7.2 2014.11.19 support IE10 and other latest browsers
+ avalon 1.3.7.2 2014.11.27 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -1673,25 +1673,22 @@
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
-        var gotoScan = true
-        for (var i = 0, binding; binding = bindings.shift(); ) {
-            switch (binding.type) {
-                case "if":
-                case "repeat":
-                case "widget":
-                    executeBindings([binding], vmodels)
-                    gotoScan = false
-                    break
-                case "data":
-                    executeBindings([binding], vmodels)
-                    break
+        var scanChild = true
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+            var type = binding.type
+            if (type === "if" || type == "widget") {
+                executeBindings([binding], vmodels)
+                break
+            } else if (type === "data") {
+                executeBindings([binding], vmodels)
+            } else {
+                executeBindings(bindings.slice(i), vmodels)
+                bindings = []
+                scanChild = binding.type !== "repeat"
             }
         }
-        if (gotoScan) {
-            executeBindings(bindings, vmodels)
-            if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                scanNodeList(elem, vmodels) //扫描子孙元素
-            }
+        if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
+            scanNodeList(elem, vmodels) //扫描子孙元素
         }
     }
 
@@ -3758,35 +3755,6 @@
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
             xhr.send()
             return id
-        }
-        //http://www.html5rocks.com/zh/tutorials/webcomponents/imports/
-        if ('import' in DOC.createElement("link")) {
-            plugins.text = function(url) {
-                var id = url.replace(/[?#].*/, "")
-                modules[id] = {}
-                var link = DOC.createElement("link")
-                link.rel = "import"
-                link.href = url
-                link.onload = function() {
-                    modules[id].state = 2
-                    var content = this["import"]
-                    if (content) {
-                        modules[id].exports = content.documentElement.outerHTML
-                        avalon.require.checkDeps()
-                    }
-                    onerror(0, content)
-                }
-
-                function onerror(a, b) {
-                    !b && avalon.error(url + "对应资源不存在或没有开启 CORS")
-                    setTimeout(function() {
-                        head.removeChild(link)
-                    })
-                }
-                link.onerror = onerror
-                head.appendChild(link)
-                return id
-            }
         }
 
         var cur = getCurrentScript(true)
