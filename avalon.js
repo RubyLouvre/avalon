@@ -2222,20 +2222,25 @@
         if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
             log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
-        var firstBinding = bindings[0] || {}
-
-        switch (firstBinding.type) {
-            case "if":
-            case "repeat":
-            case "widget":
-                executeBindings([firstBinding], vmodels)
-                break
-            default:
-                executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanNodeList(elem, vmodels) //扫描子孙元素
-                }
-                break
+        var gotoScan = true
+        for (var i = 0, binding; binding = bindings.shift(); ) {
+            switch (binding.type) {
+                case "if":
+                case "repeat":
+                case "widget":
+                    executeBindings([binding], vmodels)
+                    gotoScan = false
+                    break
+                case "data":
+                    executeBindings([binding], vmodels)
+                    break
+            }
+        }
+        if (gotoScan) {
+            executeBindings(bindings, vmodels)
+            if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+                scanNodeList(elem, vmodels) //扫描子孙元素
+            }
         }
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，

@@ -1673,19 +1673,25 @@
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
-        var firstBinding = bindings[0] || {}
-        switch (firstBinding.type) {
-            case "if":
-            case "repeat":
-            case "widget":
-                executeBindings([firstBinding], vmodels)
-                break
-            default:
-                executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
-                    scanNodeList(elem, vmodels) //扫描子孙元素
-                }
-                break;
+        var gotoScan = true
+        for (var i = 0, binding; binding = bindings.shift(); ) {
+            switch (binding.type) {
+                case "if":
+                case "repeat":
+                case "widget":
+                    executeBindings([binding], vmodels)
+                    gotoScan = false
+                    break
+                case "data":
+                    executeBindings([binding], vmodels)
+                    break
+            }
+        }
+        if (gotoScan) {
+            executeBindings(bindings, vmodels)
+            if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+                scanNodeList(elem, vmodels) //扫描子孙元素
+            }
         }
     }
 
