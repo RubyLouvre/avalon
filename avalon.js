@@ -3580,6 +3580,11 @@
                             if (DOC.documentMode === 9) {
                                 bound("paste", delay)
                                 bound("cut", delay)
+                                bound("keydown", function(e) {
+                                    if (e.keyCode === 8) {
+                                        delay()
+                                    }
+                                })
                             }
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
                             bound("propertychange", function(e) {
