@@ -2859,8 +2859,10 @@
                 switch (name) {
                     case "input":
                         bound("input", updateVModel)
-                        bound("compositionstart", compositionStart)
-                        bound("compositionend", compositionEnd)
+                        if (!DOC.documentMode) {
+                            bound("compositionstart", compositionStart)
+                            bound("compositionend", compositionEnd)
+                        }
                         break
                     default:
                         bound(name, updateVModel)

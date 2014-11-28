@@ -3573,8 +3573,10 @@
                     case "input":
                         if (W3C) { //IE9+, W3C
                             bound("input", updateVModel)
-                            bound("compositionstart", compositionStart)
-                            bound("compositionend", compositionEnd)
+                            if (!DOC.documentMode) {//非IE浏览器才用这个
+                                bound("compositionstart", compositionStart)
+                                bound("compositionend", compositionEnd)
+                            }
                             //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                             //http://www.matts411.com/post/internet-explorer-9-oninput/
                             if (DOC.documentMode === 9) {
@@ -3585,7 +3587,7 @@
                                         delay()
                                     }
                                 })
-                            }
+                            } 
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
                             bound("propertychange", function(e) {
                                 if (e.propertyName === "value")
