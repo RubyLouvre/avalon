@@ -1857,6 +1857,7 @@
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
     var findNodes = DOC.querySelectorAll ? function(str) {
+        //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
         //https://gist.github.com/DavidBruant/1016007
         return Array.prototype.slice.call(DOC.querySelectorAll(str), 0)
     } : function(str) {

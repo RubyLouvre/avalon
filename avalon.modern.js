@@ -1275,7 +1275,7 @@
                     }
                 }
             } else if (special === "up" || special === "down") {
-                var elements = events.expr ? findNode(events.expr) : []
+                var elements = events.expr ? findNodes(events.expr) : []
                 if (!elements.length)
                     return
                 for (var i in avalon.vmodels) {
@@ -1333,7 +1333,9 @@
     }
 
     function findNodes(str) {
-        return  DOC.querySelector(str)
+        //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
+        //https://gist.github.com/DavidBruant/1016007
+        return Array.prototype.slice.call(DOC.querySelectorAll(str), 0)
     }
     /*********************************************************************
      *                       依赖调度系统                                 *
