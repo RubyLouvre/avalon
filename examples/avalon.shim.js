@@ -3137,6 +3137,9 @@
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
                 }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
+                }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
                         if (name === "radio")

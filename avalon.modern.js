@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7.2 2014.11.19 support IE10 and other latest browsers
+ avalon 1.3.7.2 2014.11.27 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -325,6 +325,7 @@
         var svg = DOC.createElementNS(svgns, "svg")
         svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
         if (!rsvg.test(svg.firstChild)) {// #409
+
             function enumerateNode(node, targetNode) {
                 if (node && node.childNodes) {
                     var nodes = node.childNodes
@@ -1274,22 +1275,28 @@
                     }
                 }
             } else if (special === "up" || special === "down") {
-                var element = events.expr && findNode(events.expr)
-                if (!element)
+                var elements = events.expr ? findNode(events.expr) : []
+                if (!elements.length)
                     return
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
                     if (v !== this) {
                         if (v.$events.expr) {
-                            var node = findNode(v.$events.expr)
-                            if (!node) {
+                            var eventNodes = findNodes(v.$events.expr)
+                            if (!eventNodes.length) {
                                 continue
                             }
-                            var ok = special === "down" ? element.contains(node) : //向下捕获
-                                    node.contains(element) //向上冒泡
-                            if (ok) {
-                                node._avalon = v //符合条件的加一个标识
-                            }
+                            //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
+                            avalon.each(eventNodes, function(i, node) {
+                                avalon.each(elements, function(j, element) {
+                                    var ok = special === "down" ? element.contains(node) : //向下捕获
+                                            node.contains(element) //向上冒泡
+
+                                    if (ok) {
+                                        node._avalon = v //符合条件的加一个标识
+                                    }
+                                });
+                            })
                         }
                     }
                 }
@@ -1325,7 +1332,7 @@
         }
     }
 
-    function findNode(str) {
+    function findNodes(str) {
         return  DOC.querySelector(str)
     }
     /*********************************************************************
@@ -1660,25 +1667,28 @@
                 }
             }
         }
-        if (msData["ms-checked"] && msData["ms-duplex"]) {
-            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
+            log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
         bindings.sort(function(a, b) {
             return a.priority - b.priority
         })
-        var firstBinding = bindings[0] || {}
-        switch (firstBinding.type) {
-            case "if":
-            case "repeat":
-            case "widget":
-                executeBindings([firstBinding], vmodels)
+        var scanChild = true
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+            var type = binding.type
+            if (type === "if" || type == "widget") {
+                executeBindings([binding], vmodels)
                 break
-            default:
-                executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
-                    scanNodeList(elem, vmodels) //扫描子孙元素
-                }
-                break;
+            } else if (type === "data") {
+                executeBindings([binding], vmodels)
+            } else {
+                executeBindings(bindings.slice(i), vmodels)
+                bindings = []
+                scanChild = binding.type !== "repeat"
+            }
+        }
+        if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
+            scanNodeList(elem, vmodels) //扫描子孙元素
         }
     }
 
@@ -2456,9 +2466,13 @@
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
                 }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
+                }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                        log("ms-duplex-radio已经更名为ms-duplex-checked")
+                        if (name === "radio")
+                            log("ms-duplex-radio已经更名为ms-duplex-checked")
                         name = "checked"
                         data.isChecked = true
                     }
@@ -2845,8 +2859,10 @@
                 switch (name) {
                     case "input":
                         bound("input", updateVModel)
-                        bound("compositionstart", compositionStart)
-                        bound("compositionend", compositionEnd)
+                        if (!DOC.documentMode) {
+                            bound("compositionstart", compositionStart)
+                            bound("compositionend", compositionEnd)
+                        }
                         break
                     default:
                         bound(name, updateVModel)
@@ -3550,7 +3566,7 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
+        var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {
@@ -3741,35 +3757,6 @@
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
             xhr.send()
             return id
-        }
-        //http://www.html5rocks.com/zh/tutorials/webcomponents/imports/
-        if ('import' in DOC.createElement("link")) {
-            plugins.text = function(url) {
-                var id = url.replace(/[?#].*/, "")
-                modules[id] = {}
-                var link = DOC.createElement("link")
-                link.rel = "import"
-                link.href = url
-                link.onload = function() {
-                    modules[id].state = 2
-                    var content = this["import"]
-                    if (content) {
-                        modules[id].exports = content.documentElement.outerHTML
-                        avalon.require.checkDeps()
-                    }
-                    onerror(0, content)
-                }
-
-                function onerror(a, b) {
-                    !b && avalon.error(url + "对应资源不存在或没有开启 CORS")
-                    setTimeout(function() {
-                        head.removeChild(link)
-                    })
-                }
-                link.onerror = onerror
-                head.appendChild(link)
-                return id
-            }
         }
 
         var cur = getCurrentScript(true)

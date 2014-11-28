@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7.2 2014.11.19 support IE6+ and other browsers
+ avalon 1.3.7.2 2014.11.27 support IE6+ and other browsers
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -1798,7 +1798,7 @@
                     }
                 }
             } else if (special === "up" || special === "down") {
-                var elements = events.expr && findNodes(events.expr)
+                var elements = events.expr ? findNodes(events.expr) : []
                 if (elements.length === 0)
                     return
                 for (var i in avalon.vmodels) {
@@ -1813,7 +1813,7 @@
                             avalon.each(eventNodes, function(i, node) {
                                 avalon.each(elements, function(j, element) {
                                     var ok = special === "down" ? element.contains(node) : //向下捕获
-                                        node.contains(element) //向上冒泡
+                                            node.contains(element) //向上冒泡
 
                                     if (ok) {
                                         node._avalon = v //符合条件的加一个标识
@@ -2219,23 +2219,25 @@
             }
         }
         bindings.sort(bindingSorter)
-        if (msData["ms-checked"] && msData["ms-duplex"]) {
-            log("warning!一个元素上不能同时定义ms-checked与ms-duplex")
+        if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
+            log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
         }
-        var firstBinding = bindings[0] || {}
-
-        switch (firstBinding.type) {
-            case "if":
-            case "repeat":
-            case "widget":
-                executeBindings([firstBinding], vmodels)
+        var scanChild = true
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+            var type = binding.type
+            if (type === "if" || type == "widget") {
+                executeBindings([binding], vmodels)
                 break
-            default:
-                executeBindings(bindings, vmodels)
-                if (!stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
-                    scanNodeList(elem, vmodels) //扫描子孙元素
-                }
-                break
+            } else if (type === "data") {
+                executeBindings([binding], vmodels)
+            } else {
+                executeBindings(bindings.slice(i), vmodels)
+                bindings = []
+                scanChild = binding.type !== "repeat"
+            }
+        }
+        if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+            scanNodeList(elem, vmodels) //扫描子孙元素
         }
     }
     //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
@@ -2988,6 +2990,7 @@
                 }
                 if (elem.getAttribute(data.name)) {
                     elem.removeAttribute(data.name)
+
                     scanAttr(elem, data.vmodels)
                 }
             } else { //移出DOM树，并用注释节点占据原位置
@@ -3145,6 +3148,9 @@
                 var casting = oneObject("string,number,boolean,checked")
                 if (elem.type === "radio" && data.param === "") {
                     data.param = "checked"
+                }
+                if (elem.msData) {
+                    elem.msData["ms-duplex"] = data.value
                 }
                 data.param.replace(/\w+/g, function(name) {
                     if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
@@ -3567,14 +3573,21 @@
                     case "input":
                         if (W3C) { //IE9+, W3C
                             bound("input", updateVModel)
-                            bound("compositionstart", compositionStart)
-                            bound("compositionend", compositionEnd)
+                            if (!DOC.documentMode) {//非IE浏览器才用这个
+                                bound("compositionstart", compositionStart)
+                                bound("compositionend", compositionEnd)
+                            }
                             //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                             //http://www.matts411.com/post/internet-explorer-9-oninput/
                             if (DOC.documentMode === 9) {
                                 bound("paste", delay)
                                 bound("cut", delay)
-                            }
+                                bound("keydown", function(e) {
+                                    if (e.keyCode === 8) {
+                                        delay()
+                                    }
+                                })
+                            } 
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
                             bound("propertychange", function(e) {
                                 if (e.propertyName === "value")
@@ -4350,7 +4363,7 @@
         }
         var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
                 NUMBER_STRING = /^\d+$/
-        var riso8601= /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
+        var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
         // 1        2       3         4          5          6          7          8  9     10      11
 
         function jsonStringToDate(string) {
