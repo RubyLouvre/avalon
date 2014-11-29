@@ -3589,7 +3589,7 @@
                                         updateVModel()
                                 })
                             }
-                            bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，回车引发的变动
+                            bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，删除引发的变动
                             bound("cut", delay)
                             bound("keydown", delay)
                             //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
