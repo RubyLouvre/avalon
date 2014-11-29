@@ -4032,25 +4032,21 @@
     function convert(val, $model, array) {
         if (rcomplexType.test(avalon.type(val))) {
             array.isObjectArray = true
-           // console.log(array.pool)
+
             if (array.cache && array.pool.length) {
                 var v = array.shift()
-                console.log(v.$id)
                 var e = v.$events
                 for (var i in e) {
                     if (Array.isArray(e[i])) {
                         e[i].length = 0
                     }
                 }
-              //  console.log(v.$id)
                 for (var i in val) {
                     if (v.hasOwnProperty(i)) {
                         v[i] = val[i]
                     }
                 }
-                console.log(v)
                 return  v
-
             }
 
             val = val.$id ? val : modelFactory(val, 0, $model)
