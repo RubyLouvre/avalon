@@ -1642,6 +1642,8 @@
         thead: [1, "<table>", "</table>"],
         //如果这里不写</tbody></table>,在IE6-9会在多出一个奇怪的caption标签
         tr: [2, "<table><tbody>", "</tbody></table>"],
+        //如果这里不写</tr></tbody></table>,在IE6-9会在多出一个奇怪的caption标签
+        th: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
         td: [3, "<table><tbody><tr>"],
         g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
         //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
@@ -1650,7 +1652,6 @@
 
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
-    tagHooks.th = tagHooks.td
     String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
         tagHooks[tag] = tagHooks.g //处理SVG
     })
@@ -1856,7 +1857,9 @@
     }
     var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
     var findNodes = DOC.querySelectorAll ? function(str) {
-        return DOC.querySelectorAll(str)
+        //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
+        //https://gist.github.com/DavidBruant/1016007
+        return Array.prototype.slice.call(DOC.querySelectorAll(str), 0)
     } : function(str) {
         var match = str.match(ravalon)
         var all = DOC.getElementsByTagName(match[1])
