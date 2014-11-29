@@ -3581,10 +3581,14 @@
                                 bound("compositionend", compositionEnd)
                             }
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                            bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown修正
-                                if (e.propertyName === "value")
-                                    updateVModel()
-                            })
+                            if ("oninput" in element) {
+                                bound("input", updateVModel)
+                            } else {
+                                bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown修正
+                                    if (e.propertyName === "value")
+                                        updateVModel()
+                                })
+                            }
                             bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，回车引发的变动
                             bound("cut", delay)
                             bound("keydown", delay)
