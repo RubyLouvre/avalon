@@ -3469,6 +3469,24 @@
         })
         return val
     }
+    function IE() {
+        if (window.VBArray) {
+            var mode = document.documentMode
+            return mode ? mode : window.XMLHttpRequest ? 7 : 6
+        } else {
+            return 0
+        }
+    }
+    var IEVersion = IE()
+    if (IEVersion) {
+        avalon.bind(DOC, "selectionchange", function(e) {
+            var el = this.activeElement
+            if (el && typeof el.avalonSelectionChange === "function") {
+                el.avalonSelectionChange()
+            }
+        })
+    }
+    // ko.utils.registerEventHandler(ownerDoc, 'selectionchange', selectionChangeHandler);
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
 
@@ -3514,9 +3532,8 @@
                 element.value = val
             }
         }
-
         if (data.isChecked || element.type === "radio") {
-            var IE6 = !window.XMLHttpRequest
+            var IE6 = IEVersion === 6
             updateVModel = function() {
                 if ($elem.data("duplex-observe") !== false) {
                     var lastValue = data.pipe(element.value, data, "get")
@@ -3571,27 +3588,31 @@
                     updateVModel(e)
                 })
             }
+
             events.replace(rword, function(name) {
                 switch (name) {
                     case "input":
-                        if (W3C && (!DOC.documentMode || DOC.documentMode > 9)) { //IE10+, W3C
+                        if (!window.VBArray) { // W3C
                             bound("input", updateVModel)
-                            if (!window.VBArray) {//非IE浏览器才用这个
-                                bound("compositionstart", compositionStart)
-                                bound("compositionend", compositionEnd)
-                            }
+                            //非IE浏览器才用这个
+                            bound("compositionstart", compositionStart)
+                            bound("compositionend", compositionEnd)
+
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                            if ("oninput" in element) {
+                            element.avalonSelectionChange = updateVModel//监听IE点击input右边的X的清空行为
+                            if (IEVersion > 8) {
                                 bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                             } else {
-                                bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown修正
-                                    if (e.propertyName === "value")
+                                bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                                    if (e.propertyName === "value") {
                                         updateVModel()
+                                    }
                                 })
                             }
-                            bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，删除引发的变动
-                            bound("cut", delay)
-                            bound("keydown", delay)
+                            // bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，删除引发的变动
+                            // bound("cut", delay)
+                            // bound("keydown", delay)
+                            bound("dragend", delay)
                             //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                             //http://www.matts411.com/post/internet-explorer-9-oninput/
                         }
