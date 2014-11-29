@@ -2982,7 +2982,7 @@
             data.vmodels.cb(1)
             avalon.nextTick(function() {
                 scanNodeList(parent, data.vmodels)
-                data.vmodels.cb(-1)
+                data.vmodels && data.vmodels.cb(-1)
             })
         },
         "if": function(val, elem, data) {
