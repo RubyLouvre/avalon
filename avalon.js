@@ -3480,13 +3480,13 @@
     var IEVersion = IE()
     if (IEVersion) {
         avalon.bind(DOC, "selectionchange", function(e) {
-            var el = this.activeElement
+            var el = DOC.activeElement
             if (el && typeof el.avalonSelectionChange === "function") {
                 el.avalonSelectionChange()
             }
         })
     }
-    // ko.utils.registerEventHandler(ownerDoc, 'selectionchange', selectionChangeHandler);
+
     //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
     //字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
 
