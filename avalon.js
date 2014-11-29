@@ -3582,7 +3582,7 @@
                             }
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
                             if ("oninput" in element) {
-                                bound("input", updateVModel)
+                                bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                             } else {
                                 bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown修正
                                     if (e.propertyName === "value")
