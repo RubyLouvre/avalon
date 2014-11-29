@@ -1287,8 +1287,8 @@
                                 continue
                             }
                             //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
-                            avalon.each(eventNodes, function(i, node) {
-                                avalon.each(elements, function(j, element) {
+                            Array.prototype.forEach.call(eventNodes, function(i, node) {
+                                Array.prototype.forEach.call(elements, function(j, element) {
                                     var ok = special === "down" ? element.contains(node) : //向下捕获
                                             node.contains(element) //向上冒泡
 
@@ -1335,7 +1335,7 @@
     function findNodes(str) {
         //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
         //https://gist.github.com/DavidBruant/1016007
-        return Array.prototype.slice.call(DOC.querySelectorAll(str), 0)
+        return DOC.querySelectorAll(str)
     }
     /*********************************************************************
      *                       依赖调度系统                                 *

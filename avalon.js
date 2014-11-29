@@ -1811,8 +1811,8 @@
                                 continue
                             }
                             //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
-                            avalon.each(eventNodes, function(i, node) {
-                                avalon.each(elements, function(j, element) {
+                            Array.prototype.forEach.call(eventNodes, function(node) {
+                                Array.prototype.forEach.call(elements, function(element) {
                                     var ok = special === "down" ? element.contains(node) : //向下捕获
                                             node.contains(element) //向上冒泡
 
@@ -1859,7 +1859,7 @@
     var findNodes = DOC.querySelectorAll ? function(str) {
         //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
         //https://gist.github.com/DavidBruant/1016007
-        return Array.prototype.slice.call(DOC.querySelectorAll(str), 0)
+        return DOC.querySelectorAll(str)
     } : function(str) {
         var match = str.match(ravalon)
         var all = DOC.getElementsByTagName(match[1])
@@ -3590,7 +3590,7 @@
                                         delay()
                                     }
                                 })
-                            } 
+                            }
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
                             bound("propertychange", function(e) {
                                 if (e.propertyName === "value")
