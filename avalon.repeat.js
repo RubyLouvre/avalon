@@ -3877,9 +3877,8 @@
             var ret = this._splice(pos, n)
             if (ret.length) {
                 if (this.cache && this.isObjectArray) {
-                 //   console.log(this)
                     for (var i = 0, n = ret.length; i < n; i++) {
-                        if (this.pool.length <= this.cache) {
+                        if (this.pool.length <= this.cache && ret[i].$id) {      
                             this.pool.push(ret[i])
                         }
                     }
@@ -4032,9 +4031,8 @@
     function convert(val, $model, array) {
         if (rcomplexType.test(avalon.type(val))) {
             array.isObjectArray = true
-
             if (array.cache && array.pool.length) {
-                var v = array.shift()
+                var v = array.pool.shift()
                 var e = v.$events
                 for (var i in e) {
                     if (Array.isArray(e[i])) {
@@ -4048,7 +4046,6 @@
                 }
                 return  v
             }
-
             val = val.$id ? val : modelFactory(val, 0, $model)
         }
         return val
