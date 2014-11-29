@@ -3574,28 +3574,22 @@
             events.replace(rword, function(name) {
                 switch (name) {
                     case "input":
-                        if (W3C) { //IE9+, W3C
+                        if (W3C && (!DOC.documentMode || DOC.documentMode > 9)) { //IE10+, W3C
                             bound("input", updateVModel)
-                            if (!DOC.documentMode) {//非IE浏览器才用这个
+                            if (!window.VBArray) {//非IE浏览器才用这个
                                 bound("compositionstart", compositionStart)
                                 bound("compositionend", compositionEnd)
                             }
-                            //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
-                            //http://www.matts411.com/post/internet-explorer-9-oninput/
-                            if (DOC.documentMode === 9) {
-                                bound("paste", delay)
-                                bound("cut", delay)
-                                bound("keydown", function(e) {
-                                    if (e.keyCode === 8) {
-                                        delay()
-                                    }
-                                })
-                            }
                         } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                            bound("propertychange", function(e) {
+                            bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown修正
                                 if (e.propertyName === "value")
                                     updateVModel()
                             })
+                            bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，回车引发的变动
+                            bound("cut", delay)
+                            bound("keydown", delay)
+                            //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+                            //http://www.matts411.com/post/internet-explorer-9-oninput/
                         }
                         break
                     default:

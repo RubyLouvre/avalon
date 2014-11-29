@@ -2861,7 +2861,7 @@
                 switch (name) {
                     case "input":
                         bound("input", updateVModel)
-                        if (!DOC.documentMode) {
+                        if (!window.VBArray) {
                             bound("compositionstart", compositionStart)
                             bound("compositionend", compositionEnd)
                         }
