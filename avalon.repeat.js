@@ -448,12 +448,22 @@
         }
         return true
     }
-
-    function modelFactory($scope, $special, $model) {
+    function getPath(vmodel, name) {
+        var path = name
+        while (vmodel.$parent) {
+            path = vmodel.$surname + "." + name
+            vmodel = vmodel.$parent
+        }
+        var $events = vmodel.$events
+        $events[path] = $events[path] || []
+        return $events[path]
+    }
+    function modelFactory($scope, $options) {
+        $options = $options || {}
         if (Array.isArray($scope)) {
             var arr = $scope.concat()
             $scope.length = 0
-            var collection = Collection($scope)
+            var collection = Collection($scope, $options)
             collection.pushArray(arr)
             return collection
         }
@@ -466,9 +476,9 @@
         if (!Array.isArray($scope.$skipArray)) {
             $scope.$skipArray = []
         }
-        $scope.$skipArray.$special = $special || {} //强制要监听的属性
+        $scope.$skipArray.$special = $options.$special || {} //强制要监听的属性
         var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
-        $model = $model || {} //vmodels.$model属性
+        var $model = $options.$model || {} //vmodels.$model属性
         var $events = {} //vmodel.$events属性
         var watchedProperties = {} //监控属性
         var computedProperties = [] //计算属性
@@ -529,11 +539,13 @@
                     //第2种对应子ViewModel或监控数组 
                     accessor = function(newValue) {
                         var childVmodel = accessor.child
+
                         var oldValue = $model[name]
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return
                             }
+                            avalon.log("更新对象")
                             if (!isEqual(oldValue, newValue)) {
                                 childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
                                 newValue = $model[name] = childVmodel.$model //同步$model
@@ -547,20 +559,25 @@
                         }
                     }
                     var childVmodel = accessor.child = modelFactory(val, 0, $model[name])
+                    childVmodel.$surname = name
+                    childVmodel.$parent = $vmodel
                     childVmodel.$events[subscribers] = $events[name]
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {
+                        var path = getPath($vmodel, name)
                         var oldValue = $model[name]
                         if (arguments.length) {
                             if (!isEqual(oldValue, newValue)) {
                                 $model[name] = newValue //同步$model
                                 withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
-                                notifySubscribers($events[name]) //同步视图
+                                notifySubscribers(path)
+                                //  notifySubscribers($events[name]) //同步视图
                                 safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                             }
                         } else {
-                            collectSubscribers($events[name])
+                            collectSubscribers(path)
+                            //  collectSubscribers($events[name])
                             return oldValue
                         }
                     }
@@ -583,6 +600,7 @@
         //添加$id, $model, $events, $watch, $unwatch, $fire
         $vmodel.$id = generateID()
         $vmodel.$model = $model
+
         $vmodel.$events = $events
         for (var i in EventManager) {
             var fn = EventManager[i]
@@ -595,6 +613,7 @@
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
         }
+        //  $vmodel.valueOf = function(){}
         computedProperties.forEach(function(collect) { //收集依赖
             collect()
         })
@@ -1851,6 +1870,9 @@
                 for (var i = 0, callback; callback = all[i++]; ) {
                     if (isFunction(callback))
                         callback.apply(this, arguments)
+                }
+                if (this.$parent) {
+                    this.$parent.$fire(this.$surname + "." + type)
                 }
             }
         }
@@ -3878,7 +3900,7 @@
             if (ret.length) {
                 if (this.cache && this.isObjectArray) {
                     for (var i = 0, n = ret.length; i < n; i++) {
-                        if (this.pool.length <= this.cache && ret[i].$id) {      
+                        if (this.pool.length <= this.cache && ret[i].$id) {
                             this.pool.push(ret[i])
                         }
                     }

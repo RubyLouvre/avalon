@@ -3337,6 +3337,7 @@
                         }
                         data.renderedCallback = old
                     }
+                    
                     data.handler("add", 0, $repeat)
                 } else {
                     data.handler("add", 0, $repeat)

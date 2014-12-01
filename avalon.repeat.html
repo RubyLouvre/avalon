@@ -9,34 +9,18 @@
         <script type="text/javascript">
             //   var id
             var test = avalon.define("test", function(vm) {
-                vm.array = [{
-                        id: new Date - 0
-                    }, {
-                        id: new Date - 0
-                    }];
-
-            });
-
-            setInterval(function() {
-                test.array.push({
-                    id: new Date - 0
-                })
-                if (test.array.length > 10) {
-                    var el = test.array.shift()
+                vm.a = {
+                    c: 2
                 }
-
-
-            }, 500)
-
+                vm.b = "这是第一层属性"
+            });
 
         </script>
     </head>
     <body>
         <div ms-controller="test">
-            <ul id="userList" >
-                <li ms-repeat="array" data-repeat-pool="11">{{el.id}} {{$index}}</li>
-            </ul>
-            <p><button type="button" ms-click="clear">clear</button></p>
+            <div>{{b}}</div>
+            <div>{{a.b}}</div>
         </div>
     </body>
 </html>
