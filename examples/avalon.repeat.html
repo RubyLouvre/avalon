@@ -16,9 +16,8 @@
                 //vm.b = "这是第一层属性"
             });
             setTimeout(function() {
-             //   test.a.c = 999
-              //  test.a.array = [8, 9]
-                //  test.array.push(3,4,5)
+                test.a.c = 999
+                test.a.array = [8, 9]
             }, 2000)
 
             setTimeout(function() {
@@ -26,10 +25,10 @@
                     c: 888,
                     array: [3,4]
                 }
-            }, 2000)
-//            setTimeout(function() {
-//                test.a.c = 777
-//            }, 5000)
+            }, 4000)
+            setTimeout(function() {
+                test.a.c = 777
+            }, 5000)
         </script>
     </head>
     <body>
@@ -39,7 +38,6 @@
                     {{el}}
                 </li>
             </ul>
-            <!--            <div>{{b}}</div>-->
             <div>{{a.c}}</div>
         </div>
     </body>
