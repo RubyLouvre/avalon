@@ -454,6 +454,7 @@
             path = vmodel.$surname + "." + name
             vmodel = vmodel.$parent
         }
+        console.log(path)
         var $events = vmodel.$events
         $events[path] = $events[path] || []
         return $events[path]
@@ -500,6 +501,7 @@
                     accessor = function(newValue) {
                         var $events = $vmodel.$events
                         var oldValue = $model[name]
+                          var path = getPath($vmodel, name)
                         if (arguments.length) {
                             if (stopRepeatAssign) {
                                 return
@@ -512,13 +514,16 @@
                             }
                         } else {
                             if (avalon.openComputedCollect) { // 收集视图刷新函数
-                                collectSubscribers($events[name])
+                           
+                                   collectSubscribers(path)
+                              //  collectSubscribers($events[name])
                             }
                         }
                         newValue = $model[name] = getter.call($vmodel) //同步$model
                         if (!isEqual(oldValue, newValue)) {
                             withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                            notifySubscribers($events[name]) //同步视图
+                         //   notifySubscribers($events[name]) //同步视图
+                              notifySubscribers(path) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                         return newValue
@@ -539,7 +544,7 @@
                     //第2种对应子ViewModel或监控数组 
                     accessor = function(newValue) {
                         var childVmodel = accessor.child
-
+                        var path = getPath($vmodel, name)
                         var oldValue = $model[name]
                         if (arguments.length) {
                             if (stopRepeatAssign) {
@@ -554,14 +559,15 @@
                                 safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                             }
                         } else {
-                            collectSubscribers($events[name]) //收集视图函数
+                            collectSubscribers(path)
+                            //   collectSubscribers($events[name]) //收集视图函数
                             return childVmodel
                         }
                     }
                     var childVmodel = accessor.child = modelFactory(val, 0, $model[name])
                     childVmodel.$surname = name
                     childVmodel.$parent = $vmodel
-                    childVmodel.$events[subscribers] = $events[name]
+                    //childVmodel.$events[subscribers] = $events[name]
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {

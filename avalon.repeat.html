@@ -5,7 +5,7 @@
         <title></title>
         <script src="http://www.xiu8.com/assets/js/utils/1.0.1/jquery/1.11.1/jquery-1.11.1.js"
         type="text/javascript"></script>
-        <script src="avalon.repeat.js" type="text/javascript"></script>
+        <script src="avalon.js" type="text/javascript"></script>
         <script type="text/javascript">
             //   var id
             var test = avalon.define("test", function(vm) {
@@ -14,13 +14,15 @@
                 }
                 vm.b = "这是第一层属性"
             });
-
+            setTimeout(function() {
+                test.a.c = 999
+            }, 3000)
         </script>
     </head>
     <body>
         <div ms-controller="test">
             <div>{{b}}</div>
-            <div>{{a.b}}</div>
+            <div>{{a.c}}</div>
         </div>
     </body>
 </html>
