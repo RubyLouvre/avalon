@@ -513,7 +513,6 @@
                             }
                         } else {
                             if (avalon.openComputedCollect) { // 收集视图刷新函数
-
                                 collectSubscribers(path)
                                 //  collectSubscribers($events[name])
                             }
@@ -562,14 +561,11 @@
                             return childVmodel
                         }
                     }
-                    var childVmodel = accessor.child = modelFactory(val, {
+                    accessor.child = modelFactory(val, {
                         $model: $model[name],
                         $super: $vmodel,
                         $surname: name
                     })
-                    //   childVmodel.$surname = name
-                    //  childVmodel.$parent = $vmodel
-                    //childVmodel.$events[subscribers] = $events[name]
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {
@@ -692,9 +688,10 @@
                 withProxyCount--
                 delete withProxyPool[sid]
             }
-            son = modelFactory(value)
-            son.$surname = name
-            son.$super = parent
+            son = modelFactory(value, {
+                $surname: name,
+                $super: parent
+            })
             rebindings[son.$id] = function(data) {
                 while (data = path.shift()) {
                     (function(el) {
@@ -3873,12 +3870,14 @@
      *          监控数组（与ms-each, ms-repeat配合使用）                     *
      **********************************************************************/
 
-    function Collection(model) {
+    function Collection(model, options) {
         var array = []
+        options = options || {}
         array.$id = generateID()
         array.$model = model //数据模型
         array.$events = {}
-        array.$events[subscribers] = []
+        array.$surname = options.$surname
+        array.$super = options.$super
         array._ = modelFactory({
             length: model.length
         })
