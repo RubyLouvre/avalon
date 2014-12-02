@@ -541,6 +541,13 @@
                 } else if (rcomplexType.test(valueType)) {
                     //第2种对应子ViewModel或监控数组 
                     accessor = function(newValue) {
+                        if (!("child" in accessor)) {
+                            return accessor.child = modelFactory(val, {
+                                //   $model: $model[name],
+                                $super: $vmodel,
+                                $surname: name
+                            })
+                        }
                         var childVmodel = accessor.child
                         var path = getPath($vmodel, name)
                         var oldValue = $model[name]
@@ -548,7 +555,6 @@
                             if (stopRepeatAssign) {
                                 return
                             }
-                            avalon.log("更新对象")
                             if (!isEqual(oldValue, newValue)) {
                                 childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
                                 newValue = $model[name] = childVmodel.$model //同步$model
@@ -561,11 +567,6 @@
                             return childVmodel
                         }
                     }
-                    accessor.child = modelFactory(val, {
-                        $model: $model[name],
-                        $super: $vmodel,
-                        $surname: name
-                    })
                 } else {
                     //第3种对应简单的数据类型，自变量，监控属性
                     accessor = function(newValue) {
@@ -617,7 +618,7 @@
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
         }
-        //  $vmodel.valueOf = function(){}
+        // $vmodel.valueOf = function(){}
         computedProperties.forEach(function(collect) { //收集依赖
             collect()
         })
@@ -2638,9 +2639,9 @@
         parseExpr(code, scopes, data)
         if (data.evaluator && !noregister) {
             data.handler = bindingExecutors[data.handlerName || data.type]
-            data.evaluator.toString = function() {
-                return data.type + " binding to eval(" + code + ")"
-            }
+//            data.evaluator.toString = function() {
+//                return data.type + " binding to eval(" + code + ")"
+//            }
             //方便调试
             //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
             //将它移出订阅者列表
@@ -3237,6 +3238,7 @@
         },
         "repeat": function(data, vmodels) {
             var type = data.type
+
             parseExprProxy(data.value, vmodels, data, 0, 1)
             data.proxies = []
             var freturn = false
@@ -3248,7 +3250,8 @@
                     freturn = true
                     avalon.log("warning:" + data.value + "对应类型不正确")
                 }
-            } catch (e) {
+                var path = $repeat.$super && getPath($repeat.$super, $repeat.$surname)
+            } catch (err) {
                 freturn = true
                 avalon.log("warning:" + data.value + "编译出错")
             }
@@ -3288,20 +3291,11 @@
                 parentNode.removeChild(data.endRepeat)
                 target = data.element = data.type === "repeat" ? target : parentNode
                 data.group = target.setAttribute(data.name, data.value)
-            }
-            var arr = data.value.split(".") || []
-            if (arr.length > 1) {
-                arr.pop()
-                var n = arr[0]
-                for (var i = 0, v; v = vmodels[i++]; ) {
-                    if (v && v.hasOwnProperty(n)) {
-                        var events = v[n].$events
-                        events[subscribers] = events[subscribers] || []
-                        events[subscribers].push(data)
-                        break
-                    }
+                if (path) {
+                    path.length = 0
                 }
             }
+
             if (freturn) {
                 return
             }
@@ -3320,9 +3314,19 @@
                     break
                 }
             }
-            var $list = ($repeat.$events || {})[subscribers]
-            if ($list && avalon.Array.ensure($list, data)) {
-                addSubscribers(data, $list)
+            if ($repeat.$surname !== data.value) {
+                var vmodel = $repeat.$super
+                while (vmodel.$super) {
+                    vmodel = vmodel.$super
+                }
+                var top = data.value.split(".").shift()
+                var $events = vmodel.$events
+                var list = $events[top] = $events[top] || []
+                list.push(data)
+            }
+
+            if (path && avalon.Array.ensure(path, data)) {
+                addSubscribers(data, path)
             }
             if (!Array.isArray($repeat) && type !== "each") {
                 var pool = withProxyPool[$repeat.$id]
@@ -3878,6 +3882,7 @@
         array.$events = {}
         array.$surname = options.$surname
         array.$super = options.$super
+
         array._ = modelFactory({
             length: model.length
         })
@@ -3895,7 +3900,8 @@
     var CollectionPrototype = {
         _splice: _splice,
         _fire: function(method, a, b) {
-            notifySubscribers(this.$events[subscribers], method, a, b)
+            var path = getPath(this.$super, this.$surname)
+            notifySubscribers(path, method, a, b)
         },
         _add: function(arr, pos) { //在第pos个位置上，添加一组元素
             var oldLength = this.length
