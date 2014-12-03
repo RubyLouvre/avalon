@@ -698,7 +698,7 @@
                     (function(el) {
                         if (el.type) { //重新绑定
                             avalon.nextTick(function() {
-                                el.rollback && el.rollback() //还原 ms-with ms-on
+                                el.rollback && el.rollback() //还原 ms-with ms-on ms-repeat ms-each
                                 bindingHandlers[el.type](el, el.vmodels)
                             })
                         }
@@ -3248,7 +3248,7 @@
                 var xtype = avalon.type($repeat)
                 if (xtype !== "object" && xtype !== "array") {
                     freturn = true
-                    avalon.log("warning:" + data.value + "对应类型不正确")
+                    avalon.log("warning: " + data.value + "对应类型不正确")
                 }
                 var path = $repeat.$super && getPath($repeat.$super, $repeat.$surname)
             } catch (err) {
@@ -4089,7 +4089,10 @@
                 }
                 return  v
             }
-            val = val.$id ? val : modelFactory(val, 0, $model)
+            val = val.$id ? val : modelFactory(val,{
+                $surname: "*",
+                $super: array
+            })//, 0, $model)
         }
         return val
     }

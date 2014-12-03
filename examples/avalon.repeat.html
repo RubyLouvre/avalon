@@ -8,37 +8,20 @@
         <script type="text/javascript">
             //   var id
             var test = avalon.define("test", function(vm) {
-                vm.a = {
-                    c: 2,
-                    array: [1, 2]
-                }
-
-                //vm.b = "这是第一层属性"
+                vm.array = [{id: 1},{id: 2},{id: 3},{id: 4}]
+               
             });
-            setTimeout(function() {
-                test.a.c = 999
-                test.a.array = [8, 9]
-            }, 2000)
-
-            setTimeout(function() {
-                test.a = {
-                    c: 888,
-                    array: [3,4]
-                }
-            }, 4000)
-            setTimeout(function() {
-                test.a.c = 777
-            }, 5000)
+           
         </script>
     </head>
     <body>
         <div ms-controller="test">
             <ul>
-                <li ms-repeat="a.array">
-                    {{el}}
+                <li ms-repeat="array">
+                    {{el.id}}
                 </li>
             </ul>
-            <div>{{a.c}}</div>
+           
         </div>
     </body>
 </html>
