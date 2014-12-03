@@ -545,7 +545,8 @@
                             return accessor.child = modelFactory(val, {
                                 //   $model: $model[name],
                                 $super: $vmodel,
-                                $surname: name
+                                $surname: name,
+                                $model: $model[name]
                             })
                         }
                         var childVmodel = accessor.child
@@ -617,6 +618,9 @@
 
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
+        }
+        $vmodel.valueOf = function() {
+            return $model
         }
         // $vmodel.valueOf = function(){}
         computedProperties.forEach(function(collect) { //收集依赖
@@ -799,7 +803,8 @@
                     buffer.push("\tPublic [" + name + "]")
                 }
             })
-            buffer.push("\tPublic [" + 'hasOwnProperty' + "]")
+            buffer.push("\tPublic [valueOf]")
+            buffer.push("\tPublic [hasOwnProperty]")
             //添加访问器属性 
             for (name in accessors) {
                 buffer.push(
@@ -3676,7 +3681,7 @@
 
     function onTree(value) { //disabled状态下改动不触发input事件
         var newValue = arguments.length ? value : this.value
-        if (!this.disabled && this.oldValue !== newValue) {
+        if (!this.disabled && this.oldValue !== newValue + "") {
             var type = this.getAttribute("data-duplex-event") || "input"
             type = type.match(rword).shift()
             if (W3C) {
@@ -4089,9 +4094,10 @@
                 }
                 return  v
             }
-            val = val.$id ? val : modelFactory(val,{
+            val = val.$id ? val : modelFactory(val, {
                 $surname: "*",
-                $super: array
+                $super: array,
+                $model: $model
             })//, 0, $model)
         }
         return val
