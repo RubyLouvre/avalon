@@ -45,7 +45,7 @@
 
     function log() {
         if (window.console && avalon.config.debug) {
-            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+// http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
             Function.apply.call(console.log, console, arguments)
         }
     }
@@ -62,7 +62,7 @@
         return result
     }
 
-    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+//生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 
     function generateID() {
         return "avalon" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -145,7 +145,7 @@
             return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
         }
     }
-    //与jQuery.extend方法，可用于浅拷贝，深拷贝
+//与jQuery.extend方法，可用于浅拷贝，深拷贝
     avalon.mix = avalon.fn.mix = function() {
         var options, name, src, copy, copyIsArray, clone,
                 target = arguments[0] || {},
@@ -160,19 +160,19 @@
             i++
         }
 
-        //确保接受方为一个复杂的数据类型
+//确保接受方为一个复杂的数据类型
         if (typeof target !== "object" && avalon.type(target) !== "function") {
             target = {}
         }
 
-        //如果只有一个参数，那么新成员添加于mix所在的对象上
+//如果只有一个参数，那么新成员添加于mix所在的对象上
         if (i === length) {
             target = this
             i--
         }
 
         for (; i < length; i++) {
-            //只处理非空参数
+//只处理非空参数
             if ((options = arguments[i]) != null) {
                 for (name in options) {
                     src = target[name]
@@ -182,7 +182,7 @@
                         continue
                     }
 
-                    // 防止环引用
+// 防止环引用
                     if (target === copy) {
                         continue
                     }
@@ -451,7 +451,7 @@
     function getPath(vmodel, name) {
         var path = name
         while (vmodel.$super) {
-            path = vmodel.$surname + "." + name
+            path = vmodel.$surname + "." + path
             vmodel = vmodel.$super
         }
         var $events = vmodel.$events
@@ -2984,28 +2984,23 @@
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
-            var parent = "group" in data ? elem.parentNode : elem
-            if ("group" in data) {
-                var fragment, nodes
-                //将值转换为文档碎片，原值可以为元素节点，文档碎片，NodeList，字符串
-                if (val.nodeType === 11) {
-                    fragment = val
-                } else if (val.nodeType === 1 || val.item) {
-                    nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
-                    fragment = hyperspace.cloneNode(true)
-                    while (nodes[0]) {
-                        fragment.appendChild(nodes[0])
-                    }
-                } else {
-                    fragment = avalon.parseHTML(val)
+            var isHtmlFilter = "group" in data
+            var parent = isHtmlFilter ? elem.parentNode : elem
+            if (val.nodeType === 11) { //将val转换为文档碎片
+                var fragment = val
+            } else if (val.nodeType === 1 || val.item) {
+                var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
+                fragment = hyperspace.cloneNode(true)
+                while (nodes[0]) {
+                    fragment.appendChild(nodes[0])
                 }
-                nodes = avalon.slice(fragment.childNodes)
-                if (nodes.length === 0) {
-                    var comment = DOC.createComment("ms-html")
-                    fragment.appendChild(comment)
-                    nodes = [comment]
-                }
-                parent.insertBefore(fragment, elem) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+            } else {
+                fragment = avalon.parseHTML(val)
+            }
+            //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
+            var comment = DOC.createComment("ms-html")
+            if (isHtmlFilter) {
+                parent.insertBefore(comment, elem)
                 var length = data.group
                 while (elem) {
                     var nextNode = elem.nextSibling
@@ -3015,14 +3010,23 @@
                         break
                     elem = nextNode
                 }
-                data.element = nodes[0]
-                data.group = nodes.length
+                data.element = comment //防止被CG
             } else {
-                avalon.innerHTML(parent, val)
+                avalon.clearHTML(parent).appendChild(comment)
             }
             data.vmodels.cb(1)
             avalon.nextTick(function() {
-                scanNodeList(parent, data.vmodels)
+                if (isHtmlFilter) {
+                    data.group = fragment.childNodes.length || 1
+                }
+                var nodes = avalon.slice(fragment.childNodes)
+                if (nodes[0]) {
+                    parent.replaceChild(fragment, comment)
+                    if (isHtmlFilter) {
+                        data.element = nodes[0]
+                    }
+                }
+                scanNodeArray(nodes, data.vmodels)
                 data.vmodels && data.vmodels.cb(-1)
             })
         },
@@ -4217,8 +4221,13 @@
         if (rcomplexType.test(avalon.type(item))) {
             source.$skipArray = [param]
         }
-        proxy = modelFactory(source, watchEachOne)
-        proxy.$watch(param, function(val) {
+        proxy = modelFactory(source, {
+            $super: data.$repeat,
+            $surname: index,
+            $special: watchEachOne
+        })
+
+        proxy.$watch(param, function(val) {//只要用于ms-duplex
             data.$repeat.set(proxy.$index, val)
         })
         proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
