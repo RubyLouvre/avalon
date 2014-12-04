@@ -8,19 +8,20 @@
         <script type="text/javascript">
             //   var id
             var test = avalon.define("test", function(vm) {
-                vm.array = [1,2],
+                vm.array = [{id: 1}, {id: 2}],
                 vm.xxx = new Date - 0
             });
-            setTimeout(function(){
-                test.array.push(3,4)
-            })
+            setTimeout(function() {
+                test.array.push({id: 3})
+                test.array.reverse()
+            }, 1000)
         </script>
     </head>
     <body>
         <div ms-controller="test">
             <ul>
                 <li ms-repeat="array">
-                    {{el}}
+                    {{el.id}}
                 </li>
             </ul>
             {{xxx| date("HH:mm")}}

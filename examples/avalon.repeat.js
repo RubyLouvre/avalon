@@ -491,7 +491,7 @@
                 //总共产生三种accessor
                 var accessor
                 var valueType = avalon.type(val)
-                $events[name] = []
+                //   $events[name] = []
                 //总共产生三种accessor
                 if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
                     var setter = val.set
@@ -3290,7 +3290,7 @@
                 data.group = 1
             }
 
-            data.rollback = function() { 
+            data.rollback = function() {
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
@@ -3917,7 +3917,7 @@
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i], this.$model[pos + i], this)
+                added[i] = convert(arr[i], pos + i, this)
             }
             _splice.apply(this, [pos, 0].concat(added))
             this._fire("add", pos, added)
@@ -4080,7 +4080,7 @@
         }
     })
 
-    function convert(val, $model, array) {
+    function convert(val, index, array) {
         if (rcomplexType.test(avalon.type(val))) {
             array.isObjectArray = true
             if (array.cache && array.pool.length) {
@@ -4099,9 +4099,9 @@
                 return  v
             }
             val = val.$id ? val : modelFactory(val, {
-                $surname: "*",
+                $surname: index,
                 $super: array,
-                $model: $model
+                $model: array.$model[index]
             })//, 0, $model)
         }
         return val
