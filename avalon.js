@@ -3241,7 +3241,7 @@
                 data.group = 1
             }
 
-            data.rollback = function() { //只用于list为对象的情况
+            data.rollback = function() { 
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
