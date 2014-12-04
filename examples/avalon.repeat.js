@@ -451,6 +451,9 @@
     function getPath(vmodel, name) {
         var path = name
         while (vmodel.$super) {
+            if(Array.isArray(vmodel.$super)){
+                vmodel.$surname = vmodel.$super.indexOf(vmodel)
+            }
             path = vmodel.$surname + "." + path
             vmodel = vmodel.$super
         }

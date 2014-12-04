@@ -15,6 +15,10 @@
                 test.array.push({id: 3})
                 test.array.reverse()
             }, 1000)
+              setTimeout(function() {
+                test.array.shift()
+                test.array.push({id:9})
+            }, 3000)
         </script>
     </head>
     <body>
