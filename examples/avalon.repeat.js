@@ -457,6 +457,9 @@
             collection.pushArray(arr)
             return collection
         }
+//        if(typeof $scope !== "object"){
+//            return $scope
+//        }
         if (typeof $scope.nodeType === "number") {
             return $scope
         }
@@ -466,7 +469,12 @@
         if (!Array.isArray($scope.$skipArray)) {
             $scope.$skipArray = []
         }
-        $scope.$skipArray.$special = $special || {} //强制要监听的属性
+        try {
+            $scope.$skipArray.$special = $special || {} //强制要监听的属性
+        } catch (e) {
+            console.log($scope)
+            console.log($scope.$skipArray)
+        }
         var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
         $model = $model || {} //vmodels.$model属性
         var $events = {} //vmodel.$events属性
@@ -2410,9 +2418,8 @@
                 prefix = " = " + name + "."
         for (var i = vars.length, prop; prop = vars[--i]; ) {
             if (scope.hasOwnProperty(prop)) {
-
                 var a = prop
-                if (scope.$id.indexOf("$proxy$") === 0) {
+                if (scope + "" === "ProxyVModel") {
                     if (typeof scope[a] === "function" && a !== "$remove") {
                         a += "()"
                     }
@@ -2421,7 +2428,11 @@
                 ret.push(prop + prefix + a)
                 data.vars.push(prop)
                 if (data.type === "duplex") {
-                    vars.get = name + "." + prop
+                    var code = data.value
+                    var useFn = prop === code.trim()
+                    vars.duplex = ";\n\tif(!arguments.length){\n\t\treturn " + code +
+                            "\n\t}\n\t" + (a !== prop && useFn ? name + "." + prop + "(duplexArgs)" : code + " = duplexArgs") +
+                            "\n\t}"
                 }
                 vars.splice(i, 1)
             }
@@ -2548,15 +2559,13 @@
             code += "\nreturn ret" + expose
             names.push("filters" + expose)
         } else if (dataType === "duplex") { //双工绑定
-            var _body = "'use strict';\nreturn function(vvv){\n\t" +
-                    prefix +
-                    ";\n\tif(!arguments.length){\n\t\treturn " +
-                    code +
-                    "\n\t}\n\t" + (!rduplex.test(code) ? vars.get : code) +
-                    "= vvv;\n} "
+            var _body = "'use strict';\n" +
+                    "return function(duplexArgs){\n\t" + prefix + vars.duplex
+
             try {
                 fn = Function.apply(noop, names.concat(_body))
                 data.evaluator = cacheExprs(exprId, fn)
+                console.log(fn + "")
             } catch (e) {
                 log("debug: parse error," + e.message)
             }
@@ -2872,7 +2881,6 @@
                         calculateFragmentGroup(data, proxies)
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                        //var removed = proxies.splice(pos, el)
                         var transation = removeFragment(locatedNode, group, el)
                         avalon.clearHTML(transation)
                         // recycleEachProxies(removed)
@@ -2889,19 +2897,9 @@
                         // recycleEachProxies(proxies)
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-//                      var t = proxies.splice(pos, 1)[0]
-//                      if (t) {
-//                            proxies.splice(el, 0, t)
                         transation = removeFragment(locatedNode, group)
                         locatedNode = locateFragment(data, el)
                         parent.insertBefore(transation, locatedNode)
-                        //    }
-                        break
-                    case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
-                        var proxy = proxies[pos]
-                        if (proxy) {
-                            proxy[proxy.$itemName] = el
-                        }
                         break
                     case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                         var pool = el
@@ -3864,13 +3862,13 @@
         array._ = modelFactory({
             length: model.length
         })
-        array._.$watch("length", function(a, b) {
-            array.$fire("length", a, b)
-        })
         for (var i in EventManager) {
             array[i] = EventManager[i]
         }
         avalon.mix(array, CollectionPrototype)
+        array._.$watch("length", function(a, b) {
+            array.$fire("length", a, b)
+        })
         return array
     }
 
@@ -3887,7 +3885,7 @@
             var proxies = []
             for (var i = 0, n = arr.length; i < n; i++) {
                 var index = pos + i
-                added[i] = getEachVM(arr[i], this) //将对象数组转换为VM数组
+                added[i] = getEachVM(arr[i], this.$model[index]) //将对象数组转换为VM数组
                 proxies[i] = getEachProxy(index, this)//生成对应的代理VM数组
             }
             _splice.apply(this, [pos, 0].concat(added))
@@ -3910,7 +3908,8 @@
         },
         _index: function(pos) {
             var proxies = this.$proxies
-            for (var el; el = proxies[pos]; pos++) {
+            for (var n = proxies.length; pos < n; pos++) {
+                var el = proxies[pos]
                 el.$$index = pos
                 notifySubscribers(el.$subscribers)
             }
@@ -3932,7 +3931,6 @@
             return this.length //IE67的unshift不会返回长度
         },
         shift: function() {
-            console.log("shift")
             var el = this.$model.shift()
             this._del(0, 1)
             this._index(0)
@@ -3946,12 +3944,11 @@
         size: function() { //取得数组长度，这个函数可以同步视图，length不能
             return this._.length
         },
-        splice: function(a, b) {
+        splice: function(must) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-            a = _number(a, this.length)
-            var removed = _splice.apply(this.$model, arguments),
-                    ret = [],
-                    change
+            var a = _number(must, this.length)
+            var removed = _splice.apply(this.$model, arguments)
+            var ret = [], change
             this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
             if (removed.length) {
                 ret = this._del(a, removed.length)
@@ -4021,18 +4018,19 @@
                 } else if (valueType === "array") {
                     target.clear().push.apply(target, val)
                 } else if (target !== val) {
-                    this[index] = val
-                    this.$model[index] = val
-                    this._fire("set", index, val)
+                    this[index] = this.$model[index] = val
+                    var el = this.$proxies[index]
+                    notifySubscribers(el.$subscribers)
                 }
             }
             return this
         }
     }
+
     "sort,reverse".replace(rword, function(method) {
-        CollectionPrototype[method] = function() {
-            var aaa = this.$model 
-            var bbb = aaa.slice(0)
+        CollectionPrototype[method] = function(fn) {
+            var aaa = this.$model
+            var bbb = aaa.slice(0) //生成参照物数组
             var proxies = this.$proxies
             var sorted = false
             ap[method].apply(aaa, arguments) //移动$model数组
@@ -4063,7 +4061,6 @@
             return this
         }
     })
-
 
 
 
@@ -4141,7 +4138,7 @@
             $key: key,
             $outer: $outer,
             $val: val
-        }, {
+        }, 0, {
             $val: 1,
             $key: 1
         })
@@ -4155,11 +4152,17 @@
         }
         return val
     }
-    function getEachProxy(index, $repeat) {
+
+    //由于这里的属性最终在求值函数变成， var $first = vm1112323_0.$first(); return $first
+    //的形式，如果使用了原型，this会错误指向window
+    function getEachProxy(index, array) {
         var proxy = {
             $subscribers: [],
             $$index: index,
             $outer: {},
+            toString: function() {
+                return "ProxyVModel"
+            },
             $index: function() {//1.3.8新增
                 if (arguments.length) {
                     proxy.$$index = index
@@ -4174,11 +4177,11 @@
                 return proxy.$$index === index
             },
             $last: function() {
-                var last = $repeat.length - 1
+                var last = array.length - 1
                 return proxy.$$index === last
             },
             $remove: function() {
-                return $repeat.removeAt(proxy.$$index)
+                return array.removeAt(proxy.$$index)
             }
         }
         return proxy
