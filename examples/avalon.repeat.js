@@ -457,9 +457,6 @@
             collection.pushArray(arr)
             return collection
         }
-//        if(typeof $scope !== "object"){
-//            return $scope
-//        }
         if (typeof $scope.nodeType === "number") {
             return $scope
         }
@@ -469,12 +466,7 @@
         if (!Array.isArray($scope.$skipArray)) {
             $scope.$skipArray = []
         }
-        try {
-            $scope.$skipArray.$special = $special || {} //强制要监听的属性
-        } catch (e) {
-            console.log($scope)
-            console.log($scope.$skipArray)
-        }
+        $scope.$skipArray.$special = $special || {} //强制要监听的属性
         var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
         $model = $model || {} //vmodels.$model属性
         var $events = {} //vmodel.$events属性
