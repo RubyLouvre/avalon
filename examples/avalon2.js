@@ -2410,7 +2410,15 @@
                 prefix = " = " + name + "."
         for (var i = vars.length, prop; prop = vars[--i]; ) {
             if (scope.hasOwnProperty(prop)) {
-                ret.push(prop + prefix + prop)
+
+                var a = prop
+                if (scope.$id.indexOf("$proxy$") === 0) {
+                    if (typeof scope[a] === "function" && a !== "$remove") {
+                        a += "()"
+                    }
+                    avalon.Array.ensure(scope.$subscribers, data)
+                }
+                ret.push(prop + prefix + a)
                 data.vars.push(prop)
                 if (data.type === "duplex") {
                     vars.get = name + "." + prop
@@ -2571,6 +2579,7 @@
         try {
             fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
             data.evaluator = cacheExprs(exprId, fn)
+            console.log(fn + "")
         } catch (e) {
             log("debug: parse error," + e.message)
         } finally {
@@ -2836,7 +2845,9 @@
             if (method) {
                 var data = this
                 var parent = data.element.parentNode
-                var proxies = data.proxies
+
+                var hasProxy = "$proxies" in data.$repeat
+                var proxies = data.$repeat.$proxies || []
                 var transation = hyperspace.cloneNode(false)
 
                 if (method === "del" || method === "move") {
@@ -2846,22 +2857,22 @@
                 switch (method) {
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
-                        var last = data.$repeat.length - 1
+                        //  var last = data.$repeat.length - 1
                         var fragments = []
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
-                            var proxy = getEachProxy(ii, arr[i], data, last)
-                            proxies.splice(ii, 0, proxy)
+                            var proxy = hasProxy ? proxies[ii] : getEachProxy(ii, data.$repeat)
+                            fixEachProxy(proxy, data)
+                            //   proxies.splice(ii, 0, proxy)
                             shimController(data, transation, proxy, fragments)
                         }
                         locatedNode = locateFragment(data, pos)
-
                         parent.insertBefore(transation, locatedNode)
                         for (var i = 0, fragment; fragment = fragments[i++]; ) {
                             scanNodeArray(fragment.nodes, fragment.vmodels)
                             fragment.nodes = fragment.vmodels = null
                         }
-                        calculateFragmentGroup(data)
+                        calculateFragmentGroup(data, proxies)
                         break
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var removed = proxies.splice(pos, el)
@@ -2871,10 +2882,16 @@
                         break
                     case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                         var last = proxies.length - 1
+                        console.log(proxies)
+                        proxies.forEach(function(el) {
+                            console.log(el.el() + "_______________")
+                        })
                         for (; el = proxies[pos]; pos++) {
-                            el.$index = pos
-                            el.$first = pos === 0
-                            el.$last = pos === last
+                            // console.log(pos)
+                            el.$$index = pos
+                            notifySubscribers(el.$subscribers)
+                            //   el.$first = pos === 0
+                            //   el.$last = pos === last
                         }
                         break
                     case "clear":
@@ -2934,45 +2951,33 @@
                 }
                 var callback = data.renderedCallback || noop,
                         args = arguments
-                var checkHTML = NaN
-                var id = setInterval(function() {
-                    var parent = data.element.parentNode
-                    var innerHTML = parent.innerHTML//parent.tagName.toLowerCase() !== "repeat" &&
-                    if (innerHTML === checkHTML) {
-                        callback.apply(parent, args)
-                        clearInterval(id)
-                        if (parent.oldValue && parent.tagName === "SELECT" && method === "index") { //fix #503
-                            avalon(parent).val(parent.oldValue.split(","))
-                        }
+                checkScan(parent, function() {
+                    callback.apply(parent, args)
+                    if (parent.oldValue && parent.tagName === "SELECT" && method === "index") { //fix #503
+                        avalon(parent).val(parent.oldValue.split(","))
                     }
-                    checkHTML = innerHTML
-                }, 17)
+                }, NaN)
             }
         },
         "html": function(val, elem, data) {
             val = val == null ? "" : val
-            var parent = "group" in data ? elem.parentNode : elem
-            if ("group" in data) {
-                var fragment, nodes
-                //将值转换为文档碎片，原值可以为元素节点，文档碎片，NodeList，字符串
-                if (val.nodeType === 11) {
-                    fragment = val
-                } else if (val.nodeType === 1 || val.item) {
-                    nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
-                    fragment = hyperspace.cloneNode(true)
-                    while (nodes[0]) {
-                        fragment.appendChild(nodes[0])
-                    }
-                } else {
-                    fragment = avalon.parseHTML(val)
+            var isHtmlFilter = "group" in data
+            var parent = isHtmlFilter ? elem.parentNode : elem
+            if (val.nodeType === 11) { //将val转换为文档碎片
+                var fragment = val
+            } else if (val.nodeType === 1 || val.item) {
+                var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
+                fragment = hyperspace.cloneNode(true)
+                while (nodes[0]) {
+                    fragment.appendChild(nodes[0])
                 }
-                nodes = avalon.slice(fragment.childNodes)
-                if (nodes.length === 0) {
-                    var comment = DOC.createComment("ms-html")
-                    fragment.appendChild(comment)
-                    nodes = [comment]
-                }
-                parent.insertBefore(fragment, elem) //fix IE6-8 insertBefore的第2个参数只能为节点或null
+            } else {
+                fragment = avalon.parseHTML(val)
+            }
+            //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
+            var comment = DOC.createComment("ms-html")
+            if (isHtmlFilter) {
+                parent.insertBefore(comment, elem)
                 var length = data.group
                 while (elem) {
                     var nextNode = elem.nextSibling
@@ -2982,14 +2987,23 @@
                         break
                     elem = nextNode
                 }
-                data.element = nodes[0]
-                data.group = nodes.length
+                data.element = comment //防止被CG
             } else {
-                avalon.innerHTML(parent, val)
+                avalon.clearHTML(parent).appendChild(comment)
             }
             data.vmodels.cb(1)
             avalon.nextTick(function() {
-                scanNodeList(parent, data.vmodels)
+                if (isHtmlFilter) {
+                    data.group = fragment.childNodes.length || 1
+                }
+                var nodes = avalon.slice(fragment.childNodes)
+                if (nodes[0]) {
+                    parent.replaceChild(fragment, comment)
+                    if (isHtmlFilter) {
+                        data.element = nodes[0]
+                    }
+                }
+                scanNodeArray(nodes, data.vmodels)
                 data.vmodels && data.vmodels.cb(-1)
             })
         },
@@ -3211,7 +3225,7 @@
         "repeat": function(data, vmodels) {
             var type = data.type
             parseExprProxy(data.value, vmodels, data, 0, 1)
-            data.proxies = []
+            //   data.proxies = []
             var freturn = false
             vmodels.cb(-1)
             try {
@@ -3221,14 +3235,14 @@
                     freturn = true
                     avalon.log("warning:" + data.value + "对应类型不正确")
                 }
+                if ($repeat.$id)
+                    $repeat.$proxies = []
             } catch (e) {
                 freturn = true
                 avalon.log("warning:" + data.value + "编译出错")
             }
             var elem = data.element
-            var parentNode = elem.parentNode
             elem.removeAttribute(data.name)
-
             data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
             data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
@@ -3237,17 +3251,17 @@
 
             hyperspace.appendChild(comment)
             hyperspace.appendChild(endRepeat)
-            var isInHead = avalon.contains(head, elem)
+
             if (type === "each" || type === "with") {
                 data.template = elem.innerHTML.trim()
                 avalon.clearHTML(elem).appendChild(hyperspace)
             } else {
                 data.template = elem.outerHTML.trim()
-                parentNode.replaceChild(hyperspace, elem)
+                elem.parentNode.replaceChild(hyperspace, elem)
                 data.group = 1
             }
 
-            data.rollback = function() { //只用于list为对象的情况
+            data.rollback = function() {
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
@@ -3311,38 +3325,7 @@
                 }
                 data.handler("append", $repeat, pool)
             } else {
-
-                if (!isInHead) {
-
-                    var div = document.createElement("repeat")
-                    ifGroup.appendChild(div)
-                    var comment = DOC.createComment("ms-repeat-replaceholder")
-                    parentNode.replaceChild(comment, data.element)
-                    div.appendChild(data.element)
-                    div.appendChild(data.endRepeat)
-
-                    var old = data.renderedCallback
-
-                    data.renderedCallback = function(f) {
-                        while (f = div.firstChild) {
-                            hyperspace.appendChild(f)
-                        }
-                        hyperspace.appendChild(endRepeat)
-                        var p = comment.parentNode
-                        p.replaceChild(hyperspace, comment)
-                        ifGroup.removeChild(div)
-                        old.apply(p, ["add"])
-                        if (p.oldValue && p.tagName === "SELECT") { //fix #503
-                            avalon(p).val(p.oldValue.split(","))
-                        }
-                        data.renderedCallback = old
-                    }
-                    
-                    data.handler("add", 0, $repeat)
-                } else {
-                    data.handler("add", 0, $repeat)
-                }
-
+                data.handler("add", 0, $repeat)
             }
         },
         "html": function(data, vmodels) {
@@ -3691,7 +3674,7 @@
 
     function onTree(value) { //disabled状态下改动不触发input事件
         var newValue = arguments.length ? value : this.value
-        if (!this.disabled && this.oldValue !== newValue) {
+        if (!this.disabled && this.oldValue !== newValue + "") {
             var type = this.getAttribute("data-duplex-event") || "input"
             type = type.match(rword).shift()
             if (W3C) {
@@ -3918,10 +3901,14 @@
             var oldLength = this.length
             pos = typeof pos === "number" ? pos : oldLength
             var added = []
+            var proxies = []
             for (var i = 0, n = arr.length; i < n; i++) {
-                added[i] = convert(arr[i], this.$model[pos + i])
+                var index = pos + i
+                added[i] = getEachVM(arr[i], index, arr[i], this) //将对象数组转换为VM数组
+                proxies[i] = getEachProxy(pos + i, this)//生成对应的代理VM数组
             }
             _splice.apply(this, [pos, 0].concat(added))
+            _splice.apply(this.$proxies, [pos, 0].concat(added))
             this._fire("add", pos, added)
             if (!this._stopFireLength) {
                 return this._.length = this.length
@@ -3929,6 +3916,7 @@
         },
         _del: function(pos, n) { //在第pos个位置上，删除N个元素
             var ret = this._splice(pos, n)
+            this.$proxies.splice(pos, n)
             if (ret.length) {
                 this._fire("del", pos, n)
                 if (!this._stopFireLength) {
@@ -3937,14 +3925,19 @@
             }
             return ret
         },
-        push: function() {
-            ap.push.apply(this.$model, arguments)
-            var n = this._add(arguments)
-            this._fire("index", n > 2 ? n - 2 : 0)
-            return n
+        _index: function(pos) {
+            var proxies = this.$proxies
+            for (var el; el = proxies[pos]; pos++) {
+                el.$$index = pos
+                notifySubscribers(el.$subscribers)
+            }
         },
-        size: function() { //取得数组长度，这个函数可以同步视图，length不能
-            return this._.length
+        push: function() {
+            var pos = this.length
+            ap.push.apply(this.$model, arguments)
+            this._add(arguments)
+            this._index(pos)
+            return this.length
         },
         pushArray: function(array) {
             return this.push.apply(this, array)
@@ -3952,19 +3945,22 @@
         unshift: function() {
             ap.unshift.apply(this.$model, arguments)
             this._add(arguments, 0)
-            this._fire("index", arguments.length)
-            return this.$model.length //IE67的unshift不会返回长度
+            this._index(0)
+            return this.length //IE67的unshift不会返回长度
         },
         shift: function() {
             var el = this.$model.shift()
             this._del(0, 1)
-            this._fire("index", 0)
+            this._index(0)
             return el //返回被移除的元素
         },
         pop: function() {
             var el = this.$model.pop()
             this._del(this.length - 1, 1)
             return el //返回被移除的元素
+        },
+        size: function() { //取得数组长度，这个函数可以同步视图，length不能
+            return this._.length
         },
         splice: function(a, b) {
             // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
@@ -3999,6 +3995,7 @@
         },
         clear: function() {
             this.$model.length = this.length = this._.length = 0 //清空数组
+            recycleEachProxies(this.$proxies)
             this._fire("clear", 0)
             return this
         },
@@ -4075,9 +4072,32 @@
         }
     })
 
-    function convert(val, $model) {
+    function getEachVM(val, $model) {
         if (rcomplexType.test(avalon.type(val))) {
             val = val.$id ? val : modelFactory(val, 0, $model)
+        }
+        return val
+    }
+
+    function getEachVM(val, index, array) {
+        if (rcomplexType.test(avalon.type(val))) {
+            array.isObjectArray = true
+            if (array.cache && array.pool.length) {
+                var v = array.pool.shift()
+                var e = v.$events
+                for (var i in e) {
+                    if (Array.isArray(e[i])) {
+                        e[i].length = 0
+                    }
+                }
+                for (var i in val) {
+                    if (v.hasOwnProperty(i)) {
+                        v[i] = val[i]
+                    }
+                }
+                return  v
+            }
+            val = val.$id ? val : modelFactory(val, 0, $model[index])
         }
         return val
     }
@@ -4141,11 +4161,11 @@
         return view
     }
 
-    function calculateFragmentGroup(data) {
+    function calculateFragmentGroup(data, proxies) {
         if (!isFinite(data.group)) {
             var nodes = data.element.parentNode.childNodes
             var length = nodes.length - 2 //去掉两个注释节点
-            var n = "proxySize" in data ? data.proxySize : data.proxies.length
+            var n = "proxySize" in data ? data.proxySize : proxies.length
             data.group = length / n
         }
     }
@@ -4165,45 +4185,51 @@
         return proxy
     }
     var eachProxyPool = []
-
-    function getEachProxy(index, item, data, last) {
-        var param = data.param || "el",
-                proxy
-        var source = {
-            $remove: function() {
-                return data.$repeat.removeAt(proxy.$index)
-            },
-            $itemName: param,
-            $index: index,
-            $outer: data.$outer,
-            $first: index === 0,
-            $last: index === last
-        }
-        source[param] = item
-        for (var i = 0, n = eachProxyPool.length; i < n; i++) {
-            var proxy = eachProxyPool[i]
-            if (proxy.hasOwnProperty(param) && (avalon.type(proxy[param]) === avalon.type(item))) {
-                for (var k in source) {
-                    proxy[k] = source[k]
+    function getEachProxy(index, $repeat) {
+        var proxies = $repeat.$proxies
+        var proxy = proxies ? proxies[index] : null
+        if (!proxy) {
+            proxy = {
+                $subscribers: [],
+                $$index: index,
+                $outer: {},
+                $index: function() {//1.3.8新增
+                    if (arguments.length) {
+                        proxy.$$index = index
+                    } else {
+                        return proxy.$$index
+                    }
+                },
+                $odd: function() {//1.3.8新增
+                    return proxy.$$index % 2
+                },
+                $first: function() {
+                    return proxy.$$index === index
+                },
+                $last: function() {
+                    var last = $repeat.length - 1
+                    return proxy.$$index === last
+                },
+                $remove: function() {
+                    return $repeat.removeAt(proxy.$$index)
                 }
-                eachProxyPool.splice(i, 1)
-                proxy.$watch(param, function(val) {
-                    data.$repeat.set(proxy.$index, val)
-                })
-                return proxy
             }
         }
-        if (rcomplexType.test(avalon.type(item))) {
-            source.$skipArray = [param]
-        }
-        proxy = modelFactory(source, watchEachOne)
-        proxy.$watch(param, function(val) {
-            data.$repeat.set(proxy.$index, val)
-        })
-        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
         return proxy
     }
+    function fixEachProxy(proxy, data) {
+        var param = data.param || "el"
 
+        proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
+        proxy[param] = function(val) {
+            if (arguments.length) {
+                data.$repeat.set(proxy.$$index, val)
+            } else {
+                return data.$repeat[proxy.$$index]
+            }
+        }
+        return proxy
+    }
     function recycleEachProxies(array) {
         for (var i = 0, el; el = array[i++]; ) {
             recycleEachProxy(el)
@@ -4212,11 +4238,7 @@
     }
 
     function recycleEachProxy(proxy) {
-        for (var i in proxy.$events) {
-            if (Array.isArray(proxy.$events[i])) {
-                proxy.$events[i].length = 0
-            }
-        }
+        proxy.$subscribers.length = 0
         if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
             eachProxyPool.pop()
         }
