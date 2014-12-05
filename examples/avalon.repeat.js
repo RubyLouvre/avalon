@@ -6,7 +6,6 @@
  
  Released under the MIT license
  avalon 1.3.7.2 2014.11.27 support IE6+ and other browsers
-此版本是用于改进ms-repeat与Collection
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
@@ -2876,7 +2875,7 @@
                         //var removed = proxies.splice(pos, el)
                         var transation = removeFragment(locatedNode, group, el)
                         avalon.clearHTML(transation)
-                       // recycleEachProxies(removed)
+                        // recycleEachProxies(removed)
                         break
                     case "clear":
                         while (true) {
@@ -2890,13 +2889,13 @@
                         // recycleEachProxies(proxies)
                         break
                     case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-                        var t = proxies.splice(pos, 1)[0]
-                        if (t) {
-                            proxies.splice(el, 0, t)
-                            transation = removeFragment(locatedNode, group)
-                            locatedNode = locateFragment(data, el)
-                            parent.insertBefore(transation, locatedNode)
-                        }
+//                      var t = proxies.splice(pos, 1)[0]
+//                      if (t) {
+//                            proxies.splice(el, 0, t)
+                        transation = removeFragment(locatedNode, group)
+                        locatedNode = locateFragment(data, el)
+                        parent.insertBefore(transation, locatedNode)
+                        //    }
                         break
                     case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                         var proxy = proxies[pos]
@@ -3891,7 +3890,6 @@
                 added[i] = getEachVM(arr[i], this) //将对象数组转换为VM数组
                 proxies[i] = getEachProxy(index, this)//生成对应的代理VM数组
             }
-            console.log(added)
             _splice.apply(this, [pos, 0].concat(added))
             _splice.apply(this.$proxies, [pos, 0].concat(proxies))
             this._fire("add", pos, added)
@@ -4033,26 +4031,34 @@
     }
     "sort,reverse".replace(rword, function(method) {
         CollectionPrototype[method] = function() {
-            var aaa = this.$model,
-                    bbb = aaa.slice(0),
-                    sorted = false
-            ap[method].apply(aaa, arguments) //先移动model
+            var aaa = this.$model 
+            var bbb = aaa.slice(0)
+            var proxies = this.$proxies
+            var sorted = false
+            ap[method].apply(aaa, arguments) //移动$model数组
             for (var i = 0, n = bbb.length; i < n; i++) {
-                var a = aaa[i],
-                        b = bbb[i]
+                var a = aaa[i]
+                var b = bbb[i]
                 if (!isEqual(a, b)) {
                     sorted = true
+                    //移动参照物数组
                     var index = bbb.indexOf(a, i)
-                    var remove = this._splice(index, 1)[0]
-                    var remove2 = bbb.splice(index, 1)[0]
-                    this._splice(i, 0, remove)
-                    bbb.splice(i, 0, remove2)
+                    bbb[i] = bbb[index]
+                    bbb[index] = b
+                    //移动VM数组
+                    var c = this[i]
+                    this[i] = this[index]
+                    this[index] = c
+                    //移动代理VM数组
+                    var d = proxies.splice(index, 1)[0]
+                    proxies.splice(i, 0, d)
+                    //移动节点数组
                     this._fire("move", index, i)
                 }
             }
             bbb = void 0
             if (sorted) {
-                this._fire("index", 0)
+                this._index(0)
             }
             return this
         }

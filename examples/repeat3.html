@@ -24,7 +24,7 @@
                         this.value = "";
                     }
                 }
-                "pop,shift,sort,reverse".replace(/\w+/g, function(method) {
+                "pop,shift,sort,reverse,clear".replace(/\w+/g, function(method) {
                     vm[method] = function(e) {
                         vm.array[method]();
                     }
@@ -53,6 +53,8 @@
         <p><button type="button" ms-click="reverse">对数组进行reverse操作</button></p>
         <p><button type="button" ms-click="shift">对数组进行shift操作</button></p>
         <p><button type="button" ms-click="pop">对数组进行pop操作</button></p>
+        <p><button type="button" ms-click="clear">对数组进行clear操作</button></p>
+
         <p>当前数组的长度为<span style="color:red">{{array.size()}}</span>，注意 我们无法修改数组length的固有行为，因此它无法同步视图，需要用size方法。</p>
 
 
