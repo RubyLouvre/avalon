@@ -6,6 +6,7 @@
  
  Released under the MIT license
  avalon 1.3.7.2 2014.11.27 support IE6+ and other browsers
+此版本是用于改进ms-repeat与Collection
  ==================================================*/
 (function(DOC) {
     /*********************************************************************
