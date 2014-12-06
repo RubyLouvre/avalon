@@ -3241,7 +3241,7 @@
                 data.group = 1
             }
 
-            data.rollback = function() { 
+            data.rollback = function() {
                 bindingExecutors.repeat.call(data, "clear")
                 var elem = data.element
                 var parentNode = elem.parentNode
@@ -3395,6 +3395,10 @@
                         function offTree() {
                             if (!elem.msRetain && !root.contains(elem)) {
                                 vmodel.$remove()
+                                try {
+                                    vmodel.widgetElement = null
+                                } catch (e) {
+                                }
                                 elem.msData = {}
                                 delete avalon.vmodels[vmodel.$id]
                                 return false
