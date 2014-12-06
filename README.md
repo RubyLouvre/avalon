@@ -119,20 +119,20 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 <h3>源码内部的模块划分</h3>
 <p>从上至下，依次是</p>
 - 全局变量及方法
-- avalon的静态方法定义区
-- modelFactory
-- JavaScript 底层补丁  
-- DOM 底层补丁    
+- avalon的静态成员定义区（主要是工具函数）
+- JavaScript 底层补丁
+- DOM        底层补丁
 - 配置系统
-- avalon的原型方法定义区
-- HTML处理(parseHTML, innerHTML, clearHTML)  
-- 自定义事件系统
-- 依赖调度系统  
+- 事件总线
+- VM工厂（modelFactory）
+- 监控数组工厂(Collection)
+- 依赖调度系统(dispatcher)
+- 标签处理(parseHTML, innerHTML, clearHTML)
 - 扫描系统
+- avalon的原型方法定义区（主要是DOM处理）
+- 指令定义区
 - 编译系统
-- 绑定处理系统
-- 监控数组
-- 自带过滤器 
+- 自带过滤器
 - AMD加载器
 - DOMReady
 
