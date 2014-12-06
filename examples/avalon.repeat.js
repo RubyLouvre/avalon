@@ -3381,6 +3381,9 @@
                             if (!elem.msRetain && !root.contains(elem)) {
                                 vmodel.$remove()
                                 elem.msData = {}
+                                try{
+                                    vmodel.widgetElement = null
+                                }catch(e){}
                                 delete avalon.vmodels[vmodel.$id]
                                 return false
                             }
