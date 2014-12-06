@@ -507,7 +507,7 @@
                         }
                         newValue = $model[name] = getter.call($vmodel) //同步$model
                         if (!isEqual(oldValue, newValue)) {
-                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                            //  withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -555,7 +555,7 @@
                         if (arguments.length) {
                             if (!isEqual(oldValue, newValue)) {
                                 $model[name] = newValue //同步$model
-                                withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
+                                //   withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
                                 notifySubscribers($events[name]) //同步视图
                                 safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                             }
@@ -634,13 +634,13 @@
 
     //ms-with, ms-repeat绑定生成的代理对象储存池
     var withProxyPool = {}
-    var withProxyCount = 0
+    // var withProxyCount = 0
     var rebindings = {}
-
+    //★★★★这里看来要去掉了
     function updateWithProxy($id, name, val) {
         var pool = withProxyPool[$id]
         if (pool && pool[name]) {
-            pool[name].$val = val
+            //  pool[name].$val( val )
         }
     }
     //应用于第2种accessor
@@ -655,10 +655,10 @@
             son.clear()
             son.pushArray(value.concat())
             return son
-        } else {
+        } else {//object
             var iterators = parent.$events[name]
             if (withProxyPool[son.$id]) {
-                withProxyCount--
+                //   withProxyCount--
                 delete withProxyPool[son.$id]
             }
             var ret = modelFactory(value)
@@ -2415,9 +2415,11 @@
                     if (typeof scope[a] === "function" && a !== "$remove") {
                         a += "()"
                     }
-                    avalon.Array.ensure(scope.$subscribers, data)
+                    if (scope.$subscribers)
+                        avalon.Array.ensure(scope.$subscribers, data)
                 }
                 ret.push(prop + prefix + a)
+
                 data.vars.push(prop)
                 if (data.type === "duplex") {
                     var code = data.value
@@ -2553,11 +2555,9 @@
         } else if (dataType === "duplex") { //双工绑定
             var _body = "'use strict';\n" +
                     "return function(duplexArgs){\n\t" + prefix + vars.duplex
-
             try {
                 fn = Function.apply(noop, names.concat(_body))
                 data.evaluator = cacheExprs(exprId, fn)
-                console.log(fn + "")
             } catch (e) {
                 log("debug: parse error," + e.message)
             }
@@ -2860,7 +2860,7 @@
                         var fragments = []
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
-                            var proxy = hasProxy ? proxies[ii] : getEachProxy(ii, data.$repeat)
+                            var proxy = hasProxy ? proxies[ii] : createEachProxy(ii, data.$repeat)
                             fixEachProxy(proxy, data)
                             shimController(data, transation, proxy, fragments)
                         }
@@ -2875,7 +2875,6 @@
                     case "del": //将pos后的el个元素删掉(pos, el都是数字)
                         var transation = removeFragment(locatedNode, group, el)
                         avalon.clearHTML(transation)
-                        // recycleEachProxies(removed)
                         break
                     case "clear":
                         while (true) {
@@ -3198,7 +3197,6 @@
         "repeat": function(data, vmodels) {
             var type = data.type
             parseExprProxy(data.value, vmodels, data, 0, 1)
-            //   data.proxies = []
             var freturn = false
             vmodels.cb(-1)
             try {
@@ -3280,18 +3278,13 @@
                 addSubscribers(data, $list)
             }
             if (!Array.isArray($repeat) && type !== "each") {
-                var pool = withProxyPool[$repeat.$id]
+                var $events = $repeat.$events || {}
+                var pool = $events.$key$valPool
                 if (!pool) {
-                    withProxyCount++
-                    pool = withProxyPool[$repeat.$id] = {}
+                    pool = $events.$key$valPool = {}
                     for (var key in $repeat) {
                         if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                            (function(k, v) {
-                                pool[k] = createWithProxy(k, v, {})
-                                pool[k].$watch("$val", function(val) {
-                                    $repeat[k] = val //#303
-                                })
-                            })(key, $repeat[key])
+                            pool[key] = createWithProxy(key, $repeat)
                         }
                     }
                 }
@@ -3878,7 +3871,7 @@
             for (var i = 0, n = arr.length; i < n; i++) {
                 var index = pos + i
                 added[i] = getEachVM(arr[i], this.$model[index]) //将对象数组转换为VM数组
-                proxies[i] = getEachProxy(index, this)//生成对应的代理VM数组
+                proxies[i] = createEachProxy(index, this)//生成对应的代理VM数组
             }
             _splice.apply(this, [pos, 0].concat(added))
             _splice.apply(this.$proxies, [pos, 0].concat(proxies))
@@ -4125,18 +4118,7 @@
     }
     // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
 
-    function createWithProxy(key, val, $outer) {
-        var proxy = modelFactory({
-            $key: key,
-            $outer: $outer,
-            $val: val
-        }, 0, {
-            $val: 1,
-            $key: 1
-        })
-        proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
-        return proxy
-    }
+
     var eachProxyPool = []
     function getEachVM(val, $model) {
         if (rcomplexType.test(avalon.type(val))) {
@@ -4144,10 +4126,31 @@
         }
         return val
     }
+    function createWithProxy(key, host) {
+        var $subscribers = !host.$events ? null : (host.$events[key] || (host.$events[key] = []))
+        var proxy = {
+            $id: ("$proxy$with" + Math.random()).replace(/0\./, ""),
+            $subscribers: $subscribers,
+            toString: function() {
+                return "ProxyVModel"
+            },
+            $key: key,
+            $val: function(v) {
+                var a = host[proxy.$key]
+                if (arguments.length) {
+                    host[proxy.$key] = v
+                } else {
+                    return a
+                }
+            },
+            $outer: {}
+        }
+        return proxy
+    }
 
     //由于这里的属性最终在求值函数变成， var $first = vm1112323_0.$first(); return $first
     //的形式，如果使用了原型，this会错误指向window
-    function getEachProxy(index, array) {
+    function createEachProxy(index, host) {
         var proxy = {
             $subscribers: [],
             $$index: index,
@@ -4165,19 +4168,24 @@
             $odd: function() {//1.3.8新增
                 return proxy.$$index % 2
             },
+            $even: function() {//1.3.8新增
+                return proxy.$$index & 1 === 0
+            },
             $first: function() {
                 return proxy.$$index === index
             },
             $last: function() {
-                var last = array.length - 1
+                var last = host.length - 1
                 return proxy.$$index === last
             },
             $remove: function() {
-                return array.removeAt(proxy.$$index)
+                return host.removeAt(proxy.$$index)
             }
         }
         return proxy
     }
+
+
     function fixEachProxy(proxy, data) {
         var param = data.param || "el"
         proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
@@ -4190,6 +4198,7 @@
         }
         return proxy
     }
+
     function recycleEachProxies(array) {
         for (var i = 0, el; el = array[i++]; ) {
             recycleEachProxy(el)
