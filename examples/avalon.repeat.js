@@ -536,7 +536,7 @@
                             if (!isEqual(oldValue, newValue)) {
                                 childVmodel = accessor.child = neutrinoFactory($vmodel, name, newValue, valueType)
                                 newValue = $model[name] = childVmodel.$model //同步$model
-                                var fn = rebindings[childVmodel.$id]
+                                var fn = midway[childVmodel.$id]
                                 fn && fn() //同步视图
                                 safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                             }
@@ -642,6 +642,7 @@
                 return son //fix https://github.com/RubyLouvre/avalon/issues/261
             }
             son.clear()
+
             son.pushArray(value.concat())
             return son
         } else {//object
@@ -2838,11 +2839,7 @@
             if (method) {
                 var data = this
                 var parent = data.element.parentNode
-
-                var hasProxy = "$proxies" in data.$repeat
-                var proxies = data.$repeat.$proxies || []
                 var transation = hyperspace.cloneNode(false)
-
                 if (method === "del" || method === "move") {
                     var locatedNode = locateFragment(data, pos)
                 }
@@ -2851,6 +2848,8 @@
                     case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                         var arr = el
                         var fragments = []
+                        var hasProxy = "$proxies" in data.$repeat
+                        var proxies = data.$repeat.$proxies || []
                         for (var i = 0, n = arr.length; i < n; i++) {
                             var ii = i + pos
                             var proxy = hasProxy ? proxies[ii] : eachProxyFactory(ii, data.$repeat)
@@ -3942,7 +3941,7 @@
             this._stopFireLength = false
             this._.length = this.length
             if (change) {
-                this.index(0)
+                this._index(0)
             }
             return ret //返回被移除的元素
         },
