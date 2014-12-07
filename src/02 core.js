@@ -73,7 +73,8 @@ avalon.isPlainObject = function(obj, key) {
 }
 if (rnative.test(Object.getPrototypeOf)) {
     avalon.isPlainObject = function(obj) {
-        return !!obj && typeof obj === "object" && Object.getPrototypeOf(obj) === oproto
+        // 简单的 typeof obj === "object"检测，会致使用isPlainObject(window)在opera下通不过
+        return !!obj && serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
     }
 }
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
@@ -92,7 +93,7 @@ avalon.mix = avalon.fn.mix = function() {
     }
 
     //确保接受方为一个复杂的数据类型
-    if (typeof target !== "object" && !isFunction(target) ) {
+    if (typeof target !== "object" && !isFunction(target)) {
         target = {}
     }
 
