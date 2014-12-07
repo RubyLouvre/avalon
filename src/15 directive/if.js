@@ -1,4 +1,4 @@
-indingHandlers["if"] =
+bindingHandlers["if"] =
         bindingHandlers.data =
         bindingHandlers.text =
         bindingHandlers.html =

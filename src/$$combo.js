@@ -29,7 +29,7 @@ var modernFiles = [
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text.modern"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.modern"), directive("repeat.each.with"),
-    "16 filter","17 loader", "18 domReady","19 outer"
+    "16 filter","17 loader", "18 domReady.modern","19 outer"
 ]
 //avalon.shim.js 所需要合并的子文件
 var shimFiles = [

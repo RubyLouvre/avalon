@@ -1,8 +1,5 @@
 
 var subscribers = "$" + expose
-//http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-var window = Function("return this")()
-var DOC = window.document
 var otherRequire = window.require
 var otherDefine = window.define
 var stopRepeatAssign = false
