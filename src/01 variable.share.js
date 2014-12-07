@@ -16,7 +16,6 @@ var aslice = ap.slice
 var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
 var W3C = window.dispatchEvent
 var root = DOC.documentElement
-var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var hyperspace = DOC.createDocumentFragment()
 var cinerator = DOC.createElement("div")
 var class2type = {}
@@ -28,12 +27,6 @@ var class2type = {}
 function noop() {
 }
 
-function log() {
-    if (window.console && avalon.config.debug) {
-        // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
-        Function.apply.call(console.log, console, arguments)
-    }
-}
 
 function oneObject(array, val) {
     if (typeof array === "string") {
