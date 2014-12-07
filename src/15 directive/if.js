@@ -6,7 +6,7 @@ bindingHandlers["if"] =
             parseExprProxy(data.value, vmodels, data)
         }
 
-bindingExecutors["if"] = function(val, elem) {
+bindingExecutors["if"] = function(val, elem, data) {
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)

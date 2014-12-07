@@ -1,7 +1,7 @@
 //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
 var rdash = /\(([^)]*)\)/
-bindingHandlers["on"] = function(data, vmodels) {
+bindingHandlers.on = function(data, vmodels) {
     var value = data.value
     var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
     if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
@@ -16,7 +16,7 @@ bindingHandlers["on"] = function(data, vmodels) {
     parseExprProxy(value, vmodels, data)
 }
 
-bindingExecutors ["on"] = function(callback, elem, data) {
+bindingExecutors.on = function(callback, elem, data) {
     data.type = "on"
     callback = function(e) {
         var fn = data.evaluator || noop
