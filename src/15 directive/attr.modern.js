@@ -131,9 +131,7 @@ bindingExecutors.attr = function(val, elem, data) {
         }
     }
 }
-//============================= string preperty binding =======================
-//与href绑定器 用法差不多的其他字符串属性的绑定器
-//建议不要直接在src属性上修改，这样会发出无效的请求，请使用ms-src
+//这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"ms-src
 "title,alt,src,value,css,include,href".replace(rword, function(name) {
     bindingHandlers[name] = bindingHandlers.attr
 })

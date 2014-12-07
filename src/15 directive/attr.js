@@ -181,7 +181,7 @@ bindingExecutors.attr = function(val, elem, data) {
     }
 }
 
-//这几个指设都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
+//这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
 "title,alt,src,value,css,include,href".replace(rword, function(name) {
     bindingHandlers[name] = bindingHandlers.attr
 })
