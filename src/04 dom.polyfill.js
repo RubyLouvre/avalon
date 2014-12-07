@@ -127,7 +127,7 @@ function fixEvent(event) {
     return ret
 }
 
-var eventHooks = avalon.eventHooks
+var eventHooks = avalon.eventHooks 
 //针对firefox, chrome修正mouseenter, mouseleave
 if (!("onmouseenter" in root)) {
     avalon.each({

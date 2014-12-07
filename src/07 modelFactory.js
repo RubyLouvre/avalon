@@ -117,6 +117,7 @@ function modelFactory($scope, $special, $model) {
                     }
                     newValue = $model[name] = getter.call($vmodel) //同步$model
                     if (!isEqual(oldValue, newValue)) {
+                        withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                         notifySubscribers($events[name]) //同步视图
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
@@ -144,9 +145,9 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = neutrinoFactory($vmodel, name, newValue, valueType)
+                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            var fn = midway[childVmodel.$id]
+                            var fn = rebindings[childVmodel.$id]
                             fn && fn() //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -164,6 +165,7 @@ function modelFactory($scope, $special, $model) {
                     if (arguments.length) {
                         if (!isEqual(oldValue, newValue)) {
                             $model[name] = newValue //同步$model
+                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -214,7 +216,6 @@ function modelFactory($scope, $special, $model) {
             return name in $vmodel.$model
         }
     }
-
     computedProperties.forEach(function(collect) { //收集依赖
         collect()
     })
@@ -253,11 +254,20 @@ var descriptorFactory = W3C ? function(obj) {
     return a
 }
 
+//ms-with, ms-repeat绑定生成的代理对象储存池
+var withProxyPool = {}
+var withProxyCount = 0
+var rebindings = {}
 
-
+function updateWithProxy($id, name, val) {
+    var pool = withProxyPool[$id]
+    if (pool && pool[name]) {
+        pool[name].$val = val
+    }
+}
 //应用于第2种accessor
-var midway = {}
-function neutrinoFactory(parent, name, value, valueType) {
+
+function updateChild(parent, name, value, valueType) {
     //a为原来的VM， b为新数组或新对象
     var son = parent[name]
     if (valueType === "array") {
@@ -265,19 +275,17 @@ function neutrinoFactory(parent, name, value, valueType) {
             return son //fix https://github.com/RubyLouvre/avalon/issues/261
         }
         son.clear()
-
         son.pushArray(value.concat())
         return son
-    } else {//object
+    } else {
         var iterators = parent.$events[name]
-        var pool = son.$events.$withProxyPool
-        if (pool) {
-            proxyCinerator(pool)
-            son.$events.$withProxyPool = null
+        if (withProxyPool[son.$id]) {
+            withProxyCount--
+            delete withProxyPool[son.$id]
         }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
-        midway[ret.$id] = function(data) {
+        rebindings[ret.$id] = function(data) {
             while (data = iterators.shift()) {
                 (function(el) {
                     if (el.type) { //重新绑定
@@ -288,7 +296,7 @@ function neutrinoFactory(parent, name, value, valueType) {
                     }
                 })(data)
             }
-            delete midway[ret.$id]
+            delete rebindings[ret.$id]
         }
         return ret
     }

@@ -84,7 +84,7 @@ if (window.SVGElement) {
     }
 }
 //========================= event binding ====================
-var eventHooks = avalon.eventHooks
+var eventHooks = avalon.eventHooks 
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!("onmouseenter" in root)) {
     avalon.each({
