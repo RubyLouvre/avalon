@@ -1,38 +1,44 @@
-//åˆå¹¶è„šæœ¬
+//ºÏ²¢½Å±¾
 var fs = require("fs")
-
-var curdir = process.cwd() + "/";//å½“å‰ç›®å½•
-//avalon.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
+var path = require("path") //²»Í¬µÄ²Ù×÷ÏµÍ³£¬Æä ÎÄ¼şÄ¿Â¼ ·Ö¸î·ûÊÇ²»Ò»ÑùµÄ£¬²»ÄÜÖ±½ÓÊ¹ÓÃ + "/"À´ÊµÏÖ
+var curdir = process.cwd() //µ±Ç°Ä¿Â¼
+function directive(name) {
+   return path.join("15 directive", name)
+}
+//avalon.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
 var compatibleFiles = ["01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes", "07 modelFactory",
-    "07 modelFactory.shin", "08 Collection", "09 dispatcher", "10 HTML", 
-    "12 scan", "12 scanTag", "12 scanNode","12 scanAttr", "12 scanText",
-    "13 dom", "14 parser", "14 parser.share", 
-    "15 directive/attr", "15 directive/class.hover.active"
+    "07 modelFactory.shim", "08 Collection", "09 dispatcher", "10 HTML",
+    "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
+    "13 dom", "14 parser", "14 parser.share",
+    directive("attr"), directive("class.hover.active")
 ]
-//avalon.modern.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
-var modernFiles = ["01 variable.modern", "01 variable.share", "02 core.modern", 
+//avalon.modern.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
+var modernFiles = ["01 variable.modern", "01 variable.share", "02 core.modern",
     "04 dom.polyfill.modern", "05 configuration", "06 EventBus", "06 findNodes.modern", "07 modelFactory",
-    "08 Collection", "09 dispatcher", "10 HTML.modern", 
-    "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr.modern","12 scanText",
-    "13 dom.modern", "14 parser.modern", "14 parser.share", 
-    "15 directive/attr.modern", "15 directive/class.hover.active"
+    "08 Collection", "09 dispatcher", "10 HTML.modern",
+    "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr.modern", "12 scanText",
+    "13 dom.modern", "14 parser.modern", "14 parser.share",
+    directive("attr"), directive("class.hover.active")
 ]
-//avalon.shim.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
+//avalon.shim.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
 var shimFiles = ["01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes", "07 modelFactory",
     "08 Collection", "09 dispatcher", "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanText",
-    "13 dom", "14 parser", "14 parser.share", "15 directive/attr", "15 directive/class.hover.active"
+    "13 dom", "14 parser", "14 parser.share", directive("attr"), directive("class.hover.active")
 ]
-var writable = fs.createWriteStream(curdir + 'avalon.js');
-writable.setMaxListeners(100) //é»˜è®¤åªæœ‰æ·»åŠ 11ä¸ªäº‹ä»¶ï¼Œå¾ˆå®¹æ˜“çˆ†æ ˆ
+var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
+      encoding: "utf8"
+});
+writable.setMaxListeners(100) //Ä¬ÈÏÖ»ÓĞÌí¼Ó11¸öÊÂ¼ş£¬ºÜÈİÒ×±¬Õ»
 compatibleFiles.forEach(function(fileName) {
-    var readable = fs.createReadStream(curdir + fileName + ".js")
-    //  readable.push("//éƒ½ä¼šæ’åˆ°æ–°æ–‡ä»¶çš„æœ€å‰é¢")
-    //  writable.write("//éƒ½ä¼šæ’åˆ°æ–°æ–‡ä»¶çš„æœ€å‰é¢ ")
+    var filePath = path.join(curdir, fileName + ".js")
+    var readable = fs.createReadStream(filePath)
+    //  readable.push("//¶¼»á²åµ½ĞÂÎÄ¼şµÄ×îÇ°Ãæ")
+    //  writable.write("//¶¼»á²åµ½ĞÂÎÄ¼şµÄ×îÇ°Ãæ ")
     readable.pipe(writable)
     readable.on("readable", function() {
-        writable.write("\n//add " + fileName + ".js\n")
+        writable.write("\n//add " + filePath + "\n")
     });
 })
 
