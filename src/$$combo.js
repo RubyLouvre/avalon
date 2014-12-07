@@ -15,21 +15,23 @@ var compatibleFiles = [
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
-    directive("widget"), directive("duplex"), directive("repeat.each.with"),
-    "16 filter","17 loader", "18 domReady","19 outer"
+    directive("widget"), directive("duplex.1"), directive("duplex.2"),
+    directive("duplex.3"), directive("repeat.each.with"),
+    "16 filter", "17 loader", "18 domReady", "19 outer"
 ]
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = [
-    "00 inter","01 variable.modern", "01 variable.share", "02 core.modern",
+    "00 inter", "01 variable.modern", "01 variable.share", "02 core.modern",
     "04 dom.polyfill.modern", "05 configuration", "06 EventBus", "06 findNodes.modern",
     "07 modelFactory", "08 Collection", "09 dispatcher", "10 HTML.modern",
     "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr.modern", "12 scanText",
     "13 dom.modern", "14 parser.modern", "14 parser.share",
-     directive("skip"), directive("controller"), directive("important"),
+    directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text.modern"), directive("html"), directive("if"), directive("visible"), directive("on"),
-    directive("widget"), directive("duplex.modern"), directive("repeat.each.with"),
-    "16 filter","17 loader", "18 domReady.modern","19 outer"
+    directive("widget"), directive("duplex.1"), directive("duplex.2.modern"),
+    directive("duplex.3"), directive("repeat.each.with"),
+    "16 filter", "17 loader", "18 domReady.modern", "19 outer"
 ]
 //avalon.shim.js 所需要合并的子文件
 var shimFiles = [
@@ -41,8 +43,9 @@ var shimFiles = [
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
-    directive("widget"), directive("duplex"), directive("repeat.each.with"),
-    "16 filter","18 domReady.noop","19 outer"
+    directive("widget"), directive("duplex.1"), directive("duplex.2"),
+    directive("duplex.3"), directive("repeat.each.with"),
+    "16 filter", "18 domReady.noop", "19 outer"
 ]
 var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
     encoding: "utf8"
@@ -56,7 +59,7 @@ compatibleFiles.forEach(function(fileName) {
     readable.pipe(writable)
     readable.on("readable", function() {
         writable.write("\n")
-        console.log("add " + filePath )
+        console.log("add " + filePath)
     });
 })
 
