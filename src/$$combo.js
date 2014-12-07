@@ -1,7 +1,9 @@
 //合并脚本
 var fs = require("fs")
 var path = require("path") //不同的操作系统，其 文件目录 分割符是不一样的，不能直接使用 + "/"来实现
-var curdir = process.cwd() //当前目录
+var curDir = process.cwd() //当前目录
+var otherDir = curDir.replace(/avalon[\/\\]src/, "")
+console.log("otherDir " + otherDir)
 var Buffer = require('buffer').Buffer
 var now = new Date
 var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
@@ -50,13 +52,13 @@ var shimFiles = [
     directive("duplex.3"), directive("repeat.each.with"),
     "16 filter", "18 domReady.noop", "19 outer"
 ]
-var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
+var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
     encoding: "utf8"
 });
 writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
 
 compatibleFiles.forEach(function(fileName) {
-    var filePath = path.join(curdir, fileName + ".js")
+    var filePath = path.join(curDir, fileName + ".js")
     var readable = fs.createReadStream(filePath)
     if (fileName == "00 inter") {
         readable.on('data', function(chunk) {
@@ -71,15 +73,21 @@ compatibleFiles.forEach(function(fileName) {
     readable.on("readable", function() {
         writable.write("\n")
         console.log("add " + filePath)
+    })
+    //更新avalon.test中的文件
+    writable.on("finish", function() {
+        var readable3 = fs.createReadStream(path.join(curDir, 'avalon.js'))
+        var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.js"))
+        readable3.pipe(writable3)
     });
 })
-var writable2 = fs.createWriteStream(path.join(curdir, 'avalon.modern.js'), {
+var writable2 = fs.createWriteStream(path.join(curDir, 'avalon.modern.js'), {
     encoding: "utf8"
 })
 writable2.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
 
 modernFiles.forEach(function(fileName) {
-    var filePath = path.join(curdir, fileName + ".js")
+    var filePath = path.join(curDir, fileName + ".js")
     var readable = fs.createReadStream(filePath)
     if (fileName == "00 inter") {
         readable.on('data', function(chunk) {
@@ -94,6 +102,12 @@ modernFiles.forEach(function(fileName) {
     readable.on("readable", function() {
         writable2.write("\n")
         console.log("add " + filePath)
+    })
+    //更新avalon.test中的文件
+    writable2.on("finish", function() {
+        var readable3 = fs.createReadStream(path.join(curDir, 'avalon.modern.js'))
+        var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
+        readable3.pipe(writable3)
     });
 })
 
