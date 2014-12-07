@@ -194,8 +194,8 @@ function modelFactory($scope, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    for (var i in EventManager) {
-        var fn = EventManager[i]
+    for (var i in EventBus) {
+        var fn = EventBus[i]
         if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
             fn = fn.bind($vmodel)
         }
@@ -235,7 +235,7 @@ var isEqual = Object.is || function(v1, v2) {
 
 function safeFire(a, b, c, d) {
     if (a.$events) {
-        EventManager.$fire.call(a, b, c, d)
+        EventBus.$fire.call(a, b, c, d)
     }
 }
 

@@ -14,8 +14,8 @@ function Collection(model) {
     array._.$watch("length", function(a, b) {
         array.$fire("length", a, b)
     })
-    for (var i in EventManager) {
-        array[i] = EventManager[i]
+    for (var i in EventBus) {
+        array[i] = EventBus[i]
     }
     avalon.mix(array, CollectionPrototype)
     return array

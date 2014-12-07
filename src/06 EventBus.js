@@ -1,7 +1,7 @@
 /*********************************************************************
  *                            事件总线                               *
  **********************************************************************/
-var EventManager = {
+var EventBus = {
     $watch: function(type, callback) {
         if (typeof callback === "function") {
             var callbacks = this.$events[type]

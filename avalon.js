@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7.3 support IE6+ and other browsers build in 2014.11.7 
+ avalon 1.3.7.3 support IE6+ and other browsers build in 2014.11.8 
 =================================*/
 (function() {
 
@@ -79,7 +79,7 @@ function createCache(maxLength) {
     return cache;
 }
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = window.performance ? function() {
+var generateID = window.performance && performance.now? function() {
     return ("avalon" + performance.now() + performance.now()).replace(/\./g, "")
 } : function() {
     return ("avalon" + Math.random() + Math.random()).replace(/0\./g, "")
@@ -806,7 +806,7 @@ avalon.config = kernel
 /*********************************************************************
  *                            事件总线                               *
  **********************************************************************/
-var EventManager = {
+var EventBus = {
     $watch: function(type, callback) {
         if (typeof callback === "function") {
             var callbacks = this.$events[type]
@@ -1124,8 +1124,8 @@ function modelFactory($scope, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    for (var i in EventManager) {
-        var fn = EventManager[i]
+    for (var i in EventBus) {
+        var fn = EventBus[i]
         if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
             fn = fn.bind($vmodel)
         }
@@ -1165,7 +1165,7 @@ var isEqual = Object.is || function(v1, v2) {
 
 function safeFire(a, b, c, d) {
     if (a.$events) {
-        EventManager.$fire.call(a, b, c, d)
+        EventBus.$fire.call(a, b, c, d)
     }
 }
 
@@ -1366,8 +1366,8 @@ function Collection(model) {
     array._.$watch("length", function(a, b) {
         array.$fire("length", a, b)
     })
-    for (var i in EventManager) {
-        array[i] = EventManager[i]
+    for (var i in EventBus) {
+        array[i] = EventBus[i]
     }
     avalon.mix(array, CollectionPrototype)
     return array
@@ -2948,11 +2948,11 @@ function parseExprProxy(code, scopes, data, tokens, noregister) {
 }
 avalon.parseExprProxy = parseExprProxy
 //ms-skip绑定已经在scanTag 方法中实现
+//ms-important绑定已经在scanTag 方法中实现
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
 //ms-controller绑定已经在scanTag 方法中实现
-//ms-important绑定已经在scanTag 方法中实现
 var bools = "autofocus,autoplay,async,allowTransparency,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
         "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
 var boolMap = {}

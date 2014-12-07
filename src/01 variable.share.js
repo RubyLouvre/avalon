@@ -51,7 +51,7 @@ function createCache(maxLength) {
     return cache;
 }
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = window.performance ? function() {
+var generateID = window.performance && performance.now? function() {
     return ("avalon" + performance.now() + performance.now()).replace(/\./g, "")
 } : function() {
     return ("avalon" + Math.random() + Math.random()).replace(/0\./g, "")
