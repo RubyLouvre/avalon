@@ -138,5 +138,3 @@ if (DOC.onmousewheel === void 0) {
         }
     }
 }
-
-avalon.contains = fixContains

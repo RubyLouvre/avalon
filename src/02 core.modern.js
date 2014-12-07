@@ -67,7 +67,7 @@ avalon.mix = avalon.fn.mix = function() {
         if ((options = arguments[i]) != null) {
             for (name in options) {
                 src = target[name]
-
+                copy = options[name]
                 // 防止环引用
                 if (target === copy) {
                     continue
@@ -239,6 +239,8 @@ avalon.mix({
     }
 })
 
+var bindingHandlers = avalon.bindingHandlers = {}
+var bindingExecutors = avalon.bindingExecutors = {}
 
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 function isArrayLike(obj) {
