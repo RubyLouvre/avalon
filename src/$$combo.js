@@ -10,6 +10,33 @@ var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
 }
+
+function comboFiles(files, writer, lastCallback) {
+
+    return function callback() {
+        var fileName = files.shift()
+
+        if (!fileName) {
+            lastCallback()
+            return
+        }
+        var filePath = path.join(curDir, fileName + ".js")
+        var readable = fs.createReadStream(filePath)
+        if (fileName == "00 inter") {
+            readable.on("data", function(chunk) {
+                var str = chunk.toString("utf8")
+                var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
+                chunk.write(" build in " + date + " \n", offset)
+            })
+        }
+        readable.pipe(writer, {end: false})
+        readable.on("readable", function() {
+            writer.write("\n")
+            console.log("add " + filePath)
+        })
+        readable.on("end", callback)
+    }
+}
 //avalon.js 所需要合并的子文件
 var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
@@ -52,63 +79,34 @@ var shimFiles = [
     directive("duplex.3"), directive("repeat.each.with"),
     "16 filter", "18 domReady.noop", "19 outer"
 ]
+
+
+
 var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
     encoding: "utf8"
 });
 writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
-
-compatibleFiles.forEach(function(fileName) {
-    var filePath = path.join(curDir, fileName + ".js")
-    var readable = fs.createReadStream(filePath)
-    if (fileName == "00 inter") {
-        readable.on('data', function(chunk) {
-            var str = chunk.toString("utf8")
-            var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
-            chunk.write(" build in " + date + " \n", offset)
-        })
-    }
-    //  readable.push("//都会插到新文件的最前面")
-    //  writable.write("//都会插到新文件的最前面 ")
-    readable.pipe(writable)
-    readable.on("readable", function() {
-        writable.write("\n")
-        console.log("add " + filePath)
-    })
+var comboCompatibleFiles = comboFiles(compatibleFiles, writable, function() {
     //更新avalon.test中的文件
-    writable.on("finish", function() {
-        var readable3 = fs.createReadStream(path.join(curDir, 'avalon.js'))
-        var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.js"))
-        readable3.pipe(writable3)
-    });
+    var readable3 = fs.createReadStream(path.join(curDir, 'avalon.js'))
+    var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.js"))
+    readable3.pipe(writable3)
 })
+comboCompatibleFiles()
+
+
 var writable2 = fs.createWriteStream(path.join(curDir, 'avalon.modern.js'), {
     encoding: "utf8"
 })
 writable2.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
 
-modernFiles.forEach(function(fileName) {
-    var filePath = path.join(curDir, fileName + ".js")
-    var readable = fs.createReadStream(filePath)
-    if (fileName == "00 inter") {
-        readable.on('data', function(chunk) {
-            var str = chunk.toString("utf8")
-            var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
-            chunk.write(" build in " + date + " \n", offset)
-        })
-    }
-    //  readable.push("//都会插到新文件的最前面")
-    //  writable.write("//都会插到新文件的最前面 ")
-    readable.pipe(writable2)
-    readable.on("readable", function() {
-        writable2.write("\n")
-        console.log("add " + filePath)
-    })
+var comboModernFiles = comboFiles(modernFiles, writable2, function() {
     //更新avalon.test中的文件
-    writable2.on("finish", function() {
-        var readable3 = fs.createReadStream(path.join(curDir, 'avalon.modern.js'))
-        var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
-        readable3.pipe(writable3)
-    });
+    var readable3 = fs.createReadStream(path.join(curDir, 'avalon.modern.js'))
+    var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
+    readable3.pipe(writable3)
 })
+comboModernFiles()
+
 
 

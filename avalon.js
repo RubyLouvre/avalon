@@ -2947,12 +2947,12 @@ function parseExprProxy(code, scopes, data, tokens, noregister) {
     }
 }
 avalon.parseExprProxy = parseExprProxy
-//ms-skip绑定已经在scanTag 方法中实现
-//ms-important绑定已经在scanTag 方法中实现
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
+//ms-skip绑定已经在scanTag 方法中实现
 //ms-controller绑定已经在scanTag 方法中实现
+//ms-important绑定已经在scanTag 方法中实现
 var bools = "autofocus,autoplay,async,allowTransparency,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
         "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
 var boolMap = {}
