@@ -2,6 +2,9 @@
 var fs = require("fs")
 var path = require("path") //不同的操作系统，其 文件目录 分割符是不一样的，不能直接使用 + "/"来实现
 var curdir = process.cwd() //当前目录
+var Buffer = require('buffer').Buffer
+var now = new Date
+var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
 }
@@ -50,10 +53,8 @@ var shimFiles = [
 var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
     encoding: "utf8"
 });
-var Buffer = require('buffer').Buffer
 writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
-var now = new Date
-var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
+
 compatibleFiles.forEach(function(fileName) {
     var filePath = path.join(curdir, fileName + ".js")
     var readable = fs.createReadStream(filePath)
@@ -72,6 +73,28 @@ compatibleFiles.forEach(function(fileName) {
         console.log("add " + filePath)
     });
 })
+var writable2 = fs.createWriteStream(path.join(curdir, 'avalon.modern.js'), {
+    encoding: "utf8"
+})
+writable2.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
 
+modernFiles.forEach(function(fileName) {
+    var filePath = path.join(curdir, fileName + ".js")
+    var readable = fs.createReadStream(filePath)
+    if (fileName == "00 inter") {
+        readable.on('data', function(chunk) {
+            var str = chunk.toString("utf8")
+            var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
+            chunk.write(" build in " + date + " \n", offset)
+        })
+    }
+    //  readable.push("//都会插到新文件的最前面")
+    //  writable.write("//都会插到新文件的最前面 ")
+    readable.pipe(writable2)
+    readable.on("readable", function() {
+        writable2.write("\n")
+        console.log("add " + filePath)
+    });
+})
 
 
