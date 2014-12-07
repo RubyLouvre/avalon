@@ -1,6 +1,4 @@
-bindingHandlers.html = function(data, vmodels) {
-    parseExprProxy(data.value, vmodels, data)
-}
+// bindingHandlers.html 定义在if.js
 bindingExecutors.html = function(val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data

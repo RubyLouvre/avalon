@@ -1,4 +1,11 @@
-// bindingHandlers["if"] = bindingHandlers.html
+indingHandlers["if"] =
+        bindingHandlers.data =
+        bindingHandlers.text =
+        bindingHandlers.html =
+        function(data, vmodels) {
+            parseExprProxy(data.value, vmodels, data)
+        }
+
 bindingExecutors["if"] = function(val, elem) {
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {

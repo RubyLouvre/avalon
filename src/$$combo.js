@@ -1,19 +1,22 @@
-//ºÏ²¢½Å±¾
+//åˆå¹¶è„šæœ¬
 var fs = require("fs")
-var path = require("path") //²»Í¬µÄ²Ù×÷ÏµÍ³£¬Æä ÎÄ¼şÄ¿Â¼ ·Ö¸î·ûÊÇ²»Ò»ÑùµÄ£¬²»ÄÜÖ±½ÓÊ¹ÓÃ + "/"À´ÊµÏÖ
-var curdir = process.cwd() //µ±Ç°Ä¿Â¼
+var path = require("path") //ä¸åŒçš„æ“ä½œç³»ç»Ÿï¼Œå…¶ æ–‡ä»¶ç›®å½• åˆ†å‰²ç¬¦æ˜¯ä¸ä¸€æ ·çš„ï¼Œä¸èƒ½ç›´æ¥ä½¿ç”¨ + "/"æ¥å®ç°
+var curdir = process.cwd() //å½“å‰ç›®å½•
 function directive(name) {
-   return path.join("15 directive", name)
+    return path.join("15 directive", name)
 }
-//avalon.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
+//avalon.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
 var compatibleFiles = ["01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes", "07 modelFactory",
     "07 modelFactory.shim", "08 Collection", "09 dispatcher", "10 HTML",
     "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
     "13 dom", "14 parser", "14 parser.share",
-    directive("attr"), directive("class.hover.active")
+    directive("skip"), directive("controller"), directive("important"),
+    directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
+    directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
+    directive("widget"), directive("duplex"), directive("repeat.each.with")
 ]
-//avalon.modern.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
+//avalon.modern.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
 var modernFiles = ["01 variable.modern", "01 variable.share", "02 core.modern",
     "04 dom.polyfill.modern", "05 configuration", "06 EventBus", "06 findNodes.modern", "07 modelFactory",
     "08 Collection", "09 dispatcher", "10 HTML.modern",
@@ -21,24 +24,25 @@ var modernFiles = ["01 variable.modern", "01 variable.share", "02 core.modern",
     "13 dom.modern", "14 parser.modern", "14 parser.share",
     directive("attr"), directive("class.hover.active")
 ]
-//avalon.shim.js ËùĞèÒªºÏ²¢µÄ×ÓÎÄ¼ş
+//avalon.shim.js æ‰€éœ€è¦åˆå¹¶çš„å­æ–‡ä»¶
 var shimFiles = ["01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes", "07 modelFactory",
     "08 Collection", "09 dispatcher", "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanText",
     "13 dom", "14 parser", "14 parser.share", directive("attr"), directive("class.hover.active")
 ]
 var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
-      encoding: "utf8"
+    encoding: "utf8"
 });
-writable.setMaxListeners(100) //Ä¬ÈÏÖ»ÓĞÌí¼Ó11¸öÊÂ¼ş£¬ºÜÈİÒ×±¬Õ»
+writable.setMaxListeners(100) //é»˜è®¤åªæœ‰æ·»åŠ 11ä¸ªäº‹ä»¶ï¼Œå¾ˆå®¹æ˜“çˆ†æ ˆ
 compatibleFiles.forEach(function(fileName) {
     var filePath = path.join(curdir, fileName + ".js")
     var readable = fs.createReadStream(filePath)
-    //  readable.push("//¶¼»á²åµ½ĞÂÎÄ¼şµÄ×îÇ°Ãæ")
-    //  writable.write("//¶¼»á²åµ½ĞÂÎÄ¼şµÄ×îÇ°Ãæ ")
+    //  readable.push("//éƒ½ä¼šæ’åˆ°æ–°æ–‡ä»¶çš„æœ€å‰é¢")
+    //  writable.write("//éƒ½ä¼šæ’åˆ°æ–°æ–‡ä»¶çš„æœ€å‰é¢ ")
     readable.pipe(writable)
     readable.on("readable", function() {
-        writable.write("\n//add " + filePath + "\n")
+        writable.write("\n")
+        console.log("add " + filePath )
     });
 })
 

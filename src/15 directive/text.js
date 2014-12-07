@@ -1,4 +1,4 @@
-// bindingHandlers.text = bindingHandlers.html
+// bindingHandlers.text 定义在if.js
 bindingExecutors.text = function(val, elem) {
     val = val == null ? "" : val //不在页面上显示undefined null
     if (elem.nodeType === 3) { //绑定在文本节点上

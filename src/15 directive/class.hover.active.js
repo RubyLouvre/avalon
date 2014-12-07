@@ -79,7 +79,6 @@ bindingExecutors ["class"] = function(val, elem, data) {
     }
 }
 
-//============================ class preperty binding  =======================
 "hover,active".replace(rword, function(method) {
     bindingHandlers[method] = bindingHandlers["class"]
 })
