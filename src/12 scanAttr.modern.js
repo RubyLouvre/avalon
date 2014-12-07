@@ -55,9 +55,7 @@ function scanAttr(elem, vmodels) {
     if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
         log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
     }
-    bindings.sort(function(a, b) {
-        return a.priority - b.priority
-    })
+    bindings.sort(bindingSorter)
     var scanChild = true
     for (var i = 0, binding; binding = bindings[i]; i++) {
         var type = binding.type
