@@ -1,4 +1,4 @@
-//将模型中的字段与input, textarea的value值关联在一起
+//双工绑定
 var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
     var elem = data.element,
             hasCast
@@ -118,8 +118,7 @@ if (IEVersion) {
 
 
 //如果一个input标签添加了model绑定。那么它对应的字段将与元素的value连结在一起
-//字段变，value就变；value变，字段也跟着变。默认是绑定input事件，
-
+//字段变，value就变；value变，字段也跟着变。默认是绑定input事件
 duplexBinding.INPUT = function(element, evaluator, data) {
     var type = element.type,
             bound = data.bound,
@@ -264,6 +263,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     registerSubscriber(data)
     callback.call(element, element.value)
 }
+duplexBinding.TEXTAREA = duplexBinding.INPUT
 
 var TimerID, ribbon = [],
         launch = noop
@@ -373,4 +373,3 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }, NaN)
 }
 
-duplexBinding.TEXTAREA = duplexBinding.INPUT
