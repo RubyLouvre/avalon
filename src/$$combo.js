@@ -50,10 +50,20 @@ var shimFiles = [
 var writable = fs.createWriteStream(path.join(curdir, 'avalon.js'), {
     encoding: "utf8"
 });
+var Buffer = require('buffer').Buffer
 writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+var now = new Date
+var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
 compatibleFiles.forEach(function(fileName) {
     var filePath = path.join(curdir, fileName + ".js")
     var readable = fs.createReadStream(filePath)
+    if (fileName == "00 inter") {
+        readable.on('data', function(chunk) {
+            var str = chunk.toString("utf8")
+            var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
+            chunk.write(" build in " + date + " \n", offset)
+        })
+    }
     //  readable.push("//都会插到新文件的最前面")
     //  writable.write("//都会插到新文件的最前面 ")
     readable.pipe(writable)
