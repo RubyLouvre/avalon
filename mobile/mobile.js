@@ -3,6 +3,15 @@ void function() {
     var ua = navigator.userAgent
     var isAndroid = ua.indexOf('Android') > 0
     var isIOS = /iP(ad|hone|od)/.test(ua)
+    function W3CFire(el, name, detail) {
+        var event = DOC.createEvent("Events")
+        event.initEvent(name, true, true)
+        event.isTrusted = false
+        if (detail) {
+            event.detail = detail
+        }
+        el.dispatchEvent(event)
+    }
 
     //==============================================
     //重写原bindingHandlers.on处理函数

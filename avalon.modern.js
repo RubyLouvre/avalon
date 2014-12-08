@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7 2014.11.15 support IE10 and other latest browsers
+ avalon 1.3.7 2014.11.17 support IE10 and other latest browsers
  ==================================================*/
 (function(DOC) {
     var expose = Date.now()
@@ -215,7 +215,7 @@
             name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
-                if(name === "background"){
+                if (name === "background") {
                     name = "backgroundColor"
                 }
                 var val = fn(node, name)
@@ -1148,12 +1148,7 @@
     /************************************************************************
      *              HTML处理(parseHTML, innerHTML, clearHTML)                 *
      **************************************************************************/
-    var rtagName = /<([\w:]+)/,
-            //取得其tagName
-            rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-            scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"]),
-            //需要处理套嵌关系的标签
-            rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
+
     //parseHTML的辅助变量
     var tagHooks = new function() {
         avalon.mix(this, {
@@ -1164,52 +1159,26 @@
             tr: DOC.createElement("tbody"),
             col: DOC.createElement("colgroup"),
             legend: DOC.createElement("fieldset"),
-            "*": DOC.createElement("div"),
-            "9": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
+            _default: DOC.createElement("div"),
+            "g": DOC.createElementNS("http://www.w3.org/2000/svg", "svg")
         })
         this.optgroup = this.option
         this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
         this.th = this.td
     }
-    "circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use".replace(rword, function(tag) {
-        tagHooks[tag] = tagHooks.g//处理SVG
-    })
-
-    avalon.clearHTML = function(node) {
-        //  node.textContent = ""
-        while (node.firstChild) {
-            node.removeChild(node.firstChild)
-        }
-        return node
-    }
-
-    var rtagName = /<([\w:]+)/
-    //取得其tagName
-    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
-    //需要处理套嵌关系的标签
-    var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
-    //parseHTML的辅助变量
-    var tagHooks = {
-        area: [1, "<map>"],
-        param: [1, "<object>"],
-        col: [2, "<table><tbody></tbody><colgroup>", "</table>"],
-        legend: [1, "<fieldset>"],
-        option: [1, "<select multiple='multiple'>"],
-        thead: [1, "<table>", "</table>"],
-        tr: [2, "<table><tbody>"],
-        td: [3, "<table><tbody><tr>"],
-        text: [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">', '</svg>'],
-        //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
-        _default: [0, ""]  //div可以不用闭合
-    }
 
     tagHooks.optgroup = tagHooks.option
     tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
     tagHooks.th = tagHooks.td
-//处理SVG
-    tagHooks.circle = tagHooks.ellipse = tagHooks.line = tagHooks.path =
-            tagHooks.polygon = tagHooks.polyline = tagHooks.rect = tagHooks.text
+
+    String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
+        tagHooks[tag] = tagHooks.g //处理SVG
+    })
+    var rtagName = /<([\w:]+)/
+    var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+    var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
     var script = DOC.createElement("script")
+
     avalon.parseHTML = function(html) {
         if (typeof html !== "string") {
             html = html + ""
@@ -1217,17 +1186,15 @@
         html = html.replace(rxhtml, "<$1></$2>").trim()
         var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
                 //取得其标签名
-                wrap = tagHooks[tag] || tagHooks._default,
+                wrapper = tagHooks[tag] || tagHooks._default,
                 fragment = hyperspace.cloneNode(false),
-                wrapper = cinerator,
-                firstChild, neo
-
-        wrapper.innerHTML = wrap[1] + html + (wrap[2] || "")
+                firstChild
+        wrapper.innerHTML = html
         var els = wrapper.getElementsByTagName("script")
         if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
             for (var i = 0, el; el = els[i++]; ) {
                 if (scriptTypes[el.type]) {
-                    neo = script.cloneNode(false) //FF不能省略参数
+                    var neo = script.cloneNode(false) //FF不能省略参数
                     ap.forEach.call(el.attributes, function(attr) {
                         neo.setAttribute(attr.name, attr.value)
                     })
@@ -1236,22 +1203,24 @@
                 }
             }
         }
-        //移除我们为了符合套嵌关系而添加的标签
-        for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
-        }
 
         while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
             fragment.appendChild(firstChild)
         }
         return fragment
     }
+
     avalon.innerHTML = function(node, html) {
-        if (!/<script/i.test(html) && !rnest.test(html)) {
-            node.innerHTML = html
-        } else {
-            var a = this.parseHTML(html)
-            this.clearHTML(node).appendChild(a)
+        var a = this.parseHTML(html)
+        this.clearHTML(node).appendChild(a)
+    }
+
+    avalon.clearHTML = function(node) {
+        node.textContent = ""
+        while (node.firstChild) {
+            node.removeChild(node.firstChild)
         }
+        return node
     }
     /*********************************************************************
      *                        事件管理器                                *
@@ -1511,20 +1480,17 @@
     //http://www.w3.org/TR/html5/syntax.html#void-elements
     var stopScan = oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr,noscript,noscript,script,style,textarea".toUpperCase())
 
-    /*确保元素的内容被完全扫描渲染完毕才调用回调*/
-    function checkScan(elem, callback) {
-        var innerHTML = NaN,
-                id = setInterval(function() {
-                    var currHTML = elem.innerHTML
-                    if (currHTML === innerHTML) {
-                        clearInterval(id)
-                        callback()
-                    } else {
-                        innerHTML = currHTML
-                    }
-                }, 15)
+    function checkScan(elem, callback, innerHTML) {
+        var id = setTimeout(function() {
+            var currHTML = elem.innerHTML
+            clearTimeout(id)
+            if (currHTML === innerHTML) {
+                callback()
+            } else {
+                checkScan(elem, callback, currHTML)
+            }
+        })
     }
-
 
     function scanTag(elem, vmodels, node) {
         //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
@@ -1639,7 +1605,7 @@
     }
 
     var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+    var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
     function scanAttr(elem, vmodels) {
         //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
         var attributes = elem.hasAttributes() ? avalon.slice(elem.attributes) : []
@@ -1658,7 +1624,7 @@
                     if (events[type]) {
                         param = type
                         type = "on"
-                    } else if (/^(checked|selected|disabled|readonly|enabled)$/.test(type)) {
+                    } else if (obsoleteAttrs[type]) {
                         log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                         if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
                             type = "disabled"
@@ -2036,12 +2002,8 @@
                 if (toRemove) {
                     return elem.removeAttribute(attrName)
                 }
-                if (window.VBArray && !rsvg.test(elem)) {//IE下需要区分固有属性与自定义属性
-                    var attrs = elem.attributes || {}
-                    var attr = attrs[attrName]
-                    var isInnate = attr && attr.expando === false
-                }
-
+                //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
+                var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
                 if (isInnate) {
                     elem[attrName] = val
                 } else {
@@ -2059,9 +2021,9 @@
                         text = loaded.apply(target, [text].concat(vmodels))
                     }
                     if (rendered) {
-                        avalon.scanCallback(function(){
-                           rendered.call(target)
-                        })
+                        checkScan(target, function() {
+                            rendered.call(target)
+                        }, NaN)
                     }
                     while (true) {
                         var node = data.startInclude.nextSibling
@@ -2266,7 +2228,7 @@
                     if (parent.oldValue && parent.tagName === "SELECT" && method === "index") {//fix #503
                         avalon(parent).val(parent.oldValue.split(","))
                     }
-                })
+                }, NaN)
             }
         },
         "html": function(val, elem, data) {
@@ -2966,17 +2928,10 @@
             }
         }
         data.bound("change", updateVModel)
-        var innerHTML = NaN
-        var id = setInterval(function() {
-            var currHTML = element.innerHTML
-            if (currHTML === innerHTML) {
-                clearInterval(id)
-                //先等到select里的option元素被扫描后，才根据model设置selected属性  
-                registerSubscriber(data)
-            } else {
-                innerHTML = currHTML
-            }
-        }, 20)
+        checkScan(element, function() {
+            registerSubscriber(data)
+            data.changed.call(element, evaluator(), data)
+        }, NaN)
     }
     duplexBinding.TEXTAREA = duplexBinding.INPUT
     //========================= event binding ====================
@@ -3332,6 +3287,9 @@
                     proxy[k] = source[k]
                 }
                 eachProxyPool.splice(i, 1)
+                proxy.$watch(param, function(val) {
+                    data.$repeat.set(proxy.$index, val)
+                })
                 return proxy
             }
         }

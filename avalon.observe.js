@@ -102,7 +102,7 @@
         }
 
         //确保接受方为一个复杂的数据类型
-        if (typeof target !== "object" && avalon.type(target) !== "function") {
+        if (typeof target !== "object" && isFunction(target) !== "function") {
             target = {}
         }
 
@@ -214,6 +214,9 @@
             name = avalon.cssName(prop) || prop
             if (value === void 0 || typeof value === "boolean") { //获取样式
                 var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
+                if (name === "background") {
+                    name = "backgroundColor"
+                }
                 var val = fn(node, name)
                 return value === true ? parseFloat(val) || 0 : val
             } else if (value === "") { //请除样式
@@ -756,8 +759,7 @@
     var cssHooks = avalon.cssHooks = {}
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
     var cssMap = {
-        "float": "cssFloat",
-        background: "backgroundColor"
+        "float": "cssFloat"
     }
     avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
@@ -812,7 +814,7 @@
 
     function showHidden(node, array) {
         //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
-        if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+        if (node.offsetWidth === 0) {
             var styles = getComputedStyle(node, null)
             if (rdisplayswap.test(styles["display"])) {
                 var obj = {
@@ -842,21 +844,15 @@
                 boxSizing = override
             }
             which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
-            var ret = node[offsetProp]   // border-box 0
-            if (boxSizing === 2) {       // margin-box 2
-                return ret
-                        + avalon.css(node, "margin" + which[0], true)
-                        + avalon.css(node, "margin" + which[1], true)
+            var ret = node[offsetProp] // border-box 0
+            if (boxSizing === 2) { // margin-box 2
+                return ret + avalon.css(node, "margin" + which[0], true) + avalon.css(node, "margin" + which[1], true)
             }
-            if (boxSizing < 0) {        // padding-box  -2
-                ret = ret
-                        - avalon.css(node, "border" + which[0] + "Width", true)
-                        - avalon.css(node, "border" + which[1] + "Width", true)
+            if (boxSizing < 0) { // padding-box  -2
+                ret = ret - avalon.css(node, "border" + which[0] + "Width", true) - avalon.css(node, "border" + which[1] + "Width", true)
             }
-            if (boxSizing === -4) {     // content-box -4
-                ret = ret
-                        - avalon.css(node, "padding" + which[0], true)
-                        - avalon.css(node, "padding" + which[1], true)
+            if (boxSizing === -4) { // content-box -4
+                ret = ret - avalon.css(node, "padding" + which[0], true) - avalon.css(node, "padding" + which[1], true)
             }
             return ret
         }
@@ -877,11 +873,15 @@
         avalon.fn[method] = function(value) { //会忽视其display
             var node = this[0]
             if (arguments.length === 0) {
-                if (node.setTimeout) { //取得窗口尺寸,IE9后可以用window.innerWidth /innerHeight代替
+                if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
                     return node["inner" + name]
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
-                    return  node.documentElement[scrollProp]
+                    var doc = node.documentElement
+                    //FF chrome    html.scrollHeight< body.scrollHeight
+                    //IE 标准模式 : html.scrollHeight> body.scrollHeight
+                    //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
+                    return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
                 }
                 return cssHooks[method + "&get"](node)
             } else {
@@ -953,75 +953,52 @@
     }
 
     /************************************************************************
-     *                                parseHTML                                 *
+     *        HTML处理(parseHTML, innerHTML, clearHTML)                    *
      ****************************************************************************/
-    var rtagName = /<([\w:]+)/,
-            //取得其tagName
-            rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-            scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"]),
-            //需要处理套嵌关系的标签
-            rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/
-    //parseHTML的辅助变量
-    var tagHooks = new function() {
-        avalon.mix(this, {
-            option: DOC.createElement("select"),
-            thead: DOC.createElement("table"),
-            td: DOC.createElement("tr"),
-            area: DOC.createElement("map"),
-            tr: DOC.createElement("tbody"),
-            col: DOC.createElement("colgroup"),
-            legend: DOC.createElement("fieldset"),
-            "*": DOC.createElement("div")
+    !function(t) {
+        var rtagName = /<([\w:]+)/
+        var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+
+        var tagHooks = {
+            col: [2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
+            g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
+            //IE6-8在用innerHTML生成节点时，不能直接创建no-scope元素与HTML5的新标签
+            _default: [0, "", ""]  //div可以不用闭合
+        }
+
+
+        String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
+            tagHooks[tag] = tagHooks.g //处理SVG
         })
-        this.optgroup = this.option
-        this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
-        this.th = this.td
-    }
 
-    avalon.clearHTML = function(node) {
-        node.textContent = ""
-        return node
-    }
-    var script = DOC.createElement("script")
-    avalon.parseHTML = function(html) {
-        if (typeof html !== "string") {
-            html = html + ""
-        }
-        html = html.replace(rxhtml, "<$1></$2>").trim()
-        var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
-                //取得其标签名
-                wrapper = tagHooks[tag] || tagHooks._default,
-                fragment = hyperspace.cloneNode(false),
-                firstChild, neo
-
-        wrapper.innerHTML = html
-        var els = wrapper.getElementsByTagName("script")
-        if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
-            for (var i = 0, el; el = els[i++]; ) {
-                if (scriptTypes[el.type]) {
-                    neo = script.cloneNode(false) //FF不能省略参数
-                    ap.forEach.call(el.attributes, function(attr) {
-                        neo.setAttribute(attr.name, attr.value)
-                    })
-                    neo.text = el.text
-                    el.parentNode.replaceChild(neo, el)
-                }
+        avalon.parseHTML = function(html) {
+            html = html.replace(rxhtml, "<$1></$2>").trim()
+            var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
+            var wrap = tagHooks[tag] || tagHooks._default
+            t.innerHTML = wrap[1] + html + wrap[2]
+            var wrapper = t.content
+            if (wrap[0]) {
+                console.log(wrapper)
+//                var fragment = wrapper.cloneNode(false), firstChild
+//                for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
+//                }
+//                while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+//                    fragment.appendChild(firstChild)
+//                }
+//                return fragment
             }
+            return wrapper
         }
-
-        while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
-            fragment.appendChild(firstChild)
+        avalon.clearHTML = function(node) {
+            node.textContent = ""
+            return node
         }
-        return fragment
-    }
-    avalon.innerHTML = function(node, html) {
-        if (!/<script/i.test(html) && !rnest.test(html)) {
-            node.innerHTML = html
-        } else {
+        avalon.innerHTML = function(node, html) {
             var a = this.parseHTML(html)
             this.clearHTML(node).appendChild(a)
         }
-    }
+    }(DOC.createElement("template"));
+
     /*********************************************************************
      *                           事件管理器                                 *
      **********************************************************************/
@@ -1065,41 +1042,35 @@
             }
             var events = this.$events
             var args = aslice.call(arguments, 1)
-            var flag = special === "up" || special === "down" || special === "all"
-            if (!flag) {
-                var callbacks = events[type] || []
-                var all = events.$all || []
-                for (var i = 0, callback; callback = callbacks[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, args)
-                }
-                for (var i = 0, callback; callback = all[i++]; ) {
-                    if (isFunction(callback))
-                        callback.apply(this, arguments)
-                }
-            } else {
-                var element = events.expr && document.querySelector(events.expr)
-                if (!element)
-                    return
-                var detail = [type].concat(args)
+            var detail = [type].concat(args)
+            if (special === "all") {
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    if (v && v.$events && v.$events.expr) {
-                        if (v !== this) {
+                    if (v !== this) {
+                        v.$fire.apply(v, detail)
+                    }
+                }
+            } else if (special === "up" || special === "down") {
+                var element = events.expr && findNode(events.expr)
+                if (!element)
+                    return
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    if (v !== this) {
+                        if (v.$events.expr) {
                             var node = findNode(v.$events.expr)
                             if (!node) {
                                 continue
                             }
-                            var ok = special === "all" ? 1 : //全局广播
-                                    special === "down" ? element.contains(node) : //向下捕获
-                                    node.contains(element)//向上冒泡
+                            var ok = special === "down" ? element.contains(node) : //向下捕获
+                                    node.contains(element) //向上冒泡
                             if (ok) {
-                                node._avalon = v//符合条件的加一个标识
+                                node._avalon = v //符合条件的加一个标识
                             }
                         }
                     }
                 }
-                var nodes = DOC.getElementsByTagName("*")//实现节点排序
+                var nodes = DOC.getElementsByTagName("*") //实现节点排序
                 var alls = []
                 Array.prototype.forEach.call(nodes, function(el) {
                     if (el._avalon) {
@@ -1111,10 +1082,21 @@
                 if (special === "up") {
                     alls.reverse()
                 }
-                for (var i = 0, el; el = all[i++]; ) {
+                for (var i = 0, el; el = alls[i++]; ) {
                     if (el.$fire.apply(el, detail) === false) {
                         break
                     }
+                }
+            } else {
+                var callbacks = events[type] || []
+                var all = events.$all || []
+                for (var i = 0, callback; callback = callbacks[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, args)
+                }
+                for (var i = 0, callback; callback = all[i++]; ) {
+                    if (isFunction(callback))
+                        callback.apply(this, arguments)
                 }
             }
         }

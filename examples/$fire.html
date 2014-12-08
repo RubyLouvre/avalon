@@ -24,7 +24,7 @@
                     avalon.log("parent.aaa事件被触发了")
                 })
                 vm.click = function() {
-                    console.log("全局扩播")
+                    avalon.log("全局扩播")
                     vm.$fire("all!aaa", "broadcast")
                 }
             })
@@ -34,7 +34,7 @@
                     avalon.log("son.aaa事件被触发了")
                 })
                 vm.click = function() {
-                    console.log("向上冒泡")
+                    avalon.log("向上冒泡")
                     vm.$fire("up!aaa", "bubble")
                 }
             })
