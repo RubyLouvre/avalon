@@ -45,12 +45,6 @@
 *  [《avalon探索之旅》系列视频教程](http://v.qq.com/search.html?pagetype=3&stj2=search.search&stag=txt.index&ms_key=Avalon%E6%8E%A2%E7%B4%A2%E4%B9%8B%E6%97%85)
 
 
-运行github中的示例
-=====
-将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装[.Net4.0](http://dl.pconline.com.cn/download/54972.html)），
-点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。
-![Alt text](https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg)
-
 <h3>运行github中的示例</h3>
 <p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
