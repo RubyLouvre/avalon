@@ -5,6 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon 1.3.7.3 support IE6+ and other browsers!!
+!!
+___________________________________________________________________
+support IE6+ and other browsers
  ==================================================*/
 (function() {

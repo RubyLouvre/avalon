@@ -3,15 +3,15 @@ var fs = require("fs")
 var path = require("path") //不同的操作系统，其 文件目录 分割符是不一样的，不能直接使用 + "/"来实现
 var curDir = process.cwd() //当前目录
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
-console.log("otherDir " + otherDir)
 var Buffer = require('buffer').Buffer
 var now = new Date
+var version = "1.3.7.3"
 var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
 }
 
-function comboFiles(files, writer, lastCallback) {
+function comboFiles(files, writer, lastCallback, statement) {
 
     return function callback() {
         var fileName = files.shift()
@@ -22,11 +22,11 @@ function comboFiles(files, writer, lastCallback) {
         }
         var filePath = path.join(curDir, fileName + ".js")
         var readable = fs.createReadStream(filePath)
-        if (fileName == "00 inter") {
+        if (fileName === "00 inter") {
             readable.on("data", function(chunk) {
                 var str = chunk.toString("utf8")
                 var offset = (new Buffer(str.slice(0, str.indexOf("!!")), "utf8")).length
-                chunk.write(" build in " + date + " \n", offset)
+                chunk.write(statement, offset)
             })
         }
         readable.pipe(writer, {end: false})
@@ -81,7 +81,6 @@ var shimFiles = [
 ]
 
 
-
 var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
     encoding: "utf8"
 });
@@ -91,7 +90,7 @@ var comboCompatibleFiles = comboFiles(compatibleFiles, writable, function() {
     var readable3 = fs.createReadStream(path.join(curDir, 'avalon.js'))
     var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.js"))
     readable3.pipe(writable3)
-})
+}, "avalon.js " + version + " build in " + date + " \n")
 comboCompatibleFiles()
 
 
@@ -105,8 +104,22 @@ var comboModernFiles = comboFiles(modernFiles, writable2, function() {
     var readable3 = fs.createReadStream(path.join(curDir, 'avalon.modern.js'))
     var writable3 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
     readable3.pipe(writable3)
-})
+}, "avalon.modern.js " + version + " build in " + date + " \n")
 comboModernFiles()
+
+
+var writable3 = fs.createWriteStream(path.join(curDir, 'avalon.shim.js'), {
+    encoding: "utf8"
+})
+writable3.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+
+var comboShimFiles = comboFiles(shimFiles, writable3, function() {
+    //更新avalon.test中的文件
+    console.log("end!")
+}, "avalon.shim.js(去掉加载器与domReady) " + version + " build in " + date + " \n")
+
+
+comboShimFiles()
 
 
 
