@@ -1,49 +1,51 @@
+
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <title>ms-class</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js"></script>
-        <script>
-            require(["avalon.validation"], function() {
-                var vmodel = avalon.define({
-                    xxx: "ppp",
-                    $id: "test",
-                    aaa: 111,
-                    $skipArray: ["validation"],
-                    validation: {
-                        onSuccess: function() {
-                            console.log("success")
-                        },
-                        onError: function(a, b) {
-                            console.log(b)
-                            console.log("error")
-                        },
-                        validationHooks: {
-                            message: "等等",
-                            async: {
-                                get: function(val, data, next) {
-                                    setTimeout(function() {
-                                        next(true)
-                                    })
-                                    return val
-                                }
-                            }
-                        }
+        <style>
+            .ms-class div{
+                display:inline-block;
+                width:200px;
+                height:100px;
+                border: 1px solid  black;
+            }
+            .active{
+                background: black;
+                color: white;
+            }
+            .bgRed {
+                background:palegoldenrod;
+            }
+            .hover{
+                background: red;
+                color: white;
+            }
+            .green{
+                background: green;
+            }
+        </style>
+        <script type="text/javascript">
 
-                    }
-                })
-                avalon.scan()
-
+            var model = avalon.define({
+                $id: "test",
+                a: true,
+                d: false,
+                cn: function(a) {
+                    console.log(a)
+                }
             })
 
         </script>
     </head>
-    <body>
-        <div ms-controller="test" ms-widget="validation">
-            <input ms-attr-placeholder="xxx"/>
-            <input ms-duplex-minlength-int-async="aaa" minlength="4"/>
-        </div>
+    <body ms-controller="test" class="ms-class">
+        <button ms-if="a">xxx</button>
+        <select ms-if="!a">
+            <option>sddd</option>
+        </select>
+        <input type="checkbox" ms-duplex-radio="d"  value="1" data-duplex-changed="cn"/>
+<!--        <input type="checkbox" ms-duplex-radio="d"  value="2" data-duplex-changed="cn"/>-->
     </body>
 </html>

@@ -14,9 +14,16 @@
             }
         </style>
         <script>
+            var count = 0
             var a = avalon.define({
                 $id: "test",
                 aaa: "aaa.html",
+                checked: function(){
+                    count++
+                    if(count == 2){
+                        //cg
+                    }
+                },
                 change: function() {
                     a.aaa = a.aaa === "aaa.html" ? "bbb.html" : "aaa.html"
                 }
@@ -26,7 +33,7 @@
     </head>
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
-        <div ms-include-src="'include2'+aaa" class="contain"></div>
-        <div ms-include-src="'include2'+aaa" class="contain" data-include-replace="true"></div>
+        <div ms-include-src="'include2'+aaa" class="contain" data-include-rendered="checked"></div>
+        <div ms-include-src="'include2'+aaa" class="contain" data-include-replace="true" data-include-rendered="checked"></div>
     </body>
 </html>
