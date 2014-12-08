@@ -163,7 +163,7 @@ avalon.isPlainObject = function(obj, key) {
 if (rnative.test(Object.getPrototypeOf)) {
     avalon.isPlainObject = function(obj) {
         // 简单的 typeof obj === "object"检测，会致使用isPlainObject(window)在opera下通不过
-        return !!obj && serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
+        return serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
     }
 }
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
@@ -555,7 +555,7 @@ function fixContains(root, el) {
         return false
     }
 }
-
+avalon.contains = fixContains
 //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
 if (!root.contains) {
     Node.prototype.contains = function(arg) {
@@ -742,7 +742,7 @@ if (DOC.onmousewheel === void 0) {
     }
 }
 
-avalon.contains = fixContains
+
 /*********************************************************************
  *                           配置系统                                 *
  **********************************************************************/
@@ -1886,11 +1886,11 @@ var priorityMap = {
     "on": 3000
 }
 var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
 function bindingSorter(a, b) {
     return a.priority - b.priority
 }
-var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
+
 function scanTag(elem, vmodels, node) {
     //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
     //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
@@ -2004,7 +2004,7 @@ function scanAttr(elem, vmodels) {
     var scanChild = true
     for (var i = 0, binding; binding = bindings[i]; i++) {
         var type = binding.type
-        if (type === "if" || type == "widget") {
+        if (type === "if" || type === "widget") {
             executeBindings([binding], vmodels)
             break
         } else if (type === "data") {

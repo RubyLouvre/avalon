@@ -34,7 +34,7 @@ avalon.isWindow = function(obj) {
 
 avalon.isPlainObject = function(obj) {
     // 简单的 typeof obj === "object"检测，会致使用isPlainObject(window)在opera下通不过
-    return !!obj && serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
+    return serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
 }
 
 //与jQuery.extend方法，可用于浅拷贝，深拷贝

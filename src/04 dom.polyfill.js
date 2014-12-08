@@ -12,7 +12,7 @@ function fixContains(root, el) {
         return false
     }
 }
-
+avalon.contains = fixContains
 //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
 if (!root.contains) {
     Node.prototype.contains = function(arg) {
@@ -199,4 +199,3 @@ if (DOC.onmousewheel === void 0) {
     }
 }
 
-avalon.contains = fixContains

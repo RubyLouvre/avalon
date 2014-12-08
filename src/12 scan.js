@@ -99,8 +99,7 @@ var priorityMap = {
     "on": 3000
 }
 var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
 function bindingSorter(a, b) {
     return a.priority - b.priority
 }
-var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")

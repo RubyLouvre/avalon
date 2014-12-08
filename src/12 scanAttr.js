@@ -59,7 +59,7 @@ function scanAttr(elem, vmodels) {
     var scanChild = true
     for (var i = 0, binding; binding = bindings[i]; i++) {
         var type = binding.type
-        if (type === "if" || type == "widget") {
+        if (type === "if" || type === "widget") {
             executeBindings([binding], vmodels)
             break
         } else if (type === "data") {
