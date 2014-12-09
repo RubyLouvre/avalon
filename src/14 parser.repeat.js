@@ -57,7 +57,7 @@ function addAssign(vars, scope, name, data) {
                     if (prop !== getter) { //如果是对象数组 <input ms-repeat="array" ms-duplex="el.name">
                         var setter = getter + " = duplexArgs"
                     } else { //如果是简单数据类型的数组 <input ms-repeat="array" ms-duplex="el">
-                        setter = getter + "(duplexArgs)"
+                        setter = name + "." + getter + "( duplexArgs )"
                     }
                 } else { // 如果是简单数据类型<input ms-duplex="aaa">
                     setter = name + "." + getter + " = duplexArgs"
