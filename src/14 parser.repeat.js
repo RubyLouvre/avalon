@@ -38,7 +38,7 @@ var getVariables = function(code) {
 function addAssign(vars, scope, name, data) {
     var ret = []
     var prefix = " = " + name + "."
-    var code = data.value.trim()
+    var getter = data.value.trim()
     for (var i = vars.length, prop; prop = vars[--i]; ) {
         if (scope.hasOwnProperty(prop)) {
             var a = prop
@@ -53,10 +53,17 @@ function addAssign(vars, scope, name, data) {
 
             data.vars.push(prop)
             if (data.type === "duplex") {
-                var useFn = prop === code
-                var accept = prop.charAt(0) == "[" ? name + prop : name + "." + prop
-                vars.duplex = ";\n\tif(!arguments.length){\n\t\treturn " + code +
-                        "\n\t}\n\t" + (a !== prop && useFn ? accept + "(duplexArgs)" : accept + " = duplexArgs") +
+                if (prop !== a) { //如果a后面加了()，说明当前VM是代理VM
+                    if (prop !== getter) { //如果是对象数组 <input ms-repeat="array" ms-duplex="el.name">
+                        var setter = getter + " = duplexArgs"
+                    } else { //如果是简单数据类型的数组 <input ms-repeat="array" ms-duplex="el">
+                        setter = getter + "(duplexArgs)"
+                    }
+                } else { // 如果是简单数据类型<input ms-duplex="aaa">
+                    setter = name + "." + getter + " = duplexArgs"
+                }
+                vars.duplex = ";\n\tif(!arguments.length){\n\t\treturn " + getter +
+                        "\n\t}\n\t" + setter +
                         "\n\t}"
             }
             vars.splice(i, 1)
