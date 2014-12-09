@@ -1563,7 +1563,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+           // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1962,7 +1962,7 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+                  //  log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                     if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
                         type = "disabled"
                         value = "!(" + value + ")"
