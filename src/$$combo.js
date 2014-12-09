@@ -79,7 +79,7 @@ var shimFiles = [
     directive("duplex.3"), directive("repeat.each.with"),
     "16 filter", "18 domReady.noop", "19 outer"
 ]
-//avalon.shim.js 所需要合并的子文件
+//avalon.repeat.js 所需要合并的子文件
 var repeatFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
@@ -90,7 +90,7 @@ var repeatFiles = [
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
-    directive("duplex.3"), directive("repeat"),
+    directive("duplex.3"), directive("repeat2"),
    "16 filter", "17 loader", "18 domReady", "19 outer"
 ]
 
