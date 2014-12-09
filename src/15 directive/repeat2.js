@@ -97,6 +97,10 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
 }
 
+"with,each".replace(rword, function(name) {
+    bindingHandlers[name] = bindingHandlers.repeat
+})
+
 bindingExecutors.repeat = function(method, pos, el) {
     if (method) {
         var data = this
