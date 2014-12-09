@@ -12,7 +12,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-           // log("warning:exception throwed in [registerSubscriber] " + e)
+            // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -72,12 +72,7 @@ function removeSubscribers() {
             delete $$subscribers[obj]
             avalon.Array.remove(obj.list, data)
             //log("debug: remove " + data.type)
-            if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
-                ifGroup.removeChild(data.template)
-            }
-            for (var key in data) {
-                data[key] = null
-            }
+            disposeData(data)
             obj.data = obj.list = null
             i--
             n--
@@ -91,6 +86,14 @@ function removeSubscribers() {
         $startIndex = 0
     }
     beginTime = new Date()
+}
+function disposeData(data) {
+    if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
+        ifGroup.removeChild(data.template)
+    }
+    for (var key in data) {
+        data[key] = null
+    }
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身

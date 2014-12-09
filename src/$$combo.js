@@ -79,7 +79,20 @@ var shimFiles = [
     directive("duplex.3"), directive("repeat.each.with"),
     "16 filter", "18 domReady.noop", "19 outer"
 ]
-
+//avalon.shim.js 所需要合并的子文件
+var repeatFiles = [
+    "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
+    "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
+    "07 modelFactory.repeat", "07 modelFactory.shim", "08 Collection.repeat", "09 dispatcher",
+    "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
+    "13 dom", "14 parser", "14 parser.repeat",
+    directive("skip"), directive("controller"), directive("important"),
+    directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
+    directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
+    directive("widget"), directive("duplex.1"), directive("duplex.2"),
+    directive("duplex.3"), directive("repeat"),
+   "16 filter", "17 loader", "18 domReady", "19 outer"
+]
 
 var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
     encoding: "utf8"
@@ -122,4 +135,19 @@ var comboShimFiles = comboFiles(shimFiles, writable3, function() {
 comboShimFiles()
 
 
+
+var writable4 = fs.createWriteStream(path.join(curDir, 'avalon.repeat.js'), {
+    encoding: "utf8"
+})
+writable4.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+
+var comboRepeatFiles = comboFiles(repeatFiles, writable4, function() {
+    //更新avalon.test中的文件
+    var readable4 = fs.createReadStream(path.join(curDir, 'avalon.repeat.js'))
+    var writable4 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.repeat.js"))
+    readable4.pipe(writable4)
+}, "avalon.repeat.js(ms-repeat升级版) " + version + " build in " + date + " \n")
+
+
+comboRepeatFiles()
 

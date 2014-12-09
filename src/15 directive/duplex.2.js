@@ -53,7 +53,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     //当value变化时改变model的值
 
     function updateVModel() {
-        if (composing) //处理中文输入法在minlengh下引发的BUG
+        if (composing || !data.pipe)  //处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
@@ -78,7 +78,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     if (data.isChecked || element.type === "radio") {
         var IE6 = IEVersion === 6
         updateVModel = function() {
-            if ($elem.data("duplex-observe") !== false) {
+            if (data.pipe && $elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -103,7 +103,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         bound(IE6 ? "mouseup" : "click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
-            if ($elem.data("duplex-observe") !== false) {
+            if (data.pipe && $elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
