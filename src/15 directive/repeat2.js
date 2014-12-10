@@ -1,7 +1,6 @@
 bindingHandlers.repeat = function(data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
-    data.proxies = []
     var freturn = false
     vmodels.cb(-1)
     try {
