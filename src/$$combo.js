@@ -91,7 +91,7 @@ var repeatFiles = [
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
     directive("duplex.3"), directive("repeat2"),
-   "16 filter", "17 loader", "18 domReady", "19 outer"
+    "16 filter", "17 loader", "18 domReady", "19 outer"
 ]
 
 var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
@@ -151,3 +151,32 @@ var comboRepeatFiles = comboFiles(repeatFiles, writable4, function() {
 
 comboRepeatFiles()
 
+var mobileFiles = [
+    "00 inter", "01 variable.modern", "01 variable.share", "02 core.modern",
+    "04 dom.polyfill.modern", "05 configuration", "06 EventBus", "06 findNodes.modern",
+    "07 modelFactory.repeat", "08 Collection.repeat", "09 dispatcher", "10 HTML.modern",
+    "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr.modern", "12 scanText",
+    "13 dom.modern", "14 parser.modern", "14 parser.repeat",
+    directive("skip"), directive("controller"), directive("important"),
+    directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
+    directive("text.modern"), directive("html"), directive("if"), directive("visible"), directive("on"),
+    directive("widget"), directive("duplex.1"), directive("duplex.2.modern"),
+    directive("duplex.3"), directive("repeat2"),
+    "16 filter", "20 fastclick", "17 loader", "18 domReady.modern", "19 outer"
+]
+
+
+new function() {
+    var writable4 = fs.createWriteStream(path.join(curDir, 'avalon.mobile.js'), {
+        encoding: "utf8"
+    })
+    writable4.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+
+    var comboMobileFiles = comboFiles(mobileFiles, writable4, function() {
+        //更新avalon.test中的文件
+
+    }, "avalon.mobile.js(用于手机与触屏设备) " + version + " build in " + date + " \n")
+
+
+    comboMobileFiles()
+}
