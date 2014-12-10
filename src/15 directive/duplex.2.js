@@ -19,15 +19,15 @@ if (IEVersion) {
 function onTree(value) { //disabled状态下改动不触发input事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
-        //  var type = this.getAttribute("data-duplex-event") || "input"
-        //  type = type.match(rword).shift()
-        var type = "input"
-        if (W3C) {
-            W3CFire(this, type)
-        } else {
-            try {
-                this.fireEvent("on" + type)
-            } catch (e) {
+        var type = this.getAttribute("data-duplex-event") || "input"
+        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
+            if (W3C) {
+                W3CFire(this, type)
+            } else {
+                try {
+                    this.fireEvent("on" + type)
+                } catch (e) {
+                }
             }
         }
     }

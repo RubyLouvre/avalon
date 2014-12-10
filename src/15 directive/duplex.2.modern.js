@@ -1,9 +1,10 @@
 function onTree(value) { //disabled状态下改动不触发inout事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
-        //var type = this.getAttribute("data-duplex-event") || "input"
-       // type = type.match(rword).shift()
-        W3CFire(this, "input")
+        var type = this.getAttribute("data-duplex-event") || "input"
+        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
+            W3CFire(this, type)
+        }
     }
 }
 //处理radio, checkbox, text, textarea, password
