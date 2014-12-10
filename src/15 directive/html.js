@@ -18,15 +18,7 @@ bindingExecutors.html = function(val, elem, data) {
     var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
         parent.insertBefore(comment, elem)
-        var length = data.group
-        while (elem) {
-            var nextNode = elem.nextSibling
-            parent.removeChild(elem)
-            length--
-            if (length === 0 || nextNode === null)
-                break
-            elem = nextNode
-        }
+        avalon.clearHTML(removeFragment(elem, data.group))
         data.element = comment //防止被CG
     } else {
         avalon.clearHTML(parent).appendChild(comment)

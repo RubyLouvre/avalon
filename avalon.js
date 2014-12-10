@@ -234,7 +234,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.36,
+    version: 1.37,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -1639,9 +1639,8 @@ function removeSubscribers() {
     beginTime = new Date()
 }
 function disposeData(data) {
-    if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
-        ifGroup.removeChild(data.template)
-    }
+    data.element = null
+    data.rollback && data.rollback()
     for (var key in data) {
         data[key] = null
     }
@@ -3157,7 +3156,8 @@ bindingHandlers["class"] = function(data, vmodels) {
     if (!oldStyle || isFinite(oldStyle)) {
         data.param = "" //去掉数字
         var noExpr = text.replace(rexprg, function(a) {
-            return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+            return a.replace(/./g, "0")
+            //return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
         })
         var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
         if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
@@ -3211,16 +3211,21 @@ bindingExecutors ["class"] = function(val, elem, data) {
                         elem.tabIndex = elem.tabIndex || -1
                         activate = "mousedown"
                         abandon = "mouseup"
-                        $elem.bind("mouseleave", function() {
+                        var fn0 = $elem.bind("mouseleave", function() {
                             data.toggleClass && $elem.removeClass(data.newClass)
                         })
                     }
-                    $elem.bind(activate, function() {
+                    var fn1 = $elem.bind(activate, function() {
                         data.toggleClass && $elem.addClass(data.newClass)
                     })
-                    $elem.bind(abandon, function() {
+                    var fn2 = $elem.bind(abandon, function() {
                         data.toggleClass && $elem.removeClass(data.newClass)
                     })
+                    data.roolback = function() {
+                        $elem.unbind("mouseleave", fn0)
+                        $elem.unbind(activate, fn1)
+                        $elem.unbind(abandon, fn2)
+                    }
                     data.hasBindEvent = true
                 }
                 break;
@@ -3279,15 +3284,7 @@ bindingExecutors.html = function(val, elem, data) {
     var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
         parent.insertBefore(comment, elem)
-        var length = data.group
-        while (elem) {
-            var nextNode = elem.nextSibling
-            parent.removeChild(elem)
-            length--
-            if (length === 0 || nextNode === null)
-                break
-            elem = nextNode
-        }
+        avalon.clearHTML(removeFragment(elem, data.group))
         data.element = comment //防止被CG
     } else {
         avalon.clearHTML(parent).appendChild(comment)
@@ -3328,12 +3325,16 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.removeAttribute(data.name)
             scanAttr(elem, data.vmodels)
         }
+        data.roolback = null
     } else { //移出DOM树，并用注释节点占据原位置
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
+            data.roolback = function() {
+                ifGroup.removeChild(data.template)
+            }
         }
     }
 }
@@ -3668,15 +3669,15 @@ if (IEVersion) {
 function onTree(value) { //disabled状态下改动不触发input事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
-        //  var type = this.getAttribute("data-duplex-event") || "input"
-        //  type = type.match(rword).shift()
-        var type = "input"
-        if (W3C) {
-            W3CFire(this, type)
-        } else {
-            try {
-                this.fireEvent("on" + type)
-            } catch (e) {
+        var type = this.getAttribute("data-duplex-event") || "input"
+        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
+            if (W3C) {
+                W3CFire(this, type)
+            } else {
+                try {
+                    this.fireEvent("on" + type)
+                } catch (e) {
+                }
             }
         }
     }
@@ -3703,7 +3704,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     //当value变化时改变model的值
 
     function updateVModel() {
-        if (composing || !data.pipe)  //处理中文输入法在minlengh下引发的BUG
+        if (composing)  //处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
@@ -3728,7 +3729,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     if (data.isChecked || element.type === "radio") {
         var IE6 = IEVersion === 6
         updateVModel = function() {
-            if (data.pipe && $elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -3753,7 +3754,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         bound(IE6 ? "mouseup" : "click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
-            if (data.pipe && $elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
@@ -3833,7 +3834,7 @@ duplexBinding.TEXTAREA = duplexBinding.INPUT
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
     function updateVModel() {
-        if (data.pipe && $elem.data("duplex-observe") !== false) {
+        if ($elem.data("duplex-observe") !== false) {
             var val = $elem.val() //字符串或字符串数组
             if (Array.isArray(val)) {
                 val = val.map(function(v) {
@@ -3913,8 +3914,10 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
 
     data.rollback = function() {
-        bindingExecutors.repeat.call(data, "clear")
         var elem = data.element
+        if (!elem)
+            return
+        bindingExecutors.repeat.call(data, "clear")
         var parentNode = elem.parentNode
         var content = avalon.parseHTML(data.template)
         var target = content.firstChild
