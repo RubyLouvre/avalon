@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.modern.js 1.3.7.3 build in 2014.11.8 
-__________________________
+avalon.modern.js 1.3.7.3 build in 2014.11.10 
+_________________________
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -1182,7 +1182,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+            // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1242,12 +1242,7 @@ function removeSubscribers() {
             delete $$subscribers[obj]
             avalon.Array.remove(obj.list, data)
             //log("debug: remove " + data.type)
-            if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
-                ifGroup.removeChild(data.template)
-            }
-            for (var key in data) {
-                data[key] = null
-            }
+            disposeData(data)
             obj.data = obj.list = null
             i--
             n--
@@ -1261,6 +1256,14 @@ function removeSubscribers() {
         $startIndex = 0
     }
     beginTime = new Date()
+}
+function disposeData(data) {
+    if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
+        ifGroup.removeChild(data.template)
+    }
+    for (var key in data) {
+        data[key] = null
+    }
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
@@ -2682,7 +2685,8 @@ bindingExecutors.html = function(val, elem, data) {
         }
         var nodes = avalon.slice(fragment.childNodes)
         if (nodes[0]) {
-            parent.replaceChild(fragment, comment)
+            if (comment.parentNode)
+                comment.parentNode.replaceChild(fragment, comment)
             if (isHtmlFilter) {
                 data.element = nodes[0]
             }
@@ -3032,9 +3036,9 @@ try {
 function onTree(value) { //disabled状态下改动不触发inout事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
-        var type = this.getAttribute("data-duplex-event") || "input"
-        type = type.match(rword).shift()
-        W3CFire(this, type)
+        //var type = this.getAttribute("data-duplex-event") || "input"
+       // type = type.match(rword).shift()
+        W3CFire(this, "input")
     }
 }
 //处理radio, checkbox, text, textarea, password
@@ -3142,7 +3146,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
     function updateVModel() {
-        if ($elem.data("duplex-observe") !== false) {
+        if (data.pipe && $elem.data("duplex-observe") !== false) {
             var val = $elem.val() //字符串或字符串数组
             if (Array.isArray(val)) {
                 val = val.map(function(v) {
@@ -3183,7 +3187,7 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }, NaN)
 }
 
-duplexBinding.TEXTAREA = duplexBinding.INPUT
+
 bindingHandlers.repeat = function(data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)

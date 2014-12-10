@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.3.7.3 build in 2014.11.8 
-_________________________________
+avalon.js 1.3.7.3 build in 2014.11.10 
+________________________________
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -1563,7 +1563,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-           // log("warning:exception throwed in [registerSubscriber] " + e)
+            // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1623,12 +1623,7 @@ function removeSubscribers() {
             delete $$subscribers[obj]
             avalon.Array.remove(obj.list, data)
             //log("debug: remove " + data.type)
-            if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
-                ifGroup.removeChild(data.template)
-            }
-            for (var key in data) {
-                data[key] = null
-            }
+            disposeData(data)
             obj.data = obj.list = null
             i--
             n--
@@ -1642,6 +1637,14 @@ function removeSubscribers() {
         $startIndex = 0
     }
     beginTime = new Date()
+}
+function disposeData(data) {
+    if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
+        ifGroup.removeChild(data.template)
+    }
+    for (var key in data) {
+        data[key] = null
+    }
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
@@ -1962,7 +1965,7 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                  //  log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
                     if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
                         type = "disabled"
                         value = "!(" + value + ")"
@@ -3296,7 +3299,8 @@ bindingExecutors.html = function(val, elem, data) {
         }
         var nodes = avalon.slice(fragment.childNodes)
         if (nodes[0]) {
-            parent.replaceChild(fragment, comment)
+            if (comment.parentNode)
+                comment.parentNode.replaceChild(fragment, comment)
             if (isHtmlFilter) {
                 data.element = nodes[0]
             }
@@ -3664,8 +3668,9 @@ if (IEVersion) {
 function onTree(value) { //disabled状态下改动不触发input事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
-        var type = this.getAttribute("data-duplex-event") || "input"
-        type = type.match(rword).shift()
+        //  var type = this.getAttribute("data-duplex-event") || "input"
+        //  type = type.match(rword).shift()
+        var type = "input"
         if (W3C) {
             W3CFire(this, type)
         } else {
@@ -3698,7 +3703,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     //当value变化时改变model的值
 
     function updateVModel() {
-        if (composing) //处理中文输入法在minlengh下引发的BUG
+        if (composing || !data.pipe)  //处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
@@ -3723,7 +3728,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     if (data.isChecked || element.type === "radio") {
         var IE6 = IEVersion === 6
         updateVModel = function() {
-            if ($elem.data("duplex-observe") !== false) {
+            if (data.pipe && $elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -3748,7 +3753,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         bound(IE6 ? "mouseup" : "click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
-            if ($elem.data("duplex-observe") !== false) {
+            if (data.pipe && $elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
@@ -3828,7 +3833,7 @@ duplexBinding.TEXTAREA = duplexBinding.INPUT
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
     function updateVModel() {
-        if ($elem.data("duplex-observe") !== false) {
+        if (data.pipe && $elem.data("duplex-observe") !== false) {
             var val = $elem.val() //字符串或字符串数组
             if (Array.isArray(val)) {
                 val = val.map(function(v) {
@@ -3869,7 +3874,7 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }, NaN)
 }
 
-duplexBinding.TEXTAREA = duplexBinding.INPUT
+
 bindingHandlers.repeat = function(data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
