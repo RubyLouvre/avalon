@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.modern.js 1.3.7.3 build in 2014.11.10 
+avalon.modern.js 1.3.7.3 build in 2014.11.11 
 _________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -1182,7 +1182,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            // log("warning:exception throwed in [registerSubscriber] " + e)
+            log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -2612,7 +2612,7 @@ bindingExecutors ["class"] = function(val, elem, data) {
                     var fn2 = $elem.bind(abandon, function() {
                         data.toggleClass && $elem.removeClass(data.newClass)
                     })
-                    data.roolback = function() {
+                    data.rollback = function() {
                         $elem.unbind("mouseleave", fn0)
                         $elem.unbind(activate, fn1)
                         $elem.unbind(abandon, fn2)
@@ -2711,14 +2711,14 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.removeAttribute(data.name)
             scanAttr(elem, data.vmodels)
         }
-        data.roolback = null
+        data.rollback  = null
     } else { //移出DOM树，并用注释节点占据原位置
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
-            data.roolback = function() {
+            data.rollback  = function() {
                 ifGroup.removeChild(data.template)
             }
         }

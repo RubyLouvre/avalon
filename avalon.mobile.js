@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(用于手机与触屏设备) 1.3.7.3 build in 2014.11.10 
+avalon.mobile.js(用于手机与触屏设备) 1.3.7.3 build in 2014.11.11 
 pport IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -2640,7 +2640,7 @@ bindingExecutors ["class"] = function(val, elem, data) {
                     var fn2 = $elem.bind(abandon, function() {
                         data.toggleClass && $elem.removeClass(data.newClass)
                     })
-                    data.roolback = function() {
+                    data.rollback = function() {
                         $elem.unbind("mouseleave", fn0)
                         $elem.unbind(activate, fn1)
                         $elem.unbind(abandon, fn2)
@@ -2739,14 +2739,14 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.removeAttribute(data.name)
             scanAttr(elem, data.vmodels)
         }
-        data.roolback = null
+        data.rollback  = null
     } else { //移出DOM树，并用注释节点占据原位置
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
-            data.roolback = function() {
+            data.rollback  = function() {
                 ifGroup.removeChild(data.template)
             }
         }
@@ -3221,6 +3221,7 @@ duplexBinding.SELECT = function(element, evaluator, data) {
 bindingHandlers.repeat = function(data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
+    data.proxies = []
     var freturn = false
     vmodels.cb(-1)
     try {
@@ -3236,8 +3237,6 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
     var elem = data.element
     elem.removeAttribute(data.name)
-    data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
-    data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
     var comment = data.element = DOC.createComment("ms-repeat")
     var endRepeat = data.endRepeat = DOC.createComment("ms-repeat-end")
@@ -3245,19 +3244,19 @@ bindingHandlers.repeat = function(data, vmodels) {
     hyperspace.appendChild(comment)
     hyperspace.appendChild(endRepeat)
 
-    if (type === "each" || type === "with") {
-        data.template = elem.innerHTML.trim()
-        avalon.clearHTML(elem).appendChild(hyperspace)
-    } else {
+    if (type === "repeat") {
         data.template = elem.outerHTML.trim()
         elem.parentNode.replaceChild(hyperspace, elem)
         data.group = 1
+    } else {
+        data.template = elem.innerHTML.trim()
+        avalon.clearHTML(elem).appendChild(hyperspace)
     }
 
     data.rollback = function() {
-         var elem = data.element
-         if(!elem)
-             return
+        var elem = data.element
+        if (!elem)
+            return
         bindingExecutors.repeat.call(data, "clear")
         var parentNode = elem.parentNode
         var content = avalon.parseHTML(data.template)
@@ -3283,17 +3282,12 @@ bindingHandlers.repeat = function(data, vmodels) {
     if (freturn) {
         return
     }
-
+    data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
+    data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
     data.handler = bindingExecutors.repeat
     data.$outer = {}
-    var check0 = "$key"
-    var check1 = "$val"
-    if (Array.isArray($repeat)) {
-        check0 = "$first"
-        check1 = "$last"
-    }
     for (var i = 0, p; p = vmodels[i++]; ) {
-        if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+        if (p + "" === "ProxyVModel") {
             data.$outer = p
             break
         }
@@ -3302,7 +3296,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
-    if (!Array.isArray($repeat) && type !== "each") {
+    if (xtype === "object") {
         var $events = $repeat.$events || {}
         var pool = $events.$withProxyPool
         if (!pool) {
@@ -3889,8 +3883,7 @@ new function() {
     locate.SHORTMONTH = locate.MONTH
     filters.date.locate = locate
 }
-
-void function() {
+;new function() {
     var ua = navigator.userAgent
     var isAndroid = ua.indexOf('Android') > 0
     var isIOS = /iP(ad|hone|od)/.test(ua)
@@ -4271,7 +4264,7 @@ void function() {
         //'swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown',  'doubletap', 'tap', 'singletap', 'hold'
     }
 
-}()
+}
 
 
 
