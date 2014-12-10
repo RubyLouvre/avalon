@@ -15,7 +15,24 @@ bindingHandlers.repeat = function(data, vmodels) {
         avalon.log("warning:" + data.value + "编译出错")
     }
     var elem = data.element
-    elem.removeAttribute(data.name)
+    elem.removeAttribute(data.name) //防止死循环
+
+    var templateProperty = type === "repeat" ? "outerHTML" : "innerHTML"
+    elem.template = elem.template || elem[templateProperty].trim()
+
+    avalon.clearHTML(elem)
+    if (freturn) {
+        elem.vmodels = vmodels
+        elem.setAttribute(data.name, data.value)
+        return
+    }
+    if (data.vmodels) {
+        vmodels = elem.vmodels
+        elem.vmodels = null
+    }
+
+    data.template = elem.template
+    elem.template = null
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
@@ -25,19 +42,17 @@ bindingHandlers.repeat = function(data, vmodels) {
     hyperspace.appendChild(comment)
     hyperspace.appendChild(endRepeat)
 
-    if (type === "each" || type === "with") {
-        data.template = elem.innerHTML.trim()
-        avalon.clearHTML(elem).appendChild(hyperspace)
+    if (templateProperty === "innerHTML") {
+        elem.appendChild(hyperspace)
     } else {
-        data.template = elem.outerHTML.trim()
         elem.parentNode.replaceChild(hyperspace, elem)
         data.group = 1
     }
 
     data.rollback = function() {
-         var elem = data.element
-         if(!elem)
-             return
+        var elem = data.element
+        if (!elem)
+            return
         bindingExecutors.repeat.call(data, "clear")
         var parentNode = elem.parentNode
         var content = avalon.parseHTML(data.template)
@@ -60,20 +75,11 @@ bindingHandlers.repeat = function(data, vmodels) {
             }
         }
     }
-    if (freturn) {
-        return
-    }
 
     data.handler = bindingExecutors.repeat
     data.$outer = {}
-    var check0 = "$key"
-    var check1 = "$val"
-    if (Array.isArray($repeat)) {
-        check0 = "$first"
-        check1 = "$last"
-    }
     for (var i = 0, p; p = vmodels[i++]; ) {
-        if (p.hasOwnProperty(check0) && p.hasOwnProperty(check1)) {
+        if (p + "" === "ProxyVModel") {
             data.$outer = p
             break
         }
@@ -82,7 +88,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
-    if (!Array.isArray($repeat) && type !== "each") {
+    if (xtype === "object") {
         var $events = $repeat.$events || {}
         var pool = $events.$withProxyPool
         if (!pool) {
