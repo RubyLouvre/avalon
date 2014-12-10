@@ -8,7 +8,8 @@ bindingHandlers["class"] = function(data, vmodels) {
     if (!oldStyle || isFinite(oldStyle)) {
         data.param = "" //去掉数字
         var noExpr = text.replace(rexprg, function(a) {
-            return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+            return a.replace(/./g, "0")
+            //return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
         })
         var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
         if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
