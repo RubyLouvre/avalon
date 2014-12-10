@@ -73,7 +73,7 @@ bindingExecutors ["class"] = function(val, elem, data) {
                     var fn2 = $elem.bind(abandon, function() {
                         data.toggleClass && $elem.removeClass(data.newClass)
                     })
-                    data.roolback = function() {
+                    data.rollback = function() {
                         $elem.unbind("mouseleave", fn0)
                         $elem.unbind(activate, fn1)
                         $elem.unbind(abandon, fn2)
