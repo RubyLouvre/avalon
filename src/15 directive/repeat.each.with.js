@@ -36,8 +36,10 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
 
     data.rollback = function() {
-        bindingExecutors.repeat.call(data, "clear")
         var elem = data.element
+        if (!elem)
+            return
+        bindingExecutors.repeat.call(data, "clear")
         var parentNode = elem.parentNode
         var content = avalon.parseHTML(data.template)
         var target = content.firstChild

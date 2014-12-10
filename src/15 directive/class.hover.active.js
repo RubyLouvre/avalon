@@ -62,16 +62,21 @@ bindingExecutors ["class"] = function(val, elem, data) {
                         elem.tabIndex = elem.tabIndex || -1
                         activate = "mousedown"
                         abandon = "mouseup"
-                        $elem.bind("mouseleave", function() {
+                        var fn0 = $elem.bind("mouseleave", function() {
                             data.toggleClass && $elem.removeClass(data.newClass)
                         })
                     }
-                    $elem.bind(activate, function() {
+                    var fn1 = $elem.bind(activate, function() {
                         data.toggleClass && $elem.addClass(data.newClass)
                     })
-                    $elem.bind(abandon, function() {
+                    var fn2 = $elem.bind(abandon, function() {
                         data.toggleClass && $elem.removeClass(data.newClass)
                     })
+                    data.roolback = function() {
+                        $elem.unbind("mouseleave", fn0)
+                        $elem.unbind(activate, fn1)
+                        $elem.unbind(abandon, fn2)
+                    }
                     data.hasBindEvent = true
                 }
                 break;

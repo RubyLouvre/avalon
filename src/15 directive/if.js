@@ -16,12 +16,16 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.removeAttribute(data.name)
             scanAttr(elem, data.vmodels)
         }
+        data.roolback = null
     } else { //移出DOM树，并用注释节点占据原位置
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
+            data.roolback = function() {
+                ifGroup.removeChild(data.template)
+            }
         }
     }
 }

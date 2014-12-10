@@ -88,9 +88,8 @@ function removeSubscribers() {
     beginTime = new Date()
 }
 function disposeData(data) {
-    if (data.type === "if" && data.template && data.template.parentNode === ifGroup) {
-        ifGroup.removeChild(data.template)
-    }
+    data.element = null
+    data.rollback && data.rollback()
     for (var key in data) {
         data[key] = null
     }
