@@ -6,7 +6,9 @@
 在更高的层次上组织代码，提高软件的可维护性，可扩展性和可重用性。</p>
 <hr>
 
-*  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，及标准浏览器;avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器,主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游) ;avalon.observe是用于研究es6的新特性，使用Object.observe实现的；
+*  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，标准浏览器, 及主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游);
+avalon.modern.js 则只支持IE10等支持HTML5现代浏览器 ;
+avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 *  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其是是OniUI，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
 * avalon的测试比较庞大，放在独立的仓库中——[avalon.test](https://github.com/RubyLouvre/avalon.test)
 
