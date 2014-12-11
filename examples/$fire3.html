@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>事件在多视图中间的传播</title>
+    <script src="../avalon.js"></script>
+    <script type="text/javascript">
+
+        var ancestorVM = avalon.define({
+            $id: "ancestor",
+            up: function() {
+                posterity.$fire("up!posterity_up")
+            }
+        });
+
+        ancestorVM.$watch("posterity_up", function() {
+            alert("up")
+        })
+
+        var posterity = avalon.define({
+            $id: "posterity"
+        });
+
+    </script>
+</head>
+<body>
+
+<div>
+    <div ms-controller="ancestor"></div>
+    <div ms-controller="ancestor">
+        <div ms-controller="posterity"></div>
+        <button type="button" ms-click="up">up</button>
+    </div>
+</div>
+
+</body>
+</html>

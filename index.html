@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>测试用例</title>
+        <script src="src/avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                 array: [
+                     {
+                         toggle: true,
+                         width: 200,
+                         align: "left"
+                     },
+                      {
+                         toggle: true,
+                         width: 200,
+                         align: "left"
+                     },
+                        {
+                         toggle: true,
+                         width: 200,
+                         align: "left"
+                     }
+                 ],
+                 renderCell: function(a, b, c)  {
+                   //  console.log(a)
+                     return "xxx"
+                 },
+                 fn: function(a){
+                    // console.log(a)
+                     return "xxxx"
+                 }
+            })
+            window.onload = function(){
+                var el = document.querySelector("#aaa")
+                console.log(el.firstChild.hasAttribute)
+            }
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h2>明天要处理的问题</h2>
+        <table class="oni-simplegrid-tbody"    >
+            <tr  ms-repeat-row="array2" >
+                <td class="oni-simplegrid-td"
+                    ms-repeat="row" 
+                    ms-click="fn($key)"
+                    >
+                    {{ renderCell(row)  }}
+                </td>
+            </tr>
+            <span id="aaa">dddd</span>
+        </table>
+    </body>
+</html>

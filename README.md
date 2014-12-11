@@ -6,12 +6,24 @@
 在更高的层次上组织代码，提高软件的可维护性，可扩展性和可重用性。</p>
 <hr>
 
-*  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，及标准浏览器;avalon.modern.js 则只支持IE10及其以上版本，及标准浏览器,主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游) ;avalon.observe是用于研究es6的新特性，使用Object.observe实现的；
+*  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，标准浏览器, 及主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游);
+avalon.modern.js 则只支持IE10等支持HTML5现代浏览器 ;
+avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 *  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其是是OniUI，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
 * avalon的测试比较庞大，放在独立的仓库中——[avalon.test](https://github.com/RubyLouvre/avalon.test)
 
 优势
 ======
+```
+绝对的优势就是降低了耦合, 让开发者从复杂的各种事件中挣脱出来. 举一个简单地例子, 
+同一个状态可能跟若干个事件的发生顺序与发生时的附加参数都有关系, 
+不用 MVC (包括 MVVM) 的情况下, 逻辑可能非常复杂而且脆弱. 
+并且通常需要在不同的地方维护相关度非常高的一些逻辑, 
+稍有疏忽就会酿成 bug 不能自拔. 使用这类框架能从根本上降低应用开发的逻辑难度, 并且让应用更稳健.
+
+除此之外, 也免去了一些重复的体力劳动, 一个 {value} 就代替了一行 $(selector).text(value),
+一些个常用的 directive 也能快速实现一些原本可能需要较多代码才能实现的功能
+```
 * 使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！
 * 兼容到 **IE6** (其他MVVM框架，KnockoutJS(IE6), AngularJS(IE9), EmberJS(IE8), WinJS(IE9) )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中
 * 没有任何依赖，不到5000行，压缩后不到50KiB
@@ -27,17 +39,13 @@
 学习教程
 ======
 *  [avalon学习教程](http://www.html-js.com/article/column/234)
+*  [avalon api大全](http://ued.qunar.com/oniui/index.html#pages/apis/index.html)
 *  [avalon-learning](http://limodou.github.io/avalon-learning/zh_CN/index.html)
 *  [入门教程](http://www.cnblogs.com/rubylouvre/p/3181291.html)
 *  [HTML5交流会有关avalon的PPT](http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475)
 *  [avalon最佳实践](http://www.cnblogs.com/rubylouvre/p/3385373.html)
+*  [《avalon探索之旅》系列视频教程](http://v.qq.com/search.html?pagetype=3&stj2=search.search&stag=txt.index&ms_key=Avalon%E6%8E%A2%E7%B4%A2%E4%B9%8B%E6%97%85)
 
-
-运行github中的示例
-=====
-将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装[.Net4.0](http://dl.pconline.com.cn/download/54972.html)），
-点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。
-![Alt text](https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg)
 
 <h3>运行github中的示例</h3>
 <p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
@@ -118,20 +126,20 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 <h3>源码内部的模块划分</h3>
 <p>从上至下，依次是</p>
 - 全局变量及方法
-- avalon的静态方法定义区
-- modelFactory
-- JavaScript 底层补丁  
-- DOM 底层补丁    
+- avalon的静态成员定义区（主要是工具函数）
+- JavaScript 底层补丁
+- DOM        底层补丁
 - 配置系统
-- avalon的原型方法定义区
-- HTML处理(parseHTML, innerHTML, clearHTML)  
-- 自定义事件系统
-- 依赖调度系统  
+- 事件总线
+- VM工厂（modelFactory）
+- 监控数组工厂(Collection)
+- 依赖调度系统(dispatcher)
+- 标签处理(parseHTML, innerHTML, clearHTML)
 - 扫描系统
+- avalon的原型方法定义区（主要是DOM处理）
+- 指令定义区
 - 编译系统
-- 绑定处理系统
-- 监控数组
-- 自带过滤器 
+- 自带过滤器
 - AMD加载器
 - DOMReady
 

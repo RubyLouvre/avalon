@@ -7,19 +7,19 @@
         <script src="../avalon.js" ></script>
         <script>
             var $ = {
-                ajax: function(url, data, callback){
-                    setTimeout(function(){
+                ajax: function(url, data, callback) {
+                    setTimeout(function() {
                         callback(data)
                     }, 600)
                 }
             }
-           var vmodel = avalon.define("test", function(vm){
-                vm.current = {
+            var vmodel = avalon.define({
+                $id: "test",
+                current: {
                     name: "orign"
-                }
-                vm.click = function(){
-                    $.ajax("url",{name: Math.random().toString(32).substr(4,10)}, function(data){
-                        
+                },
+                click: function() {
+                    $.ajax("url", {name: Math.random().toString(32).substr(4, 10)}, function(data) {
                         vmodel.current.name = data.name
                     })
                 }
