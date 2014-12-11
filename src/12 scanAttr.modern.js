@@ -72,4 +72,4 @@ function scanAttr(elem, vmodels) {
 }
 
 var rnoscanAttrBinding = /^if|widget|repeat$/
-var rnoscanNodeBinding = /^each|with|html$/
+var rnoscanNodeBinding = /^each|with|html|include$/
