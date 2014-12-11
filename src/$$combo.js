@@ -54,13 +54,19 @@ var compatibleFiles = [
 ]
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = compatibleFiles.concat()
+modernFiles.splice(modernFiles.indexOf("03 es5.shim"), 1)
+modernFiles.splice(modernFiles.indexOf("07 modelFactory.shim"), 1)
 modernFiles[modernFiles.indexOf("01 variable")] = "01 variable.modern"
 modernFiles[modernFiles.indexOf("02 core")] = "02 core.modern"
 modernFiles[modernFiles.indexOf("04 dom.polyfill")] = "04 dom.polyfill.modern"
 modernFiles[modernFiles.indexOf("06 findNodes")] = "06 findNodes.modern"
+modernFiles[modernFiles.indexOf("10 HTML")] = "10 HTML.modern"
+modernFiles[modernFiles.indexOf("12 scanAttr")] = "12 scanAttr.modern"
+modernFiles[modernFiles.indexOf("12 scanTag")] = "12 scanTag.modern"
 modernFiles[modernFiles.indexOf("13 dom")] = "13 dom.modern"
 modernFiles[modernFiles.indexOf("14 parser")] = "14 parser.modern"
 modernFiles[modernFiles.indexOf(directive("text"))] = directive("text.modern")
+modernFiles[modernFiles.indexOf(directive("duplex.2"))] = directive("duplex.2.modern")
 modernFiles[modernFiles.indexOf("18 domReady")] = "18 domReady.modern"
 
 
@@ -76,12 +82,12 @@ repeatFiles[repeatFiles.indexOf(directive("repeat"))] = directive("repeat.next")
 
 //avalon.mobiles.js 所需要合并的子文件
 var mobileFiles = modernFiles.concat()
-modernFiles[modernFiles.indexOf("07 modelFactory.modern")] = "07 modelFactory.repeat"
-modernFiles[modernFiles.indexOf("08 Collection.modern")] = "08 Collection.repeat"
-modernFiles[modernFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
-repeatFiles[repeatFiles.indexOf(directive("repeat"))] = directive("repeat.next")
-modernFiles.pop()
-modernFiles.push("20 fastclick", "19 outer")
+mobileFiles[mobileFiles.indexOf("07 modelFactory")] = "07 modelFactory.repeat"
+mobileFiles[mobileFiles.indexOf("08 Collection")] = "08 Collection.repeat"
+mobileFiles[mobileFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
+mobileFiles[mobileFiles.indexOf(directive("repeat"))] = directive("repeat.next")
+mobileFiles.pop()
+mobileFiles.push("20 fastclick", "19 outer")
 
 //开始合并avalon.js
 new function() {
@@ -138,7 +144,7 @@ new function() {
         var readable2 = fs.createReadStream(path.join(curDir, 'avalon.repeat.js'))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.repeat.js"))
         readable2.pipe(writable2)
-    }, "avalon.repeat.js(ms-repeat升级版) " + version + " build in " + date + " \n")
+    }, "avalon.repeat.js(ms-repeat大更新) " + version + " build in " + date + " \n")
     comboRepeatFiles()
 }
 
@@ -154,7 +160,7 @@ new function() {
         var readable2 = fs.createReadStream(path.join(curDir, 'avalon.mobile.js'))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.mobile.js"))
         readable2.pipe(writable2)
-    }, "avalon.repeat.js(ms-repeat升级版) " + version + " build in " + date + " \n")
+    }, "avalon.mobile.js(支持触屏事件) " + version + " build in " + date + " \n")
     comboMobileFiles()
 }
 

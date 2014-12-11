@@ -21,8 +21,8 @@ function scanTag(elem, vmodels, node) {
         vmodels.cb = cb
         var name = node.name
         elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
-        createSignalTower(elem, newVmodel)
         avalon(elem).removeClass(name)
+        createSignalTower(elem, newVmodel)
     }
     scanAttr(elem, vmodels) //扫描特性节点
 }

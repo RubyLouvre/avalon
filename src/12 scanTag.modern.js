@@ -18,8 +18,6 @@ function scanTag(elem, vmodels, node) {
         elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         elem.classList.remove(node.name)
         createSignalTower(elem, newVmodel)
-        elem.setAttribute("avalonctrl", node.value)
-        newVmodel.$events.expr = elem.tagName + '[avalonctrl="' + node.value + '"]'
     }
     scanAttr(elem, vmodels) //扫描特性节点
 }
