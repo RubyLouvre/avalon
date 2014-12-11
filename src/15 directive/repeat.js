@@ -83,7 +83,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
-    if (!Array.isArray($repeat) && type !== "each") {
+    if (xtype === "object") {
         var pool = withProxyPool[$repeat.$id]
         if (!pool) {
             withProxyCount++

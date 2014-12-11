@@ -1906,7 +1906,7 @@ function scanTag(elem, vmodels, node) {
     if (typeof a === "string") {
         return
     } else if (node = b || c) {
-        var newVmodel = VMODELS[node.value]
+        var newVmodel = avalon.vmodels[node.value]
         if (!newVmodel) {
             return
         }
@@ -3961,7 +3961,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
-    if (!Array.isArray($repeat) && type !== "each") {
+    if (xtype === "object") {
         var pool = withProxyPool[$repeat.$id]
         if (!pool) {
             withProxyCount++
