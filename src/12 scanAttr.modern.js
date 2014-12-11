@@ -56,21 +56,20 @@ function scanAttr(elem, vmodels) {
         log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
     }
     bindings.sort(bindingSorter)
-    var scanChild = true
+    var scanNode = true
     for (var i = 0, binding; binding = bindings[i]; i++) {
         var type = binding.type
-        if (type === "if" || type == "widget") {
-            executeBindings([binding], vmodels)
-            break
-        } else if (type === "data") {
-            executeBindings([binding], vmodels)
-        } else {
-            executeBindings(bindings.slice(i), vmodels)
-            bindings = []
-            scanChild = binding.type !== "repeat"
+        if (rnoscanAttrBinding.test(type)) {
+            return executeBindings(bindings.slice(0, i + 1), vmodels)
+        } else if (scanNode) {
+            scanNode = !rnoscanNodeBinding.test(type)
         }
     }
-    if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
+    executeBindings(bindings, vmodels)
+    if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
+
+var rnoscanAttrBinding = /^if|widget|repeat$/
+var rnoscanNodeBinding = /^each|with|html$/

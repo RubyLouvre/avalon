@@ -56,24 +56,23 @@ function scanAttr(elem, vmodels) {
     if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
         log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
     }
-    var scanChild = true
+    var scanNode = true
     for (var i = 0, binding; binding = bindings[i]; i++) {
         var type = binding.type
-        if (type === "if" || type === "widget") {
-            executeBindings([binding], vmodels)
-            break
-        } else if (type === "data") {
-            executeBindings([binding], vmodels)
-        } else {
-            executeBindings(bindings.slice(i), vmodels)
-            bindings = []
-            scanChild = binding.type !== "repeat"
+        if (rnoscanAttrBinding.test(type)) {
+            return executeBindings(bindings.slice(0, i + 1), vmodels)
+        } else if (scanNode) {
+            scanNode = !rnoscanNodeBinding.test(type)
         }
     }
-    if (scanChild && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+    executeBindings(bindings, vmodels)
+
+    if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
+var rnoscanAttrBinding = /^if|widget|repeat$/
+var rnoscanNodeBinding = /^each|with|html$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
 if (!"1" [0]) {
