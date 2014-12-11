@@ -11,7 +11,7 @@ function scanTag(elem, vmodels, node) {
     if (typeof a === "string") {
         return
     } else if (node = b || c) {
-        var newVmodel = VMODELS[node.value]
+        var newVmodel = avalon.vmodels[node.value]
         if (!newVmodel) {
             return
         }
