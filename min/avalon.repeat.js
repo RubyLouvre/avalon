@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.repeat.js(ms-repeat大更新) 1.3.7.3 build in 2014.11.11 
+avalon.repeat.js(ms-repeat大更新) 1.3.7.3 build in 2014.11.12 
 _____
 support IE6+ and other browsers
  ==================================================*/
@@ -2016,7 +2016,7 @@ function scanAttr(elem, vmodels) {
     }
 }
 var rnoscanAttrBinding = /^if|widget|repeat$/
-var rnoscanNodeBinding = /^each|with|html$/
+var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
 if (!"1" [0]) {
@@ -4239,9 +4239,10 @@ function proxyCinerator(array) {
     var data
     for (var i in array) {
         var proxy = array[i]
-        while (data = proxy.$subscribers.pop()) {
-            disposeData(data)
-        }
+        if (proxy.$subscribers)
+            while (data = proxy.$subscribers.pop()) {
+                disposeData(data)
+            }
     }
     array.length = 0
 }

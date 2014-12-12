@@ -84,10 +84,14 @@ bindingHandlers.repeat = function(data, vmodels) {
         addSubscribers(data, $list)
     }
     if (xtype === "object") {
-        var pool = withProxyPool[$repeat.$id]
+        var id = $repeat.$id
+        var pool = id ? withProxyPool[id] : null
         if (!pool) {
-            withProxyCount++
-            pool = withProxyPool[$repeat.$id] = {}
+             pool = {}
+            if (id) {
+                withProxyCount++
+                withProxyPool[id] = pool
+            }
             for (var key in $repeat) {
                 if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
                     (function(k, v) {

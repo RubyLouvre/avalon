@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.3.7.3 build in 2014.11.11 
+avalon.mobile.js(支持触屏事件) 1.3.7.3 build in 2014.11.12 
 _____
 support IE6+ and other browsers
  ==================================================*/
@@ -1588,7 +1588,7 @@ function scanAttr(elem, vmodels) {
 }
 
 var rnoscanAttrBinding = /^if|widget|repeat$/
-var rnoscanNodeBinding = /^each|with|html$/
+var rnoscanNodeBinding = /^each|with|html|include$/
 var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
         r11a = /\|\|/g,
         r11b = /U2hvcnRDaXJjdWl0/g,
@@ -3548,9 +3548,10 @@ function proxyCinerator(array) {
     var data
     for (var i in array) {
         var proxy = array[i]
-        while (data = proxy.$subscribers.pop()) {
-            disposeData(data)
-        }
+        if (proxy.$subscribers)
+            while (data = proxy.$subscribers.pop()) {
+                disposeData(data)
+            }
     }
     array.length = 0
 }

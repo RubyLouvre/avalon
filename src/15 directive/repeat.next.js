@@ -333,9 +333,10 @@ function proxyCinerator(array) {
     var data
     for (var i in array) {
         var proxy = array[i]
-        while (data = proxy.$subscribers.pop()) {
-            disposeData(data)
-        }
+        if (proxy.$subscribers)
+            while (data = proxy.$subscribers.pop()) {
+                disposeData(data)
+            }
     }
     array.length = 0
 }
