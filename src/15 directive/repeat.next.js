@@ -51,7 +51,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var n = arr[0]
         for (var i = 0, v; v = vmodels[i++]; ) {
             if (v && v.hasOwnProperty(n)) {
-                var events = v[n].$events
+                var events = v[n].$events || {}
                 events[subscribers] = events[subscribers] || []
                 events[subscribers].push(data)
                 break
