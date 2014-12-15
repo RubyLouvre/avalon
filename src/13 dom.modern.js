@@ -175,6 +175,8 @@ var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 
 function parseData(data) {
     try {
+        if (typeof data === "object")
+            return data
         data = data === "true" ? true :
                 data === "false" ? false :
                 data === "null" ? null : +data + "" === data ? +data : rbrace.test(data) ? JSON.parse(data) : data

@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.3.7.3 build in 2014.11.12 
-_____
+avalon.mobile.js(支持触屏事件) 1.3.8 build in 2014.11.15 
+_______
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -1179,7 +1179,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+            // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1873,6 +1873,8 @@ var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 
 function parseData(data) {
     try {
+        if (typeof data === "object")
+            return data
         data = data === "true" ? true :
                 data === "false" ? false :
                 data === "null" ? null : +data + "" === data ? +data : rbrace.test(data) ? JSON.parse(data) : data
@@ -2158,19 +2160,33 @@ var getVariables = function(code) {
 function addAssign(vars, scope, name, data) {
     var ret = []
     var prefix = " = " + name + "."
-    var getter = data.value.trim()
+    var getter = data._value.trim()
+
     for (var i = vars.length, prop; prop = vars[--i]; ) {
         if (scope.hasOwnProperty(prop)) {
             var a = prop
-            if (scope + "" === "ProxyVModel") {
+            var fix$outer = false
+            if ( rproxy.test(scope.$id) ) {
+                fix$outer = prop === "$outer"
                 if (typeof scope[a] === "function" && a !== "$remove") {
                     a += "()"
                 }
-                if (scope.$subscribers)
+                if (Array.isArray(scope.$subscribers))
                     avalon.Array.ensure(scope.$subscribers, data)
             }
             ret.push(prop + prefix + a)
-
+            if (fix$outer) {
+                data._value = getter.replace(/\$outer\.\S+\b/g, function(_) {
+                    try {
+                        var fn = Function("vm", "return vm." + _)
+                        if (typeof fn(scope) === "function") {
+                            return _ + "()"
+                        }
+                    } catch (e) {
+                    }
+                    return _
+                })
+            }
             data.vars.push(prop)
             if (data.type === "duplex") {
                 if (prop !== a) { //如果a后面加了()，说明当前VM是代理VM
@@ -2226,6 +2242,7 @@ var rproxy = /(\$proxy\$[a-z]+)\d+$/
 function parseExpr(code, scopes, data) {
     var dataType = data.type
     var filters = data.filters ? data.filters.join("") : ""
+    data._value = code
     var exprId = scopes.map(function(el) {
         return String(el.$id).replace(rproxy, "$1")
     }) + code + dataType + filters
@@ -2248,6 +2265,7 @@ function parseExpr(code, scopes, data) {
     if (!assigns.length && dataType === "duplex") {
         return
     }
+    code = data._value
     if (dataType !== "duplex" && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
         //https://github.com/RubyLouvre/avalon/issues/583
         data.vars.forEach(function(v) {
@@ -2741,8 +2759,10 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
-            data.rollback  = function() {
-                ifGroup.removeChild(data.template)
+            data.rollback = function() {
+                if(elem.parentNode === ifGroup){
+                      ifGroup.removeChild(elem)
+                }
             }
         }
     }
@@ -3266,7 +3286,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var n = arr[0]
         for (var i = 0, v; v = vmodels[i++]; ) {
             if (v && v.hasOwnProperty(n)) {
-                var events = v[n].$events
+                var events = v[n].$events || {}
                 events[subscribers] = events[subscribers] || []
                 events[subscribers].push(data)
                 break
@@ -3281,7 +3301,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     data.handler = bindingExecutors.repeat
     data.$outer = {}
     for (var i = 0, p; p = vmodels[i++]; ) {
-        if (p + "" === "ProxyVModel") {
+        if (rproxy.test(p.$id)) {
             data.$outer = p
             break
         }
@@ -3477,7 +3497,7 @@ function withProxyFactory(key, host) {
         $id: ("$proxy$with" + Math.random()).replace(/0\./, ""),
         $subscribers: $subscribers,
         toString: function() {
-            return "ProxyVModel"
+            return "[ProxyVModel]"
         },
         $key: key,
         $val: function(v) {
@@ -3501,7 +3521,7 @@ function eachProxyFactory(index, host) {
         $$index: index,
         $outer: {},
         toString: function() {
-            return "ProxyVModel"
+            return "[ProxyVModel]"
         },
         $index: function() {//1.3.8新增
             if (arguments.length) {

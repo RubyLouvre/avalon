@@ -38,19 +38,33 @@ var getVariables = function(code) {
 function addAssign(vars, scope, name, data) {
     var ret = []
     var prefix = " = " + name + "."
-    var getter = data.value.trim()
+    var getter = data._value.trim()
+
     for (var i = vars.length, prop; prop = vars[--i]; ) {
         if (scope.hasOwnProperty(prop)) {
             var a = prop
-            if (scope + "" === "ProxyVModel") {
+            var fix$outer = false
+            if ( rproxy.test(scope.$id) ) {
+                fix$outer = prop === "$outer"
                 if (typeof scope[a] === "function" && a !== "$remove") {
                     a += "()"
                 }
-                if (scope.$subscribers)
+                if (Array.isArray(scope.$subscribers))
                     avalon.Array.ensure(scope.$subscribers, data)
             }
             ret.push(prop + prefix + a)
-
+            if (fix$outer) {
+                data._value = getter.replace(/\$outer\.\S+\b/g, function(_) {
+                    try {
+                        var fn = Function("vm", "return vm." + _)
+                        if (typeof fn(scope) === "function") {
+                            return _ + "()"
+                        }
+                    } catch (e) {
+                    }
+                    return _
+                })
+            }
             data.vars.push(prop)
             if (data.type === "duplex") {
                 if (prop !== a) { //如果a后面加了()，说明当前VM是代理VM
@@ -106,6 +120,7 @@ var rproxy = /(\$proxy\$[a-z]+)\d+$/
 function parseExpr(code, scopes, data) {
     var dataType = data.type
     var filters = data.filters ? data.filters.join("") : ""
+    data._value = code
     var exprId = scopes.map(function(el) {
         return String(el.$id).replace(rproxy, "$1")
     }) + code + dataType + filters
@@ -128,6 +143,7 @@ function parseExpr(code, scopes, data) {
     if (!assigns.length && dataType === "duplex") {
         return
     }
+    code = data._value
     if (dataType !== "duplex" && (code.indexOf("||") > -1 || code.indexOf("&&") > -1)) {
         //https://github.com/RubyLouvre/avalon/issues/583
         data.vars.forEach(function(v) {

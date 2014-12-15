@@ -66,7 +66,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     data.handler = bindingExecutors.repeat
     data.$outer = {}
     for (var i = 0, p; p = vmodels[i++]; ) {
-        if (p + "" === "ProxyVModel") {
+        if (rproxy.test(p.$id)) {
             data.$outer = p
             break
         }
@@ -262,7 +262,7 @@ function withProxyFactory(key, host) {
         $id: ("$proxy$with" + Math.random()).replace(/0\./, ""),
         $subscribers: $subscribers,
         toString: function() {
-            return "ProxyVModel"
+            return "[ProxyVModel]"
         },
         $key: key,
         $val: function(v) {
@@ -286,7 +286,7 @@ function eachProxyFactory(index, host) {
         $$index: index,
         $outer: {},
         toString: function() {
-            return "ProxyVModel"
+            return "[ProxyVModel]"
         },
         $index: function() {//1.3.8新增
             if (arguments.length) {

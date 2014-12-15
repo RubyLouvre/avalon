@@ -23,8 +23,10 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.parentNode.replaceChild(node, elem)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
-            data.rollback  = function() {
-                ifGroup.removeChild(data.template)
+            data.rollback = function() {
+                if(elem.parentNode === ifGroup){
+                      ifGroup.removeChild(elem)
+                }
             }
         }
     }

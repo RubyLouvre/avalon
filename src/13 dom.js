@@ -196,6 +196,8 @@ avalon.fn.mix({
 
 function parseData(data) {
     try {
+        if(typeof data === "object")
+            return data
         data = data === "true" ? true :
                 data === "false" ? false :
                 data === "null" ? null : +data + "" === data ? +data : rbrace.test(data) ? avalon.parseJSON(data) : data

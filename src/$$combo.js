@@ -5,7 +5,7 @@ var curDir = process.cwd() //当前目录
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
 var Buffer = require('buffer').Buffer
 var now = new Date
-var version = "1.3.7.3"
+var version = "1.3.8"
 var date = now.getFullYear() + "." + now.getMonth() + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
@@ -42,14 +42,14 @@ function comboFiles(files, writer, lastCallback, statement) {
 var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
-    "07 modelFactory", "07 modelFactory.shim", "08 Collection", "09 dispatcher",
+    "07 modelFactory.repeat", "07 modelFactory.shim", "08 Collection.repeat", "09 dispatcher",
     "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
-    "13 dom", "14 parser", "14 parser.share",
+    "13 dom", "14 parser", "14 parser.share.repeat",
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
-    directive("duplex.3"), directive("repeat"),
+    directive("duplex.3"), directive("repeat.next"),
     "16 filter", "17 loader", "18 domReady", "19 outer"
 ]
 //avalon.modern.js 所需要合并的子文件
@@ -74,18 +74,18 @@ modernFiles[modernFiles.indexOf("18 domReady")] = "18 domReady.modern"
 var shimFiles = compatibleFiles.slice(0, -3).concat("18 domReady.noop", "19 outer")
 
 //avalon.repeat.js 所需要合并的子文件
-var repeatFiles = compatibleFiles.concat()
-repeatFiles[repeatFiles.indexOf("07 modelFactory")] = "07 modelFactory.repeat"
-repeatFiles[repeatFiles.indexOf("08 Collection")] = "08 Collection.repeat"
-repeatFiles[repeatFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
-repeatFiles[repeatFiles.indexOf(directive("repeat"))] = directive("repeat.next")
+//var repeatFiles = compatibleFiles.concat()
+//repeatFiles[repeatFiles.indexOf("07 modelFactory")] = "07 modelFactory.repeat"
+//repeatFiles[repeatFiles.indexOf("08 Collection")] = "08 Collection.repeat"
+//repeatFiles[repeatFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
+//repeatFiles[repeatFiles.indexOf(directive("repeat"))] = directive("repeat.next")
 
 //avalon.mobiles.js 所需要合并的子文件
 var mobileFiles = modernFiles.concat()
-mobileFiles[mobileFiles.indexOf("07 modelFactory")] = "07 modelFactory.repeat"
-mobileFiles[mobileFiles.indexOf("08 Collection")] = "08 Collection.repeat"
-mobileFiles[mobileFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
-mobileFiles[mobileFiles.indexOf(directive("repeat"))] = directive("repeat.next")
+//mobileFiles[mobileFiles.indexOf("07 modelFactory")] = "07 modelFactory.repeat"
+//mobileFiles[mobileFiles.indexOf("08 Collection")] = "08 Collection.repeat"
+//mobileFiles[mobileFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
+//mobileFiles[mobileFiles.indexOf(directive("repeat"))] = directive("repeat.next")
 mobileFiles.pop()
 mobileFiles.push("20 fastclick", "19 outer")
 
@@ -134,19 +134,19 @@ new function() {
 }
 
 //开始合并avalon.repeat.js
-new function() {
-    var writable = fs.createWriteStream(path.join(curDir, 'avalon.repeat.js'), {
-        encoding: "utf8"
-    })
-    writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
-    var comboRepeatFiles = comboFiles(repeatFiles, writable, function() {
-        //更新avalon.test中的文件
-        var readable2 = fs.createReadStream(path.join(curDir, 'avalon.repeat.js'))
-        var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.repeat.js"))
-        readable2.pipe(writable2)
-    }, "avalon.repeat.js(ms-repeat大更新) " + version + " build in " + date + " \n")
-    comboRepeatFiles()
-}
+//new function() {
+//    var writable = fs.createWriteStream(path.join(curDir, 'avalon.repeat.js'), {
+//        encoding: "utf8"
+//    })
+//    writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+//    var comboRepeatFiles = comboFiles(repeatFiles, writable, function() {
+//        //更新avalon.test中的文件
+//        var readable2 = fs.createReadStream(path.join(curDir, 'avalon.repeat.js'))
+//        var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test',"src",  "avalon.repeat.js"))
+//        readable2.pipe(writable2)
+//    }, "avalon.repeat.js(ms-repeat大更新) " + version + " build in " + date + " \n")
+//    comboRepeatFiles()
+//}
 
 
 //开始合并avalon.mobile.js
