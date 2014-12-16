@@ -87,7 +87,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var id = $repeat.$id
         var pool = id ? withProxyPool[id] : null
         if (!pool) {
-             pool = {}
+            pool = {}
             if (id) {
                 withProxyCount++
                 withProxyPool[id] = pool
@@ -95,10 +95,10 @@ bindingHandlers.repeat = function(data, vmodels) {
             for (var key in $repeat) {
                 if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
                     (function(k, v) {
-                        pool[k] = createWithProxy(k, v, {})
-                        pool[k].$watch("$val", function(val) {
-                            $repeat[k] = val //#303
-                        })
+                        pool[k] = createWithProxy(k, v, $repeat)
+                        //    pool[k].$watch("$val", function(val) {
+                        //        $repeat[k] = val //#303
+                        //     })
                     })(key, $repeat[key])
                 }
             }
@@ -294,6 +294,27 @@ function createWithProxy(key, val, $outer) {
         $key: key,
         $outer: $outer,
         $val: val
+    }, {
+        $val: 1,
+        $key: 1
+    })
+    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    return proxy
+}
+
+function createWithProxy(key, val, host) {
+    var proxy = modelFactory({
+        $key: key,
+        $outer: {},
+        $host: host,
+        $val: {
+            get: function() {
+                return this.$host[this.$key]
+            },
+            set: function(v) {
+                this.$host[this.$key] = v
+            }
+        }
     }, {
         $val: 1,
         $key: 1
