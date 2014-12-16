@@ -60,7 +60,8 @@ try {
     canHideOwn = false
 }
 var fakeHead = {
-    nodeType: 1
+    nodeType: 1,
+    sourceIndex: 1
 }
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
@@ -204,6 +205,7 @@ function modelFactory($scope, $special, $model) {
         }
         $vmodel[i] = fn
     }
+
 
     if (canHideOwn) {
         Object.defineProperty($vmodel, "hasOwnProperty", {

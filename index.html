@@ -5,20 +5,29 @@
         <title>测试用例</title>
         <script src="src/avalon.js"></script>
         <script>
-            avalon.define({
+          var vm =  avalon.define({
                 $id: "test",
                 $skipArray: ["aaa"],
                 aaa: {
                     a: 1,
                     b: 1,
                     c: 1
+                },
+                fn: function(){
+                    console.log(this)
                 }
             })
+            
+            setTimeout(function(){
+                vm.fn()
+            }, 1000)
+          
 
         </script>
     </head>
     <body ms-controller="test">
         <h2>明天要处理的问题</h2>
         <div ms-with="aaa"><p>{{$key}}--{{$val}}</p></div>
+        <div ms-click="fn">eeeeeeee</div>
     </body>
 </html>

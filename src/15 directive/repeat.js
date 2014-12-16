@@ -149,8 +149,8 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var last = proxies.length - 1
                 for (; el = proxies[pos]; pos++) {
                     el.$index = pos
-                    el.$first = pos === 0
-                    el.$last = pos === last
+                 //   el.$first = pos === 0
+                 //   el.$last = pos === last
                 }
                 break
             case "clear":
@@ -289,18 +289,18 @@ function calculateFragmentGroup(data) {
 // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
 var watchEachOne = oneObject("$index,$first,$last")
 
-function createWithProxy(key, val, $outer) {
-    var proxy = modelFactory({
-        $key: key,
-        $outer: $outer,
-        $val: val
-    }, {
-        $val: 1,
-        $key: 1
-    })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
-    return proxy
-}
+//function createWithProxy(key, val, $outer) {
+//    var proxy = modelFactory({
+//        $key: key,
+//        $outer: $outer,
+//        $val: val
+//    }, {
+//        $val: 1,
+//        $key: 1
+//    })
+//    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+//    return proxy
+//}
 
 function createWithProxy(key, val, host) {
     var proxy = modelFactory({
@@ -358,6 +358,42 @@ function getEachProxy(index, item, data, last) {
     proxy.$watch(param, function(val) {
         data.$repeat.set(proxy.$index, val)
     })
+    proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
+    return proxy
+}
+
+
+function getEachProxy(index, item, data, last) {
+
+    var proxy = modelFactory({
+        $$host: data.$repeat,
+        $remove: function() {
+            return data.$repeat.removeAt(proxy.$index)
+        },
+        el: {
+            get: function() {
+               return this.$$host[this.$index]
+            }
+        },
+        $index: index,
+        $first: {
+            get: function() {
+                return this.$index == 0
+            }
+        },
+        $last: {
+            get: function() {
+                return this.$index == this.$$host.length - 1
+            }
+        },
+        $outer: {}
+    }, watchEachOne)
+//    proxy.$watch(param, function(val) {
+//        data.$repeat.set(proxy.$index, val)
+//    })
+    var e = proxy.$events
+    e.$index = e.$first = e.$last = e.el
+    console.log(e)
     proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
     return proxy
 }
