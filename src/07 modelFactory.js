@@ -59,6 +59,9 @@ try {
 } catch (e) {
     canHideOwn = false
 }
+var fakeHead = {
+    nodeType: 1
+}
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
         var arr = $scope.concat()
@@ -126,7 +129,7 @@ function modelFactory($scope, $special, $model) {
                 computedProperties.push(function() {
                     Registry[expose] = {
                         evaluator: accessor,
-                        element: head,
+                        element: fakeHead,
                         type: "computed::" + name,
                         handler: noop,
                         args: []
