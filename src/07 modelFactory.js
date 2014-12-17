@@ -61,8 +61,7 @@ try {
 }
 var fakeHead = {
     nodeType: 1,
-    sourceIndex: 1,
-    parentNode: 1
+    sourceIndex: 0
 }
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
@@ -116,14 +115,12 @@ function modelFactory($scope, $special, $model) {
                             $events[name] = backup
                         }
                     } else {
-                        if (avalon.openComputedCollect) { // 收集视图刷新函数
-                            collectSubscribers($events[name])
-                        }
+                        //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
                     }
                     newValue = $model[name] = getter.call($vmodel) //同步$model
                     if (!isEqual(oldValue, newValue)) {
-                        withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
-                        notifySubscribers($events[name]) //同步视图
+                        //withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
+                        //notifySubscribers($events[name]) //同步视图
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                     return newValue
