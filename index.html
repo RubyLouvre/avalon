@@ -7,21 +7,16 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-               // $skipArray: ["aaa"],
+                // $skipArray: ["aaa"],
                 aaa: {
                     a: 1,
                     b: 1,
                     c: 1
                 },
-                first: {},
+                array: [1, 2, 3, 4],
                 b: "right"
             })
-            
-            setTimeout(function(){
-                vm.first = {
-                    array: [1,2,3,4]
-                }
-            }, 2000)
+
 
 
 
@@ -32,12 +27,16 @@
         <div style="overflow: hidden">
             <span ms-css-float="b">明天要处理的问题</span>
         </div>
-        <div ms-repeat="first.array">
-            {{el}}
-        </div>
-<!--        <div>{{aaa.a}}</div>
-        <div>{{aaa.b}}</div>
-        <div>{{aaa.c}}</div>
-        <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>-->
+
+        <ul>
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
+        <ol>
+            <li ms-repeat-item="array">{{el}}</li>
+        </ol>
+        <!--        <div>{{aaa.a}}</div>
+                <div>{{aaa.b}}</div>
+                <div>{{aaa.c}}</div>
+                <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>-->
     </body>
 </html>

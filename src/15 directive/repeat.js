@@ -310,6 +310,53 @@ function withProxyFactory(key, host) {
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
 }
+var eachProxyNames = {el: 1}
+function eachProxyFactory(item) {
+    var source = {
+        $host: [],
+        $index: 0,
+        $first: {
+            get: function() {
+                return this.$index === 0
+            }
+        },
+        $last: {
+            get: function() {
+                var last = this.host.length - 1
+                return this.$index === last
+            }
+        },
+        $odd: {
+            get: function() {//1.3.8新增
+                return this.$index % 2
+            }
+        },
+        $even: {
+            get: function() {//1.3.8新增
+                return this.$index & 1 === 0
+            }
+        },
+        $remove: avalon.noop
+    }
+    source[item] = {
+        get: function() {
+            this.$host[this.$index]
+        },
+        set: function(val) {
+            this.$host.set(this.$index, val)
+        }
+    }
+    var second = {
+        $last: 1,
+        $even: 1,
+        $odd: 1,
+        $first: 1,
+        $index: 1
+    }
+    var proxy = modelFactory(source, second)
+    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    return proxy
+}
 
 
 var eachProxyPool = []
