@@ -148,3 +148,9 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file src/avalon.mobile.
 <h3>LOGO来历</h3>
 
 http://tieba.baidu.com/p/1350048586
+<pre>
+MVVM最先使用是在WPF，对于微软来说是从WinForm的MVP和其余的MVC衍生而来，
+比MVP/MVC做到更多的就是数据的Binding，
+是的数据的变化能即时以增量的形式反馈到View上。
+同理的实现好像还有iOS delegate，为MVC提供类似binding的Publish/Subscribe功能
+</pre>

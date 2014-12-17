@@ -61,7 +61,8 @@ try {
 }
 var fakeHead = {
     nodeType: 1,
-    sourceIndex: 1
+    sourceIndex: 1,
+    parentNode: 1
 }
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
