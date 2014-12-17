@@ -13,20 +13,19 @@
                     b: 1,
                     c: 1
                 },
-                fn: function(){
-                    console.log(this)
-                }
+                b: "right"
             })
             
-            setTimeout(function(){
-                vm.fn()
-            }, 1000)
+          
           
 
         </script>
     </head>
     <body ms-controller="test">
-        <h2>明天要处理的问题</h2>
+        <div style="overflow: hidden">
+              <span ms-css-float="b">明天要处理的问题</span>
+        </div>
+      
         <div ms-with="aaa"><p>{{$key}}--{{$val}}</p></div>
         <div ms-click="fn">eeeeeeee</div>
     </body>
