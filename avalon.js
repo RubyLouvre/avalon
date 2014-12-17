@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.3.8 build in 2014.12.17 
+avalon.js 1.3.8 build in 2014.12.18 
 __________________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -4192,7 +4192,11 @@ function withProxyFactory(key, host) {
         $key: 1
     })
     var pond = proxy.$events
-    pond.$val = pond.$key = host.$events ? host.$events[key] : []
+    if (host.$events) {
+        pond.$val = pond.$key = host.$events[key]
+    } else {
+        proxy.$events = {}
+    }
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
 }

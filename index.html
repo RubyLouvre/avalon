@@ -5,7 +5,7 @@
         <title>测试用例</title>
         <script src="src/avalon.js"></script>
         <script>
-          var vm =  avalon.define({
+            var vm = avalon.define({
                 $id: "test",
                // $skipArray: ["aaa"],
                 aaa: {
@@ -15,17 +15,19 @@
                 },
                 b: "right"
             })
-            
-          
-          
+
+
+
 
         </script>
     </head>
     <body ms-controller="test">
         <div style="overflow: hidden">
-              <span ms-css-float="b">明天要处理的问题</span>
+            <span ms-css-float="b">明天要处理的问题</span>
         </div>
-      
+        <div>{{aaa.a}}</div>
+        <div>{{aaa.b}}</div>
+        <div>{{aaa.c}}</div>
         <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>
     </body>
 </html>

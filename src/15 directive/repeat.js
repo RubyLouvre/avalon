@@ -310,7 +310,11 @@ function withProxyFactory(key, host) {
         $key: 1
     })
     var pond = proxy.$events
-    pond.$val = pond.$key = host.$events ? host.$events[key] : []
+    if (host.$events) {
+        pond.$val = pond.$key = host.$events[key]
+    } else {
+        proxy.$events = {}
+    }
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
 }
