@@ -84,22 +84,13 @@ bindingHandlers.repeat = function(data, vmodels) {
         addSubscribers(data, $list)
     }
     if (xtype === "object") {
-        var id = $repeat.$id
-        var pool = id ? withProxyPool[id] : null
+        var $events = $repeat.$events || {}
+        var pool = $events.$withProxyPool
         if (!pool) {
-            pool = {}
-            if (id) {
-                withProxyCount++
-                withProxyPool[id] = pool
-            }
+            pool = $events.$withProxyPool = {}
             for (var key in $repeat) {
                 if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                    (function(k, v) {
-                        pool[k] = createWithProxy(k, v, $repeat)
-                        //    pool[k].$watch("$val", function(val) {
-                        //        $repeat[k] = val //#303
-                        //     })
-                    })(key, $repeat[key])
+                    pool[key] = withProxyFactory(key, $repeat)
                 }
             }
         }
@@ -289,15 +280,37 @@ function calculateFragmentGroup(data) {
 // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
 var watchEachOne = oneObject("$index,$first,$last")
 
-function createWithProxy(key, val, $outer) {
+//function createWithProxy(key, val, $outer) {
+//    var proxy = modelFactory({
+//        $key: key,
+//        $outer: $outer,
+//        $val: val
+//    }, {
+//        $val: 1,
+//        $key: 1
+//    })
+//    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+//    return proxy
+//}
+function withProxyFactory(key, host) {
     var proxy = modelFactory({
         $key: key,
-        $outer: $outer,
-        $val: val
+        $outer: {},
+        $host: host,
+        $val: {
+            get: function() {
+                return this.$host[this.$key]
+            },
+            set: function(val) {
+                this.$host[this.$key] = val
+            }
+        }
     }, {
         $val: 1,
         $key: 1
     })
+    var pond = proxy.$events
+    pond.$val = pond.$key = host.$events ? host.$events[key] : []
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
 }

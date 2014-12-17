@@ -7,7 +7,7 @@
         <script>
           var vm =  avalon.define({
                 $id: "test",
-                $skipArray: ["aaa"],
+               // $skipArray: ["aaa"],
                 aaa: {
                     a: 1,
                     b: 1,
@@ -26,7 +26,6 @@
               <span ms-css-float="b">明天要处理的问题</span>
         </div>
       
-        <div ms-with="aaa"><p>{{$key}}--{{$val}}</p></div>
-        <div ms-click="fn">eeeeeeee</div>
+        <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>
     </body>
 </html>

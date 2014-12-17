@@ -38,10 +38,11 @@ var ClassListMethods = {
     __set: function(cls) {
         cls = cls.trim()
         var node = this.node
-        if (typeof node.className === "string") {
-            node.className = cls
-        } else { //SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
+        if (rsvg.test(node)) {
+            //SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
             node.setAttribute("class", cls)
+        } else {
+            node.className = cls
         }
     } //toggle存在版本差异，因此不使用它
 }
@@ -196,7 +197,7 @@ avalon.fn.mix({
 
 function parseData(data) {
     try {
-        if(typeof data === "object")
+        if (typeof data === "object")
             return data
         data = data === "true" ? true :
                 data === "false" ? false :
@@ -251,7 +252,7 @@ function getWindow(node) {
 var cssHooks = avalon.cssHooks = {}
 var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
 var cssMap = {
-    "float":  W3C ? "cssFloat" : "styleFloat"
+    "float": W3C ? "cssFloat" : "styleFloat"
 }
 avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
