@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.3.8 build in 2014.12.16 
+avalon.js 1.3.8 build in 2014.12.17 
 __________________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -991,6 +991,10 @@ try {
 } catch (e) {
     canHideOwn = false
 }
+var fakeHead = {
+    nodeType: 1,
+    sourceIndex: 1
+}
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
         var arr = $scope.concat()
@@ -1058,7 +1062,7 @@ function modelFactory($scope, $special, $model) {
                 computedProperties.push(function() {
                     Registry[expose] = {
                         evaluator: accessor,
-                        element: head,
+                        element: fakeHead,
                         type: "computed::" + name,
                         handler: noop,
                         args: []
@@ -1133,6 +1137,7 @@ function modelFactory($scope, $special, $model) {
         }
         $vmodel[i] = fn
     }
+
 
     if (canHideOwn) {
         Object.defineProperty($vmodel, "hasOwnProperty", {
@@ -2428,7 +2433,7 @@ function getWindow(node) {
 var cssHooks = avalon.cssHooks = {}
 var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
 var cssMap = {
-    "float": "cssFloat"
+    "float":  W3C ? "cssFloat" : "styleFloat"
 }
 avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
@@ -3977,9 +3982,9 @@ bindingHandlers.repeat = function(data, vmodels) {
                 if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
                     (function(k, v) {
                         pool[k] = createWithProxy(k, v, $repeat)
-                    //    pool[k].$watch("$val", function(val) {
-                    //        $repeat[k] = val //#303
-                   //     })
+                        //    pool[k].$watch("$val", function(val) {
+                        //        $repeat[k] = val //#303
+                        //     })
                     })(key, $repeat[key])
                 }
             }
@@ -4183,26 +4188,7 @@ function createWithProxy(key, val, $outer) {
     return proxy
 }
 
-function createWithProxy(key, val, host) {
-    var proxy = modelFactory({
-        $key: key,
-        $outer:{},
-        $host: host,
-        $val: {
-            get: function() {
-                return this.$host[this.$key]
-            },
-            set: function(v) {
-                this.$host[this.$key] = v
-            }
-        }
-    }, {
-        $val: 1,
-        $key: 1
-    })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
-    return proxy
-}
+
 var eachProxyPool = []
 
 function getEachProxy(index, item, data, last) {
@@ -4242,6 +4228,8 @@ function getEachProxy(index, item, data, last) {
     proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
     return proxy
 }
+
+
 
 function recycleEachProxies(array) {
     for (var i = 0, el; el = array[i++]; ) {

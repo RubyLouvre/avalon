@@ -149,8 +149,8 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var last = proxies.length - 1
                 for (; el = proxies[pos]; pos++) {
                     el.$index = pos
-                 //   el.$first = pos === 0
-                 //   el.$last = pos === last
+                    el.$first = pos === 0
+                    el.$last = pos === last
                 }
                 break
             case "clear":
