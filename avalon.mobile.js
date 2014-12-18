@@ -3205,7 +3205,27 @@ bindingHandlers.repeat = function(data, vmodels) {
         freturn = true
         avalon.log("warning:" + data.value + "编译出错")
     }
+
+    var arr = data.value.split(".") || []
+    if (arr.length > 1) {
+        arr.pop()
+        var n = arr[0]
+        for (var i = 0, v; v = vmodels[i++]; ) {
+            if (v && v.hasOwnProperty(n)) {
+                var events = v[n].$events || {}
+                events[subscribers] = events[subscribers] || []
+                events[subscribers].push(data)
+                break
+            }
+        }
+    }
     var elem = data.element
+    if (freturn) {
+        return avalon(elem).addClass("avalonHide")
+    }
+
+    avalon(elem).removeClass("avalonHide")
+
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
@@ -3237,22 +3257,6 @@ bindingHandlers.repeat = function(data, vmodels) {
         parentNode.removeChild(data.endRepeat)
         target = data.element = data.type === "repeat" ? target : parentNode
         data.group = target.setAttribute(data.name, data.value)
-    }
-    var arr = data.value.split(".") || []
-    if (arr.length > 1) {
-        arr.pop()
-        var n = arr[0]
-        for (var i = 0, v; v = vmodels[i++]; ) {
-            if (v && v.hasOwnProperty(n)) {
-                var events = v[n].$events
-                events[subscribers] = events[subscribers] || []
-                events[subscribers].push(data)
-                break
-            }
-        }
-    }
-    if (freturn) {
-        return
     }
 
     data.handler = bindingExecutors.repeat
@@ -3470,18 +3474,6 @@ function calculateFragmentGroup(data) {
 // 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
 var watchEachOne = oneObject("$index,$first,$last")
 
-//function createWithProxy(key, val, $outer) {
-//    var proxy = modelFactory({
-//        $key: key,
-//        $outer: $outer,
-//        $val: val
-//    }, {
-//        $val: 1,
-//        $key: 1
-//    })
-//    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
-//    return proxy
-//}
 function withProxyFactory(key, host) {
     var proxy = modelFactory({
         $key: key,
@@ -3507,6 +3499,65 @@ function withProxyFactory(key, host) {
     }
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
+}
+var eachProxyNames = {el: 1}
+function eachProxyFactory(item) {
+    var source = {
+        $host: [],
+        $index: 0,
+        $first: {
+            get: function() {
+                return this.$index === 0
+            }
+        },
+        $last: {
+            get: function() {
+                var last = this.host.length - 1
+                return this.$index === last
+            }
+        },
+        $odd: {
+            get: function() {//1.3.8新增
+                return this.$index % 2
+            }
+        },
+        $even: {
+            get: function() {//1.3.8新增
+                return this.$index & 1 === 0
+            }
+        },
+        $remove: avalon.noop
+    }
+    source[item] = {
+        get: function() {
+            this.$host[this.$index]
+        },
+        set: function(val) {
+            this.$host.set(this.$index, val)
+        }
+    }
+    var second = {
+        $last: 1,
+        $even: 1,
+        $odd: 1,
+        $first: 1,
+        $index: 1
+    }
+    var proxy = modelFactory(source, second)
+    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    return proxy
+}
+
+function proxyCinerator(array) {
+    var data
+    for (var i in array) {
+        var proxy = array[i]
+        if (proxy.$subscribers)
+            while (data = proxy.$subscribers.pop()) {
+                disposeData(data)
+            }
+    }
+    array.length = 0
 }
 
 

@@ -358,6 +358,18 @@ function eachProxyFactory(item) {
     return proxy
 }
 
+function proxyCinerator(array) {
+    var data
+    for (var i in array) {
+        var proxy = array[i]
+        if (proxy.$subscribers)
+            while (data = proxy.$subscribers.pop()) {
+                disposeData(data)
+            }
+    }
+    array.length = 0
+}
+
 
 var eachProxyPool = []
 

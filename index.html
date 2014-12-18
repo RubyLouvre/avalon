@@ -16,7 +16,13 @@
                 array: [1, 2, 3, 4],
                 b: "right"
             })
-
+            setTimeout(function() {
+                vm.aaa = {
+                    c: 44,
+                    d: 44,
+                    e: 44
+                }
+            }, 3000)
 
 
 
@@ -36,7 +42,7 @@
         </ol>
         <!--        <div>{{aaa.a}}</div>
                 <div>{{aaa.b}}</div>
-                <div>{{aaa.c}}</div>
-                <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>-->
+                <div>{{aaa.c}}</div>-->
+        <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>
     </body>
 </html>
