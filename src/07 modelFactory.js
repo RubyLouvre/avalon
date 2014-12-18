@@ -280,7 +280,8 @@ function updateChild(parent, name, value, valueType) {
         var iterators = parent.$events[name]
         var pool = son.$events.$withProxyPool
         if (pool) {
-            proxyCinerator(pool)
+            recycleProxies(pool, "with")
+           // proxyCinerator(pool)
             son.$events.$withProxyPool = null
         }
         var ret = modelFactory(value)

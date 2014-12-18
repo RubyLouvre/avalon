@@ -14,35 +14,43 @@
                     c: 1
                 },
                 array: [1, 2, 3, 4],
-                b: "right"
+                array2: [{a: 1}, {a: 2}, {a: 3}, {a: 4}]
             })
             setTimeout(function() {
+                vm.array2.pop()
+                vm.array2.pop()
                 vm.aaa = {
-                    c: 44,
-                    d: 44,
-                    e: 44
+                    xx: 33,
+                    yy: 66
                 }
-            }, 3000)
-
+            }, 1200)
+            setTimeout(function() {
+                vm.array.push(6)
+                vm.aaa = {
+                    xx: 444,
+                    yy: 77,
+                    zz: 55
+                }
+            }, 2400)
 
 
 
         </script>
     </head>
     <body ms-controller="test">
-        <div style="overflow: hidden">
-            <span ms-css-float="b">明天要处理的问题</span>
-        </div>
 
         <ul>
-            <li ms-repeat="array">{{el}}</li>
+            <li ms-repeat="array" ms-click='$remove'>{{el}}xxx{{$last}}xxx</li>
         </ul>
-        <ol>
-            <li ms-repeat-item="array">{{el}}</li>
-        </ol>
-        <!--        <div>{{aaa.a}}</div>
-                <div>{{aaa.b}}</div>
-                <div>{{aaa.c}}</div>-->
+<!--        <ul>
+            <li ms-repeat="array2">{{el.a}}</li>
+        </ul>
+        <ul>
+            <li ms-repeat-item="array">{{item}}!!!</li>
+        </ul>-->
+        <div>{{aaa.a}}</div>
+        <div>{{aaa.b}}</div>
+        <div>{{aaa.c}}</div>
         <div ms-with="aaa"><p>{{$key}}--{{$val}} <input ms-duplex="$val"/></p></div>
     </body>
 </html>
