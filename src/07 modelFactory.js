@@ -146,9 +146,9 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
+                            childVmodel = accessor.child = neutrinoFactory($vmodel, name, newValue, valueType)
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            var fn = rebindings[childVmodel.$id]
+                            var fn = midway[childVmodel.$id]
                             fn && fn() //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -255,18 +255,12 @@ var descriptorFactory = W3C ? function(obj) {
     return a
 }
 
-//ms-with, ms-repeat绑定生成的代理对象储存池
-var rebindings = {}
+//ms-with,ms-each, ms-repeat绑定生成的代理对象储存池
+var midway  = {}
 
-function updateWithProxy($id, name, val) {
-    var pool = withProxyPool[$id]
-    if (pool && pool[name]) {
-        pool[name].$val = val
-    }
-}
 //应用于第2种accessor
 
-function updateChild(parent, name, value, valueType) {
+function neutrinoFactory(parent, name, value, valueType) {
     //a为原来的VM， b为新数组或新对象
     var son = parent[name]
     if (valueType === "array") {
@@ -281,12 +275,11 @@ function updateChild(parent, name, value, valueType) {
         var pool = son.$events.$withProxyPool
         if (pool) {
             recycleProxies(pool, "with")
-           // proxyCinerator(pool)
             son.$events.$withProxyPool = null
         }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
-        rebindings[ret.$id] = function(data) {
+        midway[ret.$id] = function(data) {
             while (data = iterators.shift()) {
                 (function(el) {
                     if (el.type) { //重新绑定
@@ -297,7 +290,7 @@ function updateChild(parent, name, value, valueType) {
                     }
                 })(data)
             }
-            delete rebindings[ret.$id]
+            delete midway[ret.$id]
         }
         return ret
     }

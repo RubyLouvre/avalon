@@ -304,7 +304,7 @@ function eachProxyFactory(name) {
     }
     var proxy = modelFactory(source, second)
     var e = proxy.$events
-    e.$first = e.$last = e.$index
+    e[name] = e.$first = e.$last = e.$index
     proxy.$id = ("$proxy$each" + Math.random()).replace(/0\./, "")
     return proxy
 }
@@ -334,9 +334,9 @@ function eachProxyAgent(index, data) {
     return proxy
 }
 
-function withProxyFactory(key) {
+function withProxyFactory() {
     var proxy = modelFactory({
-        $key: key,
+        $key: "",
         $outer: {},
         $host: {},
         $val: {
@@ -348,8 +348,7 @@ function withProxyFactory(key) {
             }
         }
     }, {
-        $val: 1,
-        $key: 1
+        $val: 1
     })
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
@@ -358,9 +357,10 @@ function withProxyFactory(key) {
 function withProxyAgent(key, data) {
     var proxy = withProxyPool.pop()
     if (!proxy) {
-        proxy = withProxyFactory(key)
+        proxy = withProxyFactory()
     }
     var host = data.$repeat
+    proxy.$key = key
     proxy.$host = host
     proxy.$outer = data.$outer
     if (host.$events) {
@@ -373,7 +373,7 @@ function withProxyAgent(key, data) {
 
 function recycleProxies(proxies, type) {
     var proxyPool = type === "each" ? eachProxyPool : withProxyPool
-    avalon.each(proxies, function(proxy) {
+    avalon.each(proxies, function(key, proxy) {
         if (proxy.$events) {
             for (var i in proxy.$events) {
                 if (Array.isArray(proxy.$events[i])) {
