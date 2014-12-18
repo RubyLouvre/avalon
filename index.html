@@ -7,7 +7,7 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                // $skipArray: ["aaa"],
+                //$skipArray: ["aaa"],
                 aaa: {
                     a: 1,
                     b: 1,
@@ -32,17 +32,30 @@
                     zz: 55
                 }
             }, 2400)
-
-
+            var m2 = avalon.define({
+                $id: "getEachProxyBUG2",
+                fighters: []
+            })
+            setTimeout(function() {
+                m2.fighters = ['su-35', 'su-22'];
+            }, 900);
+            setTimeout(function() {
+                console.log("++++++++++++++")
+                m2.fighters.set(0, 'j-31')
+                m2.fighters.set(1, 'j-10')
+            }, 2700);
 
         </script>
     </head>
-    <body ms-controller="test">
+    <body ms-controller="test" >
 
-        <ul>
+        <!--        <div ms-controller="getEachProxyBUG2" id="getEachProxyBUG2">
+                    <h1 ms-repeat="fighters" >{{el}}<input ms-duplex='el'/></h1>
+                </div>-->
+<!--        <ul >
             <li ms-repeat="array" ms-click='$remove'>{{el}}xxx{{$last}}xxx</li>
         </ul>
-<!--        <ul>
+        <ul>
             <li ms-repeat="array2">{{el.a}}</li>
         </ul>
         <ul>
