@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.shim.js(去掉加载器与domReady) 1.3.8 build in 2014.12.18 
+avalon.shim.js(去掉加载器与domReady) 1.3.8 build in 2014.12.19 
 _
 support IE6+ and other browsers
  ==================================================*/
@@ -1078,9 +1078,9 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
+                            childVmodel = accessor.child = neutrinoFactory($vmodel, name, newValue, valueType)
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            var fn = rebindings[childVmodel.$id]
+                            var fn = midway[childVmodel.$id]
                             fn && fn() //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -1187,18 +1187,12 @@ var descriptorFactory = W3C ? function(obj) {
     return a
 }
 
-//ms-with, ms-repeat绑定生成的代理对象储存池
-var rebindings = {}
+//ms-with,ms-each, ms-repeat绑定生成的代理对象储存池
+var midway  = {}
 
-function updateWithProxy($id, name, val) {
-    var pool = withProxyPool[$id]
-    if (pool && pool[name]) {
-        pool[name].$val = val
-    }
-}
 //应用于第2种accessor
 
-function updateChild(parent, name, value, valueType) {
+function neutrinoFactory(parent, name, value, valueType) {
     //a为原来的VM， b为新数组或新对象
     var son = parent[name]
     if (valueType === "array") {
@@ -1213,12 +1207,11 @@ function updateChild(parent, name, value, valueType) {
         var pool = son.$events.$withProxyPool
         if (pool) {
             recycleProxies(pool, "with")
-           // proxyCinerator(pool)
             son.$events.$withProxyPool = null
         }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
-        rebindings[ret.$id] = function(data) {
+        midway[ret.$id] = function(data) {
             while (data = iterators.shift()) {
                 (function(el) {
                     if (el.type) { //重新绑定
@@ -1229,7 +1222,7 @@ function updateChild(parent, name, value, valueType) {
                     }
                 })(data)
             }
-            delete rebindings[ret.$id]
+            delete midway[ret.$id]
         }
         return ret
     }
@@ -3292,19 +3285,19 @@ bindingExecutors.html = function(val, elem, data) {
     } else {
         avalon.clearHTML(parent).appendChild(comment)
     }
+    if (isHtmlFilter) {
+        data.group = fragment.childNodes.length || 1
+    }
+    var nodes = avalon.slice(fragment.childNodes)
+    if (nodes[0]) {
+        if (comment.parentNode)
+            comment.parentNode.replaceChild(fragment, comment)
+        if (isHtmlFilter) {
+            data.element = nodes[0]
+        }
+    }
     data.vmodels.cb(1)
     avalon.nextTick(function() {
-        if (isHtmlFilter) {
-            data.group = fragment.childNodes.length || 1
-        }
-        var nodes = avalon.slice(fragment.childNodes)
-        if (nodes[0]) {
-            if (comment.parentNode)
-                comment.parentNode.replaceChild(fragment, comment)
-            if (isHtmlFilter) {
-                data.element = nodes[0]
-            }
-        }
         scanNodeArray(nodes, data.vmodels)
         data.vmodels && data.vmodels.cb(-1)
     })
@@ -4187,7 +4180,7 @@ function eachProxyFactory(name) {
     }
     var proxy = modelFactory(source, second)
     var e = proxy.$events
-    e.$first = e.$last = e.$index
+    e[name] = e.$first = e.$last = e.$index
     proxy.$id = ("$proxy$each" + Math.random()).replace(/0\./, "")
     return proxy
 }
@@ -4217,9 +4210,9 @@ function eachProxyAgent(index, data) {
     return proxy
 }
 
-function withProxyFactory(key) {
+function withProxyFactory() {
     var proxy = modelFactory({
-        $key: key,
+        $key: "",
         $outer: {},
         $host: {},
         $val: {
@@ -4231,8 +4224,7 @@ function withProxyFactory(key) {
             }
         }
     }, {
-        $val: 1,
-        $key: 1
+        $val: 1
     })
     proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
     return proxy
@@ -4241,9 +4233,10 @@ function withProxyFactory(key) {
 function withProxyAgent(key, data) {
     var proxy = withProxyPool.pop()
     if (!proxy) {
-        proxy = withProxyFactory(key)
+        proxy = withProxyFactory()
     }
     var host = data.$repeat
+    proxy.$key = key
     proxy.$host = host
     proxy.$outer = data.$outer
     if (host.$events) {
@@ -4256,7 +4249,7 @@ function withProxyAgent(key, data) {
 
 function recycleProxies(proxies, type) {
     var proxyPool = type === "each" ? eachProxyPool : withProxyPool
-    avalon.each(proxies, function(proxy) {
+    avalon.each(proxies, function(key, proxy) {
         if (proxy.$events) {
             for (var i in proxy.$events) {
                 if (Array.isArray(proxy.$events[i])) {

@@ -3285,19 +3285,19 @@ bindingExecutors.html = function(val, elem, data) {
     } else {
         avalon.clearHTML(parent).appendChild(comment)
     }
+    if (isHtmlFilter) {
+        data.group = fragment.childNodes.length || 1
+    }
+    var nodes = avalon.slice(fragment.childNodes)
+    if (nodes[0]) {
+        if (comment.parentNode)
+            comment.parentNode.replaceChild(fragment, comment)
+        if (isHtmlFilter) {
+            data.element = nodes[0]
+        }
+    }
     data.vmodels.cb(1)
     avalon.nextTick(function() {
-        if (isHtmlFilter) {
-            data.group = fragment.childNodes.length || 1
-        }
-        var nodes = avalon.slice(fragment.childNodes)
-        if (nodes[0]) {
-            if (comment.parentNode)
-                comment.parentNode.replaceChild(fragment, comment)
-            if (isHtmlFilter) {
-                data.element = nodes[0]
-            }
-        }
         scanNodeArray(nodes, data.vmodels)
         data.vmodels && data.vmodels.cb(-1)
     })
