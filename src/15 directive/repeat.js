@@ -384,7 +384,7 @@ function recycleProxies(proxies, type) {
                     proxy.$events[i].length = 0
                 }
             }
-            proxy.$$host = proxy.$outer = {}
+            proxy.$host = proxy.$outer = {}
             if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
                 proxyPool.pop()
             }
