@@ -132,8 +132,10 @@ function ticker() {
 }
 
 function newSetter(value) {
-    onSetter.call(this, value)
-    onTree.call(this, value)
+    if (avalon.contains(root, this)) {
+        onSetter.call(this, value)
+        onTree.call(this, value)
+    }
 }
 try {
     var inputProto = HTMLInputElement.prototype
