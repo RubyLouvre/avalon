@@ -23,7 +23,7 @@ new function() {
         return supported
     })()
     var touchSupported = w3ctouch || IE11touch || IE9_10touch
-   //合成做成触屏事件所需要的各种原生事件
+    //合成做成触屏事件所需要的各种原生事件
     var touchNames = ["mousedown", "mousemove", "mouseup", ""]
     if (w3ctouch) {
         touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
@@ -85,17 +85,20 @@ new function() {
             var touchEndX = e.clientX
             var touchEndY = e.clientY
             var diff = Date.now() - startTime //经过时间
-            var dist = Math.sqrt(Math.pow(touchEndX - touchStartX, 2) + Math.pow(touchEndY - touchStartY, 2)) //移动距离
+            var totalX = Math.abs(touchEndX - touchStartX);
+            var totalY = Math.abs(touchEndY - touchStartY);
+            //  var dist = Math.sqrt(Math.pow(touchEndX - touchStartX, 2) + Math.pow(touchEndY - touchStartY, 2)) //移动距离
             var canDoubleClick = false
             if (doubleIndex === 2) {
                 doubleIndex = 0
                 canDoubleClick = true
             }
             //如果按住时间满足触发click, dbclick, hold, swipe
-            if (tapping && diff < fastclick.clickDuration && fastclick.canClick(element)) {
-
+            if (diff < fastclick.clickDuration && fastclick.canClick(element)) {
                 //如果移动的距离太少，则认为是tap,click,hold,dblclick
-                if (dist < fastclick.dragDistance) {
+                if (totalX < fastclick.dragDistance && totalY < fastclick.dragDistance) {
+                    if (!tapping)
+                        return
                     ghostPrevent = true //在这里阻止浏览器的默认事件
                     setTimeout(function() {
                         ghostPrevent = false
@@ -149,8 +152,8 @@ new function() {
                 if (touchNames[3]) {
                     element.addEventListener(touchNames[3], resetState)
                 }
-                if (isClick)
-                    element.addEventListener("click", callback)
+
+                element.addEventListener(data.param, callback)
             }
             data.specialUnbind = function(element, callback) {
                 element.removeEventListener(touchNames[0], touchstart)
@@ -159,8 +162,7 @@ new function() {
                 if (touchNames[3]) {
                     element.removeEventListener(touchNames[3], resetState)
                 }
-                if (isClick)
-                    element.removeEventListener("click", callback)
+                element.removeEventListener(data.param, callback)
             }
         }
     }
@@ -188,7 +190,7 @@ new function() {
     avalon.fastclick = {
         activeClass: "ms-click-active",
         clickDuration: 750, //小于750ms是点击，长于它是长按或拖动
-        dragDistance: 14, //最大移动的距离
+        dragDistance: 10, //最大移动的距离
         preventTime: 2500, //2500ms还原ghostPrevent
         fireEvent: function(element, type, event) {
             var clickEvent = document.createEvent("MouseEvents")

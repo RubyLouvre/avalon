@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.modern.js 1.3.8 build in 2014.12.19 
-___________________________
+avalon.modern.js 1.38 build in 2014.12.22 
+____________________________
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -189,7 +189,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.37,
+    version: 1.38,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
@@ -3013,8 +3013,10 @@ function ticker() {
 }
 
 function newSetter(value) {
-    onSetter.call(this, value)
-    onTree.call(this, value)
+    if (avalon.contains(root, this)) {
+        onSetter.call(this, value)
+        onTree.call(this, value)
+    }
 }
 try {
     var inputProto = HTMLInputElement.prototype
@@ -3568,7 +3570,7 @@ function recycleProxies(proxies, type) {
                     proxy.$events[i].length = 0
                 }
             }
-            proxy.$$host = proxy.$outer = {}
+            proxy.$host = proxy.$outer = {}
             if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
                 proxyPool.pop()
             }
