@@ -5,10 +5,28 @@ var curDir = process.cwd() //当前目录
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
 var Buffer = require('buffer').Buffer
 var now = new Date
-var version = "1.3.8"
+var version = 1.38
 var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
+}
+
+new function() {
+    var file1 = path.join(curDir, "02 core.js")
+    var file2 = path.join(curDir, "02 core.modern.js")
+    var fixVersion = fs.readFileSync(file1, {
+        encoding: "utf8"
+    }).replace(/version:\s+([\d\.]+)/, function(a, b) {
+        return "version: " + version
+    })
+    fs.writeFileSync(file1, fixVersion)
+    var fixVersion = fs.readFileSync(file2, {
+        encoding: "utf8"
+    }).replace(/version:\s+([\d\.]+)/, function(a, b) {
+        return "version: " + version
+    })
+
+    fs.writeFileSync(file2, fixVersion)
 }
 
 function comboFiles(files, writer, lastCallback, statement) {
@@ -20,6 +38,7 @@ function comboFiles(files, writer, lastCallback, statement) {
             lastCallback()
             return
         }
+
         var filePath = path.join(curDir, fileName + ".js")
         var readable = fs.createReadStream(filePath)
         if (fileName === "00 inter") {
@@ -87,7 +106,7 @@ var mobileFiles = modernFiles.concat()
 //mobileFiles[mobileFiles.indexOf("14 parser.share")] = "14 parser.share.repeat"
 //mobileFiles[mobileFiles.indexOf(directive("repeat"))] = directive("repeat.next")
 mobileFiles.pop()
-mobileFiles.push("20 fastclick", "19 outer")
+mobileFiles.push("20 touch", "19 outer")
 
 //开始合并avalon.js
 new function() {
@@ -113,7 +132,7 @@ new function() {
 
     var comboModernFiles = comboFiles(modernFiles, writable, function() {
         //更新avalon.test中的文件
-        var readable2 = fs.createReadStream(path.join(curDir, 'avalon.modern.js'))
+        var readable2 = fs.createReadStream(path.join(curDir, "avalon.modern.js"))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
         readable2.pipe(writable2)
     }, "avalon.modern.js " + version + " build in " + date + " \n")
@@ -122,7 +141,7 @@ new function() {
 
 //开始合并avalon.shim.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir, 'avalon.shim.js'), {
+    var writable = fs.createWriteStream(path.join(curDir, "avalon.shim.js"), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈

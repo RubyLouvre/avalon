@@ -168,9 +168,9 @@ new function() {
     var ghostPrevent = false
     document.addEventListener("click", function(e) {
         if (ghostPrevent) {
-            if (!event.markFastClick) {//阻止浏览器自己触发的点击事件
-                event.stopPropagation()
-                event.preventDefault()
+            if (!e.markFastClick) {//阻止浏览器自己触发的点击事件
+                e.stopPropagation()
+                e.preventDefault()
             }
         }
         var target = e.target
