@@ -34,9 +34,5 @@ bindingExecutors.html = function(val, elem, data) {
             data.element = nodes[0]
         }
     }
-    data.vmodels.cb(1)
-    avalon.nextTick(function() {
-        scanNodeArray(nodes, data.vmodels)
-        data.vmodels && data.vmodels.cb(-1)
-    })
+    scanNodeArray(nodes, data.vmodels)
 }

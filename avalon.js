@@ -21,6 +21,7 @@ var DOC = window.document
 var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
 ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
+ifGroup.setAttribute("ms-skip", "1")
 function log() {
     if (window.console && avalon.config.debug) {
         // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
@@ -3288,11 +3289,7 @@ bindingExecutors.html = function(val, elem, data) {
             data.element = nodes[0]
         }
     }
-    data.vmodels.cb(1)
-    avalon.nextTick(function() {
-        scanNodeArray(nodes, data.vmodels)
-        data.vmodels && data.vmodels.cb(-1)
-    })
+    scanNodeArray(nodes, data.vmodels)
 }
 
 bindingHandlers["if"] =

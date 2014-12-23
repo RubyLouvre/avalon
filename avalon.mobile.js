@@ -19,7 +19,7 @@ var expose = Date.now()
 var window = Function("return this")()
 var DOC = window.document
 var head = DOC.head //HEAD元素
-head.insertAdjacentHTML("afterBegin", '<avalon><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
+head.insertAdjacentHTML("afterBegin", '<avalon ms-skip><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
 var ifGroup = head.firstChild
 
 function log() {
@@ -2668,11 +2668,7 @@ bindingExecutors.html = function(val, elem, data) {
             data.element = nodes[0]
         }
     }
-    data.vmodels.cb(1)
-    avalon.nextTick(function() {
-        scanNodeArray(nodes, data.vmodels)
-        data.vmodels && data.vmodels.cb(-1)
-    })
+    scanNodeArray(nodes, data.vmodels)
 }
 
 bindingHandlers["if"] =
