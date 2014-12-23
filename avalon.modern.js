@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.modern.js 1.38 build in 2014.12.22 
+avalon.modern.js 1.38 build in 2014.12.23 
 ____________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -729,10 +729,7 @@ try {
 } catch (e) {
     canHideOwn = false
 }
-var fakeHead = {
-    nodeType: 1,
-    sourceIndex: 0
-}
+
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
         var arr = $scope.concat()
@@ -779,10 +776,10 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (isFunction(setter)) {
-                            var backup = $events[name]
+                            var lock = $events[name]
                             $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
                             setter.call($vmodel, newValue)
-                            $events[name] = backup
+                            $events[name] = lock
                         }
                     } else {
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
@@ -795,15 +792,10 @@ function modelFactory($scope, $special, $model) {
                     return newValue
                 }
                 computedProperties.push(function() {
-                    Registry[expose] = {
-                        evaluator: accessor,
-                        element: fakeHead,
-                        type: "computed::" + name,
-                        handler: noop,
-                        args: []
+                    Registry[expose] = function() {
+                        $vmodel.$model[name] = getter.call($vmodel)
                     }
                     accessor()
-                    collectSubscribers($events[name])
                     delete Registry[expose]
                 })
             } else if (rcomplexType.test(valueType)) {
@@ -926,7 +918,7 @@ var descriptorFactory = W3C ? function(obj) {
 }
 
 //ms-with,ms-each, ms-repeat绑定生成的代理对象储存池
-var midway  = {}
+var midway = {}
 
 //应用于第2种accessor
 
