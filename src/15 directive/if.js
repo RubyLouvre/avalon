@@ -3,6 +3,10 @@ bindingHandlers["if"] =
         bindingHandlers.text =
         bindingHandlers.html =
         function(data, vmodels) {
+            if (data.element.nodeType === 1 && (data.type === "html" | data.type === "text")) {
+                var token = getToken(data.value)
+                avalon.mix(data, token)
+            }
             parseExprProxy(data.value, vmodels, data)
         }
 
@@ -16,7 +20,7 @@ bindingExecutors["if"] = function(val, elem, data) {
             elem.removeAttribute(data.name)
             scanAttr(elem, data.vmodels)
         }
-        data.rollback  = null
+        data.rollback = null
     } else { //移出DOM树，并用注释节点占据原位置
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
@@ -24,8 +28,8 @@ bindingExecutors["if"] = function(val, elem, data) {
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
             data.rollback = function() {
-                if(elem.parentNode === ifGroup){
-                      ifGroup.removeChild(elem)
+                if (elem.parentNode === ifGroup) {
+                    ifGroup.removeChild(elem)
                 }
             }
         }
