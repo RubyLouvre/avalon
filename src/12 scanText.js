@@ -83,7 +83,7 @@ function scanText(textNode, vmodels) {
                     value: token.value
                 }
                 if (rhashtml.test(filters)) {
-                    filters = filters.replace(rhashtml, "")
+                    filters = filters.replace(rhashtml, "").trim()
                     binding.type = "html"
                     binding.group = 1
                 }
