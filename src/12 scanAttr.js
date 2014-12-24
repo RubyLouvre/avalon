@@ -39,6 +39,15 @@ function scanAttr(elem, vmodels) {
                         value: value,
                         priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                     }
+                    if (type === "html" || type === "text") {
+                        var token = getToken(value)
+                        avalon.mix(binding, token)
+                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                            binding.type = "html"
+                            binding.group = 1
+                            return ""
+                        })
+                    }
                     if (type === "if" && param.indexOf("loop") > -1) {
                         binding.priority += 100
                     }

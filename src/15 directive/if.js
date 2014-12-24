@@ -3,10 +3,6 @@ bindingHandlers["if"] =
         bindingHandlers.text =
         bindingHandlers.html =
         function(data, vmodels) {
-            if (data.element.nodeType === 1 && (data.type === "html" | data.type === "text")) {
-                var token = getToken(data.value)
-                avalon.mix(data, token)
-            }
             parseExprProxy(data.value, vmodels, data)
         }
 
