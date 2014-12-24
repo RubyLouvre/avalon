@@ -187,9 +187,26 @@ new function() {
         if (typeof kernel.shim[url] === "object") {
             shim = kernel.shim[url]
         }
-        if (kernel.paths[url]) { //别名机制
-            url = kernel.paths[url]
+        url = url.split('/');
+        //For each module name segment, see if there is a path
+        //registered for it. Start with most specific name
+        //and work up from it.
+        for (var i = url.length, parentModule, parentPath; i > 0; i -= 1) {
+            parentModule = url.slice(0, i).join('/');
+
+            parentPath = kernel.paths[parentModule];
+            if (parentPath) {
+                //If an array, it means there are a few choices,
+                //Choose the one that is desired
+                if (Array.isArray(parentPath)) {
+                    parentPath = parentPath[0];
+                }
+                url.splice(0, i, parentPath);
+                break;
+            }
         }
+        //Join the path parts together, then figure out if baseUrl is needed.
+        url = url.join('/');
 
         //4. 补全路径
         if (/^(\w+)(\d)?:.*/.test(url)) {
