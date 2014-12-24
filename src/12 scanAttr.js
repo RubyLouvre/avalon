@@ -48,7 +48,7 @@ function scanAttr(elem, vmodels) {
                             return ""
                         })
                     }
-                    if (type === "if" && param.indexOf("loop") > -1) {
+                    if (name === "ms-if-loop") {
                         binding.priority += 100
                     }
                     if (vmodels.length) {
