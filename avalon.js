@@ -2055,21 +2055,30 @@ if (!"1" [0]) {
     }
 }
 
-var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
+var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
-        r11b = /U2hvcnRDaXJjdWl0/g,
+        r11b = /\u1122\u3344/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g
 
-function trimFilter(value) {//得到除filter外的文本
-    if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
+function getToken(value) {
+    if (value.indexOf("|") > 0) {
+        value = value.replace(r11a, "\u1122\u3344") //干掉所有短路或
         var index = value.indexOf("|")
         if (index > -1) {
-            return  value.slice(0, index).replace(r11b, "||")//还原短路与
+            return {
+                filters: value.slice(index).replace(r11b, "||"),
+                value: value.slice(0, index).replace(r11b, "||"),
+                expr: true
+            }
         }
+        value = value.replace(r11b, "||")
     }
-    return value
+    return {
+        value: value,
+        filters: "",
+        expr: true
+    }
 }
 
 function scanExpr(str) {
@@ -2095,12 +2104,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            var pure = trimFilter(value)
-            tokens.push({
-                value: pure,
-                expr: true,
-                filters: value.replace(pure, "")
-            })
+            tokens.push(getToken(value))
         }
         start = stop + closeTag.length
     } while (1)
@@ -2111,20 +2115,13 @@ function scanExpr(str) {
             expr: false
         })
     }
-
     return tokens
 }
-var rhashtml = /\|\s*html/
+
 function scanText(textNode, vmodels) {
     var bindings = []
     if (textNode.nodeType === 8) {
-        var value = textNode.nodeValue
-        var pure = trimFilter(value)
-        var token = {
-            expr: true,
-            value: pure,
-            filters: value.replace(pure, "")
-        }
+        var token = getToken(textNode.nodeValue)
         var tokens = [token]
     } else {
         tokens = scanExpr(textNode.data)
@@ -2139,8 +2136,8 @@ function scanText(textNode, vmodels) {
                     element: node,
                     value: token.value
                 }
-                if (rhashtml.test(filters)) {
-                    filters = filters.replace(rhashtml, "")
+                if (rhasHtml.test(filters)) {
+                    filters = filters.replace(rhasHtml, "")
                     binding.type = "html"
                     binding.group = 1
                 }
@@ -2786,19 +2783,24 @@ var cacheExprs = createCache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
+var rthimRightParentheses = /\)\s*$/
+var rthimOtherParentheses = /\)\s*\|/g
+var rquoteFilterName = /\|\s*([$\w]+)/g
+var rpatchBracket = /"\s*\["/g
+var rthimLeftParentheses = /"\s*\(/g
 function parseFilter(val, filters) {
     filters = filters
-            .replace(/\)\s*$/, "")//处理最后的小括号
-            .replace(/\)\s*\|/g, function() {//处理其他小括号
+            .replace(rthimRightParentheses, "")//处理最后的小括号
+            .replace(rthimOtherParentheses, function() {//处理其他小括号
                 return "],|"
             })
-            .replace(/\|\s*(\w+)/g, function(a, b) { //处理|及它后面的过滤器的名字
+            .replace(rquoteFilterName, function(a, b) { //处理|及它后面的过滤器的名字
                 return "[" + quote(b)
             })
-            .replace(/"\s*\["/g, function() {
+            .replace(rpatchBracket, function() {
                 return '"],["'
             })
-            .replace(/"\s*\(/g, function() {
+            .replace(rthimLeftParentheses, function() {
                 return '",'
             }) + "]"
     return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
@@ -2868,7 +2870,7 @@ function parseExpr(code, scopes, data) {
     if (prefix) {
         prefix = "var " + prefix
     }
-    if (filters) { //文本绑定，双工绑定才有过滤器
+    if (/\S/.test(filters)) { //文本绑定，双工绑定才有过滤器
         if (!/text|html/.test(data.type)) {
             throw Error("ms-" + data.type + "不支持过滤器")
         }

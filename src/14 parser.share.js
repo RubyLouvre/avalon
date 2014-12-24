@@ -66,19 +66,24 @@ var cacheExprs = createCache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
+var rthimRightParentheses = /\)\s*$/
+var rthimOtherParentheses = /\)\s*\|/g
+var rquoteFilterName = /\|\s*([$\w]+)/g
+var rpatchBracket = /"\s*\["/g
+var rthimLeftParentheses = /"\s*\(/g
 function parseFilter(val, filters) {
     filters = filters
-            .replace(/\)\s*$/, "")//处理最后的小括号
-            .replace(/\)\s*\|/g, function() {//处理其他小括号
+            .replace(rthimRightParentheses, "")//处理最后的小括号
+            .replace(rthimOtherParentheses, function() {//处理其他小括号
                 return "],|"
             })
-            .replace(/\|\s*(\w+)/g, function(a, b) { //处理|及它后面的过滤器的名字
+            .replace(rquoteFilterName, function(a, b) { //处理|及它后面的过滤器的名字
                 return "[" + quote(b)
             })
-            .replace(/"\s*\["/g, function() {
+            .replace(rpatchBracket, function() {
                 return '"],["'
             })
-            .replace(/"\s*\(/g, function() {
+            .replace(rthimLeftParentheses, function() {
                 return '",'
             }) + "]"
     return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
@@ -148,7 +153,7 @@ function parseExpr(code, scopes, data) {
     if (prefix) {
         prefix = "var " + prefix
     }
-    if (filters) { //文本绑定，双工绑定才有过滤器
+    if (/\S/.test(filters)) { //文本绑定，双工绑定才有过滤器
         if (!/text|html/.test(data.type)) {
             throw Error("ms-" + data.type + "不支持过滤器")
         }
