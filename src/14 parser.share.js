@@ -149,8 +149,11 @@ function parseExpr(code, scopes, data) {
         prefix = "var " + prefix
     }
     if (filters) { //文本绑定，双工绑定才有过滤器
+        if (!/text|html/.test(data.type)) {
+            throw Error("ms-" + data.type + "不支持过滤器")
+        }
         code = "\nvar ret" + expose + " = " + code + ";\r\n"
-        code += "\n" + parseFilter("ret" + expose, filters)
+        code += parseFilter("ret" + expose, filters)
     } else if (dataType === "duplex") { //双工绑定
         var _body = "'use strict';\nreturn function(vvv){\n\t" +
                 prefix +
