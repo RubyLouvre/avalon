@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.modern.js 1.38 build in 2014.12.24 
-____________________________
+avalon.modern.js 1.381 build in 2014.12.25 
+___________________________
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -189,7 +189,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.38,
+    version: 1.381,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
@@ -944,12 +944,12 @@ function neutrinoFactory(parent, name, value, valueType) {
         midway[ret.$id] = function(data) {
             while (data = iterators.shift()) {
                 (function(el) {
-                    if (el.type) { //重新绑定
-                        avalon.nextTick(function() {
+                    avalon.nextTick(function() {
+                        if (el.type) { //重新绑定
                             el.rollback && el.rollback() //还原 ms-with ms-on
                             bindingHandlers[el.type](el, el.vmodels)
-                        })
-                    }
+                        }
+                    })
                 })(data)
             }
             delete midway[ret.$id]
@@ -1544,7 +1544,16 @@ function scanAttr(elem, vmodels) {
                         value: value,
                         priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                     }
-                    if (type === "if" && param === "loop") {
+                    if (type === "html" || type === "text") {
+                        var token = getToken(value)
+                        avalon.mix(binding, token)
+                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                            binding.type = "html"
+                            binding.group = 1
+                            return ""
+                        })
+                    }
+                    if (name === "ms-if-loop") {
                         binding.priority += 100
                     }
                     if (vmodels.length) {
@@ -1580,22 +1589,19 @@ var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
-        r11b = /\u1122\u3344/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g
 
 function getToken(value) {
     if (value.indexOf("|") > 0) {
-        value = value.replace(r11a, "\u1122\u3344") //干掉所有短路或
-        var index = value.indexOf("|")
+        var index = value.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
             return {
-                filters: value.slice(index).replace(r11b, "||"),
-                value: value.slice(0, index).replace(r11b, "||"),
+                filters: value.slice(index),
+                value: value.slice(0, index),
                 expr: true
             }
         }
-        value = value.replace(r11b, "||")
     }
     return {
         value: value,
@@ -1617,6 +1623,7 @@ function scanExpr(str) {
         if (value) { // {{ 左边的文本
             tokens.push({
                 value: value,
+                filters: "",
                 expr: false
             })
         }
@@ -1635,7 +1642,8 @@ function scanExpr(str) {
     if (value) { //}} 右边的文本
         tokens.push({
             value: value,
-            expr: false
+            expr: false,
+            filters: ""
         })
     }
     return tokens
@@ -1653,19 +1661,14 @@ function scanText(textNode, vmodels) {
         for (var i = 0, token; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
-                var filters = token.filters || ""
-                var binding = {
-                    type: "text",
-                    element: node,
-                    value: token.value
-                }
-                if (rhasHtml.test(filters)) {
-                    filters = filters.replace(rhasHtml, "")
-                    binding.type = "html"
-                    binding.group = 1
-                }
-                binding.filters = filters
-                bindings.push(binding) //收集带有插值表达式的文本
+                token.type = "text"
+                token.element = node
+                token.filters = token.filters.replace(rhasHtml, function() {
+                    token.type = "html"
+                    token.group = 1
+                    return ""
+                })
+                bindings.push(token) //收集带有插值表达式的文本
             }
             hyperspace.appendChild(node)
         }
@@ -2671,10 +2674,6 @@ bindingHandlers["if"] =
         bindingHandlers.text =
         bindingHandlers.html =
         function(data, vmodels) {
-            if (data.element.nodeType === 1 && (data.type === "html" | data.type === "text")) {
-                var token = getToken(data.value)
-                avalon.mix(data, token)
-            }
             parseExprProxy(data.value, vmodels, data)
         }
 

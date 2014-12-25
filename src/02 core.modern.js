@@ -100,7 +100,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.38,
+    version: 1.381,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
