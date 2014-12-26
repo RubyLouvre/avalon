@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.381 build in 2014.12.25 
+avalon.mobile.js(支持触屏事件) 1.381 build in 2014.12.26 
 _______
 support IE6+ and other browsers
  ==================================================*/
@@ -34,7 +34,6 @@ var otherRequire = window.require
 var otherDefine = window.define
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
-var rnative = /\[native code\]/ //判定是否原生函数
 var rcomplexType = /^(?:object|array)$/
 var rsvg = /^\[object SVG\w*Element\]$/
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
@@ -4322,9 +4321,10 @@ new function() {
     var isIOS = /iP(ad|hone|od)/.test(ua)
     var self = bindingHandlers.on
     var touchProxy = {}
-    var ghostPrevent = false //用于在全阻止默认的点击事件
+
     var IE11touch = navigator.pointerEnabled
     var IE9_10touch = navigator.msPointerEnabled
+
     var w3ctouch = (function() {
         var supported = false
         //http://stackoverflow.com/questions/5713393/creating-and-firing-touch-events-on-a-touch-enabled-browser
@@ -4342,6 +4342,7 @@ new function() {
         return supported
     })()
     var touchSupported = w3ctouch || IE11touch || IE9_10touch
+
     //合成做成触屏事件所需要的各种原生事件
     var touchNames = ["mousedown", "mousemove", "mouseup", ""]
     if (w3ctouch) {
@@ -4365,11 +4366,11 @@ new function() {
             y: e.clientY
         }
     }
-    function resetState() {
-        touchProxy.tapping = false
-        if (touchProxy.event === "hold") {
-            touchProxy.holdTimeout = new Date
-        }
+    function resetState(e) {
+        var e = getCoordinates(event)
+
+        touchProxy.deltaX += Math.abs(touchProxy.x - e.x)
+        touchProxy.deltaY += Math.abs(touchProxy.y - e.y)
         avalon(touchProxy.element).removeClass(fastclick.activeClass)
     }
     function touchend(event) {
@@ -4383,16 +4384,17 @@ new function() {
             touchProxy.doubleIndex = 0
             canDoubleClick = true
         }
-        //如果按住时间满足触发click, dbclick, hold, swipe
-        if (diff < fastclick.clickDuration && fastclick.canClick(element)) {
+        if (totalX > 30 || totalY > 30) {
+            //如果用户滑动的距离有点大，就认为是swipe事件
+            var direction = swipeDirection(touchProxy.x, e.x, touchProxy.y, e.y)
+            var details = {
+                direction: direction
+            }
+            W3CFire(element, "swipe", details)
+            W3CFire(element, "swipe" + direction, details)
+        } else {
             //如果移动的距离太少，则认为是tap,click,hold,dblclick
-            if (totalX < fastclick.dragDistance && totalY < fastclick.dragDistance) {
-                if (!touchProxy.tapping)
-                    return
-                ghostPrevent = true //在这里阻止浏览器的默认事件
-                setTimeout(function() {
-                    ghostPrevent = false
-                }, fastclick.preventTime)
+            if (fastclick.canClick(element)) {
                 // 失去焦点的处理
                 if (document.activeElement && document.activeElement !== element) {
                     document.activeElement.blur()
@@ -4408,28 +4410,23 @@ new function() {
                     fastclick.focus(element)
                 }
                 avalon.fastclick.fireEvent(element, "click", event)//触发click事件
-                W3CFire(element, "tap")//触发tap事件
+                W3CFire(element, "tap")//触发tap事件 
                 if (forElement) {
                     avalon.fastclick.fireEvent(forElement, "click", event)
                     W3CFire(element, "tap")//触发tap事件
                 }
                 if (canDoubleClick) {
-                    //Windows default double-click time is 500 ms (half a second)
-                    //http://ux.stackexchange.com/questions/40364/what-is-the-expected-timeframe-of-a-double-click
-                    //http://msdn.microsoft.com/en-us/library/windows/desktop/bb760404(v=vs.85).aspx
-                    if (diff > 500) {
+                    if (diff < 250) {
                         avalon.fastclick.fireEvent(element, "dblclick", event)//触发dblclick事件
                         W3CFire(element, "doubletap")//触发doubletap事件
                     }
                     touchProxy.doubleIndex = 0
                 }
+
                 if (diff > 750) {
                     W3CFire(element, "hold")
+                    W3CFire(element, "longtap")
                 }
-            } else {
-                //如果用户滑动的距离有点大，就认为是swipe事件
-                W3CFire(element, "swipe")
-                W3CFire(element, "swipe" + (swipeDirection(touchProxy.x, e.x, touchProxy.y, e.y)))
             }
         }
         resetState()
@@ -4454,54 +4451,53 @@ new function() {
                 touchProxy.doubleIndex = 1
                 touchProxy.doubleStartTime = Date.now()
             } else {
-                touchProxy.doubleIndex++
+                if (!touchProxy.doubleIndex) {
+                    touchProxy.doubleIndex = 1
+                } else {
+                    touchProxy.doubleIndex = 2
+                }
             }
             if (touchProxy.tapping && avalon.fastclick.canClick(element)) {
                 avalon(element).addClass(fastclick.activeClass)
             }
         }
 
-        var isClick = data.param === "click"
-        if (isClick ? avalon.fastclick.canFix(element) : true) {
+        function needFixClick(type) {
+            return type === "click" || type === "dblclick"
+        }
+        if (needFixClick(data.param) ? touchSupported : true) {
             data.specialBind = function(element, callback) {
+                function wrapCallback(e) {
+                    //在移动端上,如果用户是用click, dblclick绑定事件那么注意屏蔽原生的click,dblclick,只让手动触发的进来
+                    if (needFixClick(e.type) ? e.hasFixClick : true) {
+                        callback.call(element, e)
+                    }
+                }
                 element.addEventListener(touchNames[0], touchstart)
-                element.addEventListener(data.param, callback)
+                element.addEventListener(data.param, wrapCallback)
             }
-            data.specialUnbind = function(element, callback) {
+            data.specialUnbind = function() {
                 element.removeEventListener(touchNames[0], touchstart)
-                element.removeEventListener(data.param, callback)
+                element.removeEventListener(data.param, wrapCallback)
             }
         }
     }
 
-
-    document.addEventListener("click", function(e) {
-        if (ghostPrevent) {
-            if (!e.markFastClick) {//阻止浏览器自己触发的点击事件
-                e.stopPropagation()
-                e.preventDefault()
-            }
-        }
-        var target = e.target
-        if (target.href && target.href.match(/#(\w+)/)) {
-            var id = RegExp.$1
-            if (id) {
-                var el = document.getElementById(id)
-                //这里做锚点的滚动处理,或做在scroll插件中
-            }
-        }
-    }, true)
-//fastclick只要是处理移动端点击存在300ms延迟的问题
-//这是苹果乱搞异致的，他们想在小屏幕设备上通过快速点击两次，将放大了的网页缩放至原始比例。
+    //fastclick只要是处理移动端点击存在300ms延迟的问题
+    //这是苹果乱搞异致的，他们想在小屏幕设备上通过快速点击两次，将放大了的网页缩放至原始比例。
     var fastclick = avalon.fastclick = {
         activeClass: "ms-click-active",
         clickDuration: 750, //小于750ms是点击，长于它是长按或拖动
         dragDistance: 10, //最大移动的距离
-        preventTime: 2500, //2500ms还原ghostPrevent
         fireEvent: function(element, type, event) {
             var clickEvent = document.createEvent("MouseEvents")
-            clickEvent.initMouseEvent(type, true, true, window, 1, event.screenX, event.screenY, event.clientX, event.clientY, false, false, false, false, 0, null)
-            clickEvent.markFastClick = "司徒正美";
+            clickEvent.initMouseEvent(type, true, true, window, 1, event.screenX, event.screenY,
+                    event.clientX, event.clientY, false, false, false, false, 0, null)
+            Object.defineProperty(clickEvent, "hasFixClick", {
+                get: function() {
+                    return "司徒正美"
+                }
+            })
             element.dispatchEvent(clickEvent)
         },
         focus: function(target) {
@@ -4549,59 +4545,15 @@ new function() {
                 default:
                     return false
             }
-        },
-        canFix: function(element) {
-            // 如果设备不支持触摸就不需要修复了
-            if (!touchSupported) {
-                return false
-            }
-            //在Android 平台的chrome 32，为了避免点击延迟，允许用户设置如下代码
-            // <meta name="viewport" content="user-scalable=no">
-            // <meta name="viewport" content="initial-scale=1,maximum-scale=1">
-            // 可禁用双击缩放
-            // 此外，iPhone 诞生时就有的另一个约定是，在渲染桌面端站点的时候，
-            // 使用 980 像素的视口宽度，而非设备本身的宽度（iPhone 是 320 像素宽）时，
-            // 即用户定义了<meta name="viewport" content="width=device-width">时
-            // 也禁用双击缩放
-            // 另外，如果页面宽度少于viewport宽度（document.documentElement.scrollWidth <= window.outerWidth）
-            // 也禁用双击缩放
-            var chromeVersion = +(/Chrome\/([0-9]+)/.exec(ua) || [0, 0])[1]
-            if (chromeVersion) {//chrome 安卓版如果指定了特定的meta也不需要修复
-                if (isAndroid) {
-                    var metaViewport = document.querySelector('meta[name=viewport]')
-                    if (metaViewport) {
-                        if (metaViewport.content.indexOf('user-scalable=no') !== -1) {
-                            return false
-                        }
-                        if (chromeVersion > 31 && document.documentElement.scrollWidth <= window.outerWidth) {
-                            return false
-                        }
-                    }
-                }
-            }
-            //IE10-11中为元素节点添加了一个touch-action属性决定能否进行双指缩放或者双击缩放
-            //  a[href], button {
-            //    -ms-touch-action: none; /* IE10 */
-            //    touch-action: none;     /* IE11 */
-            //}
-            //参考自 http://thx.alibaba-inc.com/mobile/300ms-click-delay/
-            if (element.style.msTouchAction === 'none') {
-                return false
-            }
-            return true
         }
     };
 
 
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "longtap", "hold"].forEach(function(method) {
         self[method + "Hook"] = self["clickHook"]
     })
 
     //各种摸屏事件的示意图 http://quojs.tapquo.com/  http://touch.code.baidu.com/
-
 }
-
-
-
 
 })();
