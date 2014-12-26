@@ -4,7 +4,7 @@ bindingHandlers.widget = function(data, vmodels) {
     var widget = args[0]
     var id = args[1]
     if (!id || id === "$") {//没有定义或为$时，取组件名+随机数
-        id = widget + setTimeout("1")
+        id = generateID(widget)
     }
     var optName = args[2] || widget//没有定义，取组件名
     vmodels.cb(-1)
@@ -47,8 +47,9 @@ bindingHandlers.widget = function(data, vmodels) {
                 })
             }
             if (vmodel.hasOwnProperty("$remove")) {
+                elem.id = elem.id || generateID("widget")
                 function offTree() {
-                    if (!elem.msRetain && !root.contains(elem)) {
+                    if (!elem.msRetain && DOC.getElementById(elem.id)) {
                         vmodel.$remove()
                         try {
                             vmodel.widgetElement = null

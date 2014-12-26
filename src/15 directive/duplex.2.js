@@ -190,7 +190,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 //                }
 //            })
 //        }
-        element.id = element.id || ("duplex" + Math.random()).replace(/0\./, "")
+        element.id = element.id || generateID("duplex")
         watchValueInTimer(function() {
             if (DOC.getElementById(element.id)) {
                 onTree.call(element)

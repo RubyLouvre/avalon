@@ -305,7 +305,7 @@ function eachProxyFactory(name) {
     var proxy = modelFactory(source, second)
     var e = proxy.$events
     e[name] = e.$first = e.$last = e.$index
-    proxy.$id = ("$proxy$each" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$each") 
     return proxy
 }
 
@@ -350,7 +350,7 @@ function withProxyFactory() {
     }, {
         $val: 1
     })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$with") 
     return proxy
 }
 
