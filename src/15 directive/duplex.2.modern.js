@@ -2,9 +2,7 @@ function onTree(value) { //disabled状态下改动不触发inout事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
         var type = this.getAttribute("data-duplex-event") || "input"
-        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
-            W3CFire(this, type)
-        }
+        W3CFire(this, type)
     }
 }
 //处理radio, checkbox, text, textarea, password
@@ -100,29 +98,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     element.oldValue = element.value
     if (/text|textarea|password/.test(element.type)) {
-//        if (watchValueInInstance) {
-//            Object.defineProperty(element, "value", {
-//                set: function(v) {
-//                    v = v == null ? "" : String(v)
-//                    if (this.oldValue !== v) {
-//                        this.oldValue = v
-//                        onTree.call(this, v)
-//                    }
-//                },
-//                get: function() {
-//                    this.focus()
-//                    //https://code.google.com/p/chromium/issues/detail?id=304455
-//                    document.execCommand("selectAll", false, null);
-//                    var value = window.getSelection().toString()
-//                    var n = value.length
-//                    this.setSelectionRange(n, n)
-//                    return  value
-//                }
-//            })
-//        }
-        element.id = element.id || generateID("duplex")
         watchValueInTimer(function() {
-            if (DOC.getElementById(element.id)) {
+            if (root.contains(element)) {
                 onTree.call(element)
             } else if (!element.msRetain) {
                 return false

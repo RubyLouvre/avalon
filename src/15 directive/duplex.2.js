@@ -20,14 +20,12 @@ function onTree(value) { //disabled状态下改动不触发input事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
         var type = this.getAttribute("data-duplex-event") || "input"
-        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
-            if (W3C) {
-                W3CFire(this, type)
-            } else {
-                try {
-                    this.fireEvent("on" + type)
-                } catch (e) {
-                }
+        if (W3C) {
+            W3CFire(this, type)
+        } else {
+            try {
+                this.fireEvent("on" + type)
+            } catch (e) {
             }
         }
     }
@@ -170,29 +168,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
     element.oldValue = element.value
     if (/text|textarea|password/.test(element.type)) {
-//        if (watchValueInInstance) {
-//            Object.defineProperty(element, "value", {
-//                set: function(v) {
-//                    v = v == null ? "" : String(v)
-//                    if (this.oldValue !== v) {
-//                        this.oldValue = v
-//                        onTree.call(this, v)
-//                    }
-//                },
-//                get: function() {
-//                    this.focus()
-//                    //https://code.google.com/p/chromium/issues/detail?id=304455
-//                    document.execCommand("selectAll", false, null);
-//                    var value = window.getSelection().toString()
-//                    var n = value.length
-//                    this.setSelectionRange(n, n)
-//                    return  value
-//                }
-//            })
-//        }
-        element.id = element.id || generateID("duplex")
         watchValueInTimer(function() {
-            if (DOC.getElementById(element.id)) {
+            if (root.contains(element)) {
                 onTree.call(element)
             } else if (!element.msRetain) {
                 return false

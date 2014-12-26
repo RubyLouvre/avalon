@@ -47,9 +47,8 @@ bindingHandlers.widget = function(data, vmodels) {
                 })
             }
             if (vmodel.hasOwnProperty("$remove")) {
-                elem.id = elem.id || generateID("widget")
                 function offTree() {
-                    if (!elem.msRetain && DOC.getElementById(elem.id)) {
+                    if (!elem.msRetain &&!root.contains(elem)) {
                         vmodel.$remove()
                         try {
                             vmodel.widgetElement = null

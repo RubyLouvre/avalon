@@ -56,22 +56,6 @@ var $$subscribers = [],
         $maxIndex = 200,
         beginTime = new Date(),
         removeID
-function hadRemove(el, type) {
-    if (el) {
-        if (el.nodeType !== 1) {
-            el = el.parentNode
-        }
-        if (el) {
-            if (typeof el.sourceIndex === "number") {
-                return el.sourceIndex === 0
-            } else {
-                el.id = el.id || generateID(type)
-                return !document.getElementById(el.id)
-            }
-        }
-    }
-    return true
-}
 
 function removeSubscribers() {
     for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
@@ -80,7 +64,9 @@ function removeSubscribers() {
             break
         }
         var data = obj.data
-        var remove = hadRemove(data.element, data.type)
+        var el = data.element
+        var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+                el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
         if (remove) { //如果它没有在DOM树
             $$subscribers.splice(i, 1)
             delete $$subscribers[obj]

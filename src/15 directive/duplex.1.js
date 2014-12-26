@@ -99,9 +99,7 @@ function pipe(val, data, action, e) {
     return val
 }
 
-var TimerID, ribbon = [],
-        watchValueInTimer = noop
-
+var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
@@ -137,7 +135,7 @@ function newSetter(value) {
         onTree.call(this, value)
     }
 }
-//var watchValueInInstance = false
+var watchValueInTimer = noop
 try {//IE9-IE11, safari
     var inputInst = document.createElement("input")
     var inputProto = inputInst.constructor.prototype
@@ -147,13 +145,5 @@ try {//IE9-IE11, safari
         set: newSetter
     })
 } catch (e) {
-//    try {//safari 8, opera
-//        document.execCommand("selectAll", false, null)
-//        Object.defineProperty(inputInst, "value", {
-//            set: newSetter
-//        })
-//        watchValueInInstance = true
-//    } catch (e2) {
-        watchValueInTimer = avalon.tick
-//    }
+    watchValueInTimer = avalon.tick
 }

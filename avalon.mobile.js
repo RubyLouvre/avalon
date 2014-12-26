@@ -80,10 +80,9 @@ function createCache(maxLength) {
     return cache;
 }
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = window.performance && performance.now? function() {
-    return ("avalon" + performance.now() + performance.now()).replace(/\./g, "")
-} : function() {
-    return ("avalon" + Math.random() + Math.random()).replace(/0\./g, "")
+var generateID = function(prefix) {
+    prefix = prefix || "avalon"
+    return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
 
 /*********************************************************************
@@ -1231,7 +1230,6 @@ function removeSubscribers() {
             obj.data = obj.list = null
             i--
             n--
-
         }
     }
     obj = $$subscribers[i]
@@ -2793,7 +2791,7 @@ bindingHandlers.widget = function(data, vmodels) {
     var widget = args[0]
     var id = args[1]
     if (!id || id === "$") {//没有定义或为$时，取组件名+随机数
-        id = widget + setTimeout("1")
+        id = generateID(widget)
     }
     var optName = args[2] || widget//没有定义，取组件名
     vmodels.cb(-1)
@@ -2837,7 +2835,7 @@ bindingHandlers.widget = function(data, vmodels) {
             }
             if (vmodel.hasOwnProperty("$remove")) {
                 function offTree() {
-                    if (!elem.msRetain && !root.contains(elem)) {
+                    if (!elem.msRetain &&!root.contains(elem)) {
                         vmodel.$remove()
                         try {
                             vmodel.widgetElement = null
@@ -2965,9 +2963,7 @@ function pipe(val, data, action, e) {
     return val
 }
 
-var TimerID, ribbon = [],
-        launch = noop
-
+var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
@@ -3003,23 +2999,23 @@ function newSetter(value) {
         onTree.call(this, value)
     }
 }
-try {
-    var inputProto = HTMLInputElement.prototype
+var watchValueInTimer = noop
+try {//IE9-IE11, safari
+    var inputInst = document.createElement("input")
+    var inputProto = inputInst.constructor.prototype
     Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
     var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
     Object.defineProperty(inputProto, "value", {
         set: newSetter
     })
 } catch (e) {
-    launch = avalon.tick
+    watchValueInTimer = avalon.tick
 }
 function onTree(value) { //disabled状态下改动不触发inout事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
         var type = this.getAttribute("data-duplex-event") || "input"
-        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
-            W3CFire(this, type)
-        }
+        W3CFire(this, type)
     }
 }
 //处理radio, checkbox, text, textarea, password
@@ -3114,13 +3110,15 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
     element.oldValue = element.value
-    launch(function() {
-        if (avalon.contains(root, element)) {
-            onTree.call(element)
-        } else if (!element.msRetain) {
-            return false
-        }
-    })
+    if (/text|textarea|password/.test(element.type)) {
+        watchValueInTimer(function() {
+            if (root.contains(element)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
+    }
     registerSubscriber(data)
     callback.call(element, element.value)
 }
@@ -3476,7 +3474,7 @@ function eachProxyFactory(name) {
     var proxy = modelFactory(source, second)
     var e = proxy.$events
     e[name] = e.$first = e.$last = e.$index
-    proxy.$id = ("$proxy$each" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$each") 
     return proxy
 }
 
@@ -3521,7 +3519,7 @@ function withProxyFactory() {
     }, {
         $val: 1
     })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$with") 
     return proxy
 }
 

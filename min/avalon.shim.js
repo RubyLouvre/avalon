@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.shim.js(去掉加载器与domReady) 1.381 build in 2014.12.25 
+avalon.shim.js(去掉加载器与domReady) 1.381 build in 2014.12.26 
 _
 support IE6+ and other browsers
  ==================================================*/
@@ -22,6 +22,7 @@ var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
 ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
 ifGroup.setAttribute("ms-skip", "1")
+var rnative = /\[native code\]/ //判定是否原生函数
 function log() {
     if (window.console && avalon.config.debug) {
         // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
@@ -35,7 +36,6 @@ var otherRequire = window.require
 var otherDefine = window.define
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
-var rnative = /\[native code\]/ //判定是否原生函数
 var rcomplexType = /^(?:object|array)$/
 var rsvg = /^\[object SVG\w*Element\]$/
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
@@ -82,10 +82,9 @@ function createCache(maxLength) {
     return cache;
 }
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = window.performance && performance.now? function() {
-    return ("avalon" + performance.now() + performance.now()).replace(/\./g, "")
-} : function() {
-    return ("avalon" + Math.random() + Math.random()).replace(/0\./g, "")
+var generateID = function(prefix) {
+    prefix = prefix || "avalon"
+    return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
 
 /*********************************************************************
@@ -1614,7 +1613,6 @@ function removeSubscribers() {
             obj.data = obj.list = null
             i--
             n--
-
         }
     }
     obj = $$subscribers[i]
@@ -3415,7 +3413,7 @@ bindingHandlers.widget = function(data, vmodels) {
     var widget = args[0]
     var id = args[1]
     if (!id || id === "$") {//没有定义或为$时，取组件名+随机数
-        id = widget + setTimeout("1")
+        id = generateID(widget)
     }
     var optName = args[2] || widget//没有定义，取组件名
     vmodels.cb(-1)
@@ -3459,7 +3457,7 @@ bindingHandlers.widget = function(data, vmodels) {
             }
             if (vmodel.hasOwnProperty("$remove")) {
                 function offTree() {
-                    if (!elem.msRetain && !root.contains(elem)) {
+                    if (!elem.msRetain &&!root.contains(elem)) {
                         vmodel.$remove()
                         try {
                             vmodel.widgetElement = null
@@ -3587,9 +3585,7 @@ function pipe(val, data, action, e) {
     return val
 }
 
-var TimerID, ribbon = [],
-        launch = noop
-
+var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
@@ -3625,15 +3621,17 @@ function newSetter(value) {
         onTree.call(this, value)
     }
 }
-try {
-    var inputProto = HTMLInputElement.prototype
+var watchValueInTimer = noop
+try {//IE9-IE11, safari
+    var inputInst = document.createElement("input")
+    var inputProto = inputInst.constructor.prototype
     Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
     var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
     Object.defineProperty(inputProto, "value", {
         set: newSetter
     })
 } catch (e) {
-    launch = avalon.tick
+    watchValueInTimer = avalon.tick
 }
 function IE() {
     if (window.VBArray) {
@@ -3657,14 +3655,12 @@ function onTree(value) { //disabled状态下改动不触发input事件
     var newValue = arguments.length ? value : this.value
     if (!this.disabled && this.oldValue !== newValue + "") {
         var type = this.getAttribute("data-duplex-event") || "input"
-        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
-            if (W3C) {
-                W3CFire(this, type)
-            } else {
-                try {
-                    this.fireEvent("on" + type)
-                } catch (e) {
-                }
+        if (W3C) {
+            W3CFire(this, type)
+        } else {
+            try {
+                this.fireEvent("on" + type)
+            } catch (e) {
             }
         }
     }
@@ -3804,14 +3800,18 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
+
     element.oldValue = element.value
-    launch(function() {
-        if (avalon.contains(root, element)) {
-            onTree.call(element)
-        } else if (!element.msRetain) {
-            return false
-        }
-    })
+    if (/text|textarea|password/.test(element.type)) {
+        watchValueInTimer(function() {
+            if (root.contains(element)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
+    }
+
     registerSubscriber(data)
     callback.call(element, element.value)
 }
@@ -4170,7 +4170,7 @@ function eachProxyFactory(name) {
     var proxy = modelFactory(source, second)
     var e = proxy.$events
     e[name] = e.$first = e.$last = e.$index
-    proxy.$id = ("$proxy$each" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$each") 
     return proxy
 }
 
@@ -4215,7 +4215,7 @@ function withProxyFactory() {
     }, {
         $val: 1
     })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
+    proxy.$id = generateID("$proxy$with") 
     return proxy
 }
 
