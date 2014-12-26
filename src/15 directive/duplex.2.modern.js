@@ -116,7 +116,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 //                    var value = window.getSelection().toString()
 //                    var n = value.length
 //                    this.setSelectionRange(n, n)
-//                    return  this.oldValue = value
+//                    return  value
 //                }
 //            })
 //        }
