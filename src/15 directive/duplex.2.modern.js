@@ -99,13 +99,36 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
     element.oldValue = element.value
-    launch(function() {
-        if (avalon.contains(root, element)) {
-            onTree.call(element)
-        } else if (!element.msRetain) {
-            return false
-        }
-    })
+    if (/text|textarea|password/.test(element.type)) {
+//        if (watchValueInInstance) {
+//            Object.defineProperty(element, "value", {
+//                set: function(v) {
+//                    v = v == null ? "" : String(v)
+//                    if (this.oldValue !== v) {
+//                        this.oldValue = v
+//                        onTree.call(this, v)
+//                    }
+//                },
+//                get: function() {
+//                    this.focus()
+//                    //https://code.google.com/p/chromium/issues/detail?id=304455
+//                    document.execCommand("selectAll", false, null);
+//                    var value = window.getSelection().toString()
+//                    var n = value.length
+//                    this.setSelectionRange(n, n)
+//                    return  this.oldValue = value
+//                }
+//            })
+//        }
+        element.id = element.id || ("duplex" + Math.random()).replace(/0\./, "")
+        watchValueInTimer(function() {
+            if (DOC.getElementById(element.id)) {
+                onTree.call(element)
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
+    }
     registerSubscriber(data)
     callback.call(element, element.value)
 }

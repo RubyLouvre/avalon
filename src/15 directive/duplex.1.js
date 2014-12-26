@@ -100,7 +100,7 @@ function pipe(val, data, action, e) {
 }
 
 var TimerID, ribbon = [],
-        launch = noop
+        watchValueInTimer = noop
 
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
@@ -137,13 +137,23 @@ function newSetter(value) {
         onTree.call(this, value)
     }
 }
-try {
-    var inputProto = HTMLInputElement.prototype
+//var watchValueInInstance = false
+try {//IE9-IE11, safari
+    var inputInst = document.createElement("input")
+    var inputProto = inputInst.constructor.prototype
     Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
     var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
     Object.defineProperty(inputProto, "value", {
         set: newSetter
     })
 } catch (e) {
-    launch = avalon.tick
+//    try {//safari 8, opera
+//        document.execCommand("selectAll", false, null)
+//        Object.defineProperty(inputInst, "value", {
+//            set: newSetter
+//        })
+//        watchValueInInstance = true
+//    } catch (e2) {
+        watchValueInTimer = avalon.tick
+//    }
 }
