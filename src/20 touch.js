@@ -49,7 +49,7 @@ new function() {
             y: e.clientY
         }
     }
-    function resetState(e) {
+    function resetState(event) {
         var e = getCoordinates(event)
 
         touchProxy.deltaX += Math.abs(touchProxy.x - e.x)
