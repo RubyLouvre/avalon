@@ -4434,8 +4434,6 @@ new function() {
         document.addEventListener(touchNames[3], resetState)
     }
     self["clickHook"] = function(data) {
-
-
         function touchstart(event) {
             var element = data.element
             avalon.mix(touchProxy, getCoordinates(event))
@@ -4460,7 +4458,7 @@ new function() {
         }
 
         function needFixClick(type) {
-            return type === "click" || type === "dblclick"
+            return type === "click" 
         }
         if (needFixClick(data.param) ? touchSupported : true) {
             data.specialBind = function(element, callback) {

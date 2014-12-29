@@ -2,6 +2,7 @@
 var fs = require("fs")
 var path = require("path") //不同的操作系统，其 文件目录 分割符是不一样的，不能直接使用 + "/"来实现
 var curDir = process.cwd() //当前目录
+var parentDir = curDir.replace(path.sep + "src", "")
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
 var Buffer = require('buffer').Buffer
 var now = new Date
@@ -100,13 +101,13 @@ mobileFiles.push("20 touch", "19 outer")
 
 //开始合并avalon.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir, 'avalon.js'), {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.js'), {
         encoding: "utf8"
     });
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
     var comboCompatibleFiles = comboFiles(compatibleFiles, writable, function() {
         //更新avalon.test中的文件
-        var readable2 = fs.createReadStream(path.join(curDir, 'avalon.js'))
+        var readable2 = fs.createReadStream(path.join(parentDir, 'avalon.js'))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.js"))
         readable2.pipe(writable2)
     }, "avalon.js " + version + " build in " + date + " \n")
@@ -115,14 +116,14 @@ new function() {
 
 //开始合并avalon.modern.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir, 'avalon.modern.js'), {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.modern.js'), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
 
     var comboModernFiles = comboFiles(modernFiles, writable, function() {
         //更新avalon.test中的文件
-        var readable2 = fs.createReadStream(path.join(curDir, "avalon.modern.js"))
+        var readable2 = fs.createReadStream(path.join(parentDir, "avalon.modern.js"))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.modern.js"))
         readable2.pipe(writable2)
     }, "avalon.modern.js " + version + " build in " + date + " \n")
@@ -131,7 +132,7 @@ new function() {
 
 //开始合并avalon.shim.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir, "avalon.shim.js"), {
+    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), "avalon.shim.js"), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
@@ -146,13 +147,13 @@ new function() {
 
 //开始合并avalon.mobile.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir, 'avalon.mobile.js'), {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.mobile.js'), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
     var comboMobileFiles = comboFiles(mobileFiles, writable, function() {
         //更新avalon.test中的文件
-        var readable2 = fs.createReadStream(path.join(curDir, 'avalon.mobile.js'))
+        var readable2 = fs.createReadStream(path.join(parentDir, 'avalon.mobile.js'))
         var writable2 = fs.createWriteStream(path.join(otherDir, 'avalon.test', "src", "avalon.mobile.js"))
         readable2.pipe(writable2)
     }, "avalon.mobile.js(支持触屏事件) " + version + " build in " + date + " \n")

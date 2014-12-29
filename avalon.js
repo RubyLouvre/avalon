@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.381 build in 2014.12.26 
+avalon.js 1.381 build in 2014.12.29 
 __________________________________
 support IE6+ and other browsers
  ==================================================*/
