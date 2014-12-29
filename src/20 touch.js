@@ -48,20 +48,19 @@ new function() {
         }
     }
     function resetState(event) {
-        var e = getCoordinates(event)
-        touchProxy.deltaX += Math.abs(touchProxy.x - e.x)
-        touchProxy.deltaY += Math.abs(touchProxy.y - e.y)
-        avalon(event.target).removeClass(fastclick.activeClass)
-        touchProxy.element = null
+        avalon(touchProxy.element).removeClass(fastclick.activeClass)
+        if (touchProxy.tapping)
+            touchProxy.element = null
     }
     function touchend(event) {
-        if(!touchProxy.element)
+        var element = touchProxy.element
+        if (!element)
             return
         var e = getCoordinates(event)
         var diff = Date.now() - touchProxy.startTime //经过时间
         var totalX = Math.abs(touchProxy.x - e.x)
         var totalY = Math.abs(touchProxy.y - e.y)
-        var element = touchProxy.target
+
         var canDoubleClick = false
         if (touchProxy.doubleIndex === 2) {//如果已经点了两次,就可以触发dblclick 回调
             touchProxy.doubleIndex = 0
@@ -105,14 +104,13 @@ new function() {
                     }
                     touchProxy.doubleIndex = 0
                 }
-
                 if (diff > 750) {
                     W3CFire(element, "hold")
                     W3CFire(element, "longtap")
                 }
             }
         }
-        resetState()
+        resetState(event)
     }
 
     document.addEventListener(touchNames[1], resetState)
@@ -121,9 +119,8 @@ new function() {
         document.addEventListener(touchNames[3], resetState)
     }
     self["clickHook"] = function(data) {
-        var element = data.element
-
         function touchstart(event) {
+            var element = data.element
             avalon.mix(touchProxy, getCoordinates(event))
             touchProxy.startTime = Date.now()
             touchProxy.event = data.param
@@ -146,7 +143,7 @@ new function() {
         }
 
         function needFixClick(type) {
-            return type === "click" || type === "dblclick"
+            return type === "click" 
         }
         if (needFixClick(data.param) ? touchSupported : true) {
             data.specialBind = function(element, callback) {
