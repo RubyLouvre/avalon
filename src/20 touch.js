@@ -7,9 +7,8 @@ new function() {
 
     var IE11touch = navigator.pointerEnabled
     var IE9_10touch = navigator.msPointerEnabled
-
     var w3ctouch = (function() {
-        var supported = false
+        var supported = isIOS || false
         //http://stackoverflow.com/questions/5713393/creating-and-firing-touch-events-on-a-touch-enabled-browser
         try {
             var div = document.createElement("div")
@@ -24,8 +23,7 @@ new function() {
         div = div.ontouchstart = null
         return supported
     })()
-    var touchSupported = w3ctouch || IE11touch || IE9_10touch
-
+    var touchSupported = !!(w3ctouch || IE11touch || IE9_10touch)
     //合成做成触屏事件所需要的各种原生事件
     var touchNames = ["mousedown", "mousemove", "mouseup", ""]
     if (w3ctouch) {
@@ -51,17 +49,19 @@ new function() {
     }
     function resetState(event) {
         var e = getCoordinates(event)
-
         touchProxy.deltaX += Math.abs(touchProxy.x - e.x)
         touchProxy.deltaY += Math.abs(touchProxy.y - e.y)
-        avalon(e.target).removeClass(fastclick.activeClass)
+        avalon(event.target).removeClass(fastclick.activeClass)
+        touchProxy.element = null
     }
     function touchend(event) {
+        if(!touchProxy.element)
+            return
         var e = getCoordinates(event)
         var diff = Date.now() - touchProxy.startTime //经过时间
         var totalX = Math.abs(touchProxy.x - e.x)
         var totalY = Math.abs(touchProxy.y - e.y)
-        var element = e.target
+        var element = touchProxy.target
         var canDoubleClick = false
         if (touchProxy.doubleIndex === 2) {//如果已经点了两次,就可以触发dblclick 回调
             touchProxy.doubleIndex = 0
