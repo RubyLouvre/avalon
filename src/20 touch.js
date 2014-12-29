@@ -54,14 +54,14 @@ new function() {
 
         touchProxy.deltaX += Math.abs(touchProxy.x - e.x)
         touchProxy.deltaY += Math.abs(touchProxy.y - e.y)
-        avalon(touchProxy.element).removeClass(fastclick.activeClass)
+        avalon(e.target).removeClass(fastclick.activeClass)
     }
     function touchend(event) {
         var e = getCoordinates(event)
         var diff = Date.now() - touchProxy.startTime //经过时间
         var totalX = Math.abs(touchProxy.x - e.x)
         var totalY = Math.abs(touchProxy.y - e.y)
-        var element = touchProxy.element
+        var element = e.target
         var canDoubleClick = false
         if (touchProxy.doubleIndex === 2) {//如果已经点了两次,就可以触发dblclick 回调
             touchProxy.doubleIndex = 0
