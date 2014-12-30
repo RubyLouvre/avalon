@@ -5,7 +5,6 @@
 avalon.scan = function(elem, vmodel, group) {
     elem = elem || root
     var vmodels = vmodel ? [].concat(vmodel) : []
-    vmodels.cb = noop
     scanTag(elem, vmodels)
 }
 

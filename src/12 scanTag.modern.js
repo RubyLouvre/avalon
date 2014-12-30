@@ -12,9 +12,7 @@ function scanTag(elem, vmodels, node) {
             return
         }
         //ms-important不包含父VM，ms-controller相反
-        var cb = vmodels.cb
         vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-        vmodels.cb = cb
         elem.removeAttribute(node.name) //removeAttributeNode不会刷新[ms-controller]样式规则
         elem.classList.remove(node.name)
         createSignalTower(elem, newVmodel)

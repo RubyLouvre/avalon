@@ -216,9 +216,7 @@ function shimController(data, transation, proxy, fragments) {
     var dom = avalon.parseHTML(data.template)
     var nodes = avalon.slice(dom.childNodes)
     transation.appendChild(dom)
-    var ov = data.vmodels
-    var nv = [proxy].concat(ov)
-    nv.cb = ov.cb
+    var nv = [proxy].concat(data.vmodels)
     var fragment = {
         nodes: nodes,
         vmodels: nv

@@ -1776,7 +1776,6 @@ avalon.clearHTML = function(node) {
 avalon.scan = function(elem, vmodel, group) {
     elem = elem || root
     var vmodels = vmodel ? [].concat(vmodel) : []
-    vmodels.cb = noop
     scanTag(elem, vmodels)
 }
 
@@ -1861,9 +1860,7 @@ function scanTag(elem, vmodels, node) {
             return
         }
         //ms-important不包含父VM，ms-controller相反
-        var cb = vmodels.cb
         vmodels = node === b ? [newVmodel] : [newVmodel].concat(vmodels)
-        vmodels.cb = cb
         var name = node.name
         elem.removeAttribute(name) //removeAttributeNode不会刷新[ms-controller]样式规则
         avalon(elem).removeClass(name)
@@ -2885,7 +2882,6 @@ function parseExpr(code, scopes, data) {
 //parseExpr的智能引用代理
 
 function parseExprProxy(code, scopes, data, tokens, noregister) {
-    scopes.cb(-1)
     if (Array.isArray(tokens)) {
         code = tokens.map(function(el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
@@ -4041,9 +4037,7 @@ function shimController(data, transation, proxy, fragments) {
     var dom = avalon.parseHTML(data.template)
     var nodes = avalon.slice(dom.childNodes)
     transation.appendChild(dom)
-    var ov = data.vmodels
-    var nv = [proxy].concat(ov)
-    nv.cb = ov.cb
+    var nv = [proxy].concat(data.vmodels)
     var fragment = {
         nodes: nodes,
         vmodels: nv

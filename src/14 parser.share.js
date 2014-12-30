@@ -202,7 +202,6 @@ function parseExpr(code, scopes, data) {
 //parseExpr的智能引用代理
 
 function parseExprProxy(code, scopes, data, tokens, noregister) {
-    scopes.cb(-1)
     if (Array.isArray(tokens)) {
         code = tokens.map(function(el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
