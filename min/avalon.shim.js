@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.shim.js(去掉加载器与domReady) 1.381 build in 2014.12.29 
+avalon.shim.js(去掉加载器与domReady) 1.381 build in 2014.12.30 
 _
 support IE6+ and other browsers
  ==================================================*/
@@ -1632,11 +1632,8 @@ function disposeData(data) {
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-    clearTimeout(removeID)
     if (new Date() - beginTime > 444) {
         removeSubscribers()
-    } else {
-        removeID = setTimeout(removeSubscribers, 444)
     }
     if (list && list.length) {
         var args = aslice.call(arguments, 1)

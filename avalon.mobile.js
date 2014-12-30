@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.381 build in 2014.12.29 
+avalon.mobile.js(支持触屏事件) 1.381 build in 2014.12.30 
 _______
 support IE6+ and other browsers
  ==================================================*/
@@ -1249,11 +1249,8 @@ function disposeData(data) {
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-    clearTimeout(removeID)
     if (new Date() - beginTime > 444) {
         removeSubscribers()
-    } else {
-        removeID = setTimeout(removeSubscribers, 444)
     }
     if (list && list.length) {
         var args = aslice.call(arguments, 1)
