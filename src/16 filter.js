@@ -330,9 +330,9 @@ new function() {
         },
         fullDate: "y年M月d日EEEE",
         longDate: "y年M月d日",
-        medium: "yyyy-M-d ah:mm:ss",
+        medium: "yyyy-M-d H:mm:ss",
         mediumDate: "yyyy-M-d",
-        mediumTime: "ah:mm:ss",
+        mediumTime: "H:mm:ss",
         "short": "yy-M-d ah:mm",
         shortDate: "yy-M-d",
         shortTime: "ah:mm"

@@ -4327,8 +4327,8 @@ var filters = avalon.filters = {
                 replace(/</g, '&lt;').
                 replace(/>/g, '&gt;')
     },
-    currency: function(number, symbol) {
-        return (symbol || "\uFFE5") + numberFormatr(number)
+    currency: function(amount, symbol, fractionSize) {
+        return (symbol || "\uFFE5") + numberFormatr(amount, isFinite(fractionSize) ? fractionSize: 2)
     },
     number: function(number, fractionSize) {
         return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
@@ -4550,9 +4550,9 @@ new function() {
         },
         fullDate: "y年M月d日EEEE",
         longDate: "y年M月d日",
-        medium: "yyyy-M-d ah:mm:ss",
+        medium: "yyyy-M-d H:mm:ss",
         mediumDate: "yyyy-M-d",
-        mediumTime: "ah:mm:ss",
+        mediumTime: "H:mm:ss",
         "short": "yy-M-d ah:mm",
         shortDate: "yy-M-d",
         shortTime: "ah:mm"
