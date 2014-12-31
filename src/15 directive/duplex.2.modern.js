@@ -109,3 +109,4 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     registerSubscriber(data)
     callback.call(element, element.value)
 }
+duplexBinding.TEXTAREA = duplexBinding.INPUT

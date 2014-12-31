@@ -137,11 +137,14 @@ function newSetter(value) {
 }
 var watchValueInTimer = noop
 try {//IE9-IE11, safari
-    var inputInst = document.createElement("input")
-    var inputProto = inputInst.constructor.prototype
+    var inputProto = HTMLInputElment.prototype
     Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
     var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
     Object.defineProperty(inputProto, "value", {
+        set: newSetter
+    })
+    var textProto = HTMLTextAreaElement.prototype
+    Object.defineProperty(textProto, "value", {
         set: newSetter
     })
 } catch (e) {
