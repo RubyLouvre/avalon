@@ -4231,6 +4231,41 @@ var rsanitize = {
 }
 var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
 var rnoalphanumeric = /([^\#-~| |!])/g;
+
+function numberFormat(number, decimals, dec_point, thousands_sep) {
+    //form http://phpjs.org/functions/number_format/
+    //number	必需，要格式化的数字
+    //decimals	可选，规定多少个小数位。
+    //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
+    //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+    number = (number + '')
+            .replace(/[^0-9+\-Ee.]/g, '')
+    var n = !isFinite(+number) ? 0 : +number,
+            prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+            sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+            dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+            s = '',
+            toFixedFix = function(n, prec) {
+                var k = Math.pow(10, prec)
+                return '' + (Math.round(n * k) / k)
+                        .toFixed(prec)
+            }
+    // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+    s = (prec ? toFixedFix(n, prec) : '' + Math.round(n))
+            .split('.')
+    if (s[0].length > 3) {
+        s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
+    }
+    if ((s[1] || '')
+            .length < prec) {
+        s[1] = s[1] || ''
+        s[1] += new Array(prec - s[1].length + 1)
+                .join('0')
+    }
+    return s.join(dec)
+}
+
+
 var filters = avalon.filters = {
     uppercase: function(str) {
         return str.toUpperCase()
@@ -4238,11 +4273,11 @@ var filters = avalon.filters = {
     lowercase: function(str) {
         return str.toLowerCase()
     },
-    truncate: function(target, length, truncation) {
+    truncate: function(str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         length = length || 30
         truncation = truncation === void(0) ? "..." : truncation
-        return target.length > length ? target.slice(0, length - truncation.length) + truncation : String(target)
+        return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
     $filter: function(val) {
         for (var i = 1, n = arguments.length; i < n; i++) {
@@ -4277,9 +4312,9 @@ var filters = avalon.filters = {
             return a.replace(ron, " ").replace(/\s+/g, " ") //移除onXXX事件
         })
     },
-    escape: function(html) {
-        //将字符串经过 html 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
-        return String(html).
+    escape: function(str) {
+        //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
+        return String(str).
                 replace(/&/g, '&amp;').
                 replace(rsurrogate, function(value) {
                     var hi = value.charCodeAt(0)
@@ -4293,36 +4328,10 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(number, symbol) {
-        symbol = symbol || "\uFFE5"
-        return symbol + avalon.filters.number(number)
+        return (symbol || "\uFFE5") + numberFormatr(number)
     },
-    number: function(number, decimals, dec_point, thousands_sep) {
-        //与PHP的number_format完全兼容
-        //number	必需，要格式化的数字
-        //decimals	可选，规定多少个小数位。
-        //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
-        //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
-        // http://kevin.vanzonneveld.net
-        number = (number + "").replace(/[^0-9+\-Ee.]/g, "")
-        var n = !isFinite(+number) ? 0 : +number,
-                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-                sep = thousands_sep || ",",
-                dec = dec_point || ".",
-                s = "",
-                toFixedFix = function(n, prec) {
-                    var k = Math.pow(10, prec)
-                    return "" + Math.round(n * k) / k
-                }
-        // Fix for IE parseFloat(0.55).toFixed(0) = 0 
-        s = (prec ? toFixedFix(n, prec) : "" + Math.round(n)).split('.')
-        if (s[0].length > 3) {
-            s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
-        }
-        if ((s[1] || "").length < prec) {
-            s[1] = s[1] || ""
-            s[1] += new Array(prec - s[1].length + 1).join("0")
-        }
-        return s.join(dec)
+    number: function(number, fractionSize) {
+        return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
     }
 }
 /*
@@ -4967,7 +4976,14 @@ if (DOC.readyState === "complete") {
             fireReady()
         }
     })
-    if (root.doScroll) {
+    var isFrame;
+    try{
+        isFrame=window.frameElement!=null//当前页面处于iframe中时,访问frameElement会抛出不允许跨域访问异常
+    }
+    catch(e){
+        isFrame=true
+    }
+    if (root.doScroll&& !isFrame) {//只有不处于iframe时才用doScroll判断,否则可能会不准
         doScrollCheck()
     }
 }
