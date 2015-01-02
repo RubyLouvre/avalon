@@ -150,7 +150,7 @@ new function() {
         })
     } catch (e) {
         try {
-            if (!window.VBArray) {//chrome safar6+, opera15+
+            if ("WebkitAppearance" in root.style) {//chrome safar6+, opera15+
                 Object.defineProperty(document.createElement("input"), "value", {
                     set: newSetter
                 })
