@@ -1,10 +1,4 @@
-function onTree(value) { //disabled状态下改动不触发inout事件
-    var newValue = arguments.length ? value : this.value
-    if (!this.disabled && this.oldValue !== newValue + "") {
-        var type = this.getAttribute("data-duplex-event") || "input"
-        W3CFire(this, type)
-    }
-}
+
 //处理radio, checkbox, text, textarea, password
 duplexBinding.INPUT = function(element, evaluator, data) {
     var type = element.type,
@@ -97,6 +91,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
     element.oldValue = element.value
+    element.avalonSetter = updateVModel
     if (/text|textarea|password/.test(element.type)) {
         if (watchValueInProp && element.type !== "password") {//chrome safari
             element.addEventListener("input", function(e) {
@@ -121,7 +116,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         } else {
             watchValueInTimer(function() {
                 if (root.contains(element)) {
-                    onTree.call(element)
+                    if (element.value !== element.oldValue) {
+                        updateVModel()
+                    }
                 } else if (!element.msRetain) {
                     return false
                 }

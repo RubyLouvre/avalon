@@ -45,6 +45,7 @@ var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
             }
             var old = data.rollback
             data.rollback = function() {
+                elem.avalonSetter = null
                 avalon.unbind(elem, type, callback)
                 old && old()
             }
@@ -135,13 +136,15 @@ new function() {
     try {//IE9-IE11, firefox
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                onSetter.call(this, value)
-                onTree.call(this, value)
+                nativeSetter.call(this, value)
+                if (this.avalonSetter) {
+                    this.avalonSetter()
+                }
             }
         }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        var nativeSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })

@@ -3490,6 +3490,7 @@ var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
             }
             var old = data.rollback
             data.rollback = function() {
+                elem.avalonSetter = null
                 avalon.unbind(elem, type, callback)
                 old && old()
             }
@@ -3580,13 +3581,15 @@ new function() {
     try {//IE9-IE11, firefox
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                onSetter.call(this, value)
-                onTree.call(this, value)
+                nativeSetter.call(this, value)
+                if (this.avalonSetter) {
+                    this.avalonSetter()
+                }
             }
         }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        var nativeSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
         Object.defineProperty(inputProto, "value", {
             set: newSetter
         })
@@ -3619,25 +3622,10 @@ var IEVersion = IE()
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function(e) {
         var el = DOC.activeElement
-        if (el && typeof el.avalonSelectionChange === "function") {
-            el.avalonSelectionChange()
+        if (el && typeof el.avalonSetter === "function") {
+            el.avalonSetter()
         }
     })
-}
-
-function onTree(value) { //disabled状态下改动不触发input事件
-    var newValue = arguments.length ? value : this.value
-    if (!this.disabled && this.oldValue !== newValue + "") {
-        var type = this.getAttribute("data-duplex-event") || "input"
-        if (W3C) {
-            W3CFire(this, type)
-        } else {
-            try {
-                this.fireEvent("on" + type)
-            } catch (e) {
-            }
-        }
-    }
 }
 
 //处理radio, checkbox, text, textarea, password
@@ -3750,7 +3738,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         bound("compositionend", compositionEnd)
 
                     } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                        element.avalonSelectionChange = updateVModel//监听IE点击input右边的X的清空行为
+                       // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (IEVersion > 8) {
                             bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                         } else {
@@ -3760,9 +3748,6 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                                 }
                             })
                         }
-                        // bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，删除引发的变动
-                        // bound("cut", delay)
-                        // bound("keydown", delay)
                         bound("dragend", delay)
                         //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                         //http://www.matts411.com/post/internet-explorer-9-oninput/
@@ -3776,6 +3761,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
 
     element.oldValue = element.value
+    element.avalonSetter = updateVModel
     if (/text|textarea|password/.test(element.type)) {
         if (watchValueInProp && element.type !== "password") {//chrome safari
             element.addEventListener("input", function(e) {
@@ -3800,7 +3786,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         } else {
             watchValueInTimer(function() {
                 if (root.contains(element)) {
-                    onTree.call(element)
+                    if (element.value !== element.oldValue) {
+                        updateVModel()
+                    }
                 } else if (!element.msRetain) {
                     return false
                 }
