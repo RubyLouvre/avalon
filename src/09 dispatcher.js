@@ -57,6 +57,17 @@ var $$subscribers = [],
         beginTime = new Date(),
         removeID
 
+function isRemove(el) {
+    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
+        if (!el.parentNode) {
+            return true
+        }
+    } catch (e) {
+        return true
+    }
+    return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+}
 function removeSubscribers() {
     for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
         var obj = $$subscribers[i]
@@ -64,10 +75,7 @@ function removeSubscribers() {
             break
         }
         var data = obj.data
-        var el = data.element
-        var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-                el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-        if (remove) { //如果它没有在DOM树
+        if (isRemove(data.element)) { //如果它没有在DOM树
             $$subscribers.splice(i, 1)
             delete $$subscribers[obj]
             avalon.Array.remove(obj.list, data)
