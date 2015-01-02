@@ -36,6 +36,7 @@ function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
     }
 }
 
+
 function addSubscribers(data, list) {
     data.$uuid = data.$uuid || generateID()
     list.$uuid = list.$uuid || generateID()
@@ -102,6 +103,22 @@ function disposeData(data) {
     }
 }
 
+var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
+if (MutationObserver) {
+    var observer = new MutationObserver(function(mutations) {
+        if (mutations.some(function(mutation) {
+            return mutation.removedNodes && mutation.removedNodes.length
+        })) {
+            if (new Date() - beginTime > 444) {
+                removeSubscribers()
+            }
+        }
+    });
+    observer.observe(root, {
+        childList: true,
+        subtree: true
+    })
+}
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
     if (new Date() - beginTime > 444) {
         removeSubscribers()
