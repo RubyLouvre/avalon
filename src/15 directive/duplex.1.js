@@ -129,24 +129,35 @@ function ticker() {
     }
 }
 
-function newSetter(value) {
-    if (avalon.contains(root, this)) {
-        onSetter.call(this, value)
-        onTree.call(this, value)
-    }
-}
 var watchValueInTimer = noop
-try {//IE9-IE11, safari
-    var inputProto = HTMLInputElment.prototype
-    Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-    var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
-    Object.defineProperty(inputProto, "value", {
-        set: newSetter
-    })
-    var textProto = HTMLTextAreaElement.prototype
-    Object.defineProperty(textProto, "value", {
-        set: newSetter
-    })
-} catch (e) {
-    watchValueInTimer = avalon.tick
+var watchValueInProp = false
+new function() {
+    try {//IE9-IE11, firefox
+        function newSetter(value) {
+            if (avalon.contains(root, this)) {
+                onSetter.call(this, value)
+                onTree.call(this, value)
+            }
+        }
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        Object.defineProperty(inputProto, "value", {
+            set: newSetter
+        })
+        Object.defineProperty(HTMLTextAreaElement.prototype, "value", {
+            set: newSetter
+        })
+    } catch (e) {
+        try {
+            if (!window.VBArray) {//chrome safar6+, opera15+
+                Object.defineProperty(document.createElement("input"), "value", {
+                    set: newSetter
+                })
+                return watchValueInProp = true
+            }
+        } catch (e) {
+        }
+        watchValueInTimer = avalon.tick
+    }
 }

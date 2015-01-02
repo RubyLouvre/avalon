@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.381 build in 2015.1.2 
+avalon.js 1.381 build in 2015.1.3 
 ____________________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -3574,27 +3574,39 @@ function ticker() {
     }
 }
 
-function newSetter(value) {
-    if (avalon.contains(root, this)) {
-        onSetter.call(this, value)
-        onTree.call(this, value)
+var watchValueInTimer = noop
+var watchValueInProp = false
+new function() {
+    try {//IE9-IE11, firefox
+        function newSetter(value) {
+            if (avalon.contains(root, this)) {
+                onSetter.call(this, value)
+                onTree.call(this, value)
+            }
+        }
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+        var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
+        Object.defineProperty(inputProto, "value", {
+            set: newSetter
+        })
+        Object.defineProperty(HTMLTextAreaElement.prototype, "value", {
+            set: newSetter
+        })
+    } catch (e) {
+        try {
+            if (!window.VBArray) {//chrome safar6+, opera15+
+                Object.defineProperty(document.createElement("input"), "value", {
+                    set: newSetter
+                })
+                return watchValueInProp = true
+            }
+        } catch (e) {
+        }
+        watchValueInTimer = avalon.tick
     }
 }
-var watchValueInTimer = noop
-try {//IE9-IE11, safari
-    var inputProto = HTMLInputElment.prototype
-    Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-    var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
-    Object.defineProperty(inputProto, "value", {
-        set: newSetter
-    })
-    var textProto = HTMLTextAreaElement.prototype
-    Object.defineProperty(textProto, "value", {
-        set: newSetter
-    })
-} catch (e) {
-    watchValueInTimer = avalon.tick
-}
+
 function IE() {
     if (window.VBArray) {
         var mode = document.documentMode
@@ -3765,13 +3777,36 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
     element.oldValue = element.value
     if (/text|textarea|password/.test(element.type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                onTree.call(element)
-            } else if (!element.msRetain) {
-                return false
-            }
-        })
+        if (watchValueInProp && element.type !== "password") {//chrome safari
+            element.addEventListener("input", function(e) {
+                this.select()
+                var value = window.getSelection().toString()
+                var n = value.length
+                this.setSelectionRange(n, n)
+                this.oldValue = value
+            })
+            Object.defineProperty(element, "value", {
+                set: function(v) {
+                    v = v == null ? "" : String(v)
+                    if (this.oldValue !== v) {
+                        this.oldValue = v
+                        updateVModel()
+                    }
+                },
+                get: function() {
+                    return this.oldValue
+                }
+            })
+        } else {
+            watchValueInTimer(function() {
+                if (root.contains(element)) {
+                    onTree.call(element)
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
     }
 
     registerSubscriber(data)

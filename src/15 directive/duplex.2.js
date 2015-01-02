@@ -168,13 +168,36 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
     element.oldValue = element.value
     if (/text|textarea|password/.test(element.type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                onTree.call(element)
-            } else if (!element.msRetain) {
-                return false
-            }
-        })
+        if (watchValueInProp && element.type !== "password") {//chrome safari
+            element.addEventListener("input", function(e) {
+                this.select()
+                var value = window.getSelection().toString()
+                var n = value.length
+                this.setSelectionRange(n, n)
+                this.oldValue = value
+            })
+            Object.defineProperty(element, "value", {
+                set: function(v) {
+                    v = v == null ? "" : String(v)
+                    if (this.oldValue !== v) {
+                        this.oldValue = v
+                        updateVModel()
+                    }
+                },
+                get: function() {
+                    return this.oldValue
+                }
+            })
+        } else {
+            watchValueInTimer(function() {
+                if (root.contains(element)) {
+                    onTree.call(element)
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
     }
 
     registerSubscriber(data)
