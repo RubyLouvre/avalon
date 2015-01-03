@@ -3768,7 +3768,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         bound("compositionend", compositionEnd)
 
                     } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                       // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
+                        // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (IEVersion > 8) {
                             bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                         } else {
@@ -3790,23 +3790,34 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
 
-    element.oldValue = element.value
+
     element.avalonSetter = updateVModel
     if (/text|textarea|password/.test(element.type)) {
         if (watchValueInProp && element.type !== "password") {//chrome safari
-            element.addEventListener("input", function(e) {
+            element.oldValue = element.value = data.pipe(evaluator(), data, "set")
+            element.addEventListener("input", function() {
                 this.select()
                 var value = window.getSelection().toString()
                 var n = value.length
                 this.setSelectionRange(n, n)
                 this.oldValue = value
+                console.log("fire")
+                updateVModel()
             })
             Object.defineProperty(element, "value", {
-                set: function(v) {
-                    v = v == null ? "" : String(v)
-                    if (this.oldValue !== v) {
-                        this.oldValue = v
-                        updateVModel()
+                set: function(text) {
+                    text = text == null ? "" : String(text)
+                    if (this.oldValue !== text) {
+                        //先选中表单元素创建一个选区，然后清空value
+                        //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
+                        this.select()
+                        var sel = window.getSelection()
+                        var range = sel.getRangeAt(0)
+                        range.deleteContents()
+                        //接着使用insertHTML或insertText命令设置value
+                        //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
+                        document.execCommand("insertText", false, text)
+                        this.oldValue = text
                     }
                 },
                 get: function() {
@@ -3826,8 +3837,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
 
     }
-
     registerSubscriber(data)
+    element.oldValue = element.value
     callback.call(element, element.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT
