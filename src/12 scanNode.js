@@ -1,4 +1,5 @@
 function scanNodeList(parent, vmodels) {
+   // console.log(parent.childNodes.length +"!")
     var node = parent.firstChild
     while (node) {
         var nextNode = node.nextSibling
@@ -12,11 +13,10 @@ function scanNodeArray(nodes, vmodels) {
         scanNode(node, node.nodeType, vmodels)
     }
 }
-
 function scanNode(node, nodeType, vmodels) {
     if (nodeType === 1) {
         scanTag(node, vmodels) //扫描元素节点
-    } else if (nodeType === 3 && rexpr.test(node.data)) {
+    } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
     } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
         scanText(node, vmodels) //扫描注释节点

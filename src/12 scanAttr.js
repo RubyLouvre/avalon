@@ -75,11 +75,11 @@ function scanAttr(elem, vmodels) {
         }
     }
     executeBindings(bindings, vmodels)
-
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
+
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，

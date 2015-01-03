@@ -1222,6 +1222,8 @@ function isRemove(el) {
     }
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+//    return el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+//            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
 function removeSubscribers() {
     for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
@@ -1252,27 +1254,44 @@ function removeSubscribers() {
 function disposeData(data) {
     data.element = null
     data.rollback && data.rollback()
+
     for (var key in data) {
         data[key] = null
     }
 }
 
-var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
-if (MutationObserver) {
-    var observer = new MutationObserver(function(mutations) {
-        if (mutations.some(function(mutation) {
-            return mutation.removedNodes && mutation.removedNodes.length
-        })) {
-            if (new Date() - beginTime > 444) {
-                removeSubscribers()
-            }
-        }
-    });
-    observer.observe(root, {
-        childList: true,
-        subtree: true
-    })
-}
+//var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
+//if (MutationObserver) {
+//    var observer = new MutationObserver(function(mutations) {
+//         mutations.forEach(function(mutation) {
+//             if(mutation.addedNodes.length){
+//                 console.log(mutation.addedNodes.length+"-----")
+//                 console.log(mutation.target)
+//             }
+//         })
+//        if (mutations.some(function(mutation) {
+//            return mutation.removedNodes && mutation.removedNodes.length
+//        })) {
+//            setTimeout(function() {//必须异步，要不会打断scanText的操作
+//                if (new Date() - beginTime > 444) {
+//                    removeSubscribers()
+//                }
+//            })
+//        }
+//    });
+   // window.addEventListener("load", function self(e) {
+    //    if (e.type === "load") {
+//            observer.observe(root, {
+//                childList: true,
+//                subtree: true,
+//                characterData: true
+//            })
+     //   } else {
+     //       observer.disconnect()
+      //  }
+     //   window.removeEventListener("unload", self)
+   // })
+//}
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
     if (new Date() - beginTime > 444) {
         removeSubscribers()
@@ -1464,6 +1483,7 @@ function scanTag(elem, vmodels, node) {
     scanAttr(elem, vmodels) //扫描特性节点
 }
 function scanNodeList(parent, vmodels) {
+   // console.log(parent.childNodes.length +"!")
     var node = parent.firstChild
     while (node) {
         var nextNode = node.nextSibling
@@ -1477,11 +1497,10 @@ function scanNodeArray(nodes, vmodels) {
         scanNode(node, node.nodeType, vmodels)
     }
 }
-
 function scanNode(node, nodeType, vmodels) {
     if (nodeType === 1) {
         scanTag(node, vmodels) //扫描元素节点
-    } else if (nodeType === 3 && rexpr.test(node.data)) {
+    } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
     } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
         scanText(node, vmodels) //扫描注释节点
