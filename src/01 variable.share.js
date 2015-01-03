@@ -54,3 +54,12 @@ var generateID = function(prefix) {
     prefix = prefix || "avalon"
     return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
+function IE() {
+    if (window.VBArray) {
+        var mode = document.documentMode
+        return mode ? mode : window.XMLHttpRequest ? 7 : 6
+    } else {
+        return 0
+    }
+}
+var IEVersion = IE()

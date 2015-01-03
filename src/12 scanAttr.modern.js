@@ -76,6 +76,9 @@ function scanAttr(elem, vmodels) {
     }
     executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
+        if (IEVersion) {
+            mergeTextNode(elem)
+        }
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }

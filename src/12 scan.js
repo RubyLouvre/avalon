@@ -52,7 +52,24 @@ function executeBindings(bindings, vmodels) {
     }
     bindings.length = 0
 }
-
+//https://github.com/RubyLouvre/avalon/issues/636
+function mergeTextNode(elem) {
+    var node = elem.firstChild, text
+    while (node) {
+        var aaa = node.nextSibling
+        if (node.nodeType === 3) {
+            if (text) {
+                text.nodeValue += node.nodeValue
+                elem.removeChild(node)
+            } else {
+                text = node
+            }
+        } else {
+            text = null
+        }
+        node = aaa
+    }
+}
 
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {

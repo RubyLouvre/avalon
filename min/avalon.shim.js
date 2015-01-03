@@ -86,7 +86,15 @@ var generateID = function(prefix) {
     prefix = prefix || "avalon"
     return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
-
+function IE() {
+    if (window.VBArray) {
+        var mode = document.documentMode
+        return mode ? mode : window.XMLHttpRequest ? 7 : 6
+    } else {
+        return 0
+    }
+}
+var IEVersion = IE()
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
@@ -1243,7 +1251,7 @@ if (!canHideOwn) {
             return obj
         }
     }
-    if (window.VBArray) {
+    if (IEVersion) {
         window.execScript([
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
@@ -1605,8 +1613,6 @@ function isRemove(el) {
     }
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-//    return el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-//            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
 function removeSubscribers() {
     for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
@@ -1643,38 +1649,6 @@ function disposeData(data) {
     }
 }
 
-//var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
-//if (MutationObserver) {
-//    var observer = new MutationObserver(function(mutations) {
-//         mutations.forEach(function(mutation) {
-//             if(mutation.addedNodes.length){
-//                 console.log(mutation.addedNodes.length+"-----")
-//                 console.log(mutation.target)
-//             }
-//         })
-//        if (mutations.some(function(mutation) {
-//            return mutation.removedNodes && mutation.removedNodes.length
-//        })) {
-//            setTimeout(function() {//必须异步，要不会打断scanText的操作
-//                if (new Date() - beginTime > 444) {
-//                    removeSubscribers()
-//                }
-//            })
-//        }
-//    });
-   // window.addEventListener("load", function self(e) {
-    //    if (e.type === "load") {
-//            observer.observe(root, {
-//                childList: true,
-//                subtree: true,
-//                characterData: true
-//            })
-     //   } else {
-     //       observer.disconnect()
-      //  }
-     //   window.removeEventListener("unload", self)
-   // })
-//}
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
     if (new Date() - beginTime > 444) {
         removeSubscribers()
@@ -1867,7 +1841,24 @@ function executeBindings(bindings, vmodels) {
     }
     bindings.length = 0
 }
-
+//https://github.com/RubyLouvre/avalon/issues/636
+function mergeTextNode(elem) {
+    var node = elem.firstChild, text
+    while (node) {
+        var aaa = node.nextSibling
+        if (node.nodeType === 3) {
+            if (text) {
+                text.nodeValue += node.nodeValue
+                elem.removeChild(node)
+            } else {
+                text = node
+            }
+        } else {
+            text = null
+        }
+        node = aaa
+    }
+}
 
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
@@ -2014,6 +2005,9 @@ function scanAttr(elem, vmodels) {
     }
     executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
+        if (IEVersion) {
+            mergeTextNode(elem)
+        }
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
@@ -2658,7 +2652,7 @@ function getValType(el) {
 }
 var roption = /^<option(?:\s+\w+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*\s+value[\s=]/i
 var valHooks = {
-    "option:get": window.VBArray ? function(node) {
+    "option:get": IEVersion ? function(node) {
         //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)
         //specified并不可靠，因此通过分析outerHTML判定用户有没有显示定义value
         return roption.test(node.outerHTML) ? node.value : node.text.trim()
@@ -3767,7 +3761,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         events.replace(rword, function(name) {
             switch (name) {
                 case "input":
-                    if (!window.VBArray) { // W3C
+                    if (!IEVersion) { // W3C
                         bound("input", updateVModel)
                         //非IE浏览器才用这个
                         bound("compositionstart", compositionStart)

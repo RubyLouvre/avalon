@@ -84,7 +84,15 @@ var generateID = function(prefix) {
     prefix = prefix || "avalon"
     return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
-
+function IE() {
+    if (window.VBArray) {
+        var mode = document.documentMode
+        return mode ? mode : window.XMLHttpRequest ? 7 : 6
+    } else {
+        return 0
+    }
+}
+var IEVersion = IE()
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
@@ -1222,8 +1230,6 @@ function isRemove(el) {
     }
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-//    return el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-//            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
 function removeSubscribers() {
     for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
@@ -1260,38 +1266,6 @@ function disposeData(data) {
     }
 }
 
-//var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
-//if (MutationObserver) {
-//    var observer = new MutationObserver(function(mutations) {
-//         mutations.forEach(function(mutation) {
-//             if(mutation.addedNodes.length){
-//                 console.log(mutation.addedNodes.length+"-----")
-//                 console.log(mutation.target)
-//             }
-//         })
-//        if (mutations.some(function(mutation) {
-//            return mutation.removedNodes && mutation.removedNodes.length
-//        })) {
-//            setTimeout(function() {//必须异步，要不会打断scanText的操作
-//                if (new Date() - beginTime > 444) {
-//                    removeSubscribers()
-//                }
-//            })
-//        }
-//    });
-   // window.addEventListener("load", function self(e) {
-    //    if (e.type === "load") {
-//            observer.observe(root, {
-//                childList: true,
-//                subtree: true,
-//                characterData: true
-//            })
-     //   } else {
-     //       observer.disconnect()
-      //  }
-     //   window.removeEventListener("unload", self)
-   // })
-//}
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
     if (new Date() - beginTime > 444) {
         removeSubscribers()
@@ -1442,7 +1416,24 @@ function executeBindings(bindings, vmodels) {
     }
     bindings.length = 0
 }
-
+//https://github.com/RubyLouvre/avalon/issues/636
+function mergeTextNode(elem) {
+    var node = elem.firstChild, text
+    while (node) {
+        var aaa = node.nextSibling
+        if (node.nodeType === 3) {
+            if (text) {
+                text.nodeValue += node.nodeValue
+                elem.removeChild(node)
+            } else {
+                text = node
+            }
+        } else {
+            text = null
+        }
+        node = aaa
+    }
+}
 
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
@@ -1584,6 +1575,9 @@ function scanAttr(elem, vmodels) {
     }
     executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
+        if (IEVersion) {
+            mergeTextNode(elem)
+        }
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }

@@ -22,7 +22,7 @@ if (!canHideOwn) {
             return obj
         }
     }
-    if (window.VBArray) {
+    if (IEVersion) {
         window.execScript([
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
