@@ -90,11 +90,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-    element.oldValue = element.value
+
     element.avalonSetter = updateVModel
     if (/text|textarea|password/.test(element.type)) {
         if (watchValueInProp && element.type !== "password") {//chrome safari
-            element.oldValue = element.value = data.pipe(evaluator(), data, "set")
+            element.value = String(data.pipe(evaluator(), data, "set"))
             element.addEventListener("input", function() {
                 this.select()
                 var value = window.getSelection().toString()
@@ -136,6 +136,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             })
         }
     }
+    element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
 }

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.shim.js(去掉加载器与domReady) 1.381 build in 2015.1.3 
+avalon.shim.js(去掉加载器与domReady) 1.381 build in 2015.1.4 
 ___
 support IE6+ and other browsers
  ==================================================*/
@@ -3790,18 +3790,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
 
-
     element.avalonSetter = updateVModel
     if (/text|textarea|password/.test(element.type)) {
         if (watchValueInProp && element.type !== "password") {//chrome safari
-            element.oldValue = element.value = data.pipe(evaluator(), data, "set")
+            element.value = String(data.pipe(evaluator(), data, "set"))
             element.addEventListener("input", function() {
                 this.select()
                 var value = window.getSelection().toString()
                 var n = value.length
                 this.setSelectionRange(n, n)
                 this.oldValue = value
-                console.log("fire")
                 updateVModel()
             })
             Object.defineProperty(element, "value", {
@@ -3837,8 +3835,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
 
     }
-    registerSubscriber(data)
     element.oldValue = element.value
+    registerSubscriber(data)
     callback.call(element, element.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT
