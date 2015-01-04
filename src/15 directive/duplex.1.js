@@ -152,15 +152,15 @@ new function() {
             set: newSetter
         })
     } catch (e) {
-        try {
-            if ("WebkitAppearance" in root.style) {//chrome safar6+, opera15+
-                Object.defineProperty(document.createElement("input"), "value", {
-                    set: newSetter
-                })
-                return watchValueInProp = true
-            }
-        } catch (e) {
-        }
+//        try {
+//            if ("WebkitAppearance" in root.style) {//chrome safar6+, opera15+
+//                Object.defineProperty(document.createElement("input"), "value", {
+//                    set: newSetter
+//                })
+//                return watchValueInProp = true
+//            }
+//        } catch (e) {
+//        }
         watchValueInTimer = avalon.tick
     }
 }
