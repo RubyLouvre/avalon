@@ -51,7 +51,24 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
     }
-
+    var watchProp = watchValueInProp && /text/.test(element.type)
+    if (watchProp) {
+        element.addEventListener("input", function(e) {
+            if (composing)
+                return
+            var sel = window.getSelection()
+            // http://stackoverflow.com/questions/7380190/select-whole-word-with-getselection/7381574#7381574
+            if (sel.extend) {
+                sel.extend(this, 0)
+            } else {
+                this.select()
+            }
+            var value = sel.toString()
+            var n = value.length
+            this.setSelectionRange(n, n)
+            this.oldValue = value
+        })
+    }
     //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set")
@@ -109,13 +126,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-
         function delay(e) {
             setTimeout(function() {
                 updateVModel(e)
             })
         }
-
         events.replace(rword, function(name) {
             switch (name) {
                 case "input":
@@ -149,17 +164,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
 
     element.avalonSetter = updateVModel
-    if (/text|textarea|password/.test(element.type)) {
-        if (watchValueInProp && element.type !== "password") {//chrome safari
+    if (/text|password/.test(element.type)) {
+        if (watchProp) {//chrome safari
             element.value = String(data.pipe(evaluator(), data, "set"))
-            element.addEventListener("input", function() {
-                this.select()
-                var value = window.getSelection().toString()
-                var n = value.length
-                this.setSelectionRange(n, n)
-                this.oldValue = value
-                updateVModel()
-            })
             Object.defineProperty(element, "value", {
                 set: function(text) {
                     text = text == null ? "" : String(text)
@@ -191,7 +198,6 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 }
             })
         }
-
     }
     element.oldValue = element.value
     registerSubscriber(data)
