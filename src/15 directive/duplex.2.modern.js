@@ -51,7 +51,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set")
-        if (val !== element.value) {
+        if (val !== element.oldValue) {
             element.value = val
         }
     }
