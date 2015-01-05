@@ -1215,10 +1215,7 @@ function addSubscribers(data, list) {
     }
 }
 var $$subscribers = [],
-        $startIndex = 0,
-        $maxIndex = 200,
-        beginTime = new Date(),
-        removeID
+        beginTime = new Date()
 
 function isRemove(el) {
     try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
@@ -1232,29 +1229,21 @@ function isRemove(el) {
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
 function removeSubscribers() {
-    for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
-        var obj = $$subscribers[i]
-        if (!obj) {
-            break
-        }
+    var k = 0, i = $$subscribers.length, obj
+   // avalon.log("需要检测 " + i)
+    while (obj = $$subscribers[--i]) {
         var data = obj.data
         if (isRemove(data.element)) { //如果它没有在DOM树
+            k++
             $$subscribers.splice(i, 1)
             delete $$subscribers[obj]
             avalon.Array.remove(obj.list, data)
             //log("debug: remove " + data.type)
             disposeData(data)
             obj.data = obj.list = null
-            i--
-            n--
         }
     }
-    obj = $$subscribers[i]
-    if (obj) {
-        $startIndex = n
-    } else {
-        $startIndex = 0
-    }
+    //avalon.log("已经删除 " + k)
     beginTime = new Date()
 }
 function disposeData(data) {
@@ -1267,10 +1256,10 @@ function disposeData(data) {
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-    if (new Date() - beginTime > 444) {
-        removeSubscribers()
-    }
     if (list && list.length) {
+        if (new Date() - beginTime > 444 && typeof list[0] === "object") {
+            removeSubscribers()
+        }
         var args = aslice.call(arguments, 1)
         for (var i = list.length, fn; fn = list[--i]; ) {
             var el = fn.element
