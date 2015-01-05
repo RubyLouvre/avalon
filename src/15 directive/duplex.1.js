@@ -134,9 +134,12 @@ var watchValueInTimer = noop
 var watchValueInProp = false
 new function() {
     try {//IE9-IE11, firefox
+        var setters = {}
+        var aproto = HTMLInputElement.prototype
+        var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                nativeSetter.call(this, value)
+                setters[this.tagName].call(this, value)
                 if (this.avalonSetter) {
                     this.avalonSetter()
                 }
@@ -144,11 +147,12 @@ new function() {
         }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        var nativeSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
-        Object.defineProperty(inputProto, "value", {
+        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+        Object.defineProperty(aproto, "value", {
             set: newSetter
         })
-        Object.defineProperty(HTMLTextAreaElement.prototype, "value", {
+        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+        Object.defineProperty(bproto, "value", {
             set: newSetter
         })
     } catch (e) {

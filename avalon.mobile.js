@@ -1214,8 +1214,14 @@ function addSubscribers(data, list) {
         $$subscribers.push(obj)
     }
 }
-var $$subscribers = [],
-        beginTime = new Date()
+
+function disposeData(data) {
+    data.element = null
+    data.rollback && data.rollback()
+    for (var key in data) {
+        data[key] = null
+    }
+}
 
 function isRemove(el) {
     try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
@@ -1228,31 +1234,56 @@ function isRemove(el) {
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
+var $$subscribers = []
+var beginTime = new Date()
+var oldInfo = {}
 function removeSubscribers() {
-    var k = 0, i = $$subscribers.length, obj
-   // avalon.log("需要检测 " + i)
+    var i = $$subscribers.length
+    var n = i
+    var k = 0
+    var obj
+    var types = []
+    var newInfo = {}
+    var needTest = {}
     while (obj = $$subscribers[--i]) {
         var data = obj.data
-        if (isRemove(data.element)) { //如果它没有在DOM树
-            k++
-            $$subscribers.splice(i, 1)
-            delete $$subscribers[obj]
-            avalon.Array.remove(obj.list, data)
-            //log("debug: remove " + data.type)
-            disposeData(data)
-            obj.data = obj.list = null
+        var type = data.type
+        if (newInfo[type]) {
+            newInfo[type]++
+        } else {
+            newInfo[type] = 1
+            types.push(type)
         }
     }
-    //avalon.log("已经删除 " + k)
-    beginTime = new Date()
-}
-function disposeData(data) {
-    data.element = null
-    data.rollback && data.rollback()
-
-    for (var key in data) {
-        data[key] = null
+    var diff = false
+    types.forEach(function(type) {
+        if (oldInfo[type] && oldInfo[type] !== newInfo[type]) {
+            needTest[type] = 1
+            diff = true
+        }
+    })
+    i = n
+    //avalon.log("需要检测的个数 " + i)
+    if (diff) {
+        //avalon.log("有需要移除的元素")
+        while (obj = $$subscribers[--i]) {
+            var data = obj.data
+            if (data.element === void 0)
+                continue
+            if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
+                k++
+                $$subscribers.splice(i, 1)
+                delete $$subscribers[obj]
+                avalon.Array.remove(obj.list, data)
+                //log("debug: remove " + data.type)
+                disposeData(data)
+                obj.data = obj.list = null
+            }
+        }
     }
+    oldInfo = newInfo
+   // avalon.log("已经移除的个数 " + k)
+    beginTime = new Date()
 }
 
 function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
@@ -2978,9 +3009,12 @@ var watchValueInTimer = noop
 var watchValueInProp = false
 new function() {
     try {//IE9-IE11, firefox
+        var setters = {}
+        var aproto = HTMLInputElement.prototype
+        var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                nativeSetter.call(this, value)
+                setters[this.tagName].call(this, value)
                 if (this.avalonSetter) {
                     this.avalonSetter()
                 }
@@ -2988,11 +3022,12 @@ new function() {
         }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        var nativeSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set
-        Object.defineProperty(inputProto, "value", {
+        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+        Object.defineProperty(aproto, "value", {
             set: newSetter
         })
-        Object.defineProperty(HTMLTextAreaElement.prototype, "value", {
+        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+        Object.defineProperty(bproto, "value", {
             set: newSetter
         })
     } catch (e) {
