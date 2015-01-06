@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.5 
+avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.6 
 _________
 support IE6+ and other browsers
  ==================================================*/
@@ -3746,7 +3746,8 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormatr(amount, isFinite(fractionSize) ? fractionSize: 2)
+        console.log("++++++++++++")
+        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize: 2)
     },
     number: function(number, fractionSize) {
         return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )

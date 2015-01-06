@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.381 build in 2015.1.5 
+avalon.js 1.381 build in 2015.1.6 
 ____________________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -4425,7 +4425,8 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormatr(amount, isFinite(fractionSize) ? fractionSize: 2)
+        console.log("++++++++++++")
+        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize: 2)
     },
     number: function(number, fractionSize) {
         return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
