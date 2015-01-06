@@ -85,12 +85,12 @@ function removeSubscribers() {
     var needTest = {}
     while (obj = $$subscribers[--i]) {
         var data = obj.data
-        var name = data.name
-        if (newInfo[name]) {
-            newInfo[name]++
+        var type = data.type
+        if (newInfo[type]) {
+            newInfo[type]++
         } else {
-            newInfo[name] = 1
-            types.push(name)
+            newInfo[type] = 1
+            types.push(type)
         }
     }
     var diff = false
@@ -108,7 +108,7 @@ function removeSubscribers() {
             var data = obj.data
             if (data.element === void 0)
                 continue
-            if (needTest[data.name] && isRemove(data.element)) { //如果它没有在DOM树
+            if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
                 k++
                 $$subscribers.splice(i, 1)
                 delete $$subscribers[obj]
