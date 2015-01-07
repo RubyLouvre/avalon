@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.381 build in 2015.1.6 
+avalon.js 1.381 build in 2015.1.7 
 ____________________________________
 support IE6+ and other browsers
  ==================================================*/
@@ -3274,7 +3274,7 @@ bindingExecutors.html = function(val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data
     var parent = isHtmlFilter ? elem.parentNode : elem
-    if(!parent)
+    if (!parent)
         return
     if (val.nodeType === 11) { //将val转换为文档碎片
         var fragment = val
@@ -3291,7 +3291,15 @@ bindingExecutors.html = function(val, elem, data) {
     var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
         parent.insertBefore(comment, elem)
-        avalon.clearHTML(removeFragment(elem, data.group))
+        var n = data.group, i = 1
+        while (i < n) {
+            var node = elem.nextSibling
+            if (node) {
+                parent.removeChild(node)
+                i++
+            }
+        }
+        parent.removeChild(elem)
         data.element = comment //防止被CG
     } else {
         avalon.clearHTML(parent).appendChild(comment)
@@ -3657,7 +3665,7 @@ new function() {
         })
     } catch (e) {
         try {
-            if ("WebkitAppearance" in root.style) {//chrome safar6+, opera15+
+            if ("webkitUserSelect" in root.style) {//chrome safar6+, opera15+
                 Object.defineProperty(document.createElement("input"), "value", {
                     set: newSetter
                 })
@@ -3963,19 +3971,16 @@ bindingHandlers.repeat = function(data, vmodels) {
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
-    var comment = data.element = DOC.createComment("ms-repeat")
-    var endRepeat = data.endRepeat = DOC.createComment("ms-repeat-end")
-
+    var comment = data.element = DOC.createComment("ms-"+type+"-end")
+    data.clone = DOC.createComment("ms-"+type)
     hyperspace.appendChild(comment)
-    hyperspace.appendChild(endRepeat)
 
     if (type === "each" || type === "with") {
         data.template = elem.innerHTML.trim()
-        avalon.clearHTML(elem).appendChild(hyperspace)
+        avalon.clearHTML(elem).appendChild(comment)
     } else {
         data.template = elem.outerHTML.trim()
-        elem.parentNode.replaceChild(hyperspace, elem)
-        data.group = 1
+        elem.parentNode.replaceChild(comment, elem)
     }
 
     data.rollback = function() {
@@ -3987,9 +3992,9 @@ bindingHandlers.repeat = function(data, vmodels) {
         var content = avalon.parseHTML(data.template)
         var target = content.firstChild
         parentNode.replaceChild(content, elem)
-        parentNode.removeChild(data.endRepeat)
+        var start = data.$stamp
+        start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
-        data.group = target.setAttribute(data.name, data.value)
     }
 
     data.handler = bindingExecutors.repeat
@@ -4011,10 +4016,11 @@ bindingHandlers.repeat = function(data, vmodels) {
         addSubscribers(data, $list)
     }
     if (xtype === "object") {
+        data.$with = true
         var $events = $repeat.$events
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
-    } else if($repeat.length){
+    } else if ($repeat.length) {
         data.handler("add", 0, $repeat)
     }
 }
@@ -4022,36 +4028,31 @@ bindingHandlers.repeat = function(data, vmodels) {
 bindingExecutors.repeat = function(method, pos, el) {
     if (method) {
         var data = this
-        var parent = data.element.parentNode
+        var endRepeat = data.element
+        var parent = endRepeat.parentNode
         var proxies = data.proxies
         var transation = hyperspace.cloneNode(false)
-
-        if (method === "del" || method === "move") {
-            var locatedNode = locateFragment(data, pos)
-        }
-        var group = data.group
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为数字，el为数组）
                 var arr = el
                 var last = data.$repeat.length - 1
                 var fragments = []
+                var locatedNode = locateFragment(data, pos)
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
                     var proxy = eachProxyAgent(ii, data)
                     proxies.splice(ii, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
-                locatedNode = locateFragment(data, pos)
                 parent.insertBefore(transation, locatedNode)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
-                calculateFragmentGroup(data)
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
+                var transation = removeFragment(pos, el, proxies, endRepeat)
                 var removed = proxies.splice(pos, el)
-                var transation = removeFragment(locatedNode, group, el)
                 avalon.clearHTML(transation)
                 recycleProxies(removed, "each")
                 break
@@ -4064,24 +4065,27 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
             case "clear":
-                while (true) {
-                    var node = data.element.nextSibling
-                    if (node && node !== data.endRepeat) {
+                var check = data.$stamp || proxies[0]
+                if (check) {
+                    var start = check.$stamp || check
+                    while (true) {
+                        var node = endRepeat.previousSibling
+                        if (!node)
+                            break
                         parent.removeChild(node)
-                    } else {
-                        break
+                        if (node === start) {
+                            break
+                        }
                     }
                 }
                 recycleProxies(proxies, "each")
                 break
             case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
+                locatedNode = locateFragment(data, el)
+                transation = removeFragment(pos, 1, proxies, endRepeat)
+                parent.insertBefore(transation, locatedNode)
                 var t = proxies.splice(pos, 1)[0]
-                if (t) {
-                    proxies.splice(el, 0, t)
-                    transation = removeFragment(locatedNode, group)
-                    locatedNode = locateFragment(data, el)
-                    parent.insertBefore(transation, locatedNode)
-                }
+                proxies.splice(el, 0, t)
                 break
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]
@@ -4112,20 +4116,24 @@ bindingExecutors.repeat = function(method, pos, el) {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-                data.proxySize = keys.length
-                parent.insertBefore(transation, data.element.nextSibling)
+                var comment = data.$stamp = data.clone
+                parent.insertBefore(comment, endRepeat)
+                parent.insertBefore(transation,endRepeat)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
-                calculateFragmentGroup(data)
                 break
         }
+        if (method === "index")
+            return
+        if (method === "clear")
+            method = "del"
         var callback = data.renderedCallback || noop,
                 args = arguments
         checkScan(parent, function() {
             callback.apply(parent, args)
-            if (parent.oldValue && parent.tagName === "SELECT" && method === "index") { //fix #503
+            if (parent.oldValue && parent.tagName === "SELECT") {//&& method === "index") { //fix #503
                 avalon(parent).val(parent.oldValue.split(","))
             }
         }, NaN)
@@ -4139,6 +4147,9 @@ bindingExecutors.repeat = function(method, pos, el) {
 function shimController(data, transation, proxy, fragments) {
     var dom = avalon.parseHTML(data.template)
     var nodes = avalon.slice(dom.childNodes)
+    if (proxy.$stamp) {
+        dom.insertBefore(proxy.$stamp, dom.firstChild)
+    }
     transation.appendChild(dom)
     var nv = [proxy].concat(data.vmodels)
     var fragment = {
@@ -4147,55 +4158,27 @@ function shimController(data, transation, proxy, fragments) {
     }
     fragments.push(fragment)
 }
-//如果ms-repeat紧挨着ms-repeat-end，那么就返回ms-repeat-end
-// 取得用于定位的节点。比如group = 3,  结构为
-// <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/><!--ms-repeat-end--></div>
-// 当pos为0时,返回 br#first
-// 当pos为1时,返回 br#second
-// 当pos为2时,返回 ms-repeat-end
 
 function locateFragment(data, pos) {
-    var startRepeat = data.element
-    var endRepeat = data.endRepeat
-    var nodes = []
-    var node = startRepeat.nextSibling
-    if (node !== endRepeat) {
-        do {
-            if (node !== endRepeat) {
-                nodes.push(node)
-            } else {
-                break
-            }
-        } while (node = node.nextSibling)
-    }
-    return nodes[data.group * pos] || endRepeat
+    var proxy = data.proxies[pos]
+    return proxy ? proxy.$stamp : data.element
 }
-
-function removeFragment(node, group, pos) {
-    var n = group * (pos || 1)
-    var nodes = [node],
-            i = 1
-    var view = hyperspace
-    while (i < n) {
-        node = node.nextSibling
-        if (node) {
-            nodes[i++] = node
+function removeFragment(a, n, proxies, endRepeat) {
+    var start = proxies[a].$stamp
+    var proxy = proxies[a + n]
+    var end = proxy ?  proxy.$stamp : endRepeat
+    while (true) {
+        var node = end.previousSibling
+        if (!node)
+            break
+        hyperspace.insertBefore(node, hyperspace.firstChild)
+        if (node === start) {
+            break
         }
     }
-    for (var i = 0; node = nodes[i++]; ) {
-        view.appendChild(node)
-    }
-    return view
+    return hyperspace
 }
 
-function calculateFragmentGroup(data) {
-    if (!isFinite(data.group)) {
-        var nodes = data.element.parentNode.childNodes
-        var length = nodes.length - 2 //去掉两个注释节点
-        var n = "proxySize" in data ? data.proxySize : data.proxies.length
-        data.group = length / n
-    }
-}
 // 为ms-each,ms-with, ms-repeat会创建一个代理VM，
 // 通过它们保持一个下上文，让用户能调用$index,$first,$last,$remove,$key,$val,$outer等属性与方法
 // 所有代理VM的产生,消费,收集,存放通过xxxProxyFactory,xxxProxyAgent, recycleProxies,xxxProxyPool实现
@@ -4205,6 +4188,7 @@ function eachProxyFactory(name) {
     var source = {
         $host: [],
         $outer: {},
+        $stamp: 1,
         $index: 0,
         $first: false,
         $last: false,
@@ -4226,7 +4210,7 @@ function eachProxyFactory(name) {
     var proxy = modelFactory(source, second)
     var e = proxy.$events
     e[name] = e.$first = e.$last = e.$index
-    proxy.$id = generateID("$proxy$each") 
+    proxy.$id = generateID("$proxy$each")
     return proxy
 }
 
@@ -4249,6 +4233,7 @@ function eachProxyAgent(index, data) {
     proxy.$last = index === last
     proxy.$host = host
     proxy.$outer = data.$outer
+    proxy.$stamp = data.clone.cloneNode(false)
     proxy.$remove = function() {
         return host.removeAt(proxy.$index)
     }
@@ -4271,7 +4256,7 @@ function withProxyFactory() {
     }, {
         $val: 1
     })
-    proxy.$id = generateID("$proxy$with") 
+    proxy.$id = generateID("$proxy$with")
     return proxy
 }
 

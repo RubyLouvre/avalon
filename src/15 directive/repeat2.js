@@ -39,11 +39,9 @@ bindingHandlers.repeat = function(data, vmodels) {
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
-    var comment = data.element = DOC.createComment("ms-repeat-end")
-    data.msRepeat = DOC.createComment("ms-repeat")
-
+    var comment = data.element = DOC.createComment("ms-"+type+"-end")
+    data.clone = DOC.createComment("ms-"+type)
     hyperspace.appendChild(comment)
-    // hyperspace.appendChild(endRepeat)
 
     if (type === "each" || type === "with") {
         data.template = elem.innerHTML.trim()
@@ -62,9 +60,9 @@ bindingHandlers.repeat = function(data, vmodels) {
         var content = avalon.parseHTML(data.template)
         var target = content.firstChild
         parentNode.replaceChild(content, elem)
-        parentNode.removeChild(data.endRepeat)
+        var start = data.$stamp
+        start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
-        data.group = target.setAttribute(data.name, data.value)
     }
 
     data.handler = bindingExecutors.repeat
@@ -86,6 +84,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         addSubscribers(data, $list)
     }
     if (xtype === "object") {
+        data.$with = true
         var $events = $repeat.$events
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
@@ -134,14 +133,17 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
             case "clear":
-                var start = data.$with ? data.$with : proxies[0] && proxies[0].$stamp
-                while (true) {
-                    var node = endRepeat.previousSibling
-                    if (!node)
-                        break
-                    parent.removeChild(node)
-                    if (node === start) {
-                        break
+                var check = data.$stamp || proxies[0]
+                if (check) {
+                    var start = check.$stamp || check
+                    while (true) {
+                        var node = endRepeat.previousSibling
+                        if (!node)
+                            break
+                        parent.removeChild(node)
+                        if (node === start) {
+                            break
+                        }
                     }
                 }
                 recycleProxies(proxies, "each")
@@ -174,19 +176,17 @@ bindingExecutors.repeat = function(method, pos, el) {
                         keys = keys2
                     }
                 }
-                var stamp
                 for (var i = 0, key; key = keys[i++]; ) {
                     if (key !== "hasOwnProperty") {
                         if (!pool[key]) {
                             pool[key] = withProxyAgent(key, data)
                         }
-                        if (!stamp)
-                            stamp = pool[key].$stamp
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-                data.$with = stamp
-                parent.insertBefore(transation, endRepeat.nextSibling)
+                var comment = data.$stamp = data.clone
+                parent.insertBefore(comment, endRepeat)
+                parent.insertBefore(transation,endRepeat)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
@@ -215,7 +215,9 @@ bindingExecutors.repeat = function(method, pos, el) {
 function shimController(data, transation, proxy, fragments) {
     var dom = avalon.parseHTML(data.template)
     var nodes = avalon.slice(dom.childNodes)
-    dom.insertBefore(proxy.$stamp, dom.firstChild)
+    if (proxy.$stamp) {
+        dom.insertBefore(proxy.$stamp, dom.firstChild)
+    }
     transation.appendChild(dom)
     var nv = [proxy].concat(data.vmodels)
     var fragment = {
@@ -224,12 +226,6 @@ function shimController(data, transation, proxy, fragments) {
     }
     fragments.push(fragment)
 }
-//如果ms-repeat紧挨着ms-repeat-end，那么就返回ms-repeat-end
-// 取得用于定位的节点。比如group = 3,  结构为
-// <div><!--ms-repeat--><br id="first"><br/><br/><br id="second"><br/><br/><!--ms-repeat-end--></div>
-// 当pos为0时,返回 br#first
-// 当pos为1时,返回 br#second
-// 当pos为2时,返回 ms-repeat-end
 
 function locateFragment(data, pos) {
     var proxy = data.proxies[pos]
@@ -237,7 +233,8 @@ function locateFragment(data, pos) {
 }
 function removeFragment(a, n, proxies, endRepeat) {
     var start = proxies[a].$stamp
-    var end = proxies[a + n] ? proxies[a + n].$stamp : endRepeat
+    var proxy = proxies[a + n]
+    var end = proxy ?  proxy.$stamp : endRepeat
     while (true) {
         var node = end.previousSibling
         if (!node)
@@ -304,7 +301,7 @@ function eachProxyAgent(index, data) {
     proxy.$last = index === last
     proxy.$host = host
     proxy.$outer = data.$outer
-    proxy.$stamp = data.msRepeat.cloneNode(false)
+    proxy.$stamp = data.clone.cloneNode(false)
     proxy.$remove = function() {
         return host.removeAt(proxy.$index)
     }
@@ -316,7 +313,6 @@ function withProxyFactory() {
         $key: "",
         $outer: {},
         $host: {},
-        $stamp: 1,
         $val: {
             get: function() {
                 return this.$host[this.$key]
@@ -341,7 +337,6 @@ function withProxyAgent(key, data) {
     proxy.$key = key
     proxy.$host = host
     proxy.$outer = data.$outer
-    proxy.$stamp = data.msRepeat.cloneNode(false)
     if (host.$events) {
         proxy.$events.$val = host.$events[key]
     } else {
