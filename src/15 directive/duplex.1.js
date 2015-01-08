@@ -106,9 +106,8 @@ function W3CFire(el, name, detail) {
     event.initEvent(name, true, true)
     event.fireByAvalon = true
     //event.isTrusted = false 设置这个opera会报错
-    if (detail) {
-        event.detail = detail
-    }
+    event.detail = detail || {}
+    event.detail.by = "avalon" // 签名，标记事件是有avalon触发
     el.dispatchEvent(event)
 }
 
