@@ -146,6 +146,7 @@ function parseExpr(code, scopes, data) {
     //---------------cache----------------
     var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
     if (fn) {
+        data.vmodels = null
         data.evaluator = fn
         return
     }
@@ -191,6 +192,8 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
+        if (!/repeat|each|with/.test(dataType))
+            data.vmodels = null
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

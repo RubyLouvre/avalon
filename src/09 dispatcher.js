@@ -72,7 +72,7 @@ function isRemove(el) {
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
-var $$subscribers = []
+var $$subscribers = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 function removeSubscribers() {
