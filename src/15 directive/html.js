@@ -3,6 +3,8 @@ bindingExecutors.html = function(val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data
     var parent = isHtmlFilter ? elem.parentNode : elem
+    if (!parent)
+        return
     if (val.nodeType === 11) { //将val转换为文档碎片
         var fragment = val
     } else if (val.nodeType === 1 || val.item) {
@@ -18,25 +20,29 @@ bindingExecutors.html = function(val, elem, data) {
     var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
         parent.insertBefore(comment, elem)
-        avalon.clearHTML(removeFragment(elem, data.group))
+        var n = data.group, i = 1
+        while (i < n) {
+            var node = elem.nextSibling
+            if (node) {
+                parent.removeChild(node)
+                i++
+            }
+        }
+        parent.removeChild(elem)
         data.element = comment //防止被CG
     } else {
         avalon.clearHTML(parent).appendChild(comment)
     }
-    data.vmodels.cb(1)
-    avalon.nextTick(function() {
+    if (isHtmlFilter) {
+        data.group = fragment.childNodes.length || 1
+    }
+    var nodes = avalon.slice(fragment.childNodes)
+    if (nodes[0]) {
+        if (comment.parentNode)
+            comment.parentNode.replaceChild(fragment, comment)
         if (isHtmlFilter) {
-            data.group = fragment.childNodes.length || 1
+            data.element = nodes[0]
         }
-        var nodes = avalon.slice(fragment.childNodes)
-        if (nodes[0]) {
-            if (comment.parentNode)
-                comment.parentNode.replaceChild(fragment, comment)
-            if (isHtmlFilter) {
-                data.element = nodes[0]
-            }
-        }
-        scanNodeArray(nodes, data.vmodels)
-        data.vmodels && data.vmodels.cb(-1)
-    })
+    }
+    scanNodeArray(nodes, data.vmodels)
 }

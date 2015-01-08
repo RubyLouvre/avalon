@@ -45,6 +45,7 @@ var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
             }
             var old = data.rollback
             data.rollback = function() {
+                elem.avalonSetter = null
                 avalon.unbind(elem, type, callback)
                 old && old()
             }
@@ -99,9 +100,7 @@ function pipe(val, data, action, e) {
     return val
 }
 
-var TimerID, ribbon = [],
-        launch = noop
-
+var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
@@ -131,17 +130,41 @@ function ticker() {
     }
 }
 
-function newSetter(value) {
-    onSetter.call(this, value)
-    onTree.call(this, value)
-}
-try {
-    var inputProto = HTMLInputElement.prototype
-    Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-    var onSetter = Object.getOwnPropertyDescriptor(inputProto, "value").set //屏蔽chrome, safari,opera
-    Object.defineProperty(inputProto, "value", {
-        set: newSetter
-    })
-} catch (e) {
-    launch = avalon.tick
+var watchValueInTimer = noop
+var watchValueInProp = false
+new function() {
+    try {//IE9-IE11, firefox
+        var setters = {}
+        var aproto = HTMLInputElement.prototype
+        var bproto = HTMLTextAreaElement.prototype
+        function newSetter(value) {
+            if (avalon.contains(root, this)) {
+                setters[this.tagName].call(this, value)
+                if (this.avalonSetter) {
+                    this.avalonSetter()
+                }
+            }
+        }
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+        Object.defineProperty(aproto, "value", {
+            set: newSetter
+        })
+        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+        Object.defineProperty(bproto, "value", {
+            set: newSetter
+        })
+    } catch (e) {
+        try {
+            if ("webkitUserSelect" in root.style) {//chrome safar6+, opera15+
+                Object.defineProperty(document.createElement("input"), "value", {
+                    set: newSetter
+                })
+                return watchValueInProp = true
+            }
+        } catch (e) {
+        }
+        watchValueInTimer = avalon.tick
+    }
 }

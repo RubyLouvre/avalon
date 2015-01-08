@@ -1,19 +1,24 @@
-var rfilters = /\|\s*(\w+)\s*(\([^)]*\))?/g,
+var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
-        r11b = /U2hvcnRDaXJjdWl0/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g
 
-function trimFilter(value, leach) {
-    if (value.indexOf("|") > 0) { // 抽取过滤器 先替换掉所有短路与
-        value = value.replace(r11a, "U2hvcnRDaXJjdWl0") //btoa("ShortCircuit")
-        value = value.replace(rfilters, function(c, d, e) {
-            leach.push(d + (e || ""))
-            return ""
-        })
-        value = value.replace(r11b, "||") //还原短路与
+function getToken(value) {
+    if (value.indexOf("|") > 0) {
+        var index = value.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
+        if (index > -1) {
+            return {
+                filters: value.slice(index),
+                value: value.slice(0, index),
+                expr: true
+            }
+        }
     }
-    return value
+    return {
+        value: value,
+        filters: "",
+        expr: true
+    }
 }
 
 function scanExpr(str) {
@@ -29,6 +34,7 @@ function scanExpr(str) {
         if (value) { // {{ 左边的文本
             tokens.push({
                 value: value,
+                filters: "",
                 expr: false
             })
         }
@@ -39,13 +45,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            var leach = []
-            value = trimFilter(value, leach)
-            tokens.push({
-                value: value,
-                expr: true,
-                filters: leach.length ? leach : void 0
-            })
+            tokens.push(getToken(value))
         }
         start = stop + closeTag.length
     } while (1)
@@ -53,25 +53,17 @@ function scanExpr(str) {
     if (value) { //}} 右边的文本
         tokens.push({
             value: value,
-            expr: false
+            expr: false,
+            filters: ""
         })
     }
-
     return tokens
 }
 
 function scanText(textNode, vmodels) {
     var bindings = []
     if (textNode.nodeType === 8) {
-        var leach = []
-        var value = trimFilter(textNode.nodeValue, leach)
-        var token = {
-            expr: true,
-            value: value
-        }
-        if (leach.length) {
-            token.filters = leach
-        }
+        var token = getToken(textNode.nodeValue)
         var tokens = [token]
     } else {
         tokens = scanExpr(textNode.data)
@@ -80,22 +72,14 @@ function scanText(textNode, vmodels) {
         for (var i = 0, token; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
-                var filters = token.filters
-                var binding = {
-                    type: "text",
-                    element: node,
-                    value: token.value,
-                    filters: filters
-                }
-                if (filters && filters.indexOf("html") !== -1) {
-                    avalon.Array.remove(filters, "html")
-                    binding.type = "html"
-                    binding.group = 1
-                    if (!filters.length) {
-                        delete bindings.filters
-                    }
-                }
-                bindings.push(binding) //收集带有插值表达式的文本
+                token.type = "text"
+                token.element = node
+                token.filters = token.filters.replace(rhasHtml, function() {
+                    token.type = "html"
+                    token.group = 1
+                    return ""
+                })
+                bindings.push(token) //收集带有插值表达式的文本
             }
             hyperspace.appendChild(node)
         }

@@ -6,7 +6,7 @@ var expose = Date.now()
 var window = Function("return this")()
 var DOC = window.document
 var head = DOC.head //HEAD元素
-head.insertAdjacentHTML("afterBegin", '<avalon><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
+head.insertAdjacentHTML("afterBegin", '<avalon ms-skip><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
 var ifGroup = head.firstChild
 
 function log() {

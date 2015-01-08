@@ -93,7 +93,6 @@ bindingExecutors.attr = function(val, elem, data) {
             var nodes = avalon.slice(dom.childNodes)
             target.insertBefore(dom, data.endInclude)
             scanNodeArray(nodes, vmodels)
-            vmodels.cb(-1)
         }
         if (data.param === "src") {
             if (cacheTmpls[val]) {

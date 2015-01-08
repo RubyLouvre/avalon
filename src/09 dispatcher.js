@@ -12,7 +12,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+            // log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -36,6 +36,7 @@ function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
     }
 }
 
+
 function addSubscribers(data, list) {
     data.$uuid = data.$uuid || generateID()
     list.$uuid = list.$uuid || generateID()
@@ -51,42 +52,7 @@ function addSubscribers(data, list) {
         $$subscribers.push(obj)
     }
 }
-var $$subscribers = [],
-        $startIndex = 0,
-        $maxIndex = 200,
-        beginTime = new Date(),
-        removeID
 
-function removeSubscribers() {
-    for (var i = $startIndex, n = $startIndex + $maxIndex; i < n; i++) {
-        var obj = $$subscribers[i]
-        if (!obj) {
-            break
-        }
-        var data = obj.data
-        var el = data.element
-        var remove = el === null ? 1 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-                el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-        if (remove) { //如果它没有在DOM树
-            $$subscribers.splice(i, 1)
-            delete $$subscribers[obj]
-            avalon.Array.remove(obj.list, data)
-            //log("debug: remove " + data.type)
-            disposeData(data)
-            obj.data = obj.list = null
-            i--
-            n--
-
-        }
-    }
-    obj = $$subscribers[i]
-    if (obj) {
-        $startIndex = n
-    } else {
-        $startIndex = 0
-    }
-    beginTime = new Date()
-}
 function disposeData(data) {
     data.element = null
     data.rollback && data.rollback()
@@ -95,14 +61,74 @@ function disposeData(data) {
     }
 }
 
-function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
-    clearTimeout(removeID)
-    if (new Date() - beginTime > 444) {
-        removeSubscribers()
-    } else {
-        removeID = setTimeout(removeSubscribers, 444)
+function isRemove(el) {
+    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
+        if (!el.parentNode) {
+            return true
+        }
+    } catch (e) {
+        return true
     }
+    return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
+            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
+}
+var $$subscribers = []
+var beginTime = new Date()
+var oldInfo = {}
+function removeSubscribers() {
+    var i = $$subscribers.length
+    var n = i
+    var k = 0
+    var obj
+    var types = []
+    var newInfo = {}
+    var needTest = {}
+    while (obj = $$subscribers[--i]) {
+        var data = obj.data
+        var type = data.type
+        if (newInfo[type]) {
+            newInfo[type]++
+        } else {
+            newInfo[type] = 1
+            types.push(type)
+        }
+    }
+    var diff = false
+    types.forEach(function(type) {
+        if (oldInfo[type] && oldInfo[type] !== newInfo[type]) {
+            needTest[type] = 1
+            diff = true
+        }
+    })
+    i = n
+    //avalon.log("需要检测的个数 " + i)
+    if (diff) {
+        //avalon.log("有需要移除的元素")
+        while (obj = $$subscribers[--i]) {
+            var data = obj.data
+            if (data.element === void 0)
+                continue
+            if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
+                k++
+                $$subscribers.splice(i, 1)
+                delete $$subscribers[obj]
+                avalon.Array.remove(obj.list, data)
+                //log("debug: remove " + data.type)
+                disposeData(data)
+                obj.data = obj.list = null
+            }
+        }
+    }
+    oldInfo = newInfo
+   // avalon.log("已经移除的个数 " + k)
+    beginTime = new Date()
+}
+
+function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
     if (list && list.length) {
+        if (new Date() - beginTime > 444 && typeof list[0] === "object") {
+            removeSubscribers()
+        }
         var args = aslice.call(arguments, 1)
         for (var i = list.length, fn; fn = list[--i]; ) {
             var el = fn.element

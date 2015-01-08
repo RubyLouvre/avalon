@@ -39,7 +39,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 学习教程
 ======
 *  [avalon学习教程](http://www.html-js.com/article/column/234)
-*  [avalon api大全](http://ued.qunar.com/oniui/index.html#pages/apis/index.html)
+*  [avalon新官网](http://avalonjs.github.io/)
 *  [avalon-learning](http://limodou.github.io/avalon-learning/zh_CN/index.html)
 *  [入门教程](http://www.cnblogs.com/rubylouvre/p/3181291.html)
 *  [HTML5交流会有关avalon的PPT](http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475)
@@ -55,6 +55,8 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 ```
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
 java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.js
+java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.js
+
 ```
 <p>大家也可以在<a href="http://huati.weibo.com/k/avalon%E5%BF%AB%E6%8A%A5?from=501&order=time">新浪微博</a>第一时间了解它的变更或各种秘笈分享！</p>
 
@@ -146,3 +148,9 @@ java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.
 <h3>LOGO来历</h3>
 
 http://tieba.baidu.com/p/1350048586
+<pre>
+MVVM最先使用是在WPF，对于微软来说是从WinForm的MVP和其余的MVC衍生而来，
+比MVP/MVC做到更多的就是数据的Binding，
+是的数据的变化能即时以增量的形式反馈到View上。
+同理的实现好像还有iOS delegate，为MVC提供类似binding的Publish/Subscribe功能
+</pre>

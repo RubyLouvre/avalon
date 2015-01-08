@@ -3,7 +3,6 @@ bindingHandlers.repeat = function(data, vmodels) {
     parseExprProxy(data.value, vmodels, data, 0, 1)
     data.proxies = []
     var freturn = false
-    vmodels.cb(-1)
     try {
         var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
         var xtype = avalon.type($repeat)
@@ -15,7 +14,27 @@ bindingHandlers.repeat = function(data, vmodels) {
         freturn = true
         avalon.log("warning:" + data.value + "编译出错")
     }
+
+    var arr = data.value.split(".") || []
+    if (arr.length > 1) {
+        arr.pop()
+        var n = arr[0]
+        for (var i = 0, v; v = vmodels[i++]; ) {
+            if (v && v.hasOwnProperty(n)) {
+                var events = v[n].$events || {}
+                events[subscribers] = events[subscribers] || []
+                events[subscribers].push(data)
+                break
+            }
+        }
+    }
     var elem = data.element
+    if (freturn) {
+        return avalon(elem).addClass("avalonHide")
+    }
+
+    avalon(elem).removeClass("avalonHide")
+
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
@@ -48,22 +67,6 @@ bindingHandlers.repeat = function(data, vmodels) {
         target = data.element = data.type === "repeat" ? target : parentNode
         data.group = target.setAttribute(data.name, data.value)
     }
-    var arr = data.value.split(".") || []
-    if (arr.length > 1) {
-        arr.pop()
-        var n = arr[0]
-        for (var i = 0, v; v = vmodels[i++]; ) {
-            if (v && v.hasOwnProperty(n)) {
-                var events = v[n].$events
-                events[subscribers] = events[subscribers] || []
-                events[subscribers].push(data)
-                break
-            }
-        }
-    }
-    if (freturn) {
-        return
-    }
 
     data.handler = bindingExecutors.repeat
     data.$outer = {}
@@ -83,24 +86,11 @@ bindingHandlers.repeat = function(data, vmodels) {
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
-    if (!Array.isArray($repeat) && type !== "each") {
-        var pool = withProxyPool[$repeat.$id]
-        if (!pool) {
-            withProxyCount++
-            pool = withProxyPool[$repeat.$id] = {}
-            for (var key in $repeat) {
-                if ($repeat.hasOwnProperty(key) && key !== "hasOwnProperty") {
-                    (function(k, v) {
-                        pool[k] = createWithProxy(k, v, {})
-                        pool[k].$watch("$val", function(val) {
-                            $repeat[k] = val //#303
-                        })
-                    })(key, $repeat[key])
-                }
-            }
-        }
+    if (xtype === "object") {
+        var $events = $repeat.$events
+        var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
-    } else {
+    } else if($repeat.length){
         data.handler("add", 0, $repeat)
     }
 }
@@ -123,7 +113,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var fragments = []
                 for (var i = 0, n = arr.length; i < n; i++) {
                     var ii = i + pos
-                    var proxy = getEachProxy(ii, arr[i], data, last)
+                    var proxy = eachProxyAgent(ii, data)
                     proxies.splice(ii, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
@@ -139,7 +129,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var removed = proxies.splice(pos, el)
                 var transation = removeFragment(locatedNode, group, el)
                 avalon.clearHTML(transation)
-                recycleEachProxies(removed)
+                recycleProxies(removed, "each")
                 break
             case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
                 var last = proxies.length - 1
@@ -158,7 +148,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                         break
                     }
                 }
-                recycleEachProxies(proxies)
+                recycleProxies(proxies, "each")
                 break
             case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
                 var t = proxies.splice(pos, 1)[0]
@@ -172,7 +162,7 @@ bindingExecutors.repeat = function(method, pos, el) {
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]
                 if (proxy) {
-                    proxy[proxy.$itemName] = el
+                    notifySubscribers(proxy.$events.$index)
                 }
                 break
             case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
@@ -192,6 +182,9 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 for (var i = 0, key; key = keys[i++]; ) {
                     if (key !== "hasOwnProperty") {
+                        if (!pool[key]) {
+                            pool[key] = withProxyAgent(key, data)
+                        }
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
@@ -223,10 +216,7 @@ function shimController(data, transation, proxy, fragments) {
     var dom = avalon.parseHTML(data.template)
     var nodes = avalon.slice(dom.childNodes)
     transation.appendChild(dom)
-    proxy.$outer = data.$outer
-    var ov = data.vmodels
-    var nv = [proxy].concat(ov)
-    nv.cb = ov.cb
+    var nv = [proxy].concat(data.vmodels)
     var fragment = {
         nodes: nodes,
         vmodels: nv
@@ -282,75 +272,124 @@ function calculateFragmentGroup(data) {
         data.group = length / n
     }
 }
-// 为ms-each, ms-repeat创建一个代理对象，通过它们能使用一些额外的属性与功能（$index,$first,$last,$remove,$key,$val,$outer）
-var watchEachOne = oneObject("$index,$first,$last")
-
-function createWithProxy(key, val, $outer) {
-    var proxy = modelFactory({
-        $key: key,
-        $outer: $outer,
-        $val: val
-    }, {
-        $val: 1,
-        $key: 1
-    })
-    proxy.$id = ("$proxy$with" + Math.random()).replace(/0\./, "")
-    return proxy
-}
+// 为ms-each,ms-with, ms-repeat会创建一个代理VM，
+// 通过它们保持一个下上文，让用户能调用$index,$first,$last,$remove,$key,$val,$outer等属性与方法
+// 所有代理VM的产生,消费,收集,存放通过xxxProxyFactory,xxxProxyAgent, recycleProxies,xxxProxyPool实现
 var eachProxyPool = []
-
-function getEachProxy(index, item, data, last) {
-    var param = data.param || "el",
-            proxy
+var withProxyPool = []
+function eachProxyFactory(name) {
     var source = {
-        $remove: function() {
-            return data.$repeat.removeAt(proxy.$index)
-        },
-        $itemName: param,
-        $index: index,
-        $outer: data.$outer,
-        $first: index === 0,
-        $last: index === last
+        $host: [],
+        $outer: {},
+        $index: 0,
+        $first: false,
+        $last: false,
+        $remove: avalon.noop
     }
-    source[param] = item
-    for (var i = 0, n = eachProxyPool.length; i < n; i++) {
-        var proxy = eachProxyPool[i]
-        if (proxy.hasOwnProperty(param) && (avalon.type(proxy[param]) === avalon.type(item))) {
-            for (var k in source) {
-                proxy[k] = source[k]
-            }
-            eachProxyPool.splice(i, 1)
-            proxy.$watch(param, function(val) {
-                data.$repeat.set(proxy.$index, val)
-            })
-            return proxy
+    source[name] = {
+        get: function() {
+            return this.$host[this.$index]
+        },
+        set: function(val) {
+            this.$host.set(this.$index, val)
         }
     }
-    if (rcomplexType.test(avalon.type(item))) {
-        source.$skipArray = [param]
+    var second = {
+        $last: 1,
+        $first: 1,
+        $index: 1
     }
-    proxy = modelFactory(source, watchEachOne)
-    proxy.$watch(param, function(val) {
-        data.$repeat.set(proxy.$index, val)
-    })
-    proxy.$id = ("$proxy$" + data.type + Math.random()).replace(/0\./, "")
+    var proxy = modelFactory(source, second)
+    var e = proxy.$events
+    e[name] = e.$first = e.$last = e.$index
+    proxy.$id = generateID("$proxy$each") 
     return proxy
 }
 
-function recycleEachProxies(array) {
-    for (var i = 0, el; el = array[i++]; ) {
-        recycleEachProxy(el)
-    }
-    array.length = 0
-}
-
-function recycleEachProxy(proxy) {
-    for (var i in proxy.$events) {
-        if (Array.isArray(proxy.$events[i])) {
-            proxy.$events[i].length = 0
+function eachProxyAgent(index, data) {
+    var param = data.param || "el", proxy
+    for (var i = 0, n = eachProxyPool.length; i < n; i++) {
+        var candidate = eachProxyPool[i]
+        if (candidate && candidate.hasOwnProperty(param)) {
+            proxy = candidate
+            eachProxyPool.splice(i, 1)
         }
     }
-    if (eachProxyPool.unshift(proxy) > kernel.maxRepeatSize) {
-        eachProxyPool.pop()
+    if (!proxy) {
+        proxy = eachProxyFactory(param)
     }
+    var host = data.$repeat
+    var last = host.length - 1
+    proxy.$index = index
+    proxy.$first = index === 0
+    proxy.$last = index === last
+    proxy.$host = host
+    proxy.$outer = data.$outer
+    proxy.$remove = function() {
+        return host.removeAt(proxy.$index)
+    }
+    return proxy
 }
+
+function withProxyFactory() {
+    var proxy = modelFactory({
+        $key: "",
+        $outer: {},
+        $host: {},
+        $val: {
+            get: function() {
+                return this.$host[this.$key]
+            },
+            set: function(val) {
+                this.$host[this.$key] = val
+            }
+        }
+    }, {
+        $val: 1
+    })
+    proxy.$id = generateID("$proxy$with") 
+    return proxy
+}
+
+function withProxyAgent(key, data) {
+    var proxy = withProxyPool.pop()
+    if (!proxy) {
+        proxy = withProxyFactory()
+    }
+    var host = data.$repeat
+    proxy.$key = key
+    proxy.$host = host
+    proxy.$outer = data.$outer
+    if (host.$events) {
+        proxy.$events.$val = host.$events[key]
+    } else {
+        proxy.$events = {}
+    }
+    return proxy
+}
+
+function recycleProxies(proxies, type) {
+    var proxyPool = type === "each" ? eachProxyPool : withProxyPool
+    avalon.each(proxies, function(key, proxy) {
+        if (proxy.$events) {
+            for (var i in proxy.$events) {
+                if (Array.isArray(proxy.$events[i])) {
+                    proxy.$events[i].forEach(function(data) {
+                        if (typeof data === "object")
+                            disposeData(data)
+                    })
+                    proxy.$events[i].length = 0
+                }
+            }
+            proxy.$host = proxy.$outer = {}
+            if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
+                proxyPool.pop()
+            }
+        }
+    })
+    if (type === "each")
+        proxies.length = 0
+}
+
+
+

@@ -37,7 +37,14 @@ if (DOC.readyState === "complete") {
             fireReady()
         }
     })
-    if (root.doScroll) {
+    var isFrame;
+    try{
+        isFrame=window.frameElement!=null//当前页面处于iframe中时,访问frameElement会抛出不允许跨域访问异常
+    }
+    catch(e){
+        isFrame=true
+    }
+    if (root.doScroll&& !isFrame) {//只有不处于iframe时才用doScroll判断,否则可能会不准
         doScrollCheck()
     }
 }

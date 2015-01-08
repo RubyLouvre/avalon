@@ -4,7 +4,6 @@ var otherRequire = window.require
 var otherDefine = window.define
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
-var rnative = /\[native code\]/ //判定是否原生函数
 var rcomplexType = /^(?:object|array)$/
 var rsvg = /^\[object SVG\w*Element\]$/
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
@@ -51,8 +50,16 @@ function createCache(maxLength) {
     return cache;
 }
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = window.performance && performance.now? function() {
-    return ("avalon" + performance.now() + performance.now()).replace(/\./g, "")
-} : function() {
-    return ("avalon" + Math.random() + Math.random()).replace(/0\./g, "")
+var generateID = function(prefix) {
+    prefix = prefix || "avalon"
+    return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
 }
+function IE() {
+    if (window.VBArray) {
+        var mode = document.documentMode
+        return mode ? mode : window.XMLHttpRequest ? 7 : 6
+    } else {
+        return 0
+    }
+}
+var IEVersion = IE()

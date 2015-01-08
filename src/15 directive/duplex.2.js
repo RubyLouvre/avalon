@@ -10,27 +10,10 @@ var IEVersion = IE()
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function(e) {
         var el = DOC.activeElement
-        if (el && typeof el.avalonSelectionChange === "function") {
-            el.avalonSelectionChange()
+        if (el && typeof el.avalonSetter === "function") {
+            el.avalonSetter()
         }
     })
-}
-
-function onTree(value) { //disabled状态下改动不触发input事件
-    var newValue = arguments.length ? value : this.value
-    if (!this.disabled && this.oldValue !== newValue + "") {
-        var type = this.getAttribute("data-duplex-event") || "input"
-        if (/change|blur/.test(type) ? this !== DOC.activeElement : 1) {
-            if (W3C) {
-                W3CFire(this, type)
-            } else {
-                try {
-                    this.fireEvent("on" + type)
-                } catch (e) {
-                }
-            }
-        }
-    }
 }
 
 //处理radio, checkbox, text, textarea, password
@@ -68,11 +51,28 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
     }
-
+    var watchProp = watchValueInProp && /text/.test(element.type)
+    if (watchProp) {
+        element.addEventListener("input", function(e) {
+            if (composing)
+                return
+            var sel = window.getSelection()
+            // http://stackoverflow.com/questions/7380190/select-whole-word-with-getselection/7381574#7381574
+            if (sel.extend) {
+                sel.extend(this, 0)
+            } else {
+                this.select()
+            }
+            var value = sel.toString()
+            var n = value.length
+            this.setSelectionRange(n, n)
+            this.oldValue = value
+        })
+    }
     //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set")
-        if (val !== element.value) {
+        if (val !== element.oldValue) {
             element.value = val
         }
     }
@@ -126,24 +126,22 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-
         function delay(e) {
             setTimeout(function() {
                 updateVModel(e)
             })
         }
-
         events.replace(rword, function(name) {
             switch (name) {
                 case "input":
-                    if (!window.VBArray) { // W3C
+                    if (!IEVersion) { // W3C
                         bound("input", updateVModel)
                         //非IE浏览器才用这个
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
 
                     } else { //onpropertychange事件无法区分是程序触发还是用户触发
-                        element.avalonSelectionChange = updateVModel//监听IE点击input右边的X的清空行为
+                        // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (IEVersion > 8) {
                             bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                         } else {
@@ -153,9 +151,6 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                                 }
                             })
                         }
-                        // bound("paste", delay)//IE9下propertychange不监听粘贴，剪切，删除引发的变动
-                        // bound("cut", delay)
-                        // bound("keydown", delay)
                         bound("dragend", delay)
                         //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                         //http://www.matts411.com/post/internet-explorer-9-oninput/
@@ -167,14 +162,44 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-    element.oldValue = element.value
-    launch(function() {
-        if (avalon.contains(root, element)) {
-            onTree.call(element)
-        } else if (!element.msRetain) {
-            return false
+
+    element.avalonSetter = updateVModel
+    if (/text|password/.test(element.type)) {
+        if (watchProp) {//chrome safari
+            element.value = String(data.pipe(evaluator(), data, "set"))
+            Object.defineProperty(element, "value", {
+                set: function(text) {
+                    text = text == null ? "" : String(text)
+                    if (this.oldValue !== text) {
+                        //先选中表单元素创建一个选区，然后清空value
+                        //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
+                        this.select()
+                        var sel = window.getSelection()
+                        var range = sel.getRangeAt(0)
+                        range.deleteContents()
+                        //接着使用insertHTML或insertText命令设置value
+                        //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
+                        document.execCommand("insertText", false, text)
+                        this.oldValue = text
+                    }
+                },
+                get: function() {
+                    return this.oldValue
+                }
+            })
+        } else {
+            watchValueInTimer(function() {
+                if (root.contains(element)) {
+                    if (element.value !== element.oldValue) {
+                        updateVModel()
+                    }
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
         }
-    })
+    }
+    element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
 }

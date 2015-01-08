@@ -4,10 +4,9 @@ bindingHandlers.widget = function(data, vmodels) {
     var widget = args[0]
     var id = args[1]
     if (!id || id === "$") {//没有定义或为$时，取组件名+随机数
-        id = widget + setTimeout("1")
+        id = generateID(widget)
     }
     var optName = args[2] || widget//没有定义，取组件名
-    vmodels.cb(-1)
     var constructor = avalon.ui[widget]
     if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
         vmodels = elem.vmodels || vmodels
@@ -38,34 +37,26 @@ bindingHandlers.widget = function(data, vmodels) {
             createSignalTower(elem, vmodel)
             if (vmodel.hasOwnProperty("$init")) {
                 vmodel.$init(function() {
-                    var nv = [vmodel].concat(vmodels)
-                    nv.cb = vmodels.cb
-                    avalon.scan(elem, nv)
+                    avalon.scan(elem, [vmodel].concat(vmodels))
                     if (typeof options.onInit === "function") {
                         options.onInit.call(elem, vmodel, options, vmodels)
                     }
                 })
             }
-            if (vmodel.hasOwnProperty("$remove")) {
-                function offTree() {
-                    if (!elem.msRetain && !root.contains(elem)) {
-                        vmodel.$remove()
-                        try {
-                            vmodel.widgetElement = null
-                        } catch (e) {
-                        }
-                        elem.msData = {}
-                        delete avalon.vmodels[vmodel.$id]
-                        return false
-                    }
+            data.rollback = function() {
+                try {
+                    vmodel.widgetElement = null
+                    vmodel.$remove()
+                } catch (e) {
                 }
-                if (window.chrome) {
-                    elem.addEventListener("DOMNodeRemovedFromDocument", function() {
-                        setTimeout(offTree)
-                    })
-                } else {
-                    avalon.tick(offTree)
-                }
+                elem.msData = {}
+                delete avalon.vmodels[vmodel.$id]
+            }
+            addSubscribers(data, widgetList)
+            if (window.chrome) {
+                elem.addEventListener("DOMNodeRemovedFromDocument", function() {
+                    setTimeout(removeSubscribers)
+                })
             }
         } else {
             avalon.scan(elem, vmodels)
@@ -74,4 +65,5 @@ bindingHandlers.widget = function(data, vmodels) {
         elem.vmodels = vmodels
     }
 }
+var widgetList = []
 //不存在 bindingExecutors.widget

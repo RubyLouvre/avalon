@@ -59,6 +59,7 @@ try {
 } catch (e) {
     canHideOwn = false
 }
+
 function modelFactory($scope, $special, $model) {
     if (Array.isArray($scope)) {
         var arr = $scope.concat()
@@ -105,34 +106,26 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (isFunction(setter)) {
-                            var backup = $events[name]
+                            var lock = $events[name]
                             $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
                             setter.call($vmodel, newValue)
-                            $events[name] = backup
+                            $events[name] = lock
                         }
                     } else {
-                        if (avalon.openComputedCollect) { // 收集视图刷新函数
-                            collectSubscribers($events[name])
-                        }
+                        //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
                     }
                     newValue = $model[name] = getter.call($vmodel) //同步$model
                     if (!isEqual(oldValue, newValue)) {
-                        withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步循环绑定中的代理VM
                         notifySubscribers($events[name]) //同步视图
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                     return newValue
                 }
                 computedProperties.push(function() {
-                    Registry[expose] = {
-                        evaluator: accessor,
-                        element: head,
-                        type: "computed::" + name,
-                        handler: noop,
-                        args: []
+                    Registry[expose] = function() {
+                        $vmodel.$model[name] = getter.call($vmodel)
                     }
                     accessor()
-                    collectSubscribers($events[name])
                     delete Registry[expose]
                 })
             } else if (rcomplexType.test(valueType)) {
@@ -145,9 +138,9 @@ function modelFactory($scope, $special, $model) {
                             return
                         }
                         if (!isEqual(oldValue, newValue)) {
-                            childVmodel = accessor.child = updateChild($vmodel, name, newValue, valueType)
+                            childVmodel = accessor.child = neutrinoFactory($vmodel, name, newValue, valueType)
                             newValue = $model[name] = childVmodel.$model //同步$model
-                            var fn = rebindings[childVmodel.$id]
+                            var fn = midway[childVmodel.$id]
                             fn && fn() //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -165,7 +158,6 @@ function modelFactory($scope, $special, $model) {
                     if (arguments.length) {
                         if (!isEqual(oldValue, newValue)) {
                             $model[name] = newValue //同步$model
-                            withProxyCount && updateWithProxy($vmodel.$id, name, newValue) //同步代理VM
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
@@ -201,6 +193,7 @@ function modelFactory($scope, $special, $model) {
         }
         $vmodel[i] = fn
     }
+
 
     if (canHideOwn) {
         Object.defineProperty($vmodel, "hasOwnProperty", {
@@ -254,20 +247,12 @@ var descriptorFactory = W3C ? function(obj) {
     return a
 }
 
-//ms-with, ms-repeat绑定生成的代理对象储存池
-var withProxyPool = {}
-var withProxyCount = 0
-var rebindings = {}
+//ms-with,ms-each, ms-repeat绑定生成的代理对象储存池
+var midway = {}
 
-function updateWithProxy($id, name, val) {
-    var pool = withProxyPool[$id]
-    if (pool && pool[name]) {
-        pool[name].$val = val
-    }
-}
 //应用于第2种accessor
 
-function updateChild(parent, name, value, valueType) {
+function neutrinoFactory(parent, name, value, valueType) {
     //a为原来的VM， b为新数组或新对象
     var son = parent[name]
     if (valueType === "array") {
@@ -279,24 +264,25 @@ function updateChild(parent, name, value, valueType) {
         return son
     } else {
         var iterators = parent.$events[name]
-        if (withProxyPool[son.$id]) {
-            withProxyCount--
-            delete withProxyPool[son.$id]
+        var pool = son.$events.$withProxyPool
+        if (pool) {
+            recycleProxies(pool, "with")
+            son.$events.$withProxyPool = null
         }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
-        rebindings[ret.$id] = function(data) {
+        midway[ret.$id] = function(data) {
             while (data = iterators.shift()) {
                 (function(el) {
-                    if (el.type) { //重新绑定
-                        avalon.nextTick(function() {
+                    avalon.nextTick(function() {
+                        if (el.type) { //重新绑定
                             el.rollback && el.rollback() //还原 ms-with ms-on
                             bindingHandlers[el.type](el, el.vmodels)
-                        })
-                    }
+                        }
+                    })
                 })(data)
             }
-            delete rebindings[ret.$id]
+            delete midway[ret.$id]
         }
         return ret
     }

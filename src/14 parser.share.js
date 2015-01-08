@@ -66,10 +66,32 @@ var cacheExprs = createCache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
+var rthimRightParentheses = /\)\s*$/
+var rthimOtherParentheses = /\)\s*\|/g
+var rquoteFilterName = /\|\s*([$\w]+)/g
+var rpatchBracket = /"\s*\["/g
+var rthimLeftParentheses = /"\s*\(/g
+function parseFilter(val, filters) {
+    filters = filters
+            .replace(rthimRightParentheses, "")//处理最后的小括号
+            .replace(rthimOtherParentheses, function() {//处理其他小括号
+                return "],|"
+            })
+            .replace(rquoteFilterName, function(a, b) { //处理|及它后面的过滤器的名字
+                return "[" + quote(b)
+            })
+            .replace(rpatchBracket, function() {
+                return '"],["'
+            })
+            .replace(rthimLeftParentheses, function() {
+                return '",'
+            }) + "]"
+    return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
+}
 
 function parseExpr(code, scopes, data) {
     var dataType = data.type
-    var filters = data.filters ? data.filters.join("") : ""
+    var filters = data.filters || ""
     var exprId = scopes.map(function(el) {
         return String(el.$id).replace(rproxy, "$1")
     }) + code + dataType + filters
@@ -120,9 +142,6 @@ function parseExpr(code, scopes, data) {
         })
     }
     //---------------args----------------
-    if (filters) {
-        args.push(avalon.filters)
-    }
     data.args = args
     //---------------cache----------------
     var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
@@ -134,26 +153,12 @@ function parseExpr(code, scopes, data) {
     if (prefix) {
         prefix = "var " + prefix
     }
-    if (filters) { //文本绑定，双工绑定才有过滤器
-        code = "\nvar ret" + expose + " = " + code
-        var textBuffer = [],
-                fargs
-        textBuffer.push(code, "\r\n")
-        for (var i = 0, fname; fname = data.filters[i++]; ) {
-            var start = fname.indexOf("(")
-            if (start !== -1) {
-                fargs = fname.slice(start + 1, fname.lastIndexOf(")")).trim()
-                fargs = "," + fargs
-                fname = fname.slice(0, start).trim()
-            } else {
-                fargs = ""
-            }
-            textBuffer.push(" if(filters", expose, ".", fname, "){\n\ttry{\nret", expose,
-                    " = filters", expose, ".", fname, "(ret", expose, fargs, ")\n\t}catch(e){} \n}\n")
+    if (/\S/.test(filters)) { //文本绑定，双工绑定才有过滤器
+        if (!/text|html/.test(data.type)) {
+            throw Error("ms-" + data.type + "不支持过滤器")
         }
-        code = textBuffer.join("")
-        code += "\nreturn ret" + expose
-        names.push("filters" + expose)
+        code = "\nvar ret" + expose + " = " + code + ";\r\n"
+        code += parseFilter("ret" + expose, filters)
     } else if (dataType === "duplex") { //双工绑定
         var _body = "'use strict';\nreturn function(vvv){\n\t" +
                 prefix +
@@ -197,7 +202,6 @@ function parseExpr(code, scopes, data) {
 //parseExpr的智能引用代理
 
 function parseExprProxy(code, scopes, data, tokens, noregister) {
-    scopes.cb(-1)
     if (Array.isArray(tokens)) {
         code = tokens.map(function(el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
