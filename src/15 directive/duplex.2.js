@@ -177,9 +177,12 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         var sel = window.getSelection()
                         var range = sel.getRangeAt(0)
                         range.deleteContents()
+                        //与下面的blur()用来处理 https://github.com/RubyLouvre/avalon/issues/651
+                        composing = true 
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
                         document.execCommand("insertText", false, text)
+                        this.blur()
                         this.oldValue = text
                     }
                 },

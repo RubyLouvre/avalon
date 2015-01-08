@@ -99,7 +99,7 @@ if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
 }
 
 //============================= event binding =======================
-
+var rmouseEvent = /^(?:mouse|pointer|contextmenu|drag)|click/
 function fixEvent(event) {
     var ret = {}
     for (var i in event) {
@@ -108,7 +108,7 @@ function fixEvent(event) {
     var target = ret.target = event.srcElement
     if (event.type.indexOf("key") === 0) {
         ret.which = event.charCode != null ? event.charCode : event.keyCode
-    } else if (/mouse|click/.test(event.type)) {
+    } else if (rmouseEvent.test(event.type)) {
         var doc = target.ownerDocument || DOC
         var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
         ret.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)

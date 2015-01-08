@@ -66,10 +66,10 @@ avalon.parseHTML = function(html) {
     for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
     }
     if (!W3C) { //fix IE
-        for (els = wrapper["getElementsByTagName"]("br"), i = 0; el = els[i++]; ) {
-            if (el.className && el.className === "msNoScope") {
+        var els = wrapper.getElementsByTagName("br"), n = els.length
+        while (el = els[--n]) {
+            if (el.className === "msNoScope") {
                 el.parentNode.removeChild(el)
-                i--
             }
         }
         for (els = wrapper.all, i = 0; el = els[i++]; ) { //fix VML
