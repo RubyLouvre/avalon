@@ -87,33 +87,33 @@ try {
     canHideOwn = false
 }
 
-function modelFactory($scope, $special, $model) {
-    if (Array.isArray($scope)) {
-        var arr = $scope.concat()
-        $scope.length = 0
-        var collection = Collection($scope)
+function modelFactory(source, $special, $model) {
+    if (Array.isArray(source)) {
+        var arr = source.concat()
+        source.length = 0
+        var collection = Collection(source)
         collection.pushArray(arr)
         return collection
     }
-    if (typeof $scope.nodeType === "number") {
-        return $scope
+    if (typeof source.nodeType === "number") {
+        return source
     }
-    if ($scope.$id && $scope.$events) { //fix IE6-8 createWithProxy $val: val引发的BUG
-        return $scope
+    if (source.$id && source.$events) { //fix IE6-8 createWithProxy $val: val引发的BUG
+        return source
     }
-    if (!Array.isArray($scope.$skipArray)) {
-        $scope.$skipArray = []
+    if (!Array.isArray(source.$skipArray)) {
+        source.$skipArray = []
     }
-    $scope.$skipArray.$special = $special || {} //强制要监听的属性
+    source.$skipArray.$special = $special || {} //强制要监听的属性
     var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
     $model = $model || {} //vmodels.$model属性
     var $events = {} //vmodel.$events属性
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
-    for (var i in $scope) {
+    for (var i in source) {
         (function(name, val) {
             $model[name] = val
-            if (!isObservable(name, val, $scope.$skipArray)) {
+            if (!isObservable(name, val, source.$skipArray)) {
                 return //过滤所有非监控属性
             }
             //总共产生三种accessor
@@ -131,14 +131,16 @@ function modelFactory($scope, $special, $model) {
                         return
                     }
                     //计算属性与对象属性需要重新计算newValue
-                    newValue = getNewValue(accessor, name, newValue, $vmodel)
+                    if (accessor.type !== 1) {
+                        newValue = getNewValue(accessor, name, newValue, $vmodel)
+                    }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         notifySubscribers($events[name]) //同步视图
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                 } else {
-                    if (!accessor.$type) { //$type 0 计算属性 1 监控属性 2 对象属性
+                    if (!ccessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         collectSubscribers($events[name]) //收集视图函数
                         return oldValue
                     } else {
@@ -152,6 +154,7 @@ function modelFactory($scope, $special, $model) {
                 //第1种为计算属性， 因变量，通过其他监控属性触发其改变
                 accessor.set = val.set
                 accessor.get = val.get
+                accessor.type = 0
                 initCallbacks.push(function() {
                     Registry[expose] = function() {
                         $model[name] = accessor.get.call(accessor.$vmodel)
@@ -161,6 +164,7 @@ function modelFactory($scope, $special, $model) {
                 })
             } else if (rcomplexType.test(valueType)) {
                 //第2种为对象属性，产生子VM与监控数组
+                accessor.type = 2
                 accessor.valueType = val.valueType
                 initCallbacks.push(function() {
                     var svmodel = modelFactory(val, 0, $model[name])
@@ -168,22 +172,23 @@ function modelFactory($scope, $special, $model) {
                     svmodel.$events[subscribers] = $events[name]
                 })
             } else {
+                accessor.type = 1
                 //第3种为监控属性，对应简单的数据类型，自变量
             }
             accessor.name = name
             watchedProperties[name] = accessor
-        })(i, $scope[i])
+        })(i, source[i])
     }
 
     $$skipArray.forEach(function(name) {
-        delete $scope[name]
+        delete source[name]
         delete $model[name] //这些特殊属性不应该在$model中出现
     })
 
-    var $vmodel = defineProperties({}, descriptorFactory(watchedProperties), $scope) //生成一个空的ViewModel
-    for (var name in $scope) {
+    var $vmodel = defineProperties({}, descriptorFactory(watchedProperties), source) //生成一个空的ViewModel
+    for (var name in source) {
         if (!watchedProperties[name]) {
-            $vmodel[name] = $scope[name]
+            $vmodel[name] = source[name]
         } else if (!W3C) {
             watchedProperties[name].$vmodel = $vmodel
         }
