@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.8 
+avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.9 
 _________
 support IE6+ and other browsers
  ==================================================*/

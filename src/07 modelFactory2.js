@@ -120,10 +120,15 @@ function modelFactory(source, $special, $model) {
             $events[name] = []
             var valueType = avalon.type(val)
             var accessor = function(newValue) {
-                var name = accessor.name
+                var name = accessor._name
                 var $vmodel = W3C ? this : accessor.$vmodel
+                try{
                 var $model = $vmodel.$model
                 var oldValue = $model[name]
+            }catch(e){
+                console.log(e)
+                console.log(name)
+            }
                 var $events = $vmodel.$events
 
                 if (arguments.length) {
@@ -140,12 +145,12 @@ function modelFactory(source, $special, $model) {
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                 } else {
-                    if (!accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
-                        collectSubscribers($events[name]) //收集视图函数
-                        return oldValue
-                    } else {
+                    if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
                         return $model[name] = accessor.get.call($vmodel)
+                    } else {
+                        collectSubscribers($events[name]) //收集视图函数
+                        return accessor.svmodel || oldValue
                     }
                 }
             }
@@ -175,7 +180,7 @@ function modelFactory(source, $special, $model) {
                 accessor.type = 1
                 //第3种为监控属性，对应简单的数据类型，自变量
             }
-            accessor.name = name
+            accessor._name = name
             watchedProperties[name] = accessor
         })(i, source[i])
     }
