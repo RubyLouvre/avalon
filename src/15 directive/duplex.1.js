@@ -104,7 +104,6 @@ var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
-    event.fireByAvalon = true
     //event.isTrusted = false 设置这个opera会报错
     event.detail = detail || {}
     event.detail.by = "avalon" // 签名，标记事件是有avalon触发
