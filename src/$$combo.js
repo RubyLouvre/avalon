@@ -93,11 +93,18 @@ modernFiles[modernFiles.indexOf("18 domReady")] = "18 domReady.modern"
 //avalon.shim.js 所需要合并的子文件
 var shimFiles = compatibleFiles.slice(0, -3).concat("18 domReady.noop", "19 outer")
 
+//avalon.modern.shim.js 所需要合并的子文件
+var modernShimFiles = modernFiles.slice(0, -3).concat("18 domReady.noop", "19 outer")
+
 //avalon.mobiles.js 所需要合并的子文件
 var mobileFiles = modernFiles.concat()
 
 mobileFiles.pop()
 mobileFiles.push("20 touch", "19 outer")
+
+//avalon.mobile.shim.js 所需要合并的子文件
+var mobileShimFiles = modernFiles.slice(0, -3).concat("20 touch", "18 domReady.noop", "19 outer")
+
 
 //开始合并avalon.js
 new function() {
@@ -130,6 +137,19 @@ new function() {
     comboModernFiles()
 }
 
+//开始合并avalon.modern.shim.js
+new function() {
+    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), 'avalon.modern.shim.js'), {
+        encoding: "utf8"
+    })
+    writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+    var comboModernShimFiles = comboFiles(modernShimFiles, writable, function() {
+        //更新avalon.test中的文件
+        console.log("end!")
+    }, "avalon.modern.shim.js(去掉加载器与domReady) " + version + " build in " + date + " \n")
+    comboModernShimFiles()
+}
+
 //开始合并avalon.shim.js
 new function() {
     var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), "avalon.shim.js"), {
@@ -160,3 +180,15 @@ new function() {
     comboMobileFiles()
 }
 
+//开始合并avalon.mobile.shim.js
+new function() {
+    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), 'avalon.mobile.shim.js'), {
+        encoding: "utf8"
+    })
+    writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+    var comboMobileShimFiles = comboFiles(mobileShimFiles, writable, function() {
+        //更新avalon.test中的文件
+        console.log("end!")
+    }, "avalon.mobile.shim.js(去掉加载器与domReady) " + version + " build in " + date + " \n")
+    comboMobileShimFiles()
+}

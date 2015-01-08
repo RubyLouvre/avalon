@@ -6,17 +6,38 @@
  
  Released under the MIT license
 avalon.shim.js(去掉加载器与domReady) 1.381 build in 2015.1.8 
-___
+__
 support IE6+ and other browsers
  ==================================================*/
-(function() {
+(function( global, factory ) {
+
+    if ( typeof module === "object" && typeof module.exports === "object" ) {
+        // For CommonJS and CommonJS-like environments where a proper `window`
+        // is present, execute the factory and get avalon.
+        // For environments that do not have a `window` with a `document`
+        // (such as Node.js), expose a factory as module.exports.
+        // This accentuates the need for the creation of a real `window`.
+        // e.g. var avalon = require("avalon")(window);
+        module.exports = global.document ?
+            factory( global, true ) :
+            function( w ) {
+                if ( !w.document ) {
+                    throw new Error( "Avalon requires a window with a document" );
+                }
+                return factory( w );
+            };
+    } else {
+        factory( global );
+    }
+
+// Pass this if window is not defined yet
+}(typeof window !== "undefined" ? window : this, function( window, noGlobal ){
 
 /*********************************************************************
  *                    全局变量及方法                                  *
  **********************************************************************/
 var expose = new Date - 0
 //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-var window = Function("return this")()
 var DOC = window.document
 var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
@@ -4675,4 +4696,47 @@ new function() {
     })
 }
 
-})();
+var strundefined = typeof undefined;
+
+// Register as a named AMD module, since avalon can be concatenated with other
+// files that may use define, but not via a proper concatenation script that
+// understands anonymous AMD modules. A named AMD is safest and most robust
+// way to register. Lowercase avalon is used because AMD module names are
+// derived from file names, and Avalon is normally delivered in a lowercase
+// file name. Do this after creating the global so that if an AMD module wants
+// to call noConflict to hide this version of avalon, it will work.
+
+// Note that for maximum portability, libraries that are not avalon should
+// declare themselves as anonymous modules, and avoid setting a global if an
+// AMD loader is present. avalon is a special case. For more information, see
+// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
+
+    if ( typeof define === "function" && define.amd ) {
+        define( "avalon", [], function() {
+            return avalon;
+        });
+    }
+
+    var
+    // Map over avalon in case of overwrite
+        _avalon = window.avalon;
+
+    avalon.noConflict = function( deep ) {
+
+        if ( deep && window.avalon === avalon ) {
+            window.avalon = avalon;
+        }
+
+        return avalon;
+    };
+
+
+// Expose avalon and $ identifiers, even in AMD
+// and CommonJS for browser emulators
+    if ( typeof noGlobal === strundefined ) {
+        window.avalon = avalon;
+    }
+
+    return avalon;
+
+}));
