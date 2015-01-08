@@ -12,7 +12,7 @@
                 vm.arr = [];
                 vm.init = function() {
                    id = setInterval(function() {
-                        vm.arr.push("<li><img src='http://image.cache.xiu8.com/avatar/70/70/999358.jpg' style='width: 20px'>" + (new Date()).getTime() + "</li>");
+                        vm.arr.push("<img src='http://image.cache.xiu8.com/avatar/70/70/999358.jpg' style='width: 20px'>" + (new Date()).getTime() );
                         if (vm.arr.length > 10) {
                             vm.arr.shift();
                         }
@@ -25,8 +25,8 @@
             });
             avalon.ready(function() {
                 test.init();
-
             });
+            setTimeout(function(){})
             //        var DOM = null,num= 0,_arr=[];
             //        function Destroy() {
             //            if (navigator.appName == "Microsoft Internet Explorer") {
@@ -53,7 +53,7 @@
         <div ms-controller="test">
             <button ms-click="stop" type="button">click</button>
             <ul id="userList" >
-                <li ms-repeat="arr">{{el|html}}</li>
+                <li ms-repeat="arr">{{el}}</li>
             </ul>
         </div>
     </body>

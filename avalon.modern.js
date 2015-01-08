@@ -1208,12 +1208,10 @@ function addSubscribers(data, list) {
     var obj = {
         data: data,
         list: list,
-        toString: function() {
-            return data.$uuid + " " + list.$uuid
-        }
+        $$uuid:  data.$uuid + list.$uuid
     }
-    if (!$$subscribers[obj]) {
-        $$subscribers[obj] = 1
+    if (!$$subscribers[obj.$$uuid]) {
+        $$subscribers[obj.$$uuid] = 1
         $$subscribers.push(obj)
     }
 }
@@ -1276,7 +1274,7 @@ function removeSubscribers() {
             if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
                 k++
                 $$subscribers.splice(i, 1)
-                delete $$subscribers[obj]
+                delete $$subscribers[obj.$$uuid]
                 avalon.Array.remove(obj.list, data)
                 //log("debug: remove " + data.type)
                 disposeData(data)
@@ -1497,7 +1495,6 @@ function scanTag(elem, vmodels, node) {
     scanAttr(elem, vmodels) //扫描特性节点
 }
 function scanNodeList(parent, vmodels) {
-   // console.log(parent.childNodes.length +"!")
     var node = parent.firstChild
     while (node) {
         var nextNode = node.nextSibling
@@ -2270,7 +2267,6 @@ function parseExpr(code, scopes, data) {
     //---------------cache----------------
     var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
     if (fn) {
-        data.vmodels = null
         data.evaluator = fn
         return
     }
@@ -2316,8 +2312,6 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
-        if (!/repeat|each|with/.test(dataType))
-            data.vmodels = null
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
@@ -2993,6 +2987,7 @@ var TimerID, ribbon = []
 function W3CFire(el, name, detail) {
     var event = DOC.createEvent("Events")
     event.initEvent(name, true, true)
+    event.fireByAvalon = true
     //event.isTrusted = false 设置这个opera会报错
     if (detail) {
         event.detail = detail
@@ -3185,6 +3180,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
                         document.execCommand("insertText", false, text)
+                        this.blur() // https://github.com/RubyLouvre/avalon/issues/651
                         this.oldValue = text
                     }
                 },

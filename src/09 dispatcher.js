@@ -43,12 +43,10 @@ function addSubscribers(data, list) {
     var obj = {
         data: data,
         list: list,
-        toString: function() {
-            return data.$uuid + " " + list.$uuid
-        }
+        $$uuid:  data.$uuid + list.$uuid
     }
-    if (!$$subscribers[obj]) {
-        $$subscribers[obj] = 1
+    if (!$$subscribers[obj.$$uuid]) {
+        $$subscribers[obj.$$uuid] = 1
         $$subscribers.push(obj)
     }
 }
@@ -111,7 +109,7 @@ function removeSubscribers() {
             if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
                 k++
                 $$subscribers.splice(i, 1)
-                delete $$subscribers[obj]
+                delete $$subscribers[obj.$$uuid]
                 avalon.Array.remove(obj.list, data)
                 //log("debug: remove " + data.type)
                 disposeData(data)
