@@ -99,7 +99,7 @@ if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
 }
 
 //============================= event binding =======================
-var rmouseEvent = /^(?:mouse|pointer|contextmenu|drag)|click/
+var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
 function fixEvent(event) {
     var ret = {}
     for (var i in event) {
