@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.7 
+avalon.mobile.js(支持触屏事件) 1.381 build in 2015.1.8 
 _________
 support IE6+ and other browsers
  ==================================================*/
@@ -1237,7 +1237,7 @@ function isRemove(el) {
     return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
             el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
 }
-var $$subscribers = []
+var $$subscribers = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 function removeSubscribers() {
@@ -2270,6 +2270,7 @@ function parseExpr(code, scopes, data) {
     //---------------cache----------------
     var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
     if (fn) {
+        data.vmodels = null
         data.evaluator = fn
         return
     }
@@ -2315,6 +2316,8 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
+        if (!/repeat|each|with/.test(dataType))
+            data.vmodels = null
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
