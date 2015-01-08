@@ -1,5 +1,4 @@
 function scanNodeList(parent, vmodels) {
-   // console.log(parent.childNodes.length +"!")
     var node = parent.firstChild
     while (node) {
         var nextNode = node.nextSibling
