@@ -140,7 +140,7 @@ function modelFactory(source, $special, $model) {
                         safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                 } else {
-                    if (!ccessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
+                    if (!accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         collectSubscribers($events[name]) //收集视图函数
                         return oldValue
                     } else {
