@@ -89,7 +89,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
     } else if ($repeat.length) {
-        data.handler("add", 0, $repeat)
+        data.handler("add", 0, $repeat.length)
     }
 }
 
