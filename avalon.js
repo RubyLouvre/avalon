@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
-avalon.js 1.381 build in 2015.1.9 
-____________________________________
+avalon.js 1.381 build in 2015.1.10 
+___________________________________
 support IE6+ and other browsers
  ==================================================*/
 (function() {
@@ -1152,14 +1152,7 @@ function modelFactory(source, $special, $model) {
             enumerable: false,
             configurable: true
         })
-        Object.defineProperty($vmodel, "valueOf", {
-            value: function() {
-                return this.$model
-            },
-            writable: false,
-            enumerable: false,
-            configurable: true
-        })
+
     } else {
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model
@@ -1382,88 +1375,109 @@ function Collection(model) {
     return array
 }
 
+function mutateArray(method, pos, n, index, method2, pos2, n2) {
+    var oldLen = this.length, loop = 2
+    while (--loop) {
+        switch (method) {
+            case "add":
+                var array = this.$model.slice(pos, pos + n).map(function(el) {
+                    if (rcomplexType.test(avalon.type(el))) {
+                        return el.$id ? el : modelFactory(el, 0, el)
+                    } else {
+                        return el
+                    }
+                })
+                _splice.apply(this, [pos, 0].concat(array))
+                this._fire("add", pos, n)
+                break
+            case "del":
+                var ret = this._splice(pos, n)
+                this._fire("del", pos, n)
+                break
+        }
+        if (method2) {
+            method = method2
+            pos = pos2
+            n = n2
+            loop = 2
+            method2 = 0
+        }
+    }
+    this._fire("index", index)
+    if (this.length !== oldLen) {
+        this._.length = this.length
+    }
+    return ret
+}
+
 var _splice = ap.splice
 var CollectionPrototype = {
     _splice: _splice,
     _fire: function(method, a, b) {
+        if (method == "index") {
+            this._.length = this.length
+        }
         notifySubscribers(this.$events[subscribers], method, a, b)
-    },
-    _add: function(arr, pos) { //在第pos个位置上，添加一组元素
-        var oldLength = this.length
-        var n = arr.length
-        if(!n)
-            return oldLength
-        pos = typeof pos === "number" ? pos : oldLength
-        var added = []
-        for (var i = 0; i < n; i++) {
-            added[i] = convert(arr[i], this.$model[pos + i])
-        }
-        _splice.apply(this, [pos, 0].concat(added))
-        this._fire("add", pos, added)
-        if (!this._stopFireLength) {
-            return this._.length = this.length
-        }
-    },
-    _del: function(pos, n) { //在第pos个位置上，删除N个元素
-        var ret = this._splice(pos, n)
-        if (ret.length) {
-            this._fire("del", pos, n)
-            if (!this._stopFireLength) {
-                this._.length = this.length
-            }
-        }
-        return ret
-    },
-    push: function() {
-        ap.push.apply(this.$model, arguments)
-        var n = this._add(arguments)
-        this._fire("index", n > 2 ? n - 2 : 0)
-        return n
     },
     size: function() { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
     },
     pushArray: function(array) {
-        return this.push.apply(this, array)
+        var m = array.length, n = this.length
+        if (m) {
+            ap.push.apply(this.$model, array)
+            mutateArray.call(this, "add", n, m, n)
+        }
+        return  m + n
+    },
+    push: function() {
+        //http://jsperf.com/closure-with-arguments
+        var array = []
+        var i, n = arguments.length
+        for (i = 0; i < n; i++) {
+            array[i] = arguments[i]
+        }
+        return this.pushArray(arguments)
     },
     unshift: function() {
-        ap.unshift.apply(this.$model, arguments)
-        this._add(arguments, 0)
-        this._fire("index", arguments.length)
-        return this.$model.length //IE67的unshift不会返回长度
+        var m = arguments.length, n = this.length
+        if (m) {
+            ap.unshift.apply(this.$model, arguments)
+            mutateArray.call(this, "add", 0, m, 0)
+        }
+        return  m + n //IE67的unshift不会返回长度
     },
     shift: function() {
-        var el = this.$model.shift()
-        this._del(0, 1)
-        this._fire("index", 0)
-        return el //返回被移除的元素
+        if (this.length) {
+            var el = this.$model.shift()
+            mutateArray.call(this, "del", 0, 1, 0)
+            return el //返回被移除的元素
+        }
     },
     pop: function() {
-        var el = this.$model.pop()
-        this._del(this.length - 1, 1)
-        return el //返回被移除的元素
+        var m = this.length
+        if (m) {
+            var el = this.$model.pop()
+            mutateArray.call(this, "del", m - 1, 1, Math.max(0, m - 2))
+            return el //返回被移除的元素
+        }
     },
-    splice: function(a, b) {
-        // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-        a = _number(a, this.length)
-        var removed = _splice.apply(this.$model, arguments),
-                ret = [],
-                change
-        this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
-        if (removed.length) {
-            ret = this._del(a, removed.length)
+    splice: function(start) {
+        var m = arguments.length, args = [], change
+        var removed = _splice.apply(this.$model, arguments)
+        if (removed.length) { //如果用户删掉了元素
+            args.push("del", start, removed.length, 0)
             change = true
         }
-        if (arguments.length > 2) {
-            this._add(aslice.call(arguments, 2), a)
+        if (m > 2) {  //如果用户添加了元素
+            args.splice(3, 1, 0, "add", start, m - 2)
             change = true
         }
-        this._stopFireLength = false
-        this._.length = this.length
-        if (change) {
-            this._fire("index", 0)
+        if (change) { //返回被移除的元素
+            return mutatedArray.apply(this, args)
+        } else {
+            return []
         }
-        return ret //返回被移除的元素
     },
     contains: function(el) { //判定是否包含
         return this.indexOf(el) !== -1
@@ -1472,7 +1486,11 @@ var CollectionPrototype = {
         return this.removeAt(this.indexOf(el))
     },
     removeAt: function(index) { //移除指定索引上的元素
-        return index >= 0 ? this.splice(index, 1) : []
+        if (index >= 0) {
+            this.$model.splice(index, 1)
+            return mutateArray.call(this, "del", index, 1, 0)
+        }
+        return  []
     },
     clear: function() {
         this.$model.length = this.length = this._.length = 0 //清空数组
@@ -1488,7 +1506,7 @@ var CollectionPrototype = {
             for (var i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                    this.splice(i, 1)
+                    this.removeAt(i)
                 }
             }
         } else {
@@ -1525,6 +1543,7 @@ var CollectionPrototype = {
         return this
     }
 }
+
 "sort,reverse".replace(rword, function(method) {
     CollectionPrototype[method] = function() {
         var aaa = this.$model,
@@ -1552,12 +1571,6 @@ var CollectionPrototype = {
     }
 })
 
-function convert(val, $model) {
-    if (rcomplexType.test(avalon.type(val))) {
-        val = val.$id ? val : modelFactory(val, 0, $model)
-    }
-    return val
-}
 
 /*********************************************************************
  *                           依赖调度系统                             *
@@ -3828,7 +3841,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //非IE浏览器才用这个
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
-
+                        bound("DOMAutoComplete", updateVModel)
                     } else { //onpropertychange事件无法区分是程序触发还是用户触发
                         // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (IEVersion > 8) {
@@ -3982,8 +3995,8 @@ bindingHandlers.repeat = function(data, vmodels) {
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
 
-    var comment = data.element = DOC.createComment("ms-"+type+"-end")
-    data.clone = DOC.createComment("ms-"+type)
+    var comment = data.element = DOC.createComment("ms-" + type + "-end")
+    data.clone = DOC.createComment("ms-" + type)
     hyperspace.appendChild(comment)
 
     if (type === "each" || type === "with") {
@@ -4032,7 +4045,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
     } else if ($repeat.length) {
-        data.handler("add", 0, $repeat)
+        data.handler("add", 0, $repeat.length)
     }
 }
 
@@ -4045,14 +4058,14 @@ bindingExecutors.repeat = function(method, pos, el) {
         var transation = hyperspace.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为数字，el为数组）
-                var arr = el
-                var last = data.$repeat.length - 1
+                var n = pos + el
+                var array = data.$repeat
+                var last = array.length - 1
                 var fragments = []
                 var locatedNode = locateFragment(data, pos)
-                for (var i = 0, n = arr.length; i < n; i++) {
-                    var ii = i + pos
-                    var proxy = eachProxyAgent(ii, data)
-                    proxies.splice(ii, 0, proxy)
+                for (var i = pos; i < n; i++) {
+                    var proxy = eachProxyAgent(i, data)
+                    proxies.splice(i, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
                 parent.insertBefore(transation, locatedNode)
@@ -4129,7 +4142,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 var comment = data.$stamp = data.clone
                 parent.insertBefore(comment, endRepeat)
-                parent.insertBefore(transation,endRepeat)
+                parent.insertBefore(transation, endRepeat)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
@@ -4177,7 +4190,7 @@ function locateFragment(data, pos) {
 function removeFragment(a, n, proxies, endRepeat) {
     var start = proxies[a].$stamp
     var proxy = proxies[a + n]
-    var end = proxy ?  proxy.$stamp : endRepeat
+    var end = proxy ? proxy.$stamp : endRepeat
     while (true) {
         var node = end.previousSibling
         if (!node)
