@@ -28,18 +28,14 @@ var CollectionPrototype = {
         notifySubscribers(this.$events[subscribers], method, a, b)
     },
     _add: function(pos, n) { //在第pos个位置上，添加n个元素
-
-        var array = this.$model.slice(pos, pos + n)
-        array = array.map(function(el) {
+        var array = this.$model.slice(pos, pos + n).map(function(el) {
             if (rcomplexType.test(avalon.type(el))) {
                 return el.$id ? el : modelFactory(el, 0, el)
             } else {
                 return el
             }
         })
-      //  console.log(array)
         _splice.apply(this, [pos, 0].concat(array))
-     //   console.log(this)
         this._fire("add", pos, n)
         if (!this._stopFireLength) {
             return this._.length = this.length
