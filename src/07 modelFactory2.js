@@ -212,14 +212,7 @@ function modelFactory(source, $special, $model) {
             enumerable: false,
             configurable: true
         })
-        Object.defineProperty($vmodel, "valueOf", {
-            value: function() {
-                return this.$model
-            },
-            writable: false,
-            enumerable: false,
-            configurable: true
-        })
+
     } else {
         $vmodel.hasOwnProperty = function(name) {
             return name in $vmodel.$model

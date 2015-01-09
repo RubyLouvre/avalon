@@ -96,6 +96,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
+                    bound("DOMAutoComplete", updateVModel)
                     if (!IEVersion) {
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
