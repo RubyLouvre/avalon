@@ -121,14 +121,9 @@ function modelFactory(source, $special, $model) {
             var valueType = avalon.type(val)
             var accessor = function(newValue) {
                 var name = accessor._name
-                var $vmodel = W3C ? this : accessor.$vmodel
-                try{
+                var $vmodel = this 
                 var $model = $vmodel.$model
                 var oldValue = $model[name]
-            }catch(e){
-                console.log(e)
-                console.log(name)
-            }
                 var $events = $vmodel.$events
 
                 if (arguments.length) {
@@ -162,9 +157,9 @@ function modelFactory(source, $special, $model) {
                 accessor.type = 0
                 initCallbacks.push(function() {
                     Registry[expose] = function() {
-                        $model[name] = accessor.get.call(accessor.$vmodel)
+                        $model[name] = accessor.get.call($vmodel)
                     }
-                    accessor()
+                    accessor.call($vmodel)
                     delete Registry[expose]
                 })
             } else if (rcomplexType.test(valueType)) {
@@ -190,12 +185,10 @@ function modelFactory(source, $special, $model) {
         delete $model[name] //这些特殊属性不应该在$model中出现
     })
 
-    var $vmodel = defineProperties({}, descriptorFactory(watchedProperties), source) //生成一个空的ViewModel
+    $vmodel = defineProperties($vmodel, descriptorFactory(watchedProperties), source) //生成一个空的ViewModel
     for (var name in source) {
         if (!watchedProperties[name]) {
             $vmodel[name] = source[name]
-        } else if (!W3C) {
-            watchedProperties[name].$vmodel = $vmodel
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
@@ -214,6 +207,14 @@ function modelFactory(source, $special, $model) {
         Object.defineProperty($vmodel, "hasOwnProperty", {
             value: function(name) {
                 return name in this.$model
+            },
+            writable: false,
+            enumerable: false,
+            configurable: true
+        })
+        Object.defineProperty($vmodel, "valueOf", {
+            value: function() {
+                return this.$model
             },
             writable: false,
             enumerable: false,

@@ -62,7 +62,7 @@ function comboFiles(files, writer, lastCallback, statement) {
 var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
-    "07 modelFactory", "07 modelFactory.shim", "08 Collection", "09 dispatcher",
+    "07 modelFactory2", "07 modelFactory.shim2", "08 Collection", "09 dispatcher",
     "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
     "13 dom", "14 parser", "14 parser.share",
     directive("skip"), directive("controller"), directive("important"),
