@@ -21,35 +21,49 @@ function Collection(model) {
     return array
 }
 
+function mutateArray(method, pos, n, index, method2, pos2, n2) {
+    var oldLen = this.length, loop = 2
+    while (--loop) {
+        switch (method) {
+            case "add":
+                var array = this.$model.slice(pos, pos + n).map(function(el) {
+                    if (rcomplexType.test(avalon.type(el))) {
+                        return el.$id ? el : modelFactory(el, 0, el)
+                    } else {
+                        return el
+                    }
+                })
+                _splice.apply(this, [pos, 0].concat(array))
+                this._fire("add", pos, n)
+                break
+            case "del":
+                var ret = this._splice(pos, n)
+                this._fire("del", pos, n)
+                break
+        }
+        if (method2) {
+            method = method2
+            pos = pos2
+            n = n2
+            loop = 2
+            method2 = 0
+        }
+    }
+    this._fire("index", index)
+    if (this.length !== oldLen) {
+        this._.length = this.length
+    }
+    return ret
+}
+
 var _splice = ap.splice
 var CollectionPrototype = {
     _splice: _splice,
     _fire: function(method, a, b) {
+        if (method == "index") {
+            this._.length = this.length
+        }
         notifySubscribers(this.$events[subscribers], method, a, b)
-    },
-    _add: function(pos, n) { //在第pos个位置上，添加n个元素
-        var array = this.$model.slice(pos, pos + n).map(function(el) {
-            if (rcomplexType.test(avalon.type(el))) {
-                return el.$id ? el : modelFactory(el, 0, el)
-            } else {
-                return el
-            }
-        })
-        _splice.apply(this, [pos, 0].concat(array))
-        this._fire("add", pos, n)
-        if (!this._stopFireLength) {
-            return this._.length = this.length
-        }
-    },
-    _del: function(pos, n) { //在第pos个位置上，删除N个元素
-        var ret = this._splice(pos, n)
-        if (ret.length) {
-            this._fire("del", pos, n)
-            if (!this._stopFireLength) {
-                this._.length = this.length
-            }
-        }
-        return ret
     },
     size: function() { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
@@ -58,56 +72,58 @@ var CollectionPrototype = {
         var m = array.length, n = this.length
         if (m) {
             ap.push.apply(this.$model, array)
-            this._add(n, m)
-            this._fire("index", n)
+            mutateArray.call(this, "add", n, m, n)
         }
-        return m + n
+        return  m + n
     },
     push: function() {
+        //http://jsperf.com/closure-with-arguments
+        var array = []
+        var i, n = arguments.length
+        for (i = 0; i < n; i++) {
+            array[i] = arguments[i]
+        }
         return this.pushArray(arguments)
     },
     unshift: function() {
         var m = arguments.length, n = this.length
         if (m) {
             ap.unshift.apply(this.$model, arguments)
-            this._add(0, m)
-            this._fire("index", 0) //重置所有索引
+            mutateArray.call(this, "add", 0, m, 0)
         }
-        return m + n //IE67的unshift不会返回长度
+        return  m + n //IE67的unshift不会返回长度
     },
     shift: function() {
-        var el = this.$model.shift()
-        this._del(0, 1)
-        this._fire("index", 0)
-        return el //返回被移除的元素
+        if (this.length) {
+            var el = this.$model.shift()
+            mutateArray.call(this, "del", 0, 1, 0)
+            return el //返回被移除的元素
+        }
     },
     pop: function() {
-        var el = this.$model.pop()
-        this._del(this.length - 1, 1)
-        return el //返回被移除的元素
+        var m = this.length
+        if (m) {
+            var el = this.$model.pop()
+            mutateArray.call(this, "del", m - 1, 1, Math.max(0, m - 2))
+            return el //返回被移除的元素
+        }
     },
-    splice: function(a, b) {
-        // 必须存在第一个参数，需要大于-1, 为添加或删除元素的基点
-        var m = arguments.length, n = this.length
-        a = _number(a, n)
-        var removed = _splice.apply(this.$model, arguments),
-                ret = [],
-                change
-        this._stopFireLength = true //确保在这个方法中 , $watch("length",fn)只触发一次
-        if (removed.length) {
-            ret = this._del(a, removed.length)
+    splice: function(start) {
+        var m = arguments.length, args = [], change
+        var removed = _splice.apply(this.$model, arguments)
+        if (removed.length) { //如果用户删掉了元素
+            args.push("del", start, removed.length, 0)
             change = true
         }
-        if (m > 2) {
-            this._add(a, m - 2)
+        if (m > 2) {  //如果用户添加了元素
+            args.splice(3, 1, 0, "add", start, m - 2)
             change = true
         }
-        this._stopFireLength = false
-        this._.length = this.length
-        if (change) {
-            this._fire("index", a)
+        if (change) { //返回被移除的元素
+            return mutatedArray.apply(this, args)
+        } else {
+            return []
         }
-        return ret //返回被移除的元素
     },
     contains: function(el) { //判定是否包含
         return this.indexOf(el) !== -1
@@ -116,7 +132,11 @@ var CollectionPrototype = {
         return this.removeAt(this.indexOf(el))
     },
     removeAt: function(index) { //移除指定索引上的元素
-        return index >= 0 ? this.splice(index, 1) : []
+        if (index >= 0) {
+            this.$model.splice(index, 1)
+            return mutateArray.call(this, "del", index, 1, 0)
+        }
+        return  []
     },
     clear: function() {
         this.$model.length = this.length = this._.length = 0 //清空数组
@@ -132,7 +152,7 @@ var CollectionPrototype = {
             for (var i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                    this.splice(i, 1)
+                    this.removeAt(i)
                 }
             }
         } else {
@@ -169,6 +189,7 @@ var CollectionPrototype = {
         return this
     }
 }
+
 "sort,reverse".replace(rword, function(method) {
     CollectionPrototype[method] = function() {
         var aaa = this.$model,
@@ -196,9 +217,3 @@ var CollectionPrototype = {
     }
 })
 
-function convert(val, $model) {
-    if (rcomplexType.test(avalon.type(val))) {
-        val = val.$id ? val : modelFactory(val, 0, $model)
-    }
-    return val
-}

@@ -75,7 +75,7 @@ var compatibleFiles = [
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = compatibleFiles.concat()
 modernFiles.splice(modernFiles.indexOf("03 es5.shim"), 1)
-modernFiles.splice(modernFiles.indexOf("07 modelFactory.shim"), 1)
+modernFiles.splice(modernFiles.indexOf("07 modelFactory.shim2"), 1)
 modernFiles[modernFiles.indexOf("01 variable")] = "01 variable.modern"
 modernFiles[modernFiles.indexOf("02 core")] = "02 core.modern"
 modernFiles[modernFiles.indexOf("04 dom.polyfill")] = "04 dom.polyfill.modern"
