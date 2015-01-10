@@ -3745,15 +3745,6 @@ new function() {
     }
 }
 
-function IE() {
-    if (window.VBArray) {
-        var mode = document.documentMode
-        return mode ? mode : window.XMLHttpRequest ? 7 : 6
-    } else {
-        return 0
-    }
-}
-var IEVersion = IE()
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function(e) {
         var el = DOC.activeElement
@@ -4126,14 +4117,6 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var removed = proxies.splice(pos, el)
                 recycleProxies(removed, "each")
                 break
-            case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
-                var last = proxies.length - 1
-                for (; el = proxies[pos]; pos++) {
-                    el.$index = pos
-                    el.$first = pos === 0
-                    el.$last = pos === last
-                }
-                break
             case "clear":
                 var check = data.$stamp || proxies[0]
                 if (check) {
@@ -4163,12 +4146,20 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 parent.insertBefore(transation, end)
                 break
+            case "index": //将proxies中的第pos个起的所有元素重新索引
+                var last = proxies.length - 1
+                for (; el = proxies[pos]; pos++) {
+                    el.$index = pos
+                    el.$first = pos === 0
+                    el.$last = pos === last
+                }
+                return
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]
                 if (proxy) {
                     notifySubscribers(proxy.$events.$index)
                 }
-                break
+                return
             case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                 var pool = el
                 var keys = []
@@ -4201,15 +4192,13 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
         }
-        if (method === "index")
-            return
         if (method === "clear")
             method = "del"
         var callback = data.renderedCallback || noop,
                 args = arguments
         checkScan(parent, function() {
             callback.apply(parent, args)
-            if (parent.oldValue && parent.tagName === "SELECT") {//&& method === "index") { //fix #503
+            if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
                 avalon(parent).val(parent.oldValue.split(","))
             }
         }, NaN)
