@@ -50,14 +50,14 @@ bindingHandlers.repeat = function(data, vmodels) {
         data.template = elem.outerHTML.trim()
         elem.parentNode.replaceChild(comment, elem)
     }
-
+    data.template = avalon.parseHTML(data.template)
     data.rollback = function() {
         var elem = data.element
         if (!elem)
             return
         bindingExecutors.repeat.call(data, "clear")
         var parentNode = elem.parentNode
-        var content = avalon.parseHTML(data.template)
+        var content = data.template
         var target = content.firstChild
         parentNode.replaceChild(content, elem)
         var start = data.$stamp
@@ -213,12 +213,12 @@ bindingExecutors.repeat = function(method, pos, el) {
 })
 
 function shimController(data, transation, proxy, fragments) {
-    var dom = avalon.parseHTML(data.template)
-    var nodes = avalon.slice(dom.childNodes)
+    var content = data.template.cloneNode(true)
+    var nodes = avalon.slice(content.childNodes)
     if (proxy.$stamp) {
-        dom.insertBefore(proxy.$stamp, dom.firstChild)
+        content.insertBefore(proxy.$stamp, content.firstChild)
     }
-    transation.appendChild(dom)
+    transation.appendChild(content)
     var nv = [proxy].concat(data.vmodels)
     var fragment = {
         nodes: nodes,

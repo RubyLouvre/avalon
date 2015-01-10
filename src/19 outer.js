@@ -1,4 +1,3 @@
-var strundefined = typeof undefined;
 
 // Register as a named AMD module, since avalon can be concatenated with other
 // files that may use define, but not via a proper concatenation script that
@@ -12,33 +11,24 @@ var strundefined = typeof undefined;
 // declare themselves as anonymous modules, and avoid setting a global if an
 // AMD loader is present. avalon is a special case. For more information, see
 // https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
-
-    if ( typeof define === "function" && define.amd ) {
-        define( "avalon", [], function() {
-            return avalon;
-        });
+    if (typeof define === "function" && define.amd) {
+        define("avalon", [], function() {
+            return avalon
+        })
     }
-
-    var
-    // Map over avalon in case of overwrite
-        _avalon = window.avalon;
-
-    avalon.noConflict = function( deep ) {
-
-        if ( deep && window.avalon === avalon ) {
-            window.avalon = avalon;
+// Map over avalon in case of overwrite
+    var _avalon = window.avalon
+    avalon.noConflict = function(deep) {
+        if (deep && window.avalon === avalon) {
+            window.avalon = avalon
         }
-
-        return avalon;
-    };
-
-
+        return avalon
+    }
 // Expose avalon and $ identifiers, even in AMD
 // and CommonJS for browser emulators
-    if ( typeof noGlobal === strundefined ) {
-        window.avalon = avalon;
+    if (noGlobal === void 0) {
+        window.avalon = avalon
     }
-
-    return avalon;
+    return avalon
 
 }));
