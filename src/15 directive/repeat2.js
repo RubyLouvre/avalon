@@ -132,7 +132,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                     el.$first = pos === 0
                     el.$last = pos === last
                 }
-                break
+                return
             case "clear":
                 var check = data.$stamp || proxies[0]
                 if (check) {
@@ -200,8 +200,6 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
         }
-        if (method === "index")
-            return
         if (method === "clear")
             method = "del"
         var callback = data.renderedCallback || noop,
