@@ -122,7 +122,7 @@ var CollectionPrototype = {
             change = true
         }
         if (change) { //返回被移除的元素
-            return mutatedArray.apply(this, args)
+            return mutateArray.apply(this, args)
         } else {
             return []
         }

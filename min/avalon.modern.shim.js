@@ -780,7 +780,9 @@ try {
 } catch (e) {
     canHideOwn = false
 }
-
+var K = function(fn) {
+    fn()
+}
 function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
         var arr = source.concat()
@@ -815,7 +817,7 @@ function modelFactory(source, $special, $model) {
             var valueType = avalon.type(val)
             var accessor = function(newValue) {
                 var name = accessor._name
-                var $vmodel = this 
+                var $vmodel = this
                 var $model = $vmodel.$model
                 var oldValue = $model[name]
                 var $events = $vmodel.$events
@@ -830,8 +832,15 @@ function modelFactory(source, $special, $model) {
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
-                        notifySubscribers($events[name]) //同步视图
-                        safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                        var callback = kernel.digest ? setTimeout : K
+                        if (!accessor.pedding) {
+                            accessor.pedding = true
+                            callback(function() {
+                                notifySubscribers($events[name]) //同步视图
+                                safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+                                accessor.pedding = false
+                            })
+                        }
                     }
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
@@ -1112,7 +1121,7 @@ var CollectionPrototype = {
             change = true
         }
         if (change) { //返回被移除的元素
-            return mutatedArray.apply(this, args)
+            return mutateArray.apply(this, args)
         } else {
             return []
         }
