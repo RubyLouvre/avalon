@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js(去掉加载器与domReady) 1.381 build in 2015.1.10 
+ avalon.mobile.shim.js(去掉加载器与domReady) 1.381 build in 2015.1.11 
 upport IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1191,33 +1191,48 @@ var CollectionPrototype = {
     }
 }
 
+function sortByIndex(array, indexes) {
+    var map = {};
+    for (var i = 0, n = indexes.length; i < n; i++) {
+        map[i] = array[i] // preserve
+        var j = indexes[i]
+        if (j in map) {
+            array[i] = map[j]
+            delete map[j]
+        } else {
+            array[i] = array[j]
+        }
+    }
+}
+
 "sort,reverse".replace(rword, function(method) {
     CollectionPrototype[method] = function() {
-        var aaa = this.$model,
-                bbb = aaa.slice(0),
-                sorted = false
-        ap[method].apply(aaa, arguments) //先移动model
-        for (var i = 0, n = bbb.length; i < n; i++) {
-            var a = aaa[i],
-                    b = bbb[i]
-            if (!isEqual(a, b)) {
-                sorted = true
-                var index = bbb.indexOf(a, i)
-                var remove = this._splice(index, 1)[0]
-                var remove2 = bbb.splice(index, 1)[0]
-                this._splice(i, 0, remove)
-                bbb.splice(i, 0, remove2)
-                this._fire("move", index, i)
+        var newArray = this.$model//这是要排序的新数组
+        var oldArray = newArray.concat() //保持原来状态的旧数组
+        var mask = Math.random()
+        var indexes = []
+        var hasSort
+        ap[method].apply(newArray, arguments) //排序
+        for (var i = 0, n = oldArray.length; i < n; i++) {
+            var neo = newArray[i]
+            var old = oldArray[i]
+            if (isEqual(neo, old)) {
+                indexes.push(i)
+            } else {
+                var index = oldArray.indexOf(neo)
+                indexes.push(index)//得到新数组的每个元素在旧数组对应的位置
+                oldArray[index] = mask    //屏蔽已经找过的元素
+                hasSort = true
             }
         }
-        bbb = void 0
-        if (sorted) {
+        if (hasSort) {
+            sortByIndex(this, indexes)
+            this._fire("move", indexes)
             this._fire("index", 0)
         }
         return this
     }
 })
-
 
 /*********************************************************************
  *                           依赖调度系统                             *
@@ -3346,9 +3361,9 @@ bindingHandlers.repeat = function(data, vmodels) {
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
-
-    var comment = data.element = DOC.createComment("ms-" + type + "-end")
-    data.clone = DOC.createComment("ms-" + type)
+    var signature = generateID(type)
+    var comment = data.element = DOC.createComment(signature + ":end")
+    data.clone = DOC.createComment(signature)
     hyperspace.appendChild(comment)
 
     if (type === "each" || type === "with") {
@@ -3456,12 +3471,34 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 recycleProxies(proxies, "each")
                 break
-            case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-                locatedNode = locateFragment(data, el)
-                transation = removeFragment(pos, 1, proxies, endRepeat)
-                parent.insertBefore(transation, locatedNode)
-                var t = proxies.splice(pos, 1)[0]
-                proxies.splice(el, 0, t)
+            case "move": 
+                var start = proxies[0].$stamp
+                var signature = start.nodeValue
+                var rooms = []
+                var room = []
+                while (true) {
+                    var node = endRepeat.previousSibling
+                    if (!node) {
+                        break
+                    }
+                    parent.removeChild(node)
+                    room.unshift(node)
+                    if (node.nodeValue === signature) {
+                        rooms.unshift(room)
+                        room = []
+                    }
+                    if (node === start) {
+                        break
+                    }
+                }
+                sortByIndex(proxies, pos)
+                sortByIndex(rooms, pos)
+                while (room = rooms.shift()) {
+                    while (node = room.shift()) {
+                        transation.appendChild(node)
+                    }
+                }
+                parent.insertBefore(transation, endRepeat)
                 break
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]

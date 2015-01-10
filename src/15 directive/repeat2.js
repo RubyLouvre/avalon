@@ -38,9 +38,9 @@ bindingHandlers.repeat = function(data, vmodels) {
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
-
-    var comment = data.element = DOC.createComment("ms-" + type + "-end")
-    data.clone = DOC.createComment("ms-" + type)
+    var signature = generateID(type)
+    var comment = data.element = DOC.createComment(signature + ":end")
+    data.clone = DOC.createComment(signature)
     hyperspace.appendChild(comment)
 
     if (type === "each" || type === "with") {
@@ -148,12 +148,34 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 recycleProxies(proxies, "each")
                 break
-            case "move": //将proxies中的第pos个元素移动el位置上(pos, el都是数字)
-                locatedNode = locateFragment(data, el)
-                transation = removeFragment(pos, 1, proxies, endRepeat)
-                parent.insertBefore(transation, locatedNode)
-                var t = proxies.splice(pos, 1)[0]
-                proxies.splice(el, 0, t)
+            case "move": 
+                var start = proxies[0].$stamp
+                var signature = start.nodeValue
+                var rooms = []
+                var room = []
+                while (true) {
+                    var node = endRepeat.previousSibling
+                    if (!node) {
+                        break
+                    }
+                    parent.removeChild(node)
+                    room.unshift(node)
+                    if (node.nodeValue === signature) {
+                        rooms.unshift(room)
+                        room = []
+                    }
+                    if (node === start) {
+                        break
+                    }
+                }
+                sortByIndex(proxies, pos)
+                sortByIndex(rooms, pos)
+                while (room = rooms.shift()) {
+                    while (node = room.shift()) {
+                        transation.appendChild(node)
+                    }
+                }
+                parent.insertBefore(transation, endRepeat)
                 break
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]
