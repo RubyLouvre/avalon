@@ -3,7 +3,6 @@
  **********************************************************************/
 var expose = Date.now()
 //http://stackoverflow.com/questions/7290086/javascript-use-strict-and-nicks-find-global-function
-var window = Function("return this")()
 var DOC = window.document
 var head = DOC.head //HEAD元素
 head.insertAdjacentHTML("afterBegin", '<avalon ms-skip><style id="avalonStyle">.avalonHide{ display: none!important }</style></avalon>')
