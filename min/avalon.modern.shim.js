@@ -3087,7 +3087,7 @@ function ticker() {
 var watchValueInTimer = noop
 var watchValueInProp = false
 new function() {
-    try {//IE9-IE11, firefox
+    try {//#272 IE9-IE11, firefox
         var setters = {}
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
