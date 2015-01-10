@@ -3419,8 +3419,8 @@ bindingHandlers.repeat = function(data, vmodels) {
 bindingExecutors.repeat = function(method, pos, el) {
     if (method) {
         var data = this
-        var endRepeat = data.element
-        var parent = endRepeat.parentNode
+        var end = data.element
+        var parent = end.parentNode
         var proxies = data.proxies
         var transation = hyperspace.cloneNode(false)
         switch (method) {
@@ -3429,22 +3429,23 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var array = data.$repeat
                 var last = array.length - 1
                 var fragments = []
-                var locatedNode = locateFragment(data, pos)
+                var start = locateNode(data, pos)
                 for (var i = pos; i < n; i++) {
                     var proxy = eachProxyAgent(i, data)
                     proxies.splice(i, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
-                parent.insertBefore(transation, locatedNode)
+                parent.insertBefore(transation, start)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                var transation = removeFragment(pos, el, proxies, endRepeat)
+                start = proxies[pos].$stamp
+                end = locateNode(data, pos + el)
+                sweepNodes(start, end)
                 var removed = proxies.splice(pos, el)
-                avalon.clearHTML(transation)
                 recycleProxies(removed, "each")
                 break
             case "index": //将proxies中的第pos个起的所有元素重新索引（pos为数字，el用作循环变量）
@@ -3458,39 +3459,23 @@ bindingExecutors.repeat = function(method, pos, el) {
             case "clear":
                 var check = data.$stamp || proxies[0]
                 if (check) {
-                    var start = check.$stamp || check
-                    while (true) {
-                        var node = endRepeat.previousSibling
-                        if (!node)
-                            break
-                        parent.removeChild(node)
-                        if (node === start) {
-                            break
-                        }
-                    }
+                    start = check.$stamp || check
+                    sweepNodes(start, end)
                 }
                 recycleProxies(proxies, "each")
                 break
-            case "move": 
-                var start = proxies[0].$stamp
+            case "move":
+                start = proxies[0].$stamp
                 var signature = start.nodeValue
                 var rooms = []
-                var room = []
-                while (true) {
-                    var node = endRepeat.previousSibling
-                    if (!node) {
-                        break
-                    }
-                    parent.removeChild(node)
-                    room.unshift(node)
-                    if (node.nodeValue === signature) {
+                var room = [], node
+                sweepNodes(start, end, function() {
+                    room.unshift(this)
+                    if (this.nodeValue === signature) {
                         rooms.unshift(room)
                         room = []
                     }
-                    if (node === start) {
-                        break
-                    }
-                }
+                })
                 sortByIndex(proxies, pos)
                 sortByIndex(rooms, pos)
                 while (room = rooms.shift()) {
@@ -3498,7 +3483,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                         transation.appendChild(node)
                     }
                 }
-                parent.insertBefore(transation, endRepeat)
+                parent.insertBefore(transation, end)
                 break
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 var proxy = proxies[pos]
@@ -3530,8 +3515,8 @@ bindingExecutors.repeat = function(method, pos, el) {
                     }
                 }
                 var comment = data.$stamp = data.clone
-                parent.insertBefore(comment, endRepeat)
-                parent.insertBefore(transation, endRepeat)
+                parent.insertBefore(comment, end)
+                parent.insertBefore(transation, end)
                 for (var i = 0, fragment; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
@@ -3572,24 +3557,22 @@ function shimController(data, transation, proxy, fragments) {
     fragments.push(fragment)
 }
 
-function locateFragment(data, pos) {
+function locateNode(data, pos) {
     var proxy = data.proxies[pos]
     return proxy ? proxy.$stamp : data.element
 }
-function removeFragment(a, n, proxies, endRepeat) {
-    var start = proxies[a].$stamp
-    var proxy = proxies[a + n]
-    var end = proxy ? proxy.$stamp : endRepeat
+
+function sweepNodes(start, end, callback) {
     while (true) {
         var node = end.previousSibling
         if (!node)
             break
-        hyperspace.insertBefore(node, hyperspace.firstChild)
+        node.parentNode.removeChild(node)
+        callback && callback.call(node)
         if (node === start) {
             break
         }
     }
-    return hyperspace
 }
 
 // 为ms-each,ms-with, ms-repeat会创建一个代理VM，
