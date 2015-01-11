@@ -32,9 +32,11 @@ new function() {
                 innerRequire(shim.deps || "", function() {
                     loadJS(url, id, function() {
                         modules[id].state = 2
-                        if (shim.exports)
-                            modules[id].exports = typeof shim.exports === "function" ?
-                                    shim.exports() : window[shim.exports]
+                        var s = shim.exports
+                        if (s && modules[id].exports === void 0) {
+                            modules[id].exports = typeof s === "function" ?
+                                    s() : window[s]
+                        }
                         innerRequire.checkDeps()
                     })
                 })
@@ -350,7 +352,6 @@ new function() {
             delete factory.delay //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-
         if (name) {
             factory.delay(name, args)
         } else { //先进先出
