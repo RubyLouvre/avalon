@@ -1587,27 +1587,38 @@ function sortByIndex(array, indexes) {
         }
     }
 }
-
+function sortFn(x, y) {
+    if (x === y)
+        return 0
+    if ((typeof x === "string") && (typeof y === "string"))
+        return String(x).localeCompare(y)
+    x = x + ""
+    y = y + ""
+    return x === y ? 0 : x < y ? -1 : 1
+}
+function reverseFn() {
+    return 1
+}
 "sort,reverse".replace(rword, function(method) {
-    CollectionPrototype[method] = function() {
-        var newArray = this.$model//这是要排序的新数组
-        var oldArray = newArray.concat() //保持原来状态的旧数组
-        var mask = Math.random()
-        var indexes = []
-        var hasSort
-        ap[method].apply(newArray, arguments) //排序
-        for (var i = 0, n = oldArray.length; i < n; i++) {
-            var neo = newArray[i]
-            var old = oldArray[i]
-            if (isEqual(neo, old)) {
-                indexes.push(i)
-            } else {
-                var index = oldArray.indexOf(neo)
-                indexes.push(index)//得到新数组的每个元素在旧数组对应的位置
-                oldArray[index] = mask    //屏蔽已经找过的元素
-                hasSort = true
+    CollectionPrototype[method] = function(fn) {
+        var array = this.$model//这是要排序的新数组
+        var compareFn = method == "reverse" ? reverseFn : typeof fn === "function" ? fn : sortFn
+        var hasSort = false
+        var indexes = array.map(function(el, i) {
+            return {
+                data: el,
+                index: i
             }
-        }
+        }).sort(function(a, b) {
+            var r = compareFn(a.data, b.data)
+            if (!hasSort) {
+                hasSort = r
+            }
+            return r
+        }).map(function(el, i) {
+            array[i] = el.data
+            return el.index
+        })
         if (hasSort) {
             sortByIndex(this, indexes)
             this._fire("move", indexes)
@@ -3913,8 +3924,10 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
                         this.select()
                         var sel = window.getSelection()
-                        var range = sel.getRangeAt(0)
-                        range.deleteContents()
+                        if (sel.rangeCount) {
+                            var range = sel.getRangeAt(0)
+                            range.deleteContents()
+                        }
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
                         document.execCommand("insertText", false, text)

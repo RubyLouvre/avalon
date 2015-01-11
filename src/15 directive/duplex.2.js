@@ -166,8 +166,10 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
                         this.select()
                         var sel = window.getSelection()
-                        var range = sel.getRangeAt(0)
-                        range.deleteContents()
+                        if (sel.rangeCount) {
+                            var range = sel.getRangeAt(0)
+                            range.deleteContents()
+                        }
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
                         document.execCommand("insertText", false, text)
