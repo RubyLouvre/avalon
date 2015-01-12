@@ -6,7 +6,7 @@ var parentDir = curDir.replace(path.sep + "src", "")
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
 var Buffer = require('buffer').Buffer
 var now = new Date
-var version = 1.381
+var version = 1.382
 var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)
@@ -62,14 +62,14 @@ function comboFiles(files, writer, lastCallback, statement) {
 var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
     "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
-    "07 modelFactory2", "07 modelFactory.shim2", "08 Collection2", "09 dispatcher",
+    "07 modelFactory", "07 modelFactory.shim", "08 Collection", "09 dispatcher",
     "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
     "13 dom", "14 parser", "14 parser.share",
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
-    directive("duplex.3"), directive("repeat2"),
+    directive("duplex.3"), directive("repeat"),
     "16 filter", "17 loader", "18 domReady", "19 outer"
 ]
 //avalon.modern.js 所需要合并的子文件
