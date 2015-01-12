@@ -86,9 +86,6 @@ try {
 } catch (e) {
     canHideOwn = false
 }
-var K = function(fn) {
-    fn()
-}
 function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
         var arr = source.concat()
@@ -138,14 +135,16 @@ function modelFactory(source, $special, $model) {
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
-                        var callback = kernel.digest ? setTimeout : K
-                        if (!accessor.pedding) {
+                        if ($events.$digest) {
                             accessor.pedding = true
-                            callback(function() {
+                            setTimeout(function() {
                                 notifySubscribers($events[name]) //同步视图
                                 safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
                                 accessor.pedding = false
                             })
+                        } else {
+                            notifySubscribers($events[name]) //同步视图
+                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                     }
                 } else {

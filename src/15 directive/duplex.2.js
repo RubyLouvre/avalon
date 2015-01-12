@@ -165,11 +165,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //先选中表单元素创建一个选区，然后清空value
                         //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
                         this.select()
-                        var sel = window.getSelection()
-                        if (sel.rangeCount) {
-                            var range = sel.getRangeAt(0)
-                            range.deleteContents()
-                        }
+                        var range = document.createRange()
+                        range.selectNodeContents(this)
+                        range.deleteContents()
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
                         document.execCommand("insertText", false, text)
