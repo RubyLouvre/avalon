@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.381 build in 2015.1.12 
+ avalon.js 1.382 build in 2015.1.12 
 ____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -261,7 +261,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.381,
+    version: 1.382,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
