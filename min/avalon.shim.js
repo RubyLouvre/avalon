@@ -3732,7 +3732,7 @@ new function() {
         })
     } catch (e) {
         try {
-            if ("webkitUserSelect" in root.style) {//chrome safar6+, opera15+
+            if ("webkitUserSelectX" in root.style) {//chrome safar6+, opera15+
                 Object.defineProperty(document.createElement("input"), "value", {
                     set: newSetter
                 })
@@ -3912,7 +3912,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
                         this.select()
                         var range = document.createRange()
-                        range.selectNodeContents(this);
+                        range.selectNodeContents(this)
                         range.deleteContents()
                         //接着使用insertHTML或insertText命令设置value
                         //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand

@@ -3111,7 +3111,7 @@ new function() {
         })
     } catch (e) {
         try {
-            if ("webkitUserSelect" in root.style) {//chrome safar6+, opera15+
+            if ("webkitUserSelectX" in root.style) {//chrome safar6+, opera15+
                 Object.defineProperty(document.createElement("input"), "value", {
                     set: newSetter
                 })
