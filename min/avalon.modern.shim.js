@@ -363,7 +363,7 @@ function isArrayLike(obj) {
                 str = serialize.call(obj)
         if (/(Array|List|Collection|Map|Arguments)\]$/.test(str)) {
             return true
-        } else if (str === "[object Object]" && (+n === n && !(n % 1) && n >= 0)) {
+        } else if (str === "[object Object]" && n === (n >>> 0)) {
             return true //由于ecma262v5能修改对象属性的enumerable，因此不能用propertyIsEnumerable来判定了
         }
     }

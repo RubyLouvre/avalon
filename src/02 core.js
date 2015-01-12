@@ -317,7 +317,7 @@ var bindingExecutors = avalon.bindingExecutors = {}
 function isArrayLike(obj) {
     if (obj && typeof obj === "object" && !avalon.isWindow(obj)) {
         var n = obj.length
-        if (+n === n && !(n % 1) && n >= 0) { //检测length属性是否为非负整数
+        if (n === (n >>> 0)) { //检测length属性是否为非负整数
             try {
                 if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
                     return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
