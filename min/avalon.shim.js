@@ -431,7 +431,7 @@ var bindingExecutors = avalon.bindingExecutors = {}
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 
 function isArrayLike(obj) {
-    if (obj && typeof obj === "object" && !avalon.isWindow(obj)) {
+    if (obj && typeof obj === "object") {
         var n = obj.length
         if (n === (n >>> 0)) { //检测length属性是否为非负整数
             try {
