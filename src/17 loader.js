@@ -272,18 +272,19 @@ new function() {
     }
 
     innerRequire = avalon.require = function(list, factory, parent) {
+        if (!Array.isArray(list)) {
+            avalon.error("require的第一个参数必须是依赖列数,类型为数组")
+        }
         // 用于检测它的依赖是否都为2
-        var deps = {},
-                // 用于保存依赖模块的返回值
-                args = [],
-                // 需要安装的模块数
-                dn = 0,
-                // 已安装完的模块数
-                cn = 0,
-                id = parent || "callback" + setTimeout("1")
+        var args = [] // 放置所有依赖项的完整路径
+        var deps = {} // args的另一种表现形式，为的是方便去重
+        var dn = 0  //需要安装的模块数
+        var cn = 0  // 已安装完的模块数
+        var id = parent || "callback" + setTimeout("1")
         parent = parent || basepath
-        String(list).replace(rword, function(el) {
-            var url = loadResources(el, parent)
+
+        list.forEach(function(el) {
+            var url = loadResources(el, parent) //加载资源，并返回能加载资源的完整路径
             if (url) {
                 dn++
                 if (modules[url] && modules[url].state === 2) {
@@ -295,7 +296,7 @@ new function() {
                 }
             }
         })
-        modules[id] = {//创建一个对象,记录模块的加载情况与其他信息
+        modules[id] = {//保存此模块的相关信息
             id: id,
             factory: factory,
             deps: deps,

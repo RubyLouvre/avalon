@@ -172,6 +172,7 @@ if (root.dataset) {
     }
 }
 var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
+avalon.parseJSON =  JSON.parse
 
 function parseData(data) {
     try {

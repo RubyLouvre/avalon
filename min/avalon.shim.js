@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(去掉加载器与domReady) 1.382 build in 2015.1.12 
+ avalon.shim.js(去掉加载器与domReady) 1.382 build in 2015.1.13 
 ___
  support IE6+ and other browsers
  ==================================================*/
@@ -4020,13 +4020,8 @@ bindingHandlers.repeat = function(data, vmodels) {
         }
     }
     var elem = data.element
-    if (freturn) {
-        return avalon(elem).addClass("avalonHide")
-    }
-
-    avalon(elem).removeClass("avalonHide")
-
     elem.removeAttribute(data.name)
+
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
     var signature = generateID(type)
@@ -4055,7 +4050,9 @@ bindingHandlers.repeat = function(data, vmodels) {
         start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
     }
-
+    if (freturn) {
+        return 
+    }
     data.handler = bindingExecutors.repeat
     data.$outer = {}
     var check0 = "$key",
