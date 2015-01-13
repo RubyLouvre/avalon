@@ -160,11 +160,11 @@ avalon.fn.mix({
         }
     },
     offsetParent: function() {
-        var offsetParent = this[0].offsetParent || root
-        while (offsetParent && (offsetParent.tagName !== "HTML") && avalon.css(offsetParent, "position") === "static") {
-            offsetParent = offsetParent.offsetParent
+        var offsetParent = this[0].offsetParent
+        while (offsetParent && avalon.css(offsetParent, "position") === "static") {
+            offsetParent = offsetParent.offsetParent;
         }
-        return avalon(offsetParent || root)
+        return avalon(offsetParent)
     },
     bind: function(type, fn, phase) {
         if (this[0]) { //此方法不会链
