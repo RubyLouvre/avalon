@@ -3331,12 +3331,12 @@ bindingHandlers.repeat = function(data, vmodels) {
         target = data.element = data.type === "repeat" ? target : parentNode
     }
     if (freturn) {
-        return 
+        return
     }
     data.handler = bindingExecutors.repeat
     data.$outer = {}
-    var check0 = "$key",
-            check1 = "$val"
+    var check0 = "$key"
+    var check1 = "$val"
     if (Array.isArray($repeat)) {
         check0 = "$first"
         check1 = "$last"
@@ -3347,13 +3347,13 @@ bindingHandlers.repeat = function(data, vmodels) {
             break
         }
     }
-    var $list = ($repeat.$events || {})[subscribers]
+    var $events = $repeat.$events
+    var $list = ($events || {})[subscribers]
     if ($list && avalon.Array.ensure($list, data)) {
         addSubscribers(data, $list)
     }
     if (xtype === "object") {
         data.$with = true
-        var $events = $repeat.$events
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
     } else if ($repeat.length) {
