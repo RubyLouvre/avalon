@@ -6,31 +6,13 @@
         <meta name="viewport" content="width=device-width">
         <script src="avalon.js"></script>
         <script>
-
-            var props = ["aaa", "bbb", "ccc", "ddd"]
-            var backup = props.concat()
-            var model = avalon.define({
-                $id: "test",
-                aaa: ["aaa", "bbb", "ccc"]
+            require(["aaa"], function() {
+                console.log("已经全部加载成功")
             })
 
 
         </script>
     </head>
     <body ms-controller="test">
-        <script type="avalon" id="aaa">
-               <div>{{el}}</div>
-        </script>
-        <script type="avalon" id="bbb">
-               <div>{{$index}}</div>
-        </script>
-        <script type="avalon" id="ccc">
-             <div>{{$first}}</div>
-        </script>
-        <ul>
-            <li ms-repeat="aaa" >
-                <div ms-include="el"></div>
-            </li>
-        </ul>
     </body>
 </html>
