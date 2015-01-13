@@ -30,24 +30,6 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
     }
-    var watchProp = watchValueInProp && /text/.test(element.type)
-    if (watchProp) {
-        element.addEventListener("input", function(e) {
-            if (composing)
-                return
-            var sel = window.getSelection()
-            // http://stackoverflow.com/questions/7380190/select-whole-word-with-getselection/7381574#7381574
-            if (sel.extend) {
-                sel.extend(this, 0)
-            } else {
-                this.select()
-            }
-            var value = sel.toString()
-            var n = value.length
-            this.setSelectionRange(n, n)
-            this.oldValue = value
-        })
-    }
     //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set")
@@ -109,43 +91,19 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
     }
 
-    element.avalonSetter = updateVModel
     if (/text|password/.test(element.type)) {
-        if (watchProp) {//chrome safari
-            element.value = String(data.pipe(evaluator(), data, "set"))
-            Object.defineProperty(element, "value", {
-                set: function(text) {
-                    text = text == null ? "" : String(text)
-                    if (this.oldValue !== text) {
-                        //先选中表单元素创建一个选区，然后清空value
-                        //http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div/6691294#6691294
-                        this.select()
-                        var sel = window.getSelection()
-                        var range = sel.getRangeAt(0)
-                        range.deleteContents()
-                        //接着使用insertHTML或insertText命令设置value
-                        //http://stackoverflow.com/questions/12027137/javascript-trick-for-paste-as-plain-text-in-execcommand
-                        document.execCommand("insertText", false, text)
-                        this.blur() // https://github.com/RubyLouvre/avalon/issues/651
-                        this.oldValue = text
-                    }
-                },
-                get: function() {
-                    return this.oldValue
+        watchValueInTimer(function() {
+            if (root.contains(element)) {
+                if (element.value !== element.oldValue) {
+                    updateVModel()
                 }
-            })
-        } else {
-            watchValueInTimer(function() {
-                if (root.contains(element)) {
-                    if (element.value !== element.oldValue) {
-                        updateVModel()
-                    }
-                } else if (!element.msRetain) {
-                    return false
-                }
-            })
-        }
+            } else if (!element.msRetain) {
+                return false
+            }
+        })
     }
+    
+    element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
