@@ -812,7 +812,7 @@ var plugins = {
         } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
-            if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") >= 0) {
+            if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
                 throw new SyntaxError("此定界符不合法")
             }
             cinerator.innerHTML = ""
@@ -2778,7 +2778,7 @@ var valHooks = {
         values = [].concat(values) //强制转换为数组
         var getter = valHooks["option:get"]
         for (var i = 0, el; el = node.options[i++]; ) {
-            if ((el.selected = values.indexOf(getter(el)) >= 0)) {
+            if ((el.selected = values.indexOf(getter(el)) > -1)) {
                 optionSet = true
             }
         }
@@ -3828,7 +3828,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
         data.handler = function() {
             var array = [].concat(evaluator()) //强制转换为数组
-            element.checked = array.indexOf(data.pipe(element.value, data, "get")) >= 0
+            element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
         bound(W3C ? "change" : "click", updateVModel)
     } else {

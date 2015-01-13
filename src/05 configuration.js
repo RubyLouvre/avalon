@@ -40,7 +40,7 @@ var plugins = {
         } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
-            if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") >= 0) {
+            if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
                 throw new SyntaxError("此定界符不合法")
             }
             cinerator.innerHTML = ""

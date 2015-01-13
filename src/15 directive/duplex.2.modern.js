@@ -66,7 +66,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         data.handler = function() {
             var array = [].concat(evaluator()) //强制转换为数组
-            element.checked = array.indexOf(data.pipe(element.value, data, "get")) >= 0
+            element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
         bound("change", updateVModel)
     } else {

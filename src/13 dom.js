@@ -533,7 +533,7 @@ var valHooks = {
         values = [].concat(values) //强制转换为数组
         var getter = valHooks["option:get"]
         for (var i = 0, el; el = node.options[i++]; ) {
-            if ((el.selected = values.indexOf(getter(el)) >= 0)) {
+            if ((el.selected = values.indexOf(getter(el)) > -1)) {
                 optionSet = true
             }
         }
