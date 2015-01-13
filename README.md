@@ -9,7 +9,7 @@
 *  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，标准浏览器, 及主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游);
 avalon.modern.js 则只支持IE10等支持HTML5现代浏览器 ;
 avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
-*  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其是是OniUI，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
+*  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其次是[OniUI](https://github.com/RubyLouvre/avalon.oniui)，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
 * avalon的测试比较庞大，放在独立的仓库中——[avalon.test](https://github.com/RubyLouvre/avalon.test)
 
 优势
@@ -48,7 +48,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 
 
 <h3>运行github中的示例</h3>
-<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可能需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
 <p><img src="https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg"/></p>
 <h3>JS文件的压缩</h3>
@@ -151,6 +151,6 @@ http://tieba.baidu.com/p/1350048586
 <pre>
 MVVM最先使用是在WPF，对于微软来说是从WinForm的MVP和其余的MVC衍生而来，
 比MVP/MVC做到更多的就是数据的Binding，
-是的数据的变化能即时以增量的形式反馈到View上。
+使得数据的变化能即时以增量的形式反馈到View上。
 同理的实现好像还有iOS delegate，为MVC提供类似binding的Publish/Subscribe功能
 </pre>
