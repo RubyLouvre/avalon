@@ -1,5 +1,4 @@
---------------------------------------------------
-Avalon
+# Avalon
 
 A lightweight、high-performance and easy-to-follow javascript MVVM framework
 
@@ -102,6 +101,7 @@ The code structure of the source code are listed here, from top to bottom:
 * AMD Loader
 * DOMReady
 
+--------------------------------------------------
 
 # Avalon
 
