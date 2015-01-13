@@ -273,7 +273,7 @@ new function() {
 
     innerRequire = avalon.require = function(list, factory, parent) {
         if (!Array.isArray(list)) {
-            avalon.error("require的第一个参数必须是依赖列数,类型为数组")
+            avalon.error("require的第一个参数必须是依赖列数,类型为数组"+list)
         }
         // 用于检测它的依赖是否都为2
         var args = [] // 放置所有依赖项的完整路径

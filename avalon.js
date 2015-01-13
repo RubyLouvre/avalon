@@ -2468,6 +2468,7 @@ avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
         }
         avalon.error("Invalid JSON: " + data);
     }
+    return data
 }
 
 //生成avalon.fn.scrollLeft, avalon.fn.scrollTop方法
@@ -4979,7 +4980,7 @@ new function() {
 
     innerRequire = avalon.require = function(list, factory, parent) {
         if (!Array.isArray(list)) {
-            avalon.error("require的第一个参数必须是依赖列数,类型为数组")
+            avalon.error("require的第一个参数必须是依赖列数,类型为数组"+list)
         }
         // 用于检测它的依赖是否都为2
         var args = [] // 放置所有依赖项的完整路径
@@ -5137,7 +5138,7 @@ avalon.bind(window, "load", fireReady)
 
 avalon.ready = function(fn) {
     if (innerRequire) {
-        innerRequire("ready!", fn)
+        innerRequire(["ready!"], fn)
     } else if (fireReady === noop) {
         fn(avalon)
     } else {

@@ -52,7 +52,7 @@ avalon.bind(window, "load", fireReady)
 
 avalon.ready = function(fn) {
     if (innerRequire) {
-        innerRequire("ready!", fn)
+        innerRequire(["ready!"], fn)
     } else if (fireReady === noop) {
         fn(avalon)
     } else {

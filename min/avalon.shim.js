@@ -2468,6 +2468,7 @@ avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
         }
         avalon.error("Invalid JSON: " + data);
     }
+    return data
 }
 
 //生成avalon.fn.scrollLeft, avalon.fn.scrollTop方法
