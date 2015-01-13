@@ -9,7 +9,7 @@
 *  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，标准浏览器, 及主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游);
 avalon.modern.js 则只支持IE10等支持HTML5现代浏览器 ;
 avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
-*  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其是是OniUI，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
+*  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其次是[OniUI](https://github.com/RubyLouvre/avalon.oniui)，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
 * avalon的测试比较庞大，放在独立的仓库中——[avalon.test](https://github.com/RubyLouvre/avalon.test)
 
 优势
@@ -48,7 +48,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 
 
 <h3>运行github中的示例</h3>
-<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可以需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
+<p>将项目下载到本地，里面有一个叫server.exe的.Net小型服务器（可能需要安装<a href="http://dl.pconline.com.cn/download/54972.html">.Net4.0</a>才能运行），
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。</p>
 <p><img src="https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg"/></p>
 <h3>JS文件的压缩</h3>
@@ -151,6 +151,112 @@ http://tieba.baidu.com/p/1350048586
 <pre>
 MVVM最先使用是在WPF，对于微软来说是从WinForm的MVP和其余的MVC衍生而来，
 比MVP/MVC做到更多的就是数据的Binding，
-是的数据的变化能即时以增量的形式反馈到View上。
+使得数据的变化能即时以增量的形式反馈到View上。
 同理的实现好像还有iOS delegate，为MVC提供类似binding的Publish/Subscribe功能
 </pre>
+
+
+
+--------------------------------------------------
+Avalon
+
+A lightweight、high-performance and easy-to-follow javascript MVVM framework
+
+* Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices.
+* The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here's the three pillars: 1、[mmRouter](https://github.com/RubyLouvre/mmRouter) for router, [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
+* The test cases are in a individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
+
+To compress javascript files, run:
+```sh
+java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
+java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.js
+java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.js
+```
+
+Demo:
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>avalon 101</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js" ></script>
+        <script>
+            var first = 0;
+            var model = avalon.define("test", function(vm) {
+                vm.firstName = "John"
+                vm.lastName = "Smith"
+                vm.fullName = {//a object that contain set/get will be treated as an `PropertyDescriptor`,
+                    set: function(val) {//must use `this` to refer `scope` instead of using `scope` directly 
+                        var array = (val || "").split(" ");
+                        this.firstName = array[0] || "";
+                        this.lastName = array[1] || "";
+                    },
+                    get: function() {
+                        return this.firstName + " " + this.lastName;
+                    }
+                }
+                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
+                vm.selected = ["bbb", "ccc"]
+                vm.checkAllbool = false
+                vm.checkAll = function() {
+                    if (!first) {
+                        first++
+                        return
+                    }
+                    if (this.checked) {
+                        vm.selected = vm.arr
+                    } else {
+                        vm.selected.clear()
+                    }
+                }
+                vm.checkOne = function() {
+                    var bool = this.checked
+                    if (!bool) {
+                        vm.checkAllbool = false
+                    } else {
+                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                    }
+                }
+            })
+
+        </script> 
+    </head>
+    <body>
+        <div ms-controller="test">
+            <p>First name: <input ms-duplex="firstName" /></p>
+            <p>Last name: <input ms-duplex="lastName"  /></p>
+            <p>Hello,    <input ms-duplex="fullName"></p>
+            <div>{{firstName +" | "+ lastName }}</div>
+            <ul>
+                <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>Select All</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
+            </ul>
+        </div>
+
+    </body>
+</html>
+```
+
+More examples are at [here](https://github.com/RubyLouvre/avalon/tree/master/examples).
+
+The code structure of the source code are listed here, from top to bottom:
+
+* global vars and methods
+* the static member methods of avalon (mainly util functions)
+* JavaScript polyfills
+* DOM polyfills
+* configuration system
+* event bus
+* the ViewModel factory (modelFactory)
+* watch collection factory (Collection)
+* dependency dispatcher system (dispatcher)
+* manipulation functions of tags (parseHTML, innerHTML, clearHTML)
+* scan system
+* the prototype methods definiton of avalon (mainly related to DOM manipulation)
+* directive definiton
+* compile system
+* builtin filters
+* AMD Loader
+* DOMReady
