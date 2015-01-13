@@ -4718,85 +4718,20 @@ var modules = avalon.modules = {
     }
 }
 
-
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
     var basepath
 
-    function cleanUrl(url) {
+    function trimHashAndQuery(url) {
         return (url || "").replace(/[?#].*/, "")
     }
 
-    plugins.js = function(url, shim) {
-        var id = cleanUrl(url)
-        if (!modules[id]) { //如果之前没有加载过
-            modules[id] = {
-                id: id,
-                exports: {}
-            }
-            if (shim) { //shim机制
-                innerRequire(shim.deps || "", function() {
-                    loadJS(url, id, function() {
-                        modules[id].state = 2
-                        var s = shim.exports
-                        if (s && modules[id].exports === void 0) {
-                            modules[id].exports = typeof s === "function" ?
-                                    s() : window[s]
-                        }
-                        innerRequire.checkDeps()
-                    })
-                })
-            } else {
-                loadJS(url, id)
-            }
-        }
-        return id
-    }
-    plugins.css = function(url) {
-        var id = url.replace(/(#.+|\W)/g, "") ////用于处理掉href中的hash与所有特殊符号
-        if (!DOC.getElementById(id)) {
-            var node = DOC.createElement("link")
-            node.rel = "stylesheet"
-            node.href = url
-            node.id = id
-            head.insertBefore(node, head.firstChild)
-        }
-    }
-    plugins.css.ext = ".css"
-    plugins.js.ext = ".js"
-
-    plugins.text = function(url) {
-        var xhr = getXHR()
-        var id = url.replace(/[?#].*/, "")
-        modules[id] = {}
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                var status = xhr.status;
-                if (status > 399 && status < 600) {
-                    avalon.error(url + " 对应资源不存在或没有开启 CORS")
-                } else {
-                    modules[id].state = 2
-                    modules[id].exports = xhr.responseText
-                    innerRequire.checkDeps()
-                }
-            }
-        }
-        xhr.open("GET", url, true)
-        if ("withCredentials" in xhr) {
-            xhr.withCredentials = true
-        }
-        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
-        xhr.send()
-        return id
-    }
-
-
-    var cur = getCurrentScript(true)
+    var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
     if (!cur) { //处理window safari的Error没有stack的问题
         cur = avalon.slice(DOC.scripts).pop().src
     }
-    var url = cleanUrl(cur)
+    var url = trimHashAndQuery(cur)
     basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
 
     function getCurrentScript(base) {
@@ -4835,6 +4770,89 @@ new function() {
         }
     }
 
+    innerRequire = avalon.require = function(array, factory, parent) {
+        if (!Array.isArray(array)) {
+            avalon.error("require的第一个参数必须是依赖列数,类型为数组 " + array)
+        }
+        var args = [] // 放置所有依赖项的完整路径
+        var deps = {} // args的另一种表现形式，为的是方便去重
+        var dn = 0  //需要安装的模块数
+        var cn = 0  // 已安装完的模块数
+        var id = parent || "callback" + setTimeout("1")
+        parent = parent || basepath
+
+        array.forEach(function(el) {
+            var url = loadResources(el, parent) //加载资源，并返回能加载资源的完整路径
+            if (url) {
+                dn++
+                if (modules[url] && modules[url].state === 2) {
+                    cn++
+                }
+                if (!deps[url]) {
+                    args.push(url)
+                    deps[url] = "司徒正美" //去重
+                }
+            }
+        })
+        modules[id] = {//保存此模块的相关信息
+            id: id,
+            factory: factory,
+            deps: deps,
+            args: args,
+            state: 1
+        }
+        if (dn === cn) { //如果需要安装的等于已安装好的
+            fireFactory(id, args, factory) //安装到框架中
+        } else {
+            //放到检测列队中,等待checkDeps处理
+            loadings.unshift(id)
+        }
+        checkDeps()
+    }
+
+    innerRequire.define = function(urlOrId, deps, factory) { //模块名,依赖列表,模块本身
+        var args = aslice.call(arguments)
+        if (typeof urlOrId === "string") {
+            var id = args.shift()
+        }
+        if (typeof args[0] === "function") {
+            args.unshift([])
+        }
+        //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
+        //现在除了safari5,1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
+        //safari可通过onload+delay闭包组合解决
+        var url = modules[id] && modules[id].state >= 1 ? id : trimHashAndQuery(getCurrentScript())
+
+        if (!modules[url] && id) {
+            modules[url] = {
+                id: url,
+                factory: factory,
+                state: 1
+            }
+        }
+        factory = args[1]
+        factory.id = id //用于调试
+        factory.delay = function(d) {
+            args.push(d)
+            var isCycle = true
+            try {
+                isCycle = checkCycle(modules[d].deps, d)
+            } catch (e) {
+            }
+            if (isCycle) {
+                avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
+            }
+            delete factory.delay //释放内存
+            innerRequire.apply(null, args) //0,1,2 --> 1,2,0
+        }
+        if (url) {
+            factory.delay(url)
+        } else { //先进先出
+            factorys.push(factory)
+        }
+    }
+    innerRequire.define.amd = modules
+
     function checkCycle(deps, nick) {
         //检测是否存在循环依赖
         for (var id in deps) {
@@ -4865,7 +4883,7 @@ new function() {
     }
 
     function checkFail(node, onError, fuckIE) {
-        var id = cleanUrl(node.src) //检测是否死链
+        var id = trimHashAndQuery(node.src) //检测是否死链
         node.onload = node.onreadystatechange = node.onerror = null
         if (onError || (fuckIE && !modules[id].state)) {
             setTimeout(function() {
@@ -4939,7 +4957,7 @@ new function() {
             }
         }
         //5. 补全扩展名
-        url = cleanUrl(ret)
+        url = trimHashAndQuery(ret)
         var ext = plugin.ext
         if (ext) {
             if (url.slice(0 - ext.length) !== ext) {
@@ -4978,96 +4996,6 @@ new function() {
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
-    innerRequire = avalon.require = function(list, factory, parent) {
-        if (!Array.isArray(list)) {
-            avalon.error("require的第一个参数必须是依赖列数,类型为数组"+list)
-        }
-        // 用于检测它的依赖是否都为2
-        var args = [] // 放置所有依赖项的完整路径
-        var deps = {} // args的另一种表现形式，为的是方便去重
-        var dn = 0  //需要安装的模块数
-        var cn = 0  // 已安装完的模块数
-        var id = parent || "callback" + setTimeout("1")
-        parent = parent || basepath
-
-        list.forEach(function(el) {
-            var url = loadResources(el, parent) //加载资源，并返回能加载资源的完整路径
-            if (url) {
-                dn++
-                if (modules[url] && modules[url].state === 2) {
-                    cn++
-                }
-                if (!deps[url]) {
-                    args.push(url)
-                    deps[url] = "司徒正美" //去重
-                }
-            }
-        })
-        modules[id] = {//保存此模块的相关信息
-            id: id,
-            factory: factory,
-            deps: deps,
-            args: args,
-            state: 1
-        }
-        if (dn === cn) { //如果需要安装的等于已安装好的
-            fireFactory(id, args, factory) //安装到框架中
-        } else {
-            //放到检测列队中,等待checkDeps处理
-            loadings.unshift(id)
-        }
-        checkDeps()
-    }
-
-    /**
-     * 定义模块
-     * @param {String} id ? 模块ID
-     * @param {Array} deps ? 依赖列表
-     * @param {Function} factory 模块工厂
-     * @api public
-     */
-    innerRequire.define = function(id, deps, factory) { //模块名,依赖列表,模块本身
-        var args = aslice.call(arguments)
-
-        if (typeof id === "string") {
-            var _id = args.shift()
-        }
-        if (typeof args[0] === "function") {
-            args.unshift([])
-        } //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
-        //现在除了safari外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
-        //safari可通过onload+delay闭包组合解决
-        var name = modules[_id] && modules[_id].state >= 1 ? _id : cleanUrl(getCurrentScript())
-        if (!modules[name] && _id) {
-            modules[name] = {
-                id: name,
-                factory: factory,
-                state: 1
-            }
-        }
-        factory = args[1]
-        factory.id = _id //用于调试
-        factory.delay = function(d) {
-            args.push(d)
-            var isCycle = true
-            try {
-                isCycle = checkCycle(modules[d].deps, d)
-            } catch (e) {
-            }
-            if (isCycle) {
-                avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
-            }
-            delete factory.delay //释放内存
-            innerRequire.apply(null, args) //0,1,2 --> 1,2,0
-        }
-        if (name) {
-            factory.delay(name, args)
-        } else { //先进先出
-            factorys.push(factory)
-        }
-    }
-    innerRequire.define.amd = modules
-
     function fireFactory(id, deps, factory) {
         for (var i = 0, array = [], d; d = deps[i++]; ) {
             array.push(modules[d].exports)
@@ -5080,6 +5008,70 @@ new function() {
         }
         return ret
     }
+
+    plugins.js = function(url, shim) {
+        var id = trimHashAndQuery(url)
+        if (!modules[id]) { //如果之前没有加载过
+            modules[id] = {
+                id: id,
+                exports: {}
+            }
+            if (shim) { //shim机制
+                innerRequire(shim.deps || "", function() {
+                    loadJS(url, id, function() {
+                        modules[id].state = 2
+                        var s = shim.exports
+                        if (s && modules[id].exports === void 0) {
+                            modules[id].exports = typeof s === "function" ?
+                                    s() : window[s]
+                        }
+                        innerRequire.checkDeps()
+                    })
+                })
+            } else {
+                loadJS(url, id)
+            }
+        }
+        return id
+    }
+    plugins.css = function(url) {
+        var id = trimHashAndQuery(url).replace(/\W/g, "_") ////用于处理掉href中的hash与所有特殊符号
+        if (!DOC.getElementById(id)) {
+            var node = DOC.createElement("link")
+            node.rel = "stylesheet"
+            node.href = url
+            node.id = id
+            head.insertBefore(node, head.firstChild)
+        }
+    }
+    plugins.css.ext = ".css"
+    plugins.js.ext = ".js"
+
+    plugins.text = function(url) {
+        var xhr = getXHR()
+        var id = trimHashAndQuery(url)
+        modules[id] = {}
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                var status = xhr.status;
+                if (status > 399 && status < 600) {
+                    avalon.error(url + " 对应资源不存在或没有开启 CORS")
+                } else {
+                    modules[id].state = 2
+                    modules[id].exports = xhr.responseText
+                    innerRequire.checkDeps()
+                }
+            }
+        }
+        xhr.open("GET", url, true)
+        if ("withCredentials" in xhr) {
+            xhr.withCredentials = true
+        }
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+        xhr.send()
+        return id
+    }
+
     innerRequire.config = kernel
     innerRequire.checkDeps = checkDeps
 }

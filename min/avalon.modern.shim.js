@@ -4045,7 +4045,7 @@ new function() {
     })
     var fns = [], listener,
             hack = root.doScroll,
-            domContentLoaded = 'DOMContentLoaded',
+            domContentLoaded = "DOMContentLoaded",
             loaded = (hack ? /^loaded|^c/ : /^loaded|^i|^c/).test(DOC.readyState)
     if (!loaded) {
         DOC.addEventListener(domContentLoaded, listener = function() {
