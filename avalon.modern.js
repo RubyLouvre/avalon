@@ -1508,8 +1508,9 @@ function executeBindings(bindings, vmodels) {
     }
     bindings.length = 0
 }
+
 //https://github.com/RubyLouvre/avalon/issues/636
-function mergeTextNode(elem) {
+var mergeTextNodes = IEVersion && window.MutationObserver ? function (elem) {
     var node = elem.firstChild, text
     while (node) {
         var aaa = node.nextSibling
@@ -1525,7 +1526,7 @@ function mergeTextNode(elem) {
         }
         node = aaa
     }
-}
+} : 0
 
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
@@ -1538,6 +1539,7 @@ var priorityMap = {
     "duplex": 2000,
     "on": 3000
 }
+
 var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
 function bindingSorter(a, b) {
@@ -1666,9 +1668,7 @@ function scanAttr(elem, vmodels) {
     }
     executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
-        if (IEVersion) {
-            mergeTextNode(elem)
-        }
+        mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
