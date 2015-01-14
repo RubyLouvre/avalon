@@ -14,8 +14,11 @@
   ],
   "main": [
     "avalon.js",
+    "avalon.shim.js",
     "avalon.mobile.js",
+    "avalon.mobile.shim.js",
     "avalon.modern.js"
+    "avalon.modern.shim.js"
   ],
   "license": "MIT",
   "ignore": [

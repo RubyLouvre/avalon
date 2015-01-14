@@ -139,7 +139,7 @@ new function() {
 
 //开始合并avalon.modern.shim.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), 'avalon.modern.shim.js'), {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.modern.shim.js'), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
@@ -152,7 +152,7 @@ new function() {
 
 //开始合并avalon.shim.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), "avalon.shim.js"), {
+    var writable = fs.createWriteStream(path.join(parentDir, "avalon.shim.js"), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
@@ -182,7 +182,7 @@ new function() {
 
 //开始合并avalon.mobile.shim.js
 new function() {
-    var writable = fs.createWriteStream(path.join(curDir.replace("src", "min"), 'avalon.mobile.shim.js'), {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.mobile.shim.js'), {
         encoding: "utf8"
     })
     writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈

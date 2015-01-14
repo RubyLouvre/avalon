@@ -2,7 +2,7 @@
 
 A lightweight、high-performance and easy-to-follow javascript MVVM framework
 
-* Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices.
+* Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices. For requirejs or amd-like loader, use the corresponding shim version.
 * The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here's the three pillars: 1、[mmRouter](https://github.com/RubyLouvre/mmRouter) for router, [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
 * The test cases are in a individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
 
@@ -24,10 +24,11 @@ Demo:
         <script src="avalon.js" ></script>
         <script>
             var first = 0;
-            var model = avalon.define("test", function(vm) {
-                vm.firstName = "John"
-                vm.lastName = "Smith"
-                vm.fullName = {//a object that contain set/get will be treated as an `PropertyDescriptor`,
+            var model = avalon.define({
+                $id: "test",
+                firstName: "John",
+                lastName: "Smith",
+                fullName: {//a object that contain set/get will be treated as an `PropertyDescriptor`,
                     set: function(val) {//must use `this` to refer `scope` instead of using `scope` directly 
                         var array = (val || "").split(" ");
                         this.firstName = array[0] || "";
@@ -36,27 +37,27 @@ Demo:
                     get: function() {
                         return this.firstName + " " + this.lastName;
                     }
-                }
-                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
-                vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = false
-                vm.checkAll = function() {
+                },
+                arr: ["aaa", "bbb", "ccc", "ddd"],
+                selected: ["bbb", "ccc"],
+                checkAllbool: false,
+                checkAll: function() {
                     if (!first) {
                         first++
                         return
                     }
                     if (this.checked) {
-                        vm.selected = vm.arr
+                        model.selected = model.arr
                     } else {
-                        vm.selected.clear()
+                        model.selected.clear()
                     }
-                }
-                vm.checkOne = function() {
+                },
+                checkOne: function() {
                     var bool = this.checked
                     if (!bool) {
-                        vm.checkAllbool = false
+                        model.checkAllbool = false
                     } else {
-                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                        model.checkAllbool = model.selected.size() === model.arr.length
                     }
                 }
             })
@@ -68,10 +69,10 @@ Demo:
             <p>First name: <input ms-duplex="firstName" /></p>
             <p>Last name: <input ms-duplex="lastName"  /></p>
             <p>Hello,    <input ms-duplex="fullName"></p>
-            <div>{{firstName +" | "+ lastName }}</div>
+            <div>{{firstName}} | {{lastName}}</div>
             <ul>
-                <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>Select All</li>
-                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
+                <li><input type="checkbox" ms-duplex-checked="checkAllbool"  data-duplex-changed="checkAll"/>Select All</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-attr-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
             </ul>
         </div>
 
@@ -116,6 +117,7 @@ The code structure of the source code are listed here, from top to bottom:
 *  [avalon](https://github.com/RubyLouvre/avalon)现在有三个分支:avalon.js 兼容IE6，标准浏览器, 及主流山寨浏览器(QQ, 猎豹, 搜狗, 360, 傲游);
 avalon.modern.js 则只支持IE10等支持HTML5现代浏览器 ;
 avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
+如果使用requirejs或其它amd加载器（非avalon自带的amd加载器），使用对应的shim版本。shim版本去除了avalon自带amd加载器代码。
 *  [avalon](https://github.com/RubyLouvre/avalon)拥有强大的组件库，现在由去哪儿网前端架构组在维护与升级，[这里](http://ued.qunar.com/)；首先是三柱臣，想使用路由器，可以用[mmRouter](https://github.com/RubyLouvre/mmRouter)， 想使用动画，可以用[mmAnimate](https://github.com/RubyLouvre/mmAnimate)， 想使用AJAX，可以用[mmRequest](https://github.com/RubyLouvre/mmRequest)； 其次是[OniUI](https://github.com/RubyLouvre/avalon.oniui)，树组件差不多开发完毕，届时就有一个拥有2个Grid，1个树，1 个验证插件等总数近50个UI组件的库了。
 * avalon的测试比较庞大，放在独立的仓库中——[avalon.test](https://github.com/RubyLouvre/avalon.test)
 
@@ -174,16 +176,17 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
 <!DOCTYPE html>
 <html>
     <head>
-        <title>avalon入门</title>
+        <title>avalon 101</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
         <script>
             var first = 0;
-            var model = avalon.define("test", function(vm) {
-                vm.firstName = "司徒"
-                vm.lastName = "正美"
-                vm.fullName = {//一个包含set或get的对象会被当成PropertyDescriptor，
-                    set: function(val) {//里面必须用this指向scope，不能使用scope
+            var model = avalon.define({
+                $id: "test",
+                firstName: "司徒",
+                lastName: "正美",
+                fullName: {//一个包含set或get的对象会被当成PropertyDescriptor,
+                    set: function(val) {//m里面必须用this指向scope，不能使用scope 
                         var array = (val || "").split(" ");
                         this.firstName = array[0] || "";
                         this.lastName = array[1] || "";
@@ -191,27 +194,27 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
                     get: function() {
                         return this.firstName + " " + this.lastName;
                     }
-                }
-                vm.arr = ["aaa", 'bbb', "ccc", "ddd"]
-                vm.selected = ["bbb", "ccc"]
-                vm.checkAllbool = false
-                vm.checkAll = function() {
+                },
+                arr: ["aaa", "bbb", "ccc", "ddd"],
+                selected: ["bbb", "ccc"],
+                checkAllbool: false,
+                checkAll: function() {
                     if (!first) {
                         first++
                         return
                     }
                     if (this.checked) {
-                        vm.selected = vm.arr
+                        model.selected = model.arr
                     } else {
-                        vm.selected.clear()
+                        model.selected.clear()
                     }
-                }
-                vm.checkOne = function() {
+                },
+                checkOne: function() {
                     var bool = this.checked
                     if (!bool) {
-                        vm.checkAllbool = false
+                        model.checkAllbool = false
                     } else {
-                        vm.checkAllbool = vm.selected.size() === vm.arr.length
+                        model.checkAllbool = model.selected.size() === model.arr.length
                     }
                 }
             })
@@ -223,10 +226,10 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
             <p>First name: <input ms-duplex="firstName" /></p>
             <p>Last name: <input ms-duplex="lastName"  /></p>
             <p>Hello,    <input ms-duplex="fullName"></p>
-            <div>{{firstName +" | "+ lastName }}</div>
+            <div>{{firstName}} | {{lastName}}</div>
             <ul>
-                <li><input type="checkbox" ms-duplex-radio="checkAllbool"  data-duplex-changed="checkAll"/>全选</li>
-                <li ms-repeat="arr" ><input type="checkbox" ms-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
+                <li><input type="checkbox" ms-duplex-checked="checkAllbool"  data-duplex-changed="checkAll"/>Select All</li>
+                <li ms-repeat="arr" ><input type="checkbox" ms-attr-value="el" ms-duplex="selected" data-duplex-changed="checkOne"/>{{el}}</li>
             </ul>
         </div>
 
