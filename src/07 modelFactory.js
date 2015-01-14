@@ -109,7 +109,6 @@ function modelFactory(source, $special, $model) {
     var $events = {} //vmodel.$events属性
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
-    var lockFn
     for (var i in source) {
         (function(name, val) {
             $model[name] = val
