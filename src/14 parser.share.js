@@ -120,7 +120,8 @@ function parseExpr(code, scopes, data) {
             var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
             code = code.replace(reg, function(_) {
                 var c = _.charAt(v.length)
-                var method = /^\s*\(/.test(RegExp.rightContext)
+                var r = IEVersion ? code.slice(arguments[1] + _.length) : RegExp.rightContext
+                var method = /^\s*\(/.test(r)
                 if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
                     var name = "var" + String(Math.random()).replace(/^0\./, "")
                     if (method) {//array.size()
@@ -191,6 +192,7 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
+        console.log(fn + "")
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

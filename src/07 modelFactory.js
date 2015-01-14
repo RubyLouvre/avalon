@@ -109,6 +109,7 @@ function modelFactory(source, $special, $model) {
     var $events = {} //vmodel.$events属性
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
+    var lockFn
     for (var i in source) {
         (function(name, val) {
             $model[name] = val
@@ -164,9 +165,18 @@ function modelFactory(source, $special, $model) {
                 accessor.get = val.get
                 accessor.type = 0
                 initCallbacks.push(function() {
-                    Registry[expose] = function() {
-                        $model[name] = accessor.get.call($vmodel)
+                    var data = {
+                        evaluator: function() {
+                            data.element = null
+                            data.type = new Date - 0
+                            $model[name] = accessor.get.call($vmodel)
+                        },
+                        element: head,
+                        type: new Date - 0,
+                        handler: noop,
+                        args: []
                     }
+                    Registry[expose] = data
                     accessor.call($vmodel)
                     delete Registry[expose]
                 })

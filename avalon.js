@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.382 build in 2015.1.13 
+ avalon.js 1.382 build in 2015.1.14 
 ____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -1068,6 +1068,7 @@ function modelFactory(source, $special, $model) {
     var $events = {} //vmodel.$events属性
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
+    var lockFn
     for (var i in source) {
         (function(name, val) {
             $model[name] = val
@@ -1123,9 +1124,18 @@ function modelFactory(source, $special, $model) {
                 accessor.get = val.get
                 accessor.type = 0
                 initCallbacks.push(function() {
-                    Registry[expose] = function() {
-                        $model[name] = accessor.get.call($vmodel)
+                    var data = {
+                        evaluator: function() {
+                            data.element = null
+                            data.type = new Date - 0
+                            $model[name] = accessor.get.call($vmodel)
+                        },
+                        element: head,
+                        type: new Date - 0,
+                        handler: noop,
+                        args: []
                     }
+                    Registry[expose] = data
                     accessor.call($vmodel)
                     delete Registry[expose]
                 })
@@ -1630,7 +1640,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            // log("warning:exception throwed in [registerSubscriber] " + e)
+            log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1711,7 +1721,7 @@ function removeSubscribers() {
     }
     var diff = false
     types.forEach(function(type) {
-        if (oldInfo[type] && oldInfo[type] !== newInfo[type]) {
+        if (oldInfo[type] !== newInfo[type]) {
             needTest[type] = 1
             diff = true
         }
@@ -2929,7 +2939,8 @@ function parseExpr(code, scopes, data) {
             var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
             code = code.replace(reg, function(_) {
                 var c = _.charAt(v.length)
-                var method = /^\s*\(/.test(RegExp.rightContext)
+                var r = IEVersion ? code.slice(arguments[1] + _.length) : RegExp.rightContext
+                var method = /^\s*\(/.test(r)
                 if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
                     var name = "var" + String(Math.random()).replace(/^0\./, "")
                     if (method) {//array.size()
@@ -3000,6 +3011,7 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
+        console.log(fn + "")
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
