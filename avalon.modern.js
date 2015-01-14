@@ -6,7 +6,7 @@
  
  Released under the MIT license
  avalon.modern.js 1.382 build in 2015.1.14 
-_____________________________
+____________________________
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -804,7 +804,6 @@ function modelFactory(source, $special, $model) {
     var $events = {} //vmodel.$events属性
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
-    var lockFn
     for (var i in source) {
         (function(name, val) {
             $model[name] = val
