@@ -6,7 +6,42 @@ A lightweight、high-performance and easy-to-follow javascript MVVM framework
 * The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here's the three pillars: 1、[mmRouter](https://github.com/RubyLouvre/mmRouter) for router, [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
 * The test cases are in a individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
 
-To compress javascript files, run:
+## Advantages
+
+    One absolute advantage is that the framework eliminated 
+    couplings and set developers free from varies of 
+    complex event handling.
+
+    For example, one state could be effected by the order 
+    of several events and their additional arguments, making the 
+    logic extremely complex and fragile without using MVC 
+    (including MVVM) framework and might usually maintain lots of 
+    mutuality logics which can easily cause bugs at the same time.
+
+    By using these sort of framework, one can totally reduce the 
+    difficulty of app development, and make the code more robust.
+
+    Besides, it also set developers free of the repeated tasks, 
+    like `{value}` directive can simply replace 
+    `$(selector).text(value)`, what's more, some common directive
+    can also implement some logic swiftly.
+
+Here are some of the benefits:
+
+* Easy to use. You just add binding code in HTML code, then define ViewModels in JavaScript code, finally invoke `avalon.scan()`, enjoy!
+* Compatible with IE6+ (*Very Important* in China at present / Others: KnockoutJS(IE6+), AngularJS(IE9+), EmberJS(IE8+), WinJS(IE9+)), For more efficient and edge developers, use: `avalon.modern`.
+* No dependencies, less than 5000 lines of code and at 50KiB size of compressed code.
+* Support filter function using pipe char `|`, easy for output format.
+* Partial refresh are accurated to every text/attribute node.
+* No need to use selector, as the node to manipulate has all been binded and cached to the view refresh function at the initial scan procedure.
+* You need to write DOM manipulation code slightly, either.
+* By using cascade render mechanism like CSS, ViewModels can render their views alternately.
+* While removing the node, the framework can detach the watch function of the corresponding views, reducing memory usage.
+* *Data Manipulation as DOM Manipulation*, actions on ViewModels will all be synchronized to the relevant Views and Models.
+* Ships with a builtin AMD loader.
+
+## To compress javascript files, run:
+
 ```sh
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
 java -jar compiler.jar --js avalon.modern.js --js_output_file avalon.modern.min.js
