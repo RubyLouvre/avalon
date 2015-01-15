@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.382 build in 2015.1.14 
-___________________________________
+ avalon.js 1.39 build in 2015.1.15 
+_____________________________________
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -261,7 +261,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.382,
+    version: 1.39,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -1095,6 +1095,8 @@ function modelFactory(source, $special, $model) {
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         if ($events.$digest) {
+                            if(accessor.pedding)
+                                return
                             accessor.pedding = true
                             setTimeout(function() {
                                 notifySubscribers($events[name]) //同步视图
@@ -1639,7 +1641,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+           //log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -3010,7 +3012,6 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
-        console.log(fn + "")
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

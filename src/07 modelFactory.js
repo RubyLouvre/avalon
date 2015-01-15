@@ -136,6 +136,8 @@ function modelFactory(source, $special, $model) {
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         if ($events.$digest) {
+                            if(accessor.pedding)
+                                return
                             accessor.pedding = true
                             setTimeout(function() {
                                 notifySubscribers($events[name]) //同步视图
