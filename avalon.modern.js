@@ -1070,12 +1070,7 @@ var _splice = ap.splice
 var CollectionPrototype = {
     _splice: _splice,
     _fire: function(method, a, b) {
-        var list = this.$events[subscribers]
-        for (var i = 0, fn; fn = list[i++]; ) {
-            if (fn.$repeat) {
-                fn.handler.call(fn, method, a, b) //处理监控数组的方法
-            }
-        }
+        notifySubscribers(this.$events[subscribers], method, a, b)
     },
     size: function() { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
