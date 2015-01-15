@@ -118,7 +118,11 @@ var CollectionPrototype = {
             change = true
         }
         if (m > 2) {  //如果用户添加了元素
-            args.splice(3, 1, 0, "add", start, m - 2)
+            if (change) {
+                args.splice(3, 1, 0, "add", start, m - 2)
+            } else {
+                args.push("add", start, m - 2, 0)
+            }
             change = true
         }
         if (change) { //返回被移除的元素

@@ -1128,7 +1128,11 @@ var CollectionPrototype = {
             change = true
         }
         if (m > 2) {  //如果用户添加了元素
-            args.splice(3, 1, 0, "add", start, m - 2)
+            if (change) {
+                args.splice(3, 1, 0, "add", start, m - 2)
+            } else {
+                args.push("add", start, m - 2, 0)
+            }
             change = true
         }
         if (change) { //返回被移除的元素
@@ -3400,6 +3404,9 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
+                if (!(pos in proxies)) {
+                    return
+                }
                 start = proxies[pos].$stamp
                 end = locateNode(data, pos + el)
                 sweepNodes(start, end)
