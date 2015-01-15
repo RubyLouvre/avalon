@@ -116,9 +116,6 @@ bindingExecutors.repeat = function(method, pos, el) {
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                if (!(pos in proxies)) {
-                    return
-                }
                 start = proxies[pos].$stamp
                 end = locateNode(data, pos + el)
                 sweepNodes(start, end)
