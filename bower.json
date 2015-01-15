@@ -1,6 +1,6 @@
 {
   "name": "avalon",
-  "version": "1.3.8.1",
+  "version": "1.3.9",
   "homepage": "https://github.com/RubyLouvre/avalon",
   "descriptions": "a lightweight、high-performance and easy-to-follow javascript MVVM framework",
   "authors": [
