@@ -309,7 +309,7 @@ new function() {
                 exports: {}
             }
             if (shim) { //shim机制
-                innerRequire(shim.deps || "", function() {
+                innerRequire(shim.deps || [], function() {
                     loadJS(url, id, function() {
                         modules[id].state = 2
                         var s = shim.exports

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js(支持触屏事件) 1.39 build in 2015.1.15 
+ avalon.mobile.js(支持触屏事件) 1.39 build in 2015.1.16 
 __________
  support IE6+ and other browsers
  ==================================================*/
@@ -4307,7 +4307,7 @@ new function() {
                 exports: {}
             }
             if (shim) { //shim机制
-                innerRequire(shim.deps || "", function() {
+                innerRequire(shim.deps || [], function() {
                     loadJS(url, id, function() {
                         modules[id].state = 2
                         var s = shim.exports
