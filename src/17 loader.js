@@ -10,11 +10,11 @@ var modules = avalon.modules = {
         state: 2
     }
 }
-
+//http://stackoverflow.com/questions/25175914/bundles-in-requirejs
+//http://maxogden.com/nested-dependencies.html
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
-    var basepath
 
     function trimHashAndQuery(url) {
         return (url || "").replace(/[?#].*/, "")
@@ -25,7 +25,11 @@ new function() {
         cur = avalon.slice(DOC.scripts).pop().src
     }
     var url = trimHashAndQuery(cur)
-    basepath = kernel.base = url.slice(0, url.lastIndexOf("/") + 1)
+    kernel.massUrl = url.slice(0, url.lastIndexOf("/") + 1)
+
+    function getBaseUrl() {
+        return typeof kernel.baseUrl === "string" ? kernel.baseUrl : kernel.massUrl
+    }
 
     function getCurrentScript(base) {
         // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
@@ -63,7 +67,7 @@ new function() {
         }
     }
 
-    innerRequire = avalon.require = function(array, factory, parent) {
+    innerRequire = avalon.require = function(array, factory, parentUrl) {
         if (!Array.isArray(array)) {
             avalon.error("require的第一个参数必须是依赖列数,类型为数组 " + array)
         }
@@ -71,11 +75,11 @@ new function() {
         var deps = {} // args的另一种表现形式，为的是方便去重
         var dn = 0  //需要安装的模块数
         var cn = 0  // 已安装完的模块数
-        var id = parent || "callback" + setTimeout("1")
-        parent = parent || basepath
+        var id = parentUrl || "callback" + setTimeout("1")
+        parentUrl = parentUrl ? parentUrl.substr(0, parentUrl.lastIndexOf("/")) : getBaseUrl()
 
         array.forEach(function(el) {
-            var url = loadResources(el, parent) //加载资源，并返回能加载资源的完整路径
+            var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
             if (url) {
                 dn++
                 if (modules[url] && modules[url].state === 2) {
@@ -113,32 +117,35 @@ new function() {
         }
         //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
         //现在除了safari5,1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
-        //safari可通过onload+delay闭包组合解决
+        //safari可通过onload+ factory.require闭包组合解决
         var url = modules[id] && modules[id].state >= 1 ? id : trimHashAndQuery(getCurrentScript())
+        factory = args[1]
+        factory.id = id //用于调试
+
         if (!modules[url] && id) {
-            modules[url] = {
+            modules[url] = {//必须先行定义，并且不存在deps，用于checkCycle方法
                 id: url,
                 factory: factory,
                 state: 1
             }
         }
-        factory = args[1]
-        factory.id = id //用于调试
-        factory.delay = function(d) {
-            args.push(d)
+
+        factory.require = function(url) {
+            args.push(url)
             var isCycle = true
             try {
-                isCycle = checkCycle(modules[d].deps, d)
+                isCycle = checkCycle(modules[url].deps, url)
             } catch (e) {
             }
             if (isCycle) {
-                avalon.error(d + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
+                avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + d + "模块")
             }
-            delete factory.delay //释放内存
+
+            delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
         if (url) {
-            factory.delay(url)
+            factory.require(url)
         } else { //先进先出
             factorys.push(factory)
         }
@@ -187,14 +194,58 @@ new function() {
             return true
         }
     }
-    var rdeuce = /\/\w+\/\.\./
 
-    function loadResources(url, parent, ret, shim) {
+    function isAbs(path) {
+        //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
+        return  /^(?:[a-z]+:)?\/\//i.test(String(path))
+    }
+
+    function getAbsUrl(url, baseUrl) {
+        //http://stackoverflow.com/questions/470832/getting-an-absolute-url-from-a-relative-one-ie6-issue
+        var oldBase = DOC.getElementsByTagName("base")
+        var oldHref = oldBase && oldBase.href
+        var ourBase = oldBase || head.appendChild(DOC.createElement("base"))
+        var resolver = DOC.createElement("a")
+        ourBase.href = baseUrl
+        resolver.href = url
+        try {
+            return resolver.href
+        } finally {
+            if (oldBase) {
+                oldBase.href = oldHref
+            } else {
+                head.removeChild(ourBase)
+            }
+        }
+    }
+
+    var rdeuce = /\/\w+\/\.\./
+    function joinPath(a, b) {
+        if (a.charAt(a.length - 1) !== "/") {
+            a += "/"
+        }
+        if (b.slice(0, 2) === "./") { //相对于兄弟路径
+            return a + b.slice(2)
+        }
+        if (b.slice(0, 2) === "..") { //相对于父路径
+            a += b
+            while (rdeuce.test(a)) {
+                a = a.replace(rdeuce, "")
+            }
+            return a
+        }
+        if (b.slice(0, 1) === "/") {
+            return a + b.slice(1)
+        }
+        return a + b
+    }
+
+    function loadResources(url, parentUrl) {
         //1. 特别处理mass|ready标识符
         if (url === "ready!" || (modules[url] && modules[url].state === 2)) {
             return url
         }
-        //2.  处理text!  css! 等资源
+        //2.  获取text!  css! 等插件名
         var plugin
         url = url.replace(/^\w+!/, function(a) {
             plugin = a.slice(0, -1)
@@ -202,14 +253,12 @@ new function() {
         })
         plugin = plugin || "js"
         plugin = plugins[plugin] || noop
-        //3. 转化为完整路径
+        //3. 处理shim配置项
         if (typeof kernel.shim[url] === "object") {
-            shim = kernel.shim[url]
+            var shim = kernel.shim[url]
         }
-        url = url.split('/');
-        //For each module name segment, see if there is a path
-        //registered for it. Start with most specific name
-        //and work up from it.
+        //4. 处理paths配置项
+        url = url.split("/");
         for (var i = url.length, parentModule, parentPath; i > 0; i -= 1) {
             parentModule = url.slice(0, i).join('/');
 
@@ -226,41 +275,26 @@ new function() {
         }
         //Join the path parts together, then figure out if baseUrl is needed.
         url = url.join('/');
-
-        //4. 补全路径
-        if (/^(\w+)(\d)?:.*/.test(url)) {
-            ret = url
-        } else {
-            parent = parent.substr(0, parent.lastIndexOf("/"))
-            var tmp = url.charAt(0)
-            if (tmp !== "." && tmp !== "/") { //相对于根路径
-                ret = basepath + url
-            } else if (url.slice(0, 2) === "./") { //相对于兄弟路径
-                ret = parent + url.slice(1)
-            } else if (url.slice(0, 2) === "..") { //相对于父路径
-                ret = parent + "/" + url
-                while (rdeuce.test(ret)) {
-                    ret = ret.replace(rdeuce, "")
-                }
-            } else if (tmp === "/") {
-                ret = url //相对于根路径
-            } else {
-                avalon.error("不符合模块标识规则: " + url)
-            }
-        }
         //5. 补全扩展名
-        url = trimHashAndQuery(ret)
+        url = trimHashAndQuery(url)
         var ext = plugin.ext
         if (ext) {
             if (url.slice(0 - ext.length) !== ext) {
-                ret += ext
+                url += ext
+            }
+        }
+        //5. 转换为绝对路径
+        if (!isAbs(url)) {
+            url = joinPath(parentUrl, url)
+            if (!isAbs(url)) {
+                url = getAbsUrl(url, getBaseUrl())
             }
         }
         //6. 缓存处理
         if (kernel.nocache) {
-            ret += (ret.indexOf("?") === -1 ? "?" : "&") + (new Date - 0)
+            url += (url.indexOf("?") === -1 ? "?" : "&") + (new Date - 0)
         }
-        return plugin(ret, shim)
+        return plugin(url, shim)
     }
 
     function loadJS(url, id, callback) {
@@ -271,7 +305,8 @@ new function() {
             if (W3C || /loaded|complete/i.test(node.readyState)) {
                 //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
                 var factory = factorys.pop()
-                factory && factory.delay(id)
+
+                factory && factory.require(id)
                 if (callback) {
                     callback()
                 }
@@ -301,8 +336,39 @@ new function() {
         return ret
     }
 
+
+    kernel.packages = []
+    kernel.pkgs = {}
+    jsSuffixRegExp = /\.js$/
+    currDirRegExp = /^\.\//
+    plugins.packages = function(array) {
+        for (var i = 0; i < array.length; i++) {
+            var pkgObj = array[i]
+            pkgObj = typeof pkgObj === "string" ? {name: pkgObj} : pkgObj
+            var name = pkgObj.name;
+            var location = pkgObj.location;
+            if (location) {
+                kernel.paths[name] = pkgObj.location
+            }
+            //Save pointer to main module ID for pkg name.
+            //Remove leading dot in main, so main paths are normalized,
+            //and remove any trailing .js, since different package
+            //envs have different conventions: some use a module name,
+            //some use a file name.
+            kernel.pkgs[name] = pkgObj.name + "/" + (pkgObj.main || "main")
+                    .replace(currDirRegExp, "")
+                    .replace(jsSuffixRegExp, "")
+        }
+    }
+
+
+
     plugins.js = function(url, shim) {
+        if (!isAbs(url)) {
+            url = getAbsUrl(url, getBaseUrl())
+        }
         var id = trimHashAndQuery(url)
+
         if (!modules[id]) { //如果之前没有加载过
             modules[id] = {
                 id: id,
