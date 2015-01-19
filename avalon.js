@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.39 build in 2015.1.18 
+ avalon.js 1.39 build in 2015.1.19 
 _____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4674,6 +4674,7 @@ var modules = avalon.modules = {
         state: 2
     }
 }
+modules.exports = modules.avalon
 //http://stackoverflow.com/questions/25175914/bundles-in-requirejs
 //http://maxogden.com/nested-dependencies.html
 new function() {
@@ -4742,7 +4743,6 @@ new function() {
         var id = parentUrl || "callback" + setTimeout("1")
         parentUrl = parentUrl ? parentUrl.substr(0, parentUrl.lastIndexOf("/")) : getBaseUrl()
 
-
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
             if (url) {
@@ -4788,7 +4788,7 @@ new function() {
         factory.id = id //用于调试
 
         if (!modules[url] && id) {
-            modules[url] = {
+            modules[url] = {//必须先行定义，并且不存在deps，用于checkCycle方法
                 id: url,
                 factory: factory,
                 state: 1
@@ -4989,12 +4989,17 @@ new function() {
     }
 
     function fireFactory(id, deps, factory) {
-        for (var i = 0, array = [], d; d = deps[i++]; ) {
-            array.push(modules[d].exports)
-        }
-        var module = Object(modules[id]),
-                ret = factory.apply(window, array)
+        var module = Object(modules[id])
         module.state = 2
+        for (var i = 0, array = [], d; d = deps[i++]; ) {
+            if (d === "exports") {
+                var obj = module.exports || (module.exports = {})
+                array.push(obj)
+            } else {
+                array.push(modules[d].exports)
+            }
+        }
+        var ret = factory.apply(window, array)
         if (ret !== void 0) {
             modules[id].exports = ret
         }

@@ -10,6 +10,7 @@ var modules = avalon.modules = {
         state: 2
     }
 }
+modules.exports = modules.avalon
 //http://stackoverflow.com/questions/25175914/bundles-in-requirejs
 //http://maxogden.com/nested-dependencies.html
 new function() {
@@ -324,12 +325,17 @@ new function() {
     }
 
     function fireFactory(id, deps, factory) {
-        for (var i = 0, array = [], d; d = deps[i++]; ) {
-            array.push(modules[d].exports)
-        }
-        var module = Object(modules[id]),
-                ret = factory.apply(window, array)
+        var module = Object(modules[id])
         module.state = 2
+        for (var i = 0, array = [], d; d = deps[i++]; ) {
+            if (d === "exports") {
+                var obj = module.exports || (module.exports = {})
+                array.push(obj)
+            } else {
+                array.push(modules[d].exports)
+            }
+        }
+        var ret = factory.apply(window, array)
         if (ret !== void 0) {
             modules[id].exports = ret
         }
