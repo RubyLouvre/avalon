@@ -4078,8 +4078,8 @@ new function() {
         var cn = 0  // 已安装完的模块数
         var id = parentUrl || "callback" + setTimeout("1")
         parentUrl = kernel.baseUrl ? kernel.baseUrl : parentUrl ?
-                    parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
-                    kernel.massUrl
+                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
+                kernel.massUrl
 
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
@@ -4243,6 +4243,27 @@ new function() {
         }
         return a + b
     }
+    function makeShimExports(value) {
+        function fn() {
+            var ret;
+            if (value.init) {
+                ret = value.init.apply(window, arguments);
+            }
+            return ret || (value.exports && getGlobal(value.exports));
+        }
+        return fn
+    }
+
+    function getGlobal(value) {
+        if (!value) {
+            return value;
+        }
+        var g = window
+        value.split('.').forEach(function(part) {
+            g = g[part]
+        })
+        return g;
+    }
 
     function loadResources(url, parentUrl) {
         //1. 特别处理mass|ready标识符
@@ -4258,12 +4279,15 @@ new function() {
         plugin = plugin || "js"
         plugin = plugins[plugin] || noop
         //3. 处理shim配置项
-        if (typeof kernel.shim[url] === "object") {
-            var shim = kernel.shim[url]
+        var shim = kernel.shim[url]
+        if (typeof shim === "object") {
             if (Array.isArray(shim)) {
                 shim = kernel.shim[url] = {
                     deps: shim
                 }
+            }
+            if (!shim.exportsFn && (shim.exports || shim.init)) {
+                shim.exportsFn = makeShimExports(shim)
             }
         }
         //4. 处理paths配置项
@@ -4382,20 +4406,18 @@ new function() {
             url = getAbsUrl(url, getBaseUrl())
         }
         var id = trimHashAndQuery(url)
-
         if (!modules[id]) { //如果之前没有加载过
-            modules[id] = {
+            var module = modules[id] = {
                 id: id,
-                exports: {}
+                exports: void 0
             }
             if (shim) { //shim机制
                 innerRequire(shim.deps || [], function() {
+                    var args = avalon.slice(arguments)
                     loadJS(url, id, function() {
-                        modules[id].state = 2
-                        var s = shim.exports
-                        if (s && modules[id].exports === void 0) {
-                            modules[id].exports = typeof s === "function" ?
-                                    s() : window[s]
+                        module.state = 2
+                        if (shim.exportsFn) {
+                            module.exports = shim.exportsFn.apply(0, args)
                         }
                         innerRequire.checkDeps()
                     })
