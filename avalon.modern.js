@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.39 build in 2015.1.19 
+ avalon.modern.js 1.39 build in 2015.1.20 
 ______________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4028,8 +4028,10 @@ new function() {
     var url = trimHashAndQuery(cur)
     kernel.massUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
-    function getBaseUrl() {
-        return typeof kernel.baseUrl === "string" ? kernel.baseUrl : kernel.massUrl
+    function getBaseUrl(parentUrl) {
+       return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
+                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
+                kernel.massUrl
     }
 
     function getCurrentScript(base) {
@@ -4077,10 +4079,7 @@ new function() {
         var dn = 0  //需要安装的模块数
         var cn = 0  // 已安装完的模块数
         var id = parentUrl || "callback" + setTimeout("1")
-        parentUrl = kernel.baseUrl ? kernel.baseUrl : parentUrl ?
-                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
-                kernel.massUrl
-
+        parentUrl = getBaseUrl(parentUrl)
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
             if (url) {
