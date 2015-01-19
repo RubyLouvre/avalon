@@ -4759,14 +4759,8 @@ new function() {
                 }
             }
         })
-        factory = factory || noop
-        modules[id] = {//保存此模块的相关信息
-            id: id,
-            factory: factory,
-            deps: deps,
-            args: args,
-            state: 1
-        }
+        modules[id] = makeModule(id, 1, factory || noop, deps, args)//保存此模块的相关信息
+
         if (dn === cn) { //如果需要安装的等于已安装好的
             fireFactory(id, args, factory) //安装到框架中
         } else {
@@ -4792,11 +4786,8 @@ new function() {
         factory.id = id //用于调试
 
         if (!modules[url] && id) {
-            modules[url] = {//必须先行定义，并且不存在deps，用于checkCycle方法
-                id: url,
-                factory: factory,
-                state: 1
-            }
+            ////必须先行定义，并且不存在deps，用于checkCycle方法
+            modules[url] = makeModule(url, 1, factory)
         }
 
         factory.require = function(url) {
@@ -4917,6 +4908,15 @@ new function() {
             return ret || (value.exports && getGlobal(value.exports));
         }
         return fn
+    }
+    function makeModule(id, state, factory, deps, args) {
+        return {
+            id: id,
+            state: state,
+            factory: factory,
+            deps: deps,
+            args: args
+        }
     }
 
     function getGlobal(value) {
@@ -5072,10 +5072,7 @@ new function() {
 //        }
         var id = trimHashAndQuery(url)
         if (!modules[id]) { //如果之前没有加载过
-            var module = modules[id] = {
-                id: id,
-                exports: void 0
-            }
+            var module = modules[id] = makeModule(id)
             if (shim) { //shim机制
                 innerRequire(shim.deps || [], function() {
                     var args = avalon.slice(arguments)
