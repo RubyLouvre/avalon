@@ -77,7 +77,9 @@ new function() {
         var dn = 0  //需要安装的模块数
         var cn = 0  // 已安装完的模块数
         var id = parentUrl || "callback" + setTimeout("1")
-        parentUrl = parentUrl ? parentUrl.substr(0, parentUrl.lastIndexOf("/")) : getBaseUrl()
+        parentUrl = kernel.baseUrl ? kernel.baseUrl : parentUrl ?
+                    parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
+                    kernel.massUrl
 
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
@@ -92,6 +94,7 @@ new function() {
                 }
             }
         })
+        factory = factory || noop
         modules[id] = {//保存此模块的相关信息
             id: id,
             factory: factory,
@@ -257,6 +260,11 @@ new function() {
         //3. 处理shim配置项
         if (typeof kernel.shim[url] === "object") {
             var shim = kernel.shim[url]
+            if (Array.isArray(shim)) {
+                shim = kernel.shim[url] = {
+                    deps: shim
+                }
+            }
         }
         //4. 处理paths配置项
         url = url.split("/");
