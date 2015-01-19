@@ -4695,7 +4695,7 @@ new function() {
     kernel.massUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
     function getBaseUrl(parentUrl) {
-       return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
+        return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
                 parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
                 kernel.massUrl
     }
@@ -4864,7 +4864,7 @@ new function() {
         }
     }
 
-    function isAbs(path) {
+    function isAbsUrl(path) {
         //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
@@ -4982,9 +4982,9 @@ new function() {
             }
         }
         //5. 转换为绝对路径
-        if (!isAbs(url)) {
+        if (!isAbsUrl(url)) {
             url = joinPath(parentUrl, url)
-            if (!isAbs(url)) {
+            if (!isAbsUrl(url)) {
                 url = getAbsUrl(url, getBaseUrl())
             }
         }
@@ -5067,9 +5067,9 @@ new function() {
 
 
     plugins.js = function(url, shim) {
-        if (!isAbs(url)) {
-            url = getAbsUrl(url, getBaseUrl())
-        }
+//        if (!isAbsUrl(url)) {
+//            url = getAbsUrl(url, getBaseUrl())
+//        }
         var id = trimHashAndQuery(url)
         if (!modules[id]) { //如果之前没有加载过
             var module = modules[id] = {
