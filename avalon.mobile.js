@@ -831,7 +831,7 @@ function modelFactory(source, $special, $model) {
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         if ($events.$digest) {
-                            if(accessor.pedding)
+                            if (accessor.pedding)
                                 return
                             accessor.pedding = true
                             setTimeout(function() {
@@ -879,7 +879,7 @@ function modelFactory(source, $special, $model) {
             } else if (rcomplexType.test(valueType)) {
                 //第2种为对象属性，产生子VM与监控数组
                 accessor.type = 2
-                accessor.valueType = val.valueType
+                accessor.valueType = valueType
                 initCallbacks.push(function() {
                     var svmodel = modelFactory(val, 0, $model[name])
                     accessor.svmodel = svmodel
@@ -980,7 +980,9 @@ function objectFactory(parent, name, value, valueType) {
         if (!Array.isArray(value) || son === value) {
             return son //fix https://github.com/RubyLouvre/avalon/issues/261
         }
+        son._.$unwatch()
         son.clear()
+        son._.$watch()
         son.pushArray(value.concat())
         return son
     } else {
