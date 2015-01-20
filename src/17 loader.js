@@ -65,9 +65,7 @@ new function() {
         var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
         for (var i = nodes.length, node; node = nodes[--i]; ) {
             if ((base || node.className === subscribers) && node.readyState === "interactive") {
-                var url = node.src
-                if (!isAbsUrl(url))
-                    url = node.getAttribute("src", 4)
+                var url = "1"[0] ? node.src : node.getAttribute("src", 4)
                 return node.className = url
             }
         }
@@ -96,14 +94,15 @@ new function() {
                 }
             }
         })
-        modules[id] = makeModule(id, 1, factory || noop, deps, args)//保存此模块的相关信息
-
-        if (dn === cn) { //如果需要安装的等于已安装好的
-            fireFactory(id, args, factory) //安装到框架中
-        } else {
-            //放到检测列队中,等待checkDeps处理
-            loadings.unshift(id)
+        if (!modules[id]) {
+            //如果此模块是定义在另一个JS文件中, 那必须等该文件加载完毕
+            //才能放到检测列队中
+            if (dn === cn) { //如果需要安装的等于已安装好的
+                fireFactory(id, args, factory) //安装到框架中
+            }
+            loadings.push(id)
         }
+        modules[id] = makeModule(id, 1, factory || noop, deps, args)//保存此模块的相关信息
         checkDeps()
     }
 
@@ -123,7 +122,7 @@ new function() {
         factory.id = id //用于调试
 
         if (!modules[url] && id) {
-            ////必须先行定义，并且不存在deps，用于checkCycle方法
+            //必须先行定义，并且不存在deps，用于checkCycle方法
             modules[url] = makeModule(url, 1, factory)
         }
 
@@ -202,11 +201,11 @@ new function() {
         var oldBase = DOC.getElementsByTagName("base")
         var oldHref = oldBase && oldBase.href
         var ourBase = oldBase || head.appendChild(DOC.createElement("base"))
-        var resolver = DOC.createElement("a")
+        var node = DOC.createElement("a")
         ourBase.href = baseUrl
-        resolver.href = url
+        node.href = url
         try {
-            return resolver.href
+            return  "1"[0] ? node.href : node.getAttribute("href", 4)
         } finally {
             if (oldBase) {
                 oldBase.href = oldHref
@@ -347,6 +346,8 @@ new function() {
                 }
                 if (checkFail(node, false, !W3C)) {
                     log("debug: 已成功加载 " + url)
+                    loadings.push(id)
+                    checkDeps()
                 }
             }
         }
@@ -404,12 +405,9 @@ new function() {
 
 
     plugins.js = function(url, shim) {
-//        if (!isAbsUrl(url)) {
-//            url = getAbsUrl(url, getBaseUrl())
-//        }
         var id = trimHashAndQuery(url)
         if (!modules[id]) { //如果之前没有加载过
-            var module = modules[id] = makeModule(id)
+            var module = modules[id] = makeModule(id, 1)
             if (shim) { //shim机制
                 innerRequire(shim.deps || [], function() {
                     var args = avalon.slice(arguments)
