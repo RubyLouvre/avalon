@@ -4189,7 +4189,7 @@ new function() {
 
     function getAbsUrl(url, baseUrl) {
         //http://stackoverflow.com/questions/470832/getting-an-absolute-url-from-a-relative-one-ie6-issue
-        var oldBase = DOC.getElementsByTagName("base")
+        var oldBase = DOC.getElementsByTagName("base")[0]
         var oldHref = oldBase && oldBase.href
         var ourBase = oldBase || head.appendChild(DOC.createElement("base"))
         var node = DOC.createElement("a")
