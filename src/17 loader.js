@@ -23,15 +23,15 @@ new function() {
 
     var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
     if (!cur) { //处理window safari的Error没有stack的问题
-        cur = avalon.slice(DOC.scripts).pop().src
+        cur = DOC.scripts[DOC.scripts.length - 1].src
     }
     var url = trimHashAndQuery(cur)
-    kernel.massUrl = url.slice(0, url.lastIndexOf("/") + 1)
+    kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
     function getBaseUrl(parentUrl) {
         return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
                 parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
-                kernel.massUrl
+                kernel.loaderUrl
     }
 
     function getCurrentScript(base) {
@@ -65,7 +65,10 @@ new function() {
         var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
         for (var i = nodes.length, node; node = nodes[--i]; ) {
             if ((base || node.className === subscribers) && node.readyState === "interactive") {
-                return node.className = node.src
+                var url = node.src
+                if (!isAbsUrl(url))
+                    url = node.getAttribute("src", 4)
+                return node.className = url
             }
         }
     }
@@ -265,7 +268,7 @@ new function() {
     }
 
     function loadResources(url, parentUrl) {
-        //1. 特别处理mass|ready标识符
+        //1. 特别处理ready标识符
         if (url === "ready!" || (modules[url] && modules[url].state === 2)) {
             return url
         }
