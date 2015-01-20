@@ -4004,17 +4004,24 @@ new function() {
     avalon.config({
         loader: false
     })
-    var fns = [], listener,
-            hack = root.doScroll,
-            domContentLoaded = "DOMContentLoaded",
-            loaded = (hack ? /^loaded|^c/ : /^loaded|^i|^c/).test(DOC.readyState)
-    if (!loaded) {
-        DOC.addEventListener(domContentLoaded, listener = function() {
-            DOC.removeEventListener(domContentLoaded, listener)
-            loaded = 1
-            while (listener = fns.shift())
-                listener()
+    var fns = [], fn, loaded
+    function flush(f) {
+        loaded = 1
+        while (f = fns.shift())
+            f()
+    }
+    if (W3C) {
+        avalon.bind(DOC, "DOMContentLoaded", fn = function() {
+            avalon.unbind(DOC, "DOMContentLoaded", fn)
+            flush()
         })
+    } else {
+        var id = setInterval(function() {
+            if (document.readyState === "complete" && document.body) {
+                clearInterval(id)
+                flush()
+            }
+        }, 50)
     }
     avalon.ready = function(fn) {
         loaded ? fn() : fns.push(fn)
