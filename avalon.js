@@ -3479,6 +3479,7 @@ bindingExecutors.visible = function(val, elem, data) {
 var rdash = /\(([^)]*)\)/
 bindingHandlers.on = function(data, vmodels) {
     var value = data.value
+    data.type = "on"
     var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
     if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
         bindingHandlers.on[eventType + "Hook"](data)
@@ -3493,7 +3494,6 @@ bindingHandlers.on = function(data, vmodels) {
 }
 
 bindingExecutors.on = function(callback, elem, data) {
-    data.type = "on"
     callback = function(e) {
         var fn = data.evaluator || noop
         return fn.apply(this, data.args.concat(e))
