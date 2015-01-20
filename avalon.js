@@ -4743,17 +4743,11 @@ new function() {
         }
         var args = [] // 放置所有依赖项的完整路径
         var deps = {} // args的另一种表现形式，为的是方便去重
-        var dn = 0  //需要安装的模块数
-        var cn = 0  // 已安装完的模块数
         var id = parentUrl || "callback" + setTimeout("1")
         parentUrl = getBaseUrl(parentUrl)
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
             if (url) {
-                dn++
-                if (modules[url] && modules[url].state === 2) {
-                    cn++
-                }
                 if (!deps[url]) {
                     args.push(url)
                     deps[url] = "司徒正美" //去重
@@ -4763,12 +4757,9 @@ new function() {
         if (!modules[id]) {
             //如果此模块是定义在另一个JS文件中, 那必须等该文件加载完毕
             //才能放到检测列队中
-            if (dn === cn) { //如果需要安装的等于已安装好的
-                fireFactory(id, args, factory) //安装到框架中
-            }
             loadings.push(id)
         }
-        modules[id] = makeModule(id, 1, factory || noop, deps, args)//保存此模块的相关信息
+        modules[id] = makeModule(id, 1, factory || noop, deps, args)//更新此模块信息
         checkDeps()
     }
 
@@ -4788,7 +4779,7 @@ new function() {
         factory.id = id //用于调试
 
         if (!modules[url] && id) {
-            ////必须先行定义，并且不存在deps，用于checkCycle方法
+            //必须先行定义，并且不存在deps，用于checkCycle方法
             modules[url] = makeModule(url, 1, factory)
         }
 
@@ -5073,7 +5064,7 @@ new function() {
     plugins.js = function(url, shim) {
         var id = trimHashAndQuery(url)
         if (!modules[id]) { //如果之前没有加载过
-            var module = modules[id] = makeModule(id)
+            var module = modules[id] = makeModule(id, 1)
             if (shim) { //shim机制
                 innerRequire(shim.deps || [], function() {
                     var args = avalon.slice(arguments)
