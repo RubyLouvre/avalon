@@ -4093,7 +4093,10 @@ new function() {
             //才能放到检测列队中
             loadings.push(id)
         }
-        modules[id] = makeModule(id, 1, factory, deps, args)//更新此模块信息
+        if (!modules[id] || modules[id].state !== 2) {
+            modules[id] = makeModule(id, 1, factory, deps, args)//更新此模块信息
+        }
+      
         checkDeps()
     }
 
