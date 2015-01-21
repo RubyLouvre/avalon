@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.39 build in 2015.1.20 
+ avalon.js 1.39 build in 2015.1.21 
 _____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4759,7 +4759,7 @@ new function() {
             //才能放到检测列队中
             loadings.push(id)
         }
-        modules[id] = makeModule(id, 1, factory || noop, deps, args)//更新此模块信息
+        modules[id] = makeModule(id, 1, factory, deps, args)//更新此模块信息
         checkDeps()
     }
 
@@ -4905,10 +4905,10 @@ new function() {
     function makeModule(id, state, factory, deps, args) {
         return {
             id: id,
-            state: state,
-            factory: factory,
-            deps: deps,
-            args: args
+            state: state || 1,
+            factory: factory || noop,
+            deps: deps || {},
+            args: args || []
         }
     }
 
@@ -5064,7 +5064,7 @@ new function() {
     plugins.js = function(url, shim) {
         var id = trimHashAndQuery(url)
         if (!modules[id]) { //如果之前没有加载过
-            var module = modules[id] = makeModule(id, 1)
+            var module = modules[id] = makeModule(id)
             if (shim) { //shim机制
                 innerRequire(shim.deps || [], function() {
                     var args = avalon.slice(arguments)
