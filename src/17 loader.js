@@ -199,7 +199,7 @@ new function() {
         },
         map: function(hash) {
             avalon.mix(allmaps, hash)
-            var maps = createIndexArray(allmaps, 1)
+            var maps = createIndexArray(allmaps, 1, 1)
             avalon.each(maps, function(_, item) {
                 item.v = createIndexArray(item.v)
             })
@@ -259,15 +259,15 @@ new function() {
         }
     })
     //创建一个经过特殊算法排好序的数组
-    function createIndexArray(hash, useStar) {
-        var index = hash2array(hash, 1, useStar);
+    function createIndexArray(hash, useStar, part) {
+        var index = hash2array(hash, useStar, part);
         index.sort(descSorterByKOrName);
         return index;
     }
     function createPrefixRegexp(prefix) {
         return new RegExp('^' + prefix + '(/|$)');
     }
-    function hash2array(hash, createRegExp, useStar) {
+    function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
             if (hash.hasOwnProperty(key)) {
@@ -276,10 +276,11 @@ new function() {
                     v: hash[key]
                 }
                 array.push(item)
-                if (createRegExp) {
-                    item.reg = key === '*' && useStar
-                            ? /^/
-                            : createPrefixRegexp(key)
+                item.reg = key === '*' && useStar
+                        ? /^/
+                        : createPrefixRegexp(key)
+                if (part && key !== "*") {
+                    item.reg = new RegExp('\/' + key + '(/|$)');
                 }
             }
         }
@@ -354,7 +355,8 @@ new function() {
         array = array || []
         for (var i = 0, el; el = array[i++]; ) {
             if (el.reg.test(moduleID)) {
-                return matcher(el.v, el.k, el)
+                matcher(el.v, el.k, el)
+                return false
             }
         }
     }
@@ -411,7 +413,14 @@ new function() {
                 url = url.replace(item.name, item.location)
             })
         }
-        //5. 转换为绝对路径
+        // 5. 是否命中packages配置项
+        indexRetrieve(parentUrl, kernel.maps, function(array) {
+            indexRetrieve(url, array, function(mdValue, mdKey) {
+                url = url.replace(mdKey, mdValue)
+                parentUrl = getBaseUrl()
+            })
+        })
+        //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
             if (parentUrl === getBaseUrl()) {
                 url = getAbsUrl(url, parentUrl)
@@ -419,9 +428,9 @@ new function() {
                 url = joinPath(parentUrl, url)
             }
         }
-        //6. 还原扩展名，query
+        //7. 还原扩展名，query
         url += ext + query
-        //7. 处理urlArgs
+        //8. 处理urlArgs
         indexRetrieve(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
