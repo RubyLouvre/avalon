@@ -16,16 +16,15 @@ modules.exports = modules.avalon
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
-
-    function trimHashAndQuery(url) {
-        return (url || "").replace(/[?#].*/, "")
+    var queryReg = /(\?[^#]*)$/
+    function trimQuery(url) {
+        return (url || "").replace(queryReg, "")
     }
-
     var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
     if (!cur) { //处理window safari的Error没有stack的问题
         cur = DOC.scripts[DOC.scripts.length - 1].src
     }
-    var url = trimHashAndQuery(cur)
+    var url = trimQuery(cur)
     kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
     function getBaseUrl(parentUrl) {
@@ -88,15 +87,14 @@ new function() {
                 }
             }
         })
-        if (!modules[id]) {
-            //如果此模块是定义在另一个JS文件中, 那必须等该文件加载完毕
-            //才能放到检测列队中
-            loadings.push(id)
-        }
-        if (!modules[id] || modules[id].state !== 2) {
+        var module = modules[id]
+        if (!module || module.state !== 2) {
             modules[id] = makeModule(id, 1, factory, deps, args)//更新此模块信息
         }
-      
+        if (!module) {
+            //如果此模块是定义在另一个JS文件中, 那必须等该文件加载完毕, 才能放到检测列队中
+            loadings.push(id)
+        }
         checkDeps()
     }
 
@@ -111,7 +109,7 @@ new function() {
         //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
         //现在除了safari5,1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
         //safari可通过onload+ factory.require闭包组合解决
-        var url = modules[id] && modules[id].state >= 1 ? id : trimHashAndQuery(getCurrentScript())
+        var url = modules[id] && modules[id].state >= 1 ? id : trimQuery(getCurrentScript())
         factory = args[1]
         factory.id = id //用于调试
 
@@ -172,7 +170,7 @@ new function() {
     }
 
     function checkFail(node, onError, fuckIE) {
-        var id = trimHashAndQuery(node.src) //检测是否死链
+        var id = trimQuery(node.src) //检测是否死链
         node.onload = node.onreadystatechange = node.onerror = null
         if (onError || (fuckIE && !modules[id].state)) {
             setTimeout(function() {
@@ -189,6 +187,117 @@ new function() {
         //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
+    var now = new Date - 0
+    var allpaths = kernel["orig.paths"] = {}
+    var allmaps = kernel["orig.maps"] = {}
+    var allpackages = kernel["packages"] = []
+    var allargs = kernel["orig.args"] = {}
+    avalon.mix(plugins, {
+        paths: function(hash) {
+            avalon.mix(allpaths, hash)
+            kernel.paths = createIndexArray(allpaths)
+        },
+        map: function(hash) {
+            avalon.mix(allmaps, hash)
+            var maps = createIndexArray(allmaps, 1)
+            avalon.each(maps, function(_, item) {
+                item.v = createIndexArray(item.v)
+            })
+            kernel.maps = maps
+        },
+        packages: function(array) {
+            array = array.concat(allpackages)
+            var uniq = {}
+            var ret = []
+            for (var i = 0, el; el = array[i++]; ) {
+                var pkg = el
+                if (typeof el === "string") {
+                    pkg = {
+                        name: el.split("/")[0],
+                        location: el,
+                        main: "main"
+                    }
+                }
+                if (!uniq[pkg.name]) {
+                    uniq[pkg.name] = 1
+                    ret.push(pkg)
+                    pkg.location = pkg.location || pkg.name
+                    pkg.main = (pkg.main || 'main').replace(/\.js$/i, '')
+                    pkg.reg = createPrefixRegexp(pkg.name)
+                }
+            }
+            kernel.packages = ret.sort()
+        },
+        urlArgs: function(hash) {
+            if (typeof hash === "string") {
+                hash = {"*": hash}
+            }
+            avalon.mix(allargs, hash)
+            kernel.urlArgs = createIndexArray(allargs, 1)
+        },
+        bundles: function(obj) {
+            var bundles = kernel.bundles = {}
+            for (var key in obj) {
+                avalon.each(obj[key], function(val, id) {
+                    bundles[id] = key
+                })
+            }
+        },
+        shim: function(obj) {
+            for (var i in obj) {
+                var value = obj[i]
+                if (Array.isArray(value)) {
+                    value = obj[i] = {
+                        deps: value
+                    }
+                }
+                if (!value.exportsFn && (value.exports || value.init)) {
+                    value.exportsFn = makeShimExports(value)
+                }
+            }
+            kernel.shim = obj
+        }
+    })
+    //创建一个经过特殊算法排好序的数组
+    function createIndexArray(hash, useStar) {
+        var index = hash2array(hash, 1, useStar);
+        index.sort(descSorterByKOrName);
+        return index;
+    }
+    function createPrefixRegexp(prefix) {
+        return new RegExp('^' + prefix + '(/|$)');
+    }
+    function hash2array(hash, createRegExp, useStar) {
+        var array = [];
+        for (var key in hash) {
+            if (hash.hasOwnProperty(key)) {
+                var item = {
+                    k: key,
+                    v: hash[key]
+                }
+                array.push(item)
+                if (createRegExp) {
+                    item.reg = key === '*' && useStar
+                            ? /^/
+                            : createPrefixRegexp(key)
+                }
+            }
+        }
+        return array
+    }
+    // 根据元素的k或name项进行数组字符数逆序的排序函数
+    function descSorterByKOrName(a, b) {
+        var aValue = a.k || a.name
+        var bValue = b.k || b.name
+        if (bValue === '*') {
+            return -1
+        }
+        if (aValue === '*') {
+            return 1
+        }
+        return bValue.length - aValue.length
+    }
+
 
     function getAbsUrl(url, baseUrl) {
         //http://stackoverflow.com/questions/470832/getting-an-absolute-url-from-a-relative-one-ie6-issue
@@ -229,6 +338,7 @@ new function() {
         }
         return a + b
     }
+
     function makeShimExports(value) {
         function fn() {
             var ret;
@@ -238,6 +348,15 @@ new function() {
             return ret || (value.exports && getGlobal(value.exports));
         }
         return fn
+    }
+
+    function indexRetrieve(moduleID, array, matcher) {
+        array = array || []
+        for (var i = 0, el; el = array[i++]; ) {
+            if (el.reg.test(moduleID)) {
+                return matcher(el.v, el.k, el)
+            }
+        }
     }
     function makeModule(id, state, factory, deps, args) {
         return {
@@ -261,68 +380,55 @@ new function() {
     }
 
     function loadResources(url, parentUrl) {
-        //1. 特别处理ready标识符
+        //1. 特别处理ready标识符及已经加载好的模块
         if (url === "ready!" || (modules[url] && modules[url].state === 2)) {
             return url
         }
-        //2.  获取text!  css! 等插件名
-        var plugin
-        url = url.replace(/^\w+!/, function(a) {
-            plugin = a.slice(0, -1)
-            return ""
-        })
-        plugin = plugin || "js"
+        //2. 获取模块ID(去掉资源前缀，扩展名 hash, query)
+        var match = url.match(/(\w+!)?(.+)/)
+        var plugin = match[1] || "js"
         plugin = plugins[plugin] || noop
-        //3. 处理shim配置项
-        var shim = kernel.shim[url]
-        if (typeof shim === "object") {
-            if (Array.isArray(shim)) {
-                shim = kernel.shim[url] = {
-                    deps: shim
-                }
-            }
-            if (!shim.exportsFn && (shim.exports || shim.init)) {
-                shim.exportsFn = makeShimExports(shim)
-            }
+        var id = match[2]
+        var query = ""
+        if (queryReg.test(id)) {
+            query = RegExp.$1;
+            id = id.replace(queryReg, "");
         }
-        //4. 处理paths配置项
-        url = url.split("/");
-        for (var i = url.length, parentModule, parentPath; i > 0; i -= 1) {
-            parentModule = url.slice(0, i).join('/');
-
-            parentPath = kernel.paths[parentModule];
-            if (parentPath) {
-                //If an array, it means there are a few choices,
-                //Choose the one that is desired
-                if (Array.isArray(parentPath)) {
-                    parentPath = parentPath[0];
-                }
-                url.splice(0, i, parentPath);
-                break;
-            }
+        var ext = plugin.ext || ""
+        if (ext && id.substr(id.length - ext.length) === ext) {//去掉扩展名
+            url = id.slice(0, -ext.length)
+            id = id.slice(-ext.length)
         }
-        //Join the path parts together, then figure out if baseUrl is needed.
-        url = url.join('/');
-        //5. 补全扩展名
-        url = trimHashAndQuery(url)
-        var ext = plugin.ext
-        if (ext) {
-            if (url.slice(0 - ext.length) !== ext) {
-                url += ext
-            }
+        //3. 是否命中paths配置项
+        var usePath
+        indexRetrieve(id, kernel.paths, function(value, key) {
+            url = url.replace(key, value)
+            usePath = 1
+        })
+        // 4. 是否命中packages配置项
+        if (!usePath) {
+            indexRetrieve(id, kernel.packages, function(value, key, item) {
+                url = url.replace(item.name, item.location)
+            })
         }
         //5. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            url = joinPath(parentUrl, url)
-            if (!isAbsUrl(url)) {
-                url = getAbsUrl(url, getBaseUrl())
+            if (parentUrl === getBaseUrl()) {
+                url = getAbsUrl(url, parentUrl)
+            } else {
+                url = joinPath(parentUrl, url)
             }
         }
-        //6. 缓存处理
+        //6 还原扩展名，query
+        url += ext + query
+        indexRetrieve(id, kernel.urlArgs, function(value) {
+            url += (url.indexOf("?") === -1 ? "?" : "&") + value;
+        })
+        //7. 缓存处理
         if (kernel.nocache) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + (new Date - 0)
         }
-        return plugin(url, shim)
+        return plugin(url, kernel.shim[id])
     }
 
     function loadJS(url, id, callback) {
@@ -372,34 +478,8 @@ new function() {
     }
 
 
-    kernel.packages = []
-    kernel.pkgs = {}
-    jsSuffixRegExp = /\.js$/
-    currDirRegExp = /^\.\//
-    plugins.packages = function(array) {
-        for (var i = 0; i < array.length; i++) {
-            var pkgObj = array[i]
-            pkgObj = typeof pkgObj === "string" ? {name: pkgObj} : pkgObj
-            var name = pkgObj.name;
-            var location = pkgObj.location;
-            if (location) {
-                kernel.paths[name] = pkgObj.location
-            }
-            //Save pointer to main module ID for pkg name.
-            //Remove leading dot in main, so main paths are normalized,
-            //and remove any trailing .js, since different package
-            //envs have different conventions: some use a module name,
-            //some use a file name.
-            kernel.pkgs[name] = pkgObj.name + "/" + (pkgObj.main || "main")
-                    .replace(currDirRegExp, "")
-                    .replace(jsSuffixRegExp, "")
-        }
-    }
-
-
-
     plugins.js = function(url, shim) {
-        var id = trimHashAndQuery(url)
+        var id = trimQuery(url)
         if (!modules[id]) { //如果之前没有加载过
             var module = modules[id] = makeModule(id)
             if (shim) { //shim机制
@@ -420,7 +500,7 @@ new function() {
         return id
     }
     plugins.css = function(url) {
-        var id = trimHashAndQuery(url).replace(/\W/g, "_") ////用于处理掉href中的hash与所有特殊符号
+        var id = trimQuery(url).replace(/\W/g, "_") ////用于处理掉href中的hash与所有特殊符号
         if (!DOC.getElementById(id)) {
             var node = DOC.createElement("link")
             node.rel = "stylesheet"
@@ -429,12 +509,14 @@ new function() {
             head.insertBefore(node, head.firstChild)
         }
     }
+
+
     plugins.css.ext = ".css"
     plugins.js.ext = ".js"
 
     plugins.text = function(url) {
         var xhr = getXHR()
-        var id = trimHashAndQuery(url)
+        var id = trimQuery(url)
         modules[id] = {}
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
