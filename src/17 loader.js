@@ -280,7 +280,7 @@ new function() {
                         ? /^/
                         : createPrefixRegexp(key)
                 if (part && key !== "*") {
-                    item.reg = new RegExp('\/' + key + '(/|$)');
+                    item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)');
                 }
             }
         }
