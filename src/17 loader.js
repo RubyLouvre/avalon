@@ -419,15 +419,12 @@ new function() {
                 url = joinPath(parentUrl, url)
             }
         }
-        //6 还原扩展名，query
+        //6. 还原扩展名，query
         url += ext + query
+        //7. 处理urlArgs
         indexRetrieve(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
-        //7. 缓存处理
-        if (kernel.nocache) {
-            url += (url.indexOf("?") === -1 ? "?" : "&") + (new Date - 0)
-        }
         return plugin(url, kernel.shim[id])
     }
 
