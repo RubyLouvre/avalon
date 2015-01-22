@@ -187,7 +187,6 @@ new function() {
         //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
-    var now = new Date - 0
     var allpaths = kernel["orig.paths"] = {}
     var allmaps = kernel["orig.maps"] = {}
     var allpackages = kernel["packages"] = []
@@ -222,7 +221,7 @@ new function() {
                     uniq[pkg.name] = 1
                     ret.push(pkg)
                     pkg.location = pkg.location || pkg.name
-                    pkg.main = (pkg.main || 'main').replace(/\.js$/i, '')
+                    pkg.main = (pkg.main || "main").replace(/\.js$/i, "")
                     pkg.reg = createPrefixRegexp(pkg.name)
                 }
             }

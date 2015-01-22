@@ -28,8 +28,8 @@ var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "applicat
 var script = DOC.createElement("script")
 
 avalon.parseHTML = function(html) {
-    if (typeof html !== "string") {
-        html = html + ""
+    if (typeof html !== "string" ) {
+        return DOC.createDocumentFragment()
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),

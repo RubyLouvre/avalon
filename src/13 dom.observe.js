@@ -52,26 +52,20 @@ avalon.fn.mix({
             return this[0].getAttribute(name)
         }
     },
-    data: function(name, value) {
-        name = "data-" + hyphen(name || "")
+    data: function(name, val) {
+        var dataset = this[0].dataset
         switch (arguments.length) {
             case 2:
-                this.attr(name, value)
+                dataset[name] = val
                 return this
             case 1:
-                var val = this.attr(name)
+                val = dataset[name]
                 return parseData(val)
             case 0:
                 var ret = {}
-                ap.forEach.call(this[0].attributes, function(attr) {
-                    if (attr) {
-                        name = attr.name
-                        if (!name.indexOf("data-")) {
-                            name = camelize(name.slice(5))
-                            ret[name] = parseData(attr.value)
-                        }
-                    }
-                })
+                for (var name in dataset) {
+                    ret[name] = parseData(dataset[name])
+                }
                 return ret
         }
     },
@@ -152,25 +146,7 @@ avalon.fn.mix({
     }
 })
 
-if (root.dataset) {
-    avalon.fn.data = function(name, val) {
-        var dataset = this[0].dataset
-        switch (arguments.length) {
-            case 2:
-                dataset[name] = val
-                return this
-            case 1:
-                val = dataset[name]
-                return parseData(val)
-            case 0:
-                var ret = {}
-                for (var name in dataset) {
-                    ret[name] = parseData(dataset[name])
-                }
-                return ret
-        }
-    }
-}
+
 var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 avalon.parseJSON = JSON.parse
 
@@ -267,7 +243,7 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
 
 function showHidden(node, array) {
     //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
-    if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+    if (node.offsetWidth === 0) { //opera.offsetWidth可能小于0
         var styles = getComputedStyle(node, null)
         if (rdisplayswap.test(styles["display"])) {
             var obj = {
@@ -333,7 +309,7 @@ function showHidden(node, array) {
         var node = this[0]
         if (arguments.length === 0) {
             if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
-                return node["inner" + name] 
+                return node["inner" + name]
             }
             if (node.nodeType === 9) { //取得页面尺寸
                 var doc = node.documentElement
@@ -377,34 +353,27 @@ avalon.fn.offset = function() { //取得距离页面左右角的坐标
     }
 }
 //=============================val相关=======================
-
 function getValType(el) {
     var ret = el.tagName.toLowerCase()
     return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
 }
-var valHooks = {
-    "select:get": function(node, value) {
-        var option, options = node.options,
-                index = node.selectedIndex,
-                one = node.type === "select-one" || index < 0,
-                values = one ? null : [],
-                max = one ? index + 1 : options.length,
-                i = index < 0 ? max : one ? index : 0
-        for (; i < max; i++) {
-            option = options[i]
-            //旧式IE在reset后不会改变selected，需要改用i === index判定
-            //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
-            //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
-            if ((option.selected || i === index) && !option.disabled) {
-                value = option.value
-                if (one) {
-                    return value
-                }
-                //收集所有selected值组成数组返回
-                values.push(value)
-            }
+
+function collectOptions(children, array) {
+    for (var i = 0, el; el = children[i++]; ) {
+        if (el.nodeName === "OPTGROUP") {
+            if (!el.disabled)
+                collectOptions(el.children, array)
+        } else if (!el.disabled) {
+            array.push(el.value)
         }
-        return values
+    }
+}
+
+var valHooks = {
+    "select:get": function(node) {
+        var array = []
+        collectOptions(node.children, array)
+        return node.type === "select-one" ? array[0] : array
     },
     "select:set": function(node, values, optionSet) {
         values = [].concat(values) //强制转换为数组
