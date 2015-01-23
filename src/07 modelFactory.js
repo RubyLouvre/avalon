@@ -152,7 +152,23 @@ function modelFactory(source, $special, $model) {
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
-                        return $model[name] = accessor.get.call($vmodel)
+                        var a = $model[name]
+                        var b = accessor.get.call($vmodel)
+                        if (a !== b) {
+                            //这里不用同步视图
+                            if ($events.$digest) {
+                                if (!accessor.pedding) {
+                                    accessor.pedding = true
+                                    setTimeout(function() {
+                                        safeFire($vmodel, name, $model[name], a) //触发$watch回调
+                                        accessor.pedding = false
+                                    })
+                                }
+                            } else {
+                                safeFire($vmodel, name, b, a) //触发$watch回调
+                            }
+                        }
+                        return $model[name] = b
                     } else {
                         collectSubscribers($events[name]) //收集视图函数
                         return accessor.svmodel || oldValue
