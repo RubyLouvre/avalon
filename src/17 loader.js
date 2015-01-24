@@ -245,24 +245,19 @@ new function() {
             }
         },
         baseUrl: function(url) {
-            var baseElement = head.getElementsByTagName("base")[0]
-            if (baseElement) {
-                url = baseElement.href
-                var baseUrl = "1"[0] ? baseElement.href : baseElement.getAttribute("href", 4)
-                head.removeChild(baseElement)
-                kernel.baseUrl = baseUrl
-            }
-            if (url) {
-                if (!isAbsUrl(url)) {
-                    var node = DOC.createElement("a")
-                    node.href = url
-                    url = "1"[0] ? node.href : node.getAttribute("href", 4)
+            if (!isAbsUrl(url)) {
+                var baseElement = head.getElementsByTagName("base")[0]
+                if (baseElement) {
+                    head.removeChild(baseElement)
                 }
-                kernel.baseUrl = url
+                var node = DOC.createElement("a")
+                node.href = url
+                url = "1"[0] ? node.href : node.getAttribute("href", 4)
+                if (baseElement) {
+                    head.insertBefore(baseElement, head.firstChild)
+                }
             }
-            if (baseElement) {
-                head.insertBefore(baseElement, head.firstChild)
-            }
+            kernel.baseUrl = url
         },
         shim: function(obj) {
             for (var i in obj) {
@@ -279,7 +274,7 @@ new function() {
             kernel.shim = obj
         }
     })
-    plugins.baseUrl()
+
     //创建一个经过特殊算法排好序的数组
     function createIndexArray(hash, useStar, part) {
         var index = hash2array(hash, useStar, part);
