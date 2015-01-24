@@ -6,7 +6,7 @@ var parentDir = curDir.replace(path.sep + "src", "")
 var otherDir = curDir.replace(/avalon[\/\\]src/, "")
 var Buffer = require('buffer').Buffer
 var now = new Date
-var version = 1.39
+var version = 1.391
 var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 function directive(name) {
     return path.join("15 directive", name)

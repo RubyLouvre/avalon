@@ -1,6 +1,7 @@
 /*********************************************************************
  *                      AMD加载器                                   *
  **********************************************************************/
+//https://www.devbridge.com/articles/understanding-amd-requirejs/
 var modules = avalon.modules = {
     "ready!": {
         exports: avalon
@@ -406,13 +407,13 @@ new function() {
             url = url.replace(key, value)
             usePath = 1
         })
-        // 4. 是否命中packages配置项
+        //4. 是否命中packages配置项
         if (!usePath) {
             indexRetrieve(id, kernel.packages, function(value, key, item) {
                 url = url.replace(item.name, item.location)
             })
         }
-        // 5. 是否命中packages配置项
+        //5. 是否命中packages配置项
         indexRetrieve(parentUrl, kernel.maps, function(array) {
             indexRetrieve(url, array, function(mdValue, mdKey) {
                 url = url.replace(mdKey, mdValue)
