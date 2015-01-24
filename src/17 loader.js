@@ -243,6 +243,24 @@ new function() {
                 })
             }
         },
+        baseUrl: function(url) {
+            var baseElement = head.getElementsByTagName("base")[0]
+            if (baseElement) {
+                url = baseElement.href
+                var baseUrl = "1"[0] ? baseElement.href : baseElement.getAttribute("href", 4)
+                head.removeChild(baseElement)
+                kernel.baseUrl = baseUrl
+            }
+            if (url && !isAbsUrl(url)) {
+                var node = DOC.createElement("a")
+                node.href = url
+                url = "1"[0] ? node.href : node.getAttribute("href", 4)
+                kernel.baseUrl = url
+            }
+            if (baseElement) {
+                head.insertBefore(baseElement, head.firstChild)
+            }
+        },
         shim: function(obj) {
             for (var i in obj) {
                 var value = obj[i]
@@ -297,26 +315,6 @@ new function() {
             return 1
         }
         return bValue.length - aValue.length
-    }
-
-
-    function getAbsUrl(url, baseUrl) {
-        //http://stackoverflow.com/questions/470832/getting-an-absolute-url-from-a-relative-one-ie6-issue
-        var oldBase = DOC.getElementsByTagName("base")[0]
-        var oldHref = oldBase && oldBase.href
-        var ourBase = oldBase || head.appendChild(DOC.createElement("base"))
-        var node = DOC.createElement("a")
-        ourBase.href = baseUrl
-        node.href = url
-        try {
-            return  "1"[0] ? node.href : node.getAttribute("href", 4)
-        } finally {
-            if (oldBase) {
-                oldBase.href = oldHref
-            } else {
-                head.removeChild(ourBase)
-            }
-        }
     }
 
     var rdeuce = /\/\w+\/\.\./
@@ -422,11 +420,11 @@ new function() {
         })
         //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            if (parentUrl === getBaseUrl()) {
-                url = getAbsUrl(url, parentUrl)
-            } else {
-                url = joinPath(parentUrl, url)
-            }
+//            if (parentUrl === getBaseUrl()) {
+//                url = getAbsUrl(url, parentUrl)
+//            } else {
+            url = joinPath(parentUrl, url)
+            //           }
         }
         //7. 还原扩展名，query
         url += ext + query
