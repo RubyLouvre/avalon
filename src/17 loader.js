@@ -28,6 +28,7 @@ new function() {
     var url = trimQuery(cur)
     kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
+
     function getBaseUrl(parentUrl) {
         return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
                 parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
@@ -251,10 +252,12 @@ new function() {
                 head.removeChild(baseElement)
                 kernel.baseUrl = baseUrl
             }
-            if (url && !isAbsUrl(url)) {
-                var node = DOC.createElement("a")
-                node.href = url
-                url = "1"[0] ? node.href : node.getAttribute("href", 4)
+            if (url) {
+                if (!isAbsUrl(url)) {
+                    var node = DOC.createElement("a")
+                    node.href = url
+                    url = "1"[0] ? node.href : node.getAttribute("href", 4)
+                }
                 kernel.baseUrl = url
             }
             if (baseElement) {
@@ -276,6 +279,7 @@ new function() {
             kernel.shim = obj
         }
     })
+    plugins.baseUrl()
     //创建一个经过特殊算法排好序的数组
     function createIndexArray(hash, useStar, part) {
         var index = hash2array(hash, useStar, part);
@@ -420,11 +424,7 @@ new function() {
         })
         //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
-//            if (parentUrl === getBaseUrl()) {
-//                url = getAbsUrl(url, parentUrl)
-//            } else {
             url = joinPath(parentUrl, url)
-            //           }
         }
         //7. 还原扩展名，query
         url += ext + query
