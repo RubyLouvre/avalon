@@ -60,7 +60,6 @@ function getNewValue(accessor, name, value, $vmodel) {
                 setter.call($vmodel, value)
                 $events[name] = lock
             }
-            console.log("----")
             return  getter.call($vmodel) //同步$model
         case 1://监控属性
             return value

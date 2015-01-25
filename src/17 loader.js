@@ -30,8 +30,8 @@ new function() {
 
 
     function getBaseUrl(parentUrl) {
-        return kernel.baseUrl ? kernel.baseUrl : parentUrl ?
-                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
+        return  parentUrl ?
+                parentUrl.substr(0, parentUrl.lastIndexOf("/")) : kernel.baseUrl ? kernel.baseUrl :
                 kernel.loaderUrl
     }
 
@@ -79,9 +79,11 @@ new function() {
         var args = [] // 放置所有依赖项的完整路径
         var deps = {} // args的另一种表现形式，为的是方便去重
         var id = parentUrl || "callback" + setTimeout("1")
+        var mapUrl = parentUrl && parentUrl.replace(/\.js$/i, "")
         parentUrl = getBaseUrl(parentUrl)
+
         array.forEach(function(el) {
-            var url = loadResources(el, parentUrl) //加载资源，并返回能加载资源的完整路径
+            var url = loadResources(el, parentUrl, mapUrl) //加载资源，并返回能加载资源的完整路径
             if (url) {
                 if (!deps[url]) {
                     args.push(url)
@@ -190,41 +192,35 @@ new function() {
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
     var allpaths = kernel["orig.paths"] = {}
-    var allmaps = kernel["orig.maps"] = {}
+    var allmaps = kernel["orig.map"] = {}
     var allpackages = kernel["packages"] = []
     var allargs = kernel["orig.args"] = {}
     avalon.mix(plugins, {
         paths: function(hash) {
             avalon.mix(allpaths, hash)
-            kernel.paths = createIndexArray(allpaths)
+            kernel.paths = makeIndexArray(allpaths)
         },
         map: function(hash) {
             avalon.mix(allmaps, hash)
-            var maps = createIndexArray(allmaps, 1, 1)
-            avalon.each(maps, function(_, item) {
-                item.v = createIndexArray(item.v)
+            var list = makeIndexArray(allmaps, 1, 1)
+            avalon.each(list, function(_, item) {
+                item.val = makeIndexArray(item.val)
             })
-            kernel.maps = maps
+            kernel.map = list
         },
         packages: function(array) {
             array = array.concat(allpackages)
             var uniq = {}
             var ret = []
-            for (var i = 0, el; el = array[i++]; ) {
-                var pkg = el
-                if (typeof el === "string") {
-                    pkg = {
-                        name: el.split("/")[0],
-                        location: el,
-                        main: "main"
-                    }
-                }
-                if (!uniq[pkg.name]) {
-                    uniq[pkg.name] = 1
+            for (var i = 0, pkg; pkg = array[i++]; ) {
+                var pkg = typeof pkg === "string" ? {name: pkg} : pkg
+                var name = pkg.name
+                if (!uniq[name]) {
+                    var url = pkg.location ? pkg.location : joinPath(name, pkg.main || "main")
+                    url = url.replace(/\.js$/i, "")
                     ret.push(pkg)
-                    pkg.location = pkg.location || pkg.name
-                    pkg.main = (pkg.main || "main").replace(/\.js$/i, "")
-                    pkg.reg = createPrefixRegexp(pkg.name)
+                    uniq[name] = pkg.location = url
+                    pkg.reg = createPrefixRegexp(name)
                 }
             }
             kernel.packages = ret.sort()
@@ -234,7 +230,7 @@ new function() {
                 hash = {"*": hash}
             }
             avalon.mix(allargs, hash)
-            kernel.urlArgs = createIndexArray(allargs, 1)
+            kernel.urlArgs = makeIndexArray(allargs, 1)
         },
         bundles: function(obj) {
             var bundles = kernel.bundles = {}
@@ -276,7 +272,7 @@ new function() {
     })
 
     //创建一个经过特殊算法排好序的数组
-    function createIndexArray(hash, useStar, part) {
+    function makeIndexArray(hash, useStar, part) {
         var index = hash2array(hash, useStar, part);
         index.sort(descSorterByKOrName);
         return index;
@@ -289,11 +285,11 @@ new function() {
         for (var key in hash) {
             if (hash.hasOwnProperty(key)) {
                 var item = {
-                    k: key,
-                    v: hash[key]
+                    name: key,
+                    val: hash[key]
                 }
                 array.push(item)
-                item.reg = key === '*' && useStar
+                item.reg = key === "*" && useStar
                         ? /^/
                         : createPrefixRegexp(key)
                 if (part && key !== "*") {
@@ -303,17 +299,26 @@ new function() {
         }
         return array
     }
-    // 根据元素的k或name项进行数组字符数逆序的排序函数
+    function eachIndexArray(moduleID, array, matcher) {
+        array = array || []
+        for (var i = 0, el; el = array[i++]; ) {
+            if (el.reg.test(moduleID)) {
+                matcher(el.val, el.name, el)
+                return false
+            }
+        }
+    }
+    // 根据元素的name项进行数组字符数逆序的排序函数
     function descSorterByKOrName(a, b) {
-        var aValue = a.k || a.name
-        var bValue = b.k || b.name
-        if (bValue === '*') {
+        var aaa = a.name
+        var bbb = b.name
+        if (bbb === "*") {
             return -1
         }
-        if (aValue === '*') {
+        if (aaa === "*") {
             return 1
         }
-        return bValue.length - aValue.length
+        return bbb.length - aaa.length
     }
 
     var rdeuce = /\/\w+\/\.\./
@@ -348,15 +353,7 @@ new function() {
         return fn
     }
 
-    function indexRetrieve(moduleID, array, matcher) {
-        array = array || []
-        for (var i = 0, el; el = array[i++]; ) {
-            if (el.reg.test(moduleID)) {
-                matcher(el.v, el.k, el)
-                return false
-            }
-        }
-    }
+
     function makeModule(id, state, factory, deps, args) {
         return {
             id: id,
@@ -372,13 +369,13 @@ new function() {
             return value;
         }
         var g = window
-        value.split('.').forEach(function(part) {
+        value.split(".").forEach(function(part) {
             g = g[part]
         })
         return g;
     }
 
-    function loadResources(url, parentUrl) {
+    function loadResources(url, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
         if (url === "ready!" || (modules[url] && modules[url].state === 2)) {
             return url
@@ -388,6 +385,7 @@ new function() {
         var plugin = match[1] || "js"
         plugin = plugins[plugin] || noop
         var id = match[2]
+        var useBase = /\w/.test(id.charAt(0))
         var query = ""
         if (queryReg.test(id)) {
             query = RegExp.$1;
@@ -400,31 +398,33 @@ new function() {
         }
         //3. 是否命中paths配置项
         var usePath
-        indexRetrieve(id, kernel.paths, function(value, key) {
+        eachIndexArray(id, kernel.paths, function(value, key) {
             url = url.replace(key, value)
             usePath = 1
         })
         //4. 是否命中packages配置项
         if (!usePath) {
-            indexRetrieve(id, kernel.packages, function(value, key, item) {
+            eachIndexArray(id, kernel.packages, function(value, key, item) {
                 url = url.replace(item.name, item.location)
             })
         }
-        //5. 是否命中packages配置项
-        indexRetrieve(parentUrl, kernel.maps, function(array) {
-            indexRetrieve(url, array, function(mdValue, mdKey) {
-                url = url.replace(mdKey, mdValue)
-                parentUrl = getBaseUrl()
+        //5. 是否命中map配置项
+        if (mapUrl) {
+            eachIndexArray(mapUrl, kernel.map, function(array) {
+                eachIndexArray(url, array, function(mdValue, mdKey) {
+                    url = url.replace(mdKey, mdValue)
+                    //  parentUrl = getBaseUrl()
+                })
             })
-        })
+        }
         //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            url = joinPath(parentUrl, url)
+            url = joinPath(useBase ? getBaseUrl() : parentUrl, url)
         }
         //7. 还原扩展名，query
         url += ext + query
         //8. 处理urlArgs
-        indexRetrieve(id, kernel.urlArgs, function(value) {
+        eachIndexArray(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
         return plugin(url, kernel.shim[id])
