@@ -3836,7 +3836,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     //并且必须设置延迟
                     element.defaultChecked = checked
                     element.checked = checked
-                }, 100)
+                }, 31)
             } else {
                 element.checked = checked
             }
