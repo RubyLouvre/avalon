@@ -17,9 +17,9 @@ modules.exports = modules.avalon
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
-    var queryReg = /(\?[^#]*)$/
+    var rquery = /(\?[^#]*)$/
     function trimQuery(url) {
-        return (url || "").replace(queryReg, "")
+        return (url || "").replace(rquery, "")
     }
     var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
     if (!cur) { //处理window safari的Error没有stack的问题
@@ -28,15 +28,15 @@ new function() {
     var url = trimQuery(cur)
     kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
 
-
     function getBaseUrl(parentUrl) {
         return  parentUrl ?
-                parentUrl.substr(0, parentUrl.lastIndexOf("/")) : kernel.baseUrl ? kernel.baseUrl :
+                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
+                kernel.baseUrl ? kernel.baseUrl :
                 kernel.loaderUrl
     }
 
     function getCurrentScript(base) {
-        // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
+        // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
         var stack
         try {
             a.b.c() //强制报错,以便捕获e.stack
@@ -132,7 +132,6 @@ new function() {
             if (isCycle) {
                 avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
             }
-
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
@@ -156,7 +155,6 @@ new function() {
     function checkDeps() {
         //检测此JS模块的依赖是否都已安装完毕,是则安装自身
         loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
-
             var obj = modules[id],
                     deps = obj.deps
             for (var key in deps) {
@@ -386,9 +384,9 @@ new function() {
         plugin = plugins[plugin] || noop
         var id = match[2]
         var query = ""
-        if (queryReg.test(id)) {
+        if (rquery.test(id)) {
             query = RegExp.$1;
-            id = id.replace(queryReg, "");
+            id = id.replace(rquery, "");
         }
         var ext = plugin.ext || ""
         if (ext && id.substr(id.length - ext.length) === ext) {//去掉扩展名
@@ -396,7 +394,7 @@ new function() {
             id = id.slice(-ext.length)
         }
         //3. 是否命中paths配置项
-        var usePath =0
+        var usePath = 0
         eachIndexArray(id, kernel.paths, function(value, key) {
             url = url.replace(key, value)
             usePath = 1
@@ -417,7 +415,7 @@ new function() {
         }
         //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            url = joinPath( /\w/.test(url.charAt(0)) ? getBaseUrl() : parentUrl, url)
+            url = joinPath(/\w/.test(url.charAt(0)) ? getBaseUrl() : parentUrl, url)
         }
         //7. 还原扩展名，query
         url += ext + query
