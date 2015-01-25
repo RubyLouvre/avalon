@@ -74,7 +74,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 element.checked = checked
             }
         }
-        bound(IE6 ? "mouseup" : "click", updateVModel)
+        bound("click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {

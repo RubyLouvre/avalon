@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(去掉加载器与domReady) 1.39 build in 2015.1.21 
-____
+ avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.25 
+___
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -261,7 +261,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.39,
+    version: 1.391,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -380,12 +380,13 @@ avalon.mix({
             var i = 0
             if (isArrayLike(obj)) {
                 for (var n = obj.length; i < n; i++) {
-                    fn(i, obj[i])
+                    if (fn(i, obj[i]) === false)
+                        break
                 }
             } else {
                 for (i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        fn(i, obj[i])
+                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                        break
                     }
                 }
             }
@@ -943,8 +944,6 @@ var EventBus = {
 
 var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
 var findNodes = DOC.querySelectorAll ? function(str) {
-    //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
-    //https://gist.github.com/DavidBruant/1016007
     return DOC.querySelectorAll(str)
 } : function(str) {
     var match = str.match(ravalon)
@@ -1091,18 +1090,20 @@ function modelFactory(source, $special, $model) {
                     //计算属性与对象属性需要重新计算newValue
                     if (accessor.type !== 1) {
                         newValue = getNewValue(accessor, name, newValue, $vmodel)
+                        if (!accessor.type)
+                            return
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         if ($events.$digest) {
-                            if (accessor.pedding)
-                                return
-                            accessor.pedding = true
-                            setTimeout(function() {
-                                notifySubscribers($events[name]) //同步视图
-                                safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-                                accessor.pedding = false
-                            })
+                            if (!accessor.pedding) {
+                                accessor.pedding = true
+                                setTimeout(function() {
+                                    notifySubscribers($events[name]) //同步视图
+                                    safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+                                    accessor.pedding = false
+                                })
+                            }
                         } else {
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
@@ -1111,7 +1112,23 @@ function modelFactory(source, $special, $model) {
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
-                        return $model[name] = accessor.get.call($vmodel)
+                        var newValue = accessor.get.call($vmodel)
+                        if (oldValue !== newValue) {
+                            $model[name] = newValue
+                            //这里不用同步视图
+                            if ($events.$digest) {
+                                if (!accessor.pedding) {
+                                    accessor.pedding = true
+                                    setTimeout(function() {
+                                        safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+                                        accessor.pedding = false
+                                    })
+                                }
+                            } else {
+                                safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                            }
+                        }
+                        return newValue
                     } else {
                         collectSubscribers($events[name]) //收集视图函数
                         return accessor.svmodel || oldValue
@@ -1127,8 +1144,8 @@ function modelFactory(source, $special, $model) {
                 initCallbacks.push(function() {
                     var data = {
                         evaluator: function() {
-                            data.element = null
                             data.type = new Date - 0
+                            data.element = null
                             $model[name] = accessor.get.call($vmodel)
                         },
                         element: head,
@@ -1805,8 +1822,8 @@ var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "applicat
 var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关系的标签
 var script = DOC.createElement("script")
 avalon.parseHTML = function(html) {
-    if (typeof html !== "string") {
-        html = html + ""
+    if (typeof html !== "string" ) {
+        return DOC.createDocumentFragment()
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
@@ -3824,7 +3841,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 element.checked = checked
             }
         }
-        bound(IE6 ? "mouseup" : "click", updateVModel)
+        bound("click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {

@@ -385,7 +385,6 @@ new function() {
         var plugin = match[1] || "js"
         plugin = plugins[plugin] || noop
         var id = match[2]
-        var useBase = /\w/.test(id.charAt(0))
         var query = ""
         if (queryReg.test(id)) {
             query = RegExp.$1;
@@ -397,7 +396,7 @@ new function() {
             id = id.slice(-ext.length)
         }
         //3. 是否命中paths配置项
-        var usePath
+        var usePath =0
         eachIndexArray(id, kernel.paths, function(value, key) {
             url = url.replace(key, value)
             usePath = 1
@@ -413,13 +412,12 @@ new function() {
             eachIndexArray(mapUrl, kernel.map, function(array) {
                 eachIndexArray(url, array, function(mdValue, mdKey) {
                     url = url.replace(mdKey, mdValue)
-                    //  parentUrl = getBaseUrl()
                 })
             })
         }
         //6. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            url = joinPath(useBase ? getBaseUrl() : parentUrl, url)
+            url = joinPath( /\w/.test(url.charAt(0)) ? getBaseUrl() : parentUrl, url)
         }
         //7. 还原扩展名，query
         url += ext + query
