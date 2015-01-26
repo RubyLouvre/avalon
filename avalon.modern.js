@@ -4200,7 +4200,7 @@ new function() {
             return id
         },
         css: function(url) {
-            var id = trimQuery(url).replace(/\W/g, "_") ////用于处理掉href中的hash与所有特殊符号
+            var id = trimQuery(url)
             if (!DOC.getElementById(id)) {
                 var node = DOC.createElement("link")
                 node.rel = "stylesheet"
@@ -4210,10 +4210,9 @@ new function() {
             }
         },
         text: function(url) {
-            console.log(url+"!")
-            var xhr = getXHR()
             var id = trimQuery(url)
             modules[id] = {}
+            var xhr = getXHR()
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     var status = xhr.status;
@@ -4343,7 +4342,7 @@ new function() {
         }
         //2. 获取模块ID(去掉资源前缀，扩展名 hash, query)
         var plugin = "js"
-        url = url.replace(/^(\w+)\!/, function(a, b){
+        url = url.replace(/^(\w+)\!/, function(a, b) {
             plugin = b
             return ""
         })
@@ -4443,7 +4442,7 @@ new function() {
         index.sort(descSorterByName)
         return index
     }
-    
+
     function makeMatcher(prefix) {
         return new RegExp('^' + prefix + '(/|$)')
     }
