@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js(支持触屏事件) 1.391 build in 2015.1.25 
+ avalon.mobile.js(支持触屏事件) 1.391 build in 2015.1.26 
 _________
  support IE6+ and other browsers
  ==================================================*/
@@ -3175,7 +3175,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set")
+        var val = data.pipe(evaluator(), data, "set") + ""
         if (val !== element.oldValue) {
             element.value = val
         }
@@ -3245,7 +3245,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-    
+
     element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)

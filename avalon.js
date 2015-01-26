@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.391 build in 2015.1.25 
+ avalon.js 1.391 build in 2015.1.26 
 ____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -3811,7 +3811,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set")
+        var val = data.pipe(evaluator(), data, "set") + ""//fix #673
         if (val !== element.oldValue) {
             element.value = val
         }
