@@ -4043,7 +4043,7 @@ new function() {
         parentUrl = getBaseUrl(parentUrl)
 
         array.forEach(function(el) {
-            var url = loadResources(el, parentUrl, mapUrl) //加载资源，并返回能加载资源的完整路径
+            var url = loadResources(el, parentUrl, mapUrl) //加载资源，并返回.能加载资源的完整路径
             if (url) {
                 if (!deps[url]) {
                     args.push(url)
@@ -4148,14 +4148,6 @@ new function() {
             avalon.mix(allargs, hash)
             kernel.urlArgs = makeIndexArray(allargs, 1)
         },
-        bundles: function(obj) {
-            var bundles = kernel.bundles = {}
-            for (var key in obj) {
-                avalon.each(obj[key], function(val, id) {
-                    bundles[id] = key
-                })
-            }
-        },
         baseUrl: function(url) {
             if (!isAbsUrl(url)) {
                 var baseElement = head.getElementsByTagName("base")[0]
@@ -4218,6 +4210,7 @@ new function() {
             }
         },
         text: function(url) {
+            console.log(url+"!")
             var xhr = getXHR()
             var id = trimQuery(url)
             modules[id] = {}
@@ -4349,15 +4342,17 @@ new function() {
             return url
         }
         //2. 获取模块ID(去掉资源前缀，扩展名 hash, query)
-        var match = url.match(/(\w+!)?(.+)/)
-        var plugin = match[1] || "js"
+        var plugin = "js"
+        url = url.replace(/^(\w+)\!/, function(a, b){
+            plugin = b
+            return ""
+        })
         plugin = plugins[plugin] || noop
         var query = ""
-        var id = match[2].replace(rquery, function(a) {
+        var id = url.replace(rquery, function(a) {
             query = a
             return ""
         })
-
         var ext = plugin.ext || ""
         if (ext && id.substr(id.length - ext.length) === ext) {//去掉扩展名
             url = id.slice(0, -ext.length)
