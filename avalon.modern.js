@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.391 build in 2015.1.26 
+ avalon.modern.js 1.391 build in 2015.1.27 
 _____________________________
  support IE6+ and other browsers
  ==================================================*/

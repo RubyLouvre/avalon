@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.391 build in 2015.1.26 
+ avalon.js 1.391 build in 2015.1.27 
 ____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -430,19 +430,23 @@ var bindingHandlers = avalon.bindingHandlers = {}
 var bindingExecutors = avalon.bindingExecutors = {}
 
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
-
 function isArrayLike(obj) {
-    if (obj && typeof obj === "object") {
-        var n = obj.length
-        if (n === (n >>> 0)) { //检测length属性是否为非负整数
-            try {
-                if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
-                    return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
-                }
-                return true
-            } catch (e) { //IE的NodeList直接抛错
-                return true
+    if (!obj)
+        return false
+    var n = obj.length
+    if (n === (n >>> 0)) { //检测length属性是否为非负整数
+        var type = serialize.call(obj).slice(8, -1)
+        if (/(?:regexp|string|function|window|global)$/i.test(type))
+            return false
+        if (type === "Array")
+            return true
+        try {
+            if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
+                return  /^\s?function/.test(obj.item || obj.callee)
             }
+            return true
+        } catch (e) { //IE的NodeList直接抛错
+            return !obj.eval //IE6-8 window
         }
     }
     return false

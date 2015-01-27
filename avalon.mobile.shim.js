@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.26 
+ avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.27 
 upport IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
