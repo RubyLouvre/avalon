@@ -4341,21 +4341,21 @@ new function() {
             return url
         }
         //2. 获取模块ID(去掉资源前缀，扩展名 hash, query)
-        var plugin = "js"
+        var res = "js"
         url = url.replace(/^(\w+)\!/, function(a, b) {
-            plugin = b
+            res = b
             return ""
         })
-        plugin = plugins[plugin] || noop
+        var plugin = plugins[res] || noop
         var query = ""
         var id = url.replace(rquery, function(a) {
             query = a
             return ""
         })
-        var ext = plugin.ext || ""
-        if (ext && id.substr(id.length - ext.length) === ext) {//去掉扩展名
-            url = id.slice(0, -ext.length)
-            id = id.slice(-ext.length)
+        var ext = ""
+        if (res === "js") {
+            url = id = id.replace(/\.js$/i, "")
+            ext = ".js"
         }
         //3. 是否命中paths配置项
         var usePath = 0
