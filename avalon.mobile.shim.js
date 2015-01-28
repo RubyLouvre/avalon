@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.27 
+ avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.28 
 upport IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -259,10 +259,11 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type
             if (hook.deel) {
-                fn = hook.deel(el, fn)
+                fn = hook.deel(el, type, fn, true)
             }
         }
-        el.addEventListener(type, fn, !!phase)
+        if (!fn.unbind)
+            el.addEventListener(type, fn, !!phase)
         return fn
     },
     /*卸载事件*/
@@ -272,6 +273,9 @@ avalon.mix({
         var callback = fn || noop
         if (typeof hook === "object") {
             type = hook.type
+            if (hook.deel) {
+                fn = hook.deel(el, type, fn, false)
+            }
         }
         el.removeEventListener(type, callback, !!phase)
     },
@@ -4046,6 +4050,40 @@ new function() {
     } else if (IE9_10touch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
+
+
+    if (touchSupported) {
+        //我们经由ms-click, ms-on-tap绑定事件, 其实没有直接绑在元素,全部放到一个数组中
+        //当通过touchstart, touchend等事件混合计算得当前场景应该需要执行click, tap,那么
+        //直接执行el["msdispatch"]方法
+        "click,tap".replace(/\w+/g, function(method) {
+            avalon.eventHooks[method] = {
+                type: method,
+                deel: function(el, type, fn, isAdd) {
+                    var listName = "ms" + method + "list"
+                    var fns = el[listName] || (el[listName] = [])
+                    if (!el["msdispatch"]) {
+                        el["msdispatch"] = function(event) {
+                            if (event.fireByAvalon) {
+                                for (var i = 0, fn; fn = fns[i++]; ) {
+                                    fn.call(el, event)
+                                }
+                            }
+                        }
+                        el.addEventListener(type, el["msdispatch"])
+                    }
+                    if (isAdd) {
+                        fns.push(fn)
+                    } else {
+                        avalon.Array.remove(fns, fn)
+                    }
+                    fn.unbind = true
+                    return fn
+                }
+            }
+        })
+    }
+
     var touchProxy = {}
     //判定滑动方向
     function swipeDirection(x1, x2, y1, y2) {
@@ -4154,24 +4192,18 @@ new function() {
                 avalon(element).addClass(fastclick.activeClass)
             }
         }
-
         function needFixClick(type) {
-            return type === "click" 
+            return type === "click"
         }
         if (needFixClick(data.param) ? touchSupported : true) {
             data.specialBind = function(element, callback) {
-                function wrapCallback(e) {
-                    //在移动端上,如果用户是用click, dblclick绑定事件那么注意屏蔽原生的click,dblclick,只让手动触发的进来
-                    if (needFixClick(e.type) ? e.hasFixClick : true) {
-                        callback.call(element, e)
-                    }
-                }
                 element.addEventListener(touchNames[0], touchstart)
-                element.addEventListener(data.param, wrapCallback)
+                data.msCallback = callback
+                avalon.bind(element, data.param, callback)
             }
             data.specialUnbind = function() {
                 element.removeEventListener(touchNames[0], touchstart)
-                element.removeEventListener(data.param, wrapCallback)
+                avalon.bind(data.element, data.param, data.msCallback)
             }
         }
     }
@@ -4186,10 +4218,8 @@ new function() {
             var clickEvent = document.createEvent("MouseEvents")
             clickEvent.initMouseEvent(type, true, true, window, 1, event.screenX, event.screenY,
                     event.clientX, event.clientY, false, false, false, false, 0, null)
-            Object.defineProperty(clickEvent, "hasFixClick", {
-                get: function() {
-                    return "司徒正美"
-                }
+            Object.defineProperty(clickEvent, "fireByAvalon", {
+                value: true
             })
             element.dispatchEvent(clickEvent)
         },
