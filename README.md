@@ -188,7 +188,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 *  [入门教程](http://www.cnblogs.com/rubylouvre/p/3181291.html)
 *  [HTML5交流会有关avalon的PPT](http://vdisk.weibo.com/s/aMO9PyIQCnLOF/1375154475)
 *  [avalon最佳实践](http://www.cnblogs.com/rubylouvre/p/3385373.html)
-*  [《avalon探索之旅》系列视频教程](http://v.qq.com/search.html?pagetype=3&stj2=search.search&stag=txt.index&ms_key=Avalon%E6%8E%A2%E7%B4%A2%E4%B9%8B%E6%97%85)
+*  [《avalon探索之旅》系列视频教程](http://edu.51cto.com/course/course_id-2533-page-1.html)
 
 ### 运行github中的示例
 

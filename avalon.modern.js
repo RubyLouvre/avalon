@@ -4020,6 +4020,7 @@ new function() {
  *                      AMD加载器                                   *
  **********************************************************************/
 //https://www.devbridge.com/articles/understanding-amd-requirejs/
+//http://maxogden.com/nested-dependencies.html
 var modules = avalon.modules = {
     "ready!": {
         exports: avalon
@@ -4030,8 +4031,6 @@ var modules = avalon.modules = {
     }
 }
 modules.exports = modules.avalon
-//http://stackoverflow.com/questions/25175914/bundles-in-requirejs
-//http://maxogden.com/nested-dependencies.html
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
