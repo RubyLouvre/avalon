@@ -4744,7 +4744,7 @@ new function() {
             args.unshift([])
         }
         //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
-        //现在除了safari5,1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
+        //现在除了safari5.1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
         //safari可通过onload+ factory.require闭包组合解决
         var url = modules[id] && modules[id].state >= 1 ? id : trimQuery(getCurrentScript())
         factory = args[1]
@@ -5013,7 +5013,7 @@ new function() {
 
     function loadResources(url, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
-        if (modules[url] && modules[url].state === 2) {
+        if (url === "ready!" || modules[url] && modules[url].state === 2) {
             return url
         }
 

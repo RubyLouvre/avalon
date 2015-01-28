@@ -326,7 +326,7 @@ new function() {
 
     function loadResources(url, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
-        if (modules[url] && modules[url].state === 2) {
+        if (url === "ready!" || modules[url] && modules[url].state === 2) {
             return url
         }
 
