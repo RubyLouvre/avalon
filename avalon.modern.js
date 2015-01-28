@@ -4230,9 +4230,7 @@ new function() {
     var resources = innerRequire.plugins = {
         //三大常用资源插件 js!, css!, text!, ready!
         ready: {
-            load: function(a, b, c) {
-                //  c()
-            }
+            load: noop
         },
         js: {
             load: function(name, req, onLoad) {
@@ -4355,7 +4353,7 @@ new function() {
             res = b
             return ""
         })
-      
+
         var req = {
             toUrl: toUrl,
             parentUrl: parentUrl,
@@ -4382,7 +4380,7 @@ new function() {
                 wrap(resources[res])
             }
         }
-        return url ? urlNoQuery :  res + "!"
+        return url ? urlNoQuery : res + "!"
     }
     function toUrl(url) {
         //1. 处理querystring, hash
