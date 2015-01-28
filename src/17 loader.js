@@ -212,7 +212,9 @@ new function() {
     var resources = innerRequire.plugins = {
         //三大常用资源插件 js!, css!, text!, ready!
         ready: {
-            load: noop
+            load: function(a, b, c) {
+                //  c()
+            }
         },
         js: {
             load: function(name, req, onLoad) {
@@ -326,7 +328,7 @@ new function() {
 
     function loadResources(url, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
-        if (url === "ready!" || modules[url] && modules[url].state === 2) {
+        if (modules[url] && modules[url].state === 2) {
             return url
         }
 
@@ -335,6 +337,7 @@ new function() {
             res = b
             return ""
         })
+      
         var req = {
             toUrl: toUrl,
             parentUrl: parentUrl,
@@ -361,7 +364,7 @@ new function() {
                 wrap(resources[res])
             }
         }
-        return urlNoQuery
+        return url ? urlNoQuery :  res + "!"
     }
     function toUrl(url) {
         //1. 处理querystring, hash
