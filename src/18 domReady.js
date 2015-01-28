@@ -3,7 +3,6 @@
  **********************************************************************/
 
 var readyList = []
-
 function fireReady() {
     if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
         if (innerRequire) {
@@ -38,13 +37,13 @@ if (DOC.readyState === "complete") {
         }
     })
     var isFrame;
-    try{
-        isFrame=window.frameElement!=null//当前页面处于iframe中时,访问frameElement会抛出不允许跨域访问异常
+    try {
+        isFrame = window.frameElement != null//当前页面处于iframe中时,访问frameElement会抛出不允许跨域访问异常
     }
-    catch(e){
-        isFrame=true
+    catch (e) {
+        isFrame = true
     }
-    if (root.doScroll&& !isFrame) {//只有不处于iframe时才用doScroll判断,否则可能会不准
+    if (root.doScroll && !isFrame) {//只有不处于iframe时才用doScroll判断,否则可能会不准
         doScrollCheck()
     }
 }
