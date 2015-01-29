@@ -4947,10 +4947,10 @@ new function() {
                     }
                 }
                 xhr.open("GET", url, true)
-                if ("withCredentials" in xhr) {
+                if ("withCredentials" in xhr) {//这是处理跨域
                     xhr.withCredentials = true
                 }
-                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
                 xhr.send()
             }
         }
