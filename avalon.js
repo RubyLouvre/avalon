@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.391 build in 2015.1.28 
+ avalon.js 1.391 build in 2015.1.29 
 ____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -5030,8 +5030,8 @@ new function() {
             res: res
         }
 
-        var urlNoQuery = trimQuery(req.toUrl(url))
-        if (!modules[urlNoQuery]) {
+        var urlNoQuery = url && trimQuery(req.toUrl(url))
+        if (url && !modules[urlNoQuery]) {
             var module = modules[urlNoQuery] = makeModule(urlNoQuery)
             function wrap(obj) {
                 resources[res] = obj
