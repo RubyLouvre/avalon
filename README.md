@@ -2,9 +2,9 @@
 
 A lightweight、high-performance and easy-to-follow javascript MVVM framework
 
-* Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices. For requirejs or amd-like loader, use the corresponding shim version.
-* The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here's the three pillars: 1、[mmRouter](https://github.com/RubyLouvre/mmRouter) for router, [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
-* The test cases are in a individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
+* Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices. For requirejs or AMD-like loader, use the corresponding shim version.
+* The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here's the three pillars: 1. [mmRouter](https://github.com/RubyLouvre/mmRouter) for router, 2. [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, 3. [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
+* The test cases are in an individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
 
 ## Advantages
 
