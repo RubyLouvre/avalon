@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js(支持触屏事件) 1.391 build in 2015.1.30 
+ avalon.mobile.js(支持触屏事件) 1.391 build in 2015.1.31 
 _________
  support IE6+ and other browsers
  ==================================================*/
@@ -4066,45 +4066,40 @@ new function() {
         checkDeps()
     }
     //核心API之二 require
-    innerRequire.define = function(urlOrId, deps, factory) { //模块名,依赖列表,模块本身
+    innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         var args = aslice.call(arguments)
-        if (typeof urlOrId === "string") {
-            var id = args.shift()
+        if (typeof name === "string") {
+            var name = args.shift().replace(/^\/\//, "").replace(rjsext, "")
         }
         if (typeof args[0] === "function") {
             args.unshift([])
         }
-        //上线合并后能直接得到模块ID,否则寻找当前正在解析中的script节点的src作为模块ID
-        //现在除了safari5.1-外，我们都能直接通过getCurrentScript一步到位得到当前执行的script节点，
-        //safari可通过onload+ factory.require闭包组合解决
-        var url = modules[id] && modules[id].state >= 1 ? id : trimQuery(getCurrentScript())
+
         factory = args[1]
-        factory.id = id //用于调试
-        
-        
-
-        if (!modules[url] && id) {
-            //必须先行定义，并且不存在deps，用于checkCycle方法
-            modules[url] = makeModule(url, 1, factory)
-        }
-
         factory.require = function(url) {
             args.push(url)
-            var isCycle = true
-            try {
-                isCycle = checkCycle(modules[url].deps, url)
-            } catch (e) {
-            }
-            if (isCycle) {
-                avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
+            if (modules[url]) {
+                var isCycle = true
+                try {
+                    isCycle = checkCycle(modules[url].deps, url)
+                } catch (e) {
+                }
+                if (isCycle) {
+                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
+                }
             }
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        if (url) {
+        if (window.VBArray) {
+            var url = trimQuery(getCurrentScript())
+            var module = modules[url]
+            if (module) {
+                module.state = 1
+            }
             factory.require(url)
-        } else { //先进先出
-            factorys.push(factory)
+        } else {
+            factorys.push(factory) //先进先出
         }
     }
     //核心API之三 require.config(settings)
@@ -4306,7 +4301,7 @@ new function() {
                 kernel.baseUrl ? kernel.baseUrl :
                 kernel.loaderUrl
     }
-
+    var currentScript
     function getCurrentScript(base) {
         // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
         var stack
@@ -4440,6 +4435,7 @@ new function() {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        currentScript = id
         node[W3C ? "onload" : "onreadystatechange"] = function() {
             if (W3C || /loaded|complete/i.test(node.readyState)) {
                 //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
@@ -4460,6 +4456,7 @@ new function() {
         }
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
+        currentScript = null
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
@@ -4505,7 +4502,7 @@ new function() {
     function makeModule(id, state, factory, deps, args) {
         return {
             id: id,
-            state: state || 1,
+            state: state || 0,
             factory: factory || noop,
             deps: deps || {},
             args: args || []
