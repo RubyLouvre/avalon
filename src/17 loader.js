@@ -17,13 +17,15 @@ new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
     var rjsext = /\.js$/i
+    var name2url = {}
+    var builtModules = {}
     //核心API之一 require
     innerRequire = avalon.require = function(array, factory, parentUrl) {
         if (!Array.isArray(array)) {
             avalon.error("require的第一个参数必须是依赖列数,类型为数组 " + array)
         }
-        var args = [] // 放置所有依赖项的完整路径
-        var deps = {} // args的另一种表现形式，为的是方便去重
+        var deps = [] // 放置所有依赖项的完整路径
+        var uniq = {}
         var id = parentUrl || "callback" + setTimeout("1")
         var mapUrl = parentUrl && parentUrl.replace(rjsext, "")
         parentUrl = getBaseUrl(parentUrl)
@@ -31,15 +33,15 @@ new function() {
         array.forEach(function(el) {
             var url = loadResources(el, parentUrl, mapUrl) //加载资源，并返回.能加载资源的完整路径
             if (url) {
-                if (!deps[url]) {
-                    args.push(url)
-                    deps[url] = "司徒正美" //去重
+                if (!uniq[url]) {
+                    deps.push(url)
+                    uniq[url] = "司徒正美" //去重
                 }
             }
         })
         var module = modules[id]
         if (!module || module.state !== 2) {
-            modules[id] = makeModule(id, 1, factory, deps, args)//更新此模块信息
+            modules[id] = makeModule(id, deps, factory, 1)//更新此模块信息
         }
         if (!module) {
             //如果此模块是定义在另一个JS文件中, 那必须等该文件加载完毕, 才能放到检测列队中
@@ -52,6 +54,11 @@ new function() {
         var args = aslice.call(arguments)
         if (typeof name === "string") {
             var name = args.shift().replace(/^\/\//, "").replace(rjsext, "")
+            builtModules[name] = {
+                args: deps,
+                factory: factory
+            }
+
         }
         if (typeof args[0] === "function") {
             args.unshift([])
@@ -73,7 +80,7 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        if (window.VBArray) {
+        if (document.createStyleSheet) {
             var url = trimQuery(getCurrentScript())
             var module = modules[url]
             if (module) {
@@ -167,8 +174,9 @@ new function() {
     //==============================内部方法=================================
     function checkCycle(deps, nick) {
         //检测是否存在循环依赖
-        for (var id in deps) {
-            if (deps[id] === "司徒正美" && modules[id].state !== 2 && (id === nick || checkCycle(modules[id].deps, nick))) {
+        for (var i = 0, id; id = deps[i++]; ) {
+            if (modules[id].state !== 2 &&
+                    (id === nick || checkCycle(modules[id].deps, nick))) {
                 return true
             }
         }
@@ -193,15 +201,19 @@ new function() {
         loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
             var obj = modules[id],
                     deps = obj.deps
-            for (var key in deps) {
-                if (ohasOwn.call(deps, key) && modules[key].state !== 2) {
+            for (var j = 0, key; key = deps[j]; j++) {
+                var k = name2url[key]
+                if (k) {
+                    key = deps[j] = k
+                }
+                if (Object(modules[key]).state !== 2) {
                     continue loop
                 }
             }
             //如果deps是空对象或者其依赖的模块的状态都是2
             if (obj.state !== 2) {
                 loadings.splice(i, 1) //必须先移除再安装，防止在IE下DOM树建完后手动刷新页面，会多次执行它
-                fireFactory(obj.id, obj.args, obj.factory)
+                fireFactory(obj.id, obj.deps, obj.factory)
                 checkDeps() //如果成功,则再执行一次,以防有些模块就差本模块没有安装好
             }
         }
@@ -283,7 +295,7 @@ new function() {
                 kernel.baseUrl ? kernel.baseUrl :
                 kernel.loaderUrl
     }
-    var currentScript
+
     function getCurrentScript(base) {
         // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
         var stack
@@ -321,14 +333,14 @@ new function() {
         }
     }
 
-    function loadResources(url, parentUrl, mapUrl) {
+    function loadResources(name, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
-        if (modules[url] && modules[url].state === 2) {
-            return url
+        if (modules[name] && modules[name].state === 2) {
+            return name
         }
 
         var res = "js"
-        url = url.replace(/^(\w+)\!/, function(a, b) {
+        name = name.replace(/^(\w+)\!/, function(a, b) {
             res = b
             return ""
         })
@@ -340,12 +352,19 @@ new function() {
             res: res
         }
 
-        var urlNoQuery = url && trimQuery(req.toUrl(url))
-        if (url && !modules[urlNoQuery]) {
+        var urlNoQuery = name && trimQuery(req.toUrl(name))
+        name2url[name] = urlNoQuery
+        if (name && !modules[urlNoQuery]) {
             var module = modules[urlNoQuery] = makeModule(urlNoQuery)
             function wrap(obj) {
                 resources[res] = obj
-                obj.load(url, req, function(a) {
+                if (urlNoQuery !== getCurrentScript(true) && builtModules[name]) {
+                    module = modules[urlNoQuery] = builtModules[name]
+                    module.id = urlNoQuery
+                    loadings.push(urlNoQuery)
+                    return checkDeps()
+                }
+                obj.load(name, req, function(a) {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
                     }
@@ -359,7 +378,7 @@ new function() {
                 wrap(resources[res])
             }
         }
-        return url ? urlNoQuery : res + "!"
+        return name ? urlNoQuery : res + "!"
     }
     function toUrl(url) {
         //1. 处理querystring, hash
@@ -443,6 +462,7 @@ new function() {
         var module = Object(modules[id])
         module.state = 2
         for (var i = 0, array = [], d; d = deps[i++]; ) {
+            d = name2url[d] || d
             if (d === "exports") {
                 var obj = module.exports || (module.exports = {})
                 array.push(obj)
@@ -478,13 +498,12 @@ new function() {
         }
     }
 
-    function makeModule(id, state, factory, deps, args) {
+    function makeModule(id, deps, factory, state) {
         return {
             id: id,
-            state: state || 0,
+            deps: deps || [],
             factory: factory || noop,
-            deps: deps || {},
-            args: args || []
+            state: state || 0
         }
     }
 
