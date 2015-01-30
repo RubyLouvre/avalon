@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.391 build in 2015.1.29 
+ avalon.modern.js 1.391 build in 2015.1.30 
 _____________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4080,6 +4080,8 @@ new function() {
         var url = modules[id] && modules[id].state >= 1 ? id : trimQuery(getCurrentScript())
         factory = args[1]
         factory.id = id //用于调试
+        
+        
 
         if (!modules[url] && id) {
             //必须先行定义，并且不存在deps，用于checkCycle方法
@@ -4584,13 +4586,19 @@ new function() {
         return g
     }
 
-
     var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
+    var curNode = DOC.scripts[DOC.scripts.length - 1];
     if (!cur) { //处理window safari的Error没有stack的问题
-        cur = DOC.scripts[DOC.scripts.length - 1].src
+        cur = curNode.src
     }
     var url = trimQuery(cur)
     kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
+    var mainScript = curNode.getAttribute("data-main")
+    if (mainScript) {
+        mainScript = mainScript.split('/').pop()
+        innerRequire([mainScript], noop)
+    }
+
 
 }
 

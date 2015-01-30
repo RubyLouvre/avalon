@@ -62,6 +62,8 @@ new function() {
         var url = modules[id] && modules[id].state >= 1 ? id : trimQuery(getCurrentScript())
         factory = args[1]
         factory.id = id //用于调试
+        
+        
 
         if (!modules[url] && id) {
             //必须先行定义，并且不存在deps，用于checkCycle方法
