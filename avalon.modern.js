@@ -4435,10 +4435,8 @@ new function() {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        currentScript = id
         node[W3C ? "onload" : "onreadystatechange"] = function() {
             if (W3C || /loaded|complete/i.test(node.readyState)) {
-                //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
                 var factory = factorys.pop()
                 factory && factory.require(id)
                 if (callback) {
@@ -4456,7 +4454,6 @@ new function() {
         }
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-        currentScript = null
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
@@ -4583,14 +4580,11 @@ new function() {
         return g
     }
 
-    var cur = getCurrentScript(true) //求得当前avalon.js 所在的JS文件的路径
-    var curNode = DOC.scripts[DOC.scripts.length - 1];
-    if (!cur) { //处理window safari的Error没有stack的问题
-        cur = curNode.src
-    }
-    var url = trimQuery(cur)
-    kernel.loaderUrl = url.slice(0, url.lastIndexOf("/") + 1)
-    var mainScript = curNode.getAttribute("data-main")
+    var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
+    var loaderUrl = "1"[0] ? mainNode.src : mainNode.getAttribute("src", 4)
+    loaderUrl = trimQuery(loaderUrl)
+    kernel.loaderUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
+    var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
         mainScript = mainScript.split('/').pop()
         innerRequire([mainScript], noop)
