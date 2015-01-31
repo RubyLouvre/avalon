@@ -49,8 +49,8 @@ new function() {
         }
         checkDeps()
     }
-    
-      function loadResources(name, parentUrl, mapUrl) {
+
+    function loadResources(name, parentUrl, mapUrl) {
         //1. 特别处理ready标识符及已经加载好的模块
         if (modules[name] && modules[name].state === 2) {
             return name
@@ -128,8 +128,8 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-         var url = getCurrentScript()
-            if (url) {
+        var url = getCurrentScript()
+        if (url) {
             var module = modules[url]
             if (module) {
                 module.state = 1
@@ -374,14 +374,14 @@ new function() {
         }
         var nodes = head.getElementsByTagName("script") //只在head标签中寻找
         for (var i = nodes.length, node; node = nodes[--i]; ) {
-            if ((base || node.className === subscribers) && node.readyState === "interactive") {
+            if (node.className === subscribers && node.readyState === "interactive") {
                 var url = "1"[0] ? node.src : node.getAttribute("src", 4)
                 return node.className = trimQuery(url)
             }
         }
     }
 
-  
+
     function toUrl(url) {
         //1. 处理querystring, hash
         var query = ""

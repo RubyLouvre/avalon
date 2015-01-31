@@ -4453,10 +4453,10 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize: 2)
+        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: function(number, fractionSize) {
-        return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
+        return  numberFormat(number, isFinite(fractionSize) ? fractionSize : 3)
     }
 }
 /*
@@ -4494,7 +4494,7 @@ var filters = avalon.filters = {
  */
 new function() {
     function toInt(str) {
-        return parseInt(str, 10)
+        return parseInt(str, 10) || 0
     }
 
     function padNumber(num, digits, trim) {
@@ -4567,33 +4567,8 @@ new function() {
         Z: timeZoneGetter
     }
     var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
-            NUMBER_STRING = /^\d+$/
-    var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
-    // 1        2       3         4          5          6          7          8  9     10      11
+            rnumeric = /^\d+$/
 
-    function jsonStringToDate(string) {
-        var match
-        if (match = string.match(riso8601)) {
-            var date = new Date(0),
-                    tzHour = 0,
-                    tzMin = 0,
-                    dateSetter = match[8] ? date.setUTCFullYear : date.setFullYear,
-                    timeSetter = match[8] ? date.setUTCHours : date.setHours
-            if (match[9]) {
-                tzHour = toInt(match[9] + match[10])
-                tzMin = toInt(match[9] + match[11])
-            }
-            dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-            var h = toInt(match[4] || 0) - tzHour
-            var m = toInt(match[5] || 0) - tzMin
-            var s = toInt(match[6] || 0)
-            var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
-            timeSetter.call(date, h, m, s, ms)
-            return date
-        }
-        return string
-    }
-    var rfixYMD = /^(\d+)\D(\d+)\D(\d+)/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -4602,17 +4577,49 @@ new function() {
         format = format || "mediumDate"
         format = locate[format] || format
         if (typeof date === "string") {
-            if (NUMBER_STRING.test(date)) {
+            if (rnumeric.test(date)) {
                 date = toInt(date)
             } else {
                 var trimDate = date.trim()
-                date = trimDate.replace(rfixYMD, function(a, b, c, d) {
+                var dateArray = [0, 0, 0, 0, 0, 0, 0]
+                var oDate = new Date(0)
+                //取得年月日
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(a, b, c, d) {
                     var array = d.length === 4 ? [d, b, c] : [b, c, d]
-                    return array.join("-")
+                    dateArray[0] = toInt(array[0]) //年
+                    dateArray[1] = toInt(array[1]) - 1 //月
+                    dateArray[2] = toInt(array[2])//日
+                    return ""
                 })
-                date = jsonStringToDate(date)
+                var dateSetter = oDate.setFullYear
+                var timeSetter = oDate.setHours
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                    dateArray[3] = toInt(a) //小时
+                    dateArray[4] = toInt(b) //分钟
+                    dateArray[5] = toInt(c) //秒
+                    dateArray[6] = d || ""    //毫秒
+                    return ""
+                })
+
+                dateArray[6] = Math.round(parseFloat('0.' + dateArray[6]) * 1000)
+                var tzHour = 0
+                var tzMin = 0
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                    dateSetter = oDate.setUTCFullYear
+                    timeSetter = oDate.setUTCHours
+                    if (symbol) {
+                        tzHour = toInt(symbol + c)
+                        tzMin = toInt(symbol + d)
+                    }
+                    return ""
+                })
+
+                dateArray[3] -= tzHour
+                dateArray[4] -= tzMin
+                dateSetter.apply(oDate, dateArray.slice(0, 3))
+                timeSetter.apply(oDate, dateArray.slice(3))
+                date = oDate
             }
-            date = new Date(date)
         }
         if (typeof date === "number") {
             date = new Date(date)
@@ -4736,13 +4743,61 @@ new function() {
         }
         checkDeps()
     }
+
+    function loadResources(name, parentUrl, mapUrl) {
+        //1. 特别处理ready标识符及已经加载好的模块
+        if (modules[name] && modules[name].state === 2) {
+            return name
+        }
+
+        var res = "js"
+        name = name.replace(/^(\w+)\!/, function(a, b) {
+            res = b
+            return ""
+        })
+
+        var req = {
+            toUrl: toUrl,
+            parentUrl: parentUrl,
+            mapUrl: mapUrl,
+            res: res
+        }
+
+        var urlNoQuery = name && trimQuery(req.toUrl(name))
+        name2url[name] = urlNoQuery
+        if (name && !modules[urlNoQuery]) {
+            var module = modules[urlNoQuery] = makeModule(urlNoQuery)
+            function wrap(obj) {
+                resources[res] = obj
+                if (urlNoQuery !== getCurrentScript() && builtModules[name]) {
+                    module = modules[urlNoQuery] = builtModules[name]
+                    module.id = urlNoQuery
+                    loadings.push(urlNoQuery)
+                    return checkDeps()
+                }
+                obj.load(name, req, function(a) {
+                    if (arguments.length && a !== void 0) {
+                        module.exports = a
+                    }
+                    module.state = 2
+                    innerRequire.checkDeps()
+                })
+            }
+            if (!resources[res]) {
+                innerRequire([res], wrap)
+            } else {
+                wrap(resources[res])
+            }
+        }
+        return name ? urlNoQuery : res + "!"
+    }
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         var args = aslice.call(arguments)
         if (typeof name === "string") {
             var name = args.shift().replace(/^\/\//, "").replace(rjsext, "")
             builtModules[name] = {
-                args: deps,
+                deps: deps,
                 factory: factory
             }
 
@@ -4767,8 +4822,8 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        if (document.createStyleSheet) {
-            var url = trimQuery(getCurrentScript())
+        var url = getCurrentScript()
+        if (url) {
             var module = modules[url]
             if (module) {
                 module.state = 1
@@ -4983,16 +5038,16 @@ new function() {
                 kernel.loaderUrl
     }
 
-    function getCurrentScript(base) {
+    function getCurrentScript() {
         // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
         var stack
         try {
             a.b.c() //强制报错,以便捕获e.stack
-        } catch (e) { //safari的错误对象只有line,sourceId,sourceURL
+        } catch (e) { //safari5的sourceURL，firefox的fileName，它们的效果与e.stack不一样
             stack = e.stack
             if (!stack && window.opera) {
                 //opera 9没有e.stack,但有e.Backtrace,但不能直接取得,需要对e对象转字符串进行抽取
-                stack = (String(e).match(/of linked script \S+/g) || []).join(" ")
+                stack = trimQuery(String(e).match(/of linked script \S+/g) || []).join(" ")
             }
         }
         if (stack) {
@@ -5011,62 +5066,16 @@ new function() {
             stack = stack[0] === "(" ? stack.slice(1, -1) : stack.replace(/\s/, "") //去掉换行符
             return stack.replace(/(:\d+)?:\d+$/i, "") //去掉行号与或许存在的出错字符起始位置
         }
-        var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
+        var nodes = head.getElementsByTagName("script") //只在head标签中寻找
         for (var i = nodes.length, node; node = nodes[--i]; ) {
-            if ((base || node.className === subscribers) && node.readyState === "interactive") {
+            if (node.className === subscribers && node.readyState === "interactive") {
                 var url = "1"[0] ? node.src : node.getAttribute("src", 4)
-                return node.className = url
+                return node.className = trimQuery(url)
             }
         }
     }
 
-    function loadResources(name, parentUrl, mapUrl) {
-        //1. 特别处理ready标识符及已经加载好的模块
-        if (modules[name] && modules[name].state === 2) {
-            return name
-        }
 
-        var res = "js"
-        name = name.replace(/^(\w+)\!/, function(a, b) {
-            res = b
-            return ""
-        })
-
-        var req = {
-            toUrl: toUrl,
-            parentUrl: parentUrl,
-            mapUrl: mapUrl,
-            res: res
-        }
-
-        var urlNoQuery = name && trimQuery(req.toUrl(name))
-        name2url[name] = urlNoQuery
-        if (name && !modules[urlNoQuery]) {
-            var module = modules[urlNoQuery] = makeModule(urlNoQuery)
-            function wrap(obj) {
-                resources[res] = obj
-                if (urlNoQuery !== getCurrentScript(true) && builtModules[name]) {
-                    module = modules[urlNoQuery] = builtModules[name]
-                    module.id = urlNoQuery
-                    loadings.push(urlNoQuery)
-                    return checkDeps()
-                }
-                obj.load(name, req, function(a) {
-                    if (arguments.length && a !== void 0) {
-                        module.exports = a
-                    }
-                    module.state = 2
-                    innerRequire.checkDeps()
-                })
-            }
-            if (!resources[res]) {
-                innerRequire([res], wrap)
-            } else {
-                wrap(resources[res])
-            }
-        }
-        return name ? urlNoQuery : res + "!"
-    }
     function toUrl(url) {
         //1. 处理querystring, hash
         var query = ""
