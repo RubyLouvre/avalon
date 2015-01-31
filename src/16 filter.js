@@ -221,9 +221,7 @@ new function() {
         a: ampmGetter,
         Z: timeZoneGetter
     }
-    var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
-            rnumeric = /^\d+$/
-
+    var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -232,15 +230,15 @@ new function() {
         format = format || "mediumDate"
         format = locate[format] || format
         if (typeof date === "string") {
-            if (rnumeric.test(date)) {
+            if (/^\d+$/.test(date)) {
                 date = toInt(date)
             } else {
                 var trimDate = date.trim()
                 var dateArray = [0, 0, 0, 0, 0, 0, 0]
                 var oDate = new Date(0)
                 //取得年月日
-                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(a, b, c, d) {
-                    var array = d.length === 4 ? [d, b, c] : [b, c, d]
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                    var array = c.length === 4 ? [c, a, b] : [a, b, c]
                     dateArray[0] = toInt(array[0]) //年
                     dateArray[1] = toInt(array[1]) - 1 //月
                     dateArray[2] = toInt(array[2])//日
@@ -252,11 +250,12 @@ new function() {
                     dateArray[3] = toInt(a) //小时
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
-                    dateArray[6] = d || ""    //毫秒
+                    if (d) {
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)  //毫秒
+                    }
+                    dateArray[6] = d || ""
                     return ""
                 })
-
-                dateArray[6] = Math.round(parseFloat('0.' + dateArray[6]) * 1000)
                 var tzHour = 0
                 var tzMin = 0
                 trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
@@ -283,7 +282,7 @@ new function() {
             return
         }
         while (format) {
-            match = DATE_FORMATS_SPLIT.exec(format)
+            match = rdateFormat.exec(format)
             if (match) {
                 parts = parts.concat(match.slice(1))
                 format = parts.pop()

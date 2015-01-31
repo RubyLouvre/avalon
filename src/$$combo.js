@@ -70,7 +70,7 @@ var compatibleFiles = [
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
     directive("duplex.3"), directive("repeat"),
-    "16 filter", "17 loader", "18 domReady", "19 outer"
+    "16 filter", "17 loader2", "18 domReady", "19 outer"
 ]
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = compatibleFiles.concat()

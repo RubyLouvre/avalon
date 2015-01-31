@@ -75,12 +75,12 @@ new function() {
             var module = modules[urlNoQuery] = makeModule(urlNoQuery)
             function wrap(obj) {
                 resources[res] = obj
-                if (urlNoQuery !== getCurrentScript() && builtModules[name]) {
-                    module = modules[urlNoQuery] = builtModules[name]
-                    module.id = urlNoQuery
-                    loadings.push(urlNoQuery)
-                    return checkDeps()
-                }
+//                if (urlNoQuery !== getCurrentScript() && builtModules[name]) {
+//                    module = modules[urlNoQuery] = builtModules[name]
+//                    module.id = urlNoQuery
+//                    loadings.push(urlNoQuery)
+//                    return checkDeps()
+//                }
                 obj.load(name, req, function(a) {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
