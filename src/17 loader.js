@@ -49,13 +49,61 @@ new function() {
         }
         checkDeps()
     }
+    
+      function loadResources(name, parentUrl, mapUrl) {
+        //1. 特别处理ready标识符及已经加载好的模块
+        if (modules[name] && modules[name].state === 2) {
+            return name
+        }
+
+        var res = "js"
+        name = name.replace(/^(\w+)\!/, function(a, b) {
+            res = b
+            return ""
+        })
+
+        var req = {
+            toUrl: toUrl,
+            parentUrl: parentUrl,
+            mapUrl: mapUrl,
+            res: res
+        }
+
+        var urlNoQuery = name && trimQuery(req.toUrl(name))
+        name2url[name] = urlNoQuery
+        if (name && !modules[urlNoQuery]) {
+            var module = modules[urlNoQuery] = makeModule(urlNoQuery)
+            function wrap(obj) {
+                resources[res] = obj
+                if (urlNoQuery !== getCurrentScript() && builtModules[name]) {
+                    module = modules[urlNoQuery] = builtModules[name]
+                    module.id = urlNoQuery
+                    loadings.push(urlNoQuery)
+                    return checkDeps()
+                }
+                obj.load(name, req, function(a) {
+                    if (arguments.length && a !== void 0) {
+                        module.exports = a
+                    }
+                    module.state = 2
+                    innerRequire.checkDeps()
+                })
+            }
+            if (!resources[res]) {
+                innerRequire([res], wrap)
+            } else {
+                wrap(resources[res])
+            }
+        }
+        return name ? urlNoQuery : res + "!"
+    }
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         var args = aslice.call(arguments)
         if (typeof name === "string") {
             var name = args.shift().replace(/^\/\//, "").replace(rjsext, "")
             builtModules[name] = {
-                args: deps,
+                deps: deps,
                 factory: factory
             }
 
@@ -80,8 +128,8 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        if (document.createStyleSheet) {
-            var url = trimQuery(getCurrentScript())
+         var url = getCurrentScript()
+            if (url) {
             var module = modules[url]
             if (module) {
                 module.state = 1
@@ -296,16 +344,16 @@ new function() {
                 kernel.loaderUrl
     }
 
-    function getCurrentScript(base) {
+    function getCurrentScript() {
         // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
         var stack
         try {
             a.b.c() //强制报错,以便捕获e.stack
-        } catch (e) { //safari的错误对象只有line,sourceId,sourceURL
+        } catch (e) { //safari5的sourceURL，firefox的fileName，它们的效果与e.stack不一样
             stack = e.stack
             if (!stack && window.opera) {
                 //opera 9没有e.stack,但有e.Backtrace,但不能直接取得,需要对e对象转字符串进行抽取
-                stack = (String(e).match(/of linked script \S+/g) || []).join(" ")
+                stack = trimQuery(String(e).match(/of linked script \S+/g) || []).join(" ")
             }
         }
         if (stack) {
@@ -324,62 +372,16 @@ new function() {
             stack = stack[0] === "(" ? stack.slice(1, -1) : stack.replace(/\s/, "") //去掉换行符
             return stack.replace(/(:\d+)?:\d+$/i, "") //去掉行号与或许存在的出错字符起始位置
         }
-        var nodes = (base ? DOC : head).getElementsByTagName("script") //只在head标签中寻找
+        var nodes = head.getElementsByTagName("script") //只在head标签中寻找
         for (var i = nodes.length, node; node = nodes[--i]; ) {
             if ((base || node.className === subscribers) && node.readyState === "interactive") {
                 var url = "1"[0] ? node.src : node.getAttribute("src", 4)
-                return node.className = url
+                return node.className = trimQuery(url)
             }
         }
     }
 
-    function loadResources(name, parentUrl, mapUrl) {
-        //1. 特别处理ready标识符及已经加载好的模块
-        if (modules[name] && modules[name].state === 2) {
-            return name
-        }
-
-        var res = "js"
-        name = name.replace(/^(\w+)\!/, function(a, b) {
-            res = b
-            return ""
-        })
-
-        var req = {
-            toUrl: toUrl,
-            parentUrl: parentUrl,
-            mapUrl: mapUrl,
-            res: res
-        }
-
-        var urlNoQuery = name && trimQuery(req.toUrl(name))
-        name2url[name] = urlNoQuery
-        if (name && !modules[urlNoQuery]) {
-            var module = modules[urlNoQuery] = makeModule(urlNoQuery)
-            function wrap(obj) {
-                resources[res] = obj
-                if (urlNoQuery !== getCurrentScript(true) && builtModules[name]) {
-                    module = modules[urlNoQuery] = builtModules[name]
-                    module.id = urlNoQuery
-                    loadings.push(urlNoQuery)
-                    return checkDeps()
-                }
-                obj.load(name, req, function(a) {
-                    if (arguments.length && a !== void 0) {
-                        module.exports = a
-                    }
-                    module.state = 2
-                    innerRequire.checkDeps()
-                })
-            }
-            if (!resources[res]) {
-                innerRequire([res], wrap)
-            } else {
-                wrap(resources[res])
-            }
-        }
-        return name ? urlNoQuery : res + "!"
-    }
+  
     function toUrl(url) {
         //1. 处理querystring, hash
         var query = ""
