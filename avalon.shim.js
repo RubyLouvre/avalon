@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.1.31 
-___
+ avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.2 
+____
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4567,6 +4567,7 @@ new function() {
         Z: timeZoneGetter
     }
     var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
+    var raspnetjson = /^\/Date\((\d+)\)\/$/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -4577,6 +4578,8 @@ new function() {
         if (typeof date === "string") {
             if (/^\d+$/.test(date)) {
                 date = toInt(date)
+            } else if (raspnetjson.test(date)) {
+                date = +RegExp.$1
             } else {
                 var trimDate = date.trim()
                 var dateArray = [0, 0, 0, 0, 0, 0, 0]
@@ -4584,9 +4587,9 @@ new function() {
                 //取得年月日
                 trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
                     var array = c.length === 4 ? [c, a, b] : [a, b, c]
-                    dateArray[0] = toInt(array[0]) //年
+                    dateArray[0] = toInt(array[0])     //年
                     dateArray[1] = toInt(array[1]) - 1 //月
-                    dateArray[2] = toInt(array[2])//日
+                    dateArray[2] = toInt(array[2])     //日
                     return ""
                 })
                 var dateSetter = oDate.setFullYear
@@ -4595,10 +4598,9 @@ new function() {
                     dateArray[3] = toInt(a) //小时
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
-                    if (d) {
-                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)  //毫秒
+                    if (d) {                //毫秒
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)
                     }
-                    dateArray[6] = d || ""
                     return ""
                 })
                 var tzHour = 0

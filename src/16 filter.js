@@ -222,6 +222,7 @@ new function() {
         Z: timeZoneGetter
     }
     var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
+    var raspnetjson = /^\/Date\((\d+)\)\/$/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -232,6 +233,8 @@ new function() {
         if (typeof date === "string") {
             if (/^\d+$/.test(date)) {
                 date = toInt(date)
+            } else if (raspnetjson.test(date)) {
+                date = +RegExp.$1
             } else {
                 var trimDate = date.trim()
                 var dateArray = [0, 0, 0, 0, 0, 0, 0]
@@ -251,7 +254,7 @@ new function() {
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
                     if (d) {                //毫秒
-                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)  
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)
                     }
                     return ""
                 })
