@@ -23,10 +23,9 @@ modules.exports = modules.avalon
 
 new function() {
     var loadings = [] //正在加载中的模块列表
-    var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
+    var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     var name2url = {}
-    var requireQueue = []
     var defineQueue = []
 
     function makeRequest(name, parentUrl, mapUrl) {
@@ -112,7 +111,6 @@ new function() {
     }
 
     function loadJS(url, id, callback) {
-        requireQueue.push(url)
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         if (window.VBArray) {
@@ -221,11 +219,11 @@ new function() {
         //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
         //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
         //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
-        //但如何script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
-        //但有一点比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本,就会一直堵在那里,直接脚本解析完毕
-        var firefoxUrl = requireQueue.shift()
+        //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
+        //唯比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
+        //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = getCurrentScript()
-        avalon.log(new Date - 0 + " " + url + "  define " + (firefoxUrl == url))
+        avalon.log(new Date - 0 + " " + url + "  define ")
         if (url) {
             var module = modules[url]
             if (module) {
@@ -523,15 +521,21 @@ new function() {
             eachIndexArray(this.mapUrl, kernel.map, function(array) {
                 eachIndexArray(url, array, function(mdValue, mdKey) {
                     url = url.replace(mdKey, mdValue)
+                    ++usePath
                 })
             })
+
+        }
+        var ext = this.ext
+        if (ext && usePath && url.slice(-ext.length) === ext) {
+            url = url.slice(0, -ext.length)
         }
         //4. 转换为绝对路径
         if (!isAbsUrl(url)) {
             url = joinPath(/\w/.test(url.charAt(0)) ? getBaseUrl() : this.parentUrl, url)
         }
         //5. 还原扩展名，query
-        url += this.ext + this.query
+        url += ext + this.query
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
