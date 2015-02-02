@@ -239,9 +239,9 @@ new function() {
                 //取得年月日
                 trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
                     var array = c.length === 4 ? [c, a, b] : [a, b, c]
-                    dateArray[0] = toInt(array[0]) //年
+                    dateArray[0] = toInt(array[0])     //年
                     dateArray[1] = toInt(array[1]) - 1 //月
-                    dateArray[2] = toInt(array[2])//日
+                    dateArray[2] = toInt(array[2])     //日
                     return ""
                 })
                 var dateSetter = oDate.setFullYear
@@ -250,10 +250,9 @@ new function() {
                     dateArray[3] = toInt(a) //小时
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
-                    if (d) {
-                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)  //毫秒
+                    if (d) {                //毫秒
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)  
                     }
-                    dateArray[6] = d || ""
                     return ""
                 })
                 var tzHour = 0
