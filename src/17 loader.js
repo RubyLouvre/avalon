@@ -79,7 +79,7 @@ new function() {
         if (name) {
             module = modules[urlNoQuery] = {
                 id: urlNoQuery,
-                state: 1 //loading
+                state: 1 //send
             }
             function wrap(obj) {
                 resources[res] = obj
@@ -188,10 +188,10 @@ new function() {
             if (module && module.state === 4) {
                 return checkDeps()
             }
-            modules[name] = {//如果build.js构建的，name不会以./, ../开头
+            modules[name] = {
                 deps: deps,
                 factory: factory,
-                state: 2
+                state: 2 //loading
             }
             defineQueue.push(name)
         }
@@ -202,15 +202,16 @@ new function() {
         factory.require = function(url) {
             args.push(url)
             if (modules[url]) {
-                modules[url].state = 3
-//                var isCycle = true
-//                try {
-//                    isCycle = checkCycle(modules[url].deps, url)
-//                } catch (e) {
-//                }
-//                if (isCycle) {
-//                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
-//                }
+                modules[url].state = 3 //loaded
+                var isCycle = false
+                try {
+                    isCycle = checkCycle(modules[url].deps, url)
+                } catch (e) {
+                }
+                if (isCycle) {
+                    
+                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
+                }
             }
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
@@ -318,7 +319,7 @@ new function() {
     function checkCycle(deps, nick) {
         //检测是否存在循环依赖
         for (var i = 0, id; id = deps[i++]; ) {
-            if (modules[id].state !== 2 &&
+            if (modules[id].state !== 4 &&
                     (id === nick || checkCycle(modules[id].deps, nick))) {
                 return true
             }
@@ -497,8 +498,9 @@ new function() {
         }
         var ret = factory.apply(window, array)
         if (ret !== void 0) {
-            modules[id].exports = ret
+            module.exports = ret
         }
+        delete module.factory
         return ret
     }
 
