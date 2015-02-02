@@ -5,11 +5,12 @@
 //http://maxogden.com/nested-dependencies.html
 var modules = avalon.modules = {
     "ready!": {
-        exports: avalon
+        exports: avalon,
+        state: 3
     },
     "avalon": {
         exports: avalon,
-        state: 4  
+        state: 4
     }
 }
 //Object(modules[id]).state拥有如下值 
@@ -66,13 +67,13 @@ new function() {
     function fireRequest(req) {
         var name = req.name
         var res = req.res
-        //1. 特别处理ready标识符及已经加载好的模块
+        //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
-        if (module && module.state === 4) {
+        if (module && module.state >= 1) {
             return name
         }
         var module = modules[name2url[name] ]
-        if (module && module.state === 4) {
+        if (module && module.state >= 1) {
             return name2url[name]
         }
         var urlNoQuery = name && trimQuery(req.toUrl(name))
@@ -114,7 +115,7 @@ new function() {
         requireQueue.push(url)
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
-        if(window.VBArray){
+        if (window.VBArray) {
             node.defer = true
         }
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
@@ -136,16 +137,16 @@ new function() {
         node.onerror = function() {
             checkFail(node, true)
         }
-   
+
         head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
     //核心API之一 require
     innerRequire = avalon.require = function(array, factory, parentUrl) {
         if (!Array.isArray(array)) {
-            avalon.error("require的第一个参数必须是依赖列数,类型为数组 " + array)
+            avalon.error("require方法的第一个参数应为数组 " + array)
         }
         var deps = [] // 放置所有依赖项的完整路径
         var uniq = {}
@@ -155,7 +156,7 @@ new function() {
 
         array.forEach(function(name) {
             var req = makeRequest(name, parentUrl, mapUrl)
-            var url = fireRequest(req) //加载资源，并返回.能加载资源的完整路径
+            var url = fireRequest(req) //加载资源，并返回该资源的完整地址
             if (url) {
                 if (!uniq[url]) {
                     deps.push(url)
