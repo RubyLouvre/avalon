@@ -14,11 +14,11 @@ var modules = avalon.modules = {
     }
 }
 //Object(modules[id]).state拥有如下值 
-// undefined       没有定义
-// 1(loading)     已经发出请求
-// 2(interactive) 已经被执行,但还没有执行完成
-// 3(loaded)      执行完毕,通过onload, onreadystatechange回调判定
-// 4(complete)    其依赖也执行完毕, 值放到exports对象上
+// undefined  没有定义
+// 1(send)    已经发出请求
+// 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
+// 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
+// 4(complete)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
 new function() {
@@ -77,7 +77,7 @@ new function() {
             return name2url[name]
         }
         var urlNoQuery = name && trimQuery(req.toUrl(name))
-        if (name) {//像ready!就没有name
+        if (name) {
             module = modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //loading
