@@ -9,19 +9,24 @@ var modules = avalon.modules = {
     },
     "avalon": {
         exports: avalon,
-        state: 4  //undefined, loading, interactive loaded  complete
+        state: 4  
     }
 }
+//Object(modules[id]).state拥有如下值 
+// undefined       没有定义
+// 1(loading)     已经发出请求
+// 2(interactive) 已经被执行,但还没有执行完成
+// 3(loaded)      执行完毕,通过onload, onreadystatechange回调判定
+// 4(complete)    其依赖也执行完毕, 值放到exports对象上
 modules.exports = modules.avalon
-
-
 
 new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //储存需要绑定ID与factory对应关系的模块（标准浏览器下，先parse的script节点会先onload）
     var rjsext = /\.js$/i
     var name2url = {}
-    var builtModules = {}
+    var requireQueue = []
+    var defineQueue = []
 
     function makeRequest(name, parentUrl, mapUrl) {
         //1. 去掉资源前缀
@@ -70,11 +75,9 @@ new function() {
         if (module && module.state === 4) {
             return name2url[name]
         }
-
         var urlNoQuery = name && trimQuery(req.toUrl(name))
-
         if (name) {//像ready!就没有name
-             module = modules[urlNoQuery] = {
+            module = modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //loading
             }
@@ -94,7 +97,7 @@ new function() {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
                     }
-                    module.state = 3 
+                    module.state = 3
                     checkDeps()
                 })
             }
@@ -105,6 +108,38 @@ new function() {
             }
         }
         return name ? urlNoQuery : res + "!"
+    }
+
+    function loadJS(url, id, callback) {
+        requireQueue.push(url)
+        //通过script节点加载目标模块
+        var node = DOC.createElement("script")
+        if(window.VBArray){
+            node.defer = true
+        }
+        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        node[W3C ? "onload" : "onreadystatechange"] = function() {
+            if (/undefined|loaded|complete/i.test(node.readyState)) {
+                console.log(new Date - 0 + " " + id + "  onload")
+                var factory = factorys.pop()
+                factory && factory.require(id)
+                if (callback) {
+                    callback()
+                }
+                if (checkFail(node, false, !W3C)) {
+                    log("debug: 已成功加载 " + url)
+                    loadings.push(id)
+                    checkDeps()
+                }
+            }
+        }
+        node.onerror = function() {
+            checkFail(node, true)
+        }
+   
+        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
+             node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
     //核心API之一 require
@@ -150,11 +185,16 @@ new function() {
         var args = aslice.call(arguments)
         if (typeof name === "string") {
             args.shift()
-            builtModules[name] = {//如果built构建的，name不会以./, ../开头
+            var module = modules[name]
+            if (module && module.state === 4) {
+                return checkDeps()
+            }
+            modules[name] = {//如果build.js构建的，name不会以./, ../开头
                 deps: deps,
                 factory: factory,
                 state: 2
             }
+            defineQueue.push(name)
         }
         if (typeof args[0] === "function") {
             args.unshift([])
@@ -164,20 +204,27 @@ new function() {
             args.push(url)
             if (modules[url]) {
                 modules[url].state = 3
-                var isCycle = true
-                try {
-                    isCycle = checkCycle(modules[url].deps, url)
-                } catch (e) {
-                }
-                if (isCycle) {
-                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
-                }
+//                var isCycle = true
+//                try {
+//                    isCycle = checkCycle(modules[url].deps, url)
+//                } catch (e) {
+//                }
+//                if (isCycle) {
+//                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
+//                }
             }
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
+        //根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
+        //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
+        //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
+        //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
+        //但如何script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
+        //但有一点比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本,就会一直堵在那里,直接脚本解析完毕
+        var firefoxUrl = requireQueue.shift()
         var url = getCurrentScript()
-        console.log(new Date - 0 + " " + url + "  define")
+        avalon.log(new Date - 0 + " " + url + "  define " + (firefoxUrl == url))
         if (url) {
             var module = modules[url]
             if (module) {
@@ -324,11 +371,13 @@ new function() {
             load: function(name, req, onLoad) {
                 var url = req.url
                 var id = trimQuery(url)
+
                 var shim = kernel.shim[name.replace(rjsext, "")]
                 if (shim) { //shim机制
                     innerRequire(shim.deps || [], function() {
                         var args = avalon.slice(arguments)
                         loadJS(url, id, function() {
+                            requireQunue.shift()
                             onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
                     })
@@ -432,58 +481,8 @@ new function() {
                 return node.className = trimQuery(url)
             }
         }
-        if (mainNode.readyState === "interactive") {
-            return kernel.loaderUrlNoQuery
-        }
-    }
-    var queue = [], loading = false
-    function loadJS2(url, id, callback) {
-
-        queue.push(arguments)
-        if (!loading) {
-            dequeue()
-        }
     }
 
-    function dequeue() {
-        loading = false
-        var arr = queue.shift()
-        if (arr) {
-            loadJS.apply(null, arr)
-        }
-    }
-
-    function loadJS(url, id, callback) {
-        //通过script节点加载目标模块
-        loading = true
-        var node = DOC.createElement("script")
-        node.defer = true
-        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node[W3C ? "onload" : "onreadystatechange"] = function() {
-            if (/undefined|loaded|complete/i.test(node.readyState)) {
-                console.log(new Date - 0 + " " + id + "  onload")
-                var factory = factorys.pop()
-                factory && factory.require(id)
-                if (callback) {
-                    callback()
-                }
-
-                if (checkFail(node, false, !W3C)) {
-                    log("debug: 已成功加载 " + url)
-                    loadings.push(id)
-                    checkDeps()
-                }
-                dequeue()
-            }
-        }
-        node.onerror = function() {
-            checkFail(node, true)
-            dequeue()
-        }
-        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
-        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
-    }
 
     function fireFactory(id, deps, factory) {
         var module = Object(modules[id])
