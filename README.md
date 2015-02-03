@@ -8,7 +8,8 @@ A lightweight、high-performance and easy-to-follow javascript MVVM framework
 
 ## HomePage
   [avalonjs.github.io ](http://avalonjs.github.io/)
-  [github](https://github.com/avalonjs/avalonjs.github.io)
+
+  [Fork it](https://github.com/avalonjs/avalonjs.github.io)
  
 ## Advantages
 
