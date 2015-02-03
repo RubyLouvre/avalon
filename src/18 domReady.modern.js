@@ -21,9 +21,7 @@ if (DOC.readyState === "complete") {
     window.addEventListener("load", fireReady)
 }
 avalon.ready = function(fn) {
-    if (innerRequire) {
-        innerRequire(["ready!"], fn)
-    } else if (fireReady === noop) {
+    if (fireReady === noop) {
         fn(avalon)
     } else {
         readyList.push(fn)

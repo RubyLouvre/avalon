@@ -50,9 +50,7 @@ if (DOC.readyState === "complete") {
 avalon.bind(window, "load", fireReady)
 
 avalon.ready = function(fn) {
-    if (innerRequire) {
-        innerRequire(["ready!"], fn)
-    } else if (fireReady === noop) {
+    if (fireReady === noop) {
         fn(avalon)
     } else {
         readyList.push(fn)
