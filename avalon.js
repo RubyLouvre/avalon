@@ -5082,7 +5082,6 @@ new function() {
                     innerRequire(shim.deps || [], function() {
                         var args = avalon.slice(arguments)
                         loadJS(url, id, function() {
-                            requireQunue.shift()
                             onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
                     })
@@ -5205,11 +5204,9 @@ new function() {
         if (ret !== void 0) {
             module.exports = ret
         }
-       // avalon.requireQueue.push(id)
         delete module.factory
         return ret
     }
-  //  avalon.requireQueue = []
     function toUrl(id) {
         var url = id
         //1. 是否命中paths配置项
@@ -5346,12 +5343,7 @@ new function() {
         })
         return g
     }
-    function fireRequire(arr) {
-        waitForUserFirstRequire = true
-        while (arr = requireQueue.shift()) {
-            innerRequire.apply(null, arr)
-        }
-    }
+
     var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
     var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
     kernel.loaderUrlNoQuery = loaderUrl
