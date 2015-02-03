@@ -4,7 +4,7 @@
 var readyList = []
 function fireReady() {
     if (innerRequire) {
-        modules["ready!"].state = 2
+        modules["ready!"].state = 4
         innerRequire.checkDeps()//隋性函数，防止IE9二次调用_checkDeps
     } else {
         readyList.forEach(function(a) {

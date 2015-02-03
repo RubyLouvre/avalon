@@ -6,7 +6,7 @@ var readyList = []
 function fireReady() {
     if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
         if (innerRequire) {
-            modules["ready!"].state = 2
+            modules["ready!"].state = 4
             innerRequire.checkDeps()
         } else {
             readyList.forEach(function(a) {
