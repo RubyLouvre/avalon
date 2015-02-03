@@ -26,7 +26,7 @@ new function() {
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     var name2url = {}
-    var defineQueue = []
+
 
     function makeRequest(name, parentUrl, mapUrl) {
         //1. 去掉资源前缀
@@ -68,14 +68,17 @@ new function() {
         var res = req.res
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
-        if (module && module.state >= 1) {
+        var urlNoQuery = name && trimQuery(req.toUrl(name))
+        //console.log(name + "!" + urlNoQuery + " " + defineQueue.shift())
+        if (module && module.state >= 3) {
             return name
         }
         var module = modules[name2url[name] ]
-        if (module && module.state >= 1) {
+        if (module && module.state >= 3) {
             return name2url[name]
         }
-        var urlNoQuery = name && trimQuery(req.toUrl(name))
+
+
         if (name) {
             module = modules[urlNoQuery] = {
                 id: urlNoQuery,
@@ -85,7 +88,6 @@ new function() {
                 resources[res] = obj
                 // var _name = name.replace(/^\.\//, "")
 //                if (urlNoQuery !== getCurrentScript() && builtModules[name]) {
-//                    console.log("+++++")
 //                    module = modules[urlNoQuery] = builtModules[name]
 //                    module.id = urlNoQuery
 //                    var factory = factorys.pop()
@@ -101,6 +103,7 @@ new function() {
                     checkDeps()
                 })
             }
+
             if (!resources[res]) {
                 innerRequire([res], wrap)
             } else {
@@ -119,7 +122,7 @@ new function() {
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
         node[W3C ? "onload" : "onreadystatechange"] = function() {
             if (/undefined|loaded|complete/i.test(node.readyState)) {
-                console.log(new Date - 0 + " " + id + "  onload")
+                //console.log(new Date - 0 + " " + id + "  onload")
                 var factory = factorys.pop()
                 factory && factory.require(id)
                 if (callback) {
@@ -127,7 +130,7 @@ new function() {
                 }
                 if (checkFail(node, false, !W3C)) {
                     log("debug: 已成功加载 " + url)
-                    loadings.push(id)
+                    id &&  loadings.push(id)
                     checkDeps()
                 }
             }
@@ -140,12 +143,17 @@ new function() {
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
-
+    var waitForUserFirstRequire = false
     //核心API之一 require
+
+    var requireQueue = []
     innerRequire = avalon.require = function(array, factory, parentUrl) {
-        if (!Array.isArray(array)) {
-            avalon.error("require方法的第一个参数应为数组 " + array)
+        if (!waitForUserFirstRequire) {
+            return  requireQueue.push([array, factory, parentUrl])
         }
+//        if (!Array.isArray(array)) {
+//            avalon.error("require方法的第一个参数应为数组 " + array)
+//        }
         var deps = [] // 放置所有依赖项的完整路径
         var uniq = {}
         var id = parentUrl || "callback" + setTimeout("1")
@@ -182,25 +190,27 @@ new function() {
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         var args = aslice.call(arguments)
+
         if (typeof name === "string") {
+
             args.shift()
             var module = modules[name]
             if (module && module.state === 4) {
                 return checkDeps()
             }
+
             modules[name] = {
                 deps: deps,
                 factory: factory,
                 state: 2 //loading
             }
-            defineQueue.push(name)
         }
         if (typeof args[0] === "function") {
             args.unshift([])
         }
         factory = args[1]
         factory.require = function(url) {
-            args.push(url)
+            args.push(url, true)
             if (modules[url]) {
                 modules[url].state = 3 //loaded
                 var isCycle = false
@@ -209,7 +219,6 @@ new function() {
                 } catch (e) {
                 }
                 if (isCycle) {
-                    
                     avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
                 }
             }
@@ -225,12 +234,15 @@ new function() {
         //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = getCurrentScript()
         avalon.log(new Date - 0 + " " + url + "  define ")
+
         if (url) {
             var module = modules[url]
             if (module) {
                 module.state = 2
             }
-            factory.require(url)
+            setTimeout(function() {
+                factory.require(url)
+            }, 4)
         } else {//合并前后的safari，合并后的IE6-9走此分支
             factorys.push(factory)
         }
@@ -345,6 +357,8 @@ new function() {
         loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
             var obj = modules[id],
                     deps = obj.deps
+            if (!deps)
+                continue
             for (var j = 0, key; key = deps[j]; j++) {
                 var k = name2url[key]
                 if (k) {
@@ -500,10 +514,11 @@ new function() {
         if (ret !== void 0) {
             module.exports = ret
         }
+        avalon.requireQueue.push(id)
         delete module.factory
         return ret
     }
-
+    avalon.requireQueue = []
     function toUrl(id) {
         var url = id
         //1. 是否命中paths配置项
@@ -640,7 +655,12 @@ new function() {
         })
         return g
     }
-
+    function fireRequire(arr) {
+        waitForUserFirstRequire = true
+        while (arr = requireQueue.shift()) {
+            innerRequire.apply(null, arr)
+        }
+    }
     var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
     var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
     kernel.loaderUrlNoQuery = loaderUrl
@@ -648,8 +668,9 @@ new function() {
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
         mainScript = mainScript.split('/').pop()
-        innerRequire([mainScript], noop)
+        loadJS(kernel.loaderUrl + mainScript + ".js", 0, fireRequire)
     }
-
-
+     setTimeout(function(){
+         fireRequire()
+     }, 400)
 }
