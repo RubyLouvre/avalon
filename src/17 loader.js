@@ -69,7 +69,6 @@ new function() {
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
         var urlNoQuery = name && trimQuery(req.toUrl(name))
-        //console.log(name + "!" + urlNoQuery + " " + defineQueue.shift())
         if (module && module.state >= 3) {
             return name
         }
@@ -130,7 +129,7 @@ new function() {
                 }
                 if (checkFail(node, false, !W3C)) {
                     log("debug: 已成功加载 " + url)
-                    id &&  loadings.push(id)
+                    id && loadings.push(id)
                     checkDeps()
                 }
             }
@@ -147,13 +146,20 @@ new function() {
     //核心API之一 require
 
     var requireQueue = []
-    innerRequire = avalon.require = function(array, factory, parentUrl) {
+    innerRequire = avalon.require = function(array, factory, parentUrl, userRequire) {
+        waitForUserFirstRequire = waitForUserFirstRequire || typeof userRequire  === "string"
         if (!waitForUserFirstRequire) {
             return  requireQueue.push([array, factory, parentUrl])
         }
-//        if (!Array.isArray(array)) {
-//            avalon.error("require方法的第一个参数应为数组 " + array)
-//        }
+        if(requireQueue.length){
+            var queue =  requireQueue.splice(0, requireQueue.length)
+            while(args = queue.shift()){
+                innerRequire.apply(null, args)
+            }
+        }
+        if (!Array.isArray(array)) {
+            avalon.error("require方法的第一个参数应为数组 " + array)
+        }
         var deps = [] // 放置所有依赖项的完整路径
         var uniq = {}
         var id = parentUrl || "callback" + setTimeout("1")
@@ -190,27 +196,18 @@ new function() {
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         var args = aslice.call(arguments)
-
-        if (typeof name === "string") {
-
-            args.shift()
-            var module = modules[name]
-            if (module && module.state === 4) {
-                return checkDeps()
-            }
-
-            modules[name] = {
-                deps: deps,
-                factory: factory,
-                state: 2 //loading
-            }
+        if (typeof name !== "string") {
+            args.unshift("anonymous")
         }
-        if (typeof args[0] === "function") {
-            args.unshift([])
+        if (!Array.isArray(args[1])) {
+            args.splice(1, 0, [])
         }
+        args = [args[1], args[2], name]
         factory = args[1]
+
+
         factory.require = function(url) {
-            args.push(url, true)
+            args.splice(2, 0, url)
             if (modules[url]) {
                 modules[url].state = 3 //loaded
                 var isCycle = false
@@ -233,8 +230,7 @@ new function() {
         //唯比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
         //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = getCurrentScript()
-        avalon.log(new Date - 0 + " " + url + "  define ")
-
+        //avalon.log(new Date - 0 + " " + url + "  define ")
         if (url) {
             var module = modules[url]
             if (module) {
@@ -514,11 +510,11 @@ new function() {
         if (ret !== void 0) {
             module.exports = ret
         }
-        avalon.requireQueue.push(id)
+       // avalon.requireQueue.push(id)
         delete module.factory
         return ret
     }
-    avalon.requireQueue = []
+  //  avalon.requireQueue = []
     function toUrl(id) {
         var url = id
         //1. 是否命中paths配置项
@@ -668,9 +664,6 @@ new function() {
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
         mainScript = mainScript.split('/').pop()
-        loadJS(kernel.loaderUrl + mainScript + ".js", 0, fireRequire)
+        loadJS(kernel.loaderUrl + mainScript + ".js")
     }
-     setTimeout(function(){
-         fireRequire()
-     }, 400)
 }

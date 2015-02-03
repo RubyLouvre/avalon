@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.2 
+ avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.3 
 ____
  support IE6+ and other browsers
  ==================================================*/
@@ -4720,7 +4720,7 @@ new function() {
         }, 50)
     }
     avalon.ready = function(fn) {
-        loaded ? fn() : fns.push(fn)
+        loaded ? fn(avalon) : fns.push(fn)
     }
     avalon.ready(function() {
         avalon.scan(DOC.body)

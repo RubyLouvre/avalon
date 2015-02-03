@@ -52,7 +52,7 @@ function comboFiles(files, writer, lastCallback, statement) {
         readable.pipe(writer, {end: false})
         readable.on("readable", function() {
             writer.write("\n")
-            console.log("add " + filePath)
+          //  console.log("add " + filePath)
         })
         readable.on("end", callback)
     }
@@ -179,6 +179,28 @@ new function() {
     }, "avalon.mobile.js(支持触屏事件) " + version + " build in " + date + " \n")
     comboMobileFiles()
 }
+
+//avalon.mobiles.old.js 所需要合并的子文件
+var oldMobileFiles = compatibleFiles.slice(0)
+if(oldMobileFiles[0] !== "00 inter"){
+    oldMobileFiles.unshift("00 inter")
+}
+
+oldMobileFiles.pop()
+oldMobileFiles.push("20 touch", "19 outer")
+
+//开始合并avalon.mobile.js
+new function() {
+    var writable = fs.createWriteStream(path.join(parentDir, 'avalon.mobile.old.js'), {
+        encoding: "utf8"
+    })
+    writable.setMaxListeners(100) //默认只有添加11个事件，很容易爆栈
+    var comboMobileFiles = comboFiles(oldMobileFiles, writable, function() {
+        //更新avalon.test中的文件
+    }, "avalon.mobile.old.js(安卓2.3及其他旧的移动端浏览器) " + version + " build in " + date + " \n")
+    comboMobileFiles()
+}
+
 
 //开始合并avalon.mobile.shim.js
 new function() {
