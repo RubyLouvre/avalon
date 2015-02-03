@@ -7,7 +7,7 @@ A lightweight、high-performance and easy-to-follow javascript MVVM framework
 * The test cases are in an individual repository: [avalon.test](https://github.com/RubyLouvre/avalon.test)
 
 ## HomePage
-  [avalonjs.github.io ](http://avalonjs.github.io/)
+  [http://avalonjs.github.io/](http://avalonjs.github.io/)
 
   [Fork it](https://github.com/avalonjs/avalonjs.github.io)
  
