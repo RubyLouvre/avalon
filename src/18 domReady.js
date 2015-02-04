@@ -8,11 +8,10 @@ function fireReady() {
         if (innerRequire) {
             modules["ready!"].state = 4
             innerRequire.checkDeps()
-        } else {
-            readyList.forEach(function(a) {
-                a(avalon)
-            })
         }
+        readyList.forEach(function(a) {
+            a(avalon)
+        })
         fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
     }
 }
