@@ -1,4 +1,4 @@
-define([], function(b){
-    return "ccc" 
+define(["./eee/ddd"], function(d){
+    return "ccc" + d
 })
 

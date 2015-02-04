@@ -1,3 +1,3 @@
-define(["./eee"], function(){
-    return 222
+define(["./eee"], function(e){
+    return 222 + e
 })

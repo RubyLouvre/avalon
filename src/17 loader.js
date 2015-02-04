@@ -162,16 +162,18 @@ new function() {
                 id = trimQuery(req.toUrl(defineConfig.defineName))
             }
         }
-        array.forEach(function(name) {
-            var req = makeRequest(name, defineConfig)
-            var url = fireRequest(req) //加载资源，并返回该资源的完整地址
-            if (url) {
-                if (!uniq[url]) {
-                    deps.push(url)
-                    uniq[url] = "司徒正美" //去重
+        if (!defineConfig.built) {
+            array.forEach(function(name) {
+                var req = makeRequest(name, defineConfig)
+                var url = fireRequest(req) //加载资源，并返回该资源的完整地址
+                if (url) {
+                    if (!uniq[url]) {
+                        deps.push(url)
+                        uniq[url] = "司徒正美" //去重
+                    }
                 }
-            }
-        })
+            })
+        }
         var module = modules[id]
         if (!module || module.state !== 4) {
             modules[id] = {
@@ -228,7 +230,7 @@ new function() {
         //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
         //唯比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
         //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
-        var url = config.built ? "unknown" : getCurrentScript() 
+        var url = config.built ? "unknown" : getCurrentScript()
         if (url) {
             var module = modules[url]
             if (module) {
@@ -333,7 +335,7 @@ new function() {
     function checkFail(node, onError, fuckIE) {
         var id = trimQuery(node.src) //检测是否死链
         node.onload = node.onreadystatechange = node.onerror = null
-        if (onError || (fuckIE && !modules[id].state)) {
+        if (onError || (fuckIE && modules[id] && !modules[id].state)) {
             setTimeout(function() {
                 head.removeChild(node)
                 node = null // 处理旧式IE下的循环引用问题

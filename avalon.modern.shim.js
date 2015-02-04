@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.3 
+ avalon.modern.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.4 
 support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1708,10 +1708,13 @@ var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g
-
+        rstringLiteral  = /(['"])(\\\1|.)+?\1/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
-        var index = value.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
+        var scapegoat = value.replace( rstringLiteral, function(_){
+            return Math.pow(10,_.length)
+        })
+        var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
             return {
                 filters: value.slice(index),
