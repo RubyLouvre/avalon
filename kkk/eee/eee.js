@@ -1,5 +1,3 @@
 define(function(){
-    return " ddd"
+    return 333
 })
-
-
