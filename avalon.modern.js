@@ -4473,13 +4473,6 @@ new function() {
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
 
-//    function getBaseUrl(parentUrl) {
-//        return  parentUrl ?
-//                parentUrl.substr(0, parentUrl.lastIndexOf("/")) :
-//                kernel.baseUrl ? kernel.baseUrl :
-//                kernel.loaderUrl
-//    }
-
     function getFullUrl(node, src) {
         return"1"[0] ? node[src] : node.getAttribute(src, 4)
     }
