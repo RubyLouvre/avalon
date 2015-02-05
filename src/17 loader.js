@@ -230,7 +230,7 @@ new function() {
         //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
         //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
         //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
-        //唯比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
+        //唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
         //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = config.built ? "unknown" : getCurrentScript()
         if (url) {
