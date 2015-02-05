@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>avalon • TodoMVC</title>
-<!--        <link rel="stylesheet" href="http://todomvc.com/architecture-examples/react/bower_components/todomvc-common/base.css">-->
+       <link rel="stylesheet" href="http://todomvc.com/examples/angularjs/bower_components/todomvc-common/base.css">
         <script src="../avalon.modern.js"></script>
         <style>
             .ms-controller{
@@ -99,7 +99,7 @@
                         <div class="view">
                             <input class="toggle" type="checkbox" ms-duplex-radio="todo.completed" data-duplex-changed="checkOne">
                             <label ms-dblclick="editTodo($index)">{{todo.title}}</label>
-                            <button class="destroy" ms-click="$remove"></button>
+                            <button class="destroy" ms-click="$remove">X</button>
                         </div>
                         <form action="javascript:void(0)" ms-submit="doneEditing">
                             <input class="edit" ms-duplex="todo.title"  ms-blur="doneEditing" >

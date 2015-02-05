@@ -67,11 +67,13 @@ new function() {
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
         var urlNoQuery = name && trimQuery(req.toUrl(name))
+
         if (module && module.state >= 3) {
             return name
         }
         var module = modules[urlNoQuery]
         if (module && module.state >= 3) {
+            require(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name) {
@@ -154,15 +156,15 @@ new function() {
         var id = parentUrl || "callback" + setTimeout("1")
         defineConfig = defineConfig || {}
         defineConfig.baseUrl = kernel.baseUrl ? kernel.baseUrl : kernel.loaderUrl
+        var isBuilt = !!defineConfig.built
         if (parentUrl) {
             defineConfig.parentUrl = parentUrl.substr(0, parentUrl.lastIndexOf("/"))
             defineConfig.mapUrl = parentUrl.replace(rjsext, "")
-            if (defineConfig.built) {
-                var req = makeRequest(defineConfig.defineName, defineConfig)
-                id = trimQuery(req.toUrl(defineConfig.defineName))
-            }
         }
-        if (!defineConfig.built) {
+        if (isBuilt) {
+            var req = makeRequest(defineConfig.defineName, defineConfig)
+            id = trimQuery(req.toUrl(defineConfig.defineName))
+        } else {
             array.forEach(function(name) {
                 var req = makeRequest(name, defineConfig)
                 var url = fireRequest(req) //加载资源，并返回该资源的完整地址
@@ -174,11 +176,12 @@ new function() {
                 }
             })
         }
+
         var module = modules[id]
         if (!module || module.state !== 4) {
             modules[id] = {
                 id: id,
-                deps: deps,
+                deps: isBuilt ? array.concat() : deps,
                 factory: factory || noop,
                 state: 3
             }
@@ -206,7 +209,6 @@ new function() {
         }
         factory = args[2]
         args = [args[1], factory, config]
-
         factory.require = function(url) {
             args.splice(2, 0, url)
             if (modules[url]) {
