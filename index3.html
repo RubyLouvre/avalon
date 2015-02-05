@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="require.js"></script>
+        <script>
+
+
+            require.config({
+                baseUrl: "./kkk/loader",
+                map: {
+                    "old/aaa": {
+                        ddd: "ddd1.0"
+                    },
+                    "new/aaa": {
+                        ddd: "ddd1.2"
+                    },
+                    "*": {
+                        ddd: "ddd1.1"
+                    }
+                }
+            })
+
+            require(["old/aaa", "new/aaa", "eee"], function(a, b, c) {
+                console.log(a,b,c)
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+       
+    </body>
+</html>
