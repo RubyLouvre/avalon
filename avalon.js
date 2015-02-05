@@ -4770,8 +4770,9 @@ new function() {
             return name
         }
         var module = modules[urlNoQuery]
-        if (module && module.state >= 3) {
-            require(module.deps, module.factory, urlNoQuery)
+        if (module && module.state >= 1) {
+            if (module.state === 3)
+                require(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name) {
@@ -4785,7 +4786,7 @@ new function() {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
                     }
-                    module.state = 3
+                    module.state = 4
                     checkDeps()
                 })
             }
