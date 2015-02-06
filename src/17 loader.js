@@ -405,14 +405,21 @@ new function() {
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var id = trimQuery(url).replace(/\W/g, "")
-                if (!DOC.getElementById(id)) {
+                var id = trimQuery(url)
+                if (Object(modules[id]).state === 1) {
                     var node = DOC.createElement("link")
                     node.rel = "stylesheet"
                     node.href = url
-                    node.id = id
                     head.insertBefore(node, head.firstChild)
-                    onLoad()
+                    function callback() {
+                        log("debug: 已成功加载 " + url)
+                        onLoad()
+                    }
+                    if ("onload" in node) {
+                        node.onload = callback
+                    } else {
+                        setTimeout(callback)
+                    }
                 }
             }
         },
@@ -513,6 +520,9 @@ new function() {
         return ret
     }
     function toUrl(id) {
+        if (id.indexOf( this.res +"!") === 0) {
+            id = id.slice(this.res.length+1) //处理define("css!style",[], function(){})的情况
+        }
         var url = id
         //1. 是否命中paths配置项
         var usePath = 0
