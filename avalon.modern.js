@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.391 build in 2015.2.6 
+ avalon.modern.js 1.391 build in 2015.2.7 
 ______________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4424,11 +4424,8 @@ new function() {
                 node.rel = "stylesheet"
                 node.href = url
                 head.appendChild(node)
-                node.onload = function() {
-                    log("debug: 已成功加载 " + url)
-                    onLoad()
-                }
-                log("debug: 正准备加载 " + url)
+                log("debug: 已成功加载 " + url)
+                onLoad()
             }
         },
         text: {
