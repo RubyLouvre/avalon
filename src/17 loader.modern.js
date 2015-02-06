@@ -395,11 +395,8 @@ new function() {
                 node.rel = "stylesheet"
                 node.href = url
                 head.appendChild(node)
-                node.onload = function() {
-                    log("debug: 已成功加载 " + url)
-                    onLoad()
-                }
-                log("debug: 正准备加载 " + url)
+                log("debug: 已成功加载 " + url)
+                onLoad()
             }
         },
         text: {

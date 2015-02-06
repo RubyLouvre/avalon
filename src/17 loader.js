@@ -99,7 +99,7 @@ new function() {
         }
         return name ? urlNoQuery : res + "!"
     }
-  
+
     //核心API之一 require
     var requireQueue = []
     var isUserFirstRequire = false
@@ -341,8 +341,8 @@ new function() {
             }
         }
     }
-    
-      var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
+
+    var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
@@ -407,16 +407,8 @@ new function() {
                 node.rel = "stylesheet"
                 node.href = url
                 head.insertBefore(node, head.firstChild)
-                function callback() {
-                    log("debug: 已成功加载 " + url)
-                    onLoad()
-                }
-                if ("onload" in node) {
-                    node.onload = callback
-                } else {
-                    setTimeout(callback)
-                }
-                log("debug: 正准备加载 " + url)
+                log("debug: 已成功加载 " + url)
+                onLoad()
             }
         },
         text: {
@@ -616,7 +608,7 @@ new function() {
             }
         }
     }
-   // 根据元素的name项进行数组字符数逆序的排序函数
+    // 根据元素的name项进行数组字符数逆序的排序函数
     function descSorterByName(a, b) {
         var aaa = a.name
         var bbb = b.name
