@@ -99,44 +99,8 @@ new function() {
         }
         return name ? urlNoQuery : res + "!"
     }
-    var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
-    function loadJS(url, id, callback) {
-        //通过script节点加载目标模块
-        var node = DOC.createElement("script")
-        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        var timeID
-        var supportLoad = "onload" in node
-        var onEvent = supportLoad ? "onload" : "onreadystatechange"
-        function onload() {
-            if (!"1"[0] && !timeID) {
-                return timeID = setTimeout(onload, 150)
-            }
-            if (supportLoad || rreadyState.test(node.readyState)) {
-                clearTimeout(timeID)
-                var factory = factorys.pop()
-                factory && factory.require(id)
-                if (callback) {
-                    callback()
-                }
-                if (checkFail(node, false, !supportLoad)) {
-                    log("debug: 已成功加载 " + url)
-                    id && loadings.push(id)
-                    checkDeps()
-                }
-            }
-        }
-        node[onEvent] = onload
-        node.onerror = function() {
-            checkFail(node, true)
-        }
-
-        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
-        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
-    }
-
+  
     //核心API之一 require
-
     var requireQueue = []
     var isUserFirstRequire = false
     innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
@@ -377,6 +341,43 @@ new function() {
             }
         }
     }
+    
+      var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
+    function loadJS(url, id, callback) {
+        //通过script节点加载目标模块
+        var node = DOC.createElement("script")
+        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        var timeID
+        var supportLoad = "onload" in node
+        var onEvent = supportLoad ? "onload" : "onreadystatechange"
+        function onload() {
+            if (!"1"[0] && !timeID) {
+                return timeID = setTimeout(onload, 150)
+            }
+            if (supportLoad || rreadyState.test(node.readyState)) {
+                clearTimeout(timeID)
+                var factory = factorys.pop()
+                factory && factory.require(id)
+                if (callback) {
+                    callback()
+                }
+                if (checkFail(node, false, !supportLoad)) {
+                    log("debug: 已成功加载 " + url)
+                    id && loadings.push(id)
+                    checkDeps()
+                }
+            }
+        }
+        node[onEvent] = onload
+        node.onerror = function() {
+            checkFail(node, true)
+        }
+
+        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
+        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+    }
+
     var resources = innerRequire.plugins = {
         //三大常用资源插件 js!, css!, text!, ready!
         ready: {
@@ -615,7 +616,7 @@ new function() {
             }
         }
     }
-// 根据元素的name项进行数组字符数逆序的排序函数
+   // 根据元素的name项进行数组字符数逆序的排序函数
     function descSorterByName(a, b) {
         var aaa = a.name
         var bbb = b.name
