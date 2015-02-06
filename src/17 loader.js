@@ -18,7 +18,7 @@ var modules = avalon.modules = {
 // 1(send)    已经发出请求
 // 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
 // 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
-// 4(complete)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
+// 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
 new function() {
@@ -26,8 +26,6 @@ new function() {
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     var name2url = {}
-
-
     function makeRequest(name, config) {
         //1. 去掉资源前缀
         var res = "js"
@@ -77,11 +75,11 @@ new function() {
             require(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
-        if (name) {
-            module = module || (modules[urlNoQuery] = {
+        if (name && !module) {
+            module = modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //send
-            })
+            }
             function wrap(obj) {
                 resources[res] = obj
                 obj.load(name, req, function(a) {
@@ -388,63 +386,60 @@ new function() {
             load: function(name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
-                if (Object(modules[id]).state === 1) {
-                    var shim = kernel.shim[name.replace(rjsext, "")]
-                    if (shim) { //shim机制
-                        innerRequire(shim.deps || [], function() {
-                            var args = avalon.slice(arguments)
-                            loadJS(url, id, function() {
-                                onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
-                            })
+                var shim = kernel.shim[name.replace(rjsext, "")]
+                if (shim) { //shim机制
+                    innerRequire(shim.deps || [], function() {
+                        var args = avalon.slice(arguments)
+                        loadJS(url, id, function() {
+                            onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
-                    } else {
-                        loadJS(url, id)
-                    }
+                    })
+                } else {
+                    loadJS(url, id)
                 }
             }
         },
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                if (Object(modules[ req.urlNoQuery ]).state === 1) {
-                    var node = DOC.createElement("link")
-                    node.rel = "stylesheet"
-                    node.href = url
-                    head.insertBefore(node, head.firstChild)
-                    function callback() {
-                        log("debug: 已成功加载 " + url)
-                        onLoad()
-                    }
-                    if ("onload" in node) {
-                        node.onload = callback
-                    } else {
-                        setTimeout(callback)
-                    }
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                head.insertBefore(node, head.firstChild)
+                function callback() {
+                    log("debug: 已成功加载 " + url)
+                    onLoad()
                 }
+                if ("onload" in node) {
+                    node.onload = callback
+                } else {
+                    setTimeout(callback)
+                }
+                log("debug: 正准备加载 " + url)
             }
         },
         text: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                if (Object(modules[ req.urlNoQuery ]).state === 1) {
-                    var xhr = getXHR()
-                    xhr.onreadystatechange = function() {
-                        if (xhr.readyState === 4) {
-                            var status = xhr.status;
-                            if (status > 399 && status < 600) {
-                                avalon.error(url + " 对应资源不存在或没有开启 CORS")
-                            } else {
-                                onLoad(xhr.responseText)
-                            }
+                var xhr = getXHR()
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var status = xhr.status;
+                        if (status > 399 && status < 600) {
+                            avalon.error(url + " 对应资源不存在或没有开启 CORS")
+                        } else {
+                            log("debug: 已成功加载 " + url)
+                            onLoad(xhr.responseText)
                         }
                     }
-                    xhr.open("GET", url, true)
-                    if ("withCredentials" in xhr) {//这是处理跨域
-                        xhr.withCredentials = true
-                    }
-                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
-                    xhr.send()
                 }
+                xhr.open("GET", url, true)
+                if ("withCredentials" in xhr) {//这是处理跨域
+                    xhr.withCredentials = true
+                }
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
+                xhr.send()
+                log("debug: 正准备加载 " + url)
             }
         }
     }

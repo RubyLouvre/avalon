@@ -17,7 +17,7 @@ var modules = avalon.modules = {
 // 1(send)    已经发出请求
 // 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
 // 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
-// 4(complete)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
+// 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
 new function() {
@@ -75,11 +75,11 @@ new function() {
             require(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
-        if (name) {
-            module = module || (modules[urlNoQuery] = {
+        if (name && !module) {
+            module = modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //send
-            })
+            }
             function wrap(obj) {
                 resources[res] = obj
                 obj.load(name, req, function(a) {
@@ -99,28 +99,7 @@ new function() {
         }
         return name ? urlNoQuery : res + "!"
     }
-    function loadJS(url, id, callback) {
-        //通过script节点加载目标模块
-        var node = DOC.createElement("script")
-        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node.onload = function() {
-            var factory = factorys.pop()
-            factory && factory.require(id)
-            if (callback) {
-                callback()
-            }
-            log("debug: 已成功加载 " + url)
-            id && loadings.push(id)
-            checkDeps()
-        }
-        node.onerror = function() {
-            checkFail(node, true)
-        }
 
-        head.appendChild(node) //chrome下第二个参数不能为null
-        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
-        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
-    }
 
 //核心API之一 require
 
@@ -364,6 +343,29 @@ new function() {
             }
         }
     }
+    function loadJS(url, id, callback) {
+        //通过script节点加载目标模块
+        var node = DOC.createElement("script")
+        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        node.onload = function() {
+            var factory = factorys.pop()
+            factory && factory.require(id)
+            if (callback) {
+                callback()
+            }
+            log("debug: 已成功加载 " + url)
+            id && loadings.push(id)
+            checkDeps()
+        }
+        node.onerror = function() {
+            checkFail(node, true)
+        }
+
+        head.appendChild(node) //chrome下第二个参数不能为null
+        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+    }
+
     var resources = innerRequire.plugins = {
         //三大常用资源插件 js!, css!, text!, ready!
         ready: {
@@ -373,56 +375,52 @@ new function() {
             load: function(name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
-                if (Object(modules[id]).state === 1) {
-                    var shim = kernel.shim[name.replace(rjsext, "")]
-                    if (shim) { //shim机制
-                        innerRequire(shim.deps || [], function() {
-                            var args = avalon.slice(arguments)
-                            loadJS(url, id, function() {
-                                onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
-                            })
+                var shim = kernel.shim[name.replace(rjsext, "")]
+                if (shim) { //shim机制
+                    innerRequire(shim.deps || [], function() {
+                        var args = avalon.slice(arguments)
+                        loadJS(url, id, function() {
+                            onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
-                    } else {
-                        loadJS(url, id)
-                    }
+                    })
+                } else {
+                    loadJS(url, id)
                 }
             }
         },
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                if (Object(modules[ req.urlNoQuery ]).state === 1) {
-                    var node = DOC.createElement("link")
-                    node.rel = "stylesheet"
-                    node.href = url
-                    head.appendChild(node)
-                    node.onload = function() {
-                        log("debug: 已成功加载 " + url)
-                        onLoad()
-                    }
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                head.appendChild(node)
+                node.onload = function() {
+                    log("debug: 已成功加载 " + url)
+                    onLoad()
                 }
+                log("debug: 正准备加载 " + url)
             }
         },
         text: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                if (Object(modules[ req.urlNoQuery ]).state === 1) {
-                    var xhr = getXHR()
-                    xhr.onload = function() {
-                        var status = xhr.status;
-                        if (status > 399 && status < 600) {
-                            avalon.error(url + " 对应资源不存在或没有开启 CORS")
-                        } else {
-                            onLoad(xhr.responseText)
-                        }
+                var xhr = getXHR()
+                xhr.onload = function() {
+                    var status = xhr.status;
+                    if (status > 399 && status < 600) {
+                        avalon.error(url + " 对应资源不存在或没有开启 CORS")
+                    } else {
+                        onLoad(xhr.responseText)
                     }
-                    xhr.open("GET", url, true)
-                    if ("withCredentials" in xhr) {//这是处理跨域
-                        xhr.withCredentials = true
-                    }
-                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
-                    xhr.send()
                 }
+                xhr.open("GET", url, true)
+                if ("withCredentials" in xhr) {//这是处理跨域
+                    xhr.withCredentials = true
+                }
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
+                xhr.send()
+                log("debug: 正准备加载 " + url)
             }
         }
     }
