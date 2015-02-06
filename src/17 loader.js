@@ -156,7 +156,7 @@ new function() {
         var uniq = {}
         var id = parentUrl || "callback" + setTimeout("1")
         defineConfig = defineConfig || {}
-        defineConfig.baseUrl = kernel.baseUrl ? kernel.baseUrl : kernel.loaderUrl
+        defineConfig.baseUrl = kernel.baseUrl
         var isBuilt = !!defineConfig.built
         if (parentUrl) {
             defineConfig.parentUrl = parentUrl.substr(0, parentUrl.lastIndexOf("/"))
@@ -304,7 +304,8 @@ new function() {
                     head.insertBefore(baseElement, head.firstChild)
                 }
             }
-            kernel.baseUrl = url
+            if (url.length > 3)
+                kernel.baseUrl = url
         },
         shim: function(obj) {
             for (var i in obj) {
@@ -510,6 +511,8 @@ new function() {
         var url = id
         //1. 是否命中paths配置项
         var usePath = 0
+        var baseUrl = this.baseUrl
+        var rootUrl = this.parentUrl || baseUrl
         eachIndexArray(id, kernel.paths, function(value, key) {
             url = url.replace(key, value)
             usePath = 1
@@ -525,10 +528,9 @@ new function() {
             eachIndexArray(this.mapUrl, kernel.map, function(array) {
                 eachIndexArray(url, array, function(mdValue, mdKey) {
                     url = url.replace(mdKey, mdValue)
-                    ++usePath
+                    rootUrl = baseUrl
                 })
             })
-
         }
         var ext = this.ext
         if (ext && usePath && url.slice(-ext.length) === ext) {
@@ -536,8 +538,8 @@ new function() {
         }
         //4. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            var parent = this.built ? this.baseUrl : this.parentUrl || this.baseUrl
-            url = joinPath(parent, url)
+            rootUrl = this.built ? baseUrl : rootUrl
+            url = joinPath(rootUrl, url)
         }
         //5. 还原扩展名，query
         url += ext + this.query
@@ -646,11 +648,10 @@ new function() {
 
     var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
     var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
-    kernel.loaderUrlNoQuery = loaderUrl
-    kernel.loaderUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
+    loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
         mainScript = mainScript.split('/').pop()
-        loadJS(kernel.loaderUrl + mainScript + ".js")
+        loadJS(loaderUrl + mainScript + ".js")
     }
 }
