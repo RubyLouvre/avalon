@@ -5100,20 +5100,20 @@ new function() {
                 }
             }
         },
-        css: {
-            load: function(name, req, onLoad) {
-                var url = req.url
-                var id = trimQuery(url).replace(/\W/g, "")
-                if (!DOC.getElementById(id)) {
-                    var node = DOC.createElement("link")
-                    node.rel = "stylesheet"
-                    node.href = url
-                    node.id = id
-                    head.insertBefore(node, head.firstChild)
-                    onLoad()
-                }
-            }
-        },
+//        css: {
+//            load: function(name, req, onLoad) {
+//                var url = req.url
+//                var id = trimQuery(url).replace(/\W/g, "")
+//                if (!DOC.getElementById(id)) {
+//                    var node = DOC.createElement("link")
+//                    node.rel = "stylesheet"
+//                    node.href = url
+//                    node.id = id
+//                    head.insertBefore(node, head.firstChild)
+//                    onLoad()
+//                }
+//            }
+//        },
         text: {
             load: function(name, req, onLoad) {
                 var url = req.url
