@@ -15,34 +15,36 @@
         </style>
         <script >
 
-            var model = avalon.define('test', function(vm) {
-                vm.first = {
+            var model = avalon.define({
+                $id: "test",
+                object: {
                     a: 1,
                     b: 1,
                     c: 1,
                     d: 1
-                }
-                vm.text = ""
-            });
-            setTimeout(function() {
+                },
+                text: "初始状态"
+            })
+            setTimeout(function(){
+                  setTimeout(function() {
                 model.text = "修改"
-                model.first = {
-                    a: 3,
-                    b: 3,
-                    c: 3,
-                    d: 3
+                model.object = {
+                    a: 2,
+                    b: 2,
+                    c: 2,
+                    d: 2
                 }
             }, 1000)
             setTimeout(function() {
                 model.text = "移除"
-                model.first = {
+                model.object = {
                     a: 3,
                     b: 3
                 }
             }, 2000)
             setTimeout(function() {
                 model.text = "添加"
-                model.first = {
+                model.object = {
                     a: 3,
                     b: 3,
                     f: 4,
@@ -51,22 +53,26 @@
             }, 3000)
             setTimeout(function() {
                 model.text = "排序"
-                model.first = {
+                model.object = {
                     g: 4,
                     f: 4,
                     b: 3,
                     a: 3
                 }
             }, 4000)
+            },5000)
+          
         </script>
 
     </head>
     <body ms-controller="test" >
         <p>演示对象循环的对象被整个替换掉的效果</p>
         <p>{{text}}实验</p>
-        <div>
-            <p ms-repeat="first">{{$key}}---------------{{$val}}</p>
-        </div>
-
+        <ul>
+            <li ms-repeat="object">{{$key}}:<strong>{{$val}}</strong>(通过ms-repeat实现)</li>
+        </ul>
+        <ol ms-with="object">
+            <li>{{$key}}:<strong>{{$val}}</strong>(通过ms-with实现)</li>
+        </ol>
     </body>
 </html>

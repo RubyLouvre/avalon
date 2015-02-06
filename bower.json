@@ -1,0 +1,31 @@
+{
+  "name": "avalon",
+  "version": "1.3.9",
+  "homepage": "https://github.com/RubyLouvre/avalon",
+  "descriptions": "a lightweight、high-performance and easy-to-follow javascript MVVM framework",
+  "authors": [
+    "RubyLouvre <cheng19840218@gmail.com>"
+  ],
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "MVVM"
+  ],
+  "main": [
+    "avalon.js",
+    "avalon.shim.js",
+    "avalon.mobile.js",
+    "avalon.mobile.shim.js",
+    "avalon.modern.js",
+    "avalon.modern.shim.js"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

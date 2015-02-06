@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>paths配置项</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script data-main="main-built" src="avalon.js"></script>
+        <script>
+
+        </script>
+
+    </head>
+    <body>
+        <h1>paths配置项 </h1>
+        <pre>
+require.config({
+    baseUrl: "./kkk",
+    paths: {
+        jquery: 'jQuery/jquery'
+    }
+})
+
+require(["./aaa", "./bbb", "./ccc", "jquery"], function(a, b, c, d) {
+    console.log([a, b, c, d] + " complete")
+})
+        </pre>
+    </body>
+</html>

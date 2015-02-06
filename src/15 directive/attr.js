@@ -1,0 +1,185 @@
+var bools = "autofocus,autoplay,async,allowTransparency,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
+        "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
+var boolMap = {}
+bools.replace(rword, function(name) {
+    boolMap[name.toLowerCase()] = name
+})
+
+var propMap = {//属性名映射
+    "accept-charset": "acceptCharset",
+    "char": "ch",
+    "charoff": "chOff",
+    "class": "className",
+    "for": "htmlFor",
+    "http-equiv": "httpEquiv"
+}
+
+var anomaly = "accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan," + "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight," + "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
+anomaly.replace(rword, function(name) {
+    propMap[name.toLowerCase()] = name
+})
+
+var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
+var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
+
+var getXHR = function() {
+    return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+}
+
+var cacheTmpls = avalon.templateCache = {}
+
+bindingHandlers.attr = function(data, vmodels) {
+    var text = data.value.trim(),
+            simple = true
+    if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
+        simple = false
+        if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
+            simple = true
+            text = RegExp.$1
+        }
+    }
+    if (data.type === "include") {
+        var elem = data.element
+        data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
+        data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
+        var outer = data.includeReplaced = !!avalon(elem).data("includeReplace")
+        data.startInclude = DOC.createComment("ms-include")
+        data.endInclude = DOC.createComment("ms-include-end")
+        if (outer) {
+            data.element = data.startInclude
+            elem.parentNode.insertBefore(data.startInclude, elem)
+            elem.parentNode.insertBefore(data.endInclude, elem.nextSibling)
+        } else {
+            elem.insertBefore(data.startInclude, elem.firstChild)
+            elem.appendChild(data.endInclude)
+        }
+    }
+    data.handlerName = "attr" //handleName用于处理多种绑定共用同一种bindingExecutor的情况
+    parseExprProxy(text, vmodels, data, (simple ? 0 : scanExpr(data.value)))
+}
+
+bindingExecutors.attr = function(val, elem, data) {
+    var method = data.type,
+            attrName = data.param
+    if (method === "css") {
+        avalon(elem).css(attrName, val)
+    } else if (method === "attr") {
+        // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
+        // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
+        // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+        if (boolMap[attrName]) {
+            var bool = boolMap[attrName]
+            if (typeof elem[bool] === "boolean") {
+                // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
+                return elem[bool] = !!val
+            }
+        }
+        var toRemove = (val === false) || (val === null) || (val === void 0)
+
+        if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
+            attrName = propMap[attrName]
+        }
+        if (toRemove) {
+            return elem.removeAttribute(attrName)
+        }
+        //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
+        var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
+        if (isInnate) {
+            elem[attrName] = val
+        } else {
+            elem.setAttribute(attrName, val)
+        }
+    } else if (method === "include" && val) {
+        var vmodels = data.vmodels
+        var rendered = data.includeRendered
+        var loaded = data.includeLoaded
+        var replace = data.includeReplaced
+        var target = replace ? elem.parentNode : elem
+        function scanTemplate(text) {
+            if (loaded) {
+                text = loaded.apply(target, [text].concat(vmodels))
+            }
+            if (rendered) {
+                checkScan(target, function() {
+                    rendered.call(target)
+                }, NaN)
+            }
+            while (true) {
+                var node = data.startInclude.nextSibling
+                if (node && node !== data.endInclude) {
+                    target.removeChild(node)
+                } else {
+                    break
+                }
+            }
+            var dom = avalon.parseHTML(text)
+            var nodes = avalon.slice(dom.childNodes)
+            target.insertBefore(dom, data.endInclude)
+            scanNodeArray(nodes, vmodels)
+        }
+        if (data.param === "src") {
+            if (cacheTmpls[val]) {
+                avalon.nextTick(function() {
+                    scanTemplate(cacheTmpls[val])
+                })
+            } else {
+                var xhr = getXHR()
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var s = xhr.status
+                        if (s >= 200 && s < 300 || s === 304 || s === 1223) {
+                            scanTemplate(cacheTmpls[val] = xhr.responseText)
+                        }
+                    }
+                }
+                xhr.open("GET", val, true)
+                if ("withCredentials" in xhr) {
+                    xhr.withCredentials = true
+                }
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                xhr.send(null)
+            }
+        } else {
+            //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
+            //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
+            var el = val && val.nodeType === 1 ? val : DOC.getElementById(val)
+            if (el) {
+                if (el.tagName === "NOSCRIPT" && !(el.innerHTML || el.fixIE78)) { //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+                    var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+                    xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
+                    xhr.send(null)
+                    //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+                    var noscripts = DOC.getElementsByTagName("noscript")
+                    var array = (xhr.responseText || "").match(rnoscripts) || []
+                    var n = array.length
+                    for (var i = 0; i < n; i++) {
+                        var tag = noscripts[i]
+                        if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
+                            tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
+                            tag.fixIE78 = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
+                        }
+                    }
+                }
+                avalon.nextTick(function() {
+                    scanTemplate(el.fixIE78 || el.value || el.innerText || el.innerHTML)
+                })
+            }
+        }
+    } else {
+        if (!root.hasAttribute && typeof val === "string" && (method === "src" || method === "href")) {
+            val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
+        }
+        elem[method] = val
+        if (window.chrome && elem.tagName === "EMBED") {
+            var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+            var comment = document.createComment("ms-src")
+            parent.replaceChild(comment, elem)
+            parent.replaceChild(elem, comment)
+        }
+    }
+}
+
+//这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
+"title,alt,src,value,css,include,href".replace(rword, function(name) {
+    bindingHandlers[name] = bindingHandlers.attr
+})

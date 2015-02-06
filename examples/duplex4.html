@@ -6,15 +6,15 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../avalon.js" ></script>
         <script>
-            var model = avalon.define("test", function(vm) {
-                vm.rows = {name: 'a', age: 45}
-                vm.text = "OO"
-                vm.arr = [{name: "55"}]
-                vm.log = function() {
-                    if (window.console) {
+            var model = avalon.define({
+                $id: "ms-duplex-5",
+                rows: {name: 'a', age: 45},
+                text: "OO",
+                arr: [{name: "55"}],
+                log: function() {
+                    if (window.JSON && JSON.stringify) {
                         var value = model.$model
-                        console.log(value)
-                        document.getElementById("show").value = JSON.stringify(value, 4, "\t")
+                        document.getElementById("ms-duplex-show-json").value = JSON.stringify(value, 4, "\t")
                     }
                 }
             });
@@ -23,8 +23,8 @@
     </head>
     <body>
         <h3>测试同步到$model</h3>
-        <fieldset ms-controller="test">
-            <table border="1" width="80%">
+        <fieldset ms-controller="ms-duplex-5">
+            <table class="shim-table">
                 <tr ms-repeat-row='rows'>
                     <td>
                         {{$key}}: {{$val}} <input ms-duplex="$val">
@@ -38,7 +38,7 @@
             <p>
                 <button ms-click="log">打印出来</button>
             </p>
-            <textarea id="show" style="width:60%;height:300px;"></textarea>
+            <textarea id="ms-duplex-show-json" style="width:60%;height:210px;"></textarea>
         </fieldset>
     </body>
 </html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+          <script src="../avalon.js" ></script>
+        <script>
+
+          var vmodel =  avalon.define({
+                $id: "test",
+                aaa: "111",
+                html : "<span>11</span><strong>222</strong><span>333</span><strong>444</strong><span>555</span><strong>666</strong>",
+                change : function(){
+                    vmodel.html = "<em>2343</em><br><em>2343</em><br><em>2343</em><br><em>2343</em><br>"
+                }
+            });
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div>%%%%{{html|html}}%%%%</div>
+        <p><button ms-click="change" type="button">click me</button></p>
+        <input ms-duplex="aaa" data-duplex-event="change">{{aaa}}
+    </body>
+</html>

@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-class</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../avalon.js"></script>
+        <style>
+            .ms-class div{
+                display:inline-block;
+                width:200px;
+                height:100px;
+                border: 1px solid  black;
+            }
+
+        </style>
+        <script type="text/javascript">
+            var model = avalon.define({
+                $id: "test",
+                a: 1,
+                callback: function() {
+                   model.$fire("down!b", new Date - 0)
+                }
+            })
+            var son = avalon.define({
+                $id: "son",
+                b: 10
+            })
+            son.$watch("b", function(v) {
+                son.b = v
+            })
+        </script>
+    </head>
+    <body ms-controller="test" class="ms-class">
+        <div>{{a}}</div>
+        <button type="button" ms-click="callback">fire</button>
+        <div ms-controller="son">
+            <div>{{b}}</div>
+        </div>
+    </body>
+</html>

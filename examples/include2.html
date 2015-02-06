@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>duplexHooks</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+        <script src="../avalon.modern.js"></script>
+        <style>
+            .bp{
+                border: 1px  solid green;
+            }
+            .contain{
+                border: 1px solid red;
+            }
+        </style>
+        <script>
+            var count = 0
+            var a = avalon.define({
+                $id: "test",
+                aaa: "aaa.html",
+                checked: function(){
+                    count++
+                    if(count == 2){
+                        //cg
+                    }
+                },
+                change: function() {
+                    a.aaa = a.aaa === "aaa.html" ? "bbb.html" : "aaa.html"
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+        <div ms-include-src="'include2'+aaa" class="contain" data-include-rendered="checked"></div>
+        <div ms-include-src="'include2'+aaa" class="contain" data-include-replace="true" data-include-rendered="checked"></div>
+    </body>
+</html>
