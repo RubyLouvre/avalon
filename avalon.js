@@ -4750,13 +4750,15 @@ new function() {
                 return a
             }
         })
-        return avalon.mix({
+        var req = avalon.mix({
             query: query,
             ext: ext,
             res: res,
             name: name,
             toUrl: toUrl
         }, config)
+        req.toUrl(name)
+        return req
     }
 
     function fireRequest(req) {
@@ -4764,22 +4766,20 @@ new function() {
         var res = req.res
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
-        var urlNoQuery = name && trimQuery(req.toUrl(name))
-
+        var urlNoQuery = name && req.urlNoQuery
         if (module && module.state >= 3) {
             return name
         }
-        var module = modules[urlNoQuery]
-        if (module && module.state >= 1) {
-            if (module.state === 3)
-                require(module.deps, module.factory, urlNoQuery)
+        module = modules[urlNoQuery]
+        if (module && module.state >= 3) {
+            require(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name) {
-            module = modules[urlNoQuery] = {
+            module = module || (modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //send
-            }
+            })
             function wrap(obj) {
                 resources[res] = obj
                 obj.load(name, req, function(a) {
@@ -4867,9 +4867,7 @@ new function() {
         }
         if (isBuilt) {
             var req = makeRequest(defineConfig.defineName, defineConfig)
-
-            id = trimQuery(req.toUrl(defineConfig.defineName))
-            console.log(id + "------")
+            id = req.urlNoQuery
         } else {
             array.forEach(function(name) {
                 var req = makeRequest(name, defineConfig)
@@ -5087,26 +5085,26 @@ new function() {
         js: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var id = trimQuery(url)
-
-                var shim = kernel.shim[name.replace(rjsext, "")]
-                if (shim) { //shim机制
-                    innerRequire(shim.deps || [], function() {
-                        var args = avalon.slice(arguments)
-                        loadJS(url, id, function() {
-                            onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
+                var id = req.urlNoQuery
+                if (Object(modules[id]).state === 1) {
+                    var shim = kernel.shim[name.replace(rjsext, "")]
+                    if (shim) { //shim机制
+                        innerRequire(shim.deps || [], function() {
+                            var args = avalon.slice(arguments)
+                            loadJS(url, id, function() {
+                                onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
+                            })
                         })
-                    })
-                } else {
-                    loadJS(url, id)
+                    } else {
+                        loadJS(url, id)
+                    }
                 }
             }
         },
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var id = trimQuery(url)
-                if (Object(modules[id]).state === 1) {
+                if (Object(modules[ req.urlNoQuery ]).state === 1) {
                     var node = DOC.createElement("link")
                     node.rel = "stylesheet"
                     node.href = url
@@ -5126,23 +5124,25 @@ new function() {
         text: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var xhr = getXHR()
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        var status = xhr.status;
-                        if (status > 399 && status < 600) {
-                            avalon.error(url + " 对应资源不存在或没有开启 CORS")
-                        } else {
-                            onLoad(xhr.responseText)
+                if (Object(modules[ req.urlNoQuery ]).state === 1) {
+                    var xhr = getXHR()
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            var status = xhr.status;
+                            if (status > 399 && status < 600) {
+                                avalon.error(url + " 对应资源不存在或没有开启 CORS")
+                            } else {
+                                onLoad(xhr.responseText)
+                            }
                         }
                     }
+                    xhr.open("GET", url, true)
+                    if ("withCredentials" in xhr) {//这是处理跨域
+                        xhr.withCredentials = true
+                    }
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
+                    xhr.send()
                 }
-                xhr.open("GET", url, true)
-                if ("withCredentials" in xhr) {//这是处理跨域
-                    xhr.withCredentials = true
-                }
-                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
-                xhr.send()
             }
         }
     }
@@ -5220,8 +5220,8 @@ new function() {
         return ret
     }
     function toUrl(id) {
-        if (id.indexOf( this.res +"!") === 0) {
-            id = id.slice(this.res.length+1) //处理define("css!style",[], function(){})的情况
+        if (id.indexOf(this.res + "!") === 0) {
+            id = id.slice(this.res.length + 1) //处理define("css!style",[], function(){})的情况
         }
         var url = id
         //1. 是否命中paths配置项
@@ -5257,12 +5257,14 @@ new function() {
             url = joinPath(rootUrl, url)
         }
         //5. 还原扩展名，query
-        url += ext + this.query
+        var urlNoQuery = url + ext
+        url = urlNoQuery + this.query
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
-        return this.url = url
+        this.url = url
+        return  this.urlNoQuery = urlNoQuery
     }
 
     function makeIndexArray(hash, useStar, part) {
