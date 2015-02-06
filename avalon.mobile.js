@@ -4130,7 +4130,7 @@ new function() {
         }
         return name ? urlNoQuery : res + "!"
     }
-
+    var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
@@ -4138,12 +4138,11 @@ new function() {
         var timeID
         var supportLoad = "onload" in node
         var onEvent = supportLoad ? "onload" : "onreadystatechange"
-        node[onEvent] = function onLoad() {
-            if (!supportLoad && !timeID && /complete|loaded/.test(node.readyState) ) {
-                timeID = setTimeout(onLoad, 300)
-                return
+        function onload() {
+            if (!"1"[0] && !timeID) {
+                return timeID = setTimeout(onload, 150)
             }
-            if (supportLoad || timeID) {
+            if (supportLoad || rreadyState.test(node.readyState)) {
                 clearTimeout(timeID)
                 var factory = factorys.pop()
                 factory && factory.require(id)
@@ -4157,6 +4156,7 @@ new function() {
                 }
             }
         }
+        node[onEvent] = onload
         node.onerror = function() {
             checkFail(node, true)
         }
