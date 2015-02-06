@@ -4742,7 +4742,7 @@ new function() {
                 supported = true
             }
             var e = document.createEvent("TouchEvent")
-            e.initTouchEvent("touchstart", true, true)
+            e.initUIEvent("touchstart", true, true)
             div.dispatchEvent(e)
         } catch (err) {
         }
@@ -4793,7 +4793,6 @@ new function() {
         })
     }
 
-    var touchProxy = {}
     //判定滑动方向
     function swipeDirection(x1, x2, y1, y2) {
         return Math.abs(x1 - x2) >=
