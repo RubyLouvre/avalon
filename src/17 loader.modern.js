@@ -1,7 +1,7 @@
 /*********************************************************************
  *                      AMD加载器                                   *
  **********************************************************************/
-//去掉getFullUrl 精简loadJS text!插件
+//去掉getFullUrl 精简loadJS text!插件 baseUrl插件
 var modules = avalon.modules = {
     "ready!": {
         exports: avalon,
