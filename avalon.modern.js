@@ -4472,10 +4472,6 @@ new function() {
             a.b.c() //强制报错,以便捕获e.stack
         } catch (e) { //safari5的sourceURL，firefox的fileName，它们的效果与e.stack不一样
             stack = e.stack
-            if (!stack && window.opera) {
-                //opera 9没有e.stack,但有e.Backtrace,但不能直接取得,需要对e对象转字符串进行抽取
-                stack = (String(e).match(/of linked script \S+/g) || []).join(" ")
-            }
         }
         if (stack) {
             /**e.stack最后一行在所有支持的浏览器大致如下:
