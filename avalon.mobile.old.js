@@ -4802,18 +4802,23 @@ new function() {
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
-        if (window.VBArray) {
-            node.defer = true
-        }
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node[W3C ? "onload" : "onreadystatechange"] = function() {
-            if (/undefined|loaded|complete/i.test(node.readyState)) {
+        var timeID
+        var supportLoad = "onload" in node
+        var onEvent = supportLoad ? "onload" : "onreadystatechange"
+        node[onEvent] = function onLoad() {
+            if (!supportLoad && !timeID && /complete|loaded/.test(node.readyState) ) {
+                timeID = setTimeout(onLoad, 300)
+                return
+            }
+            if (supportLoad || timeID) {
+                clearTimeout(timeID)
                 var factory = factorys.pop()
                 factory && factory.require(id)
                 if (callback) {
                     callback()
                 }
-                if (checkFail(node, false, !W3C)) {
+                if (checkFail(node, false, !supportLoad)) {
                     log("debug: 已成功加载 " + url)
                     id && loadings.push(id)
                     checkDeps()
