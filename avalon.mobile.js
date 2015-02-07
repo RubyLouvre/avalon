@@ -318,7 +318,7 @@ avalon.mix({
                 }
             } else {
                 for (i in obj) {
-                    if (obj.hasOwnProperty(i) && fn(i, obj[i] === false)) {
+                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
                         break
                     }
                 }
