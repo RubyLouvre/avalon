@@ -4141,7 +4141,7 @@ new function() {
     innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
         if (!isUserFirstRequire) {
             requireQueue.push(avalon.slice(arguments))
-            if (arguments.length === 2) {
+            if (arguments.length <= 2) {
                 isUserFirstRequire = true
                 var queue = requireQueue.splice(0, requireQueue.length), args
                 while (args = queue.shift()) {
