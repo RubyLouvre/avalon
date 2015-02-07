@@ -4032,7 +4032,7 @@ new function() {
  **********************************************************************/
 //去掉getFullUrl 精简loadJS text!插件 baseUrl插件
 var modules = avalon.modules = {
-    "ready!": {
+    "domReady!": {
         exports: avalon,
         state: 3
     },
@@ -4061,6 +4061,10 @@ new function() {
             res = b
             return ""
         })
+        if (res === "ready") {
+            log("debug: ready!已经被废弃，请使用domReady!")
+            res = "domReady"
+        }
         //2. 去掉querystring, hash
         var query = ""
         name = name.replace(rquery, function(a) {
@@ -4549,7 +4553,7 @@ new function() {
         }
         //4. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            rootUrl = this.built ? baseUrl : rootUrl
+            rootUrl = this.built || /^\w/.test(url) ? baseUrl : rootUrl
             url = joinPath(rootUrl, url)
         }
         //5. 还原扩展名，query
@@ -4664,8 +4668,7 @@ new function() {
     loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
-        mainScript = mainScript.split('/').pop()
-        loadJS(loaderUrl + mainScript + ".js")
+        loadJS(joinPath(loaderUrl, mainScript + ".js"))
     }
 }
 
@@ -4675,7 +4678,7 @@ new function() {
 var readyList = []
 function fireReady() {
     if (innerRequire) {
-        modules["ready!"].state = 4
+        modules["domReady!"].state = 4
         innerRequire.checkDeps()//隋性函数，防止IE9二次调用_checkDeps
     }
     readyList.forEach(function(a) {
