@@ -27,7 +27,7 @@ new function() {
     var rjsext = /\.js$/i
     var name2url = {}
     function makeRequest(name, config) {
-        //1. 去掉资源前缀
+//1. 去掉资源前缀
         var res = "js"
         name = name.replace(/^(\w+)\!/, function(a, b) {
             res = b
@@ -37,7 +37,7 @@ new function() {
             log("debug: ready!已经被废弃，请使用domReady!")
             res = "domReady"
         }
-        //2. 去掉querystring, hash
+//2. 去掉querystring, hash
         var query = ""
         name = name.replace(rquery, function(a) {
             query = a
@@ -104,7 +104,7 @@ new function() {
         return name ? urlNoQuery : res + "!"
     }
 
-    //核心API之一 require
+//核心API之一 require
     var requireQueue = []
     var isUserFirstRequire = false
     innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
@@ -165,7 +165,7 @@ new function() {
         checkDeps()
     }
 
-    //核心API之二 require
+//核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
         if (typeof name !== "string") {
             factory = deps
@@ -197,13 +197,13 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        //根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
-        //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
-        //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
-        //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
-        //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
-        //唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
-        //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
+//根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
+//老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
+//较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
+//下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
+//但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
+//唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
+//亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = config.built ? "unknown" : getCurrentScript()
         if (url) {
             var module = modules[url]
@@ -215,7 +215,7 @@ new function() {
             factorys.push(factory)
         }
     }
-    //核心API之三 require.config(settings)
+//核心API之三 require.config(settings)
     innerRequire.config = kernel
     //核心API之四 define.amd 标识其符合AMD规范
     innerRequire.define.amd = modules
@@ -657,12 +657,15 @@ new function() {
         return g
     }
 
-    var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
-    var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
-    loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
-    var mainScript = mainNode.getAttribute("data-main")
-    if (mainScript) {
-        mainScript = mainScript.split("/").pop()
-        loadJS(joinPath(loaderUrl, mainScript.replace(rjsext, "") + ".js"))
+    var mainNode = DOC.scripts[DOC.scripts.length - 1] 
+    var dataMain = mainNode.getAttribute("data-main")
+    if (dataMain) {
+        plugins.baseUrl(dataMain)
+        var href = kernel.baseUrl
+        kernel.baseUrl = href.slice(0, href.lastIndexOf("/") + 1)
+        loadJS(href.replace(rjsext, "") + ".js")
+    } else {
+        var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
+        kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
 }

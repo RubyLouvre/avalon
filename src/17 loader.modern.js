@@ -634,12 +634,15 @@ new function() {
         return g
     }
 
-    var mainNode = DOC.scripts[DOC.scripts.length - 1] //求得当前avalon.js 所在的JS文件的路径
-    var loaderUrl = trimQuery(mainNode.src)
-    loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
-    var mainScript = mainNode.getAttribute("data-main")
-    if (mainScript) {
-        mainScript = mainScript.split("/").pop()
-        loadJS(joinPath(loaderUrl, mainScript.replace(rjsext, "") + ".js"))
+    var mainNode = DOC.scripts[DOC.scripts.length - 1]
+    var dataMain = mainNode.getAttribute("data-main")
+    if (dataMain) {
+        plugins.baseUrl(dataMain)
+        var href = kernel.baseUrl
+        kernel.baseUrl = href.slice(0, href.lastIndexOf("/") + 1)
+        loadJS(href.replace(rjsext, "") + ".js")
+    } else {
+        var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
+        kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
 }
