@@ -76,7 +76,7 @@ new function() {
         }
         module = modules[urlNoQuery]
         if (module && module.state >= 3) {
-            require(module.deps, module.factory, urlNoQuery)
+            innerRequire(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name && !module) {
@@ -136,7 +136,7 @@ new function() {
             defineConfig.mapUrl = parentUrl.replace(rjsext, "")
         }
         if (isBuilt) {
-            var req = makeRequest(defineConfig.defineName, defineConfig)
+            var req = makeRequest(defineConfig.name, defineConfig)
             id = req.urlNoQuery
         } else {
             array.forEach(function(name) {
@@ -169,20 +169,20 @@ new function() {
 
 //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
-        var args = aslice.call(arguments)
         if (typeof name !== "string") {
-            args.unshift("anonymous")
+            factory = deps
+            deps = name
+            name = "anonymous"
         }
-
-        if (!Array.isArray(args[1])) {
-            args.splice(1, 0, [])
+        if (!Array.isArray(deps)) {
+            factory = deps
+            deps = []
         }
         var config = {
             built: !isUserFirstRequire, //用r.js打包后,所有define会放到requirejs之前
-            defineName: name
+            name: name
         }
-        factory = args[2]
-        args = [args[1], factory, config]
+        var args = [deps, factory, config]
         factory.require = function(url) {
             args.splice(2, 0, url)
             if (modules[url]) {

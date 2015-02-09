@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.391 build in 2015.2.7 
+ avalon.js 1.391 build in 2015.2.9 
 _____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -4774,7 +4774,7 @@ new function() {
         }
         module = modules[urlNoQuery]
         if (module && module.state >= 3) {
-            require(module.deps, module.factory, urlNoQuery)
+            innerRequire(module.deps, module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name && !module) {
@@ -4865,20 +4865,20 @@ new function() {
 
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
-        var args = aslice.call(arguments)
         if (typeof name !== "string") {
-            args.unshift("anonymous")
+            factory = deps
+            deps = name
+            name = "anonymous"
         }
-
-        if (!Array.isArray(args[1])) {
-            args.splice(1, 0, [])
+        if (!Array.isArray(deps)) {
+            factory = deps
+            deps = []
         }
         var config = {
             built: !isUserFirstRequire, //用r.js打包后,所有define会放到requirejs之前
             defineName: name
         }
-        factory = args[2]
-        args = [args[1], factory, config]
+        var args = [deps, factory, config]
         factory.require = function(url) {
             args.splice(2, 0, url)
             if (modules[url]) {
@@ -5089,7 +5089,12 @@ new function() {
             load: function(name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
-                var shim = kernel.shim[name.replace(rjsext, "")]
+
+                try {
+                    var shim = kernel.shim[name.replace(rjsext, "")]
+                } catch (e) {
+                    console.log(req)
+                }
                 if (shim) { //shim机制
                     innerRequire(shim.deps || [], function() {
                         var args = avalon.slice(arguments)
