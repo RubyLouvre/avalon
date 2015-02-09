@@ -5089,12 +5089,7 @@ new function() {
             load: function(name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
-
-                try {
-                    var shim = kernel.shim[name.replace(rjsext, "")]
-                } catch (e) {
-                    console.log(req)
-                }
+                var shim = kernel.shim[name.replace(rjsext, "")]
                 if (shim) { //shim机制
                     innerRequire(shim.deps || [], function() {
                         var args = avalon.slice(arguments)
