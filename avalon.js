@@ -4775,7 +4775,7 @@ new function() {
         }
         module = modules[urlNoQuery]
         if (module && module.state >= 3) {
-            innerRequire(module.deps, module.factory, urlNoQuery)
+            innerRequire(module.deps || [], module.factory, urlNoQuery)
             return urlNoQuery
         }
         if (name && !module) {
