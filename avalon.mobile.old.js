@@ -5360,7 +5360,8 @@ new function() {
     loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
-        loadJS(joinPath(loaderUrl, mainScript + ".js"))
+        mainScript = mainScript.split("/").pop()
+        loadJS(joinPath(loaderUrl, mainScript.replace(rjsext, "") + ".js"))
     }
 }
 
