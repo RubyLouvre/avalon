@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.391 build in 2015.2.6 
+ avalon.js 1.391 build in 2015.2.9 
 _____________________________________
  support IE6+ and other browsers
  ==================================================*/
@@ -41,6 +41,7 @@ var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
 ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
 ifGroup.setAttribute("ms-skip", "1")
+ifGroup.className = "avalonHide"
 var rnative = /\[native code\]/ //判定是否原生函数
 function log() {
     if (window.console && avalon.config.debug) {
@@ -4702,7 +4703,7 @@ new function() {
 //https://www.devbridge.com/articles/understanding-amd-requirejs/
 //http://maxogden.com/nested-dependencies.html
 var modules = avalon.modules = {
-    "ready!": {
+    "domReady!": {
         exports: avalon,
         state: 3
     },
@@ -4716,7 +4717,7 @@ var modules = avalon.modules = {
 // 1(send)    已经发出请求
 // 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
 // 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
-// 4(complete)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
+// 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
 new function() {
@@ -4724,8 +4725,6 @@ new function() {
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     var name2url = {}
-
-
     function makeRequest(name, config) {
         //1. 去掉资源前缀
         var res = "js"
@@ -4733,6 +4732,10 @@ new function() {
             res = b
             return ""
         })
+        if (res === "ready") {
+            log("debug: ready!已经被废弃，请使用domReady!")
+            res = "domReady"
+        }
         //2. 去掉querystring, hash
         var query = ""
         name = name.replace(rquery, function(a) {
@@ -4750,13 +4753,15 @@ new function() {
                 return a
             }
         })
-        return avalon.mix({
+        var req = avalon.mix({
             query: query,
             ext: ext,
             res: res,
             name: name,
             toUrl: toUrl
         }, config)
+        req.toUrl(name)
+        return req
     }
 
     function fireRequest(req) {
@@ -4764,18 +4769,16 @@ new function() {
         var res = req.res
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
-        var urlNoQuery = name && trimQuery(req.toUrl(name))
-
+        var urlNoQuery = name && req.urlNoQuery
         if (module && module.state >= 3) {
             return name
         }
-        var module = modules[urlNoQuery]
-        if (module && module.state >= 1) {
-            if (module.state === 3)
-                require(module.deps, module.factory, urlNoQuery)
+        module = modules[urlNoQuery]
+        if (module && module.state >= 3) {
+            innerRequire(module.deps || [], module.factory, urlNoQuery)
             return urlNoQuery
         }
-        if (name) {
+        if (name && !module) {
             module = modules[urlNoQuery] = {
                 id: urlNoQuery,
                 state: 1 //send
@@ -4800,44 +4803,13 @@ new function() {
         return name ? urlNoQuery : res + "!"
     }
 
-    function loadJS(url, id, callback) {
-        //通过script节点加载目标模块
-        var node = DOC.createElement("script")
-        if (window.VBArray) {
-            node.defer = true
-        }
-        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node[W3C ? "onload" : "onreadystatechange"] = function() {
-            if (/undefined|loaded|complete/i.test(node.readyState)) {
-                var factory = factorys.pop()
-                factory && factory.require(id)
-                if (callback) {
-                    callback()
-                }
-                if (checkFail(node, false, !W3C)) {
-                    log("debug: 已成功加载 " + url)
-                    id && loadings.push(id)
-                    checkDeps()
-                }
-            }
-        }
-        node.onerror = function() {
-            checkFail(node, true)
-        }
-
-        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
-        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
-    }
-
     //核心API之一 require
-
     var requireQueue = []
     var isUserFirstRequire = false
     innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
         if (!isUserFirstRequire) {
             requireQueue.push(avalon.slice(arguments))
-            if (arguments.length === 2) {
+            if (arguments.length <= 2) {
                 isUserFirstRequire = true
                 var queue = requireQueue.splice(0, requireQueue.length), args
                 while (args = queue.shift()) {
@@ -4862,7 +4834,7 @@ new function() {
         }
         if (isBuilt) {
             var req = makeRequest(defineConfig.defineName, defineConfig)
-            id = trimQuery(req.toUrl(defineConfig.defineName))
+            id = req.urlNoQuery
         } else {
             array.forEach(function(name) {
                 var req = makeRequest(name, defineConfig)
@@ -4894,20 +4866,20 @@ new function() {
 
     //核心API之二 require
     innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
-        var args = aslice.call(arguments)
         if (typeof name !== "string") {
-            args.unshift("anonymous")
+            factory = deps
+            deps = name
+            name = "anonymous"
         }
-
-        if (!Array.isArray(args[1])) {
-            args.splice(1, 0, [])
+        if (!Array.isArray(deps)) {
+            factory = deps
+            deps = []
         }
         var config = {
             built: !isUserFirstRequire, //用r.js打包后,所有define会放到requirejs之前
             defineName: name
         }
-        factory = args[2]
-        args = [args[1], factory, config]
+        var args = [deps, factory, config]
         factory.require = function(url) {
             args.splice(2, 0, url)
             if (modules[url]) {
@@ -5072,6 +5044,43 @@ new function() {
             }
         }
     }
+
+    var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
+    function loadJS(url, id, callback) {
+        //通过script节点加载目标模块
+        var node = DOC.createElement("script")
+        node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
+        var timeID
+        var supportLoad = "onload" in node
+        var onEvent = supportLoad ? "onload" : "onreadystatechange"
+        function onload() {
+            if (!"1"[0] && !timeID) {
+                return timeID = setTimeout(onload, 150)
+            }
+            if (supportLoad || rreadyState.test(node.readyState)) {
+                clearTimeout(timeID)
+                var factory = factorys.pop()
+                factory && factory.require(id)
+                if (callback) {
+                    callback()
+                }
+                if (checkFail(node, false, !supportLoad)) {
+                    log("debug: 已成功加载 " + url)
+                    id && loadings.push(id)
+                    checkDeps()
+                }
+            }
+        }
+        node[onEvent] = onload
+        node.onerror = function() {
+            checkFail(node, true)
+        }
+
+        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
+        node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
+        log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
+    }
+
     var resources = innerRequire.plugins = {
         //三大常用资源插件 js!, css!, text!, ready!
         ready: {
@@ -5080,8 +5089,7 @@ new function() {
         js: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var id = trimQuery(url)
-
+                var id = req.urlNoQuery
                 var shim = kernel.shim[name.replace(rjsext, "")]
                 if (shim) { //shim机制
                     innerRequire(shim.deps || [], function() {
@@ -5098,15 +5106,12 @@ new function() {
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var id = trimQuery(url).replace(/\W/g, "")
-                if (!DOC.getElementById(id)) {
-                    var node = DOC.createElement("link")
-                    node.rel = "stylesheet"
-                    node.href = url
-                    node.id = id
-                    head.insertBefore(node, head.firstChild)
-                    onLoad()
-                }
+                var node = DOC.createElement("link")
+                node.rel = "stylesheet"
+                node.href = url
+                head.insertBefore(node, head.firstChild)
+                log("debug: 已成功加载 " + url)
+                onLoad()
             }
         },
         text: {
@@ -5119,6 +5124,7 @@ new function() {
                         if (status > 399 && status < 600) {
                             avalon.error(url + " 对应资源不存在或没有开启 CORS")
                         } else {
+                            log("debug: 已成功加载 " + url)
                             onLoad(xhr.responseText)
                         }
                     }
@@ -5129,6 +5135,7 @@ new function() {
                 }
                 xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")//告诉后端这是AJAX请求
                 xhr.send()
+                log("debug: 正准备加载 " + url)
             }
         }
     }
@@ -5206,6 +5213,9 @@ new function() {
         return ret
     }
     function toUrl(id) {
+        if (id.indexOf(this.res + "!") === 0) {
+            id = id.slice(this.res.length + 1) //处理define("css!style",[], function(){})的情况
+        }
         var url = id
         //1. 是否命中paths配置项
         var usePath = 0
@@ -5236,16 +5246,18 @@ new function() {
         }
         //4. 转换为绝对路径
         if (!isAbsUrl(url)) {
-            rootUrl = this.built ? baseUrl : rootUrl
+            rootUrl = this.built || /^\w/.test(url) ? baseUrl : rootUrl
             url = joinPath(rootUrl, url)
         }
         //5. 还原扩展名，query
-        url += ext + this.query
+        var urlNoQuery = url + ext
+        url = urlNoQuery + this.query
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function(value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
-        return this.url = url
+        this.url = url
+        return  this.urlNoQuery = urlNoQuery
     }
 
     function makeIndexArray(hash, useStar, part) {
@@ -5299,7 +5311,7 @@ new function() {
             }
         }
     }
-// 根据元素的name项进行数组字符数逆序的排序函数
+    // 根据元素的name项进行数组字符数逆序的排序函数
     function descSorterByName(a, b) {
         var aaa = a.name
         var bbb = b.name
@@ -5349,8 +5361,7 @@ new function() {
     loaderUrl = kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     var mainScript = mainNode.getAttribute("data-main")
     if (mainScript) {
-        mainScript = mainScript.split('/').pop()
-        loadJS(loaderUrl + mainScript + ".js")
+        loadJS(joinPath(loaderUrl, mainScript + ".js"))
     }
 }
 
@@ -5362,7 +5373,7 @@ var readyList = []
 function fireReady() {
     if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
         if (innerRequire) {
-            modules["ready!"].state = 4
+            modules["domReady!"].state = 4
             innerRequire.checkDeps()
         }
         readyList.forEach(function(a) {

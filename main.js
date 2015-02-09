@@ -5,6 +5,6 @@ require.config({
     }
 })
 
-require(["./aaa", "./bbb", "./ccc", "jquery"], function(a, b, c, d) {
+require(["./aaa", "./bbb", "./ccc", "text!xxx.htm","css!style"], function(a, b, c, d) {
     console.log([a, b, c, d] + " complete")
 })

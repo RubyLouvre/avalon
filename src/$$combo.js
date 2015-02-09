@@ -85,6 +85,7 @@ modernFiles[modernFiles.indexOf("12 scanAttr")] = "12 scanAttr.modern"
 modernFiles[modernFiles.indexOf("12 scanTag")] = "12 scanTag.modern"
 modernFiles[modernFiles.indexOf("13 dom")] = "13 dom.modern"
 modernFiles[modernFiles.indexOf("14 parser")] = "14 parser.modern"
+modernFiles[modernFiles.indexOf("17 loader")] = "17 loader.modern"
 modernFiles[modernFiles.indexOf(directive("text"))] = directive("text.modern")
 modernFiles[modernFiles.indexOf(directive("duplex.2"))] = directive("duplex.2.modern")
 modernFiles[modernFiles.indexOf("18 domReady")] = "18 domReady.modern"

@@ -1,4 +1,4 @@
-define(function(){
+define(["./eee/ddd"],function(){
     return "bbb"
 })
 
