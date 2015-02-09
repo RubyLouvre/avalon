@@ -33,7 +33,50 @@ new function() {
     } else if (IE9_10touch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
-
+    var clickbuster = {
+        underFrame: null,
+        coordinates: [],
+        addUnderFrame: function(event) {
+            var underFrame = null
+            if(!clickbuster.underFrame) { 
+                underFrame = document.createElement('div');
+                underFrame.style.cssText = [
+                    "opacity: 0",
+                    "display: none;",
+                    "border-radius: 60px;",
+                    "position: absolute;",
+                    "z-index: 99999;",
+                    "width: 60px;",
+                    "height: 60px"
+                ].join("");
+                document.body.appendChild(underFrame)
+            }
+            clickbuster.underFrame = underFrame
+            underFrame.style.top = (event.changedTouches[0].clientY - 30) + "px"
+            underFrame.style.left = (event.changedTouches[0].clientX - 30) + "px"
+            underFrame.style.display = "block"
+            setTimeout(function(){
+                underFrame.style.display = "none"
+            }, 360)
+        },
+        preventGhostClick: function(x, y) {
+            clickbuster.coordinates.push(x, y);
+            window.setTimeout(clickbuster.pop, 2500)
+        },
+        pop: function() {
+            clickbuster.coordinates.splice(0, 2)
+        },
+        onClick: function(event) {
+            for (var i = 0; i < clickbuster.coordinates.length; i += 2) {
+                var x = clickbuster.coordinates[i]
+                var y = clickbuster.coordinates[i + 1]
+                if (Math.abs(event.clientX - x) < 25 && Math.abs(event.clientY - y) < 25) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+            }
+        }
+    }
 
     if (touchSupported) {
         //我们经由ms-click, ms-on-tap绑定事件, 其实没有直接绑在元素,全部放到一个数组中
@@ -47,7 +90,7 @@ new function() {
                     var fns = el[listName] || (el[listName] = [])
                     if (!el["msdispatch"]) {
                         el["msdispatch"] = function(event) {
-                            if (event.fireByAvalon) {
+                            if (event.fireByAvalon) { 
                                 for (var i = 0, fn; fn = fns[i++]; ) {
                                     fn.call(el, event)
                                 }
@@ -81,22 +124,16 @@ new function() {
         }
     }
 
-    function touchend(event) {
+    function touchend(event) { 
         var element = touchProxy.element
-        if (!element)
+        if (!element) 
             return
         var e = getCoordinates(event)
         var diff = Date.now() - touchProxy.startTime //经过时间
         var totalX = Math.abs(touchProxy.x - e.x)
         var totalY = Math.abs(touchProxy.y - e.y)
-
-        var canDoubleClick = false
-        if (touchProxy.doubleIndex === 2) {//如果已经点了两次,就可以触发dblclick 回调
-            touchProxy.doubleIndex = 0
-            canDoubleClick = true
-            if (avalon.config.stopZoom) {
-                event.preventDefault()
-            }
+        if (touchProxy.doubleIndex === 2 && avalon.config.stopZoom) {//如果已经点了两次,就可以触发dblclick 回调
+            event.preventDefault()
         }
         if (totalX > 30 || totalY > 30) {
             //如果用户滑动的距离有点大，就认为是swipe事件
@@ -131,22 +168,31 @@ new function() {
                     avalon.fastclick.fireEvent(forElement, "click", event)
                     W3CFire(element, "tap")//触发tap事件
                 }
-                if (canDoubleClick) {
-                    if (diff < 250) {
+                if (diff < 250) {
+                    if (touchProxy.doubleIndex == 2) {
                         avalon.fastclick.fireEvent(element, "dblclick", event)//触发dblclick事件
                         W3CFire(element, "doubletap")//触发doubletap事件
+                        touchProxy.doubleIndex = 0
+                    } else {
+                        setTimeout(function() {
+                            touchProxy.doubleIndex = 0
+                        }, 250)
                     }
-                    touchProxy.doubleIndex = 0
                 }
+                    
                 if (diff > fastclick.clickDuration) {
                     W3CFire(element, "hold")
                     W3CFire(element, "longtap")
+                    touchProxy.doubleIndex = 0
                 }
             }
         }
         avalon(element).removeClass(fastclick.activeClass)
         touchProxy.element = null
     }
+    // 避免被点击的元素下有input、textarea时会触发其focus从而调出键盘
+    // http://hzxiaosheng.github.io/work/2014/09/13/click-event-300ms-delay-and-ghost-click-in-mobile-browser/
+    document.addEventListener('click', clickbuster.onClick, true)
     document.addEventListener(touchNames[1], function(event) {
         if (!touchProxy.element)
             return
@@ -157,6 +203,7 @@ new function() {
             touchProxy.element = null
         }
     })
+
     document.addEventListener(touchNames[2], touchend)
     if (touchNames[3]) {
         document.addEventListener(touchNames[3], touchend)
@@ -169,22 +216,18 @@ new function() {
             touchProxy.cy = touchProxy.y
             touchProxy.mx = 0 //计算总结移动了多少距离，指在移动距离重分
             touchProxy.my = 0
-            touchProxy.startTime = Date.now()
+            // touchProxy.startTime = Date.now()
             touchProxy.event = data.param
             touchProxy.tapping = /click|tap|hold$/.test(touchProxy.event)
 
-            touchProxy.element = element
             //--------------处理双击事件--------------
-            if (touchProxy.element !== element) {
+            if (!touchProxy.doubleIndex) {
                 touchProxy.doubleIndex = 1
-                touchProxy.doubleStartTime = Date.now()
+                touchProxy.startTime = Date.now()
             } else {
-                if (!touchProxy.doubleIndex) {
-                    touchProxy.doubleIndex = 1
-                } else {
-                    touchProxy.doubleIndex = 2
-                }
+                touchProxy.doubleIndex = 2
             }
+            touchProxy.element = element
             if (touchProxy.tapping && avalon.fastclick.canClick(element)) {
                 avalon(element).addClass(fastclick.activeClass)
             }
@@ -272,6 +315,25 @@ new function() {
     ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "dblclick", "longtap", "hold"].forEach(function(method) {
         me[method + "Hook"] = me["clickHook"]
     })
-
+    if (touchSupported) {
+        me[touchNames[2] + "Hook"] = function(data) {
+            data.specialBind = function(element, callback) {
+                var _callback = callback
+                if (element.hasAttribute('avoidFocus')) {
+                    _callback = function(event) {
+                        var e = getCoordinates(event)
+                        clickbuster.preventGhostClick(e.x, e.y)
+                        clickbuster.addUnderFrame(event)
+                        callback.apply(this, [].slice.call(arguments))
+                    } 
+                } 
+                data.msCallback = _callback
+                avalon.bind(element, data.param, _callback)
+            }
+            data.specialUnbind = function() {
+                avalon.unbind(data.element, data.param, data.msCallback)
+            }
+        }
+    }
     //各种摸屏事件的示意图 http://quojs.tapquo.com/  http://touch.code.baidu.com/
 }
