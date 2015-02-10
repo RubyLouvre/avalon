@@ -26,6 +26,12 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+    "combo",
+    "examples",
+    "src",
+    ".gitignore",
+    "compiler.jar",
+    "server.exe"
   ]
 }
