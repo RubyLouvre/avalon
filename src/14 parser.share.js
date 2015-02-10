@@ -192,7 +192,6 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
-        console.log(fn + "")
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

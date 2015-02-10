@@ -108,10 +108,10 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize: 2)
+        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: function(number, fractionSize) {
-        return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
+        return  numberFormat(number, isFinite(fractionSize) ? fractionSize : 3)
     }
 }
 /*
@@ -149,7 +149,7 @@ var filters = avalon.filters = {
  */
 new function() {
     function toInt(str) {
-        return parseInt(str, 10)
+        return parseInt(str, 10) || 0
     }
 
     function padNumber(num, digits, trim) {
@@ -221,34 +221,8 @@ new function() {
         a: ampmGetter,
         Z: timeZoneGetter
     }
-    var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
-            NUMBER_STRING = /^\d+$/
-    var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
-    // 1        2       3         4          5          6          7          8  9     10      11
-
-    function jsonStringToDate(string) {
-        var match
-        if (match = string.match(riso8601)) {
-            var date = new Date(0),
-                    tzHour = 0,
-                    tzMin = 0,
-                    dateSetter = match[8] ? date.setUTCFullYear : date.setFullYear,
-                    timeSetter = match[8] ? date.setUTCHours : date.setHours
-            if (match[9]) {
-                tzHour = toInt(match[9] + match[10])
-                tzMin = toInt(match[9] + match[11])
-            }
-            dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-            var h = toInt(match[4] || 0) - tzHour
-            var m = toInt(match[5] || 0) - tzMin
-            var s = toInt(match[6] || 0)
-            var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
-            timeSetter.call(date, h, m, s, ms)
-            return date
-        }
-        return string
-    }
-    var rfixYMD = /^(\d+)\D(\d+)\D(\d+)/
+    var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
+    var raspnetjson = /^\/Date\((\d+)\)\/$/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -257,17 +231,51 @@ new function() {
         format = format || "mediumDate"
         format = locate[format] || format
         if (typeof date === "string") {
-            if (NUMBER_STRING.test(date)) {
+            if (/^\d+$/.test(date)) {
                 date = toInt(date)
+            } else if (raspnetjson.test(date)) {
+                date = +RegExp.$1
             } else {
                 var trimDate = date.trim()
-                date = trimDate.replace(rfixYMD, function(a, b, c, d) {
-                    var array = d.length === 4 ? [d, b, c] : [b, c, d]
-                    return array.join("-")
+                var dateArray = [0, 0, 0, 0, 0, 0, 0]
+                var oDate = new Date(0)
+                //取得年月日
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                    var array = c.length === 4 ? [c, a, b] : [a, b, c]
+                    dateArray[0] = toInt(array[0])     //年
+                    dateArray[1] = toInt(array[1]) - 1 //月
+                    dateArray[2] = toInt(array[2])     //日
+                    return ""
                 })
-                date = jsonStringToDate(date)
+                var dateSetter = oDate.setFullYear
+                var timeSetter = oDate.setHours
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                    dateArray[3] = toInt(a) //小时
+                    dateArray[4] = toInt(b) //分钟
+                    dateArray[5] = toInt(c) //秒
+                    if (d) {                //毫秒
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)
+                    }
+                    return ""
+                })
+                var tzHour = 0
+                var tzMin = 0
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                    dateSetter = oDate.setUTCFullYear
+                    timeSetter = oDate.setUTCHours
+                    if (symbol) {
+                        tzHour = toInt(symbol + c)
+                        tzMin = toInt(symbol + d)
+                    }
+                    return ""
+                })
+
+                dateArray[3] -= tzHour
+                dateArray[4] -= tzMin
+                dateSetter.apply(oDate, dateArray.slice(0, 3))
+                timeSetter.apply(oDate, dateArray.slice(3))
+                date = oDate
             }
-            date = new Date(date)
         }
         if (typeof date === "number") {
             date = new Date(date)
@@ -276,7 +284,7 @@ new function() {
             return
         }
         while (format) {
-            match = DATE_FORMATS_SPLIT.exec(format)
+            match = rdateFormat.exec(format)
             if (match) {
                 parts = parts.concat(match.slice(1))
                 format = parts.pop()

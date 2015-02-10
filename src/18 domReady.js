@@ -3,17 +3,15 @@
  **********************************************************************/
 
 var readyList = []
-
 function fireReady() {
     if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
         if (innerRequire) {
-            modules["ready!"].state = 2
+            modules["domReady!"].state = 4
             innerRequire.checkDeps()
-        } else {
-            readyList.forEach(function(a) {
-                a(avalon)
-            })
         }
+        readyList.forEach(function(a) {
+            a(avalon)
+        })
         fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
     }
 }
@@ -37,23 +35,18 @@ if (DOC.readyState === "complete") {
             fireReady()
         }
     })
-    var isFrame;
-    try{
-        isFrame=window.frameElement!=null//当前页面处于iframe中时,访问frameElement会抛出不允许跨域访问异常
+    try {
+        var isTop = window.frameElement === null
+    } catch (e) {
     }
-    catch(e){
-        isFrame=true
-    }
-    if (root.doScroll&& !isFrame) {//只有不处于iframe时才用doScroll判断,否则可能会不准
+    if (root.doScroll && isTop && window.external) {//只有不处于iframe时才用doScroll判断,否则可能会不准
         doScrollCheck()
     }
 }
 avalon.bind(window, "load", fireReady)
 
 avalon.ready = function(fn) {
-    if (innerRequire) {
-        innerRequire(["ready!"], fn)
-    } else if (fireReady === noop) {
+    if (fireReady === noop) {
         fn(avalon)
     } else {
         readyList.push(fn)

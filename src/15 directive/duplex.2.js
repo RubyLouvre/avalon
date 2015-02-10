@@ -44,7 +44,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set")
+        var val = data.pipe(evaluator(), data, "set") + ""//fix #673
         if (val !== element.oldValue) {
             element.value = val
         }
@@ -69,12 +69,12 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     //并且必须设置延迟
                     element.defaultChecked = checked
                     element.checked = checked
-                }, 100)
+                }, 31)
             } else {
                 element.checked = checked
             }
         }
-        bound(IE6 ? "mouseup" : "click", updateVModel)
+        bound("click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {

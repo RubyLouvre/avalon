@@ -32,7 +32,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set")
+        var val = data.pipe(evaluator(), data, "set") + ""
         if (val !== element.oldValue) {
             element.value = val
         }
@@ -102,7 +102,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-    
+
     element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)

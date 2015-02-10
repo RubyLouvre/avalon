@@ -1,12 +1,12 @@
 /*==================================================
- Copyright (c) 2013-2014 司徒正美 and other contributors
+ Copyright (c) 2013-2015 司徒正美 and other contributors
  http://www.cnblogs.com/rubylouvre/
  https://github.com/RubyLouvre
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(去掉加载器与domReady) 1.382 build in 2015.1.14 
-__
+ avalon.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.9 
+____
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -41,6 +41,7 @@ var head = DOC.getElementsByTagName("head")[0] //HEAD元素
 var ifGroup = head.insertBefore(document.createElement("avalon"), head.firstChild) //避免IE6 base标签BUG
 ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!important }</style>"
 ifGroup.setAttribute("ms-skip", "1")
+ifGroup.className = "avalonHide"
 var rnative = /\[native code\]/ //判定是否原生函数
 function log() {
     if (window.console && avalon.config.debug) {
@@ -261,7 +262,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.382,
+    version: 1.391,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -380,12 +381,13 @@ avalon.mix({
             var i = 0
             if (isArrayLike(obj)) {
                 for (var n = obj.length; i < n; i++) {
-                    fn(i, obj[i])
+                    if (fn(i, obj[i]) === false)
+                        break
                 }
             } else {
                 for (i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        fn(i, obj[i])
+                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                        break
                     }
                 }
             }
@@ -429,19 +431,23 @@ var bindingHandlers = avalon.bindingHandlers = {}
 var bindingExecutors = avalon.bindingExecutors = {}
 
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
-
 function isArrayLike(obj) {
-    if (obj && typeof obj === "object") {
-        var n = obj.length
-        if (n === (n >>> 0)) { //检测length属性是否为非负整数
-            try {
-                if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
-                    return Array.isArray(obj) || /^\s?function/.test(obj.item || obj.callee)
-                }
-                return true
-            } catch (e) { //IE的NodeList直接抛错
-                return true
+    if (!obj)
+        return false
+    var n = obj.length
+    if (n === (n >>> 0)) { //检测length属性是否为非负整数
+        var type = serialize.call(obj).slice(8, -1)
+        if (/(?:regexp|string|function|window|global)$/i.test(type))
+            return false
+        if (type === "Array")
+            return true
+        try {
+            if ({}.propertyIsEnumerable.call(obj, "length") === false) { //如果是原生对象
+                return  /^\s?function/.test(obj.item || obj.callee)
             }
+            return true
+        } catch (e) { //IE的NodeList直接抛错
+            return !obj.eval //IE6-8 window
         }
     }
     return false
@@ -943,8 +949,6 @@ var EventBus = {
 
 var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
 var findNodes = DOC.querySelectorAll ? function(str) {
-    //pc safari v5.1: typeof DOC.querySelectorAll(str) === 'function'
-    //https://gist.github.com/DavidBruant/1016007
     return DOC.querySelectorAll(str)
 } : function(str) {
     var match = str.match(ravalon)
@@ -1091,16 +1095,20 @@ function modelFactory(source, $special, $model) {
                     //计算属性与对象属性需要重新计算newValue
                     if (accessor.type !== 1) {
                         newValue = getNewValue(accessor, name, newValue, $vmodel)
+                        if (!accessor.type)
+                            return
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
                         if ($events.$digest) {
-                            accessor.pedding = true
-                            setTimeout(function() {
-                                notifySubscribers($events[name]) //同步视图
-                                safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-                                accessor.pedding = false
-                            })
+                            if (!accessor.pedding) {
+                                accessor.pedding = true
+                                setTimeout(function() {
+                                    notifySubscribers($events[name]) //同步视图
+                                    safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+                                    accessor.pedding = false
+                                })
+                            }
                         } else {
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
@@ -1109,7 +1117,23 @@ function modelFactory(source, $special, $model) {
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
-                        return $model[name] = accessor.get.call($vmodel)
+                        var newValue = accessor.get.call($vmodel)
+                        if (oldValue !== newValue) {
+                            $model[name] = newValue
+                            //这里不用同步视图
+                            if ($events.$digest) {
+                                if (!accessor.pedding) {
+                                    accessor.pedding = true
+                                    setTimeout(function() {
+                                        safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+                                        accessor.pedding = false
+                                    })
+                                }
+                            } else {
+                                safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
+                            }
+                        }
+                        return newValue
                     } else {
                         collectSubscribers($events[name]) //收集视图函数
                         return accessor.svmodel || oldValue
@@ -1125,8 +1149,8 @@ function modelFactory(source, $special, $model) {
                 initCallbacks.push(function() {
                     var data = {
                         evaluator: function() {
-                            data.element = null
                             data.type = new Date - 0
+                            data.element = null
                             $model[name] = accessor.get.call($vmodel)
                         },
                         element: head,
@@ -1141,7 +1165,7 @@ function modelFactory(source, $special, $model) {
             } else if (rcomplexType.test(valueType)) {
                 //第2种为对象属性，产生子VM与监控数组
                 accessor.type = 2
-                accessor.valueType = val.valueType
+                accessor.valueType = valueType
                 initCallbacks.push(function() {
                     var svmodel = modelFactory(val, 0, $model[name])
                     accessor.svmodel = svmodel
@@ -1242,7 +1266,9 @@ function objectFactory(parent, name, value, valueType) {
         if (!Array.isArray(value) || son === value) {
             return son //fix https://github.com/RubyLouvre/avalon/issues/261
         }
+        son._.$unwatch()
         son.clear()
+        son._.$watch()
         son.pushArray(value.concat())
         return son
     } else {
@@ -1450,12 +1476,7 @@ var _splice = ap.splice
 var CollectionPrototype = {
     _splice: _splice,
     _fire: function(method, a, b) {
-        var list = this.$events[subscribers]
-        for (var i = 0, fn; fn = list[i++]; ) {
-            if (fn.$repeat) {
-                fn.handler.call(fn, method, a, b) //处理监控数组的方法
-            }
-        }
+        notifySubscribers(this.$events[subscribers], method, a, b)
     },
     size: function() { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
@@ -1508,7 +1529,11 @@ var CollectionPrototype = {
             change = true
         }
         if (m > 2) {  //如果用户添加了元素
-            args.splice(3, 1, 0, "add", start, m - 2)
+            if (change) {
+                args.splice(3, 1, 0, "add", start, m - 2)
+            } else {
+                args.push("add", start, m - 2, 0)
+            }
             change = true
         }
         if (change) { //返回被移除的元素
@@ -1639,7 +1664,7 @@ function registerSubscriber(data) {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             data.handler(c, data.element, data)
         } catch (e) {
-            log("warning:exception throwed in [registerSubscriber] " + e)
+           //log("warning:exception throwed in [registerSubscriber] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1802,8 +1827,8 @@ var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "applicat
 var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关系的标签
 var script = DOC.createElement("script")
 avalon.parseHTML = function(html) {
-    if (typeof html !== "string") {
-        html = html + ""
+    if (typeof html !== "string" ) {
+        return DOC.createDocumentFragment()
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
@@ -2165,10 +2190,13 @@ var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g
-
+        rstringLiteral  = /(['"])(\\\1|.)+?\1/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
-        var index = value.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
+        var scapegoat = value.replace( rstringLiteral, function(_){
+            return Math.pow(10,_.length)
+        })
+        var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
             return {
                 filters: value.slice(index),
@@ -3010,7 +3038,6 @@ function parseExpr(code, scopes, data) {
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
         data.evaluator = cacheExprs(exprId, fn)
-        console.log(fn + "")
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
@@ -3477,6 +3504,7 @@ bindingExecutors.visible = function(val, elem, data) {
 var rdash = /\(([^)]*)\)/
 bindingHandlers.on = function(data, vmodels) {
     var value = data.value
+    data.type = "on"
     var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
     if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
         bindingHandlers.on[eventType + "Hook"](data)
@@ -3491,7 +3519,6 @@ bindingHandlers.on = function(data, vmodels) {
 }
 
 bindingExecutors.on = function(callback, elem, data) {
-    data.type = "on"
     callback = function(e) {
         var fn = data.evaluator || noop
         return fn.apply(this, data.args.concat(e))
@@ -3792,7 +3819,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set")
+        var val = data.pipe(evaluator(), data, "set") + ""//fix #673
         if (val !== element.oldValue) {
             element.value = val
         }
@@ -3817,12 +3844,12 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     //并且必须设置延迟
                     element.defaultChecked = checked
                     element.checked = checked
-                }, 100)
+                }, 31)
             } else {
                 element.checked = checked
             }
         }
-        bound(IE6 ? "mouseup" : "click", updateVModel)
+        bound("click", updateVModel)
     } else if (type === "checkbox") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {
@@ -4430,10 +4457,10 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize: 2)
+        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: function(number, fractionSize) {
-        return  numberFormat(number, isFinite(fractionSize) ? fractionSize: 3 )
+        return  numberFormat(number, isFinite(fractionSize) ? fractionSize : 3)
     }
 }
 /*
@@ -4471,7 +4498,7 @@ var filters = avalon.filters = {
  */
 new function() {
     function toInt(str) {
-        return parseInt(str, 10)
+        return parseInt(str, 10) || 0
     }
 
     function padNumber(num, digits, trim) {
@@ -4543,34 +4570,8 @@ new function() {
         a: ampmGetter,
         Z: timeZoneGetter
     }
-    var DATE_FORMATS_SPLIT = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,
-            NUMBER_STRING = /^\d+$/
-    var riso8601 = /^(\d{4})-?(\d+)-?(\d+)(?:T(\d+)(?::?(\d+)(?::?(\d+)(?:\.(\d+))?)?)?(Z|([+-])(\d+):?(\d+))?)?$/
-    // 1        2       3         4          5          6          7          8  9     10      11
-
-    function jsonStringToDate(string) {
-        var match
-        if (match = string.match(riso8601)) {
-            var date = new Date(0),
-                    tzHour = 0,
-                    tzMin = 0,
-                    dateSetter = match[8] ? date.setUTCFullYear : date.setFullYear,
-                    timeSetter = match[8] ? date.setUTCHours : date.setHours
-            if (match[9]) {
-                tzHour = toInt(match[9] + match[10])
-                tzMin = toInt(match[9] + match[11])
-            }
-            dateSetter.call(date, toInt(match[1]), toInt(match[2]) - 1, toInt(match[3]))
-            var h = toInt(match[4] || 0) - tzHour
-            var m = toInt(match[5] || 0) - tzMin
-            var s = toInt(match[6] || 0)
-            var ms = Math.round(parseFloat('0.' + (match[7] || 0)) * 1000)
-            timeSetter.call(date, h, m, s, ms)
-            return date
-        }
-        return string
-    }
-    var rfixYMD = /^(\d+)\D(\d+)\D(\d+)/
+    var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
+    var raspnetjson = /^\/Date\((\d+)\)\/$/
     filters.date = function(date, format) {
         var locate = filters.date.locate,
                 text = "",
@@ -4579,17 +4580,51 @@ new function() {
         format = format || "mediumDate"
         format = locate[format] || format
         if (typeof date === "string") {
-            if (NUMBER_STRING.test(date)) {
+            if (/^\d+$/.test(date)) {
                 date = toInt(date)
+            } else if (raspnetjson.test(date)) {
+                date = +RegExp.$1
             } else {
                 var trimDate = date.trim()
-                date = trimDate.replace(rfixYMD, function(a, b, c, d) {
-                    var array = d.length === 4 ? [d, b, c] : [b, c, d]
-                    return array.join("-")
+                var dateArray = [0, 0, 0, 0, 0, 0, 0]
+                var oDate = new Date(0)
+                //取得年月日
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                    var array = c.length === 4 ? [c, a, b] : [a, b, c]
+                    dateArray[0] = toInt(array[0])     //年
+                    dateArray[1] = toInt(array[1]) - 1 //月
+                    dateArray[2] = toInt(array[2])     //日
+                    return ""
                 })
-                date = jsonStringToDate(date)
+                var dateSetter = oDate.setFullYear
+                var timeSetter = oDate.setHours
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                    dateArray[3] = toInt(a) //小时
+                    dateArray[4] = toInt(b) //分钟
+                    dateArray[5] = toInt(c) //秒
+                    if (d) {                //毫秒
+                        dateArray[6] = Math.round(parseFloat("0." + d) * 1000)
+                    }
+                    return ""
+                })
+                var tzHour = 0
+                var tzMin = 0
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                    dateSetter = oDate.setUTCFullYear
+                    timeSetter = oDate.setUTCHours
+                    if (symbol) {
+                        tzHour = toInt(symbol + c)
+                        tzMin = toInt(symbol + d)
+                    }
+                    return ""
+                })
+
+                dateArray[3] -= tzHour
+                dateArray[4] -= tzMin
+                dateSetter.apply(oDate, dateArray.slice(0, 3))
+                timeSetter.apply(oDate, dateArray.slice(3))
+                date = oDate
             }
-            date = new Date(date)
         }
         if (typeof date === "number") {
             date = new Date(date)
@@ -4598,7 +4633,7 @@ new function() {
             return
         }
         while (format) {
-            match = DATE_FORMATS_SPLIT.exec(format)
+            match = rdateFormat.exec(format)
             if (match) {
                 parts = parts.concat(match.slice(1))
                 format = parts.pop()
@@ -4669,20 +4704,27 @@ new function() {
     avalon.config({
         loader: false
     })
-    var fns = [], listener,
-            hack = root.doScroll,
-            domContentLoaded = "DOMContentLoaded",
-            loaded = (hack ? /^loaded|^c/ : /^loaded|^i|^c/).test(DOC.readyState)
-    if (!loaded) {
-        DOC.addEventListener(domContentLoaded, listener = function() {
-            DOC.removeEventListener(domContentLoaded, listener)
-            loaded = 1
-            while (listener = fns.shift())
-                listener()
+    var fns = [], fn, loaded
+    function flush(f) {
+        loaded = 1
+        while (f = fns.shift())
+            f()
+    }
+    if (W3C) {
+        avalon.bind(DOC, "DOMContentLoaded", fn = function() {
+            avalon.unbind(DOC, "DOMContentLoaded", fn)
+            flush()
         })
+    } else {
+        var id = setInterval(function() {
+            if (document.readyState === "complete" && document.body) {
+                clearInterval(id)
+                flush()
+            }
+        }, 50)
     }
     avalon.ready = function(fn) {
-        loaded ? fn() : fns.push(fn)
+        loaded ? fn(avalon) : fns.push(fn)
     }
     avalon.ready(function() {
         avalon.scan(DOC.body)

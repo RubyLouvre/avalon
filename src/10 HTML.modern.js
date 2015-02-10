@@ -19,10 +19,6 @@ var tagHooks = new function() {
     this.th = this.td
 }
 
-tagHooks.optgroup = tagHooks.option
-tagHooks.tbody = tagHooks.tfoot = tagHooks.colgroup = tagHooks.caption = tagHooks.thead
-tagHooks.th = tagHooks.td
-
 String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
     tagHooks[tag] = tagHooks.g //处理SVG
 })
@@ -32,8 +28,8 @@ var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "applicat
 var script = DOC.createElement("script")
 
 avalon.parseHTML = function(html) {
-    if (typeof html !== "string") {
-        html = html + ""
+    if (typeof html !== "string" ) {
+        return DOC.createDocumentFragment()
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),

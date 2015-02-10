@@ -100,7 +100,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.382,
+    version: 1.391,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
@@ -146,10 +146,11 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type
             if (hook.deel) {
-                fn = hook.deel(el, fn)
+                fn = hook.deel(el, type, fn, true)
             }
         }
-        el.addEventListener(type, fn, !!phase)
+        if (!fn.unbind)
+            el.addEventListener(type, fn, !!phase)
         return fn
     },
     /*卸载事件*/
@@ -159,6 +160,9 @@ avalon.mix({
         var callback = fn || noop
         if (typeof hook === "object") {
             type = hook.type
+            if (hook.deel) {
+                fn = hook.deel(el, type, fn, false)
+            }
         }
         el.removeEventListener(type, callback, !!phase)
     },
@@ -195,12 +199,13 @@ avalon.mix({
             var i = 0
             if (isArrayLike(obj)) {
                 for (var n = obj.length; i < n; i++) {
-                    fn(i, obj[i])
+                    if (fn(i, obj[i]) === false)
+                        break
                 }
             } else {
                 for (i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        fn(i, obj[i])
+                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                        break
                     }
                 }
             }
