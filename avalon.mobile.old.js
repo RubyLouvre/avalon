@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js(安卓2.3及其他旧的移动端浏览器) 1.391 build in 2015.2.9 
-d other browsers
+ avalon.mobile.old.js(安卓2.3及其他旧的移动端浏览器) 1.391 build in 2015.2.10 
+ other browsers
  ==================================================*/
 (function(global, factory) {
 
