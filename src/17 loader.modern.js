@@ -642,7 +642,7 @@ new function() {
         kernel.baseUrl = href.slice(0, href.lastIndexOf("/") + 1)
         loadJS(href.replace(rjsext, "") + ".js")
     } else {
-        var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
+        var loaderUrl = trimQuery(mainNode.src)
         kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
 }

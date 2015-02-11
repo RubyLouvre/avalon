@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js(支持触屏事件) 1.391 build in 2015.2.10 
+ avalon.mobile.js(支持触屏事件) 1.391 build in 2015.2.11 
 _________
  support IE6+ and other browsers
  ==================================================*/
@@ -4671,7 +4671,7 @@ new function() {
         kernel.baseUrl = href.slice(0, href.lastIndexOf("/") + 1)
         loadJS(href.replace(rjsext, "") + ".js")
     } else {
-        var loaderUrl = trimQuery(getFullUrl(mainNode, "src"))
+        var loaderUrl = trimQuery(mainNode.src)
         kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
 }
