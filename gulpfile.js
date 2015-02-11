@@ -14,7 +14,7 @@ gulp.task('combo', function() {
         var version = 1.391 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
-        
+
         gulp.src(compatibleFiles)
                 .pipe(concat('avalon.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function(a, b) {
@@ -23,10 +23,10 @@ gulp.task('combo', function() {
                 .pipe(replace(/!!/, function(a, b) {
                     return  "avalon.js " + version + " built in " + date
                 }))
-                .pipe(gulp.dest('./dist/'), function() {
-                    console.log('合并完毕')
-                })
+                .pipe(gulp.dest('./dist/'))
     })
 
 })
-gulp.task('default', ['combo']);
+gulp.task('default', ['combo'], function() {
+    console.log('合并完毕')
+});
