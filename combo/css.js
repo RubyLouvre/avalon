@@ -1,3 +1,35 @@
+/*
+ * Require-CSS RequireJS css! loader plugin
+ * 0.1.8
+ * Guy Bedford 2014
+ * MIT
+ */
+
+/*
+ *
+ * Usage:
+ *  require(['css!./mycssFile']);
+ *
+ * Tested and working in (up to latest versions as of March 2013):
+ * Android
+ * iOS 6
+ * IE 6 - 10
+ * Chome 3 - 26
+ * Firefox 3.5 - 19
+ * Opera 10 - 12
+ * 
+ * browserling.com used for virtual testing environment
+ *
+ * Credit to B Cavalier & J Hann for the IE 6 - 9 method,
+ * refined with help from Martin Cermak
+ * 
+ * Sources that helped along the way:
+ * - https://developer.mozilla.org/en-US/docs/Browser_detection_using_the_user_agent
+ * - http://www.phpied.com/when-is-a-stylesheet-really-loaded/
+ * - https://github.com/cujojs/curl/blob/master/src/curl/plugin/css.js
+ *
+ */
+
 define(function() {
 //>>excludeStart('excludeRequireCss', pragmas.excludeRequireCss)
   if (typeof window == 'undefined')
