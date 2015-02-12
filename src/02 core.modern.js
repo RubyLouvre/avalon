@@ -21,7 +21,7 @@ avalon.type = function(obj) { //取得目标的类型
 }
 
 var isFunction = function(fn) {
-    return serialize.call(fn) == "[object Function]"
+    return serialize.call(fn) === "[object Function]"
 }
 
 avalon.isFunction = isFunction
@@ -131,7 +131,7 @@ avalon.mix({
         }
         var index = -1,
                 length = Math.max(0, Math.ceil((end - start) / step)),
-                result = Array(length)
+                result = new Array(length)
         while (++index < length) {
             result[index] = start
             start += step
@@ -171,10 +171,10 @@ avalon.mix({
         if (node instanceof avalon) {
             node = node[0]
         }
-        var prop = /[_-]/.test(name) ? camelize(name) : name
+        var prop = /[_-]/.test(name) ? camelize(name) : name, fn
         name = avalon.cssName(prop) || prop
         if (value === void 0 || typeof value === "boolean") { //获取样式
-            var fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
+            fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
             if (name === "background") {
                 name = "backgroundColor"
             }

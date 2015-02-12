@@ -2,7 +2,7 @@ var gulp = require('gulp');
 var path = require('path');
 var concat = require('gulp-concat')
 var replace = require('gulp-replace')
-
+var jshint = require('gulp-jshint')
 
 gulp.task('combo', function() {
 //https://github.com/isaacs/node-glob
@@ -23,7 +23,11 @@ gulp.task('combo', function() {
                 .pipe(replace(/!!/, function(a, b) {
                     return  "avalon.js " + version + " built in " + date
                 }))
+             
+
                 .pipe(gulp.dest('./dist/'))
+                .pipe(jshint())
+                .pipe(jshint.reporter('default'))
     })
 
 })
