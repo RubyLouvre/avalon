@@ -245,7 +245,7 @@ new function() {
             var uniq = {}
             var ret = []
             for (var i = 0, pkg; pkg = array[i++]; ) {
-                var pkg = typeof pkg === "string" ? {name: pkg} : pkg
+                pkg = typeof pkg === "string" ? {name: pkg} : pkg
                 var name = pkg.name
                 if (!uniq[name]) {
                     var url = pkg.location ? pkg.location : joinPath(name, pkg.main || "main")
@@ -569,9 +569,7 @@ new function() {
                     val: hash[key]
                 }
                 array.push(item)
-                item.reg = key === "*" && useStar
-                        ? /^/
-                        : makeMatcher(key)
+                item.reg = key === "*" && useStar ? /^/ : makeMatcher(key)
                 if (part && key !== "*") {
                     item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
                 }

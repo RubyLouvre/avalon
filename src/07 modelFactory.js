@@ -154,7 +154,7 @@ function modelFactory(source, $special, $model) {
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
                         //计算属性不需要收集视图刷新函数,都是由其他监控属性代劳
-                        var newValue = accessor.get.call($vmodel)
+                        newValue = accessor.get.call($vmodel)
                         if (oldValue !== newValue) {
                             $model[name] = newValue
                             //这里不用同步视图

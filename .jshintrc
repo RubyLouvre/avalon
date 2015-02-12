@@ -1,17 +1,12 @@
 {
  "newcap": true,
   "noarg": true,
-  "noempty": true,
-  "nonew": true,
+
   "trailing": true,
   "maxlen": 200,
   
   "eqeqeq": true,
   "es3": true,
-  "laxbreak": true,
-  "loopfunc": true,
-  
-  "undef": true,
 
 
 
@@ -19,5 +14,6 @@
   "asi": true,
   "boss": true,
   "eqnull": true,
-  "expr": true
+  "expr": true,
+  "funcscope":true
 }
