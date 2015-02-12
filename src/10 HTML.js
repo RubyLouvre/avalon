@@ -66,7 +66,7 @@ avalon.parseHTML = function(html) {
     for (i = wrap[0]; i--; wrapper = wrapper.lastChild) {
     }
     if (!W3C) { //fix IE
-        var els = wrapper.getElementsByTagName("br"), n = els.length
+        els = wrapper.getElementsByTagName("br"), n = els.length
         while (el = els[--n]) {
             if (el.className === "msNoScope") {
                 el.parentNode.removeChild(el)

@@ -7,10 +7,11 @@ var jshint = require('gulp-jshint')
 gulp.task('combo', function() {
 //https://github.com/isaacs/node-glob
 //http://www.linuxjournal.com/content/bash-extended-globbing
-    return gulp.src('./src/**/[0-9]*.js', function(a, b) {
+    return gulp.src('./src/**/*.js', function(a, b) {
         var compatibleFiles = b.filter(function(f) {
-            return !/noop|modern|observe|touch/.test(f)
+            return !/\$\$|noop|modern|observe|touch/.test(f)
         })
+        console.log(compatibleFiles)
         var version = 1.391 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()

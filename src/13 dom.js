@@ -17,7 +17,7 @@ function camelize(target) {
     })
 }
 
-var ClassListMethods = {
+var fakeClassListMethods = {
     _toString: function() {
         var node = this.node
         var cls = node.className
@@ -47,13 +47,13 @@ var ClassListMethods = {
     } //toggle存在版本差异，因此不使用它
 }
 
-function ClassList(node) {
+function fakeClassList(node) {
     if (!("classList" in node)) {
         node.classList = {
             node: node
         }
-        for (var k in ClassListMethods) {
-            node.classList[k.slice(1)] = ClassListMethods[k]
+        for (var k in fakeClassListMethods) {
+            node.classList[k.slice(1)] = fakeClassListMethods[k]
         }
     }
     return node.classList
@@ -66,7 +66,7 @@ function ClassList(node) {
         //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
         if (cls && typeof cls === "string" && el && el.nodeType === 1) {
             cls.replace(/\S+/g, function(c) {
-                ClassList(el)[method](c)
+                fakeClassList(el)[method](c)
             })
         }
         return this
@@ -75,7 +75,7 @@ function ClassList(node) {
 avalon.fn.mix({
     hasClass: function(cls) {
         var el = this[0] || {}
-        return el.nodeType === 1 && ClassList(el).contains(cls)
+        return el.nodeType === 1 && fakeClassList(el).contains(cls)
     },
     toggleClass: function(value, stateVal) {
         var className, i = 0

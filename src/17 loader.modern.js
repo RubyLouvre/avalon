@@ -84,7 +84,7 @@ new function() {
                 id: urlNoQuery,
                 state: 1 //send
             }
-            function wrap(obj) {
+           var wrap = function(obj) {
                 resources[res] = obj
                 obj.load(name, req, function(a) {
                     if (arguments.length && a !== void 0) {
