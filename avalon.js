@@ -5457,7 +5457,7 @@ avalon.ready(function() {
         }
         return avalon
     }
-// Expose avalon and $ identifiers, even in AMD
+// Expose avalon identifiers, even in AMD
 // and CommonJS for browser emulators
     if (noGlobal === void 0) {
         window.avalon = avalon
