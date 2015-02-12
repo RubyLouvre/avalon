@@ -42,6 +42,7 @@ gulp.task('combo', function() {
                 .pipe(gulp.dest('./'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
+                .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.min.js'))
                 .pipe(gulp.dest('./min/'))
@@ -84,6 +85,8 @@ gulp.task('combo', function() {
             "duplex.2": "duplex.2.modern",
             "18 domReady": "18 domReady.modern"
         })
+        console.log(modernFiles)
+     
         gulp.src(modernFiles)
                 .pipe(concat('avalon.modern.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function(a, b) {
@@ -93,6 +96,7 @@ gulp.task('combo', function() {
                     return  "avalon.modern.js " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
                 .pipe(gulp.dest('./min/'))

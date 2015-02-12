@@ -1,7 +1,8 @@
 /*********************************************************************
  *                      AMD加载器                                   *
  **********************************************************************/
-//去掉getFullUrl 精简loadJS text!插件 baseUrl插件
+//https://www.devbridge.com/articles/understanding-amd-requirejs/
+//http://maxogden.com/nested-dependencies.html
 var modules = avalon.modules = {
     "domReady!": {
         exports: avalon,
@@ -26,7 +27,7 @@ new function() {
     var rjsext = /\.js$/i
     var name2url = {}
     function makeRequest(name, config) {
-        //1. 去掉资源前缀
+//1. 去掉资源前缀
         var res = "js"
         name = name.replace(/^(\w+)\!/, function(a, b) {
             res = b
@@ -36,7 +37,7 @@ new function() {
             log("debug: ready!已经被废弃，请使用domReady!")
             res = "domReady"
         }
-        //2. 去掉querystring, hash
+//2. 去掉querystring, hash
         var query = ""
         name = name.replace(rquery, function(a) {
             query = a
@@ -70,7 +71,6 @@ new function() {
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
         var urlNoQuery = name && req.urlNoQuery
-
         if (module && module.state >= 3) {
             return name
         }
@@ -84,7 +84,7 @@ new function() {
                 id: urlNoQuery,
                 state: 1 //send
             }
-           var wrap = function(obj) {
+            var wrap = function(obj) {
                 resources[res] = obj
                 obj.load(name, req, function(a) {
                     if (arguments.length && a !== void 0) {
@@ -104,9 +104,7 @@ new function() {
         return name ? urlNoQuery : res + "!"
     }
 
-
 //核心API之一 require
-
     var requireQueue = []
     var isUserFirstRequire = false
     innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
@@ -136,7 +134,7 @@ new function() {
             defineConfig.mapUrl = parentUrl.replace(rjsext, "")
         }
         if (isBuilt) {
-            var req = makeRequest(defineConfig.name, defineConfig)
+            var req = makeRequest(defineConfig.defineName, defineConfig)
             id = req.urlNoQuery
         } else {
             array.forEach(function(name) {
@@ -180,7 +178,7 @@ new function() {
         }
         var config = {
             built: !isUserFirstRequire, //用r.js打包后,所有define会放到requirejs之前
-            name: name
+            defineName: name
         }
         var args = [deps, factory, config]
         factory.require = function(url) {
@@ -199,13 +197,13 @@ new function() {
             delete factory.require //释放内存
             innerRequire.apply(null, args) //0,1,2 --> 1,2,0
         }
-        //根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
-        //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
-        //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
-        //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
-        //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
-        //唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
-        //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
+//根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
+//老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
+//较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
+//下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
+//但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
+//唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
+//亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
         var url = config.built ? "unknown" : getCurrentScript()
         if (url) {
             var module = modules[url]
@@ -219,10 +217,10 @@ new function() {
     }
 //核心API之三 require.config(settings)
     innerRequire.config = kernel
-//核心API之四 define.amd 标识其符合AMD规范
+    //核心API之四 define.amd 标识其符合AMD规范
     innerRequire.define.amd = modules
 
-//==========================对用户配置项进行再加工==========================
+    //==========================对用户配置项进行再加工==========================
     var allpaths = kernel["orig.paths"] = {}
     var allmaps = kernel["orig.map"] = {}
     var allpackages = kernel["packages"] = []
@@ -266,7 +264,7 @@ new function() {
         },
         baseUrl: function(url) {
             if (!isAbsUrl(url)) {
-                var baseElement = head.querySelector("base")
+                var baseElement = head.getElementsByTagName("base")[0]
                 if (baseElement) {
                     head.removeChild(baseElement)
                 }
@@ -298,7 +296,7 @@ new function() {
     })
 
 
-//==============================内部方法=================================
+    //==============================内部方法=================================
     function checkCycle(deps, nick) {
         //检测是否存在循环依赖
         for (var i = 0, id; id = deps[i++]; ) {
@@ -347,6 +345,7 @@ new function() {
             }
         }
     }
+
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
@@ -365,7 +364,7 @@ new function() {
             checkFail(node, true)
         }
 
-        head.appendChild(node) //chrome下第二个参数不能为null
+        head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
@@ -395,10 +394,7 @@ new function() {
         css: {
             load: function(name, req, onLoad) {
                 var url = req.url
-                var node = DOC.createElement("link")
-                node.rel = "stylesheet"
-                node.href = url
-                head.appendChild(node)
+                head.insertAdjacentHTML("afterBegin", '<link rel="stylesheet" href="'+ url +'">')
                 log("debug: 已成功加载 " + url)
                 onLoad()
             }
@@ -412,6 +408,7 @@ new function() {
                     if (status > 399 && status < 600) {
                         avalon.error(url + " 对应资源不存在或没有开启 CORS")
                     } else {
+                        log("debug: 已成功加载 " + url)
                         onLoad(xhr.responseText)
                     }
                 }
@@ -436,6 +433,7 @@ new function() {
         //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
         return  /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
+
 
     function getCurrentScript() {
         // inspireb by https://github.com/samyk/jiagra/blob/master/jiagra.js
@@ -587,7 +585,7 @@ new function() {
             }
         }
     }
-// 根据元素的name项进行数组字符数逆序的排序函数
+    // 根据元素的name项进行数组字符数逆序的排序函数
     function descSorterByName(a, b) {
         var aaa = a.name
         var bbb = b.name
