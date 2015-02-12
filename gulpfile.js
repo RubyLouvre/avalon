@@ -129,7 +129,25 @@ gulp.task('combo', function() {
                 .pipe(rename('avalon.mobile.min.js'))
                 .pipe(gulp.dest('./min/'))
 
+        //avalon.mobiles.js 所需要合并的子文件
+        var mobileOldFiles = compatibleFiles.concat()
+
+        mobileOldFiles.pop()
+        mobileOldFiles.push(fixPath("20 touch"), fixPath("19 outer"))
+
+        gulp.src(mobileOldFiles)
+                .pipe(concat('avalon.mobile.old.js'))
+                .pipe(replace(/version:\s+([\d\.]+)/, function(a, b) {
+                    return "version: " + version
+                }))
+                .pipe(replace(/!!/, function(a, b) {
+                    return  "avalon.mobile.old.js " + version + " built in " + date + "\n support IE8 and other browsers"
+                }))
+                .pipe(gulp.dest('./'))
+
     })
+
+
 
 })
 gulp.task('default', ['combo'], function() {
