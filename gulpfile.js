@@ -26,7 +26,7 @@ gulp.task('combo', function() {
         var compatibleFiles = b.filter(function(f) {
             return !/\$\$|noop|modern|observe|touch/.test(f)
         })
-        var version = 1.391 //当前版本号
+        var version = 1.40 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 

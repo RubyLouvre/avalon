@@ -5,10 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.12 
-upport IE6+ and other browsers
- ==================================================*/
-(function(global, factory) {
+ avalon.mobile.shim.js(去掉加载器与domReady) 1.391 build in 2015.2.15 
+ factory) {
 
     if (typeof module === "object" && typeof module.exports === "object") {
         // For CommonJS and CommonJS-like environments where a proper `window`
@@ -4426,7 +4424,7 @@ new function() {
         }
         return avalon
     }
-// Expose avalon and $ identifiers, even in AMD
+// Expose avalon identifiers, even in AMD
 // and CommonJS for browser emulators
     if (noGlobal === void 0) {
         window.avalon = avalon
