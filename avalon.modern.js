@@ -1921,7 +1921,7 @@ avalon.fn.mix({
         while (offsetParent && avalon.css(offsetParent, "position") === "static") {
             offsetParent = offsetParent.offsetParent;
         }
-        return avalon(offsetParent)
+        return avalon(offsetParent || root)
     },
     bind: function(type, fn, phase) {
         if (this[0]) { //此方法不会链
