@@ -6,8 +6,6 @@
  
  Released under the MIT license
  !!
- ___________________________________________________________________
- support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
 

@@ -116,7 +116,7 @@ function fixEvent(event) {
         ret.wheelDeltaY = ret.wheelDelta
         ret.wheelDeltaX = 0
     }
-    ret.timeStamp = new Date - 0
+    ret.timeStamp = new Date() - 0
     ret.originalEvent = event
     ret.preventDefault = function() { //阻止默认行为
         event.returnValue = false

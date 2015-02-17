@@ -36,7 +36,7 @@ bindingExecutors.html = function(val, elem, data) {
     if (isHtmlFilter) {
         data.group = fragment.childNodes.length || 1
     }
-    var nodes = avalon.slice(fragment.childNodes)
+    nodes = avalon.slice(fragment.childNodes)
     if (nodes[0]) {
         if (comment.parentNode)
             comment.parentNode.replaceChild(fragment, comment)
