@@ -5,8 +5,9 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js(去掉加载器与domReady) 1.4 build in 2015.2.17 
-l, factory) {
+ avalon.mobile.shim.js(去掉加载器与domReady) 1.4 build in 2015.2.25 
+===============================================*/
+(function(global, factory) {
 
     if (typeof module === "object" && typeof module.exports === "object") {
         // For CommonJS and CommonJS-like environments where a proper `window`
@@ -4051,7 +4052,7 @@ new function() {
         return supported
     })()
     var touchSupported = !!(w3ctouch || IE11touch || IE9_10touch)
-    合成做成触屏事件所需要的各种原生事件
+    //合成做成触屏事件所需要的各种原生事件
     var touchNames = ["mousedown", "mousemove", "mouseup", ""]
     if (w3ctouch) {
         touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]

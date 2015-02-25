@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.4 build in 2015.2.17 
-=====================*/
+ avalon.js 1.4 build in 2015.2.25                                     
+==================================================*/
 (function(global, factory) {
 
     if (typeof module === "object" && typeof module.exports === "object") {
