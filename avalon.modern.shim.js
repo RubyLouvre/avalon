@@ -5,8 +5,9 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(去掉加载器与domReady) 1.4 build in 2015.2.17 
-l, factory) {
+ avalon.modern.shim.js(去掉加载器与domReady) 1.4 build in 2015.2.25 
+===============================================*/
+(function(global, factory) {
 
     if (typeof module === "object" && typeof module.exports === "object") {
         // For CommonJS and CommonJS-like environments where a proper `window`
