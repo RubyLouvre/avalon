@@ -46,6 +46,18 @@ function log() {
         console.log.apply(console, arguments)
     }
 }
+/**
+ * Creates a new object without a prototype. This object is useful for lookup without having to
+ * guard against prototypically inherited properties via hasOwnProperty.
+ *
+ * Related micro-benchmarks:
+ * - http://jsperf.com/object-create2
+ * - http://jsperf.com/proto-map-lookup/2
+ * - http://jsperf.com/for-in-vs-object-keys2
+ */
+function createMap() {
+  return Object.create(null)
+}
 
 var subscribers = "$" + expose
 var otherRequire = window.require
@@ -701,7 +713,7 @@ var findNodes = function(str) {
  *                           modelFactory                             *
  **********************************************************************/
 //avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
-var VMODELS = avalon.vmodels = {} //所有vmodel都储存在这里
+var VMODELS = avalon.vmodels = createMap() //所有vmodel都储存在这里
 avalon.define = function(id, factory) {
     var $id = id.$id || id
     if (!$id) {
@@ -746,7 +758,7 @@ function isObservable(name, value, $skipArray) {
     return true
 }
 //ms-with,ms-each, ms-repeat绑定生成的代理对象储存池
-var midway = {}
+var midway = createMap()
 function getNewValue(accessor, name, value, $vmodel) {
     switch (accessor.type) {
         case 0://计算属性
@@ -773,18 +785,6 @@ function getNewValue(accessor, name, value, $vmodel) {
     }
 }
 
-var defineProperty = Object.defineProperty
-var canHideOwn = true
-//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
-//标准浏览器使用__defineGetter__, __defineSetter__实现
-try {
-    defineProperty({}, "_", {
-        value: "x"
-    })
-    var defineProperties = Object.defineProperties
-} catch (e) {
-    canHideOwn = false
-}
 function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
         var arr = source.concat()
@@ -802,11 +802,11 @@ function modelFactory(source, $special, $model) {
     if (!Array.isArray(source.$skipArray)) {
         source.$skipArray = []
     }
-    source.$skipArray.$special = $special || {} //强制要监听的属性
-    var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    $model = $model || {} //vmodels.$model属性
-    var $events = {} //vmodel.$events属性
-    var watchedProperties = {} //监控属性
+    source.$skipArray.$special = $special || createMap() //强制要监听的属性
+    var $vmodel = createMap() //要返回的对象, 它在IE6-8下可能被偷龙转凤
+    $model = $model || createMap() //vmodels.$model属性
+    var $events = createMap() //vmodel.$events属性
+    var watchedProperties = createMap() //监控属性
     var initCallbacks = [] //初始化才执行的函数
     for (var i in source) {
         (function(name, val) {
@@ -886,7 +886,7 @@ function modelFactory(source, $special, $model) {
                     var data = {
                         evaluator: function() {
                             data.type = Math.random(),
-                            data.element = null
+                                    data.element = null
                             $model[name] = accessor.get.call($vmodel)
                         },
                         element: head,
@@ -921,7 +921,7 @@ function modelFactory(source, $special, $model) {
         delete $model[name] //这些特殊属性不应该在$model中出现
     })
 
-    $vmodel = defineProperties($vmodel, descriptorFactory(watchedProperties), source) //生成一个空的ViewModel
+    $vmodel = Object.defineProperties($vmodel, descriptorFactory(watchedProperties), source) //生成一个空的ViewModel
     for (var name in source) {
         if (!watchedProperties[name]) {
             $vmodel[name] = source[name]
@@ -931,29 +931,19 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    for ( i in EventBus) {
-        var fn = EventBus[i]
-        if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
-            fn = fn.bind($vmodel)
-        }
-        $vmodel[i] = fn
+    for (i in EventBus) {
+        $vmodel[i] = EventBus[i]
     }
 
-    if (canHideOwn) {
-        Object.defineProperty($vmodel, "hasOwnProperty", {
-            value: function(name) {
-                return name in this.$model
-            },
-            writable: false,
-            enumerable: false,
-            configurable: true
-        })
+    Object.defineProperty($vmodel, "hasOwnProperty", {
+        value: function(name) {
+            return name in this.$model
+        },
+        writable: false,
+        enumerable: false,
+        configurable: true
+    })
 
-    } else {
-        $vmodel.hasOwnProperty = function(name) {
-            return name in $vmodel.$model
-        }
-    }
     initCallbacks.forEach(function(cb) { //收集依赖
         cb()
     })
@@ -977,7 +967,7 @@ function safeFire(a, b, c, d) {
     }
 }
 
-var descriptorFactory = W3C ? function(obj) {
+var descriptorFactory =  function(obj) {
     var descriptors = {}
     for (var i in obj) {
         descriptors[i] = {
@@ -988,11 +978,7 @@ var descriptorFactory = W3C ? function(obj) {
         }
     }
     return descriptors
-} : function(a) {
-    return a
 }
-
-
 
 //应用于第2种accessor
 function objectFactory(parent, name, value, valueType) {
@@ -1965,7 +1951,7 @@ if (root.dataset) {
                 val = dataset[name]
                 return parseData(val)
             case 0:
-                var ret = {}
+                var ret = createMap()
                 for (var name in dataset) {
                     ret[name] = parseData(dataset[name])
                 }

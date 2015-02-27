@@ -75,6 +75,7 @@ gulp.task('combo', function() {
             "02 core": "02 core.modern",
             "04 dom.polyfill": "04 dom.polyfill.modern",
             "06 findNodes": "06 findNodes.modern",
+            "07 modelFactory": "07 modelFactory.modern",
             "10 HTML": "10 HTML.modern",
             "12 scanAttr": "12 scanAttr.modern",
             "12 scanTag": "12 scanTag.modern",

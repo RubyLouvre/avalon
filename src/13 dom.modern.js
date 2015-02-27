@@ -163,7 +163,7 @@ if (root.dataset) {
                 val = dataset[name]
                 return parseData(val)
             case 0:
-                var ret = {}
+                var ret = createMap()
                 for (var name in dataset) {
                     ret[name] = parseData(dataset[name])
                 }
