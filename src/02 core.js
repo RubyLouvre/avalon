@@ -167,7 +167,7 @@ avalon.mix({
     noop: noop,
     /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
     error: function(str, e) {
-        throw new (e || Error)(str)
+        throw  (e || Error)(str)
     },
     /*将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象*/
     oneObject: oneObject,
