@@ -4365,18 +4365,18 @@ var rsanitize = {
 var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
 var rnoalphanumeric = /([^\#-~| |!])/g;
 
-function numberFormat(number, decimals, dec_point, thousands_sep) {
+function numberFormat(number, decimals, point, thousands) {
     //form http://phpjs.org/functions/number_format/
     //number	必需，要格式化的数字
     //decimals	可选，规定多少个小数位。
-    //dec_point	可选，规定用作小数点的字符串（默认为 . ）。
-    //thousands_sep	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+    //point	可选，规定用作小数点的字符串（默认为 . ）。
+    //thousands	可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
     number = (number + '')
             .replace(/[^0-9+\-Ee.]/g, '')
     var n = !isFinite(+number) ? 0 : +number,
-            prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-            sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
-            dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+            prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
+            sep = thousands || ",",
+            dec = point || ".",
             s = '',
             toFixedFix = function(n, prec) {
                 var k = Math.pow(10, prec)
@@ -4463,9 +4463,7 @@ var filters = avalon.filters = {
     currency: function(amount, symbol, fractionSize) {
         return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
-    number: function(number, fractionSize) {
-        return  numberFormat(number, isFinite(fractionSize) ? fractionSize : 3)
-    }
+    number: numberFormat
 }
 /*
  'yyyy': 4 digit representation of year (e.g. AD 1 => 0001, AD 2010 => 2010)
