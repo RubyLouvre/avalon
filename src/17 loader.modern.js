@@ -25,7 +25,7 @@ new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
-    var name2url = {}
+    var name2url = createMap()
     function makeRequest(name, config) {
 //1. 去掉资源前缀
         var res = "js"
@@ -124,9 +124,9 @@ new function() {
             avalon.error("require方法的第一个参数应为数组 " + array)
         }
         var deps = [] // 放置所有依赖项的完整路径
-        var uniq = {}
+        var uniq = createMap()
         var id = parentUrl || "callback" + setTimeout("1")
-        defineConfig = defineConfig || {}
+        defineConfig = defineConfig || createMap()
         defineConfig.baseUrl = kernel.baseUrl
         var isBuilt = !!defineConfig.built
         if (parentUrl) {
@@ -221,10 +221,10 @@ new function() {
     innerRequire.define.amd = modules
 
     //==========================对用户配置项进行再加工==========================
-    var allpaths = kernel["orig.paths"] = {}
-    var allmaps = kernel["orig.map"] = {}
+    var allpaths = kernel["orig.paths"] = createMap()
+    var allmaps = kernel["orig.map"] = createMap()
     var allpackages = kernel["packages"] = []
-    var allargs = kernel["orig.args"] = {}
+    var allargs = kernel["orig.args"] = createMap()
     avalon.mix(plugins, {
         paths: function(hash) {
             avalon.mix(allpaths, hash)
@@ -240,7 +240,7 @@ new function() {
         },
         packages: function(array) {
             array = array.concat(allpackages)
-            var uniq = {}
+            var uniq = createMap()
             var ret = []
             for (var i = 0, pkg; pkg = array[i++]; ) {
                 pkg = typeof pkg === "string" ? {name: pkg} : pkg
@@ -475,7 +475,7 @@ new function() {
         for (var i = 0, array = [], d; d = deps[i++]; ) {
             d = name2url[d] || d
             if (d === "exports") {
-                var obj = module.exports || (module.exports = {})
+                var obj = module.exports || (module.exports = createMap())
                 array.push(obj)
             } else {
                 array.push(modules[d].exports)
@@ -561,7 +561,7 @@ new function() {
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-            if (hash.hasOwnProperty(key)) {
+           // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
                 var item = {
                     name: key,
                     val: hash[key]
@@ -571,7 +571,7 @@ new function() {
                 if (part && key !== "*") {
                     item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
                 }
-            }
+         //   }
         }
         return array
     }

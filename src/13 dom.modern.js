@@ -209,7 +209,7 @@ function getWindow(node) {
 }
 
 //=============================css相关==================================
-var cssHooks = avalon.cssHooks = {}
+var cssHooks = avalon.cssHooks = createMap()
 var prefixes = ["", "-webkit-", "-moz-", "-ms-"]//去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"

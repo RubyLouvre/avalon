@@ -2,7 +2,7 @@ function scanAttr(elem, vmodels) {
     //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
     var attributes = elem.hasAttributes() ? avalon.slice(elem.attributes) : []
     var bindings = [],
-            msData = {},
+            msData = createMap(),
             match
     for (var i = 0, attr; attr = attributes[i++]; ) {
         if (attr.specified) {

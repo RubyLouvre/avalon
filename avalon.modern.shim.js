@@ -803,8 +803,8 @@ function modelFactory(source, $special, $model) {
         source.$skipArray = []
     }
     source.$skipArray.$special = $special || createMap() //强制要监听的属性
-    var $vmodel = createMap() //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    $model = $model || createMap() //vmodels.$model属性
+    var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
+    $model = $model || {} //vmodels.$model属性
     var $events = createMap() //vmodel.$events属性
     var watchedProperties = createMap() //监控属性
     var initCallbacks = [] //初始化才执行的函数
@@ -968,7 +968,7 @@ function safeFire(a, b, c, d) {
 }
 
 var descriptorFactory =  function(obj) {
-    var descriptors = {}
+    var descriptors = createMap()
     for (var i in obj) {
         descriptors[i] = {
             get: obj[i],
@@ -1567,7 +1567,7 @@ function scanAttr(elem, vmodels) {
     //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
     var attributes = elem.hasAttributes() ? avalon.slice(elem.attributes) : []
     var bindings = [],
-            msData = {},
+            msData = createMap(),
             match
     for (var i = 0, attr; attr = attributes[i++]; ) {
         if (attr.specified) {
@@ -1997,7 +1997,7 @@ function getWindow(node) {
 }
 
 //=============================css相关==================================
-var cssHooks = avalon.cssHooks = {}
+var cssHooks = avalon.cssHooks = createMap()
 var prefixes = ["", "-webkit-", "-moz-", "-ms-"]//去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"

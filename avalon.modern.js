@@ -803,8 +803,8 @@ function modelFactory(source, $special, $model) {
         source.$skipArray = []
     }
     source.$skipArray.$special = $special || createMap() //强制要监听的属性
-    var $vmodel = createMap() //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    $model = $model || createMap() //vmodels.$model属性
+    var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
+    $model = $model || {} //vmodels.$model属性
     var $events = createMap() //vmodel.$events属性
     var watchedProperties = createMap() //监控属性
     var initCallbacks = [] //初始化才执行的函数
@@ -968,7 +968,7 @@ function safeFire(a, b, c, d) {
 }
 
 var descriptorFactory =  function(obj) {
-    var descriptors = {}
+    var descriptors = createMap()
     for (var i in obj) {
         descriptors[i] = {
             get: obj[i],
@@ -1567,7 +1567,7 @@ function scanAttr(elem, vmodels) {
     //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
     var attributes = elem.hasAttributes() ? avalon.slice(elem.attributes) : []
     var bindings = [],
-            msData = {},
+            msData = createMap(),
             match
     for (var i = 0, attr; attr = attributes[i++]; ) {
         if (attr.specified) {
@@ -1997,7 +1997,7 @@ function getWindow(node) {
 }
 
 //=============================css相关==================================
-var cssHooks = avalon.cssHooks = {}
+var cssHooks = avalon.cssHooks = createMap()
 var prefixes = ["", "-webkit-", "-moz-", "-ms-"]//去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
@@ -4042,7 +4042,7 @@ new function() {
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
-    var name2url = {}
+    var name2url = createMap()
     function makeRequest(name, config) {
 //1. 去掉资源前缀
         var res = "js"
@@ -4141,9 +4141,9 @@ new function() {
             avalon.error("require方法的第一个参数应为数组 " + array)
         }
         var deps = [] // 放置所有依赖项的完整路径
-        var uniq = {}
+        var uniq = createMap()
         var id = parentUrl || "callback" + setTimeout("1")
-        defineConfig = defineConfig || {}
+        defineConfig = defineConfig || createMap()
         defineConfig.baseUrl = kernel.baseUrl
         var isBuilt = !!defineConfig.built
         if (parentUrl) {
@@ -4238,10 +4238,10 @@ new function() {
     innerRequire.define.amd = modules
 
     //==========================对用户配置项进行再加工==========================
-    var allpaths = kernel["orig.paths"] = {}
-    var allmaps = kernel["orig.map"] = {}
+    var allpaths = kernel["orig.paths"] = createMap()
+    var allmaps = kernel["orig.map"] = createMap()
     var allpackages = kernel["packages"] = []
-    var allargs = kernel["orig.args"] = {}
+    var allargs = kernel["orig.args"] = createMap()
     avalon.mix(plugins, {
         paths: function(hash) {
             avalon.mix(allpaths, hash)
@@ -4257,7 +4257,7 @@ new function() {
         },
         packages: function(array) {
             array = array.concat(allpackages)
-            var uniq = {}
+            var uniq = createMap()
             var ret = []
             for (var i = 0, pkg; pkg = array[i++]; ) {
                 pkg = typeof pkg === "string" ? {name: pkg} : pkg
@@ -4492,7 +4492,7 @@ new function() {
         for (var i = 0, array = [], d; d = deps[i++]; ) {
             d = name2url[d] || d
             if (d === "exports") {
-                var obj = module.exports || (module.exports = {})
+                var obj = module.exports || (module.exports = createMap())
                 array.push(obj)
             } else {
                 array.push(modules[d].exports)
@@ -4578,7 +4578,7 @@ new function() {
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-            if (hash.hasOwnProperty(key)) {
+           // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
                 var item = {
                     name: key,
                     val: hash[key]
@@ -4588,7 +4588,7 @@ new function() {
                 if (part && key !== "*") {
                     item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
                 }
-            }
+         //   }
         }
         return array
     }
