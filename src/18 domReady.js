@@ -2,9 +2,10 @@
  *                           DOMReady                               *
  **********************************************************************/
 
-var readyList = []
-function fireReady() {
-    if (DOC.body) { //  在IE8 iframe中doScrollCheck可能不正确
+var readyList = [], isReady
+var fireReady = function() {
+    if (!isReady) {
+        isReady = true
         if (innerRequire) {
             modules["domReady!"].state = 4
             innerRequire.checkDeps()
@@ -12,7 +13,6 @@ function fireReady() {
         readyList.forEach(function(a) {
             a(avalon)
         })
-        fireReady = noop //隋性函数，防止IE9二次调用_checkDeps
     }
 }
 
@@ -39,17 +39,17 @@ if (DOC.readyState === "complete") {
         var isTop = window.frameElement === null
     } catch (e) {
     }
-    if (root.doScroll && isTop && window.external) {//只有不处于iframe时才用doScroll判断,否则可能会不准
+    if (root.doScroll && isTop && window.external) {//fix IE iframe BUG
         doScrollCheck()
     }
 }
 avalon.bind(window, "load", fireReady)
 
 avalon.ready = function(fn) {
-    if (fireReady === noop) {
-        fn(avalon)
-    } else {
+    if (!isReady) {
         readyList.push(fn)
+    } else {
+        fn(avalon)
     }
 }
 
