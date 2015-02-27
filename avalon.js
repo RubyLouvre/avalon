@@ -2195,7 +2195,7 @@ var rhasHtml = /\|\s*html\s*/,
 function getToken(value) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace( rstringLiteral, function(_){
-            return Math.pow(10,_.length)
+            return Array(_.length+1).join("1")
         })
         var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
@@ -2501,10 +2501,10 @@ avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
             if (rvalidchars.test(data.replace(rvalidescape, "@")
                     .replace(rvalidtokens, "]")
                     .replace(rvalidbraces, ""))) {
-                return (new Function("return " + data))();
+                return (new Function("return " + data))()
             }
         }
-        avalon.error("Invalid JSON: " + data);
+        avalon.error("Invalid JSON: " + data)
     }
     return data
 }
