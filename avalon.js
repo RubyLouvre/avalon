@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.4 built in 2015.2.27
+ avalon.js 1.4 built in 2015.2.28
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -185,7 +185,7 @@ avalon.isPlainObject = function(obj, key) {
     }
     for (key in obj) {
     }
-    return key === void 0 || ohasOwn.call(obj, key);
+    return key === void 0 || ohasOwn.call(obj, key)
 }
 if (rnative.test(Object.getPrototypeOf)) {
     avalon.isPlainObject = function(obj) {
@@ -5286,7 +5286,7 @@ new function() {
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-            if (hash.hasOwnProperty(key)) {
+            if (ohasOwn.call(hash, key)) {
                 var item = {
                     name: key,
                     val: hash[key]

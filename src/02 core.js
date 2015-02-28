@@ -69,7 +69,7 @@ avalon.isPlainObject = function(obj, key) {
     }
     for (key in obj) {
     }
-    return key === void 0 || ohasOwn.call(obj, key);
+    return key === void 0 || ohasOwn.call(obj, key)
 }
 if (rnative.test(Object.getPrototypeOf)) {
     avalon.isPlainObject = function(obj) {

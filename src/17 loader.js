@@ -586,7 +586,7 @@ new function() {
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-            if (hash.hasOwnProperty(key)) {
+            if (ohasOwn.call(hash, key)) {
                 var item = {
                     name: key,
                     val: hash[key]
