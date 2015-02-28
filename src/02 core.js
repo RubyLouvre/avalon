@@ -1,10 +1,6 @@
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
-avalon = function(el) { //创建jQuery式的无new 实例化结构
-    return new avalon.init(el)
-}
-
 avalon.init = function(el) {
     this[0] = this.element = el
 }
@@ -334,8 +330,4 @@ function isArrayLike(obj) {
         }
     }
     return false
-}
-/*视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)*/
-avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
-    setTimeout(callback, 0) //IE10-11 or W3C
 }

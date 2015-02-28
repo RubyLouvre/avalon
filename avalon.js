@@ -90,16 +90,6 @@ function oneObject(array, val) {
     return result
 }
 
-function createCache(maxLength) {
-    var keys = []
-    function cache(key, value) {
-        if (keys.push(key) > maxLength) {
-            delete cache[keys.shift()]
-        }
-        return cache[key] = value;
-    }
-    return cache;
-}
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 var generateID = function(prefix) {
     prefix = prefix || "avalon"
@@ -114,13 +104,60 @@ function IE() {
     }
 }
 var IEVersion = IE()
-/*********************************************************************
- *                 avalon的静态方法定义区                              *
- **********************************************************************/
+
 avalon = function(el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)
 }
 
+/*视浏览器情况采用最快的异步回调*/
+avalon.nextTick = new function() {
+    var tickImmediate = window.setImmediate
+    var tickObserver = window.MutationObserver
+    var tickPost = W3C && window.postMessage
+    if (tickImmediate) {
+        return tickImmediate.bind(window)
+    }
+
+    var queue = []
+    function callback() {
+        var n = queue.length
+        for (var i = 0; i < n; i++) {
+            queue[i]()
+        }
+        queue = queue.slice(n)
+    }
+
+    if (tickObserver) {
+        var node = document.createTextNode("avalon")
+        new tickObserver(callback).observe(node, {characterData: true})
+        return function(fn) {
+            queue.push(fn)
+            node.data = Math.random()
+        }
+    }
+
+    if (tickPost) {
+        window.addEventListener("message", function(e) {
+            var source = e.source
+            if ((source === window || source === null) && e.data === "process-tick") {
+                e.stopPropagation()
+                callback()
+            }
+        })
+
+        return function(fn) {
+            queue.push(fn)
+            window.postMessage('process-tick', '*')
+        }
+    }
+
+    return function(fn) {
+        setTimeout(fn, 0)
+    }
+}
+/*********************************************************************
+ *                 avalon的静态方法定义区                              *
+ **********************************************************************/
 avalon.init = function(el) {
     this[0] = this.element = el
 }
@@ -451,9 +488,79 @@ function isArrayLike(obj) {
     }
     return false
 }
-/*视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)*/
-avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
-    setTimeout(callback, 0) //IE10-11 or W3C
+
+
+// https://github.com/rsms/js-lru
+var Cache = new function() {
+    function LRU(maxLength) {
+        this.size = 0
+        this.limit = maxLength
+        this.head = this.tail = undefined
+        this._keymap = {}
+    }
+
+    var p = LRU.prototype
+
+    p.put = function(key, value) {
+        var entry = {
+            key: key,
+            value: value
+        }
+        this._keymap[key] = entry
+        if (this.tail) {
+            this.tail.newer = entry
+            entry.older = this.tail
+        } else {
+            this.head = entry
+        }
+        this.tail = entry
+        if (this.size === this.limit) {
+            this.shift()
+        } else {
+            this.size++
+        }
+        return value
+    }
+
+    p.shift = function() {
+        var entry = this.head
+        if (entry) {
+            this.head = this.head.newer
+            this.head.older =
+                    entry.newer =
+                    entry.older =
+                    this._keymap[entry.key] = void 0
+        }
+    }
+    p.get = function(key) {
+        var entry = this._keymap[key]
+        if (entry === void 0)
+            return
+        if (entry === this.tail) {
+            return  entry.value
+        }
+        // HEAD--------------TAIL
+        //   <.older   .newer>
+        //  <--- add direction --
+        //   A  B  C  <D>  E
+        if (entry.newer) {
+            if (entry === this.head) {
+                this.head = entry.newer
+            }
+            entry.newer.older = entry.older // C <-- E.
+        }
+        if (entry.older) {
+            entry.older.newer = entry.newer // C. --> E
+        }
+        entry.newer = void 0 // D --x
+        entry.older = this.tail // D. --> E
+        if (this.tail) {
+            this.tail.newer = entry // E. <-- D
+        }
+        this.tail = entry
+        return entry.value
+    }
+    return LRU
 }
 
 /*********************************************************************
@@ -837,6 +944,20 @@ kernel.paths = {}
 kernel.shim = {}
 kernel.maxRepeatSize = 100
 avalon.config = kernel
+var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
+var findNodes = DOC.querySelectorAll ? function(str) {
+    return DOC.querySelectorAll(str)
+} : function(str) {
+    var match = str.match(ravalon)
+    var all = DOC.getElementsByTagName(match[1])
+    var nodes = []
+    for (var i = 0, el; el = all[i++]; ) {
+        if (el.getAttribute(match[2]) === match[3]) {
+            nodes.push(el)
+        }
+    }
+    return nodes
+}
 /*********************************************************************
  *                            事件总线                               *
  **********************************************************************/
@@ -948,20 +1069,6 @@ var EventBus = {
     }
 }
 
-var ravalon = /(\w+)\[(avalonctrl)="(\S+)"\]/
-var findNodes = DOC.querySelectorAll ? function(str) {
-    return DOC.querySelectorAll(str)
-} : function(str) {
-    var match = str.match(ravalon)
-    var all = DOC.getElementsByTagName(match[1])
-    var nodes = []
-    for (var i = 0, el; el = all[i++]; ) {
-        if (el.getAttribute(match[2]) === match[3]) {
-            nodes.push(el)
-        }
-    }
-    return nodes
-}
 /*********************************************************************
  *                           modelFactory                             *
  **********************************************************************/
@@ -2093,7 +2200,7 @@ var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
 if (!"1" [0]) {
-    var cacheAttrs = createCache(512)
+    var cacheAttrs = new Cache(512)
     var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
             rquote = /^['"]/,
             rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
@@ -2116,9 +2223,10 @@ if (!"1" [0]) {
         var str = html.match(rtag)[0]
         var attributes = [],
                 match,
-                k, v;
-        if (cacheAttrs[str]) {
-            return cacheAttrs[str]
+                k, v
+        var ret = cacheAttrs.get(str)
+        if (ret) {
+            return ret
         }
         while (k = rattrs.exec(str)) {
             v = k[2]
@@ -2134,7 +2242,7 @@ if (!"1" [0]) {
             }
             attributes.push(binding)
         }
-        return cacheAttrs(str, attributes)
+        return cacheAttrs.put(str, attributes)
     }
 }
 
@@ -2863,11 +2971,12 @@ var rsplit = /[^\w$]+/g
 var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
 var rnumber = /\b\d[^,]*/g
 var rcomma = /^,+|,+$/g
-var cacheVars = createCache(512)
+var cacheVars = new Cache(512)
 var getVariables = function(code) {
     var key = "," + code.trim()
-    if (cacheVars[key]) {
-        return cacheVars[key]
+    var ret = cacheVars.get(key)
+    if (ret) {
+        return ret
     }
     var match = code
             .replace(rrexpstr, "")
@@ -2876,7 +2985,7 @@ var getVariables = function(code) {
             .replace(rnumber, "")
             .replace(rcomma, "")
             .split(/^$|,+/)
-    return cacheVars(key, uniqSet(match))
+    return cacheVars.put(key, uniqSet(match))
 }
 /*添加赋值语句*/
 
@@ -2909,7 +3018,7 @@ function uniqSet(array) {
     return ret
 }
 //缓存求值函数，以便多次利用
-var cacheExprs = createCache(128)
+var cacheExprs = new Cache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -2992,7 +3101,7 @@ function parseExpr(code, scopes, data) {
     //---------------args----------------
     data.args = args
     //---------------cache----------------
-    var fn = cacheExprs[exprId] //直接从缓存，免得重复生成
+    var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
     if (fn) {
         data.evaluator = fn
         return
@@ -3016,7 +3125,7 @@ function parseExpr(code, scopes, data) {
                 "= vvv;\n} "
         try {
             fn = Function.apply(noop, names.concat(_body))
-            data.evaluator = cacheExprs(exprId, fn)
+            data.evaluator = cacheExprs.put(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
         }
@@ -3038,7 +3147,7 @@ function parseExpr(code, scopes, data) {
     }
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-        data.evaluator = cacheExprs(exprId, fn)
+        data.evaluator = cacheExprs.put(exprId, fn)
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

@@ -39,16 +39,6 @@ function oneObject(array, val) {
     return result
 }
 
-function createCache(maxLength) {
-    var keys = []
-    function cache(key, value) {
-        if (keys.push(key) > maxLength) {
-            delete cache[keys.shift()]
-        }
-        return cache[key] = value;
-    }
-    return cache;
-}
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 var generateID = function(prefix) {
     prefix = prefix || "avalon"
@@ -63,3 +53,54 @@ function IE() {
     }
 }
 var IEVersion = IE()
+
+avalon = function(el) { //创建jQuery式的无new 实例化结构
+    return new avalon.init(el)
+}
+
+/*视浏览器情况采用最快的异步回调*/
+avalon.nextTick = new function() {
+    var tickImmediate = window.setImmediate
+    var tickObserver = window.MutationObserver
+    var tickPost = W3C && window.postMessage
+    if (tickImmediate) {
+        return tickImmediate.bind(window)
+    }
+
+    var queue = []
+    function callback() {
+        var n = queue.length
+        for (var i = 0; i < n; i++) {
+            queue[i]()
+        }
+        queue = queue.slice(n)
+    }
+
+    if (tickObserver) {
+        var node = document.createTextNode("avalon")
+        new tickObserver(callback).observe(node, {characterData: true})
+        return function(fn) {
+            queue.push(fn)
+            node.data = Math.random()
+        }
+    }
+
+    if (tickPost) {
+        window.addEventListener("message", function(e) {
+            var source = e.source
+            if ((source === window || source === null) && e.data === "process-tick") {
+                e.stopPropagation()
+                callback()
+            }
+        })
+
+        return function(fn) {
+            queue.push(fn)
+            window.postMessage('process-tick', '*')
+        }
+    }
+
+    return function(fn) {
+        setTimeout(fn, 0)
+    }
+}
