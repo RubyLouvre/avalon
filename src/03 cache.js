@@ -4,7 +4,7 @@ var Cache = new function() {
     function LRU(maxLength) {
         this.size = 0
         this.limit = maxLength
-        this.head = this.tail = undefined
+        this.head = this.tail = void 0
         this._keymap = {}
     }
 
