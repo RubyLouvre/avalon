@@ -70,7 +70,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("change", updateVModel)
     } else {
-        var events = element.getAttribute("data-duplex-event") || element.getAttribute("data-event") || "input"
+        var events = element.getAttribute("data-duplex-event") || "input"
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
@@ -95,7 +95,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
                 if (element.value !== element.oldValue) {
-                    updateVModel()
+                    if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
+                        updateVModel()
+                    }
                 }
             } else if (!element.msRetain) {
                 return false
