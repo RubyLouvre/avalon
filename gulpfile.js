@@ -133,10 +133,25 @@ gulp.task('combo', function() {
                 .pipe(uglify())
                 .pipe(rename('avalon.mobile.min.js'))
                 .pipe(gulp.dest('./min/'))
+        
+        
+        //avalon.mobiles.shim.js 所需要合并的子文件
+        var mobileShimFiles =  modernShimFiles.concat()
+        modernShimFiles.pop()
+        mobileShimFiles.push(fixPath("20 touch"), fixPath("19 outer"))
+        
+        gulp.src(mobileShimFiles)
+                .pipe(concat('avalon.mobile.shim.js'))
+                .pipe(replace(/version:\s+([\d\.]+)/, function(a, b) {
+                    return "version: " + version
+                }))
+                .pipe(replace(/!!/, function(a, b) {
+                    return  "avalon.mobile.shim.js " + version + " built in " + date 
+                }))
+                .pipe(gulp.dest('./'))
 
-        //avalon.mobiles.js 所需要合并的子文件
+        //avalon.mobiles.old.js 所需要合并的子文件
         var mobileOldFiles = compatibleFiles.concat()
-
         mobileOldFiles.pop()
         mobileOldFiles.push(fixPath("20 touch"), fixPath("19 outer"))
 
