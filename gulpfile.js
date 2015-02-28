@@ -86,7 +86,6 @@ gulp.task('combo', function() {
             "duplex.2": "duplex.2.modern",
             "18 domReady": "18 domReady.modern"
         })
-        console.log(modernFiles)
      
         gulp.src(modernFiles)
                 .pipe(concat('avalon.modern.js'))
@@ -136,9 +135,8 @@ gulp.task('combo', function() {
         
         
         //avalon.mobiles.shim.js 所需要合并的子文件
-        var mobileShimFiles =  modernShimFiles.concat()
-        modernShimFiles.pop()
-        mobileShimFiles.push(fixPath("20 touch"), fixPath("19 outer"))
+         var mobileShimFiles = modernFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("20 touch"), fixPath("19 outer"))
+         console.log(mobileShimFiles)
         
         gulp.src(mobileShimFiles)
                 .pipe(concat('avalon.mobile.shim.js'))
