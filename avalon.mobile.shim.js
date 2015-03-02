@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.4 built in 2015.2.28
+ avalon.mobile.shim.js 1.4 built in 2015.3.2
  ==================================================*/
 (function(global, factory) {
 
@@ -2967,9 +2967,12 @@ new function() {
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                setters[this.tagName].call(this, value)
-                if (this.avalonSetter) {
-                    this.avalonSetter()
+               setters[this.tagName].call(this, value)
+               if (this.avalonSetter) {
+                    var events = this.getAttribute("data-duplex-event") || "input"
+                    if (/change|blur/.test(events) ? this !== DOC.activeElement : 1) {
+                        this.avalonSetter()
+                    }
                 }
             }
         }

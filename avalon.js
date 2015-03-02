@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.4 built in 2015.2.28
+ avalon.js 1.4 built in 2015.3.2
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3603,9 +3603,12 @@ new function() {
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-                setters[this.tagName].call(this, value)
-                if (this.avalonSetter) {
-                    this.avalonSetter()
+               setters[this.tagName].call(this, value)
+               if (this.avalonSetter) {
+                    var events = this.getAttribute("data-duplex-event") || "input"
+                    if (/change|blur/.test(events) ? this !== DOC.activeElement : 1) {
+                        this.avalonSetter()
+                    }
                 }
             }
         }
@@ -3681,7 +3684,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
-            }
+            } 
         }
         data.handler = function() {
             var val = evaluator()
@@ -3762,7 +3765,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
-            if (root.contains(element)) {
+            if (avalon.contains(root, element)) {
                 if (element.value !== element.oldValue) {
                     if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
                         updateVModel()
