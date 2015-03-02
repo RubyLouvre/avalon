@@ -136,8 +136,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
-            if (avalon.contains(root, element)) {
-                if (element.value !== element.oldValue) {
+             if (root.contains(element)) {
+                if (element.oldValue !== element.value) {
                     if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
                         updateVModel()
                     }

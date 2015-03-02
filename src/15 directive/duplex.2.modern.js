@@ -15,6 +15,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
+    
     var updateVModel = function() {
         if (composing)//处理中文输入法在minlengh下引发的BUG
             return
@@ -94,7 +95,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
-                if (element.value !== element.oldValue) {
+                if (element.oldValue !== element.value) {
                     if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
                         updateVModel()
                     }
