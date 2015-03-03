@@ -55,7 +55,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
-            } 
+            }
         }
         data.handler = function() {
             var val = evaluator()
@@ -134,19 +134,25 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
+    bound("focus", function() {
+        element.msFocus = true
+    })
+    bound("blur", function() {
+        element.msFocus = false
+    })
+    
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
-             if (root.contains(element)) {
-                if (element.oldValue !== element.value) {
-                    if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
-                        updateVModel()
-                    }
+            if (root.contains(element)) {
+                if (!element.msFocus && element.oldValue !== element.value) {
+                    updateVModel()
                 }
             } else if (!element.msRetain) {
                 return false
             }
         })
     }
+
     element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)

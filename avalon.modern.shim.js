@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.2
+ avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.3
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2968,12 +2968,9 @@ new function() {
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-               setters[this.tagName].call(this, value)
-               if (this.avalonSetter) {
-                    var events = this.getAttribute("data-duplex-event") || "input"
-                    if (/change|blur/.test(events) ? this !== DOC.activeElement : 1) {
-                        this.avalonSetter()
-                    }
+                setters[this.tagName].call(this, value)
+                if (!this.msFocus && this.avalonSetter) {
+                    this.avalonSetter()
                 }
             }
         }
@@ -3009,7 +3006,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
-    
+
     var updateVModel = function() {
         if (composing)//处理中文输入法在minlengh下引发的BUG
             return
@@ -3085,14 +3082,17 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-
+    bound("focus", function() {
+        element.msFocus = true
+    })
+    bound("blur", function() {
+        element.msFocus = false
+    })
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
-                if (element.oldValue !== element.value) {
-                    if (/change|blur/.test(events) ? element !== DOC.activeElement : 1) {
-                        updateVModel()
-                    }
+                if (!element.msFocus && element.oldValue !== element.value) {
+                    updateVModel()
                 }
             } else if (!element.msRetain) {
                 return false

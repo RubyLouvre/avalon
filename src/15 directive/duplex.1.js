@@ -138,12 +138,9 @@ new function() {
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) {
             if (avalon.contains(root, this)) {
-               setters[this.tagName].call(this, value)
-               if (this.avalonSetter) {
-                    var events = this.getAttribute("data-duplex-event") || "input"
-                    if (/change|blur/.test(events) ? this !== DOC.activeElement : 1) {
-                        this.avalonSetter()
-                    }
+                setters[this.tagName].call(this, value)
+                if (!this.msFocus && this.avalonSetter) {
+                    this.avalonSetter()
                 }
             }
         }
