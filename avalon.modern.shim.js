@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.3
+ avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.4
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -308,7 +308,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type
             if (hook.deel) {
-                fn = hook.deel(el, type, fn, true)
+                fn = hook.deel(el, type, fn, phase)
             }
         }
         if (!fn.unbind)
@@ -593,7 +593,7 @@ if (!("onmouseenter" in root)) {
     }, function(origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            deel: function(elem, fn) {
+            deel: function(elem, _, fn) {
                 return function(e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
@@ -626,7 +626,7 @@ if (DOC.onmousewheel === void 0) {
      chrome wheel deltaY 下100 上-100 */
     eventHooks.mousewheel = {
         type: "wheel",
-        deel: function(elem, fn) {
+        deel: function(elem, _, fn) {
             return function(e) {
                 e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0

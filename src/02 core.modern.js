@@ -142,7 +142,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type
             if (hook.deel) {
-                fn = hook.deel(el, type, fn, true)
+                fn = hook.deel(el, type, fn, phase)
             }
         }
         if (!fn.unbind)
