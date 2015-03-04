@@ -200,7 +200,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type
             if (hook.deel) {
-                fn = hook.deel(el, fn)
+                 fn = hook.deel(el, type, fn, phase)
             }
         }
         var callback = W3C ? fn : function(e) {
@@ -220,6 +220,9 @@ avalon.mix({
         var callback = fn || noop
         if (typeof hook === "object") {
             type = hook.type
+            if (hook.deel) {
+                fn = hook.deel(el, type, fn, false)
+            }
         }
         if (W3C) {
             el.removeEventListener(type, callback, !!phase)
