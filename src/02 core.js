@@ -1,10 +1,6 @@
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
-avalon = function(el) { //创建jQuery式的无new 实例化结构
-    return new avalon.init(el)
-}
-
 avalon.init = function(el) {
     this[0] = this.element = el
 }
@@ -69,7 +65,7 @@ avalon.isPlainObject = function(obj, key) {
     }
     for (key in obj) {
     }
-    return key === void 0 || ohasOwn.call(obj, key);
+    return key === void 0 || ohasOwn.call(obj, key)
 }
 if (rnative.test(Object.getPrototypeOf)) {
     avalon.isPlainObject = function(obj) {
@@ -167,7 +163,7 @@ avalon.mix({
     noop: noop,
     /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
     error: function(str, e) {
-        throw new (e || Error)(str)
+        throw  (e || Error)(str)
     },
     /*将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象*/
     oneObject: oneObject,
@@ -334,8 +330,4 @@ function isArrayLike(obj) {
         }
     }
     return false
-}
-/*视浏览器情况采用最快的异步回调(在avalon.ready里，还有一个分支，用于处理IE6-9)*/
-avalon.nextTick = window.setImmediate ? setImmediate.bind(window) : function(callback) {
-    setTimeout(callback, 0) //IE10-11 or W3C
 }

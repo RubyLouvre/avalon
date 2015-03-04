@@ -25,7 +25,7 @@ new function() {
         return supported
     })()
     var touchSupported = !!(w3ctouch || IE11touch || IE9_10touch)
-    合成做成触屏事件所需要的各种原生事件
+    //合成做成触屏事件所需要的各种原生事件
     var touchNames = ["mousedown", "mousemove", "mouseup", ""]
     if (w3ctouch) {
         touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]

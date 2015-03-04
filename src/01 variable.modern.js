@@ -14,3 +14,15 @@ function log() {
         console.log.apply(console, arguments)
     }
 }
+/**
+ * Creates a new object without a prototype. This object is useful for lookup without having to
+ * guard against prototypically inherited properties via hasOwnProperty.
+ *
+ * Related micro-benchmarks:
+ * - http://jsperf.com/object-create2
+ * - http://jsperf.com/proto-map-lookup/2
+ * - http://jsperf.com/for-in-vs-object-keys2
+ */
+function createMap() {
+  return Object.create(null)
+}

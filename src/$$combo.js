@@ -60,10 +60,10 @@ function comboFiles(files, writer, lastCallback, statement) {
 
 //avalon.js 所需要合并的子文件
 var compatibleFiles = [
-    "00 inter", "01 variable", "01 variable.share", "02 core", "03 es5.shim",
-    "04 dom.polyfill", "05 configuration", "06 EventBus", "06 findNodes",
-    "07 modelFactory", "07 modelFactory.shim", "08 Collection", "09 dispatcher",
-    "10 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
+    "00 inter", "01 variable", "01 variable.share", "02 core","03 cache", "04 es5.shim",
+    "05 dom.polyfill", "06 configuration", "07 EventBus", "07 EventBus.share",
+    "08 modelFactory", "08 modelFactory.shim", "09 Collection", "10 dispatcher",
+    "11 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
     "13 dom", "14 parser", "14 parser.share",
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
@@ -74,13 +74,14 @@ var compatibleFiles = [
 ]
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = compatibleFiles.concat()
-modernFiles.splice(modernFiles.indexOf("03 es5.shim"), 1)
-modernFiles.splice(modernFiles.indexOf("07 modelFactory.shim"), 1)
+modernFiles.splice(modernFiles.indexOf("04 es5.shim"), 1)
+modernFiles.splice(modernFiles.indexOf("08 modelFactory.shim"), 1)
 modernFiles[modernFiles.indexOf("01 variable")] = "01 variable.modern"
 modernFiles[modernFiles.indexOf("02 core")] = "02 core.modern"
-modernFiles[modernFiles.indexOf("04 dom.polyfill")] = "04 dom.polyfill.modern"
-modernFiles[modernFiles.indexOf("06 findNodes")] = "06 findNodes.modern"
-modernFiles[modernFiles.indexOf("10 HTML")] = "10 HTML.modern"
+modernFiles[modernFiles.indexOf("05 dom.polyfill")] = "05 dom.polyfill.modern"
+modernFiles[modernFiles.indexOf("07 EventBus")] = "07 EventBus.modern"
+modernFiles[modernFiles.indexOf("08 modelFactory")] = "08 modelFactory.modern"
+modernFiles[modernFiles.indexOf("11 HTML")] = "11 HTML.modern"
 modernFiles[modernFiles.indexOf("12 scanAttr")] = "12 scanAttr.modern"
 modernFiles[modernFiles.indexOf("12 scanTag")] = "12 scanTag.modern"
 modernFiles[modernFiles.indexOf("13 dom")] = "13 dom.modern"

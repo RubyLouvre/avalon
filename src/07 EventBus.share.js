@@ -39,7 +39,9 @@ var EventBus = {
             special = RegExp.$1
             type = RegExp.$2
         }
-        var events = this.$events
+        var events = this.$events 
+        if(!events)
+            return
         var args = aslice.call(arguments, 1)
         var detail = [type].concat(args)
         if (special === "all") {

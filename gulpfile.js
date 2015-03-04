@@ -73,9 +73,10 @@ gulp.task('combo', function() {
         replaceUrls(modernFiles, {
             "01 variable": "01 variable.modern",
             "02 core": "02 core.modern",
-            "04 dom.polyfill": "04 dom.polyfill.modern",
-            "06 findNodes": "06 findNodes.modern",
-            "10 HTML": "10 HTML.modern",
+            "05 dom.polyfill": "05 dom.polyfill.modern",
+            "07 EventBus": "07 EventBus.modern",
+            "08 modelFactory": "08 modelFactory.modern",
+            "11 HTML": "11 HTML.modern",
             "12 scanAttr": "12 scanAttr.modern",
             "12 scanTag": "12 scanTag.modern",
             "13 dom": "13 dom.modern",
@@ -85,7 +86,6 @@ gulp.task('combo', function() {
             "duplex.2": "duplex.2.modern",
             "18 domReady": "18 domReady.modern"
         })
-        console.log(modernFiles)
      
         gulp.src(modernFiles)
                 .pipe(concat('avalon.modern.js'))
@@ -132,10 +132,24 @@ gulp.task('combo', function() {
                 .pipe(uglify())
                 .pipe(rename('avalon.mobile.min.js'))
                 .pipe(gulp.dest('./min/'))
+        
+        
+        //avalon.mobiles.shim.js 所需要合并的子文件
+         var mobileShimFiles = modernFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("20 touch"), fixPath("19 outer"))
+         console.log(mobileShimFiles)
+        
+        gulp.src(mobileShimFiles)
+                .pipe(concat('avalon.mobile.shim.js'))
+                .pipe(replace(/version:\s+([\d\.]+)/, function(a, b) {
+                    return "version: " + version
+                }))
+                .pipe(replace(/!!/, function(a, b) {
+                    return  "avalon.mobile.shim.js " + version + " built in " + date 
+                }))
+                .pipe(gulp.dest('./'))
 
-        //avalon.mobiles.js 所需要合并的子文件
+        //avalon.mobiles.old.js 所需要合并的子文件
         var mobileOldFiles = compatibleFiles.concat()
-
         mobileOldFiles.pop()
         mobileOldFiles.push(fixPath("20 touch"), fixPath("19 outer"))
 

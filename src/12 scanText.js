@@ -6,7 +6,7 @@ var rhasHtml = /\|\s*html\s*/,
 function getToken(value) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace( rstringLiteral, function(_){
-            return Math.pow(10,_.length)
+            return Array(_.length+1).join("1")
         })
         var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {

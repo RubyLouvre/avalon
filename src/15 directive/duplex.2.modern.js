@@ -15,7 +15,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
-    function updateVModel() {
+
+    var updateVModel = function() {
         if (composing)//处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
@@ -70,7 +71,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("change", updateVModel)
     } else {
-        var events = element.getAttribute("data-duplex-event") || element.getAttribute("data-event") || "input"
+        var events = element.getAttribute("data-duplex-event") || "input"
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
@@ -90,11 +91,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         })
     }
-
+    bound("focus", function() {
+        element.msFocus = true
+    })
+    bound("blur", function() {
+        element.msFocus = false
+    })
     if (/text|password/.test(element.type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
-                if (element.value !== element.oldValue) {
+                if (!element.msFocus && element.oldValue !== element.value) {
                     updateVModel()
                 }
             } else if (!element.msRetain) {
