@@ -91,6 +91,8 @@ new function() {
             touchProxy.element = element
         } else {
             //如果移动的距离太少，则认为是tap,click,hold,dblclick
+            // 如果hold(longtap)事件触发了，则touchProxy.mx为undefined，则不会进入条件，从而避免tap事件的触发
+            // undefined与任何number比大小都会返回false(Number(undefined)为NaN)
             if (fastclick.canClick(element) && touchProxy.mx < fastclick.dragDistance && touchProxy.my < fastclick.dragDistance) {
                 // 失去焦点的处理
                 if (document.activeElement && document.activeElement !== element) {
@@ -153,6 +155,7 @@ new function() {
     me["clickHook"] = function(data) {
 
         function touchstart(event) {
+
             var element = data.element,
                 now = Date.now(),
                 delta = now - (touchProxy.last || now)
@@ -174,7 +177,7 @@ new function() {
                 W3CFire(element, "hold")
                 W3CFire(element, "longtap")
                 touchProxy = {}
-                touchProxy.element = element
+                avalon(element).removeClass(fastclick.activeClass)
             }, fastclick.clickDuration)
             if (touchProxy.tapping && avalon.fastclick.canClick(element)) {
                 avalon(element).addClass(fastclick.activeClass)
