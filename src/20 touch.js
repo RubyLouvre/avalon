@@ -34,7 +34,7 @@ new function() {
     } else if (IE9_10touch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
-    var touchTimeout
+    var touchTimeout, longTapTimeout
     //判定滑动方向
     function swipeDirection(x1, x2, y1, y2) {
         return Math.abs(x1 - x2) >=
@@ -66,13 +66,17 @@ new function() {
             return true    
         }
     }
+    function cancelLongTap() {
+        if (longTapTimeout) clearTimeout(longTapTimeout)
+        longTapTimeout = null
+    }
     function touchend(event) { 
         var element = touchProxy.element
         if (!element) {
             return
         }
+        cancelLongTap()
         var e = getCoordinates(event)
-        var diff = Date.now() - touchProxy.last //经过时间
         var totalX = Math.abs(touchProxy.x - e.x)
         var totalY = Math.abs(touchProxy.y - e.y)
         if (totalX > 30 || totalY > 30) {
@@ -104,12 +108,7 @@ new function() {
                 }
                 W3CFire(element, 'tap')
                 avalon.fastclick.fireEvent(element, "click", event)
-                if (diff > fastclick.clickDuration) {
-                    W3CFire(element, "hold")
-                    W3CFire(element, "longtap")
-                    touchProxy = {}
-                    touchProxy.element = element
-                } else if (touchProxy.isDoubleTap) {
+                if (touchProxy.isDoubleTap) {
                     W3CFire(element, "doubletap")
                     avalon.fastclick.fireEvent(element, "dblclick", event)
                     touchProxy = {}
@@ -131,8 +130,9 @@ new function() {
     document.addEventListener('mousedown', onMouse, true)
     document.addEventListener('click', onMouse, true)
     document.addEventListener(touchNames[1], function(event) {
-        if (!touchProxy.element)
-            return
+        var element = touchProxy.element
+        if (!element) return
+        cancelLongTap()
         var e = getCoordinates(event)
         touchProxy.mx += Math.abs(touchProxy.x - e.x)
         touchProxy.my += Math.abs(touchProxy.y - e.y)
@@ -143,7 +143,12 @@ new function() {
 
     document.addEventListener(touchNames[2], touchend)
     if (touchNames[3]) {
-        document.addEventListener(touchNames[3], touchend)
+        document.addEventListener(touchNames[3], function() {
+            if (longTapTimeout) clearTimeout(longTapTimeout)
+            if (touchTimeout) clearTimeout(touchTimeout)
+            longTapTimeout = touchTimeout = null
+            touchProxy = {}
+        })
     }
     me["clickHook"] = function(data) {
 
@@ -161,6 +166,16 @@ new function() {
             }
             touchProxy.last = now
             touchProxy.element = element
+            /*
+                当触发hold和longtap事件时会触发touchcancel事件，从而阻止touchend事件的触发，继而保证在同时绑定tap和hold(longtap)事件时只触发其中一个事件
+            */
+            longTapTimeout = setTimeout(function() {
+                longTapTimeout = null
+                W3CFire(element, "hold")
+                W3CFire(element, "longtap")
+                touchProxy = {}
+                touchProxy.element = element
+            }, fastclick.clickDuration)
             if (touchProxy.tapping && avalon.fastclick.canClick(element)) {
                 avalon(element).addClass(fastclick.activeClass)
             }
