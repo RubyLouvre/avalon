@@ -4951,7 +4951,10 @@ new function() {
         touchProxy.mx += Math.abs(touchProxy.x - e.x)
         touchProxy.my += Math.abs(touchProxy.y - e.y)
         if (touchProxy.tapping && (touchProxy.mx > fastclick.dragDistance || touchProxy.my > fastclick.dragDistance)) {
-            touchProxy.element = null
+            // 因为对于element的touchNames[0]事件只绑定了一次导致touchProxy.event仅仅是第一次绑定事件时的data.param，当同时绑定tap,hold,swipeleft时，这里的touchProxy.tapping为true而设置touchProxy.element = null,那么swipeleft或者swiperight事件就不会触发，因此我们在touchProxy.events中保存所有的events types并作进一步的判断从而保证每个事件都可以触发，并且触发了一个不会触发其他的事件
+            if (!~touchProxy.events.indexOf('swipeleft') && !~touchProxy.events.indexOf('swiperight')) {
+                touchProxy.element = null    
+            }
         }
     })
 
@@ -4965,17 +4968,17 @@ new function() {
         })
     }
     me["clickHook"] = function(data) {
-
         function touchstart(event) {
-
             var element = data.element,
                 now = Date.now(),
                 delta = now - (touchProxy.last || now)
             avalon.mix(touchProxy, getCoordinates(event))
-            touchProxy.event = data.param
+            touchProxy.events = element.events
             touchProxy.mx = 0
             touchProxy.my = 0
-            touchProxy.tapping = /click|tap|hold$/.test(touchProxy.event)
+            touchProxy.tapping = touchProxy.events.some(function(item, index) {
+                return /click|tap|hold|longtap$/.test(item)
+            })
             if (delta > 0 && delta <= 250) {
                 touchProxy.isDoubleTap = true
             }
@@ -5005,7 +5008,10 @@ new function() {
                 // 不将touchstart绑定在document上是为了获取绑定事件的element
                 if (!element.bindStart) { // 如果元素上绑定了多个事件不做处理的话会绑定多个touchstart监听器，显然不需要
                     element.bindStart = true
+                    element.events = [data.param]
                     element.addEventListener(touchNames[0], touchstart)
+                } else {
+                    avalon.Array.ensure(element.events, data.param)
                 }
                 data.msCallback = callback
                 avalon.bind(element, data.param, callback)
