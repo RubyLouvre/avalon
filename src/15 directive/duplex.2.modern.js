@@ -1,7 +1,7 @@
 
 //处理radio, checkbox, text, textarea, password
 duplexBinding.INPUT = function(element, evaluator, data) {
-    var type = element.type,
+    var $type = element.type,
             bound = data.bound,
             $elem = avalon(element),
             composing = false
@@ -38,7 +38,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             element.value = val
         }
     }
-    if (data.isChecked || element.type === "radio") {
+    if (data.isChecked || $type === "radio") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
@@ -52,7 +52,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             element.checked = element.oldValue = checked
         }
         bound("click", updateVModel)
-    } else if (type === "checkbox") {
+    } else if ($type === "checkbox") {
         updateVModel = function() {
             if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
@@ -97,7 +97,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     bound("blur", function() {
         element.msFocus = false
     })
-    if (/text|password/.test(element.type)) {
+    if (/text|password|hidden/.test($type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
                 if (!element.msFocus && element.oldValue !== element.value) {
