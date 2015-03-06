@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.5
+ avalon.modern.shim.js(无加载器版本) 1.4 built in 2015.3.6
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
