@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.4 built in 2015.3.6
+ avalon.mobile.old.js 1.4 built in 2015.3.9
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -5493,16 +5493,14 @@ new function() {
  **********************************************************************/
 
 var readyList = [], isReady
-var fireReady = function() {
-    if (!isReady) {
-        isReady = true
-        if (innerRequire) {
-            modules["domReady!"].state = 4
-            innerRequire.checkDeps()
-        }
-        readyList.forEach(function(a) {
-            a(avalon)
-        })
+var fireReady = function(fn) {
+    isReady = true
+    if (innerRequire) {
+        modules["domReady!"].state = 4
+        innerRequire.checkDeps()
+    }
+    while(fn = readyList.shift()){
+        fn(avalon)
     }
 }
 

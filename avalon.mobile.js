@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.4 built in 2015.3.6
+ avalon.mobile.js 1.4 built in 2015.3.9
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4778,18 +4778,17 @@ new function() {
  *                    DOMReady                                         *
  **********************************************************************/
 var readyList = [], isReady
-function fireReady() {
-    if (!isReady) {
-        isReady = true
-        if (innerRequire) {
-            modules["domReady!"].state = 4
-            innerRequire.checkDeps()//隋性函数，防止IE9二次调用_checkDeps
-        }
-        readyList.forEach(function(a) {
-            a(avalon)
-        })
+var fireReady = function(fn) {
+    isReady = true
+    if (innerRequire) {
+        modules["domReady!"].state = 4
+        innerRequire.checkDeps()
+    }
+    while(fn = readyList.shift()){
+        fn(avalon)
     }
 }
+
 
 if (DOC.readyState === "complete") {
     setTimeout(fireReady) //如果在domReady之外加载

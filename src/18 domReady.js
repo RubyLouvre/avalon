@@ -3,16 +3,14 @@
  **********************************************************************/
 
 var readyList = [], isReady
-var fireReady = function() {
-    if (!isReady) {
-        isReady = true
-        if (innerRequire) {
-            modules["domReady!"].state = 4
-            innerRequire.checkDeps()
-        }
-        readyList.forEach(function(a) {
-            a(avalon)
-        })
+var fireReady = function(fn) {
+    isReady = true
+    if (innerRequire) {
+        modules["domReady!"].state = 4
+        innerRequire.checkDeps()
+    }
+    while(fn = readyList.shift()){
+        fn(avalon)
     }
 }
 

@@ -2,18 +2,17 @@
  *                    DOMReady                                         *
  **********************************************************************/
 var readyList = [], isReady
-function fireReady() {
-    if (!isReady) {
-        isReady = true
-        if (innerRequire) {
-            modules["domReady!"].state = 4
-            innerRequire.checkDeps()//隋性函数，防止IE9二次调用_checkDeps
-        }
-        readyList.forEach(function(a) {
-            a(avalon)
-        })
+var fireReady = function(fn) {
+    isReady = true
+    if (innerRequire) {
+        modules["domReady!"].state = 4
+        innerRequire.checkDeps()
+    }
+    while(fn = readyList.shift()){
+        fn(avalon)
     }
 }
+
 
 if (DOC.readyState === "complete") {
     setTimeout(fireReady) //如果在domReady之外加载
