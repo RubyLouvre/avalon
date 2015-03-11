@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.4 built in 2015.3.9
+ avalon.mobile.js 1.4 built in 2015.3.11
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -943,19 +943,19 @@ function modelFactory(source, $special, $model) {
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
-                        if ($events.$digest) {
-                            if (!accessor.pedding) {
-                                accessor.pedding = true
-                                setTimeout(function() {
-                                    notifySubscribers($events[name]) //同步视图
-                                    safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-                                    accessor.pedding = false
-                                })
-                            }
-                        } else {
+//                        if ($events.$digest) {
+//                            if (!accessor.pedding) {
+//                                accessor.pedding = true
+//                                setTimeout(function() {
+//                                    notifySubscribers($events[name]) //同步视图
+//                                    safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+//                                    accessor.pedding = false
+//                                })
+//                            }
+//                        } else {
                             notifySubscribers($events[name]) //同步视图
                             safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-                        }
+//                        }
                     }
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
@@ -964,17 +964,17 @@ function modelFactory(source, $special, $model) {
                         if (oldValue !== newValue) {
                             $model[name] = newValue
                             //这里不用同步视图
-                            if ($events.$digest) {
-                                if (!accessor.pedding) {
-                                    accessor.pedding = true
-                                    setTimeout(function() {
-                                        safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-                                        accessor.pedding = false
-                                    })
-                                }
-                            } else {
+//                            if ($events.$digest) {
+//                                if (!accessor.pedding) {
+//                                    accessor.pedding = true
+//                                    setTimeout(function() {
+//                                        safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
+//                                        accessor.pedding = false
+//                                    })
+//                                }
+//                            } else {
                                 safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-                            }
+//                            }
                         }
                         return newValue
                     } else {
