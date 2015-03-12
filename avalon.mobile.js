@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.4 built in 2015.3.11
+ avalon.mobile.js 1.4 built in 2015.3.12
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2961,6 +2961,7 @@ function ticker() {
 }
 
 var watchValueInTimer = noop
+ var rmsinput = /text|password|hidden/
 new function() {
     try {//#272 IE9-IE11, firefox
         var setters = {}
@@ -2969,6 +2970,8 @@ new function() {
         function newSetter(value) {
             if (avalon.contains(root, this)) {
                 setters[this.tagName].call(this, value)
+                if (!rmsinput.test(this.type))
+                    return
                 if (!this.msFocus && this.avalonSetter) {
                     this.avalonSetter()
                 }
@@ -3088,7 +3091,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     bound("blur", function() {
         element.msFocus = false
     })
-    if (/text|password|hidden/.test($type)) {
+    if (rmsinput.test($type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
                 if (!element.msFocus && element.oldValue !== element.value) {

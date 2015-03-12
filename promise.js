@@ -44,7 +44,7 @@ msPromise.prototype = {
     _then: function(onSuccess, onFail) {
         if (this._fired) {//在已有Promise上添加回调
             var me = this
-            var execute = me.async ? asyncExecute : syncExecute
+            var execute = me.async === void 0 ? asyncExecute : syncExecute
             execute(function() {
                 me._fire(onSuccess, onFail)
             });
@@ -120,7 +120,7 @@ function _reject(promise, value) {//触发失败回调
 function _transmit(promise, value) {
     promise._fired = true
     promise._value = value
-    var execute = promise.async ? asyncExecute : syncExecute
+    var execute = promise.async === void 0 ? asyncExecute : syncExecute
     execute(function() {
         promise._callbacks.forEach(function(data) {
             promise._fire(data.onSuccess, data.onFail);
@@ -136,5 +136,3 @@ function fail(onFail) {//添加出错回调
     return this.then(null, onFail)
 }
 
-mmPromise.prototype.done = done
-mmPromise.prototype.fail = fail

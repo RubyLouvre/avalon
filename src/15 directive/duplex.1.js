@@ -131,6 +131,7 @@ function ticker() {
 }
 
 var watchValueInTimer = noop
+ var rmsinput = /text|password|hidden/
 new function() {
     try {//#272 IE9-IE11, firefox
         var setters = {}
@@ -139,6 +140,8 @@ new function() {
         function newSetter(value) {
             if (avalon.contains(root, this)) {
                 setters[this.tagName].call(this, value)
+                if (!rmsinput.test(this.type))
+                    return
                 if (!this.msFocus && this.avalonSetter) {
                     this.avalonSetter()
                 }
