@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.4 built in 2015.3.12
+ avalon.mobile.shim.js 1.4 built in 2015.3.13
  ==================================================*/
 (function(global, factory) {
 
@@ -2131,7 +2131,7 @@ cssHooks["@:get"] = function(node, name) {
     if (!node || !node.style) {
         throw new Error("getComputedStyle要求传入一个节点 " + node)
     }
-    var ret, computed = getComputedStyle(node, null)
+    var ret, computed = getComputedStyle(node)
     if (computed) {
         ret = name === "filter" ? computed.getPropertyValue(name) : computed[name]
         if (ret === "") {
