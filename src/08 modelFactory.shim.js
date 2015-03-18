@@ -109,7 +109,6 @@ if (!canHideOwn) {
                     "End Function"
                 ].join("\r\n"))
             }
-            // console.log(code)
             var ret = window[realClassName + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品
         }

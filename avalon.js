@@ -1077,7 +1077,7 @@ var EventBus = {
  **********************************************************************/
 //avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
 var VMODELS = avalon.vmodels = {} //所有vmodel都储存在这里
-avalon.define = function(id, factory) {
+avalon.define = function (id, factory) {
     var $id = id.$id || id
     if (!$id) {
         log("warning: vm必须指定$id")
@@ -1168,10 +1168,8 @@ function modelFactory(source, $special, $model) {
         collection.pushArray(arr)
         return collection
     }
-    if (typeof source.nodeType === "number") {
-        return source
-    }
-    if (source.$id && source.$events) { //fix IE6-8 createWithProxy $val: val引发的BUG
+    //0 null undefined || Node || VModel(fix IE6-8 createWithProxy $val: val引发的BUG)
+    if (!source || source.nodeType > 0 || (source.$id && source.$events)) {
         return source
     }
     if (!Array.isArray(source.$skipArray)) {
@@ -1184,7 +1182,7 @@ function modelFactory(source, $special, $model) {
     var watchedProperties = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
     for (var i in source) {
-        (function(name, val) {
+        (function (name, val) {
             $model[name] = val
             if (!isObservable(name, val, source.$skipArray)) {
                 return //过滤所有非监控属性
@@ -1192,7 +1190,7 @@ function modelFactory(source, $special, $model) {
             //总共产生三种accessor
             $events[name] = []
             var valueType = avalon.type(val)
-            var accessor = function(newValue) {
+            var accessor = function (newValue) {
                 var name = accessor._name
                 var $vmodel = this
                 var $model = $vmodel.$model
@@ -1211,19 +1209,8 @@ function modelFactory(source, $special, $model) {
                     }
                     if (!isEqual(oldValue, newValue)) {
                         $model[name] = newValue
-//                        if ($events.$digest) {
-//                            if (!accessor.pedding) {
-//                                accessor.pedding = true
-//                                setTimeout(function() {
-//                                    notifySubscribers($events[name]) //同步视图
-//                                    safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-//                                    accessor.pedding = false
-//                                })
-//                            }
-//                        } else {
-                            notifySubscribers($events[name]) //同步视图
-                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-//                        }
+                        notifySubscribers($events[name]) //同步视图
+                        safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                     }
                 } else {
                     if (accessor.type === 0) { //type 0 计算属性 1 监控属性 2 对象属性
@@ -1232,17 +1219,7 @@ function modelFactory(source, $special, $model) {
                         if (oldValue !== newValue) {
                             $model[name] = newValue
                             //这里不用同步视图
-//                            if ($events.$digest) {
-//                                if (!accessor.pedding) {
-//                                    accessor.pedding = true
-//                                    setTimeout(function() {
-//                                        safeFire($vmodel, name, $model[name], oldValue) //触发$watch回调
-//                                        accessor.pedding = false
-//                                    })
-//                                }
-//                            } else {
-                                safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
-//                            }
+                            safeFire($vmodel, name, newValue, oldValue) //触发$watch回调
                         }
                         return newValue
                     } else {
@@ -1257,11 +1234,11 @@ function modelFactory(source, $special, $model) {
                 accessor.set = val.set
                 accessor.get = val.get
                 accessor.type = 0
-                initCallbacks.push(function() {
+                initCallbacks.push(function () {
                     var data = {
-                        evaluator: function() {
+                        evaluator: function () {
                             data.type = Math.random(),
-                            data.element = null
+                                    data.element = null
                             $model[name] = accessor.get.call($vmodel)
                         },
                         element: head,
@@ -1277,7 +1254,7 @@ function modelFactory(source, $special, $model) {
                 //第2种为对象属性，产生子VM与监控数组
                 accessor.type = 2
                 accessor.valueType = valueType
-                initCallbacks.push(function() {
+                initCallbacks.push(function () {
                     var svmodel = modelFactory(val, 0, $model[name])
                     accessor.svmodel = svmodel
                     svmodel.$events[subscribers] = $events[name]
@@ -1291,7 +1268,7 @@ function modelFactory(source, $special, $model) {
         })(i, source[i])
     }
 
-    $$skipArray.forEach(function(name) {
+    $$skipArray.forEach(function (name) {
         delete source[name]
         delete $model[name] //这些特殊属性不应该在$model中出现
     })
@@ -1306,7 +1283,7 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    for ( i in EventBus) {
+    for (i in EventBus) {
         var fn = EventBus[i]
         if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
             fn = fn.bind($vmodel)
@@ -1316,7 +1293,7 @@ function modelFactory(source, $special, $model) {
 
     if (canHideOwn) {
         Object.defineProperty($vmodel, "hasOwnProperty", {
-            value: function(name) {
+            value: function (name) {
                 return name in this.$model
             },
             writable: false,
@@ -1325,18 +1302,18 @@ function modelFactory(source, $special, $model) {
         })
 
     } else {
-        $vmodel.hasOwnProperty = function(name) {
+        $vmodel.hasOwnProperty = function (name) {
             return name in $vmodel.$model
         }
     }
-    initCallbacks.forEach(function(cb) { //收集依赖
+    initCallbacks.forEach(function (cb) { //收集依赖
         cb()
     })
     return $vmodel
 }
 
 //比较两个值是否相等
-var isEqual = Object.is || function(v1, v2) {
+var isEqual = Object.is || function (v1, v2) {
     if (v1 === 0 && v2 === 0) {
         return 1 / v1 === 1 / v2
     } else if (v1 !== v1) {
@@ -1352,7 +1329,7 @@ function safeFire(a, b, c, d) {
     }
 }
 
-var descriptorFactory = W3C ? function(obj) {
+var descriptorFactory = W3C ? function (obj) {
     var descriptors = {}
     for (var i in obj) {
         descriptors[i] = {
@@ -1363,7 +1340,7 @@ var descriptorFactory = W3C ? function(obj) {
         }
     }
     return descriptors
-} : function(a) {
+} : function (a) {
     return a
 }
 
@@ -1391,10 +1368,10 @@ function objectFactory(parent, name, value, valueType) {
         }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
-        midway[ret.$id] = function(data) {
+        midway[ret.$id] = function (data) {
             while (data = iterators.shift()) {
-                (function(el) {
-                    avalon.nextTick(function() {
+                (function (el) {
+                    avalon.nextTick(function () {
                         if (el.type) { //重新绑定
                             el.rollback && el.rollback() //还原 ms-with ms-on
                             bindingHandlers[el.type](el, el.vmodels)
@@ -1518,7 +1495,6 @@ if (!canHideOwn) {
                     "End Function"
                 ].join("\r\n"))
             }
-            // console.log(code)
             var ret = window[realClassName + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品
         }
