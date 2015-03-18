@@ -97,7 +97,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     bound("blur", function() {
         element.msFocus = false
     })
-    if (/text|password|hidden/.test($type)) {
+    if (rmsinput.test($type)) {
         watchValueInTimer(function() {
             if (root.contains(element)) {
                 if (!element.msFocus && element.oldValue !== element.value) {
