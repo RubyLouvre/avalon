@@ -278,7 +278,7 @@ function objectFactory(parent, name, value, valueType) {
                             bindingHandlers[type](el, el.vmodels)
                         }
                     })
-                })(data)
+                })(data)// jshint ignore:line
             }
             delete midway[ret.$id]
         }

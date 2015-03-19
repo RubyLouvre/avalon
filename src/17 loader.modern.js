@@ -125,7 +125,7 @@ new function() {// jshint ignore:line
         }
         var deps = [] // 放置所有依赖项的完整路径
         var uniq = createMap()
-        var id = parentUrl || "callback" + setTimeout("1")
+        var id = parentUrl || "callback" + setTimeout("1")// jshint ignore:line
         defineConfig = defineConfig || createMap()
         defineConfig.baseUrl = kernel.baseUrl
         var isBuilt = !!defineConfig.built
