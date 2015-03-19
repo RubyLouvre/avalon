@@ -5671,6 +5671,7 @@ new function () {// jshint ignore:line
                 } else {
                     fastclick.focus(element)
                 }
+                event.preventDefault()
                 fireEvent(element, 'tap')
                 avalon.fastclick.fireEvent(element, "click", event)
                 if (touchProxy.isDoubleTap) {
