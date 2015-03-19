@@ -2890,7 +2890,7 @@ avalon.duplexHooks = {
     },
     number: {
         get: function (val, data) {
-            var number = parseFloat(a)
+            var number = parseFloat(val)
             if (-val === -number) {
                 return number
             }
