@@ -5572,7 +5572,7 @@ avalon.ready(function() {
     var _avalon = window.avalon
     avalon.noConflict = function(deep) {
         if (deep && window.avalon === avalon) {
-            window.avalon = avalon
+            window.avalon = _avalon
         }
         return avalon
     }
