@@ -11,7 +11,7 @@ function Collection(model) {
     array._ = modelFactory({
         length: model.length
     })
-    array._.$watch("length", function(a, b) {
+    array._.$watch("length", function (a, b) {
         array.$fire("length", a, b)
     })
     for (var i in EventBus) {
@@ -26,13 +26,15 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
     while (--loop) {
         switch (method) {
             case "add":
-                var array = this.$model.slice(pos, pos + n).map(function(el) {
+                /* jshint ignore:start */
+                var array = this.$model.slice(pos, pos + n).map(function (el) {
                     if (rcomplexType.test(avalon.type(el))) {
                         return el.$id ? el : modelFactory(el, 0, el)
                     } else {
                         return el
                     }
                 })
+                /* jshint ignore:end */
                 _splice.apply(this, [pos, 0].concat(array))
                 this._fire("add", pos, n)
                 break
@@ -59,13 +61,13 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
 var _splice = ap.splice
 var CollectionPrototype = {
     _splice: _splice,
-    _fire: function(method, a, b) {
+    _fire: function (method, a, b) {
         notifySubscribers(this.$events[subscribers], method, a, b)
     },
-    size: function() { //取得数组长度，这个函数可以同步视图，length不能
+    size: function () { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
     },
-    pushArray: function(array) {
+    pushArray: function (array) {
         var m = array.length, n = this.length
         if (m) {
             ap.push.apply(this.$model, array)
@@ -73,7 +75,7 @@ var CollectionPrototype = {
         }
         return  m + n
     },
-    push: function() {
+    push: function () {
         //http://jsperf.com/closure-with-arguments
         var array = []
         var i, n = arguments.length
@@ -82,7 +84,7 @@ var CollectionPrototype = {
         }
         return this.pushArray(arguments)
     },
-    unshift: function() {
+    unshift: function () {
         var m = arguments.length, n = this.length
         if (m) {
             ap.unshift.apply(this.$model, arguments)
@@ -90,14 +92,14 @@ var CollectionPrototype = {
         }
         return  m + n //IE67的unshift不会返回长度
     },
-    shift: function() {
+    shift: function () {
         if (this.length) {
             var el = this.$model.shift()
             mutateArray.call(this, "del", 0, 1, 0)
             return el //返回被移除的元素
         }
     },
-    pop: function() {
+    pop: function () {
         var m = this.length
         if (m) {
             var el = this.$model.pop()
@@ -105,7 +107,7 @@ var CollectionPrototype = {
             return el //返回被移除的元素
         }
     },
-    splice: function(start) {
+    splice: function (start) {
         var m = arguments.length, args = [], change
         var removed = _splice.apply(this.$model, arguments)
         if (removed.length) { //如果用户删掉了元素
@@ -126,27 +128,27 @@ var CollectionPrototype = {
             return []
         }
     },
-    contains: function(el) { //判定是否包含
+    contains: function (el) { //判定是否包含
         return this.indexOf(el) !== -1
     },
-    remove: function(el) { //移除第一个等于给定值的元素
+    remove: function (el) { //移除第一个等于给定值的元素
         return this.removeAt(this.indexOf(el))
     },
-    removeAt: function(index) { //移除指定索引上的元素
+    removeAt: function (index) { //移除指定索引上的元素
         if (index >= 0) {
             this.$model.splice(index, 1)
             return mutateArray.call(this, "del", index, 1, 0)
         }
         return  []
     },
-    clear: function() {
+    clear: function () {
         this.$model.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
     },
-    removeAll: function(all) { //移除N个元素
+    removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
-            all.forEach(function(el) {
+            all.forEach(function (el) {
                 this.remove(el)
             }, this)
         } else if (typeof all === "function") {
@@ -160,13 +162,13 @@ var CollectionPrototype = {
             this.clear()
         }
     },
-    ensure: function(el) {
+    ensure: function (el) {
         if (!this.contains(el)) { //只有不存在才push
             this.push(el)
         }
         return this
     },
-    set: function(index, val) {
+    set: function (index, val) {
         if (index >= 0) {
             var valueType = avalon.type(val)
             if (val && val.$model) {
@@ -205,8 +207,8 @@ function sortByIndex(array, indexes) {
     }
 }
 
-"sort,reverse".replace(rword, function(method) {
-    CollectionPrototype[method] = function() {
+"sort,reverse".replace(rword, function (method) {
+    CollectionPrototype[method] = function () {
         var newArray = this.$model//这是要排序的新数组
         var oldArray = newArray.concat() //保持原来状态的旧数组
         var mask = Math.random()

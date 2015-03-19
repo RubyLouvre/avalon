@@ -2,11 +2,11 @@
  *                           DOM 底层补丁                             *
  **********************************************************************/
 if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
-    Node.prototype.contains = function(arg) {
+    Node.prototype.contains = function (arg) {
         return !!(this.compareDocumentPosition(arg) & 16)
     }
 }
-avalon.contains = function(root, el) {
+avalon.contains = function (root, el) {
     try {
         while ((el = el.parentNode))
             if (el === root)
@@ -21,7 +21,7 @@ if (window.SVGElement) {
     var svg = DOC.createElementNS(svgns, "svg")
     svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
     if (!rsvg.test(svg.firstChild)) {// #409
-
+        /* jshint ignore:start */
         function enumerateNode(node, targetNode) {
             if (node && node.childNodes) {
                 var nodes = node.childNodes
@@ -30,7 +30,7 @@ if (window.SVGElement) {
                         var svg = DOC.createElementNS(svgns,
                                 el.tagName.toLowerCase())
                         // copy attrs
-                        ap.forEach.call(el.attributes, function(attr) {
+                        ap.forEach.call(el.attributes, function (attr) {
                             svg.setAttribute(attr.name, attr.value)
                         })
                         // 递归处理子节点
@@ -40,14 +40,15 @@ if (window.SVGElement) {
                 }
             }
         }
+        /* jshint ignore:end */
         Object.defineProperties(SVGElement.prototype, {
             "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                 enumerable: true,
                 configurable: true,
-                get: function() {
+                get: function () {
                     return new XMLSerializer().serializeToString(this)
                 },
-                set: function(html) {
+                set: function (html) {
                     var tagName = this.tagName.toLowerCase(),
                             par = this.parentNode,
                             frag = avalon.parseHTML(html)
@@ -66,13 +67,13 @@ if (window.SVGElement) {
             "innerHTML": {
                 enumerable: true,
                 configurable: true,
-                get: function() {
+                get: function () {
                     var s = this.outerHTML
                     var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
                     var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
                     return  s.replace(ropen, "").replace(rclose, "")
                 },
-                set: function(html) {
+                set: function (html) {
                     if (avalon.clearHTML) {
                         avalon.clearHTML(this)
                         var frag = avalon.parseHTML(html)
@@ -84,17 +85,17 @@ if (window.SVGElement) {
     }
 }
 //========================= event binding ====================
-var eventHooks = avalon.eventHooks 
+var eventHooks = avalon.eventHooks
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!("onmouseenter" in root)) {
     avalon.each({
         mouseenter: "mouseover",
         mouseleave: "mouseout"
-    }, function(origType, fixType) {
+    }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            deel: function(elem, _, fn) {
-                return function(e) {
+            deel: function (elem, _, fn) {
+                return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
                         delete e.type
@@ -110,7 +111,7 @@ if (!("onmouseenter" in root)) {
 avalon.each({
     AnimationEvent: "animationend",
     WebKitAnimationEvent: "webkitAnimationEnd"
-}, function(construct, fixType) {
+}, function (construct, fixType) {
     if (window[construct] && !eventHooks.animationend) {
         eventHooks.animationend = {
             type: fixType
@@ -126,8 +127,8 @@ if (DOC.onmousewheel === void 0) {
      chrome wheel deltaY 下100 上-100 */
     eventHooks.mousewheel = {
         type: "wheel",
-        deel: function(elem, _, fn) {
-            return function(e) {
+        deel: function (elem, _, fn) {
+            return function (e) {
                 e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0
                 Object.defineProperty(e, "type", {

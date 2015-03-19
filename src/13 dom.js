@@ -218,7 +218,7 @@ avalon.parseJSON = window.JSON ? JSON.parse : function(data) {
             if (rvalidchars.test(data.replace(rvalidescape, "@")
                     .replace(rvalidtokens, "]")
                     .replace(rvalidbraces, ""))) {
-                return (new Function("return " + data))()
+                return (new Function("return " + data))()// jshint ignore:line
             }
         }
         avalon.error("Invalid JSON: " + data)

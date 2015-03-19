@@ -1,7 +1,9 @@
-var bools = "autofocus,autoplay,async,allowTransparency,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
-        "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
+var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
+    "declare,disabled,defer,defaultChecked,defaultSelected",
+    "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
+    "open,readOnly,selected"].join(",")
 var boolMap = {}
-bools.replace(rword, function(name) {
+bools.replace(rword, function (name) {
     boolMap[name.toLowerCase()] = name
 })
 
@@ -14,21 +16,23 @@ var propMap = {//属性名映射
     "http-equiv": "httpEquiv"
 }
 
-var anomaly = "accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan," + "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight," + "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
-anomaly.replace(rword, function(name) {
+var anomaly = ["accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan",
+    "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight",
+    "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"].join(",")
+anomaly.replace(rword, function (name) {
     propMap[name.toLowerCase()] = name
 })
 
 var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
 var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
 
-var getXHR = function() {
-    return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")
+var getXHR = function () {
+    return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")// jshint ignore:line
 }
 
 var cacheTmpls = avalon.templateCache = {}
 
-bindingHandlers.attr = function(data, vmodels) {
+bindingHandlers.attr = function (data, vmodels) {
     var text = data.value.trim(),
             simple = true
     if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
@@ -58,7 +62,7 @@ bindingHandlers.attr = function(data, vmodels) {
     parseExprProxy(text, vmodels, data, (simple ? 0 : scanExpr(data.value)))
 }
 
-bindingExecutors.attr = function(val, elem, data) {
+bindingExecutors.attr = function (val, elem, data) {
     var method = data.type,
             attrName = data.param
     if (method === "css") {
@@ -95,12 +99,12 @@ bindingExecutors.attr = function(val, elem, data) {
         var loaded = data.includeLoaded
         var replace = data.includeReplaced
         var target = replace ? elem.parentNode : elem
-        var scanTemplate = function(text) {
+        var scanTemplate = function (text) {
             if (loaded) {
                 text = loaded.apply(target, [text].concat(vmodels))
             }
             if (rendered) {
-                checkScan(target, function() {
+                checkScan(target, function () {
                     rendered.call(target)
                 }, NaN)
             }
@@ -119,12 +123,12 @@ bindingExecutors.attr = function(val, elem, data) {
         }
         if (data.param === "src") {
             if (cacheTmpls[val]) {
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     scanTemplate(cacheTmpls[val])
                 })
             } else {
                 var xhr = getXHR()
-                xhr.onreadystatechange = function() {
+                xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4) {
                         var s = xhr.status
                         if (s >= 200 && s < 300 || s === 304 || s === 1223) {
@@ -160,7 +164,7 @@ bindingExecutors.attr = function(val, elem, data) {
                         }
                     }
                 }
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     scanTemplate(el.fixIE78 || el.value || el.innerText || el.innerHTML)
                 })
             }
@@ -180,6 +184,6 @@ bindingExecutors.attr = function(val, elem, data) {
 }
 
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
-"title,alt,src,value,css,include,href".replace(rword, function(name) {
+"title,alt,src,value,css,include,href".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.attr
 })

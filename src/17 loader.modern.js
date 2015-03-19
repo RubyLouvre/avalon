@@ -21,7 +21,7 @@ var modules = avalon.modules = {
 // 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
-new function() {
+new function() {// jshint ignore:line
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
@@ -641,4 +641,4 @@ new function() {
         var loaderUrl = trimQuery(mainNode.src)
         kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
-}
+}// jshint ignore:line

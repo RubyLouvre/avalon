@@ -90,7 +90,7 @@ avalon.duplexHooks = {
             }
             var arr = /strong|medium|weak/.exec(data.element.getAttribute("data-duplex-number")) || ["medium"]
             switch (arr[0]) {
-                case "string":
+                case "strong":
                     return 0
                 case "medium":
                     return val === "" ? "" : 0
@@ -144,12 +144,12 @@ function ticker() {
 
 var watchValueInTimer = noop
 var rmsinput = /text|password|hidden/
-new function () {
+new function () {// jshint ignore:line
     try {//#272 IE9-IE11, firefox
         var setters = {}
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
-        function newSetter(value) {
+        function newSetter(value) {// jshint ignore:line
             if (avalon.contains(root, this)) {
                 setters[this.tagName].call(this, value)
                 if (!rmsinput.test(this.type))
@@ -172,4 +172,4 @@ new function () {
     } catch (e) {
         watchValueInTimer = avalon.tick
     }
-}
+}// jshint ignore:line

@@ -2,7 +2,7 @@
  *                            事件总线                               *
  **********************************************************************/
 var EventBus = {
-    $watch: function(type, callback) {
+    $watch: function (type, callback) {
         if (typeof callback === "function") {
             var callbacks = this.$events[type]
             if (callbacks) {
@@ -15,7 +15,7 @@ var EventBus = {
         }
         return this
     },
-    $unwatch: function(type, callback) {
+    $unwatch: function (type, callback) {
         var n = arguments.length
         if (n === 0) { //让此VM的所有$watch回调无效化
             this.$watch.backup = this.$events
@@ -33,14 +33,14 @@ var EventBus = {
         }
         return this
     },
-    $fire: function(type) {
+    $fire: function (type) {
         var special, i, v, callback
         if (/^(\w+)!(\S+)$/.test(type)) {
             special = RegExp.$1
             type = RegExp.$2
         }
-        var events = this.$events 
-        if(!events)
+        var events = this.$events
+        if (!events)
             return
         var args = aslice.call(arguments, 1)
         var detail = [type].concat(args)
@@ -64,22 +64,23 @@ var EventBus = {
                             continue
                         }
                         //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
-                        Array.prototype.forEach.call(eventNodes, function(node) {
-                            Array.prototype.forEach.call(elements, function(element) {
+                        /* jshint ignore:start */
+                        Array.prototype.forEach.call(eventNodes, function (node) {
+                            Array.prototype.forEach.call(elements, function (element) {
                                 var ok = special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element) //向上冒泡
-
                                 if (ok) {
                                     node._avalon = v //符合条件的加一个标识
                                 }
                             });
                         })
+                        /* jshint ignore:end */
                     }
                 }
             }
             var nodes = DOC.getElementsByTagName("*") //实现节点排序
             var alls = []
-            Array.prototype.forEach.call(nodes, function(el) {
+            Array.prototype.forEach.call(nodes, function (el) {
                 if (el._avalon) {
                     alls.push(el._avalon)
                     el._avalon = ""
