@@ -196,7 +196,7 @@ avalon.each({
             return win ? win[prop] : node[method]
         } else {
             if (win) {
-                win.scrollTo(!top ? val : avalon(win).scrollLeft(), top ? val : avalon(win).scrollTop())
+                win.scrollTo(!top ? val : win[prop], top ? val : win[prop])
             } else {
                 node[method] = val
             }
