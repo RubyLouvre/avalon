@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.41 built in 2015.3.19
+ avalon.modern.js 1.41 built in 2015.3.20
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4184,7 +4184,7 @@ new function() {// jshint ignore:line
         //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
         var urlNoQuery = name && req.urlNoQuery
-        if (module && module.state >= 3) {
+        if (module && module.state >= 1) {
             return name
         }
         module = modules[urlNoQuery]
