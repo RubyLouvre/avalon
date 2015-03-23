@@ -6,7 +6,7 @@ var rhasHtml = /\|\s*html\s*/,
 function getToken(value) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace( rstringLiteral, function(_){
-            return Array(_.length+1).join("1")
+            return Array(_.length+1).join("1")// jshint ignore:line
         })
         var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
@@ -81,7 +81,7 @@ function scanText(textNode, vmodels) {
                     token.type = "html"
                     token.group = 1
                     return ""
-                })
+                })// jshint ignore:line
                 bindings.push(token) //收集带有插值表达式的文本
             }
             hyperspace.appendChild(node)

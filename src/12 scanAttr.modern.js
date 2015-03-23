@@ -46,7 +46,7 @@ function scanAttr(elem, vmodels) {
                             binding.type = "html"
                             binding.group = 1
                             return ""
-                        })
+                        })// jshint ignore:line
                     }
                     if (name === "ms-if-loop") {
                         binding.priority += 100

@@ -3,14 +3,14 @@
  **********************************************************************/
 if (!"司徒正美".trim) {
     var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
-    String.prototype.trim = function() {
+    String.prototype.trim = function () {
         return this.replace(rtrim, "")
     }
 }
 var hasDontEnumBug = !({
     'toString': null
 }).propertyIsEnumerable('toString'),
-        hasProtoEnumBug = (function() {
+        hasProtoEnumBug = (function () {
         }).propertyIsEnumerable('prototype'),
         dontEnums = [
             "toString",
@@ -23,7 +23,7 @@ var hasDontEnumBug = !({
         ],
         dontEnumsLength = dontEnums.length;
 if (!Object.keys) {
-    Object.keys = function(object) { //ecma262v5 15.2.3.14
+    Object.keys = function (object) { //ecma262v5 15.2.3.14
         var theKeys = [];
         var skipProto = hasProtoEnumBug && typeof object === "function"
         if (typeof object === "string" || (object && object.callee)) {
@@ -52,18 +52,18 @@ if (!Object.keys) {
     }
 }
 if (!Array.isArray) {
-    Array.isArray = function(a) {
+    Array.isArray = function (a) {
         return serialize.call(a) === "[object Array]"
     }
 }
 
 if (!noop.bind) {
-    Function.prototype.bind = function(scope) {
+    Function.prototype.bind = function (scope) {
         if (arguments.length < 2 && scope === void 0)
             return this
         var fn = this,
                 argv = arguments
-        return function() {
+        return function () {
             var args = [],
                     i
             for (i = 1; i < argv.length; i++)
@@ -77,12 +77,14 @@ if (!noop.bind) {
 
 function iterator(vars, body, ret) {
     var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
+    /* jshint ignore:start */
     return Function("fn,scope", fun)
+    /* jshint ignore:end */
 }
 if (!rnative.test([].map)) {
     avalon.mix(ap, {
         //定位操作，返回数组中第一个等于给定参数的元素的索引值。
-        indexOf: function(item, index) {
+        indexOf: function (item, index) {
             var n = this.length,
                     i = ~~index
             if (i < 0)
@@ -93,7 +95,7 @@ if (!rnative.test([].map)) {
             return -1
         },
         //定位操作，同上，不过是从后遍历。
-        lastIndexOf: function(item, index) {
+        lastIndexOf: function (item, index) {
             var n = this.length,
                     i = index == null ? n - 1 : index
             if (i < 0)

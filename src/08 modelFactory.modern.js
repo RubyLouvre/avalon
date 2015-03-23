@@ -78,7 +78,7 @@ function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
         var arr = source.concat()
         source.length = 0
-        var collection = Collection(source)
+        var collection = Collection(source)// jshint ignore:line
         collection.pushArray(arr)
         return collection
     }
@@ -179,7 +179,7 @@ function modelFactory(source, $special, $model) {
             }
             accessor._name = name
             watchedProperties[name] = accessor
-        })(i, source[i])
+        })(i, source[i])// jshint ignore:line
     }
 
     $$skipArray.forEach(function (name) {
@@ -272,12 +272,13 @@ function objectFactory(parent, name, value, valueType) {
             while (data = iterators.shift()) {
                 (function (el) {
                     avalon.nextTick(function () {
-                        if (el.type) { //重新绑定
+                        var type = el.type
+                        if (type && bindingHandlers[type]) { //#753
                             el.rollback && el.rollback() //还原 ms-with ms-on
-                            bindingHandlers[el.type](el, el.vmodels)
+                            bindingHandlers[type](el, el.vmodels)
                         }
                     })
-                })(data)
+                })(data)// jshint ignore:line
             }
             delete midway[ret.$id]
         }

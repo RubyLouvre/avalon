@@ -2,7 +2,7 @@
  *              HTML处理(parseHTML, innerHTML, clearHTML)                 *
  **************************************************************************/
 //parseHTML的辅助变量
-var tagHooks = new function() {
+var tagHooks = new function() {// jshint ignore:line
     avalon.mix(this, {
         option: DOC.createElement("select"),
         thead: DOC.createElement("table"),
@@ -17,7 +17,7 @@ var tagHooks = new function() {
     this.optgroup = this.option
     this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
     this.th = this.td
-}
+}// jshint ignore:line
 
 String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(rword, function(tag) {
     tagHooks[tag] = tagHooks.g //处理SVG
@@ -45,7 +45,7 @@ avalon.parseHTML = function(html) {
                 var neo = script.cloneNode(false) //FF不能省略参数
                 ap.forEach.call(el.attributes, function(attr) {
                     neo.setAttribute(attr.name, attr.value)
-                })
+                })// jshint ignore:line
                 neo.text = el.text
                 el.parentNode.replaceChild(neo, el)
             }

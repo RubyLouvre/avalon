@@ -1,7 +1,7 @@
 //===================修复浏览器对Object.defineProperties的支持=================
 if (!canHideOwn) {
     if ("__defineGetter__" in avalon) {
-        defineProperty = function(obj, prop, desc) {
+        defineProperty = function (obj, prop, desc) {
             if ('value' in desc) {
                 obj[prop] = desc.value
             }
@@ -13,7 +13,7 @@ if (!canHideOwn) {
             }
             return obj
         }
-        defineProperties = function(obj, descs) {
+        defineProperties = function (obj, descs) {
             for (var prop in descs) {
                 if (descs.hasOwnProperty(prop)) {
                     defineProperty(obj, prop, descs[prop])
@@ -23,7 +23,7 @@ if (!canHideOwn) {
         }
     }
     if (IEVersion) {
-        window.execScript([
+        window.execScript([ // jshint ignore:line
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
             "End Function",
@@ -46,8 +46,7 @@ if (!canHideOwn) {
             "\tfindOrDefineVBClass=found",
             "End Function"
         ].join("\n"), "VBScript")
-
-        function VBMediator(instance, accessors, name, value) {
+        function VBMediator(instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
                 accessor.call(instance, value)
@@ -55,8 +54,8 @@ if (!canHideOwn) {
                 return accessor.call(instance)
             }
         }
-        defineProperties = function(name, accessors, properties) {
-            var className = "VBClass" + setTimeout("1"),
+        defineProperties = function (name, accessors, properties) {
+            var className = "VBClass" + setTimeout("1"),// jshint ignore:line
                     buffer = []
             buffer.push(
                     "\r\n\tPrivate [__data__], [__proxy__]",
@@ -70,7 +69,7 @@ if (!canHideOwn) {
                     buffer.push("\tPublic [" + name + "]")
                 }
             }
-            $$skipArray.forEach(function(name) {
+            $$skipArray.forEach(function (name) {
                 if (!accessors.hasOwnProperty(name)) {
                     buffer.push("\tPublic [" + name + "]")
                 }

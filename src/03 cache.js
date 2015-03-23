@@ -1,6 +1,6 @@
 
 // https://github.com/rsms/js-lru
-var Cache = new function() {
+var Cache = new function() {// jshint ignore:line
     function LRU(maxLength) {
         this.size = 0
         this.limit = maxLength
@@ -70,4 +70,4 @@ var Cache = new function() {
         return entry.value
     }
     return LRU
-}
+}// jshint ignore:line
