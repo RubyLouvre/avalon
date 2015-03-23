@@ -32,7 +32,7 @@ avalon.isWindow = function(obj) {
         return false
     // 利用IE678 window == document为true,document == window竟然为false的神奇特性
     // 标准浏览器及IE9，IE10等使用 正则检测
-    return obj == obj.document && obj.document != obj
+    return obj == obj.document && obj.document != obj //jshint ignore:line
 }
 
 function isWindow(obj) {

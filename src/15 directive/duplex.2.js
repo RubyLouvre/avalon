@@ -98,7 +98,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-        function delay(e) {
+        function delay(e) {// jshint ignore:line
             setTimeout(function() {
                 updateVModel(e)
             })

@@ -53,7 +53,7 @@ avalon.parseHTML = function (html) {
                         neo[attr.name] = attr.value //复制其属性
                         neo.setAttribute(attr.name, attr.value)
                     }
-                })
+                })  // jshint ignore:line
                 neo.text = el.text
                 el.parentNode.replaceChild(neo, el) //替换节点
             }

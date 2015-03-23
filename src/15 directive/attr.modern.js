@@ -1,5 +1,7 @@
-var bools = "autofocus,autoplay,async,allowTransparency,checked,controls,declare,disabled,defer,defaultChecked,defaultSelected" +
-        "contentEditable,isMap,loop,multiple,noHref,noResize,noShade,open,readOnly,selected"
+var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
+    "declare,disabled,defer,defaultChecked,defaultSelected",
+    "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
+    "open,readOnly,selected"].join(",")
 var boolMap = {}
 bools.replace(rword, function(name) {
     boolMap[name.toLowerCase()] = name

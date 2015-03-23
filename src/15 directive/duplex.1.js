@@ -84,13 +84,13 @@ avalon.duplexHooks = {
     },
     number: {
         get: function (val, data) {
-            var number = parseFloat(a)
+            var number = parseFloat(val)
             if (-val === -number) {
                 return number
             }
             var arr = /strong|medium|weak/.exec(data.element.getAttribute("data-duplex-number")) || ["medium"]
             switch (arr[0]) {
-                case "string":
+                case "strong":
                     return 0
                 case "medium":
                     return val === "" ? "" : 0
@@ -113,16 +113,6 @@ function pipe(val, data, action, e) {
 }
 
 var TimerID, ribbon = []
-function W3CFire(el, name, detail) {
-    var event = DOC.createEvent("Events")
-    event.initEvent(name, true, true)
-    event.fireByAvalon = true//签名，标记事件是由avalon触发
-    //event.isTrusted = false 设置这个opera会报错
-    if (detail)
-        event.detail = detail
-    el.dispatchEvent(event)
-}
-
 
 avalon.tick = function (fn) {
     if (ribbon.push(fn) === 1) {
@@ -144,12 +134,12 @@ function ticker() {
 
 var watchValueInTimer = noop
 var rmsinput = /text|password|hidden/
-new function () {
+new function () {// jshint ignore:line
     try {//#272 IE9-IE11, firefox
         var setters = {}
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
-        function newSetter(value) {
+        function newSetter(value) {// jshint ignore:line
             if (avalon.contains(root, this)) {
                 setters[this.tagName].call(this, value)
                 if (!rmsinput.test(this.type))
@@ -172,4 +162,4 @@ new function () {
     } catch (e) {
         watchValueInTimer = avalon.tick
     }
-}
+}// jshint ignore:line
