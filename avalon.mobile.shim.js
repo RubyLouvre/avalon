@@ -4171,7 +4171,7 @@ new function() {
     })
 }
 
-new function() {
+new function() {// jshint ignore:line
     // http://www.cnblogs.com/yexiaochai/p/3462657.html
     var ua = navigator.userAgent
     var isAndroid = ua.indexOf("Android") > 0
@@ -4208,11 +4208,11 @@ new function() {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
     function isPrimaryTouch(event){
-        return (event.pointerType == 'touch' || event.pointerType == event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
+        return (event.pointerType === 'touch' || event.pointerType === event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
     }
 
     function isPointerEventType(e, type){
-        return (e.type == 'pointer'+type || e.type.toLowerCase() == 'mspointer'+type)
+        return (e.type === 'pointer'+type || e.type.toLowerCase() === 'mspointer'+type)
     }
 
     var touchTimeout, longTapTimeout
@@ -4434,7 +4434,7 @@ new function() {
     })
 
     //各种摸屏事件的示意图 http://quojs.tapquo.com/  http://touch.code.baidu.com/
-}
+}// jshint ignore:line
 
 // Register as a named AMD module, since avalon can be concatenated with other
 // files that may use define, but not via a proper concatenation script that

@@ -25,7 +25,7 @@ gulp.task('combo', function () {
 //http://www.linuxjournal.com/content/bash-extended-globbing
     return gulp.src('./src/**/*.js', function (a, b) {
         var compatibleFiles = b.filter(function (f) {
-            return !/\$\$|noop|modern|observe|touch/.test(f)
+            return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
         var version = 1.41 //当前版本号
         var now = new Date  //构建日期
