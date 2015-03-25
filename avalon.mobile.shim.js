@@ -4207,7 +4207,6 @@ new function() {
     } else if (IE9_10touch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
-
     function isPrimaryTouch(event){
         return (event.pointerType == 'touch' || event.pointerType == event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
     }
@@ -4275,12 +4274,15 @@ new function() {
         /*
             当触发hold和longtap事件时会触发touchcancel事件，从而阻止touchend事件的触发，继而保证在同时绑定tap和hold(longtap)事件时只触发其中一个事件
         */
+        avalon(element).addClass(fastclick.activeClass)
         longTapTimeout = setTimeout(function() {
             longTapTimeout = null
             fireEvent(element, "hold")
             fireEvent(element, "longtap")
             touchProxy = {}
+            avalon(element).removeClass(fastclick.activeClass)
         }, fastclick.clickDuration)
+        return true
     }
     function touchmove(event) {
         var _isPointerType = isPointerEventType(event, 'down'),
@@ -4297,7 +4299,7 @@ new function() {
 
         if (_isPointerType && !isPrimaryTouch(event)) return
 
-        if (!element) { // longtap|hold触发后touchProxy为{}
+        if (!element) { 
             return
         }
         cancelLongTap()
@@ -4312,6 +4314,7 @@ new function() {
             }
             fireEvent(element, "swipe", details)
             fireEvent(element, "swipe" + direction, details)
+            avalon(element).removeClass(fastclick.activeClass)
             touchProxy = {}
         } else {
             if (fastclick.canClick(element) && touchProxy.mx < fastclick.dragDistance && touchProxy.my < fastclick.dragDistance) {
@@ -4332,15 +4335,18 @@ new function() {
                 event.preventDefault()
                 fireEvent(element, 'tap')
                 avalon.fastclick.fireEvent(element, "click", event)
+                avalon(element).removeClass(fastclick.activeClass)
                 if (touchProxy.isDoubleTap) {
                     fireEvent(element, "doubletap")
                     avalon.fastclick.fireEvent(element, "dblclick", event)
                     touchProxy = {}
+                    avalon(element).removeClass(fastclick.activeClass)
                 } else {
                     touchTimeout = setTimeout(function() {
                         clearTimeout(touchTimeout)
                         touchTimeout = null
                         touchProxy = {}
+                        avalon(element).removeClass(fastclick.activeClass)
                     }, 250)
                 }
             }
@@ -4358,34 +4364,6 @@ new function() {
             longTapTimeout = touchTimeout = null
             touchProxy = {}
         })
-    }
-    me["clickHook"] = function(data) {
-        function touchstart(event) {
-            var $element = avalon(data.element)
-            $element.addClass(fastclick.activeClass)
-        }
-        function needFixClick(type) {
-            return type === "click"
-        }
-        if (needFixClick(data.param) ? touchSupported : true) {
-            data.specialBind = function(element, callback) {
-                var _callback = callback
-                if (!element.bindStart) { // 如果元素上绑定了多个事件不做处理的话会绑定多个touchstart监听器，显然不需要
-                    element.bindStart = true
-                    element.addEventListener(touchNames[0], touchstart)
-                } 
-                callback = function(event) {
-                    avalon(element).removeClass(fastclick.activeClass)
-                    _callback.apply(this, arguments)
-                }
-                data.msCallback = callback
-                avalon.bind(element, data.param, callback)
-            }
-            data.specialUnbind = function() {
-                element.removeEventListener(touchNames[0], touchstart)
-                avalon.unbind(data.element, data.param, data.msCallback)
-            }
-        }
     }
     //fastclick只要是处理移动端点击存在300ms延迟的问题
     //这是苹果乱搞异致的，他们想在小屏幕设备上通过快速点击两次，将放大了的网页缩放至原始比例。
@@ -4457,7 +4435,6 @@ new function() {
 
     //各种摸屏事件的示意图 http://quojs.tapquo.com/  http://touch.code.baidu.com/
 }
-
 
 // Register as a named AMD module, since avalon can be concatenated with other
 // files that may use define, but not via a proper concatenation script that
