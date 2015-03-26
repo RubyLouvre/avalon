@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.41 built in 2015.3.25
+ avalon.mobile.old.js 1.41 built in 2015.3.26
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -5514,7 +5514,7 @@ new function() {// jshint ignore:line
 var readyList = [], isReady
 var fireReady = function(fn) {
     isReady = true
-    if (innerRequire) {
+    if (innerRequire !== noop) {
         modules["domReady!"].state = 4
         innerRequire.checkDeps()
     }

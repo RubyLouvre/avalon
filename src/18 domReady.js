@@ -5,7 +5,7 @@
 var readyList = [], isReady
 var fireReady = function(fn) {
     isReady = true
-    if (innerRequire) {
+    if (innerRequire !== noop) {
         modules["domReady!"].state = 4
         innerRequire.checkDeps()
     }

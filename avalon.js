@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.41 built in 2015.3.25
+ avalon.js 1.41 built in 2015.3.26
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -5514,7 +5514,7 @@ new function() {// jshint ignore:line
 var readyList = [], isReady
 var fireReady = function(fn) {
     isReady = true
-    if (innerRequire) {
+    if (innerRequire !== noop) {
         modules["domReady!"].state = 4
         innerRequire.checkDeps()
     }
