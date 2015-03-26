@@ -2,6 +2,7 @@
 var subscribers = "$" + expose
 var otherRequire = window.require
 var otherDefine = window.define
+var innerRequire
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rcomplexType = /^(?:object|array)$/

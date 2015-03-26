@@ -24,13 +24,14 @@ function escapeRegExp(target) {
     //将字符串安全格式化为正则表达式的源码
     return (target + "").replace(rregexp, "\\$&")
 }
-var innerRequire = noop
+
 var plugins = {
-    loader: function(builtin) {
-        window.define = builtin ? innerRequire.define : otherDefine
-        window.require = builtin ? innerRequire : otherRequire
+    loader: function (builtin) {
+        var flag = innerRequire && builtin
+        window.require = flag ? innerRequire : otherRequire
+        window.define = flag ? innerRequire.define : otherDefine
     },
-    interpolate: function(array) {
+    interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
         if (openTag === closeTag) {

@@ -2,13 +2,13 @@
  *                    DOMReady                                         *
  **********************************************************************/
 var readyList = [], isReady
-var fireReady = function(fn) {
+var fireReady = function (fn) {
     isReady = true
-    if (innerRequire !== noop) {
+    if (innerRequire) {
         modules["domReady!"].state = 4
         innerRequire.checkDeps()
     }
-    while(fn = readyList.shift()){
+    while (fn = readyList.shift()) {
         fn(avalon)
     }
 }
@@ -20,7 +20,7 @@ if (DOC.readyState === "complete") {
     DOC.addEventListener("DOMContentLoaded", fireReady)
 }
 window.addEventListener("load", fireReady)
-avalon.ready = function(fn) {
+avalon.ready = function (fn) {
     if (!isReady) {
         readyList.push(fn)
     } else {
@@ -30,6 +30,6 @@ avalon.ready = function(fn) {
 avalon.config({
     loader: true
 })
-avalon.ready(function() {
+avalon.ready(function () {
     avalon.scan(DOC.body)
 })
