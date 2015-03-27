@@ -17,8 +17,9 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
-                    if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
+                    log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
+                    if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        log("warning!ms-enabled或ms-attr-enabled已经被废弃")
                         type = "disabled"
                         value = "!(" + value + ")"
                     }
@@ -42,7 +43,7 @@ function scanAttr(elem, vmodels) {
                     if (type === "html" || type === "text") {
                         var token = getToken(value)
                         avalon.mix(binding, token)
-                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                        binding.filters = binding.filters.replace(rhasHtml, function () {
                             binding.type = "html"
                             binding.group = 1
                             return ""
@@ -62,12 +63,18 @@ function scanAttr(elem, vmodels) {
         }
     }
     bindings.sort(bindingSorter)
-    if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
-        log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
+    var control = elem.type
+    if (control && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        }
+        if (msData["ms-attr-value"] && /text|password/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        }
     }
     var scanNode = true
     for (i = 0; binding = bindings[i]; i++) {
-       type = binding.type
+        type = binding.type
         if (rnoscanAttrBinding.test(type)) {
             return executeBindings(bindings.slice(0, i + 1), vmodels)
         } else if (scanNode) {
@@ -100,7 +107,7 @@ if (!"1" [0]) {
     //            }
     //        }
     //依次输出<SECTION>, </SECTION>
-    var getAttributes = function(elem) {
+    var getAttributes = function (elem) {
         var html = elem.outerHTML
         //处理IE6-8解析HTML5新标签的情况，及<br>等半闭合标签outerHTML为空的情况
         if (html.slice(0, 2) === "</" || !html.trim()) {

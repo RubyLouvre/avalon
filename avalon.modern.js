@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.41 built in 2015.3.26
+ avalon.modern.js 1.41 built in 2015.3.27
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1673,8 +1673,9 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+                    log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
                     if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        log("warning!ms-enabled或ms-attr-enabled已经被废弃")
                         type = "disabled"
                         value = "!(" + value + ")"
                     }
@@ -1698,7 +1699,7 @@ function scanAttr(elem, vmodels) {
                     if (type === "html" || type === "text") {
                         var token = getToken(value)
                         avalon.mix(binding, token)
-                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                        binding.filters = binding.filters.replace(rhasHtml, function () {
                             binding.type = "html"
                             binding.group = 1
                             return ""
@@ -1717,8 +1718,14 @@ function scanAttr(elem, vmodels) {
             }
         }
     }
-    if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
-        log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
+    var control = elem.type
+    if (control && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        }
+        if (msData["ms-attr-value"] && /text|password/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        }
     }
     bindings.sort(bindingSorter)
     var scanNode = true
@@ -3301,11 +3308,10 @@ bindingHandlers.repeat = function(data, vmodels) {
         var xtype = avalon.type($repeat)
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
-            avalon.log("warning:" + data.value + "对应类型不正确")
+            avalon.log("warning:" + data.value + "只能是对象或数组")
         }
     } catch (e) {
         freturn = true
-        avalon.log("warning:" + data.value + "编译出错")
     }
 
     var arr = data.value.split(".") || []
@@ -4163,14 +4169,14 @@ var modules = avalon.modules = {
 // 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
-new function() {// jshint ignore:line
+new function () {// jshint ignore:line
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     function makeRequest(name, config) {
 //1. 去掉资源前缀
         var res = "js"
-        name = name.replace(/^(\w+)\!/, function(a, b) {
+        name = name.replace(/^(\w+)\!/, function (a, b) {
             res = b
             return ""
         })
@@ -4180,14 +4186,14 @@ new function() {// jshint ignore:line
         }
 //2. 去掉querystring, hash
         var query = ""
-        name = name.replace(rquery, function(a) {
+        name = name.replace(rquery, function (a) {
             query = a
             return ""
         })
         //3. 去掉扩展名
         var suffix = "." + res
         var ext = /js|css/.test(suffix) ? suffix : ""
-        name = name.replace(/\.[a-z0-9]+$/g, function(a) {
+        name = name.replace(/\.[a-z0-9]+$/g, function (a) {
             if (a === suffix) {
                 ext = a
                 return ""
@@ -4225,9 +4231,9 @@ new function() {// jshint ignore:line
                 id: urlNoQuery,
                 state: 1 //send
             }
-            var wrap = function(obj) {
+            var wrap = function (obj) {
                 resources[res] = obj
-                obj.load(name, req, function(a) {
+                obj.load(name, req, function (a) {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
                     }
@@ -4248,7 +4254,7 @@ new function() {// jshint ignore:line
 //核心API之一 require
     var requireQueue = []
     var isUserFirstRequire = false
-    innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
+    innerRequire = avalon.require = function (array, factory, parentUrl, defineConfig) {
         if (!isUserFirstRequire) {
             requireQueue.push(avalon.slice(arguments))
             if (arguments.length <= 2) {
@@ -4278,7 +4284,7 @@ new function() {// jshint ignore:line
             var req = makeRequest(defineConfig.defineName, defineConfig)
             id = req.urlNoQuery
         } else {
-            array.forEach(function(name) {
+            array.forEach(function (name) {
                 var req = makeRequest(name, defineConfig)
                 var url = fireRequest(req) //加载资源，并返回该资源的完整地址
                 if (url) {
@@ -4307,7 +4313,7 @@ new function() {// jshint ignore:line
     }
 
 //核心API之二 require
-    innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
+    innerRequire.define = function (name, deps, factory) { //模块名,依赖列表,模块本身
         if (typeof name !== "string") {
             factory = deps
             deps = name
@@ -4322,7 +4328,7 @@ new function() {// jshint ignore:line
             defineName: name
         }
         var args = [deps, factory, config]
-        factory.require = function(url) {
+        factory.require = function (url) {
             args.splice(2, 0, url)
             if (modules[url]) {
                 modules[url].state = 3 //loaded
@@ -4367,19 +4373,19 @@ new function() {// jshint ignore:line
     var allpackages = kernel["packages"] = []
     var allargs = kernel["orig.args"] = createMap()
     avalon.mix(plugins, {
-        paths: function(hash) {
+        paths: function (hash) {
             avalon.mix(allpaths, hash)
             kernel.paths = makeIndexArray(allpaths)
         },
-        map: function(hash) {
+        map: function (hash) {
             avalon.mix(allmaps, hash)
             var list = makeIndexArray(allmaps, 1, 1)
-            avalon.each(list, function(_, item) {
+            avalon.each(list, function (_, item) {
                 item.val = makeIndexArray(item.val)
             })
             kernel.map = list
         },
-        packages: function(array) {
+        packages: function (array) {
             array = array.concat(allpackages)
             var uniq = createMap()
             var ret = []
@@ -4396,14 +4402,14 @@ new function() {// jshint ignore:line
             }
             kernel.packages = ret.sort()
         },
-        urlArgs: function(hash) {
+        urlArgs: function (hash) {
             if (typeof hash === "string") {
                 hash = {"*": hash}
             }
             avalon.mix(allargs, hash)
             kernel.urlArgs = makeIndexArray(allargs, 1)
         },
-        baseUrl: function(url) {
+        baseUrl: function (url) {
             if (!isAbsUrl(url)) {
                 var baseElement = head.getElementsByTagName("base")[0]
                 if (baseElement) {
@@ -4419,7 +4425,7 @@ new function() {// jshint ignore:line
             if (url.length > 3)
                 kernel.baseUrl = url
         },
-        shim: function(obj) {
+        shim: function (obj) {
             for (var i in obj) {
                 var value = obj[i]
                 if (Array.isArray(value)) {
@@ -4452,7 +4458,7 @@ new function() {// jshint ignore:line
         var id = trimQuery(node.src) //检测是否死链
         node.onload = node.onerror = null
         if (onError) {
-            setTimeout(function() {
+            setTimeout(function () {
                 head.removeChild(node)
                 node = null // 处理旧式IE下的循环引用问题
             })
@@ -4487,7 +4493,7 @@ new function() {// jshint ignore:line
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node.onload = function() {
+        node.onload = function () {
             var factory = factorys.pop()
             factory && factory.require(id)
             if (callback) {
@@ -4497,7 +4503,7 @@ new function() {// jshint ignore:line
             id && loadings.push(id)
             checkDeps()
         }
-        node.onerror = function() {
+        node.onerror = function () {
             checkFail(node, true)
         }
 
@@ -4512,14 +4518,14 @@ new function() {// jshint ignore:line
             load: noop
         },
         js: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
                 var shim = kernel.shim[name.replace(rjsext, "")]
                 if (shim) { //shim机制
-                    innerRequire(shim.deps || [], function() {
+                    innerRequire(shim.deps || [], function () {
                         var args = avalon.slice(arguments)
-                        loadJS(url, id, function() {
+                        loadJS(url, id, function () {
                             onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
                     })
@@ -4529,18 +4535,18 @@ new function() {// jshint ignore:line
             }
         },
         css: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
-                head.insertAdjacentHTML("afterBegin", '<link rel="stylesheet" href="'+ url +'">')
+                head.insertAdjacentHTML("afterBegin", '<link rel="stylesheet" href="' + url + '">')
                 log("debug: 已成功加载 " + url)
                 onLoad()
             }
         },
         text: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
                 var xhr = getXHR()
-                xhr.onload = function() {
+                xhr.onload = function () {
                     var status = xhr.status;
                     if (status > 399 && status < 600) {
                         avalon.error(url + " 对应资源不存在或没有开启 CORS")
@@ -4605,7 +4611,7 @@ new function() {// jshint ignore:line
         }
     }
 
-
+    var rcallback = /^callback\d+$/
     function fireFactory(id, deps, factory) {
         var module = Object(modules[id])
         module.state = 4
@@ -4617,9 +4623,16 @@ new function() {// jshint ignore:line
                 array.push(modules[d].exports)
             }
         }
-        var ret = factory.apply(window, array)
+        try {
+            var ret = factory.apply(window, array)
+        } catch (e) {
+            log("执行[" + id + "]模块的factory抛错： " + e)
+        }
         if (ret !== void 0) {
             module.exports = ret
+        }
+        if (rcallback.test(id)) {
+            delete modules[id]
         }
         delete module.factory
         return ret
@@ -4633,20 +4646,20 @@ new function() {// jshint ignore:line
         var usePath = 0
         var baseUrl = this.baseUrl
         var rootUrl = this.parentUrl || baseUrl
-        eachIndexArray(id, kernel.paths, function(value, key) {
+        eachIndexArray(id, kernel.paths, function (value, key) {
             url = url.replace(key, value)
             usePath = 1
         })
         //2. 是否命中packages配置项
         if (!usePath) {
-            eachIndexArray(id, kernel.packages, function(value, key, item) {
+            eachIndexArray(id, kernel.packages, function (value, key, item) {
                 url = url.replace(item.name, item.location)
             })
         }
         //3. 是否命中map配置项
         if (this.mapUrl) {
-            eachIndexArray(this.mapUrl, kernel.map, function(array) {
-                eachIndexArray(url, array, function(mdValue, mdKey) {
+            eachIndexArray(this.mapUrl, kernel.map, function (array) {
+                eachIndexArray(url, array, function (mdValue, mdKey) {
                     url = url.replace(mdKey, mdValue)
                     rootUrl = baseUrl
                 })
@@ -4665,7 +4678,7 @@ new function() {// jshint ignore:line
         var urlNoQuery = url + ext
         url = urlNoQuery + this.query
         //6. 处理urlArgs
-        eachIndexArray(id, kernel.urlArgs, function(value) {
+        eachIndexArray(id, kernel.urlArgs, function (value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
         this.url = url
@@ -4684,7 +4697,7 @@ new function() {// jshint ignore:line
     }
 
     function makeExports(value) {
-        return function() {
+        return function () {
             var ret
             if (value.init) {
                 ret = value.init.apply(window, arguments)
@@ -4697,17 +4710,17 @@ new function() {// jshint ignore:line
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-           // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
-                var item = {
-                    name: key,
-                    val: hash[key]
-                }
-                array.push(item)
-                item.reg = key === "*" && useStar ? /^/ : makeMatcher(key)
-                if (part && key !== "*") {
-                    item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
-                }
-         //   }
+            // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
+            var item = {
+                name: key,
+                val: hash[key]
+            }
+            array.push(item)
+            item.reg = key === "*" && useStar ? /^/ : makeMatcher(key)
+            if (part && key !== "*") {
+                item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
+            }
+            //   }
         }
         return array
     }
@@ -4760,7 +4773,7 @@ new function() {// jshint ignore:line
             return value
         }
         var g = window
-        value.split(".").forEach(function(part) {
+        value.split(".").forEach(function (part) {
             g = g[part]
         })
         return g

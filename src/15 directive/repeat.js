@@ -8,11 +8,10 @@ bindingHandlers.repeat = function(data, vmodels) {
         var xtype = avalon.type($repeat)
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
-            avalon.log("warning:" + data.value + "对应类型不正确")
+            avalon.log("warning:" + data.value + "只能是对象或数组")
         }
     } catch (e) {
         freturn = true
-        avalon.log("warning:" + data.value + "编译出错")
     }
 
     var arr = data.value.split(".") || []
