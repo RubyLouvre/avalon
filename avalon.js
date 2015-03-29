@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.41 built in 2015.3.27
+ avalon.js 1.41 built in 2015.3.29
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3662,7 +3662,7 @@ new function () {// jshint ignore:line
 }// jshint ignore:line
 
 if (IEVersion) {
-    avalon.bind(DOC, "selectionchange", function(e) {
+    avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement
         if (el && typeof el.avalonSetter === "function") {
             el.avalonSetter()
@@ -3671,7 +3671,7 @@ if (IEVersion) {
 }
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
             bound = data.bound,
             $elem = avalon(element),
@@ -3689,7 +3689,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
-    var updateVModel = function() {
+    var updateVModel = function () {
         if (composing)  //处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
@@ -3698,14 +3698,14 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     element.focus()
                 })
             }
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
+    data.handler = function () {
         var val = data.pipe(evaluator(), data, "set") + ""//fix #673
         if (val !== element.oldValue) {
             element.value = val
@@ -3713,19 +3713,19 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     if (data.isChecked || $type === "radio") {
         var IE6 = IEVersion === 6
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
             var checked = data.isChecked ? !!val : val + "" === element.value
             element.oldValue = checked
             if (IE6) {
-                setTimeout(function() {
+                setTimeout(function () {
                     //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                     //并且要先设置defaultChecked后设置checked
                     //并且必须设置延迟
@@ -3738,7 +3738,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3751,7 +3751,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
 
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
@@ -3762,11 +3762,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
         function delay(e) {// jshint ignore:line
-            setTimeout(function() {
+            setTimeout(function () {
                 updateVModel(e)
             })
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     if (!IEVersion) { // W3C
@@ -3780,7 +3780,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         if (IEVersion > 8) {
                             bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                         } else {
-                            bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            bound("propertychange", function (e) {//IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
                                 if (e.propertyName === "value") {
                                     updateVModel()
                                 }
@@ -3796,27 +3796,28 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-    }
-    bound("focus", function() {
-        element.msFocus = true
-    })
-    bound("blur", function() {
-        element.msFocus = false
-    })
-    
-    if (rmsinput.test($type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                if (!element.msFocus && element.oldValue !== element.value) {
-                    updateVModel()
-                }
-            } else if (!element.msRetain) {
-                return false
-            }
+        bound("focus", function () {
+            element.msFocus = true
         })
+        bound("blur", function () {
+            element.msFocus = false
+        })
+
+        if (rmsinput.test($type)) {
+            watchValueInTimer(function () {
+                if (root.contains(element)) {
+                    if (!element.msFocus && element.oldValue !== element.value) {
+                        updateVModel()
+                    }
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
+        element.avalonSetter = updateVModel//#765
     }
 
-    element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)

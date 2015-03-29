@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.41 built in 2015.3.27
+ avalon.modern.js 1.41 built in 2015.3.29
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3009,7 +3009,7 @@ new function () {// jshint ignore:line
 
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
             bound = data.bound,
             $elem = avalon(element),
@@ -3025,7 +3025,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当value变化时改变model的值
 
-    var updateVModel = function() {
+    var updateVModel = function () {
         if (composing)//处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
@@ -3034,35 +3034,35 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     element.focus()
                 })
             }
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
+    data.handler = function () {
         var val = data.pipe(evaluator(), data, "set") + ""
         if (val !== element.oldValue) {
             element.value = val
         }
     }
     if (data.isChecked || $type === "radio") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
             var checked = data.isChecked ? !!val : val + "" === element.value
             element.checked = element.oldValue = checked
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3074,7 +3074,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 callback.call(element, array)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
@@ -3084,7 +3084,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
@@ -3099,26 +3099,27 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-    }
-    bound("focus", function() {
-        element.msFocus = true
-    })
-    bound("blur", function() {
-        element.msFocus = false
-    })
-    if (rmsinput.test($type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                if (!element.msFocus && element.oldValue !== element.value) {
-                    updateVModel()
-                }
-            } else if (!element.msRetain) {
-                return false
-            }
+        bound("focus", function () {
+            element.msFocus = true
         })
+        bound("blur", function () {
+            element.msFocus = false
+        })
+        if (rmsinput.test($type)) {
+            watchValueInTimer(function () {
+                if (root.contains(element)) {
+                    if (!element.msFocus && element.oldValue !== element.value) {
+                        updateVModel()
+                    }
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
+        element.avalonSetter = updateVModel
     }
 
-    element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
