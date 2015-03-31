@@ -549,6 +549,11 @@ new function () {// jshint ignore:line
         //4. 转换为绝对路径
         if (!isAbsUrl(url)) {
             rootUrl = this.built || /^\w/.test(url) ? baseUrl : rootUrl
+            if (/^\//i.test(url)) { // 绝对定位，rootUrl定位至根目录
+                var a = document.createElement('a')
+                a.href = url
+                rootUrl = a.protocol + '//' + a.host + '/'
+            }
             url = joinPath(rootUrl, url)
         }
         //5. 还原扩展名，query
