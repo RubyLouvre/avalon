@@ -5527,6 +5527,7 @@ new function () {// jshint ignore:line
         kernel.baseUrl = loaderUrl.slice(0, loaderUrl.lastIndexOf("/") + 1)
     }
 }// jshint ignore:line
+
 /*********************************************************************
  *                           DOMReady                               *
  **********************************************************************/
