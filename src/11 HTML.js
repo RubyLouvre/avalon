@@ -61,7 +61,7 @@ avalon.parseHTML = function (html) {
     }
     if (!W3C) { //fix IE
         var target = wrap[1] === "X<div>" ? wrapper.lastChild.firstChild : wrapper.lastChild
-        if (target.tagName === "TABLE" && tag !== "tbody") {
+        if (target && target.tagName === "TABLE" && tag !== "tbody") {
             //IE6-7处理 <thead> --> <thead>,<tbody>
             //<tfoot> --> <tfoot>,<tbody>
             //<table> --> <table><tbody></table>

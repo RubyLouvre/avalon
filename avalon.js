@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.41 built in 2015.3.29
+ avalon.js 1.41 built in 2015.3.31
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1953,7 +1953,7 @@ avalon.parseHTML = function (html) {
     }
     if (!W3C) { //fix IE
         var target = wrap[1] === "X<div>" ? wrapper.lastChild.firstChild : wrapper.lastChild
-        if (target.tagName === "TABLE" && tag !== "tbody") {
+        if (target && target.tagName === "TABLE" && tag !== "tbody") {
             //IE6-7处理 <thead> --> <thead>,<tbody>
             //<tfoot> --> <tfoot>,<tbody>
             //<table> --> <table><tbody></table>
