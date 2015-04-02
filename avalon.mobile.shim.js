@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.41 built in 2015.4.1
+ avalon.mobile.shim.js 1.41 built in 2015.4.2
  ==================================================*/
 (function(global, factory) {
 
@@ -1179,7 +1179,7 @@ var CollectionPrototype = {
         var m = array.length, n = this.length
         if (m) {
             ap.push.apply(this.$model, array)
-            mutateArray.call(this, "add", n, m, n)
+            mutateArray.call(this, "add", n, m, Math.max(0, n - 1))
         }
         return  m + n
     },
@@ -1190,7 +1190,7 @@ var CollectionPrototype = {
         for (i = 0; i < n; i++) {
             array[i] = arguments[i]
         }
-        return this.pushArray(arguments)
+        return this.pushArray(array)
     },
     unshift: function () {
         var m = arguments.length, n = this.length
@@ -1208,10 +1208,10 @@ var CollectionPrototype = {
         }
     },
     pop: function () {
-        var m = this.length
-        if (m) {
+        var n = this.length
+        if (n) {
             var el = this.$model.pop()
-            mutateArray.call(this, "del", m - 1, 1, Math.max(0, m - 2))
+            mutateArray.call(this, "del", n - 1, 1, Math.max(0, n - 2))
             return el //返回被移除的元素
         }
     },
