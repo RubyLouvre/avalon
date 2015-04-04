@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.41 built in 2015.4.2
+ avalon.mobile.old.js 1.41 built in 2015.4.4
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1918,15 +1918,20 @@ var rcreate = W3C ? /[^\d\D]/ : /(<(?:script|link|style|meta|noscript))/ig
 var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
 var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关系的标签
 var script = DOC.createElement("script")
+var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function (html) {
+    var fragment = hyperspace.cloneNode(false)
     if (typeof html !== "string") {
-        return DOC.createDocumentFragment()
+        return fragment
+    }
+    if (!rhtml.test(html)) {
+        fragment.appendChild(DOC.createTextNode(html))
+        return fragment
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
             //取得其标签名
             wrap = tagHooks[tag] || tagHooks._default,
-            fragment = hyperspace.cloneNode(false),
             wrapper = cinerator,
             firstChild, neo
     if (!W3C) { //fix IE

@@ -13,10 +13,15 @@ var rtagName = /<([\w:]+)/
 var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
 var script = DOC.createElement("script")
-
+var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function (html) {
-    if (typeof html !== "string") {
-        return DOC.createDocumentFragment()
+    var fragment = hyperspace.cloneNode(false)
+    if (typeof html !== "string" ) {
+        return fragment
+    }
+    if (!rhtml.test(html)) {
+        fragment.appendChild(DOC.createTextNode(html))
+        return fragment
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase()
