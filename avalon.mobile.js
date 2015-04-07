@@ -4907,13 +4907,18 @@ new function() {// jshint ignore:line
         if (event.fireByAvalon) { 
             return true
         }
-        if (event.stopImmediatePropagation) {
-            event.stopImmediatePropagation()
-        } else {
-            event.propagationStopped = true
+        if (touchProxy.element) { // 如果是pc端,不判断touchProxy.element的话此监听函数先触发的话之后所有的事件都不能正常触发
+            if (event.stopImmediatePropagation) {
+                event.stopImmediatePropagation()
+            } else {
+                event.propagationStopped = true
+            }
+            event.stopPropagation() 
+            event.preventDefault()
+            if (event.type === 'click') {
+                touchProxy.element = null
+            }
         }
-        event.stopPropagation() 
-        event.preventDefault()
     }
     function cancelLongTap() {
         if (longTapTimeout) clearTimeout(longTapTimeout)
@@ -4921,13 +4926,11 @@ new function() {// jshint ignore:line
     }
     function touchstart(event) {
         var _isPointerType = isPointerEventType(event, 'down'),
-            firstTouch = _isPointerType ? event : event.touches[0],
+            firstTouch = _isPointerType ? event : (event.touches && event.touches[0] || event),
             element = 'tagName' in firstTouch.target ? firstTouch.target: firstTouch.target.parentNode,
             now = Date.now(),
             delta = now - (touchProxy.last || now)
-
         if (_isPointerType && !isPrimaryTouch(event)) return
-
         avalon.mix(touchProxy, getCoordinates(event))
         touchProxy.mx = 0
         touchProxy.my = 0
@@ -4964,7 +4967,7 @@ new function() {// jshint ignore:line
 
         if (_isPointerType && !isPrimaryTouch(event)) return
 
-        if (!element) { 
+        if (!element) { // longtap|hold触发后touchProxy为{}
             return
         }
         cancelLongTap()
@@ -4981,6 +4984,7 @@ new function() {// jshint ignore:line
             fireEvent(element, "swipe" + direction, details)
             avalon(element).removeClass(fastclick.activeClass)
             touchProxy = {}
+            touchProxy.element = element
         } else {
             if (fastclick.canClick(element) && touchProxy.mx < fastclick.dragDistance && touchProxy.my < fastclick.dragDistance) {
                 // 失去焦点的处理
@@ -5006,12 +5010,14 @@ new function() {// jshint ignore:line
                     avalon.fastclick.fireEvent(element, "dblclick", event)
                     touchProxy = {}
                     avalon(element).removeClass(fastclick.activeClass)
+                    touchProxy.element = element
                 } else {
                     touchTimeout = setTimeout(function() {
                         clearTimeout(touchTimeout)
                         touchTimeout = null
                         touchProxy = {}
                         avalon(element).removeClass(fastclick.activeClass)
+                        touchProxy.element = element
                     }, 250)
                 }
             }
