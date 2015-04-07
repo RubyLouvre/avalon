@@ -79,7 +79,9 @@ bindingExecutors.attr = function (val, elem, data) {
         var target = replace ? elem.parentNode : elem
         var scanTemplate = function (text) {
             if (loaded) {
-                text = loaded.apply(target, [text].concat(vmodels))
+                var newText = loaded.apply(target, [text].concat(vmodels))
+                if (typeof newText === "string")
+                    text = newText
             }
             if (rendered) {
                 checkScan(target, function () {

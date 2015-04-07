@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.41 built in 2015.4.4
+ avalon.mobile.shim.js 1.41 built in 2015.4.7
  ==================================================*/
 (function(global, factory) {
 
@@ -2632,7 +2632,9 @@ bindingExecutors.attr = function (val, elem, data) {
         var target = replace ? elem.parentNode : elem
         var scanTemplate = function (text) {
             if (loaded) {
-                text = loaded.apply(target, [text].concat(vmodels))
+                var newText = loaded.apply(target, [text].concat(vmodels))
+                if (typeof newText === "string")
+                    text = newText
             }
             if (rendered) {
                 checkScan(target, function () {
