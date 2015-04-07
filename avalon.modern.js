@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.41 built in 2015.3.25
+ avalon.modern.js 1.41 built in 2015.4.4
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -62,6 +62,7 @@ function createMap() {
 var subscribers = "$" + expose
 var otherRequire = window.require
 var otherDefine = window.define
+var innerRequire
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rcomplexType = /^(?:object|array)$/
@@ -501,7 +502,8 @@ var Cache = new function() {// jshint ignore:line
 /*********************************************************************
  *                           DOM 底层补丁                             *
  **********************************************************************/
-if (!root.contains) { //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+if (!DOC.contains) {
     Node.prototype.contains = function (arg) {
         return !!(this.compareDocumentPosition(arg) & 16)
     }
@@ -510,12 +512,13 @@ avalon.contains = function (root, el) {
     try {
         while ((el = el.parentNode))
             if (el === root)
-                return true;
+                return true
         return false
     } catch (e) {
         return false
     }
 }
+
 if (window.SVGElement) {
     var svgns = "http://www.w3.org/2000/svg"
     var svg = DOC.createElementNS(svgns, "svg")
@@ -666,13 +669,14 @@ function escapeRegExp(target) {
     //将字符串安全格式化为正则表达式的源码
     return (target + "").replace(rregexp, "\\$&")
 }
-var innerRequire = noop
+
 var plugins = {
-    loader: function(builtin) {
-        window.define = builtin ? innerRequire.define : otherDefine
-        window.require = builtin ? innerRequire : otherRequire
+    loader: function (builtin) {
+        var flag = innerRequire && builtin
+        window.require = flag ? innerRequire : otherRequire
+        window.define = flag ? innerRequire.define : otherDefine
     },
-    interpolate: function(array) {
+    interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
         if (openTag === closeTag) {
@@ -1178,7 +1182,7 @@ var CollectionPrototype = {
         var m = array.length, n = this.length
         if (m) {
             ap.push.apply(this.$model, array)
-            mutateArray.call(this, "add", n, m, n)
+            mutateArray.call(this, "add", n, m, Math.max(0, n - 1))
         }
         return  m + n
     },
@@ -1189,7 +1193,7 @@ var CollectionPrototype = {
         for (i = 0; i < n; i++) {
             array[i] = arguments[i]
         }
-        return this.pushArray(arguments)
+        return this.pushArray(array)
     },
     unshift: function () {
         var m = arguments.length, n = this.length
@@ -1207,10 +1211,10 @@ var CollectionPrototype = {
         }
     },
     pop: function () {
-        var m = this.length
-        if (m) {
+        var n = this.length
+        if (n) {
             var el = this.$model.pop()
-            mutateArray.call(this, "del", m - 1, 1, Math.max(0, m - 2))
+            mutateArray.call(this, "del", n - 1, 1, Math.max(0, n - 2))
             return el //返回被移除的元素
         }
     },
@@ -1515,16 +1519,20 @@ var rtagName = /<([\w:]+)/
 var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
 var script = DOC.createElement("script")
-
+var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function(html) {
+    var fragment = hyperspace.cloneNode(false)
     if (typeof html !== "string" ) {
-        return DOC.createDocumentFragment()
+        return fragment
+    }
+    if (!rhtml.test(html)) {
+        fragment.appendChild(DOC.createTextNode(html))
+        return fragment
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
             //取得其标签名
             wrapper = tagHooks[tag] || tagHooks._default,
-            fragment = hyperspace.cloneNode(false),
             firstChild
     wrapper.innerHTML = html
     var els = wrapper.getElementsByTagName("script")
@@ -1671,8 +1679,9 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
+                    log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
                     if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        log("warning!ms-enabled或ms-attr-enabled已经被废弃")
                         type = "disabled"
                         value = "!(" + value + ")"
                     }
@@ -1696,7 +1705,7 @@ function scanAttr(elem, vmodels) {
                     if (type === "html" || type === "text") {
                         var token = getToken(value)
                         avalon.mix(binding, token)
-                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                        binding.filters = binding.filters.replace(rhasHtml, function () {
                             binding.type = "html"
                             binding.group = 1
                             return ""
@@ -1715,8 +1724,14 @@ function scanAttr(elem, vmodels) {
             }
         }
     }
-    if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
-        log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
+    var control = elem.type
+    if (control && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        }
+        if (msData["ms-attr-value"] && /text|password/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        }
     }
     bindings.sort(bindingSorter)
     var scanNode = true
@@ -2489,7 +2504,7 @@ function parseExpr(code, scopes, data) {
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
-        vars = textBuffer = names = null //释放内存
+        vars = assigns = names = null //释放内存
     }
 }
 
@@ -3000,7 +3015,7 @@ new function () {// jshint ignore:line
 
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
             bound = data.bound,
             $elem = avalon(element),
@@ -3016,7 +3031,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当value变化时改变model的值
 
-    var updateVModel = function() {
+    var updateVModel = function () {
         if (composing)//处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
@@ -3025,35 +3040,35 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     element.focus()
                 })
             }
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
+    data.handler = function () {
         var val = data.pipe(evaluator(), data, "set") + ""
         if (val !== element.oldValue) {
             element.value = val
         }
     }
     if (data.isChecked || $type === "radio") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
             var checked = data.isChecked ? !!val : val + "" === element.value
             element.checked = element.oldValue = checked
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3065,7 +3080,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 callback.call(element, array)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
@@ -3075,7 +3090,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
@@ -3090,26 +3105,27 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-    }
-    bound("focus", function() {
-        element.msFocus = true
-    })
-    bound("blur", function() {
-        element.msFocus = false
-    })
-    if (rmsinput.test($type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                if (!element.msFocus && element.oldValue !== element.value) {
-                    updateVModel()
-                }
-            } else if (!element.msRetain) {
-                return false
-            }
+        bound("focus", function () {
+            element.msFocus = true
         })
+        bound("blur", function () {
+            element.msFocus = false
+        })
+        if (rmsinput.test($type)) {
+            watchValueInTimer(function () {
+                if (root.contains(element)) {
+                    if (!element.msFocus && element.oldValue !== element.value) {
+                        updateVModel()
+                    }
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
+        element.avalonSetter = updateVModel
     }
 
-    element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
@@ -3299,11 +3315,10 @@ bindingHandlers.repeat = function(data, vmodels) {
         var xtype = avalon.type($repeat)
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
-            avalon.log("warning:" + data.value + "对应类型不正确")
+            avalon.log("warning:" + data.value + "只能是对象或数组")
         }
     } catch (e) {
         freturn = true
-        avalon.log("warning:" + data.value + "编译出错")
     }
 
     var arr = data.value.split(".") || []
@@ -4161,14 +4176,14 @@ var modules = avalon.modules = {
 // 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
 
-new function() {// jshint ignore:line
+new function () {// jshint ignore:line
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
     var rjsext = /\.js$/i
     function makeRequest(name, config) {
 //1. 去掉资源前缀
         var res = "js"
-        name = name.replace(/^(\w+)\!/, function(a, b) {
+        name = name.replace(/^(\w+)\!/, function (a, b) {
             res = b
             return ""
         })
@@ -4178,14 +4193,14 @@ new function() {// jshint ignore:line
         }
 //2. 去掉querystring, hash
         var query = ""
-        name = name.replace(rquery, function(a) {
+        name = name.replace(rquery, function (a) {
             query = a
             return ""
         })
         //3. 去掉扩展名
         var suffix = "." + res
         var ext = /js|css/.test(suffix) ? suffix : ""
-        name = name.replace(/\.[a-z0-9]+$/g, function(a) {
+        name = name.replace(/\.[a-z0-9]+$/g, function (a) {
             if (a === suffix) {
                 ext = a
                 return ""
@@ -4223,9 +4238,9 @@ new function() {// jshint ignore:line
                 id: urlNoQuery,
                 state: 1 //send
             }
-            var wrap = function(obj) {
+            var wrap = function (obj) {
                 resources[res] = obj
-                obj.load(name, req, function(a) {
+                obj.load(name, req, function (a) {
                     if (arguments.length && a !== void 0) {
                         module.exports = a
                     }
@@ -4246,7 +4261,7 @@ new function() {// jshint ignore:line
 //核心API之一 require
     var requireQueue = []
     var isUserFirstRequire = false
-    innerRequire = avalon.require = function(array, factory, parentUrl, defineConfig) {
+    innerRequire = avalon.require = function (array, factory, parentUrl, defineConfig) {
         if (!isUserFirstRequire) {
             requireQueue.push(avalon.slice(arguments))
             if (arguments.length <= 2) {
@@ -4276,7 +4291,7 @@ new function() {// jshint ignore:line
             var req = makeRequest(defineConfig.defineName, defineConfig)
             id = req.urlNoQuery
         } else {
-            array.forEach(function(name) {
+            array.forEach(function (name) {
                 var req = makeRequest(name, defineConfig)
                 var url = fireRequest(req) //加载资源，并返回该资源的完整地址
                 if (url) {
@@ -4305,7 +4320,7 @@ new function() {// jshint ignore:line
     }
 
 //核心API之二 require
-    innerRequire.define = function(name, deps, factory) { //模块名,依赖列表,模块本身
+    innerRequire.define = function (name, deps, factory) { //模块名,依赖列表,模块本身
         if (typeof name !== "string") {
             factory = deps
             deps = name
@@ -4320,7 +4335,7 @@ new function() {// jshint ignore:line
             defineName: name
         }
         var args = [deps, factory, config]
-        factory.require = function(url) {
+        factory.require = function (url) {
             args.splice(2, 0, url)
             if (modules[url]) {
                 modules[url].state = 3 //loaded
@@ -4365,19 +4380,19 @@ new function() {// jshint ignore:line
     var allpackages = kernel["packages"] = []
     var allargs = kernel["orig.args"] = createMap()
     avalon.mix(plugins, {
-        paths: function(hash) {
+        paths: function (hash) {
             avalon.mix(allpaths, hash)
             kernel.paths = makeIndexArray(allpaths)
         },
-        map: function(hash) {
+        map: function (hash) {
             avalon.mix(allmaps, hash)
             var list = makeIndexArray(allmaps, 1, 1)
-            avalon.each(list, function(_, item) {
+            avalon.each(list, function (_, item) {
                 item.val = makeIndexArray(item.val)
             })
             kernel.map = list
         },
-        packages: function(array) {
+        packages: function (array) {
             array = array.concat(allpackages)
             var uniq = createMap()
             var ret = []
@@ -4394,14 +4409,14 @@ new function() {// jshint ignore:line
             }
             kernel.packages = ret.sort()
         },
-        urlArgs: function(hash) {
+        urlArgs: function (hash) {
             if (typeof hash === "string") {
                 hash = {"*": hash}
             }
             avalon.mix(allargs, hash)
             kernel.urlArgs = makeIndexArray(allargs, 1)
         },
-        baseUrl: function(url) {
+        baseUrl: function (url) {
             if (!isAbsUrl(url)) {
                 var baseElement = head.getElementsByTagName("base")[0]
                 if (baseElement) {
@@ -4417,7 +4432,7 @@ new function() {// jshint ignore:line
             if (url.length > 3)
                 kernel.baseUrl = url
         },
-        shim: function(obj) {
+        shim: function (obj) {
             for (var i in obj) {
                 var value = obj[i]
                 if (Array.isArray(value)) {
@@ -4450,7 +4465,7 @@ new function() {// jshint ignore:line
         var id = trimQuery(node.src) //检测是否死链
         node.onload = node.onerror = null
         if (onError) {
-            setTimeout(function() {
+            setTimeout(function () {
                 head.removeChild(node)
                 node = null // 处理旧式IE下的循环引用问题
             })
@@ -4485,7 +4500,7 @@ new function() {// jshint ignore:line
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        node.onload = function() {
+        node.onload = function () {
             var factory = factorys.pop()
             factory && factory.require(id)
             if (callback) {
@@ -4495,7 +4510,7 @@ new function() {// jshint ignore:line
             id && loadings.push(id)
             checkDeps()
         }
-        node.onerror = function() {
+        node.onerror = function () {
             checkFail(node, true)
         }
 
@@ -4510,14 +4525,14 @@ new function() {// jshint ignore:line
             load: noop
         },
         js: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
                 var id = req.urlNoQuery
                 var shim = kernel.shim[name.replace(rjsext, "")]
                 if (shim) { //shim机制
-                    innerRequire(shim.deps || [], function() {
+                    innerRequire(shim.deps || [], function () {
                         var args = avalon.slice(arguments)
-                        loadJS(url, id, function() {
+                        loadJS(url, id, function () {
                             onLoad(shim.exportsFn ? shim.exportsFn.apply(0, args) : void 0)
                         })
                     })
@@ -4527,18 +4542,18 @@ new function() {// jshint ignore:line
             }
         },
         css: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
-                head.insertAdjacentHTML("afterBegin", '<link rel="stylesheet" href="'+ url +'">')
+                head.insertAdjacentHTML("afterBegin", '<link rel="stylesheet" href="' + url + '">')
                 log("debug: 已成功加载 " + url)
                 onLoad()
             }
         },
         text: {
-            load: function(name, req, onLoad) {
+            load: function (name, req, onLoad) {
                 var url = req.url
                 var xhr = getXHR()
-                xhr.onload = function() {
+                xhr.onload = function () {
                     var status = xhr.status;
                     if (status > 399 && status < 600) {
                         avalon.error(url + " 对应资源不存在或没有开启 CORS")
@@ -4603,7 +4618,7 @@ new function() {// jshint ignore:line
         }
     }
 
-
+    var rcallback = /^callback\d+$/
     function fireFactory(id, deps, factory) {
         var module = Object(modules[id])
         module.state = 4
@@ -4615,9 +4630,16 @@ new function() {// jshint ignore:line
                 array.push(modules[d].exports)
             }
         }
-        var ret = factory.apply(window, array)
+        try {
+            var ret = factory.apply(window, array)
+        } catch (e) {
+            log("执行[" + id + "]模块的factory抛错： " + e)
+        }
         if (ret !== void 0) {
             module.exports = ret
+        }
+        if (rcallback.test(id)) {
+            delete modules[id]
         }
         delete module.factory
         return ret
@@ -4631,20 +4653,20 @@ new function() {// jshint ignore:line
         var usePath = 0
         var baseUrl = this.baseUrl
         var rootUrl = this.parentUrl || baseUrl
-        eachIndexArray(id, kernel.paths, function(value, key) {
+        eachIndexArray(id, kernel.paths, function (value, key) {
             url = url.replace(key, value)
             usePath = 1
         })
         //2. 是否命中packages配置项
         if (!usePath) {
-            eachIndexArray(id, kernel.packages, function(value, key, item) {
+            eachIndexArray(id, kernel.packages, function (value, key, item) {
                 url = url.replace(item.name, item.location)
             })
         }
         //3. 是否命中map配置项
         if (this.mapUrl) {
-            eachIndexArray(this.mapUrl, kernel.map, function(array) {
-                eachIndexArray(url, array, function(mdValue, mdKey) {
+            eachIndexArray(this.mapUrl, kernel.map, function (array) {
+                eachIndexArray(url, array, function (mdValue, mdKey) {
                     url = url.replace(mdKey, mdValue)
                     rootUrl = baseUrl
                 })
@@ -4663,7 +4685,7 @@ new function() {// jshint ignore:line
         var urlNoQuery = url + ext
         url = urlNoQuery + this.query
         //6. 处理urlArgs
-        eachIndexArray(id, kernel.urlArgs, function(value) {
+        eachIndexArray(id, kernel.urlArgs, function (value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
         this.url = url
@@ -4682,7 +4704,7 @@ new function() {// jshint ignore:line
     }
 
     function makeExports(value) {
-        return function() {
+        return function () {
             var ret
             if (value.init) {
                 ret = value.init.apply(window, arguments)
@@ -4695,17 +4717,17 @@ new function() {// jshint ignore:line
     function hash2array(hash, useStar, part) {
         var array = [];
         for (var key in hash) {
-           // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
-                var item = {
-                    name: key,
-                    val: hash[key]
-                }
-                array.push(item)
-                item.reg = key === "*" && useStar ? /^/ : makeMatcher(key)
-                if (part && key !== "*") {
-                    item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
-                }
-         //   }
+            // if (hash.hasOwnProperty(key)) {//hash是由createMap创建没有hasOwnProperty
+            var item = {
+                name: key,
+                val: hash[key]
+            }
+            array.push(item)
+            item.reg = key === "*" && useStar ? /^/ : makeMatcher(key)
+            if (part && key !== "*") {
+                item.reg = new RegExp('\/' + key.replace(/^\//, "") + '(/|$)')
+            }
+            //   }
         }
         return array
     }
@@ -4758,7 +4780,7 @@ new function() {// jshint ignore:line
             return value
         }
         var g = window
-        value.split(".").forEach(function(part) {
+        value.split(".").forEach(function (part) {
             g = g[part]
         })
         return g
@@ -4781,13 +4803,13 @@ new function() {// jshint ignore:line
  *                    DOMReady                                         *
  **********************************************************************/
 var readyList = [], isReady
-var fireReady = function(fn) {
+var fireReady = function (fn) {
     isReady = true
     if (innerRequire) {
         modules["domReady!"].state = 4
         innerRequire.checkDeps()
     }
-    while(fn = readyList.shift()){
+    while (fn = readyList.shift()) {
         fn(avalon)
     }
 }
@@ -4799,7 +4821,7 @@ if (DOC.readyState === "complete") {
     DOC.addEventListener("DOMContentLoaded", fireReady)
 }
 window.addEventListener("load", fireReady)
-avalon.ready = function(fn) {
+avalon.ready = function (fn) {
     if (!isReady) {
         readyList.push(fn)
     } else {
@@ -4809,7 +4831,7 @@ avalon.ready = function(fn) {
 avalon.config({
     loader: true
 })
-avalon.ready(function() {
+avalon.ready(function () {
     avalon.scan(DOC.body)
 })
 

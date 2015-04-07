@@ -5,7 +5,6 @@ function scanAttr(elem, vmodels) {
             msData = {},
             match
     for (var i = 0, attr; attr = attributes[i++]; ) {
-
         if (match = attr.name.match(rmsAttr)) {
             //如果是以指定前缀命名的
             var type = match[1]
@@ -45,11 +44,16 @@ function scanAttr(elem, vmodels) {
                     }
                 }
             }
-
         }
     }
-    if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
-        log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
+    var control = elem.type
+    if (control && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        }
+        if (msData["ms-attr-value"] && /text|password/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        }
     }
     bindings.sort(bindingSorter)
     var scanNode = true

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.41 built in 2015.3.25
+ avalon.shim.js(无加载器版本) 1.41 built in 2015.4.4
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -53,6 +53,7 @@ function log() {
 var subscribers = "$" + expose
 var otherRequire = window.require
 var otherDefine = window.define
+var innerRequire
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rcomplexType = /^(?:object|array)$/
@@ -693,19 +694,13 @@ function fixContains(root, el) {
     try { //IE6-8,游离于DOM树外的文本节点，访问parentNode有时会抛错
         while ((el = el.parentNode))
             if (el === root)
-                return true;
+                return true
         return false
     } catch (e) {
         return false
     }
 }
 avalon.contains = fixContains
-//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
-if (!root.contains) {
-    Node.prototype.contains = function (arg) {
-        return !!(this.compareDocumentPosition(arg) & 16)
-    }
-}
 //IE6-11的文档对象没有contains
 if (!DOC.contains) {
     DOC.contains = function (b) {
@@ -717,14 +712,18 @@ function outerHTML() {
     return new XMLSerializer().serializeToString(this)
 }
 
-
 if (window.SVGElement) {
+    //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+    if (!DOC.createTextNode("x").contains) {
+        Node.prototype.contains = function (arg) {//IE6-8没有Node对象
+            return !!(this.compareDocumentPosition(arg) & 16)
+        }
+    }
     var svgns = "http://www.w3.org/2000/svg"
     var svg = DOC.createElementNS(svgns, "svg")
     svg.innerHTML = '<circle cx="50" cy="50" r="40" fill="red" />'
     if (!rsvg.test(svg.firstChild)) { // #409
-        /* jshint ignore:start */
-        function enumerateNode(node, targetNode) {
+        function enumerateNode(node, targetNode) {// jshint ignore:line
             if (node && node.childNodes) {
                 var nodes = node.childNodes
                 for (var i = 0, el; el = nodes[i++]; ) {
@@ -733,7 +732,7 @@ if (window.SVGElement) {
                                 el.tagName.toLowerCase())
                         ap.forEach.call(el.attributes, function (attr) {
                             svg.setAttribute(attr.name, attr.value) //复制属性
-                        })
+                        })// jshint ignore:line
                         // 递归处理子节点
                         enumerateNode(el, svg)
                         targetNode.appendChild(svg)
@@ -741,7 +740,6 @@ if (window.SVGElement) {
                 }
             }
         }
-        /* jshint ignore:end */
         Object.defineProperties(SVGElement.prototype, {
             "outerHTML": {//IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
                 enumerable: true,
@@ -915,13 +913,14 @@ function escapeRegExp(target) {
     //将字符串安全格式化为正则表达式的源码
     return (target + "").replace(rregexp, "\\$&")
 }
-var innerRequire = noop
+
 var plugins = {
-    loader: function(builtin) {
-        window.define = builtin ? innerRequire.define : otherDefine
-        window.require = builtin ? innerRequire : otherRequire
+    loader: function (builtin) {
+        var flag = innerRequire && builtin
+        window.require = flag ? innerRequire : otherRequire
+        window.define = flag ? innerRequire.define : otherDefine
     },
-    interpolate: function(array) {
+    interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
         if (openTag === closeTag) {
@@ -1581,7 +1580,7 @@ var CollectionPrototype = {
         var m = array.length, n = this.length
         if (m) {
             ap.push.apply(this.$model, array)
-            mutateArray.call(this, "add", n, m, n)
+            mutateArray.call(this, "add", n, m, Math.max(0, n - 1))
         }
         return  m + n
     },
@@ -1592,7 +1591,7 @@ var CollectionPrototype = {
         for (i = 0; i < n; i++) {
             array[i] = arguments[i]
         }
-        return this.pushArray(arguments)
+        return this.pushArray(array)
     },
     unshift: function () {
         var m = arguments.length, n = this.length
@@ -1610,10 +1609,10 @@ var CollectionPrototype = {
         }
     },
     pop: function () {
-        var m = this.length
-        if (m) {
+        var n = this.length
+        if (n) {
             var el = this.$model.pop()
-            mutateArray.call(this, "del", m - 1, 1, Math.max(0, m - 2))
+            mutateArray.call(this, "del", n - 1, 1, Math.max(0, n - 2))
             return el //返回被移除的元素
         }
     },
@@ -1919,15 +1918,20 @@ var rcreate = W3C ? /[^\d\D]/ : /(<(?:script|link|style|meta|noscript))/ig
 var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
 var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关系的标签
 var script = DOC.createElement("script")
+var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function (html) {
+    var fragment = hyperspace.cloneNode(false)
     if (typeof html !== "string") {
-        return DOC.createDocumentFragment()
+        return fragment
+    }
+    if (!rhtml.test(html)) {
+        fragment.appendChild(DOC.createTextNode(html))
+        return fragment
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
             //取得其标签名
             wrap = tagHooks[tag] || tagHooks._default,
-            fragment = hyperspace.cloneNode(false),
             wrapper = cinerator,
             firstChild, neo
     if (!W3C) { //fix IE
@@ -1953,7 +1957,7 @@ avalon.parseHTML = function (html) {
     }
     if (!W3C) { //fix IE
         var target = wrap[1] === "X<div>" ? wrapper.lastChild.firstChild : wrapper.lastChild
-        if (target.tagName === "TABLE" && tag !== "tbody") {
+        if (target && target.tagName === "TABLE" && tag !== "tbody") {
             //IE6-7处理 <thead> --> <thead>,<tbody>
             //<tfoot> --> <tfoot>,<tbody>
             //<table> --> <table><tbody></table>
@@ -2128,8 +2132,9 @@ function scanAttr(elem, vmodels) {
                     param = type
                     type = "on"
                 } else if (obsoleteAttrs[type]) {
-                    log("ms-" + type + "已经被废弃,请使用ms-attr-*代替")
-                    if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
+                    log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
+                    if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                        log("warning!ms-enabled或ms-attr-enabled已经被废弃")
                         type = "disabled"
                         value = "!(" + value + ")"
                     }
@@ -2153,7 +2158,7 @@ function scanAttr(elem, vmodels) {
                     if (type === "html" || type === "text") {
                         var token = getToken(value)
                         avalon.mix(binding, token)
-                        binding.filters = binding.filters.replace(rhasHtml, function() {
+                        binding.filters = binding.filters.replace(rhasHtml, function () {
                             binding.type = "html"
                             binding.group = 1
                             return ""
@@ -2173,12 +2178,18 @@ function scanAttr(elem, vmodels) {
         }
     }
     bindings.sort(bindingSorter)
-    if (msData["ms-attr-checked"] && msData["ms-duplex"]) {
-        log("warning!一个元素上不能同时定义ms-attr-checked与ms-duplex")
+    var control = elem.type
+    if (control && msData["ms-duplex"]) {
+        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        }
+        if (msData["ms-attr-value"] && /text|password/.test(control)) {
+            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        }
     }
     var scanNode = true
     for (i = 0; binding = bindings[i]; i++) {
-       type = binding.type
+        type = binding.type
         if (rnoscanAttrBinding.test(type)) {
             return executeBindings(bindings.slice(0, i + 1), vmodels)
         } else if (scanNode) {
@@ -2211,7 +2222,7 @@ if (!"1" [0]) {
     //            }
     //        }
     //依次输出<SECTION>, </SECTION>
-    var getAttributes = function(elem) {
+    var getAttributes = function (elem) {
         var html = elem.outerHTML
         //处理IE6-8解析HTML5新标签的情况，及<br>等半闭合标签outerHTML为空的情况
         if (html.slice(0, 2) === "</" || !html.trim()) {
@@ -3145,7 +3156,7 @@ function parseExpr(code, scopes, data) {
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
-        vars = textBuffer = names = null //释放内存
+        vars = assigns = names = null //释放内存
     }
 }
 
@@ -3655,7 +3666,7 @@ new function () {// jshint ignore:line
 }// jshint ignore:line
 
 if (IEVersion) {
-    avalon.bind(DOC, "selectionchange", function(e) {
+    avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement
         if (el && typeof el.avalonSetter === "function") {
             el.avalonSetter()
@@ -3664,7 +3675,7 @@ if (IEVersion) {
 }
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
             bound = data.bound,
             $elem = avalon(element),
@@ -3682,7 +3693,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
-    var updateVModel = function() {
+    var updateVModel = function () {
         if (composing)  //处理中文输入法在minlengh下引发的BUG
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
@@ -3691,14 +3702,14 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
-                avalon.nextTick(function() {
+                avalon.nextTick(function () {
                     element.focus()
                 })
             }
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
+    data.handler = function () {
         var val = data.pipe(evaluator(), data, "set") + ""//fix #673
         if (val !== element.oldValue) {
             element.value = val
@@ -3706,19 +3717,19 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     if (data.isChecked || $type === "radio") {
         var IE6 = IEVersion === 6
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
             var checked = data.isChecked ? !!val : val + "" === element.value
             element.oldValue = checked
             if (IE6) {
-                setTimeout(function() {
+                setTimeout(function () {
                     //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                     //并且要先设置defaultChecked后设置checked
                     //并且必须设置延迟
@@ -3731,7 +3742,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplex-observe") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3744,7 +3755,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
 
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
@@ -3755,11 +3766,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
         function delay(e) {// jshint ignore:line
-            setTimeout(function() {
+            setTimeout(function () {
                 updateVModel(e)
             })
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     if (!IEVersion) { // W3C
@@ -3773,7 +3784,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         if (IEVersion > 8) {
                             bound("input", updateVModel)//IE9使用propertychange无法监听中文输入改动
                         } else {
-                            bound("propertychange", function(e) {//IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            bound("propertychange", function (e) {//IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
                                 if (e.propertyName === "value") {
                                     updateVModel()
                                 }
@@ -3789,27 +3800,28 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-    }
-    bound("focus", function() {
-        element.msFocus = true
-    })
-    bound("blur", function() {
-        element.msFocus = false
-    })
-    
-    if (rmsinput.test($type)) {
-        watchValueInTimer(function() {
-            if (root.contains(element)) {
-                if (!element.msFocus && element.oldValue !== element.value) {
-                    updateVModel()
-                }
-            } else if (!element.msRetain) {
-                return false
-            }
+        bound("focus", function () {
+            element.msFocus = true
         })
+        bound("blur", function () {
+            element.msFocus = false
+        })
+
+        if (rmsinput.test($type)) {
+            watchValueInTimer(function () {
+                if (root.contains(element)) {
+                    if (!element.msFocus && element.oldValue !== element.value) {
+                        updateVModel()
+                    }
+                } else if (!element.msRetain) {
+                    return false
+                }
+            })
+        }
+
+        element.avalonSetter = updateVModel//#765
     }
 
-    element.avalonSetter = updateVModel
     element.oldValue = element.value
     registerSubscriber(data)
     callback.call(element, element.value)
@@ -4001,11 +4013,10 @@ bindingHandlers.repeat = function(data, vmodels) {
         var xtype = avalon.type($repeat)
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
-            avalon.log("warning:" + data.value + "对应类型不正确")
+            avalon.log("warning:" + data.value + "只能是对象或数组")
         }
     } catch (e) {
         freturn = true
-        avalon.log("warning:" + data.value + "编译出错")
     }
 
     var arr = data.value.split(".") || []

@@ -26,16 +26,20 @@ var rtagName = /<([\w:]+)/
 var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 var scriptTypes = oneObject(["", "text/javascript", "text/ecmascript", "application/ecmascript", "application/javascript"])
 var script = DOC.createElement("script")
-
+var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function(html) {
+    var fragment = hyperspace.cloneNode(false)
     if (typeof html !== "string" ) {
-        return DOC.createDocumentFragment()
+        return fragment
+    }
+    if (!rhtml.test(html)) {
+        fragment.appendChild(DOC.createTextNode(html))
+        return fragment
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
             //取得其标签名
             wrapper = tagHooks[tag] || tagHooks._default,
-            fragment = hyperspace.cloneNode(false),
             firstChild
     wrapper.innerHTML = html
     var els = wrapper.getElementsByTagName("script")

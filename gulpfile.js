@@ -25,7 +25,7 @@ gulp.task('combo', function () {
 //http://www.linuxjournal.com/content/bash-extended-globbing
     return gulp.src('./src/**/*.js', function (a, b) {
         var compatibleFiles = b.filter(function (f) {
-            return !/\$\$|noop|modern|observe|touch/.test(f)
+            return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
         var version = 1.41 //当前版本号
         var now = new Date  //构建日期
@@ -108,6 +108,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
                     return "version: " + version
                 }))
+                .pipe(replace(/loader:\s*true/, "loader: false"))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
@@ -145,6 +146,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
                     return "version: " + version
                 }))
+                .pipe(replace(/loader:\s*true/, "loader: false"))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.shim.js " + version + " built in " + date
                 }))
