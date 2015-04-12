@@ -74,13 +74,6 @@ bindingExecutors.attr = function (val, elem, data) {
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-        if (boolMap[attrName]) {
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
-                return elem[bool] = !!val
-            }
-        }
         var toRemove = (val === false) || (val === null) || (val === void 0)
 
         if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
@@ -88,6 +81,14 @@ bindingExecutors.attr = function (val, elem, data) {
         }
         if (toRemove) {
             return elem.removeAttribute(attrName)
+        }
+        
+        if (boolMap[attrName]) {
+            var bool = boolMap[attrName]
+            if (typeof elem[bool] === "boolean") {
+                // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
+                return elem[bool] = !!val
+            }
         }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
