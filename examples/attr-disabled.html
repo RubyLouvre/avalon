@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <script src="../avalon.js" charset="utf-8"></script>
+        <script>
+
+          var a = avalon.define({
+                $id: "test",
+                aaa: "",
+                flag: true
+            })
+            a.$watch("aaa", function(v){
+               console.log(v.length)
+               a.flag = !(v.length >= 11)
+            })
+        </script>
+        <style>
+            button:disabled{
+                color: #ccc
+            }
+        </style>
+    </head>
+
+    <body ms-controller="test">
+        <input ms-duplex="aaa"/>
+        <button ms-attr-disabled="flag">xxx</button>
+    </body>
+
+</html>

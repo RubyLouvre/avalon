@@ -3257,7 +3257,7 @@ bindingExecutors.attr = function (val, elem, data) {
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
         if (boolMap[attrName]) {
             var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
+            if (typeof elem[bool] === "boolean" ) {
                 // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
                 return elem[bool] = !!val
             }
