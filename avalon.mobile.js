@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.42 built in 2015.4.12
+ avalon.mobile.js 1.42 built in 2015.4.13
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4403,7 +4403,7 @@ new function () {// jshint ignore:line
                 pkg = typeof pkg === "string" ? {name: pkg} : pkg
                 var name = pkg.name
                 if (!uniq[name]) {
-                    var url = pkg.location ? pkg.location : joinPath(name, pkg.main || "main")
+                    var url =  joinPath(pkg.location || name, pkg.main || "main")
                     url = url.replace(rjsext, "")
                     ret.push(pkg)
                     uniq[name] = pkg.location = url

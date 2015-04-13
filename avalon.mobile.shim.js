@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.42 built in 2015.4.12
+ avalon.mobile.shim.js 1.42 built in 2015.4.13
  ==================================================*/
 (function(global, factory) {
 
