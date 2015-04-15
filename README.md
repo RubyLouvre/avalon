@@ -10,6 +10,10 @@ A lightweight,high-performance and easy-to-learn javascript MVVM framework
   [http://avalonjs.github.io/](http://avalonjs.github.io/)
 
   [Fork it](https://github.com/avalonjs/avalonjs.github.io)
+
+##Loader
+avalon uses a amd-style loader. if you like nodejs's commonjs loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
+to converts amd to commonjs.
  
 ## Advantages
 
@@ -201,6 +205,9 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 点击它然后打开里面与index开头的HTML文件，一边看运行效果，一边看源码进行学习。
 
 ![](https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg)
+
+###加载器
+avalon是使用自带AMD式加载器,如果你喜欢nodejs那种commonjs风格加载器,你可以用[这个工具](https://github.com/ilife5/cat)进行转换。
 
 ### JS文件的压缩
 ```
