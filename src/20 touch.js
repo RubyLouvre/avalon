@@ -117,6 +117,13 @@ new function() {// jshint ignore:line
     function touchmove(event) {
         var _isPointerType = isPointerEventType(event, 'down'),
             e = getCoordinates(event)
+        /*
+            android下某些浏览器触发了touchmove事件的话touchend事件不触发，禁用touchmove可以解决此bug
+            http://stackoverflow.com/questions/14486804/understanding-touch-events
+        */
+        if (isAndroid && Math.abs(touchProxy.x - e.x) > 10) {
+            event.preventDefault()
+        }
         if (_isPointerType && !isPrimaryTouch(event)) return
           
         cancelLongTap()
