@@ -4,7 +4,7 @@
         <title>ms-duplex</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../avalon.js" ></script>
+        <script src="../avalon.modern.js" ></script>
         <script>
             avalon.define({
                 $id: "test",
@@ -20,7 +20,7 @@
     <body ms-controller="test">
         <input ms-duplex="aaa['xxx']">
         <input ms-duplex="aaa[bbb]">
-        <input ms-duplex="zzz" ms-data-duplex-observe="zzz"/>
+        <input ms-duplex="zzz" ms-data-duplex-observe="zzz" id='aaa'/>
         <p>{{aaa.xxx}}</p>
         <p>{{aaa.yyy}}</p>
         <p>{{zzz}}</p>

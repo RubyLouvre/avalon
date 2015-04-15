@@ -31,7 +31,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
-        if ($elem.data("duplex-observe") !== false) {
+        if ($elem.data("duplexObserve") !== false) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
@@ -51,7 +51,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     if (data.isChecked || $type === "radio") {
         var IE6 = IEVersion === 6
         updateVModel = function () {
-            if ($elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplexObserve") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -76,7 +76,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
         updateVModel = function () {
-            if ($elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplexObserve") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {

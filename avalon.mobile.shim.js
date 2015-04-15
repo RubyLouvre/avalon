@@ -3041,7 +3041,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
             return
         var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
-        if ($elem.data("duplex-observe") !== false) {
+        if ($elem.data("duplexObserve") !== false) {
             evaluator(lastValue)
             callback.call(element, lastValue)
             if ($elem.data("duplex-focus")) {
@@ -3060,7 +3060,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     }
     if (data.isChecked || $type === "radio") {
         updateVModel = function () {
-            if ($elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplexObserve") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
@@ -3074,7 +3074,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
         updateVModel = function () {
-            if ($elem.data("duplex-observe") !== false) {
+            if ($elem.data("duplexObserve") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
@@ -3139,7 +3139,7 @@ duplexBinding.TEXTAREA = duplexBinding.INPUT
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
     function updateVModel() {
-        if ($elem.data("duplex-observe") !== false) {
+        if ($elem.data("duplexObserve") !== false) {
             var val = $elem.val() //字符串或字符串数组
             if (Array.isArray(val)) {
                 val = val.map(function(v) {
