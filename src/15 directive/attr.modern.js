@@ -53,15 +53,15 @@ bindingExecutors.attr = function (val, elem, data) {
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+        var toRemove = (val === false) || (val === null) || (val === void 0)
+        if (toRemove) {
+            return elem.removeAttribute(attrName)
+        }
         if (boolMap[attrName]) {
             var bool = boolMap[attrName]
             if (typeof elem[bool] === "boolean") {
                 return elem[bool] = !!val
             }
-        }
-        var toRemove = (val === false) || (val === null) || (val === void 0)
-        if (toRemove) {
-            return elem.removeAttribute(attrName)
         }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
@@ -79,7 +79,9 @@ bindingExecutors.attr = function (val, elem, data) {
         var target = replace ? elem.parentNode : elem
         var scanTemplate = function (text) {
             if (loaded) {
-                text = loaded.apply(target, [text].concat(vmodels))
+                var newText = loaded.apply(target, [text].concat(vmodels))
+                if (typeof newText === "string")
+                    text = newText
             }
             if (rendered) {
                 checkScan(target, function () {
