@@ -3011,6 +3011,9 @@ new function () {// jshint ignore:line
             set: newSetter
         })
     } catch (e) {
+        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
+        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
         watchValueInTimer = avalon.tick
     }
 }// jshint ignore:line
