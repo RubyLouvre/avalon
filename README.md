@@ -12,7 +12,7 @@ A lightweight,high-performance and easy-to-learn javascript MVVM framework
   [Fork it](https://github.com/avalonjs/avalonjs.github.io)
 
 ##Loader
-avalon uses a amd-style loader. if you like nodejs's commonjs loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
+Avalon uses a amd-style loader. If you like nodejs's commonjs loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
 to converts amd to commonjs.
  
 ## Advantages
