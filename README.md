@@ -293,7 +293,7 @@ java -jar compiler.jar --js avalon.mobile.js --js_output_file avalon.mobile.min.
 - AMD加载器
 - DOMReady
 
-### LOGO来历
+### LOGO来历---------
 
 http://tieba.baidu.com/p/1350048586
 <pre>
