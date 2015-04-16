@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.42 built in 2015.4.15
+ avalon.modern.js 1.42 built in 2015.4.16
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2530,13 +2530,14 @@ avalon.parseExprProxy = parseExprProxy
 var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
     "declare,disabled,defer,defaultChecked,defaultSelected",
     "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
-    "open,readOnly,selected"].join(",")
+    "open,readOnly,selected"
+].join(",")
 var boolMap = {}
-bools.replace(rword, function (name) {
+bools.replace(rword, function(name) {
     boolMap[name.toLowerCase()] = name
 })
 
-var propMap = {//属性名映射
+var propMap = { //属性名映射
     "accept-charset": "acceptCharset",
     "char": "ch",
     "charoff": "chOff",
@@ -2547,23 +2548,24 @@ var propMap = {//属性名映射
 
 var anomaly = ["accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan",
     "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight",
-    "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"].join(",")
-anomaly.replace(rword, function (name) {
+    "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
+].join(",")
+anomaly.replace(rword, function(name) {
     propMap[name.toLowerCase()] = name
 })
 
 var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
 var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
 
-var getXHR = function () {
-    return new (window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP")// jshint ignore:line
+var getXHR = function() {
+    return new(window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP") // jshint ignore:line
 }
 
 var cacheTmpls = avalon.templateCache = {}
 
-bindingHandlers.attr = function (data, vmodels) {
+bindingHandlers.attr = function(data, vmodels) {
     var text = data.value.trim(),
-            simple = true
+        simple = true
     if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
         simple = false
         if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
@@ -2575,7 +2577,7 @@ bindingHandlers.attr = function (data, vmodels) {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
         data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-        var outer = data.includeReplace = !!avalon(elem).data("includeReplace")
+        var outer = data.includeReplace = !! avalon(elem).data("includeReplace")
         if (avalon(elem).data("includeCache")) {
             data.templateCache = {}
         }
@@ -2594,9 +2596,9 @@ bindingHandlers.attr = function (data, vmodels) {
     parseExprProxy(text, vmodels, data, (simple ? 0 : scanExpr(data.value)))
 }
 
-bindingExecutors.attr = function (val, elem, data) {
+bindingExecutors.attr = function(val, elem, data) {
     var method = data.type,
-            attrName = data.param
+        attrName = data.param
     if (method === "css") {
         avalon(elem).css(attrName, val)
     } else if (method === "attr") {
@@ -2611,12 +2613,12 @@ bindingExecutors.attr = function (val, elem, data) {
         if (toRemove) {
             return elem.removeAttribute(attrName)
         }
-        
+
         if (boolMap[attrName]) {
             var bool = boolMap[attrName]
             if (typeof elem[bool] === "boolean") {
                 // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
-                return elem[bool] = !!val
+                return elem[bool] = !! val
             }
         }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
@@ -2632,14 +2634,14 @@ bindingExecutors.attr = function (val, elem, data) {
         var loaded = data.includeLoaded
         var replace = data.includeReplace
         var target = replace ? elem.parentNode : elem
-        var scanTemplate = function (text) {
+        var scanTemplate = function(text) {
             if (loaded) {
                 var newText = loaded.apply(target, [text].concat(vmodels))
                 if (typeof newText === "string")
                     text = newText
             }
             if (rendered) {
-                checkScan(target, function () {
+                checkScan(target, function() {
                     rendered.call(target)
                 }, NaN)
             }
@@ -2669,20 +2671,27 @@ bindingExecutors.attr = function (val, elem, data) {
         }
 
         if (data.param === "src") {
-            if (cacheTmpls[val]) {
-                avalon.nextTick(function () {
+            if (typeof cacheTmpls[val] === "string") {
+                avalon.nextTick(function() {
                     scanTemplate(cacheTmpls[val])
                 })
+            } else if (Array.isArray(cacheTmpls[val])) {//#805 防止在循环绑定中发出许多相同的请求
+                cacheTmpls[val].push(scanTemplate)
             } else {
                 var xhr = getXHR()
-                xhr.onreadystatechange = function () {
+                xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
                         var s = xhr.status
                         if (s >= 200 && s < 300 || s === 304 || s === 1223) {
-                            scanTemplate(cacheTmpls[val] = xhr.responseText)
+                            var text = xhr.responseText
+                            for (var f = 0, fn; fn = cacheTmpls[val][f++];) {
+                                fn(text)
+                            }
+                            cacheTmpls[val] = text
                         }
                     }
                 }
+                cacheTmpls[val] = [scanTemplate]
                 xhr.open("GET", val, true)
                 if ("withCredentials" in xhr) {
                     xhr.withCredentials = true
@@ -2711,7 +2720,7 @@ bindingExecutors.attr = function (val, elem, data) {
                         }
                     }
                 }
-                avalon.nextTick(function () {
+                avalon.nextTick(function() {
                     scanTemplate(el.fixIE78 || el.value || el.innerText || el.innerHTML)
                 })
             }
@@ -2733,17 +2742,18 @@ bindingExecutors.attr = function (val, elem, data) {
 function getTemplateNodes(data, id, text) {
     var div = data.templateCache && data.templateCache[id]
     if (div) {
-        var dom = DOC.createDocumentFragment(), firstChild
+        var dom = DOC.createDocumentFragment(),
+            firstChild
         while (firstChild = div.firstChild) {
             dom.appendChild(firstChild)
         }
         return dom
     }
-    return  avalon.parseHTML(text)
+    return avalon.parseHTML(text)
 }
 
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
-"title,alt,src,value,css,include,href".replace(rword, function (name) {
+"title,alt,src,value,css,include,href".replace(rword, function(name) {
     bindingHandlers[name] = bindingHandlers.attr
 })
 //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag" 
