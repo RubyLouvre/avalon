@@ -2045,6 +2045,7 @@ avalon.fn.mix({
 
 if (root.dataset) {
     avalon.fn.data = function (name, val) {
+        name = camelize(name)
         var dataset = this[0].dataset
         switch (arguments.length) {
             case 2:
