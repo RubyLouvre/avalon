@@ -25,7 +25,7 @@ bindingHandlers.attr = function(data, vmodels) {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
         data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-        var outer = data.includeReplace = !! avalon(elem).data("includeReplace")
+        var outer = data.includeReplace = !!avalon(elem).data("includeReplace")
         if (avalon(elem).data("includeCache")) {
             data.templateCache = {}
         }
@@ -55,14 +55,15 @@ bindingExecutors.attr = function(val, elem, data) {
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
         var toRemove = (val === false) || (val === null) || (val === void 0)
+        var bool = boolMap[attrName]
+        if (typeof elem[bool] === "boolean") {
+            elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
+            if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
+                toRemove = true
+            }
+        }
         if (toRemove) {
             return elem.removeAttribute(attrName)
-        }
-        if (boolMap[attrName]) {
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                return elem[bool] = !! val
-            }
         }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
@@ -117,7 +118,7 @@ bindingExecutors.attr = function(val, elem, data) {
                 avalon.nextTick(function() {
                     scanTemplate(cacheTmpls[val])
                 })
-            } else if (Array.isArray(cacheTmpls[val])) {//#805 防止在循环绑定中发出许多相同的请求
+            } else if (Array.isArray(cacheTmpls[val])) { //#805 防止在循环绑定中发出许多相同的请求
                 cacheTmpls[val].push(scanTemplate)
             } else {
                 var xhr = new window.XMLHttpRequest

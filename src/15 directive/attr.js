@@ -48,7 +48,7 @@ bindingHandlers.attr = function(data, vmodels) {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
         data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-        var outer = data.includeReplace = !! avalon(elem).data("includeReplace")
+        var outer = data.includeReplace = !!avalon(elem).data("includeReplace")
         if (avalon(elem).data("includeCache")) {
             data.templateCache = {}
         }
@@ -81,17 +81,17 @@ bindingExecutors.attr = function(val, elem, data) {
         if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
             attrName = propMap[attrName]
         }
+        var bool = boolMap[attrName]
+        if (typeof elem[bool] === "boolean") {
+            elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
+            if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
+                toRemove = true
+            }
+        }
         if (toRemove) {
             return elem.removeAttribute(attrName)
         }
 
-        if (boolMap[attrName]) {
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                // IE6-11不支持动态设置fieldset的disabled属性，IE11下样式是生效了，但无法阻止用户对其底下的input元素进行设值……
-                return elem[bool] = !! val
-            }
-        }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {
@@ -146,7 +146,7 @@ bindingExecutors.attr = function(val, elem, data) {
                 avalon.nextTick(function() {
                     scanTemplate(cacheTmpls[val])
                 })
-            } else if (Array.isArray(cacheTmpls[val])) {//#805 防止在循环绑定中发出许多相同的请求
+            } else if (Array.isArray(cacheTmpls[val])) { //#805 防止在循环绑定中发出许多相同的请求
                 cacheTmpls[val].push(scanTemplate)
             } else {
                 var xhr = getXHR()
@@ -179,7 +179,7 @@ bindingExecutors.attr = function(val, elem, data) {
                     xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
                     xhr.open("GET", location, false) //谢谢Nodejs 乱炖群 深圳-纯属虚构
                     xhr.send(null)
-                    //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+                        //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
                     var noscripts = DOC.getElementsByTagName("noscript")
                     var array = (xhr.responseText || "").match(rnoscripts) || []
                     var n = array.length

@@ -1,5 +1,6 @@
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
+
     function updateVModel() {
         if ($elem.data("duplexObserve") !== false) {
             var val = $elem.val() //字符串或字符串数组
@@ -41,4 +42,3 @@ duplexBinding.SELECT = function(element, evaluator, data) {
         data.changed.call(element, evaluator(), data)
     }, NaN)
 }
-
