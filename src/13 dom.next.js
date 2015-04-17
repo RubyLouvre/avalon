@@ -104,6 +104,9 @@ avalon.fn.mix({
             }
             parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true)
             parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true)
+                    // Subtract offsetParent scroll positions
+			parentOffset.top -= offsetParent.scrollTop()
+			parentOffset.left -= offsetParent.scrollLeft()
         }
         return {
             top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
