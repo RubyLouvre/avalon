@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.42 built in 2015.4.20
+ avalon.js 1.42 built in 2015.4.23
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2407,10 +2407,11 @@ function hyphen(target) {
 }
 
 function camelize(target) {
-    //转换为驼峰风格
-    if (target.indexOf("-") < 0 && target.indexOf("_") < 0) {
-        return target //提前判断，提高getStyle等的效率
+    //提前判断，提高getStyle等的效率
+    if (!target || target.indexOf("-") < 0 && target.indexOf("_") < 0) {
+        return target
     }
+    //转换为驼峰风格
     return target.replace(/[-_][^-_]/g, function(match) {
         return match.charAt(1).toUpperCase()
     })
@@ -2943,6 +2944,7 @@ var valHooks = {
         }
     }
 }
+
 /*********************************************************************
  *                          编译系统                                  *
  **********************************************************************/

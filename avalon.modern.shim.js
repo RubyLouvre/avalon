@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.42 built in 2015.4.20
+ avalon.modern.shim.js(无加载器版本) 1.42 built in 2015.4.23
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2050,7 +2050,7 @@ avalon.fn.mix({
 
 if (root.dataset) {
     avalon.fn.data = function(name, val) {
-        name = camelize(name)
+        name = name && camelize(name)
         var dataset = this[0].dataset
         switch (arguments.length) {
             case 2:
