@@ -80,7 +80,7 @@ var fakeClassListMethods = {
         },
         toggleClass: function(value, stateVal) {
             var className, i = 0
-            var classNames = value.split(/\s+/)
+            var classNames = String(value).split(/\s+/)
             var isBool = typeof stateVal === "boolean"
             while ((className = classNames[i++])) {
                 var state = isBool ? stateVal : !this.hasClass(className)

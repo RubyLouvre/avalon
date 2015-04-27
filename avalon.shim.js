@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.42 built in 2015.4.23
+ avalon.shim.js(无加载器版本) 1.42 built in 2015.4.27
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2479,7 +2479,7 @@ var fakeClassListMethods = {
         },
         toggleClass: function(value, stateVal) {
             var className, i = 0
-            var classNames = value.split(/\s+/)
+            var classNames = String(value).split(/\s+/)
             var isBool = typeof stateVal === "boolean"
             while ((className = classNames[i++])) {
                 var state = isBool ? stateVal : !this.hasClass(className)
