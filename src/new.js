@@ -3,12 +3,6 @@ var dependencyDetection = (function () {
             currentFrame,
             lastId = 0;
 
-    // Return a unique ID that can be assigned to an observable for dependency tracking.
-    // Theoretically, you could eventually overflow the number storage size, resulting
-    // in duplicate IDs. But in JavaScript, the largest exact integral value is 2^53
-    // or 9,007,199,254,740,992. If you created 1,000,000 IDs per second, it would
-    // take over 285 years to reach that number.
-    // Reference http://blog.vjeux.com/2010/javascript/javascript-max_int-number-limits.html
     function getId() {
         return ++lastId;
     }
@@ -25,10 +19,13 @@ var dependencyDetection = (function () {
     return {
         begin: begin,
         end: end,
-        registerDependency: function (otherAccessor) {
+        registerDependency: function (accessor, vmodel) {
             if (currentFrame) {
-                console.log(otherAccessor._name + "进入依赖收集系统" + currentFrame)
-                currentFrame.callback(otherAccessor, otherAccessor._id || (otherAccessor._id = getId()));
+                if (!accessor._id) {
+                    accessor._id = getId()
+                }
+                //  console.log(otherAccessor._name + "进入依赖收集系统" + currentFrame)
+                currentFrame.callback(accessor, vmodel);
             }
         },
         ignore: function (callback, callbackTarget, callbackArgs) {
@@ -66,7 +63,7 @@ var makeSimpleAccessor = function (name) {
             }
             return this
         } else {
-            dependencyDetection.registerDependency(accessor)
+            dependencyDetection.registerDependency(accessor, this)
             return oldValue
         }
     }
@@ -82,14 +79,24 @@ function accessorFactory(accessor, name) {
         return this._versionNumber
     }
     accessor.hasChanged = function (versionToCheck) {
+        //console.log(this.getVersion(), versionToCheck, this._name)
         return this.getVersion() !== versionToCheck
     }
     accessor.updateVersion = function () {
         ++this._versionNumber
     }
+    accessor.collect = function (collector, computed, computedVM) {
+        var name = this._name
+        var array = collector.$events[name]
+        if (array) {
+            array.push(function () {
+                return computed(computedVM, true)
+            })
+        }
+    }
     accessor.notify = function (vmodel, value) {
         var name = this._name
-        console.log("进入notify", name, value, vmodel)
+        //console.log("进入notify", name, value, vmodel)
         var oldValue = vmodel.$model[name]
         vmodel.$model[name] = value
         var array = vmodel.$events[name]
@@ -129,40 +136,42 @@ var makeComputedAccessor = function (name, options) {
         trackingObj._version = target.getVersion()
     }
 
-    function evaluateImmediate($vmodel, accessor, oldValue) {
-        var disposalCandidates = dependencyTracking
-        var disposalCount = _dependenciesCount
+    function evaluateImmediate(computedVM, notify) {
+        var computed = accessor
+        var name = computed._name
+        var value = computedVM.$model[name]
         dependencyDetection.begin({
-            callback: function (otherAccessor, id) {
-                if (disposalCount && disposalCandidates[id]) {
-                    // Don't want to dispose this subscription, as it's still being used
-                    addDependencyTracking(id, otherAccessor, disposalCandidates[id]);
-                    delete disposalCandidates[id];
-                    --disposalCount;
-                } else if (!dependencyTracking[id]) {
+            callback: function (accessor, accessorVM) {
+                var id = accessor._id
+                if (!dependencyTracking[id]) {
                     // Brand new subscription - add it
-                    addDependencyTracking(id, otherAccessor, {_target: otherAccessor})
-                    console.log(dependencyTracking)
+                    addDependencyTracking(id, accessor, {_target: accessor})
+                    accessor.collect(accessorVM, evaluateImmediate, computedVM)
                 }
             }
         })
-        console.log("begin-------------")
-        dependencyTracking = {}
-        _dependenciesCount = 0
         try {
-            var newValue = accessor.get.call($vmodel)
+            var newValue = computed.get.call(computedVM)
         } finally {
             dependencyDetection.end()
-            console.log("end-----------")
             _needsEvaluation = false
         }
-        if (newValue !== oldValue) {
-            oldValue = newValue;
-            accessor.updateVersion()
-            accessor.notify($vmodel, oldValue)
+
+        if (newValue !== value) {
+            value = newValue;
+            computed.updateVersion()
+            if (notify)
+                computed.notify(computedVM, value)
         }
-        return oldValue
+        return value
     }
+    function updateDependencyTracking() {
+        for (var id in dependencyTracking) {
+            var dependency = dependencyTracking[id]
+            dependency._version = dependency._target.getVersion()
+        }
+    }
+
     function accessor(value) {//计算属性
         var name = accessor._name
         var $vmodel = this
@@ -182,12 +191,13 @@ var makeComputedAccessor = function (name, options) {
             }
             return this
         } else {
-            if (_needsEvaluation || haveDependenciesChanged()) {
-                console.log("对" + name + "进行求值" + $vmodel)
-                oldValue = evaluateImmediate($vmodel, accessor, oldValue)
-
+            var changed = haveDependenciesChanged()
+            if (_needsEvaluation || changed) {
+                //  console.log("对" + name + "进行求值" + $vmodel)
+                oldValue = evaluateImmediate($vmodel)
+                updateDependencyTracking()
             }
-            dependencyDetection.registerDependency(accessor)
+            dependencyDetection.registerDependency(accessor, this)
             return oldValue
         }
     }
@@ -196,9 +206,6 @@ var makeComputedAccessor = function (name, options) {
     accessorFactory(accessor, name)
     return accessor;
 }
-
-
-
 
 var vm = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
 var $model = {} //vmodels.$model属性
@@ -225,20 +232,25 @@ function setProperty($vmodel, name, value, accessor) {
 var fn = makeSimpleAccessor("firstName")
 setProperty(vm, "firstName", "司徒", fn)
 
-
 var fn2 = makeSimpleAccessor("lastName")
-
 setProperty(vm, "lastName", "正美", fn2)
 
 var fn3 = makeComputedAccessor("fullName", {
     get: function () {
-        return this.firstName + " " + this.lastName + " " + this.firstName
+        return this.firstName + " " + this.lastName
     }
 })
 
 setProperty(vm, "fullName", "xx xx", fn3)
-
-vm.$watch("firstName", function(a, b, c){
+vm.$watch("firstName", function (a, b, c) {
     console.log("fire ", c, a)
 })
+vm.$watch("fullName", function (a, b, c) {
+    console.log("fire ", c, a)
+})
+
 console.log(vm.fullName)
+vm.firstName = 777
+vm.firstName = 888
+vm.firstName = 999
+
