@@ -48,7 +48,7 @@ var dependencyDetection = (function () {
 })()
 
 
-//创建一个简单的访问器
+//创建一个简单访问器
 var makeSimpleAccessor = function (name) {
     function accessor(value) {
         var name = accessor._name
@@ -110,7 +110,7 @@ function accessorFactory(accessor, name) {
 }
 
 
-//创建一个简单的访问器
+//创建一个计算访问器
 var makeComputedAccessor = function (name, options) {
     var dependencyTracking = {}
     var _dependenciesCount = 0
@@ -148,11 +148,15 @@ var makeComputedAccessor = function (name, options) {
                     // Brand new subscription - add it
                     addDependencyTracking(id, accessor, {_target: accessor})
                     accessor.collect(accessorVM, evaluateImmediate, computedVM)
+                    //console.log(dependencyTracking)
+                   // console.log(computed._name)
                 }
             }
         })
         try {
+         
             var newValue = computed.get.call(computedVM)
+             console.log("xxxxxxxxxxxx"+newValue+"  "+name)
         } finally {
             dependencyDetection.end()
             _needsEvaluation = false
@@ -193,8 +197,10 @@ var makeComputedAccessor = function (name, options) {
         } else {
             var changed = haveDependenciesChanged()
             if (_needsEvaluation || changed) {
+               
                 //  console.log("对" + name + "进行求值" + $vmodel)
                 oldValue = evaluateImmediate($vmodel)
+                 console.log("["+name+"] oldValue: "+ oldValue)
                 updateDependencyTracking()
             }
             dependencyDetection.registerDependency(accessor, this)
@@ -237,6 +243,7 @@ setProperty(vm, "lastName", "正美", fn2)
 
 var fn3 = makeComputedAccessor("fullName", {
     get: function () {
+        console.log("-------")
         return this.firstName + " " + this.lastName
     },
     set: function (value) {
@@ -246,7 +253,16 @@ var fn3 = makeComputedAccessor("fullName", {
     }
 })
 
-setProperty(vm, "fullName", "aaa bbb", fn3)
+setProperty(vm, "fullName", "司徒 正美", fn3)
+
+var fn4 = makeComputedAccessor("fullNameMore", {
+    get: function () {
+        return this.fullName + " 先生" 
+    }
+})
+
+setProperty(vm, "fullNameMore", "xxxx", fn4)
+
 vm.$watch("firstName", function (a, b, c) {
     console.log("fire ", c, a)
 })
@@ -255,10 +271,12 @@ vm.$watch("fullName", function (a, b, c) {
 })
 
 
-
 console.log(vm.fullName)
-vm.fullName = "111 222"
-vm.firstName = 777
-vm.firstName = 888
-vm.firstName = 999
+
+console.log(vm)
+console.log(vm.fullNameMore)
+//vm.fullName = "111 222"
+//vm.firstName = 777
+//vm.firstName = 888
+//vm.firstName = 999
 
