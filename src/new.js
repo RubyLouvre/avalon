@@ -19,16 +19,15 @@ var dependencyDetection = (function () {
     }
 
     function end() {
-        currentFrame = outerFrames.pop();
+        currentFrame = outerFrames.pop()
     }
 
     return {
         begin: begin,
         end: end,
         registerDependency: function (otherAccessor) {
-        
             if (currentFrame) {
-                    console.log(otherAccessor._name + "进入依赖收集系统")
+                console.log(otherAccessor._name + "进入依赖收集系统" + currentFrame)
                 currentFrame.callback(otherAccessor, otherAccessor._id || (otherAccessor._id = getId()));
             }
         },
@@ -55,12 +54,12 @@ var dependencyDetection = (function () {
 //创建一个简单的访问器
 var makeSimpleAccessor = function (name) {
     function accessor(value) {
+        var name = accessor._name
+        var $vmodel = this
+        var $model = $vmodel.$model
+        var oldValue = $model[name]
+        var $events = $vmodel.$events
         if (arguments.length > 0) {
-            var name = accessor._name
-            var $vmodel = this
-            var $model = $vmodel.$model
-            var oldValue = $model[name]
-            var $events = $vmodel.$events
             if (oldValue !== value) {
                 accessor.updateVersion()
                 accessor.notify(this, value)
@@ -90,36 +89,25 @@ function accessorFactory(accessor, name) {
     }
     accessor.notify = function (vmodel, value) {
         var name = this._name
-        console.log("进入notify", name, value)
+        console.log("进入notify", name, value, vmodel)
+        var oldValue = vmodel.$model[name]
         vmodel.$model[name] = value
+        var array = vmodel.$events[name]
+        if (array) {
+            for (var i = 0, fn; fn = array[i++]; ) {
+                fn.call(vmodel, value, oldValue, name)
+            }
+        }
     }
 
 }
-var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
-var $model = {} //vmodels.$model属性
-var $events = {} //vmodel.$events属性
-var fn = makeSimpleAccessor("firstName")
-var vm = Object.defineProperty($vmodel, "firstName", {
-    get: fn,
-    set: fn,
-    enumerable: true,
-    configurable: true
-})
-vm.$model = $model
-vm.$events = $events
-function setProperty($vmodel, name, value) {
-    $vmodel.$events[name] = []
-    $vmodel[name] = value
-}
-setProperty(vm, "firstName", 1)
-vm.firstName = 22
-console.log( vm.firstName )
+
 
 //创建一个简单的访问器
 var makeComputedAccessor = function (name, options) {
     var dependencyTracking = {}
     var _dependenciesCount = 0
-    var _needsEvaluation  = true
+    var _needsEvaluation = true
     //判定此计算属性的所依赖的访问器们有没有发生改动
     function haveDependenciesChanged() {
         var id, dependency;
@@ -154,33 +142,34 @@ var makeComputedAccessor = function (name, options) {
                 } else if (!dependencyTracking[id]) {
                     // Brand new subscription - add it
                     addDependencyTracking(id, otherAccessor, {_target: otherAccessor})
+                    console.log(dependencyTracking)
                 }
             }
         })
-        
+        console.log("begin-------------")
         dependencyTracking = {}
         _dependenciesCount = 0
         try {
             var newValue = accessor.get.call($vmodel)
         } finally {
             dependencyDetection.end()
+            console.log("end-----------")
             _needsEvaluation = false
         }
         if (newValue !== oldValue) {
             oldValue = newValue;
             accessor.updateVersion()
-            console.log("evaluateImmediate "+ $vmodel)
             accessor.notify($vmodel, oldValue)
         }
         return oldValue
     }
-    function accessor(value) {
+    function accessor(value) {//计算属性
+        var name = accessor._name
+        var $vmodel = this
+        var $model = $vmodel.$model
+        var oldValue = $model[name]
+        var $events = $vmodel.$events
         if (arguments.length > 0) {
-            var name = accessor._name
-            var $vmodel = this
-            var $model = $vmodel.$model
-            var oldValue = $model[name]
-            var $events = $vmodel.$events
             if (typeof accessor.set === "function") {
                 var lock = $events[name]
                 $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
@@ -194,8 +183,9 @@ var makeComputedAccessor = function (name, options) {
             return this
         } else {
             if (_needsEvaluation || haveDependenciesChanged()) {
-                console.log("+1111111111"+ $vmodel)
+                console.log("对" + name + "进行求值" + $vmodel)
                 oldValue = evaluateImmediate($vmodel, accessor, oldValue)
+
             }
             dependencyDetection.registerDependency(accessor)
             return oldValue
@@ -207,19 +197,48 @@ var makeComputedAccessor = function (name, options) {
     return accessor;
 }
 
-var fn2 = makeComputedAccessor("fullName",{
-    get: function(){
-        return this.firstName+"!!"
+
+
+
+var vm = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
+var $model = {} //vmodels.$model属性
+var $events = {} //vmodel.$events属性
+
+vm.$model = $model
+vm.$events = $events
+vm.$watch = function (name, fn) {
+    var array = vm.$events[name]
+    if (array) {
+        array.push(fn)
+    }
+}
+function setProperty($vmodel, name, value, accessor) {
+    Object.defineProperty($vmodel, name, {
+        get: accessor,
+        set: accessor,
+        enumerable: true,
+        configurable: true
+    })
+    $vmodel.$events[name] = []
+    $vmodel[name] = value
+}
+var fn = makeSimpleAccessor("firstName")
+setProperty(vm, "firstName", "司徒", fn)
+
+
+var fn2 = makeSimpleAccessor("lastName")
+
+setProperty(vm, "lastName", "正美", fn2)
+
+var fn3 = makeComputedAccessor("fullName", {
+    get: function () {
+        return this.firstName + " " + this.lastName + " " + this.firstName
     }
 })
-Object.defineProperty(vm, "fullName", {
-    get: fn2,
-    set: fn2,
-    enumerable: true,
-    configurable: true
+
+setProperty(vm, "fullName", "xx xx", fn3)
+
+vm.$watch("firstName", function(a, b, c){
+    console.log("fire ", c, a)
 })
-
-setProperty(vm, "fullName", 33)
-
 console.log(vm.fullName)
-
