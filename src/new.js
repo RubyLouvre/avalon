@@ -115,6 +115,7 @@ var makeComputedAccessor = function (name, options) {
     var dependencyTracking = {}
     var _dependenciesCount = 0
     var _needsEvaluation = true
+    var isSetting = false
     //判定此计算属性的所依赖的访问器们有没有发生改动
     function haveDependenciesChanged() {
         var id, dependency;
@@ -160,7 +161,7 @@ var makeComputedAccessor = function (name, options) {
         if (newValue !== value) {
             value = newValue;
             computed.updateVersion()
-            if (notify)
+            if (notify && !isSetting)
                 computed.notify(computedVM, value)
         }
         return value
@@ -180,10 +181,9 @@ var makeComputedAccessor = function (name, options) {
         var $events = $vmodel.$events
         if (arguments.length > 0) {
             if (typeof accessor.set === "function") {
-                var lock = $events[name]
-                $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                isSetting = true
                 accessor.set.call($vmodel, value)
-                $events[name] = lock
+                isSetting = false
             }
             if (haveDependenciesChanged()) {
                 accessor.updateVersion()
@@ -238,10 +238,15 @@ setProperty(vm, "lastName", "正美", fn2)
 var fn3 = makeComputedAccessor("fullName", {
     get: function () {
         return this.firstName + " " + this.lastName
+    },
+    set: function (value) {
+        var array = value.split(" ")
+        this.firstName = array[0]
+        this.lastName = array[1]
     }
 })
 
-setProperty(vm, "fullName", "xx xx", fn3)
+setProperty(vm, "fullName", "aaa bbb", fn3)
 vm.$watch("firstName", function (a, b, c) {
     console.log("fire ", c, a)
 })
@@ -249,7 +254,10 @@ vm.$watch("fullName", function (a, b, c) {
     console.log("fire ", c, a)
 })
 
+
+
 console.log(vm.fullName)
+vm.fullName = "111 222"
 vm.firstName = 777
 vm.firstName = 888
 vm.firstName = 999
