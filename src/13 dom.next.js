@@ -352,9 +352,9 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
     }
     //=============================val相关=======================
 
-    function getValType(el) {
-        var ret = el.tagName.toLowerCase()
-        return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
+    function getValType(elem) {
+        var ret = elem.tagName.toLowerCase()
+        return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
     }
 
     function collectOptions(children, array) {

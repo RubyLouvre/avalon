@@ -495,9 +495,9 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
 
     //==================================val相关============================
 
-    function getValType(el) {
-        var ret = el.tagName.toLowerCase()
-        return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
+    function getValType(elem) {
+        var ret = elem.tagName.toLowerCase()
+        return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
     }
 var roption = /^<option(?:\s+\w+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*\s+value[\s=]/i
 var valHooks = {

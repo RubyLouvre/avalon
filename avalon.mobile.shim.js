@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.42 built in 2015.4.27
+ avalon.mobile.shim.js 1.42 built in 2015.4.30
  ==================================================*/
 (function(global, factory) {
 
@@ -2267,9 +2267,9 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
     }
     //=============================val相关=======================
 
-    function getValType(el) {
-        var ret = el.tagName.toLowerCase()
-        return ret === "input" && /checkbox|radio/.test(el.type) ? "checked" : ret
+    function getValType(elem) {
+        var ret = elem.tagName.toLowerCase()
+        return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
     }
 var valHooks = {
     "select:get": function(node, value) {
