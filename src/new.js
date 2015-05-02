@@ -103,8 +103,71 @@ var makeSimpleAccessor = function (name) {
     accessorFactory(accessor, name)
     return accessor;
 }
+var rebindings = {}
 
-
+//创建一个简单访问器
+var makeObjectAccessor = function (name) {
+    function accessor(value) {
+        var name = accessor._name
+        var vmodel = accessor.$vmodel || (accessor.$vmodel = this)
+        var oldVmodel = vmodel[name]
+        var oldValue = oldVmodel.$model
+        if (arguments.length > 0) {
+            if (oldValue !== value) {
+               var newVmodel = updateChild(vmodel, name, value, Array.isArray(value))
+                value = vmodel.$model[name] = newVmodel.$model //同步$model
+                var fn = rebindings[newVmodel.$id]
+                fn && fn() //同步视图
+                accessor.updateVersion()
+                accessor.notify(value)
+            }
+            return this
+        } else {
+            dependencyDetection.registerDependency(accessor)
+            return oldVmodel
+        }
+    }
+    accessorFactory(accessor, name)
+    return accessor;
+}
+var updateObjectAccessor = function(parent, name, value, valueType){
+     //a为原来的VM， b为新数组或新对象
+//    var son = parent[name]
+//    if (valueType === "array") {
+//        if (!Array.isArray(value) || son === value) {
+//            return son //fix https://github.com/RubyLouvre/avalon/issues/261
+//        }
+//        son._.$unwatch()
+//        son.clear()
+//        son._.$watch()
+//        son.pushArray(value.concat())
+//        return son
+//    } else {
+//        var iterators = parent.$events[name]
+//        var pool = son.$events.$withProxyPool
+//        if (pool) {
+//            recycleProxies(pool, "with")
+//            son.$events.$withProxyPool = null
+//        }
+//        var ret = modelFactory(value)
+//        ret.$events[subscribers] = iterators
+//        midway[ret.$id] = function (data) {
+//            while (data = iterators.shift()) {
+//                (function (el) {
+//                    avalon.nextTick(function () {
+//                        var type = el.type
+//                        if (type && bindingHandlers[type]) { //#753
+//                            el.rollback && el.rollback() //还原 ms-with ms-on
+//                            bindingHandlers[type](el, el.vmodels)
+//                        }
+//                    })
+//                })(data) // jshint ignore:line
+//            }
+//            delete midway[ret.$id]
+//        }
+//        return ret
+//    }
+}
 //创建一个计算访问器
 var makeComputedAccessor = function (name, options) {
     var dependencyTracking = {}
