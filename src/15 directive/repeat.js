@@ -1,4 +1,4 @@
-bindingHandlers.repeat = function(data, vmodels) {
+bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
     data.proxies = []
@@ -45,7 +45,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         elem.parentNode.replaceChild(comment, elem)
     }
     data.template = avalon.parseHTML(data.template)
-    data.rollback = function() {
+    data.rollback = function () {
         var elem = data.element
         if (!elem)
             return
@@ -89,7 +89,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
 }
 
-bindingExecutors.repeat = function(method, pos, el) {
+bindingExecutors.repeat = function (method, pos, el) {
     if (method) {
         var data = this
         var end = data.element
@@ -134,7 +134,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var signature = start.nodeValue
                 var rooms = []
                 var room = [], node
-                sweepNodes(start, end, function() {
+                sweepNodes(start, end, function () {
                     room.unshift(this)
                     if (this.nodeValue === signature) {
                         rooms.unshift(room)
@@ -161,7 +161,7 @@ bindingExecutors.repeat = function(method, pos, el) {
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
                 proxy = proxies[pos]
                 if (proxy) {
-                    notifySubscribers(proxy.$events.$index)
+                    notifySubscribers(proxy.$events[data.param|| "el"])
                 }
                 return
             case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
@@ -200,7 +200,7 @@ bindingExecutors.repeat = function(method, pos, el) {
             method = "del"
         var callback = data.renderedCallback || noop,
                 args = arguments
-        checkScan(parent, function() {
+        checkScan(parent, function () {
             callback.apply(parent, args)
             if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
                 avalon(parent).val(parent.oldValue.split(","))
@@ -209,7 +209,7 @@ bindingExecutors.repeat = function(method, pos, el) {
     }
 }
 
-"with,each".replace(rword, function(name) {
+"with,each".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.repeat
 })
 
@@ -262,10 +262,17 @@ function eachProxyFactory(name) {
         $remove: avalon.noop
     }
     source[name] = {
-        get: function() {
-            return this.$host[this.$index]
+        get: function () {
+            var e = this.$events
+            var array = e.$index
+            e.$index = e[name]//#817 通过$index为el收集依赖
+            try {
+                return this.$host[this.$index]
+            } finally {
+                e.$index = array
+            }
         },
-        set: function(val) {
+        set: function (val) {
             this.$host.set(this.$index, val)
         }
     }
@@ -275,8 +282,6 @@ function eachProxyFactory(name) {
         $index: 1
     }
     var proxy = modelFactory(source, second)
-    var e = proxy.$events
-    e[name] = e.$first = e.$last = e.$index
     proxy.$id = generateID("$proxy$each")
     return proxy
 }
@@ -301,7 +306,7 @@ function eachProxyAgent(index, data) {
     proxy.$host = host
     proxy.$outer = data.$outer
     proxy.$stamp = data.clone.cloneNode(false)
-    proxy.$remove = function() {
+    proxy.$remove = function () {
         return host.removeAt(proxy.$index)
     }
     return proxy
@@ -313,10 +318,10 @@ function withProxyFactory() {
         $outer: {},
         $host: {},
         $val: {
-            get: function() {
+            get: function () {
                 return this.$host[this.$key]
             },
-            set: function(val) {
+            set: function (val) {
                 this.$host[this.$key] = val
             }
         }
@@ -346,11 +351,11 @@ function withProxyAgent(key, data) {
 
 function recycleProxies(proxies, type) {
     var proxyPool = type === "each" ? eachProxyPool : withProxyPool
-    avalon.each(proxies, function(key, proxy) {
+    avalon.each(proxies, function (key, proxy) {
         if (proxy.$events) {
             for (var i in proxy.$events) {
                 if (Array.isArray(proxy.$events[i])) {
-                    proxy.$events[i].forEach(function(data) {
+                    proxy.$events[i].forEach(function (data) {
                         if (typeof data === "object")
                             disposeData(data)
                     })// jshint ignore:line
