@@ -48,24 +48,21 @@ var dependencyDetection = (function () {
 })()
 function accessorFactory(accessor, name) {
     accessor._name = name
-    accessor._versionNumber = 0
-    accessor.getVersion = function () {
-        return this._versionNumber
+    accessor.updateValue = function (value) {
+        this._value = value
     }
-    accessor.updateVersion = function () {
-        ++this._versionNumber
+    accessor.hasChanged = function (value) {
+       return this._value !== value
     }
-    //判其版本号有没有变化
-    accessor.hasChanged = function (versionToCheck) {
-        //console.log(this.getVersion(), versionToCheck, this._name)
-        return this.getVersion() !== versionToCheck
-    }
-    accessor.collect = function (evaluate) {
+    accessor.collect = function (evaluator) {
         var name = this._name
         var array = this.$vmodel.$events[name]
         if (array) {
-            array.push(function () {
-                return evaluate(true)
+            array.push({
+                element: 1,
+                handler: function(){},
+                evaluator: evaluator,
+                args: [true]
             })
         }
     }
@@ -77,7 +74,9 @@ function accessorFactory(accessor, name) {
         model[name] = value
         var array = vmodel.$events[name] //刷新值
         if (array) {
+            notifySubscribers(array)
             for (var i = 0, fn; fn = array[i++]; ) {
+                if(typeof fn === "function")
                 fn.call(vmodel, value, oldValue, name)
             }
         }
@@ -85,19 +84,20 @@ function accessorFactory(accessor, name) {
 }
 //创建一个简单访问器
 var makeSimpleAccessor = function (name) {
-    function accessor(value) {
-        var name = accessor._name
-        var vmodel = accessor.$vmodel || (accessor.$vmodel = this)
-        var oldValue = vmodel.$model[name]
+    function accessor(newValue) {
+        var value = accessor._value
+        if(!accessor.$vmodel){
+            accessor.$vmodel = this
+        }
         if (arguments.length > 0) {
-            if (oldValue !== value) {
-                accessor.updateVersion()
-                accessor.notify(value)
+            if (value !== newValue) {
+                accessor.updateValue(newValue)
+                accessor.notify(newValue)
             }
             return this
         } else {
             dependencyDetection.registerDependency(accessor)
-            return oldValue
+            return value
         }
     }
     accessorFactory(accessor, name)
@@ -106,7 +106,7 @@ var makeSimpleAccessor = function (name) {
 var rebindings = {}
 
 //创建一个简单访问器
-var makeObjectAccessor = function (name) {
+var makeObjectAccessor = function (name, valueType) {
     function accessor(value) {
         var name = accessor._name
         var vmodel = accessor.$vmodel || (accessor.$vmodel = this)
@@ -114,11 +114,11 @@ var makeObjectAccessor = function (name) {
         var oldValue = oldVmodel.$model
         if (arguments.length > 0) {
             if (oldValue !== value) {
-               var newVmodel = updateChild(vmodel, name, value, Array.isArray(value))
+               var newVmodel = updateChild(vmodel, name, value, valueType)
                 value = vmodel.$model[name] = newVmodel.$model //同步$model
                 var fn = rebindings[newVmodel.$id]
                 fn && fn() //同步视图
-                accessor.updateVersion()
+                accessor.updateValue(value)
                 accessor.notify(value)
             }
             return this
@@ -174,47 +174,46 @@ var makeComputedAccessor = function (name, options) {
     var _dependenciesCount = 0
     var _needsEvaluation = true
     var isSetting = false
-    function accessor(value) {//计算属性
-        var name = accessor._name
+    function accessor(newValue) {//计算属性
+        var value = accessor._value
         var vmodel = accessor.$vmodel || (accessor.$vmodel = this)
-        var oldValue = vmodel.$model[name]
         if (arguments.length > 0) {
             if (typeof accessor.set === "function") {
                 isSetting = true
-                accessor.set.call(vmodel, value)
+                accessor.set.call(vmodel, newValue)
                 isSetting = false
             }
             if (haveDependenciesChanged()) {
-                accessor.updateVersion()
-                console.log(isSetting)
+                accessor.updateValue(newValue)
                 updateDependencyTracking()
-                accessor.notify(value)
+                accessor.notify(newValue)
             }
             return this
         } else {
             if (_needsEvaluation || haveDependenciesChanged()) {
-                oldValue = evaluateImmediate(false)
+                value = compute(false)
                 updateDependencyTracking()
             }
             dependencyDetection.registerDependency(accessor, this)
-            return oldValue
+            return value
         }
     }
     accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
     //判定此计算属性的所依赖的访问器们有没有发生改动
-    function haveDependenciesChanged() {
+   function haveDependenciesChanged(){
         var id, dependency;
         for (id in dependencyTracking) {
             if (dependencyTracking.hasOwnProperty(id)) {
                 dependency = dependencyTracking[id];
-                if (dependency._target.hasChanged(dependency._version)) {
+                if (dependency._target.hasChanged(dependency._value)) {
                     return true;
                 }
             }
         }
-    }
+   }
+
 
     function addDependencyTracking(id, target, trackingObj) {
         if (target === accessor) {
@@ -222,28 +221,26 @@ var makeComputedAccessor = function (name, options) {
         }
         dependencyTracking[id] = trackingObj
         trackingObj._order = _dependenciesCount++
-        trackingObj._version = target.getVersion()
+        trackingObj._value = target._value
     }
-
-    //它应该放在所有updateVersion方法之前
+    //它应该放在所有updateValue方法之前
     function updateDependencyTracking() {
         for (var id in dependencyTracking) {
             var dependency = dependencyTracking[id]
-            dependency._version = dependency._target.getVersion()
+            dependency._value = dependency._target._value
         }
     }
-
-    function evaluateImmediate(isNotify) {
+    function compute(isNotify) {
         var name = accessor._name
+        var value = accessor._value
         var vmodel = accessor.$vmodel
-        var value = vmodel.$model[name]
         dependencyDetection.begin({
             callback: function (dependency) {
                 var id = dependency._id
                 if (!dependencyTracking[id]) {
                     // Brand new subscription - add it
                     addDependencyTracking(id, dependency, {_target: dependency})
-                    dependency.collect(evaluateImmediate)
+                    dependency.collect(compute)
                 }
             }
         })
@@ -255,7 +252,7 @@ var makeComputedAccessor = function (name, options) {
         }
         if (newValue !== value) {
             value = newValue;
-            accessor.updateVersion()
+            accessor.updateValue(value)
             vmodel.$model[name] = value
             // 不能在这里使用 updateDependencyTracking， 这会让修改fullName，无法触发fullName的$watch回调
             if (isNotify && !isSetting)
@@ -266,6 +263,26 @@ var makeComputedAccessor = function (name, options) {
 
     return accessor;
 }
+
+
+function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
+    if (list && list.length) {
+
+        var args = [].slice.call(arguments, 1)
+        for (var i = list.length, fn; fn = list[--i]; ) {
+            var el = fn.element
+            if (el) {
+                if (fn.$repeat) {
+                    fn.handler.apply(fn, args) //处理监控数组的方法
+                } else if (fn.type !== "on") { //事件绑定只能由用户触发,不能由程序触发
+                    var fun = fn.evaluator || function(){}
+                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                }
+            }
+        }
+    }
+}
+
 
 var vm = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
 var $model = {} //vmodels.$model属性
