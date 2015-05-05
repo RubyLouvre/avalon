@@ -2,7 +2,7 @@
  *                           扫描系统                                 *
  **********************************************************************/
 
-avalon.scan = function(elem, vmodel, group) {
+avalon.scan = function(elem, vmodel) {
     elem = elem || root
     var vmodels = vmodel ? [].concat(vmodel) : []
     scanTag(elem, vmodels)
