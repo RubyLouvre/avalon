@@ -301,16 +301,63 @@ function getToken(value) {
         expr: true
     }
 }
-function scanText() {
+var openTag = "{{"
+var closeTag = "}}"
+function scanExpr(str) {
+    var tokens = [],
+            value, start = 0,
+            stop
+    do {
+        stop = str.indexOf(openTag, start)
+        if (stop === -1) {
+            break
+        }
+        value = str.slice(start, stop)
+        if (value) { // {{ 左边的文本
+            tokens.push({
+                value: value,
+                filters: "",
+                expr: false
+            })
+        }
+        start = stop + openTag.length
+        stop = str.indexOf(closeTag, start)
+        if (stop === -1) {
+            break
+        }
+        value = str.slice(start, stop)
+        if (value) { //处理{{ }}插值表达式
+            tokens.push(getToken(value))
+        }
+        start = stop + closeTag.length
+    } while (1)
+    value = str.slice(start)
+    if (value) { //}} 右边的文本
+        tokens.push({
+            value: value,
+            expr: false,
+            filters: ""
+        })
+    }
+    return tokens
+}
 
+function scanText(textNode) {
+     var bindings = []
+    if (textNode.nodeName === "#comment") {
+        var token = getToken(textNode.data)//在parse5中注释节点的值用data来取
+        var tokens = [token]
+    } else {
+         tokens = scanExpr(textNode.value)//在parse5中文本节点的值用value来取
+    }
 }
 function executeBindings() {
 }
 
 //var document = parser.parse('<!DOCTYPE html><html><head></head><body>Hi there!</body></html>')
-//var documentFragment = parser.parseFragment('<table></table>cccc<!--ddd-->');
-//
-//console.log(documentFragment)
+var documentFragment = parser.parseFragment('<table></table>cccc<!--ddd-->');
+
+console.log(documentFragment)
 //
 //var trFragment = parser.parseFragment('<tr><td>Shake it, baby</td></tr>', documentFragment.childNodes[0]);
 //
