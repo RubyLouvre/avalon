@@ -3,21 +3,9 @@ var parser = new parse5.Parser();
 var serializer = new parse5.Serializer();
 //https://github.com/exolution/xCube/blob/master/XParser.js
 //Then feed it with an HTML document
-//var document = parser.parse('<!DOCTYPE html><html><head></head><body>Hi there!</body></html>')
 
-var documentFragment = parser.parseFragment('<table></table>cccc<!--ddd-->');
-//
-console.log(documentFragment)
-//
-//var trFragment = parser.parseFragment('<tr><td>Shake it, baby</td></tr>', documentFragment.childNodes[0]);
-//
-//
-//console.log(documentFragment)
-//
-var b = parser.parse('<!DOCTYPE html><html ms-controller="test"><head></head><body ms-attr-title=xxx><div>{{aaa}}</div><div>{{bbb}}</div></body></html>')
 
-//var a = serializer.serialize(trFragment);
-//console.log(a)
+
 var avalon = {}
 
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
@@ -117,7 +105,7 @@ var isFunction = function (fn) {
 }
 
 avalon.isFunction = isFunction
-
+avalon.vmodels = {}
 avalon.scan = function (elem, vmodel) {
     elem = elem  //||  root
     var vmodels = vmodel ? [].concat(vmodel) : []
@@ -137,12 +125,12 @@ function scanTag(elem, vmodels) {
         if (!getAttribute(elem, "ms-skip-ctrl")) {
             var ctrl = getAttribute(elem, "ms-important")
             if (ctrl) {
-                elem.attrs.push({name: "ms-skip-ctrl", value: true})
+                elem.attrs.push({name: "ms-skip-ctrl", value: "true"})
                 var isImporant = true
             } else {
                 ctrl = getAttribute(elem, "ms-controller")
                 if (ctrl) {
-                    elem.attrs.push({name: "ms-skip-ctrl", value: true})
+                    elem.attrs.push({name: "ms-skip-ctrl", value: "true"})
                 }
             }
             if (ctrl) {
@@ -163,7 +151,7 @@ function scanTag(elem, vmodels) {
 
 function scanNodeArray(nodes, vmodels) {
     for (var i = 0, node; node = nodes[i++]; ) {
-        scanNode(node, node.nodeType, vmodels)
+        scanNode(node, vmodels)
     }
 }
 function scanNode(node, vmodels) {
@@ -191,7 +179,10 @@ var priorityMap = {
     "duplex": 2000,
     "on": 3000
 }
-
+var log = function () {
+    // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+    Function.apply.call(console.log, console, arguments)
+}
 var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
 function bindingSorter(a, b) {
@@ -199,11 +190,11 @@ function bindingSorter(a, b) {
 }
 
 function scanAttr(elem, vmodels) {
-    var attributes = elem.attributes
+    var attributes = elem.attrs || []
     var bindings = [],
             msData = {},
             match
-    for (var i = attributes.length; i >= 0; i--) {
+    for (var i = attributes.length - 1; i >= 0; i--) {
         var attr = attributes[i]
         if (match = attr.name.match(rmsAttr)) {
             //如果是以指定前缀命名的
@@ -288,8 +279,8 @@ bindingHandlers = {
 var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
-        rgt = /&gt;/g
-rstringLiteral = /(['"])(\\\1|.)+?\1/g
+        rgt = /&gt;/g,
+        rstringLiteral = /(['"])(\\\1|.)+?\1/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace(rstringLiteral, function (_) {
@@ -313,5 +304,24 @@ function getToken(value) {
 function scanText() {
 
 }
-function executeBindings(){}
+function executeBindings() {
+}
+
+//var document = parser.parse('<!DOCTYPE html><html><head></head><body>Hi there!</body></html>')
+//var documentFragment = parser.parseFragment('<table></table>cccc<!--ddd-->');
+//
+//console.log(documentFragment)
+//
+//var trFragment = parser.parseFragment('<tr><td>Shake it, baby</td></tr>', documentFragment.childNodes[0]);
+//
+//
+//console.log(documentFragment)
+//
+avalon.vmodels.test = {}
+var b = parser.parse('<!DOCTYPE html><html ms-controller="test"><head></head><body ms-title=xxx><div>{{aaa}}</div><div>{{bbb}}</div></body></html>')
 avalon.scan(b)
+
+var html = b.childNodes[1]
+console.log(html)
+var a = serializer.serialize(b);
+console.log(a)

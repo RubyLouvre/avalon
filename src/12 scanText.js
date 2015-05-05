@@ -1,7 +1,7 @@
 var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
-        rgt = /&gt;/g
+        rgt = /&gt;/g,
         rstringLiteral  = /(['"])(\\\1|.)+?\1/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
