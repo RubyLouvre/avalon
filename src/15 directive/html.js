@@ -5,17 +5,17 @@ bindingExecutors.html = function(val, elem, data) {
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
         return
-    if (val.nodeType === 11) { //将val转换为文档碎片
-        var fragment = val
+    if(typeof val === "string"){
+        var fragment = avalon.parseHTML(val)
+    }else if (val.nodeType === 11) { //将val转换为文档碎片
+        fragment = val
     } else if (val.nodeType === 1 || val.item) {
         var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
         fragment = hyperspace.cloneNode(true)
         while (nodes[0]) {
             fragment.appendChild(nodes[0])
         }
-    } else {
-        fragment = avalon.parseHTML(val)
-    }
+    } 
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
