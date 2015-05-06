@@ -1,13 +1,13 @@
 // bindingHandlers.html 定义在if.js
-bindingExecutors.html = function(val, elem, data) {
+bindingExecutors.html = function (val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
         return
-    if(typeof val === "string"){
+    if (typeof val === "string") {
         var fragment = avalon.parseHTML(val)
-    }else if (val.nodeType === 11) { //将val转换为文档碎片
+    } else if (val.nodeType === 11) { //将val转换为文档碎片
         fragment = val
     } else if (val.nodeType === 1 || val.item) {
         var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
@@ -15,11 +15,17 @@ bindingExecutors.html = function(val, elem, data) {
         while (nodes[0]) {
             fragment.appendChild(nodes[0])
         }
-    } 
+    }
+    if (!fragment.firstChild) {
+        fragment.appendChild( DOC.createComment("ms-html") )
+    }
+    nodes = avalon.slice(fragment.childNodes)
+
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
-    var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
-        parent.insertBefore(comment, elem)
+        var newGroup = nodes.length
+        var newElement = nodes[0]
+
         var n = data.group, i = 1
         while (i < n) {
             var node = elem.nextSibling
@@ -28,21 +34,12 @@ bindingExecutors.html = function(val, elem, data) {
                 i++
             }
         }
-        parent.removeChild(elem)
-        data.element = comment //防止被CG
+        parent.replaceChild(fragment, elem)
+
+        data.group = newGroup
+        data.element = newElement
     } else {
-        avalon.clearHTML(parent).appendChild(comment)
-    }
-    if (isHtmlFilter) {
-        data.group = fragment.childNodes.length || 1
-    }
-    nodes = avalon.slice(fragment.childNodes)
-    if (nodes[0]) {
-        if (comment.parentNode)
-            comment.parentNode.replaceChild(fragment, comment)
-        if (isHtmlFilter) {
-            data.element = nodes[0]
-        }
+        avalon.clearHTML(parent).appendChild(fragment)
     }
     scanNodeArray(nodes, data.vmodels)
 }
