@@ -362,7 +362,7 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
             if (el.nodeName === "OPTGROUP") {
                 if (!el.disabled)
                     collectOptions(el.children, array)
-            } else if (!el.disabled) {
+            } else if (!el.disabled && el.selected) {
                 array.push(el.value)
             }
         }
