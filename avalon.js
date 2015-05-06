@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.42 built in 2015.5.3
+ avalon.js 1.43 built in 2015.5.7
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -299,7 +299,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.42,
+    version: 1.43,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -2025,7 +2025,7 @@ avalon.clearHTML = function (node) {
  *                           扫描系统                                 *
  **********************************************************************/
 
-avalon.scan = function(elem, vmodel, group) {
+avalon.scan = function(elem, vmodel) {
     elem = elem || root
     var vmodels = vmodel ? [].concat(vmodel) : []
     scanTag(elem, vmodels)
@@ -2308,7 +2308,7 @@ function scanTag(elem, vmodels, node) {
 var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
-        rgt = /&gt;/g
+        rgt = /&gt;/g,
         rstringLiteral  = /(['"])(\\\1|.)+?\1/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
@@ -3894,27 +3894,33 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }, NaN)
 }
 // bindingHandlers.html 定义在if.js
-bindingExecutors.html = function(val, elem, data) {
+bindingExecutors.html = function (val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
         return
-    if (val.nodeType === 11) { //将val转换为文档碎片
-        var fragment = val
+    if (typeof val === "string") {
+        var fragment = avalon.parseHTML(val)
+    } else if (val.nodeType === 11) { //将val转换为文档碎片
+        fragment = val
     } else if (val.nodeType === 1 || val.item) {
         var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
         fragment = hyperspace.cloneNode(true)
         while (nodes[0]) {
             fragment.appendChild(nodes[0])
         }
-    } else {
-        fragment = avalon.parseHTML(val)
     }
+    if (!fragment.firstChild) {
+        fragment.appendChild( DOC.createComment("ms-html") )
+    }
+    nodes = avalon.slice(fragment.childNodes)
+
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
-    var comment = DOC.createComment("ms-html")
     if (isHtmlFilter) {
-        parent.insertBefore(comment, elem)
+        var newGroup = nodes.length
+        var newElement = nodes[0]
+
         var n = data.group, i = 1
         while (i < n) {
             var node = elem.nextSibling
@@ -3923,21 +3929,12 @@ bindingExecutors.html = function(val, elem, data) {
                 i++
             }
         }
-        parent.removeChild(elem)
-        data.element = comment //防止被CG
+        parent.replaceChild(fragment, elem)
+
+        data.group = newGroup
+        data.element = newElement
     } else {
-        avalon.clearHTML(parent).appendChild(comment)
-    }
-    if (isHtmlFilter) {
-        data.group = fragment.childNodes.length || 1
-    }
-    nodes = avalon.slice(fragment.childNodes)
-    if (nodes[0]) {
-        if (comment.parentNode)
-            comment.parentNode.replaceChild(fragment, comment)
-        if (isHtmlFilter) {
-            data.element = nodes[0]
-        }
+        avalon.clearHTML(parent).appendChild(fragment)
     }
     scanNodeArray(nodes, data.vmodels)
 }
