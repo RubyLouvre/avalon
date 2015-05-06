@@ -3215,16 +3215,16 @@ bindingExecutors.html = function (val, elem, data) {
         }
     }
     if (!fragment.firstChild) {
-        fragment.appendChild( DOC.createComment("ms-html") )
+        fragment.appendChild(DOC.createComment("ms-html"))
     }
     nodes = avalon.slice(fragment.childNodes)
-
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     if (isHtmlFilter) {
-        var newGroup = nodes.length
-        var newElement = nodes[0]
-
         var n = data.group, i = 1
+        
+        data.group = nodes.length
+        data.element = nodes[0]
+
         while (i < n) {
             var node = elem.nextSibling
             if (node) {
@@ -3233,9 +3233,6 @@ bindingExecutors.html = function (val, elem, data) {
             }
         }
         parent.replaceChild(fragment, elem)
-
-        data.group = newGroup
-        data.element = newElement
     } else {
         avalon.clearHTML(parent).appendChild(fragment)
     }
