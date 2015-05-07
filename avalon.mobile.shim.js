@@ -3207,7 +3207,7 @@ bindingExecutors.html = function (val, elem, data) {
     } else if (val.nodeType === 11) { //将val转换为文档碎片
         fragment = val
     } else if (val.nodeType === 1 || val.item) {
-        var nodes = val.nodeType === 1 ? val.childNodes : val.item ? val : []
+        var nodes = val.nodeType === 1 ? val.childNodes : val.item
         fragment = hyperspace.cloneNode(true)
         while (nodes[0]) {
             fragment.appendChild(nodes[0])
