@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.43 built in 2015.5.7
+ avalon.shim.js(无加载器版本) 1.43 built in 2015.5.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2273,6 +2273,9 @@ function scanNodeArray(nodes, vmodels) {
 function scanNode(node, nodeType, vmodels) {
     if (nodeType === 1) {
         scanTag(node, vmodels) //扫描元素节点
+        if(node.duplexCallback){
+            node.duplexCallback()
+        }
     } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
     } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
@@ -3852,22 +3855,22 @@ duplexBinding.TEXTAREA = duplexBinding.INPUT
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
 
-    function updateVModel() {
-        if ($elem.data("duplexObserve") !== false) {
-            var val = $elem.val() //字符串或字符串数组
-            if (Array.isArray(val)) {
-                val = val.map(function(v) {
-                    return data.pipe(v, data, "get")
-                })
-            } else {
-                val = data.pipe(val, data, "get")
+        function updateVModel() {
+            if ($elem.data("duplexObserve") !== false) {
+                var val = $elem.val() //字符串或字符串数组
+                if (Array.isArray(val)) {
+                    val = val.map(function(v) {
+                        return data.pipe(v, data, "get")
+                    })
+                } else {
+                    val = data.pipe(val, data, "get")
+                }
+                if (val + "" !== element.oldValue) {
+                    evaluator(val)
+                }
+                data.changed.call(element, val, data)
             }
-            if (val + "" !== element.oldValue) {
-                evaluator(val)
-            }
-            data.changed.call(element, val, data)
         }
-    }
     data.handler = function() {
         var val = evaluator()
         val = val && val.$model || val
@@ -3888,10 +3891,14 @@ duplexBinding.SELECT = function(element, evaluator, data) {
         }
     }
     data.bound("change", updateVModel)
-    checkScan(element, function() {
+    element.duplexCallback = function() {
         registerSubscriber(data)
         data.changed.call(element, evaluator(), data)
-    }, NaN)
+        try {
+            element.duplexCallback = void 0
+            delete element.duplexCallback
+        } catch (e) {}
+    }
 }
 // bindingHandlers.html 定义在if.js
 bindingExecutors.html = function (val, elem, data) {
