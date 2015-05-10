@@ -1,18 +1,19 @@
 var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
     "declare,disabled,defer,defaultChecked,defaultSelected",
     "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
-    "open,readOnly,selected"].join(",")
+    "open,readOnly,selected"
+].join(",")
 var boolMap = {}
-bools.replace(rword, function (name) {
+bools.replace(rword, function(name) {
     boolMap[name.toLowerCase()] = name
 })
 
 
 var cacheTmpls = avalon.templateCache = {}
 
-bindingHandlers.attr = function (data, vmodels) {
+bindingHandlers.attr = function(data, vmodels) {
     var text = data.value.trim(),
-            simple = true
+        simple = true
     if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
         simple = false
         if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
@@ -24,7 +25,7 @@ bindingHandlers.attr = function (data, vmodels) {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
         data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-        var outer = data.includeReplace = !!avalon(elem).data("includeReplace")
+        var outer = data.includeReplace = !! avalon(elem).data("includeReplace")
         if (avalon(elem).data("includeCache")) {
             data.templateCache = {}
         }
@@ -43,7 +44,7 @@ bindingHandlers.attr = function (data, vmodels) {
     parseExprProxy(text, vmodels, data, (simple ? 0 : scanExpr(data.value)))
 }
 
-bindingExecutors.attr = function (val, elem, data) {
+bindingExecutors.attr = function(val, elem, data) {
     var method = data.type
     var attrName = data.param
 
@@ -54,14 +55,15 @@ bindingExecutors.attr = function (val, elem, data) {
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
         var toRemove = (val === false) || (val === null) || (val === void 0)
+        var bool = boolMap[attrName]
+        if (typeof elem[bool] === "boolean") {
+            elem[bool] = !! val //布尔属性必须使用el.xxx = true|false方式设值
+            if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
+                toRemove = true
+            }
+        }
         if (toRemove) {
             return elem.removeAttribute(attrName)
-        }
-        if (boolMap[attrName]) {
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                return elem[bool] = !!val
-            }
         }
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
@@ -77,14 +79,14 @@ bindingExecutors.attr = function (val, elem, data) {
         var loaded = data.includeLoaded
         var replace = data.includeReplace
         var target = replace ? elem.parentNode : elem
-        var scanTemplate = function (text) {
+        var scanTemplate = function(text) {
             if (loaded) {
                 var newText = loaded.apply(target, [text].concat(vmodels))
                 if (typeof newText === "string")
                     text = newText
             }
             if (rendered) {
-                checkScan(target, function () {
+                checkScan(target, function() {
                     rendered.call(target)
                 }, NaN)
             }
@@ -112,18 +114,25 @@ bindingExecutors.attr = function (val, elem, data) {
             scanNodeArray(nodes, vmodels)
         }
         if (data.param === "src") {
-            if (cacheTmpls[val]) {
-                avalon.nextTick(function () {
+            if (typeof cacheTmpls[val] === "string") {
+                avalon.nextTick(function() {
                     scanTemplate(cacheTmpls[val])
                 })
+            } else if (Array.isArray(cacheTmpls[val])) { //#805 防止在循环绑定中发出许多相同的请求
+                cacheTmpls[val].push(scanTemplate)
             } else {
                 var xhr = new window.XMLHttpRequest
-                xhr.onload = function () {
+                xhr.onload = function() {
                     var s = xhr.status
                     if (s >= 200 && s < 300 || s === 304) {
-                        scanTemplate(cacheTmpls[val] = xhr.responseText)
+                        var text = xhr.responseText
+                        for (var f = 0, fn; fn = cacheTmpls[val][f++];) {
+                            fn(text)
+                        }
+                        cacheTmpls[val] = text
                     }
                 }
+                cacheTmpls[val] = [scanTemplate]
                 xhr.open("GET", val, true)
                 xhr.withCredentials = true
                 xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
@@ -133,14 +142,14 @@ bindingExecutors.attr = function (val, elem, data) {
             //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
             //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
             var el = val && val.nodeType == 1 ? val : DOC.getElementById(val)
-            avalon.nextTick(function () {
+            avalon.nextTick(function() {
                 scanTemplate(el.value || el.innerText || el.innerHTML)
             })
         }
     } else {
         elem[method] = val
         if (window.chrome && elem.tagName === "EMBED") {
-            var parent = elem.parentNode//#525  chrome1-37下embed标签动态设置src不能发生请求
+            var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
             var comment = document.createComment("ms-src")
             parent.replaceChild(comment, elem)
             parent.replaceChild(elem, comment)
@@ -151,16 +160,17 @@ bindingExecutors.attr = function (val, elem, data) {
 function getTemplateNodes(data, id, text) {
     var div = data.templateCache && data.templateCache[id]
     if (div) {
-        var dom = DOC.createDocumentFragment(), firstChild
+        var dom = DOC.createDocumentFragment(),
+            firstChild
         while (firstChild = div.firstChild) {
             dom.appendChild(firstChild)
         }
         return dom
     }
-    return  avalon.parseHTML(text)
+    return avalon.parseHTML(text)
 }
 
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"ms-src
-"title,alt,src,value,css,include,href".replace(rword, function (name) {
+"title,alt,src,value,css,include,href".replace(rword, function(name) {
     bindingHandlers[name] = bindingHandlers.attr
 })

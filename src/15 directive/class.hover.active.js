@@ -2,9 +2,9 @@
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
 bindingHandlers["class"] = function(data, vmodels) {
     var oldStyle = data.param,
-            text = data.value,
-            rightExpr
-    data.handlerName = "class"
+        text = data.value,
+        rightExpr
+        data.handlerName = "class"
     if (!oldStyle || isFinite(oldStyle)) {
         data.param = "" //去掉数字
         var noExpr = text.replace(rexprg, function(a) {
@@ -37,14 +37,14 @@ bindingHandlers["class"] = function(data, vmodels) {
     }
 }
 
-bindingExecutors ["class"] = function(val, elem, data) {
+bindingExecutors["class"] = function(val, elem, data) {
     var $elem = avalon(elem),
-            method = data.type
+        method = data.type
     if (method === "class" && data.oldStyle) { //如果是旧风格
-        $elem.toggleClass(data.oldStyle, !!val)
+        $elem.toggleClass(data.oldStyle, !! val)
     } else {
         //如果存在冒号就有求值函数
-        data.toggleClass = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
+        data.toggleClass = data._evaluator ? !! data._evaluator.apply(elem, data._args) : true
         data.newClass = data.immobileClass || val
         if (data.oldClass && data.newClass !== data.oldClass) {
             $elem.removeClass(data.oldClass)

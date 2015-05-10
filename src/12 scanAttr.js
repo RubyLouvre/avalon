@@ -63,8 +63,10 @@ function scanAttr(elem, vmodels) {
         }
     }
     bindings.sort(bindingSorter)
-    var control = elem.type
-    if (control && msData["ms-duplex"]) {
+    //http://bugs.jquery.com/ticket/7071
+    //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
+    if (("form" in elem) && msData["ms-duplex"]) {
+         var control = elem.type
         if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
             log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
         }

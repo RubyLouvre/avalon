@@ -1,21 +1,22 @@
 duplexBinding.SELECT = function(element, evaluator, data) {
     var $elem = avalon(element)
-    function updateVModel() {
-        if ($elem.data("duplex-observe") !== false) {
-            var val = $elem.val() //字符串或字符串数组
-            if (Array.isArray(val)) {
-                val = val.map(function(v) {
-                    return data.pipe(v, data, "get")
-                })
-            } else {
-                val = data.pipe(val, data, "get")
+
+        function updateVModel() {
+            if ($elem.data("duplexObserve") !== false) {
+                var val = $elem.val() //字符串或字符串数组
+                if (Array.isArray(val)) {
+                    val = val.map(function(v) {
+                        return data.pipe(v, data, "get")
+                    })
+                } else {
+                    val = data.pipe(val, data, "get")
+                }
+                if (val + "" !== element.oldValue) {
+                    evaluator(val)
+                }
+                data.changed.call(element, val, data)
             }
-            if (val + "" !== element.oldValue) {
-                evaluator(val)
-            }
-            data.changed.call(element, val, data)
         }
-    }
     data.handler = function() {
         var val = evaluator()
         val = val && val.$model || val
@@ -36,9 +37,12 @@ duplexBinding.SELECT = function(element, evaluator, data) {
         }
     }
     data.bound("change", updateVModel)
-    checkScan(element, function() {
+    element.duplexCallback = function() {
         registerSubscriber(data)
         data.changed.call(element, evaluator(), data)
-    }, NaN)
+        try {
+            element.duplexCallback = void 0
+            delete element.duplexCallback
+        } catch (e) {}
+    }
 }
-
