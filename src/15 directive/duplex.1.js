@@ -1,69 +1,70 @@
 //双工绑定
 var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
-        var elem = data.element,
-            hasCast
+    var elem = data.element,
+        hasCast
         parseExprProxy(data.value, vmodels, data, 0, 1)
 
         data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
-        if (data.evaluator && data.args) {
-            var params = []
-            var casting = oneObject("string,number,boolean,checked")
-            if (elem.type === "radio" && data.param === "") {
-                data.param = "checked"
-            }
-            if (elem.msData) {
-                elem.msData["ms-duplex"] = data.value
-            }
-            data.param.replace(/\w+/g, function(name) {
-                if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
-                    if (name === "radio")
-                        log("ms-duplex-radio已经更名为ms-duplex-checked")
-                    name = "checked"
-                    data.isChecked = true
-                }
-                if (name === "bool") {
-                    name = "boolean"
-                    log("ms-duplex-bool已经更名为ms-duplex-boolean")
-                } else if (name === "text") {
-                    name = "string"
-                    log("ms-duplex-text已经更名为ms-duplex-string")
-                }
-                if (casting[name]) {
-                    hasCast = true
-                }
-                avalon.Array.ensure(params, name)
-            })
-            if (!hasCast) {
-                params.push("string")
-            }
-            data.param = params.join("-")
-            data.bound = function(type, callback) {
-                if (elem.addEventListener) {
-                    elem.addEventListener(type, callback, false)
-                } else {
-                    elem.attachEvent("on" + type, callback)
-                }
-                var old = data.rollback
-                data.rollback = function() {
-                    elem.avalonSetter = null
-                    avalon.unbind(elem, type, callback)
-                    old && old()
-                }
-            }
-            for (var i in avalon.vmodels) {
-                var v = avalon.vmodels[i]
-                v.$fire("avalon-ms-duplex-init", data)
-            }
-            var cpipe = data.pipe || (data.pipe = pipe)
-            cpipe(null, data, "init")
-            var tagName = elem.tagName
-            duplexBinding[tagName] && duplexBinding[tagName](elem, data.evaluator.apply(null, data.args), data)
+    if (data.evaluator && data.args) {
+        var params = []
+        var casting = oneObject("string,number,boolean,checked")
+        if (elem.type === "radio" && data.param === "") {
+            data.param = "checked"
         }
+        if (elem.msData) {
+            elem.msData["ms-duplex"] = data.value
+        }
+        data.param.replace(/\w+/g, function(name) {
+            if (/^(checkbox|radio)$/.test(elem.type) && /^(radio|checked)$/.test(name)) {
+                if (name === "radio")
+                    log("ms-duplex-radio已经更名为ms-duplex-checked")
+                name = "checked"
+                data.isChecked = true
+            }
+            if (name === "bool") {
+                name = "boolean"
+                log("ms-duplex-bool已经更名为ms-duplex-boolean")
+            } else if (name === "text") {
+                name = "string"
+                log("ms-duplex-text已经更名为ms-duplex-string")
+            }
+            if (casting[name]) {
+                hasCast = true
+            }
+            avalon.Array.ensure(params, name)
+        })
+        if (!hasCast) {
+            params.push("string")
+        }
+        data.param = params.join("-")
+        data.bound = function(type, callback) {
+            if (elem.addEventListener) {
+                elem.addEventListener(type, callback, false)
+            } else {
+                elem.attachEvent("on" + type, callback)
+            }
+            var old = data.rollback
+            data.rollback = function() {
+                elem.avalonSetter = null
+                avalon.unbind(elem, type, callback)
+                old && old()
+            }
+        }
+        for (var i in avalon.vmodels) {
+            var v = avalon.vmodels[i]
+            v.$fire("avalon-ms-duplex-init", data)
+        }
+        var cpipe = data.pipe || (data.pipe = pipe)
+        cpipe(null, data, "init")
+        var tagName = elem.tagName
+        duplexBinding[tagName] && duplexBinding[tagName](elem, data.evaluator.apply(null, data.args), data)
     }
-    //不存在 bindingExecutors.duplex
-function fixNull(val) {
-    return val == null ? "" : val
 }
+//不存在 bindingExecutors.duplex
+
+    function fixNull(val) {
+        return val == null ? "" : val
+    }
 avalon.duplexHooks = {
     checked: {
         get: function(val, data) {
@@ -114,23 +115,23 @@ function pipe(val, data, action, e) {
 
 var TimerID, ribbon = []
 
-avalon.tick = function(fn) {
-    if (ribbon.push(fn) === 1) {
-        TimerID = setInterval(ticker, 60)
-    }
-}
-
-function ticker() {
-    for (var n = ribbon.length - 1; n >= 0; n--) {
-        var el = ribbon[n]
-        if (el() === false) {
-            ribbon.splice(n, 1)
+    avalon.tick = function(fn) {
+        if (ribbon.push(fn) === 1) {
+            TimerID = setInterval(ticker, 60)
         }
     }
-    if (!ribbon.length) {
-        clearInterval(TimerID)
+
+    function ticker() {
+        for (var n = ribbon.length - 1; n >= 0; n--) {
+            var el = ribbon[n]
+            if (el() === false) {
+                ribbon.splice(n, 1)
+            }
+        }
+        if (!ribbon.length) {
+            clearInterval(TimerID)
+        }
     }
-}
 
 var watchValueInTimer = noop
 var rmsinput = /text|password|hidden/
@@ -140,16 +141,16 @@ new function() { // jshint ignore:line
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
 
-        function newSetter(value) { // jshint ignore:line
-            if (avalon.contains(root, this)) {
-                setters[this.tagName].call(this, value)
-                if (!rmsinput.test(this.type))
-                    return
-                if (!this.msFocus && this.avalonSetter) {
-                    this.avalonSetter()
+            function newSetter(value) { // jshint ignore:line
+                if (avalon.contains(root, this)) {
+                    setters[this.tagName].call(this, value)
+                    if (!rmsinput.test(this.type))
+                        return
+                    if (!this.msFocus && this.avalonSetter) {
+                        this.avalonSetter()
+                    }
                 }
             }
-        }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
         setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set

@@ -25,7 +25,7 @@ bindingHandlers.attr = function(data, vmodels) {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
         data.includeLoaded = getBindingCallback(elem, "data-include-loaded", vmodels)
-        var outer = data.includeReplace = !!avalon(elem).data("includeReplace")
+        var outer = data.includeReplace = !! avalon(elem).data("includeReplace")
         if (avalon(elem).data("includeCache")) {
             data.templateCache = {}
         }
@@ -57,7 +57,7 @@ bindingExecutors.attr = function(val, elem, data) {
         var toRemove = (val === false) || (val === null) || (val === void 0)
         var bool = boolMap[attrName]
         if (typeof elem[bool] === "boolean") {
-            elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
+            elem[bool] = !! val //布尔属性必须使用el.xxx = true|false方式设值
             if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
                 toRemove = true
             }

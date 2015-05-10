@@ -4,12 +4,12 @@ bindingHandlers["class"] = function(data, vmodels) {
     var oldStyle = data.param,
         text = data.value,
         rightExpr
-    data.handlerName = "class"
+        data.handlerName = "class"
     if (!oldStyle || isFinite(oldStyle)) {
         data.param = "" //去掉数字
         var noExpr = text.replace(rexprg, function(a) {
             return a.replace(/./g, "0")
-                //return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
+            //return Math.pow(10, a.length - 1) //将插值表达式插入10的N-1次方来占位
         })
         var colonIndex = noExpr.indexOf(":") //取得第一个冒号的位置
         if (colonIndex === -1) { // 比如 ms-class="aaa bbb ccc" 的情况
@@ -41,10 +41,10 @@ bindingExecutors["class"] = function(val, elem, data) {
     var $elem = avalon(elem),
         method = data.type
     if (method === "class" && data.oldStyle) { //如果是旧风格
-        $elem.toggleClass(data.oldStyle, !!val)
+        $elem.toggleClass(data.oldStyle, !! val)
     } else {
         //如果存在冒号就有求值函数
-        data.toggleClass = data._evaluator ? !!data._evaluator.apply(elem, data._args) : true
+        data.toggleClass = data._evaluator ? !! data._evaluator.apply(elem, data._args) : true
         data.newClass = data.immobileClass || val
         if (data.oldClass && data.newClass !== data.oldClass) {
             $elem.removeClass(data.oldClass)

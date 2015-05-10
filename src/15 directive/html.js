@@ -1,5 +1,5 @@
 // bindingHandlers.html 定义在if.js
-bindingExecutors.html = function (val, elem, data) {
+bindingExecutors.html = function(val, elem, data) {
     val = val == null ? "" : val
     var isHtmlFilter = "group" in data
     var parent = isHtmlFilter ? elem.parentNode : elem
@@ -22,10 +22,11 @@ bindingExecutors.html = function (val, elem, data) {
     nodes = avalon.slice(fragment.childNodes)
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     if (isHtmlFilter) {
-        var n = data.group, i = 1
-        
-        data.group = nodes.length
-        data.element = nodes[0]
+        var n = data.group,
+            i = 1
+
+            data.group = nodes.length
+            data.element = nodes[0]
 
         while (i < n) {
             var node = elem.nextSibling

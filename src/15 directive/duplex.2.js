@@ -14,34 +14,34 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         $elem = avalon(element),
         composing = false
 
-    function callback(value) {
-        data.changed.call(this, value, data)
-    }
+        function callback(value) {
+            data.changed.call(this, value, data)
+        }
 
-    function compositionStart() {
-        composing = true
-    }
+        function compositionStart() {
+            composing = true
+        }
 
-    function compositionEnd() {
+        function compositionEnd() {
             composing = false
         }
         //当value变化时改变model的值
     var updateVModel = function() {
-            if (composing) //处理中文输入法在minlengh下引发的BUG
-                return
-            var val = element.oldValue = element.value //防止递归调用形成死循环
-            var lastValue = data.pipe(val, data, "get")
-            if ($elem.data("duplexObserve") !== false) {
-                evaluator(lastValue)
-                callback.call(element, lastValue)
-                if ($elem.data("duplex-focus")) {
-                    avalon.nextTick(function() {
-                        element.focus()
-                    })
-                }
+        if (composing) //处理中文输入法在minlengh下引发的BUG
+            return
+        var val = element.oldValue = element.value //防止递归调用形成死循环
+        var lastValue = data.pipe(val, data, "get")
+        if ($elem.data("duplexObserve") !== false) {
+            evaluator(lastValue)
+            callback.call(element, lastValue)
+            if ($elem.data("duplex-focus")) {
+                avalon.nextTick(function() {
+                    element.focus()
+                })
             }
         }
-        //当model变化时,它就会改变value的值
+    }
+    //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set") + "" //fix #673
         if (val !== element.oldValue) {
@@ -59,7 +59,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         data.handler = function() {
             var val = evaluator()
-            var checked = data.isChecked ? !!val : val + "" === element.value
+            var checked = data.isChecked ? !! val : val + "" === element.value
             element.oldValue = checked
             if (IE6) {
                 setTimeout(function() {
@@ -109,7 +109,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 case "input":
                     if (!IEVersion) { // W3C
                         bound("input", updateVModel)
-                            //非IE浏览器才用这个
+                        //非IE浏览器才用这个
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
                         bound("DOMAutoComplete", updateVModel)
@@ -125,8 +125,8 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                             })
                         }
                         bound("dragend", delay)
-                            //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
-                            //http://www.matts411.com/post/internet-explorer-9-oninput/
+                        //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+                        //http://www.matts411.com/post/internet-explorer-9-oninput/
                     }
                     break
                 default:

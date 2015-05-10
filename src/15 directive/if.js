@@ -1,10 +1,10 @@
 bindingHandlers["if"] =
-        bindingHandlers.data =
-        bindingHandlers.text =
-        bindingHandlers.html =
-        function(data, vmodels) {
-            parseExprProxy(data.value, vmodels, data)
-        }
+    bindingHandlers.data =
+    bindingHandlers.text =
+    bindingHandlers.html =
+    function(data, vmodels) {
+        parseExprProxy(data.value, vmodels, data)
+}
 
 bindingExecutors["if"] = function(val, elem, data) {
     if (val) { //插回DOM树
@@ -31,4 +31,3 @@ bindingExecutors["if"] = function(val, elem, data) {
         }
     }
 }
-

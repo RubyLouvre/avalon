@@ -3,14 +3,14 @@ bindingHandlers.widget = function(data, vmodels) {
     var elem = data.element
     var widget = args[0]
     var id = args[1]
-    if (!id || id === "$") {//没有定义或为$时，取组件名+随机数
+    if (!id || id === "$") { //没有定义或为$时，取组件名+随机数
         id = generateID(widget)
     }
-    var optName = args[2] || widget//没有定义，取组件名
+    var optName = args[2] || widget //没有定义，取组件名
     var constructor = avalon.ui[widget]
     if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
         vmodels = elem.vmodels || vmodels
-        for (var i = 0, v; v = vmodels[i++]; ) {
+        for (var i = 0, v; v = vmodels[i++];) {
             if (v.hasOwnProperty(optName) && typeof v[optName] === "object") {
                 var vmOptions = v[optName]
                 vmOptions = vmOptions.$model || vmOptions
@@ -20,6 +20,7 @@ bindingHandlers.widget = function(data, vmodels) {
         if (vmOptions) {
             var wid = vmOptions[widget + "Id"]
             if (typeof wid === "string") {
+                log("warning!不再支持" + widget + "Id")
                 id = wid
             }
         }
@@ -35,21 +36,19 @@ bindingHandlers.widget = function(data, vmodels) {
         if (vmodel.$id) {
             avalon.vmodels[id] = vmodel
             createSignalTower(elem, vmodel)
-            try{
+            try {
                 vmodel.$init(function() {
                     avalon.scan(elem, [vmodel].concat(vmodels))
                     if (typeof options.onInit === "function") {
                         options.onInit.call(elem, vmodel, options, vmodels)
                     }
                 })
-            }catch(e){
-            }
+            } catch (e) {}
             data.rollback = function() {
                 try {
                     vmodel.widgetElement = null
                     vmodel.$remove()
-                } catch (e) {
-                }
+                } catch (e) {}
                 elem.msData = {}
                 delete avalon.vmodels[vmodel.$id]
             }
