@@ -69,7 +69,7 @@ new function() {// jshint ignore:line
         if (event.fireByAvalon) { 
             return true
         }
-        if (touchProxy.element) { // 如果是pc端,不判断touchProxy.element的话此监听函数先触发的话之后所有的事件都不能正常触发
+        if (touchProxy.element && event.target.tagName.toLowerCase()!=='select') { // 如果是pc端,不判断touchProxy.element的话此监听函数先触发的话之后所有的事件都不能正常触发
             if (event.stopImmediatePropagation) {
                 event.stopImmediatePropagation()
             } else {
@@ -170,7 +170,9 @@ new function() {// jshint ignore:line
                 } else {
                     fastclick.focus(element)
                 }
-                event.preventDefault()
+                if (event.target.tagName.toLowerCase() !== 'select') { //select无法通过click或者focus事件触发其下拉款的显示，只能让其通过原生的方式触发
+                    event.preventDefault()
+                }
                 fireEvent(element, 'tap')
                 avalon.fastclick.fireEvent(element, "click", event)
                 avalon(element).removeClass(fastclick.activeClass)
