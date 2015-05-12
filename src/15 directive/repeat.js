@@ -234,7 +234,7 @@ function locateNode(data, pos) {
     var proxy = data.proxies[pos]
     return proxy ? proxy.$stamp : data.element
 }
-
+//移除掉start与end之间的节点
 function sweepNodes(start, end, callback) {
     while (true) {
         var node = end.previousSibling

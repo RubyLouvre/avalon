@@ -245,7 +245,7 @@ new function () {// jshint ignore:line
                 pkg = typeof pkg === "string" ? {name: pkg} : pkg
                 var name = pkg.name
                 if (!uniq[name]) {
-                    var url =  joinPath(pkg.location || name, pkg.main || "main")
+                    var url = joinPath(pkg.location || name, pkg.main || "main")
                     url = url.replace(rjsext, "")
                     ret.push(pkg)
                     uniq[name] = pkg.location = url
@@ -341,33 +341,37 @@ new function () {// jshint ignore:line
         }
     }
 
-    var rreadyState = DOC.documentMode >= 8 ? /loaded/ : /complete|loaded/
+    var rreadyState = /complete|loaded/ 
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
-        var timeID
         var supportLoad = "onload" in node
         var onEvent = supportLoad ? "onload" : "onreadystatechange"
         function onload() {
-            if (!"1"[0] && !timeID) {
-                return timeID = setTimeout(onload, 150)
+            var factory = factorys.pop()
+            factory && factory.require(id)
+            if (callback) {
+                callback()
             }
-            if (supportLoad || rreadyState.test(node.readyState)) {
-                clearTimeout(timeID)
-                var factory = factorys.pop()
-                factory && factory.require(id)
-                if (callback) {
-                    callback()
-                }
-                if (checkFail(node, false, !supportLoad)) {
-                    log("debug: 已成功加载 " + url)
-                    id && loadings.push(id)
-                    checkDeps()
+            if (checkFail(node, false, !supportLoad)) {
+                log("debug: 已成功加载 " + url)
+                id && loadings.push(id)
+                checkDeps()
+            }
+        }
+        var index = 0,  loadID
+        node[onEvent] = supportLoad ? onload : function () {
+            if (rreadyState.test(node.readyState)) {
+                ++index
+                if (index === 1) {
+                    loadID = setTimeout(onload, 500)
+                } else {
+                    clearTimeout(loadID)
+                    onload()
                 }
             }
         }
-        node[onEvent] = onload
         node.onerror = function () {
             checkFail(node, true)
         }
@@ -503,12 +507,12 @@ new function () {// jshint ignore:line
         try {
             var ret = factory.apply(window, array)
         } catch (e) {
-            log("执行["+id+"]模块的factory抛错： "+ e)
+            log("执行[" + id + "]模块的factory抛错： " + e)
         }
         if (ret !== void 0) {
             module.exports = ret
         }
-        if(rcallback.test(id)){
+        if (rcallback.test(id)) {
             delete modules[id]
         }
         delete module.factory

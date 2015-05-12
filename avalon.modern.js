@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.43 built in 2015.5.10
+ avalon.modern.js 1.43 built in 2015.5.12
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3558,7 +3558,7 @@ function locateNode(data, pos) {
     var proxy = data.proxies[pos]
     return proxy ? proxy.$stamp : data.element
 }
-
+//移除掉start与end之间的节点
 function sweepNodes(start, end, callback) {
     while (true) {
         var node = end.previousSibling
