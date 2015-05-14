@@ -15,9 +15,10 @@ function scanNodeArray(nodes, vmodels) {
 function scanNode(node, nodeType, vmodels) {
     if (nodeType === 1) {
         scanTag(node, vmodels) //扫描元素节点
-        if(node.tagName === "SELECT" && node.duplexCallback){
-            node.duplexCallback()
-        }
+        if( node.msCallback){
+            node.msCallback()
+            node.msCallback = void 0
+       }
     } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
     } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {

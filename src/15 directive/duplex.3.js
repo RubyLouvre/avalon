@@ -37,12 +37,8 @@ duplexBinding.SELECT = function(element, evaluator, data) {
         }
     }
     data.bound("change", updateVModel)
-    element.duplexCallback = function() {
+    element.msCallback = function() {
         registerSubscriber(data)
         data.changed.call(element, evaluator(), data)
-        try {
-            element.duplexCallback = void 0
-            delete element.duplexCallback
-        } catch (e) {}
     }
 }

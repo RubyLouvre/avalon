@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.43 built in 2015.5.12
+ avalon.js 1.43 built in 2015.5.14
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2273,9 +2273,10 @@ function scanNodeArray(nodes, vmodels) {
 function scanNode(node, nodeType, vmodels) {
     if (nodeType === 1) {
         scanTag(node, vmodels) //扫描元素节点
-        if(node.tagName === "SELECT" && node.duplexCallback){
-            node.duplexCallback()
-        }
+        if( node.msCallback){
+            node.msCallback()
+            node.msCallback = void 0
+       }
     } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
     } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
@@ -3891,13 +3892,9 @@ duplexBinding.SELECT = function(element, evaluator, data) {
         }
     }
     data.bound("change", updateVModel)
-    element.duplexCallback = function() {
+    element.msCallback = function() {
         registerSubscriber(data)
         data.changed.call(element, evaluator(), data)
-        try {
-            element.duplexCallback = void 0
-            delete element.duplexCallback
-        } catch (e) {}
     }
 }
 // bindingHandlers.html 定义在if.js
