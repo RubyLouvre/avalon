@@ -1352,16 +1352,17 @@ function sortByIndex(array, indexes) {
  **********************************************************************/
 var ronduplex = /^(duplex|on)$/
 
-function registerSubscriber(data) {
+avalon.injectBinding = function (data) {
     Registry[expose] = data //暴光此函数,方便collectSubscribers收集
     avalon.openComputedCollect = true
     var fn = data.evaluator
     if (fn) { //如果是求值函数
         try {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-            data.handler(c, data.element, data)
+            if (!data.noRefresh)
+                data.handler(c, data.element, data)
         } catch (e) {
-           //log("warning:exception throwed in [registerSubscriber] " + e)
+            //log("warning:exception throwed in [avalon.injectBinding] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -1392,7 +1393,7 @@ function addSubscribers(data, list) {
     var obj = {
         data: data,
         list: list,
-        $$uuid:  data.$uuid + list.$uuid
+        $$uuid: data.$uuid + list.$uuid
     }
     if (!$$subscribers[obj.$$uuid]) {
         $$subscribers[obj.$$uuid] = 1
@@ -1441,7 +1442,7 @@ function removeSubscribers() {
         }
     }
     var diff = false
-    types.forEach(function(type) {
+    types.forEach(function (type) {
         if (oldInfo[type] !== newInfo[type]) {
             needTest[type] = 1
             diff = true
@@ -1467,7 +1468,7 @@ function removeSubscribers() {
         }
     }
     oldInfo = newInfo
-   // avalon.log("已经移除的个数 " + k)
+    // avalon.log("已经移除的个数 " + k)
     beginTime = new Date()
 }
 
@@ -2518,19 +2519,19 @@ function parseExpr(code, scopes, data) {
 
 //parseExpr的智能引用代理
 
-function parseExprProxy(code, scopes, data, tokens, noregister) {
+function parseExprProxy(code, scopes, data, tokens, noRegister) {
     if (Array.isArray(tokens)) {
         code = tokens.map(function (el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
         }).join(" + ")
     }
     parseExpr(code, scopes, data)
-    if (data.evaluator && !noregister) {
+    if (data.evaluator && !noRegister) {
         data.handler = bindingExecutors[data.handlerName || data.type]
         //方便调试
         //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
         //将它移出订阅者列表
-        registerSubscriber(data)
+        avalon.injectBinding(data)
     }
 }
 avalon.parseExprProxy = parseExprProxy
@@ -3196,7 +3197,7 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }
     data.bound("change", updateVModel)
     element.msCallback = function() {
-        registerSubscriber(data)
+        avalon.injectBinding(data)
         data.changed.call(element, evaluator(), data)
     }
 }

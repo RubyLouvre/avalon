@@ -200,19 +200,19 @@ function parseExpr(code, scopes, data) {
 
 //parseExpr的智能引用代理
 
-function parseExprProxy(code, scopes, data, tokens, noregister) {
+function parseExprProxy(code, scopes, data, tokens, noRegister) {
     if (Array.isArray(tokens)) {
         code = tokens.map(function (el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
         }).join(" + ")
     }
     parseExpr(code, scopes, data)
-    if (data.evaluator && !noregister) {
+    if (data.evaluator && !noRegister) {
         data.handler = bindingExecutors[data.handlerName || data.type]
         //方便调试
         //这里非常重要,我们通过判定视图刷新函数的element是否在DOM树决定
         //将它移出订阅者列表
-        registerSubscriber(data)
+        avalon.injectBinding(data)
     }
 }
 avalon.parseExprProxy = parseExprProxy
