@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.43 built in 2015.5.14
+ avalon.mobile.old.js 1.43 built in 2015.5.15
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -94,7 +94,7 @@ function oneObject(array, val) {
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 var generateID = function(prefix) {
     prefix = prefix || "avalon"
-    return (prefix + Math.random() + Math.random()).replace(/0\./g, "")
+    return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
 }
 function IE() {
     if (window.VBArray) {
