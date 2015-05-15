@@ -157,7 +157,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
 
     element.oldValue = element.value
-    registerSubscriber(data)
+    avalon.injectBinding(data)
     callback.call(element, element.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT

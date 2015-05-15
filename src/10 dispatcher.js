@@ -3,16 +3,17 @@
  **********************************************************************/
 var ronduplex = /^(duplex|on)$/
 
-function registerSubscriber(data) {
+avalon.injectBinding = function (data) {
     Registry[expose] = data //暴光此函数,方便collectSubscribers收集
     avalon.openComputedCollect = true
     var fn = data.evaluator
     if (fn) { //如果是求值函数
         try {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-            data.handler(c, data.element, data)
+            if (!data.noRefresh)
+                data.handler(c, data.element, data)
         } catch (e) {
-           //log("warning:exception throwed in [registerSubscriber] " + e)
+            //log("warning:exception throwed in [avalon.injectBinding] " + e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -43,7 +44,7 @@ function addSubscribers(data, list) {
     var obj = {
         data: data,
         list: list,
-        $$uuid:  data.$uuid + list.$uuid
+        $$uuid: data.$uuid + list.$uuid
     }
     if (!$$subscribers[obj.$$uuid]) {
         $$subscribers[obj.$$uuid] = 1
@@ -92,7 +93,7 @@ function removeSubscribers() {
         }
     }
     var diff = false
-    types.forEach(function(type) {
+    types.forEach(function (type) {
         if (oldInfo[type] !== newInfo[type]) {
             needTest[type] = 1
             diff = true
@@ -118,7 +119,7 @@ function removeSubscribers() {
         }
     }
     oldInfo = newInfo
-   // avalon.log("已经移除的个数 " + k)
+    // avalon.log("已经移除的个数 " + k)
     beginTime = new Date()
 }
 
