@@ -1,7 +1,7 @@
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
-    data.proxies = []
+    //  data.proxies = []
     var freturn = false
     try {
         var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
@@ -95,7 +95,7 @@ bindingExecutors.repeat = function (method, pos, el) {
         var data = this
         var end = data.element
         var parent = end.parentNode
-        var proxies = data.proxies
+      //  var proxies = data.proxies
         var transation = hyperspace.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为数字，el为数组）
@@ -116,20 +116,20 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                start = proxies[pos].$stamp
+                start = data.$repeat[pos].$stamp
                 end = locateNode(data, pos + el)
                 sweepNodes(start, end)
                 break
             case "clear":
-                var check = data.$stamp || proxies[0]
+                var check = data.$stamp || data.$repeat[0]
                 if (check) {
                     start = check.$stamp || check
                     sweepNodes(start, end)
                 }
-                recycleProxies(proxies, "each")
+              //  recycleProxies(proxies, "each")
                 break
             case "move":
-                start = proxies[0].$stamp
+                start = data.$repeat[0].$stamp
                 var signature = start.nodeValue
                 var rooms = []
                 var room = [],
