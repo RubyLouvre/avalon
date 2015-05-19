@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.43 built in 2015.5.15
+ avalon.mobile.js 1.43 built in 2015.5.19
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3153,7 +3153,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
 
     element.oldValue = element.value
-    registerSubscriber(data)
+    avalon.injectBinding(data)
     callback.call(element, element.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT

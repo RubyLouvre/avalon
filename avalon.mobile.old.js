@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.43 built in 2015.5.15
+ avalon.mobile.old.js 1.43 built in 2015.5.19
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
