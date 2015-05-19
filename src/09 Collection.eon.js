@@ -38,7 +38,8 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
                         return el
                     }
                 })
-                for (var i = pos; i < n; i++) {//生成代理VM
+                var m = pos + n
+                for (var i = pos; i < m; i++) {//生成代理VM
                     var proxy = eachProxyAgent(i, this)
                     this.$proxy.splice(i, 0, proxy)
                 }

@@ -95,10 +95,10 @@ bindingExecutors.repeat = function (method, pos, el) {
         var data = this
         var end = data.element
         var parent = end.parentNode
-      //  var proxies = data.proxies
+        //  var proxies = data.proxies
         var transation = hyperspace.cloneNode(false)
         switch (method) {
-            case "add": //在pos位置后添加el数组（pos为数字，el为数组）
+            case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
                 var n = pos + el
                 var array = data.$repeat
                 var fragments = [],
@@ -106,7 +106,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 var start = locateNode(data, pos)
                 for (var i = pos; i < n; i++) {
                     var proxy = array.$proxy[i]
-                    proxy.$outer = data.outer
+                    proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
                 parent.insertBefore(transation, start)
@@ -126,7 +126,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     start = check.$stamp || check
                     sweepNodes(start, end)
                 }
-              //  recycleProxies(proxies, "each")
+                //  recycleProxies(proxies, "each")
                 break
             case "move":
                 start = data.$repeat[0].$stamp
@@ -141,7 +141,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                         room = []
                     }
                 })
-             //   sortByIndex(proxies, pos)
+                //   sortByIndex(proxies, pos)
                 sortByIndex(rooms, pos)
                 while (room = rooms.shift()) {
                     while (node = room.shift()) {
@@ -151,18 +151,8 @@ bindingExecutors.repeat = function (method, pos, el) {
                 parent.insertBefore(transation, end)
                 break
             case "index": //将proxies中的第pos个起的所有元素重新索引
-//                last = proxies.length - 1
-//                for (; el = proxies[pos]; pos++) {
-//                    el.$index = pos
-//                    el.$first = pos === 0
-//                    el.$last = pos === last
-//                }
                 return
             case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
-//                proxy = proxies[pos]
-//                if (proxy) {
-//                    notifySubscribers(proxy.$events[data.param || "el"])
-//                }
                 return
             case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                 var pool = el
@@ -216,8 +206,8 @@ bindingExecutors.repeat = function (method, pos, el) {
 function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)
-    if (proxy.$stamp) {
-        content.insertBefore(proxy.$stamp, content.firstChild)
+    if (data.$repeat) {
+        content.insertBefore(data.clone.cloneNode(false), content.firstChild)
     }
     transation.appendChild(content)
     var nv = [proxy].concat(data.vmodels)
@@ -229,8 +219,18 @@ function shimController(data, transation, proxy, fragments) {
 }
 
 function locateNode(data, pos) {
-    var proxy = data.proxies[pos]
-    return proxy ? proxy.$stamp : data.element
+    var end = data.element
+    //在第0个位置上插入
+    var signature = end.nodeValue.replace(":end", "")
+    var node = end.previousSibling
+    var array = []
+    while (node) {
+        if (node.nodeType === 8 && node.nodeValue === signature) {
+            array.unshift(node)
+        }
+        node = node.previousSibling
+    }
+    return array[pos] || end
 }
 //移除掉start与end之间的节点
 function sweepNodes(start, end, callback) {

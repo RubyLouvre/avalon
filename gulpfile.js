@@ -53,6 +53,24 @@ gulp.task('combo', function () {
             return path.join($$pathName, name + ".js")
         }
 
+        var eonFiles = compatibleFiles.concat()
+        replaceUrls(eonFiles, {
+            "09 Collection": "09 Collection.eon",
+            "14 parse.share": "14 parse.share.eon",
+            "12 scanTag": "12 scanTag.modern",
+            "repeat": "repeat.eon"
+        })
+        gulp.src(eonFiles)
+                .pipe(concat('avalon.eon.js'))
+                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
+                    return "version: " + version
+                }))
+                .pipe(replace(/!!/, function (a, b) {
+                    return  "avalon.eon.js " + version + " built in " + date + "\n new repeat"
+                }))
+                .pipe(gulp.dest('./'))
+
+
         //avalon.shim.js 所需要合并的子文件
         var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("19 outer"))
         gulp.src(shimFiles)
