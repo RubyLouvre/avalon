@@ -18,7 +18,7 @@ function Collection(model) {
         array[i] = EventBus[i]
     }
     array.$map = {
-        name: 1
+        el: 1
     }
     array.$proxy = []
     avalon.mix(array, CollectionPrototype)

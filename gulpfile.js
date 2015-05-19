@@ -56,7 +56,7 @@ gulp.task('combo', function () {
         var eonFiles = compatibleFiles.concat()
         replaceUrls(eonFiles, {
             "09 Collection": "09 Collection.eon",
-            "14 parse.share": "14 parse.share.eon",
+            "14 parser.share": "14 parser.share.eon",
             "12 scanTag": "12 scanTag.modern",
             "repeat": "repeat.eon"
         })

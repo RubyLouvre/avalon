@@ -116,7 +116,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                start = data.$repeat[pos].$stamp
+                start = locateNode(data, pos)
                 end = locateNode(data, pos + el)
                 sweepNodes(start, end)
                 break
