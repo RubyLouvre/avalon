@@ -94,7 +94,6 @@ bindingExecutors.repeat = function(method, pos, el) {
         var data = this
         var end = data.element
         var parent = end.parentNode
-        //  var proxies = data.proxies
         var transation = hyperspace.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
@@ -147,10 +146,6 @@ bindingExecutors.repeat = function(method, pos, el) {
                     parent.insertBefore(transation, end)
                 }
                 break
-            case "index": //将proxies中的第pos个起的所有元素重新索引
-                return
-            case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
-                return
             case "append": //将pos的键值对从el中取出（pos为一个普通对象，el为预先生成好的代理VM对象池）
                 var pool = el
                 var keys = []
