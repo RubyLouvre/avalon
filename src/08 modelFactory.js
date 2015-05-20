@@ -289,11 +289,11 @@ function objectFactory(parent, name, value, valueType) {
         return son
     } else {
         var iterators = parent.$events[name]
-        var pool = son.$events.$withProxyPool
-        if (pool) {
-            recycleProxies(pool, "with")
-            son.$events.$withProxyPool = null
-        }
+        //  var pool = son.$events.$withProxyPool
+        // if (pool) {
+        //   recycleProxies(pool, "with")
+        //   son.$events.$withProxyPool = null
+        // }
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
         midway[ret.$id] = function (data) {

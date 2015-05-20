@@ -153,7 +153,8 @@ var CollectionPrototype = {
         return  []
     },
     clear: function () {
-        this.$model.length = this.length.$proxy.length = this.length = this._.length = 0 //清空数组
+        recycleProxies(this.$proxy, "each")
+        this.$model.length = this.$proxy.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
     },

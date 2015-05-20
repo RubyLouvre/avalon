@@ -122,7 +122,6 @@ bindingExecutors.repeat = function(method, pos, el) {
             case "clear":
                 var array = getComments(data)
                 sweepNodes(array[0] || end, end)
-                //  recycleProxies(proxies, "each")
                 break
             case "move":
                 var start = getComments(data)[0]
@@ -204,7 +203,7 @@ bindingExecutors.repeat = function(method, pos, el) {
 function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)
-    if (data.$repeat) {
+    if (!data.$with) {
         content.insertBefore(data.clone.cloneNode(false), content.firstChild)
     }
     transation.appendChild(content)

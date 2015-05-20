@@ -4,13 +4,26 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="avalon.eon.js"></script>
+        <script src="avalon.js"></script>
         <script>
 
 
             var obj = {
                 $id: "test",
-                array: [1, 2, 3, 4, 5]
+                array: [1, 2, 3, 4, 5],
+                obj:{
+                    a:1,
+                    b:2,
+                    x:444
+                },
+                reset: function(){
+                    vm.array = [Math.random(),Math.random(),Math.random(),Math.random(),Math.random() ]
+                    vm.obj = {
+                        x: Math.random(),
+                        y: new Date -0,
+                        z: 333
+                    }
+                }
             }
             "pop,shift,unshift,push,reverse".replace(/\w+/g, function (name) {
                 obj[name] = function () {
@@ -18,18 +31,24 @@
                 }
             })
             var vm = avalon.define(obj)
+            
+            
         </script>
     </head>
     <body ms-controller="test">
         <ul>
             <li ms-repeat="array">{{el}}:{{$index}}</li>
         </ul>
+        <p>{{obj.x}}</p>
+        <ol>
+            <li ms-repeat="obj">{{$key}}:{{$val}}</li>
+        </ol>
         <button type="button" ms-click="pop">pop</button>
         <button type="button" ms-click="shift">shift</button>
         <button type="button" ms-click="unshift">unshift</button>
 
         <button type="button" ms-click="push">push</button>
         <button type="button" ms-click="reverse">reverse</button>
-
+ <button type="button" ms-click="reset">reset</button>
     </body>
 </html>
