@@ -1,7 +1,6 @@
 bindingHandlers.repeat = function(data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
-    //  data.proxies = []
     var freturn = false
     try {
         var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
@@ -54,7 +53,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         var content = data.template
         var target = content.firstChild
         parentNode.replaceChild(content, elem)
-        var start = data.$stamp
+        var start = data.$with
         start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
     }
@@ -137,7 +136,6 @@ bindingExecutors.repeat = function(method, pos, el) {
                                 room = []
                             }
                         })
-                        //   sortByIndex(proxies, pos)
                         sortByIndex(rooms, pos)
                         while (room = rooms.shift()) {
                             while (node = room.shift()) {
@@ -174,7 +172,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-                var comment = data.$stamp = data.clone
+                var comment = data.$with = data.clone
                 parent.insertBefore(comment, end)
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++];) {
