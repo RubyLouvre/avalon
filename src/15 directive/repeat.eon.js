@@ -119,8 +119,10 @@ bindingExecutors.repeat = function(method, pos, el) {
                 sweepNodes(array[pos], array[pos + el] || end)
                 break
             case "clear":
-                var array = getComments(data)
-                sweepNodes(array[0] || end, end)
+                var start = getComments(data)[0]
+                if(start){
+                   sweepNodes(start, end)
+                }  
                 break
             case "move":
                 var start = getComments(data)[0]
