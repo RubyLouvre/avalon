@@ -65,6 +65,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     var check0 = "$key"
     var check1 = "$val"
     if (Array.isArray($repeat)) {
+        $repeat.$map[data.param || "el"] = 1
         check0 = "$first"
         check1 = "$last"
     }
@@ -84,7 +85,6 @@ bindingHandlers.repeat = function(data, vmodels) {
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         data.handler("append", $repeat, pool)
     } else if ($repeat.length) {
-        data.$repeat.$map[data.param || "el"] = 1
         data.handler("add", 0, $repeat.length)
     }
 }
