@@ -3030,18 +3030,12 @@ function addAssign(vars, scope, name, data) {
             prefix = " = " + name + "."
     var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        if(isProxy && scope.$map[prop]){
-            ret.push(prop + prefix + "el")
+        var el = isProxy && scope.$map[prop] ? "el" : prop
+        if (scope.hasOwnProperty(el)) {
+            ret.push(prop + prefix + el)
             data.vars.push(prop)
             if (data.type === "duplex") {
-                vars.get = name + ".el"
-            }
-            vars.splice(i, 1)
-        }else if (scope.hasOwnProperty(prop)) {
-            ret.push(prop + prefix + prop)
-            data.vars.push(prop)
-            if (data.type === "duplex") {
-                vars.get = name + "." + prop
+                vars.get = name + "." + el
             }
             vars.splice(i, 1)
         }
