@@ -29,6 +29,11 @@
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
+    var _e = eval
+    window._injectTer = function(code) {
+        return _e(code)
+    }
+    
     return avalon
 
 }));
