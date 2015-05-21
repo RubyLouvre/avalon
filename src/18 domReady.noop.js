@@ -5,7 +5,7 @@ new function() {
     avalon.config({
         loader: false
     })
-    var fns = [], fn, loaded
+    var fns = [], loaded = DOC.readyState === "complete", fn
     function flush(f) {
         loaded = 1
         while (f = fns.shift())
