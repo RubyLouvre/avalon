@@ -17,6 +17,10 @@ function Collection(model) {
     for (var i in EventBus) {
         array[i] = EventBus[i]
     }
+    array.$map = {
+        el: 1
+    }
+    array.$proxy = []
     avalon.mix(array, CollectionPrototype)
     return array
 }
@@ -27,19 +31,26 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
         switch (method) {
             case "add":
                 /* jshint ignore:start */
-                var array = this.$model.slice(pos, pos + n).map(function (el) {
-                    if (rcomplexType.test(avalon.type(el))) {
+                var m = pos + n
+                var array = this.$model.slice(pos, m).map(function (el) {
+                    if (rcomplexType.test(avalon.type(el))) {//转换为VM
                         return el.$id ? el : modelFactory(el, 0, el)
                     } else {
                         return el
                     }
                 })
                 /* jshint ignore:end */
+                for (var i = pos; i < m; i++) {//生成代理VM
+                    var proxy = eachProxyAgent(i, this)
+                    this.$proxy.splice(i, 0, proxy)
+                }
                 _splice.apply(this, [pos, 0].concat(array))
                 this._fire("add", pos, n)
                 break
             case "del":
                 var ret = this._splice(pos, n)
+                var removed = this.$proxy.splice(pos, n) //回收代理VM
+                recycleProxies(removed, "each")
                 this._fire("del", pos, n)
                 break
         }
@@ -51,7 +62,7 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
             method2 = 0
         }
     }
-    this._fire("index", index)
+    resetIndex(this.$proxy, index)
     if (this.length !== oldLen) {
         this._.length = this.length
     }
@@ -142,7 +153,8 @@ var CollectionPrototype = {
         return  []
     },
     clear: function () {
-        this.$model.length = this.length = this._.length = 0 //清空数组
+        recycleProxies(this.$proxy, "each")
+        this.$model.length = this.$proxy.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
     },
@@ -186,10 +198,23 @@ var CollectionPrototype = {
             } else if (target !== val) {
                 this[index] = val
                 this.$model[index] = val
-                this._fire("set", index, val)
+                var proxy = this.$proxy[index]
+                if (proxy) {
+                    notifySubscribers(proxy.$events.el)
+                }
+                //  this._fire("set", index, val)
             }
         }
         return this
+    }
+}
+//相当于原来bindingExecutors.repeat 的index分支
+function resetIndex(array, pos) {
+    var last = array.length - 1
+    for (var el; el = array[pos]; pos++) {
+        el.$index = pos
+        el.$first = pos === 0
+        el.$last = pos === last
     }
 }
 
@@ -229,8 +254,9 @@ function sortByIndex(array, indexes) {
         }
         if (hasSort) {
             sortByIndex(this, indexes)
+            sortByIndex(this.$proxy, indexes)
             this._fire("move", indexes)
-            this._fire("index", 0)
+            resetIndex(this.$proxy, 0)
         }
         return this
     }
