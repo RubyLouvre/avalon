@@ -1,4 +1,4 @@
-bindingHandlers.repeat = function(data, vmodels) {
+bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
     var freturn = false
@@ -17,7 +17,7 @@ bindingHandlers.repeat = function(data, vmodels) {
     if (arr.length > 1) {
         arr.pop()
         var n = arr[0]
-        for (var i = 0, v; v = vmodels[i++];) {
+        for (var i = 0, v; v = vmodels[i++]; ) {
             if (v && v.hasOwnProperty(n)) {
                 var events = v[n].$events || {}
                 events[subscribers] = events[subscribers] || []
@@ -44,7 +44,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         elem.parentNode.replaceChild(comment, elem)
     }
     data.template = avalon.parseHTML(data.template)
-    data.rollback = function() {
+    data.rollback = function () {
         var elem = data.element
         if (!elem)
             return
@@ -69,7 +69,7 @@ bindingHandlers.repeat = function(data, vmodels) {
         check0 = "$first"
         check1 = "$last"
     }
-    for (i = 0; v = vmodels[i++];) {
+    for (i = 0; v = vmodels[i++]; ) {
         if (v.hasOwnProperty(check0) && v.hasOwnProperty(check1)) {
             data.$outer = v
             break
@@ -89,60 +89,58 @@ bindingHandlers.repeat = function(data, vmodels) {
     }
 }
 
-bindingExecutors.repeat = function(method, pos, el) {
+bindingExecutors.repeat = function (method, pos, el) {
     if (method) {
-        var data = this
+        var data = this, start, fragment
         var end = data.element
+        var comments = getComments(data)
         var parent = end.parentNode
         var transation = hyperspace.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
                 var n = pos + el
+                var fragments = []
                 var array = data.$repeat
-                var fragments = [],
-                    fragment
-                var start = getComments(data)[pos] || end
                 for (var i = pos; i < n; i++) {
                     var proxy = array.$proxy[i]
                     proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
-                parent.insertBefore(transation, start)
-                for (i = 0; fragment = fragments[i++];) {
+                parent.insertBefore(transation, comments[pos] || end)
+                for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
-                var array = getComments(data)
-                sweepNodes(array[pos], array[pos + el] || end)
+                sweepNodes(comments[pos], comments[pos + el] || end)
                 break
             case "clear":
-                var start = getComments(data)[0]
-                if(start){
-                   sweepNodes(start, end)
-                }  
+                start = comments[0]
+                if (start) {
+                    sweepNodes(start, end)
+                }
                 break
             case "move":
-                var start = getComments(data)[0]
+                start = comments[0]
                 if (start) {
                     var signature = start.nodeValue
                     var rooms = []
                     var room = [],
-                        node
-                        sweepNodes(start, end, function() {
-                            room.unshift(this)
-                            if (this.nodeValue === signature) {
-                                rooms.unshift(room)
-                                room = []
-                            }
-                        })
-                        sortByIndex(rooms, pos)
-                        while (room = rooms.shift()) {
-                            while (node = room.shift()) {
-                                transation.appendChild(node)
-                            }
+                            node
+                    sweepNodes(start, end, function () {
+                        room.unshift(this)
+                        if (this.nodeValue === signature) {
+                            rooms.unshift(room)
+                            room = []
                         }
+                    })
+                    sortByIndex(rooms, pos)
+                    while (room = rooms.shift()) {
+                        while (node = room.shift()) {
+                            transation.appendChild(node)
+                        }
+                    }
                     parent.insertBefore(transation, end)
                 }
                 break
@@ -161,7 +159,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                         keys = keys2
                     }
                 }
-                for (i = 0; key = keys[i++];) {
+                for (i = 0; key = keys[i++]; ) {
                     if (key !== "hasOwnProperty") {
                         if (!pool[key]) {
                             pool[key] = withProxyAgent(key, data)
@@ -172,7 +170,7 @@ bindingExecutors.repeat = function(method, pos, el) {
                 var comment = data.$with = data.clone
                 parent.insertBefore(comment, end)
                 parent.insertBefore(transation, end)
-                for (i = 0; fragment = fragments[i++];) {
+                for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
@@ -181,17 +179,17 @@ bindingExecutors.repeat = function(method, pos, el) {
         if (method === "clear")
             method = "del"
         var callback = data.renderedCallback || noop,
-            args = arguments
-            checkScan(parent, function() {
-                callback.apply(parent, args)
-                if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
-                    avalon(parent).val(parent.oldValue.split(","))
-                }
-            }, NaN)
+                args = arguments
+        checkScan(parent, function () {
+            callback.apply(parent, args)
+            if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
+                avalon(parent).val(parent.oldValue.split(","))
+            }
+        }, NaN)
     }
 }
 
-"with,each".replace(rword, function(name) {
+"with,each".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.repeat
 })
 
@@ -245,115 +243,115 @@ function sweepNodes(start, end, callback) {
 var eachProxyPool = []
 var withProxyPool = []
 
-    function eachProxyFactory() {
-        var source = {
-            $index: 0,
-            $first: false,
-            $last: false,
-            $map: {},
-            $host: [],
-            $outer: {},
-            $remove: avalon.noop,
-            el: {
-                get: function() {
-                    var e = this.$events
-                    var array = e.$index
-                    e.$index = e.el //#817 通过$index为el收集依赖
-                    try {
-                        return this.$host[this.$index]
-                    } finally {
-                        e.$index = array
-                    }
-                },
-                set: function(val) {
-                    this.$host.set(this.$index, val)
+function eachProxyFactory() {
+    var source = {
+        $index: 0,
+        $first: false,
+        $last: false,
+        $map: {},
+        $host: [],
+        $outer: {},
+        $remove: avalon.noop,
+        el: {
+            get: function () {
+                var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
+                    return this.$host[this.$index]
+                } finally {
+                    e.$index = array
                 }
+            },
+            set: function (val) {
+                this.$host.set(this.$index, val)
             }
         }
-
-        var second = {
-            $last: 1,
-            $first: 1,
-            $index: 1
-        }
-        var proxy = modelFactory(source, second)
-        proxy.$id = generateID("$proxy$each")
-        return proxy
     }
 
-    function eachProxyAgent(index, host) {
-        var proxy = eachProxyPool.shift()
-        if (!proxy) {
-            proxy = eachProxyFactory()
-        }
-        var last = host.length - 1
-        proxy.$index = index
-        proxy.$first = index === 0
-        proxy.$last = index === last
-        proxy.$map = host.$map
-        proxy.$host = host
-        proxy.$remove = function() {
-            return host.removeAt(proxy.$index)
-        }
-        return proxy
+    var second = {
+        $last: 1,
+        $first: 1,
+        $index: 1
     }
+    var proxy = modelFactory(source, second)
+    proxy.$id = generateID("$proxy$each")
+    return proxy
+}
 
-    function withProxyFactory() {
-        var proxy = modelFactory({
-            $key: "",
-            $outer: {},
-            $host: {},
-            $val: {
-                get: function() {
-                    return this.$host[this.$key]
-                },
-                set: function(val) {
-                    this.$host[this.$key] = val
+function eachProxyAgent(index, host) {
+    var proxy = eachProxyPool.shift()
+    if (!proxy) {
+        proxy = eachProxyFactory()
+    }
+    var last = host.length - 1
+    proxy.$index = index
+    proxy.$first = index === 0
+    proxy.$last = index === last
+    proxy.$map = host.$map
+    proxy.$host = host
+    proxy.$remove = function () {
+        return host.removeAt(proxy.$index)
+    }
+    return proxy
+}
+
+function withProxyFactory() {
+    var proxy = modelFactory({
+        $key: "",
+        $outer: {},
+        $host: {},
+        $val: {
+            get: function () {
+                return this.$host[this.$key]
+            },
+            set: function (val) {
+                this.$host[this.$key] = val
+            }
+        }
+    }, {
+        $val: 1
+    })
+    proxy.$id = generateID("$proxy$with")
+    return proxy
+}
+
+function withProxyAgent(key, data) {
+    var proxy = withProxyPool.pop()
+    if (!proxy) {
+        proxy = withProxyFactory()
+    }
+    var host = data.$repeat
+    proxy.$key = key
+    proxy.$host = host
+    proxy.$outer = data.$outer
+    if (host.$events) {
+        proxy.$events.$val = host.$events[key]
+    } else {
+        proxy.$events = {}
+    }
+    return proxy
+}
+
+function recycleProxies(proxies, type) {
+    var proxyPool = type === "each" ? eachProxyPool : withProxyPool
+    avalon.each(proxies, function (key, proxy) {
+        if (proxy.$events) {
+            for (var i in proxy.$events) {
+                if (Array.isArray(proxy.$events[i])) {
+                    proxy.$events[i].forEach(function (data) {
+                        if (typeof data === "object")
+                            disposeData(data)
+                    }) // jshint ignore:line
+                    proxy.$events[i].length = 0
                 }
             }
-        }, {
-            $val: 1
-        })
-        proxy.$id = generateID("$proxy$with")
-        return proxy
-    }
-
-    function withProxyAgent(key, data) {
-        var proxy = withProxyPool.pop()
-        if (!proxy) {
-            proxy = withProxyFactory()
-        }
-        var host = data.$repeat
-        proxy.$key = key
-        proxy.$host = host
-        proxy.$outer = data.$outer
-        if (host.$events) {
-            proxy.$events.$val = host.$events[key]
-        } else {
-            proxy.$events = {}
-        }
-        return proxy
-    }
-
-    function recycleProxies(proxies, type) {
-        var proxyPool = type === "each" ? eachProxyPool : withProxyPool
-        avalon.each(proxies, function(key, proxy) {
-            if (proxy.$events) {
-                for (var i in proxy.$events) {
-                    if (Array.isArray(proxy.$events[i])) {
-                        proxy.$events[i].forEach(function(data) {
-                            if (typeof data === "object")
-                                disposeData(data)
-                        }) // jshint ignore:line
-                        proxy.$events[i].length = 0
-                    }
-                }
-                proxy.$host = proxy.$outer = {}
-                if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
-                    proxyPool.pop()
-                }
+            proxy.$host = proxy.$outer = {}
+            if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
+                proxyPool.pop()
             }
-        })
-        if (type === "each")
-            proxies.length = 0
-    }
+        }
+    })
+    if (type === "each")
+        proxies.length = 0
+}
