@@ -3700,6 +3700,7 @@ function recycleProxies(proxies, type) {
     if (type === "each")
         proxies.length = 0
 }
+
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
@@ -4885,9 +4886,9 @@ avalon.ready(function () {
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
-    var _e = eval
+    
     window._injectTer = function(code) {
-        return _e(code)
+        return eval(code)
     }
     
     return avalon
