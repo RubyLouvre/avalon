@@ -4397,6 +4397,7 @@ function recycleProxies(proxies, type) {
     if (type === "each")
         proxies.length = 0
 }
+
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
@@ -5919,6 +5920,11 @@ new function() {// jshint ignore:line
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
+    
+    window._injectTer = function(code) {
+        return eval(code)
+    }
+    
     return avalon
 
 }));
