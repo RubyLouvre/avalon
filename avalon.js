@@ -1366,6 +1366,7 @@ function objectFactory(parent, name, value, valueType) {
         son.pushArray(value.concat())
         return son
     } else {
+        console.log(son)
         var iterators = parent.$events[name]
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators

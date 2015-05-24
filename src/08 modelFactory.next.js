@@ -96,7 +96,7 @@ function modelFactory(source, $special, $model) {
                 accessor = makeComputedAccessor(name, val)
                 initCallbacks.push(accessor)
             } else if (rcomplexType.test(valueType)) {
-                accessor = makeComplexAccessor(name, valueType)
+                accessor = makeComplexAccessor(name, val, valueType)
             } else {
                 accessor = makeSimpleAccessor(name)
 
@@ -239,21 +239,22 @@ var makeComputedAccessor = function (name, options) {
 }
 
 //创建一个计算访问器
-var makeComputedAccessor = function (name, valueType) {
+var makeComputedAccessor = function (name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
-        var son = this[name]
+        var son = accessor._vmodel
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
             if (valueType === "array") {
-                son._.$unwatch()
+                var old = son._
+                son._ = []
                 son.clear()
-                son._.$watch()
-                son.pushArray(value.concat())
+                son._ = old
+                son.pushArray(value)
             } else if (valueType === "object") {
-                son = modelFactory(value)
+                son = accessor._vmodel = modelFactory(value)
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
@@ -263,6 +264,9 @@ var makeComputedAccessor = function (name, valueType) {
             return oldValue
         }
     }
+    accessorFactory(accessor, name)
+    accessor._vmodel = modelFactory(initValue)
+    return accessor
 }
 
 function accessorFactory(accessor, name) {
