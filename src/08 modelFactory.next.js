@@ -238,6 +238,33 @@ var makeComputedAccessor = function (name, options) {
     return accessor
 }
 
+//创建一个计算访问器
+var makeComputedAccessor = function (name, valueType) {
+    function accessor(value) {
+        var oldValue = accessor._value
+        var son = this[name]
+        if (arguments.length > 0) {
+            if (stopRepeatAssign) {
+                return this
+            }
+            if (valueType === "array") {
+                son._.$unwatch()
+                son.clear()
+                son._.$watch()
+                son.pushArray(value.concat())
+            } else if (valueType === "object") {
+                son = modelFactory(value)
+            }
+            accessor.updateValue(this, son.$model)
+            accessor.notify(this, this._value, oldValue)
+            return son
+        } else {
+            dependencyDetection.registerDependency(accessor)
+            return oldValue
+        }
+    }
+}
+
 function accessorFactory(accessor, name) {
     accessor._name = name
     //判其值有没有变化
