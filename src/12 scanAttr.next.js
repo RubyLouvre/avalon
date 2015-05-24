@@ -1,6 +1,6 @@
 function scanAttr(elem, vmodels) {
     //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
-    var attributes = elem.hasAttributes() ? elem.attributes : []
+    var attributes = elem.attributes
     var bindings = [],
             msData = {},
             match
@@ -21,14 +21,14 @@ function scanAttr(elem, vmodels) {
                     type: type,
                     param: param,
                     element: elem,
-                    name: match[0],
+                    name: name,
                     value: value,
                     priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
                 }
                 if (type === "html" || type === "text") {
                     var token = getToken(value)
                     avalon.mix(binding, token)
-                    binding.filters = binding.filters.replace(rhasHtml, function() {
+                    binding.filters = binding.filters.replace(rhasHtml, function () {
                         binding.type = "html"
                         binding.group = 1
                         return ""
@@ -46,26 +46,28 @@ function scanAttr(elem, vmodels) {
             }
         }
     }
-    var control = elem.type
-    if (control && msData["ms-duplex"]) {
-        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
-            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+    if (bindings.length) {
+        bindings.sort(bindingSorter)
+        var control = elem.type
+        if (control && msData["ms-duplex"]) {
+            if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
+                log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+            }
+            if (msData["ms-attr-value"] && /text|password/.test(control)) {
+                log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+            }
         }
-        if (msData["ms-attr-value"] && /text|password/.test(control)) {
-            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
+        var scanNode = true
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+            var type = binding.type
+            if (rnoscanAttrBinding.test(type)) {
+                return executeBindings(bindings.slice(0, i + 1), vmodels)
+            } else if (scanNode) {
+                scanNode = !rnoscanNodeBinding.test(type)
+            }
         }
+        executeBindings(bindings, vmodels)
     }
-    bindings.sort(bindingSorter)
-    var scanNode = true
-    for (var i = 0, binding; binding = bindings[i]; i++) {
-        var type = binding.type
-        if (rnoscanAttrBinding.test(type)) {
-            return executeBindings(bindings.slice(0, i + 1), vmodels)
-        } else if (scanNode) {
-            scanNode = !rnoscanNodeBinding.test(type)
-        }
-    }
-    executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML + elem.textContent)) {
         mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
