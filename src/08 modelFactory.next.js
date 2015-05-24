@@ -37,9 +37,9 @@ function isObservable(name, value, $skipArray) {
     if ($skipArray.indexOf(name) !== -1) {
         return false
     }
-    if ($$skipArray.indexOf(name) !== -1) {
-        return false
-    }
+//    if ($$skipArray.indexOf(name) !== -1) {
+//        return false
+//    }
     var $special = $skipArray.$special
     if (name && name.charAt(0) === "$" && !$special[name]) {
         return false
@@ -82,6 +82,11 @@ function modelFactory(source, $special, $model) {
     var $events = {} //vmodel.$events属性
     var accessors = {} //监控属性
     var initCallbacks = [] //初始化才执行的函数
+
+    $$skipArray.forEach(function (name) {
+        delete source[name]
+    })
+
     for (var i in source) {
         (function (name, val, accessor) {
             $model[name] = val
@@ -105,12 +110,12 @@ function modelFactory(source, $special, $model) {
         })(i, source[i])// jshint ignore:line
     }
 
-    $$skipArray.forEach(function (name) {
-        delete source[name]
-        delete $model[name] //这些特殊属性不应该在$model中出现
-    })
-
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
+    for (var name in source) {
+        if (!accessors[name]) {
+            $vmodel[name] = source[name]
+        }
+    }
     //添加$id, $model, $events, $watch, $unwatch, $fire
     $vmodel.$id = generateID()
     $vmodel.$model = $model
