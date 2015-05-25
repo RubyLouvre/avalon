@@ -39,12 +39,12 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
                         return el
                     }
                 })
+                _splice.apply(this, [pos, 0].concat(array))
                 /* jshint ignore:end */
                 for (var i = pos; i < m; i++) {//生成代理VM
                     var proxy = eachProxyAgent(i, this)
                     this.$proxy.splice(i, 0, proxy)
                 }
-                _splice.apply(this, [pos, 0].concat(array))
                 this._fire("add", pos, n)
                 break
             case "del":
@@ -261,3 +261,58 @@ function sortByIndex(array, indexes) {
         return this
     }
 })
+
+var eachProxyPool = []
+
+function eachProxyFactory() {
+    var source = {
+        $index: NaN,
+        $first: NaN,
+        $last: NaN,
+        $map: {},
+        $host: [],
+        $outer: {},
+        $remove: avalon.noop,
+        el: {
+            get: function () {
+                var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
+                    return this.$host[this.$index]
+                } finally {
+                    e.$index = array
+                }
+            },
+            set: function (val) {
+                this.$host.set(this.$index, val)
+            }
+        }
+    }
+
+    var second = {
+        $last: 1,
+        $first: 1,
+        $index: 1
+    }
+    var proxy = modelFactory(source, second)
+    proxy.$id = generateID("$proxy$each")
+    return proxy
+}
+
+function eachProxyAgent(index, host) {
+    var proxy = eachProxyPool.shift()
+    if (!proxy) {
+        proxy = eachProxyFactory( )
+    }
+    var last = host.length - 1
+    proxy.$host = host
+    proxy.$index = index
+    proxy.$first = index === 0
+    proxy.$last = index === last
+    proxy.$map = host.$map
+    proxy.$remove = function () {
+        return host.removeAt(proxy.$index)
+    }
+    return proxy
+}
