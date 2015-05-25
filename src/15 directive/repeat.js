@@ -77,9 +77,7 @@ bindingHandlers.repeat = function (data, vmodels) {
     }
     var $events = $repeat.$events
     var $list = ($events || {})[subscribers]
-    if ($list && avalon.Array.ensure($list, data)) {
-        addSubscribers(data, $list)
-    }
+    injectSubscribers($list, data)
     if (xtype === "object") {
         data.$with = true
         var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})

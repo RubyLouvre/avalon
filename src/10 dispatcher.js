@@ -4,10 +4,15 @@
 var ronduplex = /^(duplex|on)$/
 
 avalon.injectBinding = function (data) {
-    Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-    avalon.openComputedCollect = true
     var fn = data.evaluator
     if (fn) { //如果是求值函数
+        dependencyDetection.begin({
+            callback: function (vmodel, dependency) {
+                injectSubscribers(vmodel.$events[dependency._name], data)
+            }
+        })
+        // Registry[expose] = data //暴光此函数,方便collectSubscribers收集
+        avalon.openComputedCollect = true
         try {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             if (!data.noRefresh)
@@ -24,15 +29,39 @@ avalon.injectBinding = function (data) {
                     node.data = openTag + data.value + closeTag
                 }
             }
+        } finally {
+            avalon.openComputedCollect = false
+            dependencyDetection.end()
         }
     }
-    avalon.openComputedCollect = false
-    delete Registry[expose]
 }
 
-function collectSubscribers(list) { //收集依赖于这个访问器的订阅者
-    var data = Registry[expose]
-    if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
+
+var dependencyDetection = (function () {
+    var outerFrames = []
+    var currentFrame
+    return {
+        begin: function (accessorObject) {
+            //accessorObject为一个拥有callback的对象
+            outerFrames.push(currentFrame)
+            currentFrame = accessorObject
+        },
+        end: function () {
+            currentFrame = outerFrames.pop()
+        },
+        collectDependency: function (vmodel, accessor) {
+            if (currentFrame) {
+                //被dependencyDetection.begin调用
+                currentFrame.callback(vmodel, accessor);
+            }
+        }
+    };
+})()
+
+//将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
+function injectSubscribers(list, data) { 
+    data = data || Registry[expose]
+    if (list && data && avalon.Array.ensure(list, data) && data.element) { 
         addSubscribers(data, list)
     }
 }
