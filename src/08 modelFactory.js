@@ -37,9 +37,6 @@ function isObservable(name, value, $skipArray) {
     if ($skipArray.indexOf(name) !== -1) {
         return false
     }
-//    if ($$skipArray.indexOf(name) !== -1) {
-//        return false
-//    }
     var $special = $skipArray.$special
     if (name && name.charAt(0) === "$" && !$special[name]) {
         return false
@@ -73,7 +70,7 @@ function modelFactory(source, $special, $model) {
     if (!source || source.nodeType > 0 || (source.$id && source.$events)) {
         return source
     }
-    var $skipArray = source.$skipArray || []
+    var $skipArray = Array.isArray(source.$skipArray) ? source.$skipArray : []
     $skipArray.$special = $special || {} //强制要监听的属性
     var $vmodel = {} //要返回的对象, 它在IE6-8下可能被偷龙转凤
     $model = $model || {} //vmodels.$model属性
@@ -270,10 +267,10 @@ var makeComplexAccessor = function (name, initValue, valueType) {
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
-            return son
+            return this
         } else {
             dependencyDetection.collectDependency(this, accessor)
-            return oldValue
+            return son
         }
     }
     accessorFactory(accessor, name)

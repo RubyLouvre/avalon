@@ -1412,7 +1412,7 @@ var dependencyDetection = (function () {
     var currentFrame
     return {
         begin: function (accessorObject) {
-            //accessorObject为一个对象,里面有一个callback方法,callback方法会将
+            //accessorObject为一个拥有callback的对象
             outerFrames.push(currentFrame)
             currentFrame = accessorObject
         },
@@ -1428,10 +1428,10 @@ var dependencyDetection = (function () {
     };
 })()
 
-
-function injectSubscribers(list, data) { //收集依赖于这个访问器的订阅者
+//将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
+function injectSubscribers(list, data) { 
     data = data || Registry[expose]
-    if (list && data && avalon.Array.ensure(list, data) && data.element) { //只有数组不存在此元素才push进去
+    if (list && data && avalon.Array.ensure(list, data) && data.element) { 
         addSubscribers(data, list)
     }
 }
@@ -3455,9 +3455,6 @@ bindingHandlers.repeat = function (data, vmodels) {
     }
     var $events = $repeat.$events
     var $list = ($events || {})[subscribers]
-//    if ($list && avalon.Array.ensure($list, data)) {
-//        addSubscribers(data, $list)
-//    }
     injectSubscribers($list, data)
     if (xtype === "object") {
         data.$with = true
@@ -4210,7 +4207,7 @@ new function() {// jshint ignore:line
 /*********************************************************************
  *                     END                                  *
  **********************************************************************/
-new function() {
+new function () {
     avalon.config({
         loader: false
     })
@@ -4220,23 +4217,23 @@ new function() {
         while (f = fns.shift())
             f()
     }
-    if (W3C) {
-        avalon.bind(DOC, "DOMContentLoaded", fn = function() {
-            avalon.unbind(DOC, "DOMContentLoaded", fn)
+
+    avalon.bind(DOC, "DOMContentLoaded", fn = function () {
+        avalon.unbind(DOC, "DOMContentLoaded", fn)
+        flush()
+    })
+
+    var id = setInterval(function () {
+        if (document.readyState === "complete" && document.body) {
+            clearInterval(id)
             flush()
-        })
-    } else {
-        var id = setInterval(function() {
-            if (document.readyState === "complete" && document.body) {
-                clearInterval(id)
-                flush()
-            }
-        }, 50)
-    }
-    avalon.ready = function(fn) {
+        }
+    }, 50)
+
+    avalon.ready = function (fn) {
         loaded ? fn(avalon) : fns.push(fn)
     }
-    avalon.ready(function() {
+    avalon.ready(function () {
         avalon.scan(DOC.body)
     })
 }
