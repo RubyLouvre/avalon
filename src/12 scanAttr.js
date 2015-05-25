@@ -17,7 +17,6 @@ function scanAttr(elem, vmodels, match) {
                         param = type
                         type = "on"
                     } else if (obsoleteAttrs[type]) {
-                        log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
                         if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
                             log("warning!ms-enabled或ms-attr-enabled已经被废弃")
                             type = "disabled"
@@ -62,6 +61,7 @@ function scanAttr(elem, vmodels, match) {
         if (bindings.length) {
             bindings.sort(bindingSorter)
             fixAttrs.forEach(function (arr) {
+                log("warning!请改用" + arr[1] + "代替" + arr[0] + "!")
                 elem.removeAttribute(arr[0])
                 elem.setAttribute(arr[1], arr[2])
             })
