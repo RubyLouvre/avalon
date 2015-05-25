@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.43 built in 2015.5.21
+ avalon.js 1.44 built in 2015.5.25
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -299,7 +299,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.43,
+    version: 1.44,
     ui: {},
     log: log,
     slice: W3C ? function(nodes, start, end) {
@@ -1366,7 +1366,6 @@ function objectFactory(parent, name, value, valueType) {
         son.pushArray(value.concat())
         return son
     } else {
-        console.log(son)
         var iterators = parent.$events[name]
         var ret = modelFactory(value)
         ret.$events[subscribers] = iterators
@@ -2136,61 +2135,59 @@ function bindingSorter(a, b) {
     return a.priority - b.priority
 }
 
-function scanAttr(elem, vmodels) {
-    //防止setAttribute, removeAttribute时 attributes自动被同步,导致for循环出错
-    var attributes = getAttributes ? getAttributes(elem) : avalon.slice(elem.attributes)
-    var bindings = [],
-            msData = {},
-            match
-    for (var i = 0, attr; attr = attributes[i++]; ) {
-        if (attr.specified) {
-            if (match = attr.name.match(rmsAttr)) {
-                //如果是以指定前缀命名的
-                var type = match[1]
-                var param = match[2] || ""
-                var value = attr.value
-                var name = attr.name
-                msData[name] = value
-                if (events[type]) {
-                    param = type
-                    type = "on"
-                } else if (obsoleteAttrs[type]) {
-                    log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
-                    if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
-                        log("warning!ms-enabled或ms-attr-enabled已经被废弃")
-                        type = "disabled"
-                        value = "!(" + value + ")"
+function scanAttr(elem, vmodels, match) {
+    var scanNode = true
+    if (vmodels.length) {
+        var attributes = getAttributes ? getAttributes(elem) : elem.attributes
+        var bindings = []
+        var fixAttrs = []
+        var msData = {}
+        for (var i = 0, attr; attr = attributes[i++]; ) {
+            if (attr.specified) {
+                if (match = attr.name.match(rmsAttr)) {
+                    //如果是以指定前缀命名的
+                    var type = match[1]
+                    var param = match[2] || ""
+                    var value = attr.value
+                    var name = attr.name
+                    if (events[type]) {
+                        param = type
+                        type = "on"
+                    } else if (obsoleteAttrs[type]) {
+                        log("warning!请改用ms-attr-" + type + "代替ms-" + type + "！")
+                        if (type === "enabled") {//吃掉ms-enabled绑定,用ms-disabled代替
+                            log("warning!ms-enabled或ms-attr-enabled已经被废弃")
+                            type = "disabled"
+                            value = "!(" + value + ")"
+                        }
+                        param = type
+                        type = "attr"
+                        name = "ms-" + type + param
+                        fixAttrs.push([attr.name, name, value])
                     }
-                    param = type
-                    type = "attr"
-                    elem.removeAttribute(name)
-                    name = "ms-attr-" + param
-                    elem.setAttribute(name, value)
-                    match = [name]
                     msData[name] = value
-                }
-                if (typeof bindingHandlers[type] === "function") {
-                    var binding = {
-                        type: type,
-                        param: param,
-                        element: elem,
-                        name: match[0],
-                        value: value,
-                        priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
-                    }
-                    if (type === "html" || type === "text") {
-                        var token = getToken(value)
-                        avalon.mix(binding, token)
-                        binding.filters = binding.filters.replace(rhasHtml, function () {
-                            binding.type = "html"
-                            binding.group = 1
-                            return ""
-                        })// jshint ignore:line
-                    }
-                    if (name === "ms-if-loop") {
-                        binding.priority += 100
-                    }
-                    if (vmodels.length) {
+                    if (typeof bindingHandlers[type] === "function") {
+                        var binding = {
+                            type: type,
+                            param: param,
+                            element: elem,
+                            name: name,
+                            value: value,
+                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
+                        }
+                        if (type === "html" || type === "text") {
+                            var token = getToken(value)
+                            avalon.mix(binding, token)
+                            binding.filters = binding.filters.replace(rhasHtml, function () {
+                                binding.type = "html"
+                                binding.group = 1
+                                return ""
+                            })// jshint ignore:line
+                        } else if (type === "duplex") {
+                            var hasDuplex = name
+                        } else if (name === "ms-if-loop") {
+                            binding.priority += 100
+                        }
                         bindings.push(binding)
                         if (type === "widget") {
                             elem.msData = elem.msData || msData
@@ -2199,29 +2196,33 @@ function scanAttr(elem, vmodels) {
                 }
             }
         }
-    }
-    bindings.sort(bindingSorter)
-    //http://bugs.jquery.com/ticket/7071
-    //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
-    if (("form" in elem) && msData["ms-duplex"]) {
-         var control = elem.type
-        if (msData["ms-attr-checked"] && /radio|checkbox/.test(control)) {
-            log("warning!" + control + "控件不能同时定义ms-attr-checked与ms-duplex")
+        if (bindings.length) {
+            bindings.sort(bindingSorter)
+            fixAttrs.forEach(function (arr) {
+                elem.removeAttribute(arr[0])
+                elem.setAttribute(arr[1], arr[2])
+            })
+            //http://bugs.jquery.com/ticket/7071
+            //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
+            if (hasDuplex) {
+                if (msData["ms-attr-checked"]) {
+                    log("warning!一个控件不能同时定义ms-attr-checked与" + hasDuplex)
+                }
+                if (msData["ms-attr-value"]) {
+                    log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
+                }
+            }
+            for (i = 0; binding = bindings[i]; i++) {
+                type = binding.type
+                if (rnoscanAttrBinding.test(type)) {
+                    return executeBindings(bindings.slice(0, i + 1), vmodels)
+                } else if (scanNode) {
+                    scanNode = !rnoscanNodeBinding.test(type)
+                }
+            }
+            executeBindings(bindings, vmodels)
         }
-        if (msData["ms-attr-value"] && /text|password/.test(control)) {
-            log("warning!" + control + "控件不能同时定义ms-attr-value与ms-duplex")
-        }
     }
-    var scanNode = true
-    for (i = 0; binding = bindings[i]; i++) {
-        type = binding.type
-        if (rnoscanAttrBinding.test(type)) {
-            return executeBindings(bindings.slice(0, i + 1), vmodels)
-        } else if (scanNode) {
-            scanNode = !rnoscanNodeBinding.test(type)
-        }
-    }
-    executeBindings(bindings, vmodels)
     if (scanNode && !stopScan[elem.tagName] && rbind.test(elem.innerHTML.replace(rlt, "<").replace(rgt, ">"))) {
         mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
