@@ -242,7 +242,16 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son._ = old
                 son.pushArray(value)
             } else if (valueType === "object") {
+                var $proxy = son.$proxy
+                var array = son.$events[subscribers]
                 son = accessor._vmodel = modelFactory(value)
+                son.a = $proxy
+                if(array.length){
+                  //  array.forEach()
+                }
+                
+           //       var $events = $repeat.$events
+   // var $list = ($events || {})[subscribers]
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
