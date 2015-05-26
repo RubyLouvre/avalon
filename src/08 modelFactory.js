@@ -131,7 +131,7 @@ function modelFactory(source, $special, $model) {
     })
     return $vmodel
 }
-
+//创建一个简单访问器
 var makeSimpleAccessor = function (name, value) {
     function accessor(value) {
         var oldValue = accessor._value
