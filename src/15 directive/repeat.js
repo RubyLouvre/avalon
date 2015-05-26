@@ -243,7 +243,7 @@ function withProxyFactory() {
     var proxy = modelFactory({
         $key: "",
         $outer: {},
-        $host: {},
+        $host: 1,
         $val: {
             get: function () {
                 return this.$host[this.$key]
@@ -253,7 +253,8 @@ function withProxyFactory() {
             }
         }
     }, {
-        $val: 1
+        $val: 1,
+        $host: 1
     })
     proxy.$id = generateID("$proxy$with")
     return proxy

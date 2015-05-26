@@ -270,7 +270,7 @@ function eachProxyFactory() {
         $first: NaN,
         $last: NaN,
         $map: {},
-        $host: [],
+        $host: 1,
         $outer: {},
         $remove: avalon.noop,
         el: {
@@ -293,7 +293,8 @@ function eachProxyFactory() {
     var second = {
         $last: 1,
         $first: 1,
-        $index: 1
+        $index: 1,
+        $host: 1
     }
     var proxy = modelFactory(source, second)
     proxy.$id = generateID("$proxy$each")

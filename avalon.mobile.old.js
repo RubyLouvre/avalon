@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.44 built in 2015.5.25
+ avalon.mobile.old.js 1.44 built in 2015.5.26
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1811,7 +1811,7 @@ function eachProxyFactory() {
         $first: NaN,
         $last: NaN,
         $map: {},
-        $host: [],
+        $host: 1,
         $outer: {},
         $remove: avalon.noop,
         el: {
@@ -1834,7 +1834,8 @@ function eachProxyFactory() {
     var second = {
         $last: 1,
         $first: 1,
-        $index: 1
+        $index: 1,
+        $host: 1
     }
     var proxy = modelFactory(source, second)
     proxy.$id = generateID("$proxy$each")

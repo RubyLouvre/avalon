@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.44 built in 2015.5.25
+ avalon.js 1.44 built in 2015.5.26
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1415,7 +1415,9 @@ function updateDependencies(dependencies) {
 function haveDependenciesChanged(dependencies) {
     var id, dependency;
     for (id in dependencies) {
+        
         if (dependencies.hasOwnProperty(id)) {
+            console.log(id)
             dependency = dependencies[id];
             if (dependency._target.hasChanged(dependency._value)) {
                 return true
@@ -1820,7 +1822,7 @@ function eachProxyFactory() {
                 var array = e.$index
                 e.$index = e.el //#817 通过$index为el收集依赖
                 try {
-                    return this.$host[this.$index]
+                    return  this.$host[this.$index]
                 } finally {
                     e.$index = array
                 }
