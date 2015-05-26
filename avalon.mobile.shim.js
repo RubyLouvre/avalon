@@ -1392,7 +1392,7 @@ function eachProxyFactory() {
         $first: NaN,
         $last: NaN,
         $map: {},
-        $host: 1,
+        $host:{},
         $outer: {},
         $remove: avalon.noop,
         el: {
