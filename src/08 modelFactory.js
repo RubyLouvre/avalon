@@ -28,7 +28,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy").match(rword)
 
 function isObservable(name, value, $skipArray) {
     if (isFunction(value) || value && value.nodeType) {
@@ -205,7 +205,7 @@ function computeAndInjectSubscribers(vmodel, accessor, collect) {
                 if (dependency !== accessor) {
                     var list = vm.$events[name]
                     injectSubscribers(list, function () {
-                        accessor.dirty = true
+                        accessor.dirty = true//这是由低层访问器触发的$watch回调
                         return  computeAndInjectSubscribers(vmodel, accessor, false)
                     })
                 }
@@ -221,7 +221,6 @@ function computeAndInjectSubscribers(vmodel, accessor, collect) {
     if (!isEqual(newValue, oldValue)) {
         accessor.updateValue(vmodel, newValue)
         accessor.dirty = false
-        // 不能在这里使用 updateDependencies， 这会让修改fullName，无法触发fullName的$watch回调
         accessor.notify(vmodel, newValue, oldValue)
         oldValue = newValue
     }

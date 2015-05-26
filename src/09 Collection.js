@@ -50,7 +50,7 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
             case "del":
                 var ret = this._splice(pos, n)
                 var removed = this.$proxy.splice(pos, n) //回收代理VM
-                recycleProxies(removed, "each")
+                eachProxyRecycler(removed, "each")
                 this._fire("del", pos, n)
                 break
         }
@@ -153,7 +153,7 @@ var CollectionPrototype = {
         return  []
     },
     clear: function () {
-        recycleProxies(this.$proxy, "each")
+        eachProxyRecycler(this.$proxy, "each")
         this.$model.length = this.$proxy.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
