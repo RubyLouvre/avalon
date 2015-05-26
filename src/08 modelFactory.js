@@ -94,12 +94,12 @@ function modelFactory(source, $special, $model) {
             //总共产生三种accessor
             if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
                 accessor = makeComputedAccessor(name, val)
+
                 initCallbacks.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 accessor = makeComplexAccessor(name, val, valueType)
             } else {
                 accessor = makeSimpleAccessor(name, val)
-
             }
             accessors[name] = accessor
         })(i, source[i])// jshint ignore:line
@@ -169,84 +169,64 @@ var makeSimpleAccessor = function (name, value) {
 
 //创建一个计算访问器
 var makeComputedAccessor = function (name, options) {
-    var dependencies = {}
-    var initializing = true
-    var isSetting = false
+    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            if (typeof accessor.set === "function") {
-                isSetting = true
-                accessor.set.call(this, value)
-                isSetting = false
-            }
-            //如果依赖发现改变
-            if (haveDependenciesChanged(dependencies)) {
-                accessor.updateValue(this, value)//更新自身的值
-                updateDependencies(dependencies)//更新检测对象上依赖项的值
-                accessor.notify(this, value, oldValue)//触发$watch回调及视图刷新
-            }
+
+            accessor.set.call(this, value)
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-            if (initializing || haveDependenciesChanged(dependencies)) {
+            if (accessor.dirty) {
                 //将自己注入到低层访问器的订阅数组中
-                oldValue = computeAndInjectSubscribers(this, true)
-                updateDependencies(dependencies)
+                oldValue = computeAndInjectSubscribers(this, accessor, true)
             }
             return oldValue
         }
     }
     accessor.set = options.set
     accessor.get = options.get
+    accessor.dirty = true
     accessorFactory(accessor, name)
-
-    function computeAndInjectSubscribers(vmodel, isInject) {
-        var oldValue = accessor._value
-        if (isInject) {
-            dependencyDetection.begin({
-                callback: function (vm, dependency) {//dependency为一个accessor
-                    var name = dependency._name
-                    if (!dependencies[name]) {
-                        if (dependency !== accessor) {
-                            var trackingObj = {
-                                _target: dependency
-                            }
-                            dependencies[name] = trackingObj
-                            trackingObj._value = dependency._value
-                        }
-                        var list = vm.$events[name]
-                        injectSubscribers(list, function () {
-                            return computeAndInjectSubscribers(vmodel)
-                        })
-                    }
-                }
-            })
-        }
-        try {
-            var newValue = accessor.get.call(vmodel)
-        } finally {
-            if (isInject)
-                dependencyDetection.end()
-            initializing = false
-        }
-        if (!isEqual(newValue, oldValue)) {
-            accessor.updateValue(vmodel, newValue)
-            // 不能在这里使用 updateDependencies， 这会让修改fullName，无法触发fullName的$watch回调
-            if (!isInject)
-                accessor.notify(vmodel, newValue, oldValue)
-            oldValue = newValue
-        }
-        return oldValue
-    }
-
     return accessor
 }
 
+function computeAndInjectSubscribers(vmodel, accessor, collect) {
+    var oldValue = accessor._value
+    if (collect)
+        dependencyDetection.begin({
+            callback: function (vm, dependency) {//dependency为一个accessor
+                var name = dependency._name
+                if (dependency !== accessor) {
+                    var list = vm.$events[name]
+                    injectSubscribers(list, function () {
+                        accessor.dirty = true
+                        return  computeAndInjectSubscribers(vmodel, accessor, false)
+                    })
+                }
+            }
+        })
+
+    try {
+        var newValue = accessor.get.call(vmodel)
+    } finally {
+        if (collect)
+            dependencyDetection.end()
+    }
+    if (!isEqual(newValue, oldValue)) {
+        accessor.updateValue(vmodel, newValue)
+        accessor.dirty = false
+        // 不能在这里使用 updateDependencies， 这会让修改fullName，无法触发fullName的$watch回调
+        accessor.notify(vmodel, newValue, oldValue)
+        oldValue = newValue
+    }
+    return oldValue
+}
 //创建一个复杂访问器
 var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
@@ -324,24 +304,3 @@ var descriptorFactory = W3C ? function (obj) {
     return a
 }
 
-
-//它应该放在所有updateVersion方法之前
-function updateDependencies(dependencies) {
-    for (var id in dependencies) {
-        var dependency = dependencies[id]
-        dependency._value = dependency._target._value
-    }
-}
-
-//判定此计算属性的所依赖的访问器们有没有发生改动
-function haveDependenciesChanged(dependencies) {
-    var id, dependency;
-    for (id in dependencies) {
-        if (dependencies.hasOwnProperty(id)) {
-            dependency = dependencies[id];
-            if (dependency._target.hasChanged(dependency._value)) {
-                return true
-            }
-        }
-    }
-}

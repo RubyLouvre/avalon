@@ -59,9 +59,9 @@ var dependencyDetection = (function () {
 })()
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
-function injectSubscribers(list, data) { 
+function injectSubscribers(list, data) {
     data = data || Registry[expose]
-    if (list && data && avalon.Array.ensure(list, data) && data.element) { 
+    if (list && data && avalon.Array.ensure(list, data) && data.element) {
         addSubscribers(data, list)
     }
 }
