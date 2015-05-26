@@ -202,7 +202,6 @@ var CollectionPrototype = {
                 if (proxy) {
                     notifySubscribers(proxy.$events.el)
                 }
-                //  this._fire("set", index, val)
             }
         }
         return this
@@ -293,8 +292,7 @@ function eachProxyFactory() {
     var second = {
         $last: 1,
         $first: 1,
-        $index: 1,
-        $host: 1
+        $index: 1
     }
     var proxy = modelFactory(source, second)
     proxy.$id = generateID("$proxy$each")
