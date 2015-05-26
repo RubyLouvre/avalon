@@ -593,7 +593,7 @@ var hasDontEnumBug = !({
         dontEnumsLength = dontEnums.length;
 if (!Object.keys) {
     Object.keys = function (object) { //ecma262v5 15.2.3.14
-        var theKeys = [];
+        var theKeys = []
         var skipProto = hasProtoEnumBug && typeof object === "function"
         if (typeof object === "string" || (object && object.callee)) {
             for (var i = 0; i < object.length; ++i) {
@@ -609,7 +609,7 @@ if (!Object.keys) {
 
         if (hasDontEnumBug) {
             var ctor = object.constructor,
-                    skipConstructor = ctor && ctor.prototype === object;
+                    skipConstructor = ctor && ctor.prototype === object
             for (var j = 0; j < dontEnumsLength; j++) {
                 var dontEnum = dontEnums[j]
                 if (!(skipConstructor && dontEnum === "constructor") && ohasOwn.call(object, dontEnum)) {
@@ -1031,8 +1031,8 @@ var EventBus = {
                         }
                         //循环两个vmodel中的节点，查找匹配（向上匹配或者向下匹配）的节点并设置标识
                         /* jshint ignore:start */
-                        Array.prototype.forEach.call(eventNodes, function (node) {
-                            Array.prototype.forEach.call(elements, function (element) {
+                        ap.forEach.call(eventNodes, function (node) {
+                            ap.forEach.call(elements, function (element) {
                                 var ok = special === "down" ? element.contains(node) : //向下捕获
                                         node.contains(element) //向上冒泡
                                 if (ok) {
@@ -1046,7 +1046,7 @@ var EventBus = {
             }
             var nodes = DOC.getElementsByTagName("*") //实现节点排序
             var alls = []
-            Array.prototype.forEach.call(nodes, function (el) {
+            ap.forEach.call(nodes, function (el) {
                 if (el._avalon) {
                     alls.push(el._avalon)
                     el._avalon = ""
@@ -1176,6 +1176,10 @@ function modelFactory(source, $special, $model) {
                 initCallbacks.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 accessor = makeComplexAccessor(name, val, valueType)
+                initCallbacks.push(function () {
+                    var son = accessor._vmodel
+                    son.$events[subscribers] = this.$events[name]
+                })
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -1211,11 +1215,9 @@ function modelFactory(source, $special, $model) {
         })
 
     } else {
-        /* jshint ignore:start */
         $vmodel.hasOwnProperty = function (name) {
             return name in $vmodel.$model
-        }
-        /* jshint ignore:end */
+        }// jshint ignore:line
     }
     initCallbacks.forEach(function (cb) { //收集依赖
         cb.call($vmodel)
@@ -1254,7 +1256,6 @@ var makeComputedAccessor = function (name, options) {
             if (stopRepeatAssign) {
                 return this
             }
-
             accessor.set.call(this, value)
             return this
         } else {
@@ -1309,6 +1310,7 @@ var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
+        var observes = son.$events[subscribers] = this.$events[name]
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
@@ -1320,7 +1322,22 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son._ = old
                 son.pushArray(value)
             } else if (valueType === "object") {
+                var $proxy = son.$proxy
+
                 son = accessor._vmodel = modelFactory(value)
+                son.$proxy = $proxy
+                if (observes.length) {
+                    observes.forEach(function (data) {
+                        console.log(data)
+                        if (data.$repeat) {
+                            data.handler("append", son)
+                        }
+                    })
+                    son.$events[name] = observes
+                }
+
+                //       var $events = $repeat.$events
+                // var $list = ($events || {})[subscribers]
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
@@ -1331,6 +1348,7 @@ var makeComplexAccessor = function (name, initValue, valueType) {
         }
     }
     accessorFactory(accessor, name)
+
     accessor._vmodel = modelFactory(initValue)
     return accessor
 }
@@ -4206,7 +4224,7 @@ bindingHandlers.repeat = function (data, vmodels) {
     if (xtype === "object") {
         data.$with = true
         //   var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
-        var pool = $repeat.$proxy || ($repeat.$proxy = {})
+        $repeat.$proxy || ($repeat.$proxy = {})
         data.handler("append", $repeat)
     } else if ($repeat.length) {
         data.handler("add", 0, $repeat.length)
@@ -4268,7 +4286,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     parent.insertBefore(transation, end)
                 }
                 break
-            case "append": 
+            case "append":
                 var object = pos //原来第2参数， 被循环对象
                 var pool = object.$proxy   //代理对象组成的hash
                 var keys = []
@@ -4290,12 +4308,10 @@ bindingExecutors.repeat = function (method, pos, el) {
                         keys = keys2
                     }
                 }
-                
+
                 for (i = 0; key = keys[i++]; ) {
                     if (key !== "hasOwnProperty") {
-                      //  if (!pool[key]) {
-                            pool[key] = withProxyAgent( pool[key], key, data)
-                     //   }
+                        pool[key] = withProxyAgent(pool[key], key, data)
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
@@ -4394,7 +4410,7 @@ function withProxyFactory() {
 }
 
 function withProxyAgent(proxy, key, data) {
-     proxy = proxy || withProxyPool.pop()
+    proxy = proxy || withProxyPool.pop()
     if (!proxy) {
         proxy = withProxyFactory()
     }
@@ -4423,7 +4439,7 @@ function proxyRecycler(proxy, proxyPool) {
             proxy.$events[i].forEach(function (data) {
                 if (typeof data === "object")
                     disposeData(data)
-            })
+            })// jshint ignore:line
             proxy.$events[i].length = 0
         }
     }

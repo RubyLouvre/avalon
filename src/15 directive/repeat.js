@@ -298,7 +298,7 @@ function proxyRecycler(proxy, proxyPool) {
             proxy.$events[i].forEach(function (data) {
                 if (typeof data === "object")
                     disposeData(data)
-            })
+            })// jshint ignore:line
             proxy.$events[i].length = 0
         }
     }

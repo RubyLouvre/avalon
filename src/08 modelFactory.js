@@ -98,6 +98,10 @@ function modelFactory(source, $special, $model) {
                 initCallbacks.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 accessor = makeComplexAccessor(name, val, valueType)
+                initCallbacks.push(function () {
+                    var son = accessor._vmodel
+                    son.$events[subscribers] = this.$events[name]
+                })
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -133,11 +137,9 @@ function modelFactory(source, $special, $model) {
         })
 
     } else {
-        /* jshint ignore:start */
         $vmodel.hasOwnProperty = function (name) {
             return name in $vmodel.$model
-        }
-        /* jshint ignore:end */
+        }// jshint ignore:line
     }
     initCallbacks.forEach(function (cb) { //收集依赖
         cb.call($vmodel)
@@ -176,7 +178,6 @@ var makeComputedAccessor = function (name, options) {
             if (stopRepeatAssign) {
                 return this
             }
-
             accessor.set.call(this, value)
             return this
         } else {
@@ -231,6 +232,7 @@ var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
+        var observes = son.$events[subscribers] = this.$events[name]
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
@@ -243,15 +245,21 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son.pushArray(value)
             } else if (valueType === "object") {
                 var $proxy = son.$proxy
-                var array = son.$events[subscribers]
+
                 son = accessor._vmodel = modelFactory(value)
-                son.a = $proxy
-                if(array.length){
-                  //  array.forEach()
+                son.$proxy = $proxy
+                if (observes.length) {
+                    observes.forEach(function (data) {
+                        console.log(data)
+                        if (data.$repeat) {
+                            data.handler("append", son)
+                        }
+                    })
+                    son.$events[name] = observes
                 }
-                
-           //       var $events = $repeat.$events
-   // var $list = ($events || {})[subscribers]
+
+                //       var $events = $repeat.$events
+                // var $list = ($events || {})[subscribers]
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
@@ -262,6 +270,7 @@ var makeComplexAccessor = function (name, initValue, valueType) {
         }
     }
     accessorFactory(accessor, name)
+
     accessor._vmodel = modelFactory(initValue)
     return accessor
 }
