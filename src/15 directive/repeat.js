@@ -12,26 +12,21 @@ bindingHandlers.repeat = function (data, vmodels) {
     } catch (e) {
         freturn = true
     }
-    var elem = data.element
-    if (freturn) {
-        avalon(data.element).addClass("avalonHide")
-        return
+    var arr = data.value.split(".") || []
+    if (arr.length > 1) {
+        arr.pop()
+        var n = arr[0]
+        for (var i = 0, v; v = vmodels[i++]; ) {
+            if (v && v.hasOwnProperty(n)) {
+                var events = v[n].$events || {}
+                events[subscribers] = events[subscribers] || []
+                events[subscribers].push(data)
+                break
+            }
+        }
     }
-    avalon(data.element).removeClass("avalonHide")
-//    var arr = data.value.split(".") || []
-//    if (arr.length > 1) {
-//        arr.pop()
-//        var n = arr[0]
-//        for (var i = 0, v; v = vmodels[i++]; ) {
-//            if (v && v.hasOwnProperty(n)) {
-//                var events = v[n].$events || {}
-//                events[subscribers] = events[subscribers] || []
-//                events[subscribers].push(data)
-//                break
-//            }
-//        }
-//    }
 
+    var elem = data.element
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
@@ -52,7 +47,7 @@ bindingHandlers.repeat = function (data, vmodels) {
         var elem = data.element
         if (!elem)
             return
-        bindingExecutors.repeat.call(data, "clear")
+        data.handler("clear")
         var parentNode = elem.parentNode
         var content = data.template
         var target = content.firstChild
@@ -61,7 +56,9 @@ bindingHandlers.repeat = function (data, vmodels) {
         start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
     }
-
+    if (freturn) {
+        return
+    }
     data.handler = bindingExecutors.repeat
     data.$outer = {}
     var check0 = "$key"
@@ -82,7 +79,6 @@ bindingHandlers.repeat = function (data, vmodels) {
     injectSubscribers($list, data)
     if (xtype === "object") {
         data.$with = true
-        //   var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         $repeat.$proxy || ($repeat.$proxy = {})
         data.handler("append", $repeat)
     } else if ($repeat.length) {

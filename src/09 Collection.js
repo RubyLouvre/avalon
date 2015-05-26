@@ -2,7 +2,7 @@
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
 
-function Collection(model) {
+function arrayFactory(model) {
     var array = []
     array.$id = generateID()
     array.$model = model //数据模型
@@ -21,7 +21,7 @@ function Collection(model) {
         el: 1
     }
     array.$proxy = []
-    avalon.mix(array, CollectionPrototype)
+    avalon.mix(array, arrayPrototype)
     return array
 }
 
@@ -70,7 +70,7 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
 }
 
 var _splice = ap.splice
-var CollectionPrototype = {
+var arrayPrototype = {
     _splice: _splice,
     _fire: function (method, a, b) {
         notifySubscribers(this.$events[subscribers], method, a, b)
@@ -232,7 +232,7 @@ function sortByIndex(array, indexes) {
 }
 
 "sort,reverse".replace(rword, function (method) {
-    CollectionPrototype[method] = function () {
+    arrayPrototype[method] = function () {
         var newArray = this.$model//这是要排序的新数组
         var oldArray = newArray.concat() //保持原来状态的旧数组
         var mask = Math.random()

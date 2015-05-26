@@ -11,8 +11,6 @@ avalon.injectBinding = function (data) {
                 injectSubscribers(vmodel.$events[dependency._name], data)
             }
         })
-        // Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-        avalon.openComputedCollect = true
         try {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             if (!data.noRefresh)
@@ -30,7 +28,6 @@ avalon.injectBinding = function (data) {
                 }
             }
         } finally {
-            avalon.openComputedCollect = false
             dependencyDetection.end()
         }
     }

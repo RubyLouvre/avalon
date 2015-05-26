@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.44 built in 2015.5.26
+ avalon.js 1.44 built in 2015.5.27
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1107,22 +1107,6 @@ avalon.define = function (id, factory) {
 
 //一些不需要被监听的属性
 var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy").match(rword)
-
-function isObservable(name, value, $skipArray) {
-    if (isFunction(value) || value && value.nodeType) {
-        return false
-    }
-    if ($skipArray.indexOf(name) !== -1) {
-        return false
-    }
-    var $special = $skipArray.$special
-    if (name && name.charAt(0) === "$" && !$special[name]) {
-        return false
-    }
-    return true
-}
-
-
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -1140,7 +1124,7 @@ function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
         var arr = source.concat()
         source.length = 0
-        var collection = Collection(source)// jshint ignore:line
+        var collection = arrayFactory(source)
         collection.pushArray(arr)
         return collection
     }
@@ -1172,7 +1156,6 @@ function modelFactory(source, $special, $model) {
             //总共产生三种accessor
             if (valueType === "object" && isFunction(val.get) && Object.keys(val).length <= 2) {
                 accessor = makeComputedAccessor(name, val)
-
                 initCallbacks.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 accessor = makeComplexAccessor(name, val, valueType)
@@ -1215,9 +1198,11 @@ function modelFactory(source, $special, $model) {
         })
 
     } else {
+        /* jshint ignore:start */
         $vmodel.hasOwnProperty = function (name) {
             return name in $vmodel.$model
-        }// jshint ignore:line
+        }
+        /* jshint ignore:end */
     }
     initCallbacks.forEach(function (cb) { //收集依赖
         cb.call($vmodel)
@@ -1256,12 +1241,15 @@ var makeComputedAccessor = function (name, options) {
             if (stopRepeatAssign) {
                 return this
             }
+            accessor.callSet = true
             accessor.set.call(this, value)
+            accessor.callSet = false
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
             if (accessor.dirty) {
+                accessor.depCount = accessor.curCount = 0
                 //将自己注入到低层访问器的订阅数组中
                 oldValue = computeAndInjectSubscribers(this, accessor, true)
             }
@@ -1277,30 +1265,36 @@ var makeComputedAccessor = function (name, options) {
 
 function computeAndInjectSubscribers(vmodel, accessor, collect) {
     var oldValue = accessor._value
-    if (collect)
+    if (collect) {
         dependencyDetection.begin({
             callback: function (vm, dependency) {//dependency为一个accessor
                 var name = dependency._name
                 if (dependency !== accessor) {
                     var list = vm.$events[name]
+                    accessor.depCount++
                     injectSubscribers(list, function () {
-                        accessor.dirty = true//这是由低层访问器触发的$watch回调
-                        return  computeAndInjectSubscribers(vmodel, accessor, false)
+                        accessor.curCount++
+                        accessor.dirty = true
+                        //这是由低层访问器触发的$watch回调，并阻止冗余的依赖收集
+                        return  computeAndInjectSubscribers(vmodel, accessor)
                     })
                 }
             }
         })
-
+    }
     try {
         var newValue = accessor.get.call(vmodel)
     } finally {
-        if (collect)
-            dependencyDetection.end()
+        collect && dependencyDetection.end()
     }
     if (!isEqual(newValue, oldValue)) {
         accessor.updateValue(vmodel, newValue)
         accessor.dirty = false
-        accessor.notify(vmodel, newValue, oldValue)
+        //如果是setter触发，需要依赖次数depCount等于调用次数curCount
+        if (accessor.callSet ? accessor.depCount === accessor.curCount : 1) {
+            accessor.curCount = 0
+            accessor.notify(vmodel, newValue, oldValue)
+        }
         oldValue = newValue
     }
     return oldValue
@@ -1310,7 +1304,6 @@ var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
-        var observes = son.$events[subscribers] = this.$events[name]
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
@@ -1323,21 +1316,18 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son.pushArray(value)
             } else if (valueType === "object") {
                 var $proxy = son.$proxy
-
+                var observes = this.$events[name] || []
                 son = accessor._vmodel = modelFactory(value)
                 son.$proxy = $proxy
                 if (observes.length) {
                     observes.forEach(function (data) {
-                        console.log(data)
                         if (data.$repeat) {
-                            data.handler("append", son)
+                            data.handler("clear")
+                            data.handler("append", data.$repeat = son)
                         }
                     })
                     son.$events[name] = observes
                 }
-
-                //       var $events = $repeat.$events
-                // var $list = ($events || {})[subscribers]
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)
@@ -1348,22 +1338,16 @@ var makeComplexAccessor = function (name, initValue, valueType) {
         }
     }
     accessorFactory(accessor, name)
-
     accessor._vmodel = modelFactory(initValue)
     return accessor
 }
 
 function accessorFactory(accessor, name) {
     accessor._name = name
-    //判其值有没有变化
-    accessor.hasChanged = function (curValue) {
-        return this._value !== curValue
-    }
     //同时更新_value与model
     accessor.updateValue = function (vmodel, value) {
         vmodel.$model[this._name] = this._value = value
     }
-
     accessor.notify = function (vmodel, value, oldValue) {
         var name = this._name
         var array = vmodel.$events[name] //刷新值
@@ -1384,6 +1368,21 @@ var isEqual = Object.is || function (v1, v2) {
         return v1 === v2
     }
 }
+
+function isObservable(name, value, $skipArray) {
+    if (isFunction(value) || value && value.nodeType) {
+        return false
+    }
+    if ($skipArray.indexOf(name) !== -1) {
+        return false
+    }
+    var $special = $skipArray.$special
+    if (name && name.charAt(0) === "$" && !$special[name]) {
+        return false
+    }
+    return true
+}
+
 var descriptorFactory = W3C ? function (obj) {
     var descriptors = {}
     for (var i in obj) {
@@ -1520,7 +1519,7 @@ if (!canHideOwn) {
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
 
-function Collection(model) {
+function arrayFactory(model) {
     var array = []
     array.$id = generateID()
     array.$model = model //数据模型
@@ -1539,7 +1538,7 @@ function Collection(model) {
         el: 1
     }
     array.$proxy = []
-    avalon.mix(array, CollectionPrototype)
+    avalon.mix(array, arrayPrototype)
     return array
 }
 
@@ -1588,7 +1587,7 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
 }
 
 var _splice = ap.splice
-var CollectionPrototype = {
+var arrayPrototype = {
     _splice: _splice,
     _fire: function (method, a, b) {
         notifySubscribers(this.$events[subscribers], method, a, b)
@@ -1750,7 +1749,7 @@ function sortByIndex(array, indexes) {
 }
 
 "sort,reverse".replace(rword, function (method) {
-    CollectionPrototype[method] = function () {
+    arrayPrototype[method] = function () {
         var newArray = this.$model//这是要排序的新数组
         var oldArray = newArray.concat() //保持原来状态的旧数组
         var mask = Math.random()
@@ -1847,8 +1846,6 @@ avalon.injectBinding = function (data) {
                 injectSubscribers(vmodel.$events[dependency._name], data)
             }
         })
-        // Registry[expose] = data //暴光此函数,方便collectSubscribers收集
-        avalon.openComputedCollect = true
         try {
             var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
             if (!data.noRefresh)
@@ -1866,7 +1863,6 @@ avalon.injectBinding = function (data) {
                 }
             }
         } finally {
-            avalon.openComputedCollect = false
             dependencyDetection.end()
         }
     }
@@ -4153,26 +4149,21 @@ bindingHandlers.repeat = function (data, vmodels) {
     } catch (e) {
         freturn = true
     }
-    var elem = data.element
-    if (freturn) {
-        avalon(data.element).addClass("avalonHide")
-        return
+    var arr = data.value.split(".") || []
+    if (arr.length > 1) {
+        arr.pop()
+        var n = arr[0]
+        for (var i = 0, v; v = vmodels[i++]; ) {
+            if (v && v.hasOwnProperty(n)) {
+                var events = v[n].$events || {}
+                events[subscribers] = events[subscribers] || []
+                events[subscribers].push(data)
+                break
+            }
+        }
     }
-    avalon(data.element).removeClass("avalonHide")
-//    var arr = data.value.split(".") || []
-//    if (arr.length > 1) {
-//        arr.pop()
-//        var n = arr[0]
-//        for (var i = 0, v; v = vmodels[i++]; ) {
-//            if (v && v.hasOwnProperty(n)) {
-//                var events = v[n].$events || {}
-//                events[subscribers] = events[subscribers] || []
-//                events[subscribers].push(data)
-//                break
-//            }
-//        }
-//    }
 
+    var elem = data.element
     elem.removeAttribute(data.name)
     data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
     data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
@@ -4193,7 +4184,7 @@ bindingHandlers.repeat = function (data, vmodels) {
         var elem = data.element
         if (!elem)
             return
-        bindingExecutors.repeat.call(data, "clear")
+        data.handler("clear")
         var parentNode = elem.parentNode
         var content = data.template
         var target = content.firstChild
@@ -4202,7 +4193,9 @@ bindingHandlers.repeat = function (data, vmodels) {
         start && start.parentNode && start.parentNode.removeChild(start)
         target = data.element = data.type === "repeat" ? target : parentNode
     }
-
+    if (freturn) {
+        return
+    }
     data.handler = bindingExecutors.repeat
     data.$outer = {}
     var check0 = "$key"
@@ -4223,7 +4216,6 @@ bindingHandlers.repeat = function (data, vmodels) {
     injectSubscribers($list, data)
     if (xtype === "object") {
         data.$with = true
-        //   var pool = !$events ? {} : $events.$withProxyPool || ($events.$withProxyPool = {})
         $repeat.$proxy || ($repeat.$proxy = {})
         data.handler("append", $repeat)
     } else if ($repeat.length) {
