@@ -3490,6 +3490,7 @@ bindingHandlers.repeat = function (data, vmodels) {
         elem.parentNode.replaceChild(comment, elem)
     }
     data.template = avalon.parseHTML(data.template)
+    data.handler = bindingExecutors.repeat
     data.rollback = function () {
         var elem = data.element
         if (!elem)
@@ -3506,7 +3507,7 @@ bindingHandlers.repeat = function (data, vmodels) {
     if (freturn) {
         return
     }
-    data.handler = bindingExecutors.repeat
+
     data.$outer = {}
     var check0 = "$key"
     var check1 = "$val"
@@ -3642,7 +3643,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 "with,each".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.repeat
 })
-
+avalon.pool = eachProxyPool
 function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)

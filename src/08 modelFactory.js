@@ -102,6 +102,9 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
+//    $vmodel.$reset = function (fn) {
+//        fn.call($vmodel, accessors)
+//    }
     for (i in EventBus) {
         var fn = EventBus[i]
         if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -194,11 +197,12 @@ function computeAndInjectSubscribers(vmodel, accessor, collect) {
                 if (dependency !== accessor) {
                     var list = vm.$events[name]
                     accessor.depCount++
-                    injectSubscribers(list, function () {
+                    injectSubscribers(list, function fn() {
                         accessor.curCount++
                         accessor.dirty = true
                         //这是由低层访问器触发的$watch回调，并阻止冗余的依赖收集
-                        return  computeAndInjectSubscribers(vmodel, accessor)
+                        computeAndInjectSubscribers(vmodel, accessor)
+                        avalon.Array.remove(list, fn)
                     })
                 }
             }
@@ -243,9 +247,9 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son.$proxy = $proxy
                 if (observes.length) {
                     observes.forEach(function (data) {
-                        if (data.$repeat) {
-                            data.handler("clear")
-                            data.handler("append", data.$repeat = son)
+                        if (data.rollback && data.type !== "duplex") {
+                            data.rollback() //还原 ms-with ms-on
+                            bindingHandlers[data.type](data, data.vmodels)
                         }
                     })
                     son.$events[name] = observes
