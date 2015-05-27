@@ -1251,11 +1251,11 @@ var makeComputedAccessor = function (name, options) {
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-            if (accessor.dirty) {
+          //  if (accessor.dirty) {
                 accessor.depCount = accessor.curCount = 0
                 //将自己注入到低层访问器的订阅数组中
                 oldValue = computeAndInjectSubscribers(this, accessor, true)
-            }
+        //    }
             return oldValue
         }
     }
@@ -2256,7 +2256,8 @@ function scanAttr(elem, vmodels, match) {
                             element: elem,
                             name: name,
                             value: value,
-                            priority: type in priorityMap ? priorityMap[type] : type.charCodeAt(0) * 10 + (Number(param) || 0)
+                             //chrome与firefox下Number(param)得到的值不一样 #855
+                            priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
                             var token = getToken(value)

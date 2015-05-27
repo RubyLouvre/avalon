@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="avalon.eon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "fund",
+                statistics: function () {
+                    var money = 0
+                    var uniq = {}
+                    vm.trade.forEach(function (el) {
+                        if (!uniq[el.code]) {
+                            //买入此基金
+                            uniq[el.code] = el.name
+                        } else {
+                            delete uniq[el.code]
+                        }
+                        var type = el.type ? 1 : -1
+                        money += type * el.money
+                    })
+                    var liveNames = []
+                    for (var i in uniq) {
+                        liveNames.push(uniq[i])
+                    }
+                    vm.money = money
+                    vm.liveNames = liveNames
+                    var money2 = 0
+                    vm.trade.forEach(function (el) {
+                        if (!uniq[el.code]) {
+                            var type = el.type ? 1 : -1
+                            money2 += type * el.money
+                        }
+                    })
+                    vm.money2 = money2
+                },
+                money2: 0,
+                money: 0,
+                liveNames: [],
+                trade: [
+                    {
+                        time: new Date("2015/3/24") - 0,
+                        code: 160706,
+                        name: "嘉实沪深300",
+                        type: false, //买
+                        lot: 2771.99,
+                        money: 3000,
+                        value: 1.0758
+                    },
+                    {
+                        time: new Date("2015/4/8") - 0,
+                        code: "000697",
+                        name: "汇添富移动互联股票",
+                        type: false, //买
+                        lot: 866.26,
+                        money: 2000,
+                        value: 2.2950
+                    },
+                    {
+                        time: new Date("2015/4/8") - 0,
+                        code: 519093,
+                        name: "新华钻石品质企业",
+                        type: false, //买
+                        lot: 1368.57,
+                        money: 3000,
+                        value: 2.1790
+                    },
+                    {
+                        time: new Date("2015/4/8") - 0,
+                        code: 161610,
+                        name: "融通领先成长（前端）",
+                        type: false, //买
+                        lot: 2271.22,
+                        money: 3000,
+                        value: 1.3130
+                    },
+                    {
+                        time: new Date("2015/4/14") - 0,
+                        code: 200008,
+                        name: "长城品牌优选",
+                        type: false, //买
+                        lot: 1108.18,
+                        money: 1500,
+                        value: 1.3455
+                    },
+                    {
+                        time: new Date("2015/4/14") - 0,
+                        code: 519019,
+                        name: "大成景阳领先",
+                        type: false, //买
+                        lot: 2503.87,
+                        money: 3000,
+                        value: 1.1910
+                    },
+                    {
+                        time: new Date("2015/4/14") - 0,
+                        code: 160706,
+                        name: "嘉实沪深300",
+                        type: false, //买
+                        lot: 3337.65,
+                        money: 4000,
+                        value: 1.1913
+                    },
+                    {
+                        time: new Date("2015/4/21") - 0,
+                        code: 519019,
+                        name: "大成景阳领先",
+                        type: true, //卖
+                        lot: 2503.87,
+                        money: 2670.73,
+                        value: 1.0720
+                    },
+                    {
+                        time: new Date("2015/4/21") - 0,
+                        code: 200008,
+                        name: "长城品牌优选",
+                        type: true, //卖
+                        lot: 1108.18,
+                        money: 1575.78,
+                        value: 1.4291
+                    },
+                    {
+                        time: new Date("2015/4/22") - 0,
+                        code: "000697",
+                        name: "汇添富移动互联股票",
+                        type: true, //卖
+                        lot: 866.26,
+                        money: 1971.43,
+                        value: 2.2930
+                    },
+                    {
+                        time: new Date("2015/4/21") - 0,
+                        code: 161610,
+                        name: "融通领先成长（前端）",
+                        type: true, //卖
+                        lot: 2271.22,
+                        money: 2766.07,
+                        value: 1.2240
+                    },
+                    {
+                        time: new Date("2015/4/24") - 0,
+                        code: 202021,
+                        name: "南方小康产业联接",
+                        type: false, //买
+                        lot: 2491.78,
+                        money: 4000,
+                        value: 1.5957
+                    },
+                    {
+                        time: new Date("2015/4/24") - 0,
+                        code: 160706,
+                        name: "嘉实沪深300",
+                        type: false, //买
+                        lot: 2341.66,
+                        money: 3000,
+                        value: 1.2735
+                    },
+                    {
+                        time: new Date("2015/4/30") - 0,
+                        code: 202021,
+                        name: "南方小康产业联接",
+                        type: true, //卖
+                        lot: 2491.78,
+                        money: 4107.24,
+                        value: 1.6566
+                    },
+                    {
+                        time: new Date("2015/4/30") - 0,
+                        code: 519093,
+                        name: "新华钻石品质企业",
+                        type: true, //卖
+                        lot: 1368.57,
+                        money: 3096.57,
+                        value: 2.2740
+                    },
+                    {
+                        time: new Date("2015/5/5") - 0,
+                        code: 202021,
+                        name: "南方小康产业联接",
+                        type: false,
+                        lot: 2948.61,
+                        money: 5000.00,
+                        value: 1.6856
+                    },
+                    {
+                        time: new Date("2015/5/14") - 0,
+                        code: 519979,
+                        name: "长信内需成长",
+                        type: false,
+                        lot: 1570.71,
+                        money: 3500.00,
+                        value: 2.2150
+                    },
+                    {
+                        time: new Date("2015/5/21") - 0,
+                        code: 590002,
+                        name: "中邮核心成长",
+                        type: false,
+                        lot: 4046.39,
+                        money: 5000.00,
+                        value: 1.2283
+                    }
+
+
+                ]
+            })
+        </script>
+        <style>
+            .checknone{
+                width:90%;
+                border:1px solid #c5c5c5;
+                border-collapse: collapse;
+            }
+            .checknone thead th{
+                background: #f7f7f7;
+            }
+            .checknone th{
+                padding: 4px 6px;
+                border:1px solid #c5c5c5;
+                font-weight: normal;
+            }
+        </style>
+    </head>
+    <body ms-controller="fund">
+        <div><button type="button" ms-click="statistics">统计</button></div>
+        <table class="checknone">
+            <thead>
+            <th>确认日期</th>
+            <th>基金代码</th>
+            <th>基金名称</th>
+            <th>业务类型</th>
+            <th>确认份额</th>
+            <th>确认金额</th>
+            <th>确认净值</th>
+            <th>状态</th>
+        </thead>
+        <tbody>
+            <tr ms-repeat="trade">
+                <th>{{el.time|date("yyyy/MM/dd")}}</th>
+                <th>{{el.code}}</th>
+                <th>{{el.name}}</th>
+                <th>{{el.type ? "卖基金确认": "买基金确认"}}</th>
+                <th>{{el.lot}}</th>
+                <th>￥{{el.money}}</th>
+                <th>{{el.value}}</th>
+                <th></th>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="8">
+                    还持有{{liveNames.size()}}只基金，分别是<span ms-repeat="liveNames">{{el}}、</span><br/>
+                    被平仓的基金带来{{money2}}元收益
+                    当前总回报 {{money}}元；
+
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>

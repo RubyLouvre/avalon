@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title></title>
+        <script type="text/javascript" src="avalon.js"></script>
+        <script type="text/javascript">
+            var vm = avalon.define({
+                $id: "test",
+                b: 1,
+                a: 2,
+                array: ["aaa", "bbb", "ccc"],
+                object: {
+                    aaa: 11,
+                    bbb: 22,
+                    ccc: 33
+                },
+                nest: {
+                    
+                },
+                array2: [{a: 1}, {a: 2}],
+                d: function () {
+                    return vm.c + "#d"
+                },
+                c: {
+                    get: function () {
+                        return this.a + this.b
+                    },
+                    set: function (v) {
+                        var arr = v.split(" ")
+                        this.a = Number(arr[0])
+                        this.b = ~~arr[1]
+                    }
+                }
+            })
+            vm.$watch("c", function (a, b) {
+                console.log(a, b)
+            })
+
+
+            setTimeout(function () {
+                vm.c = "7 8";
+                vm.array2[0].a = "111"
+                vm.array = [111, 222, 333]
+                vm.nest = {
+                    a: 888,
+                    array:[5,6,7,8]
+                }
+                vm.object.aaa = 888
+            }, 2000)
+            setTimeout(function () {
+                vm.a = 10
+
+            }, 4000)
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <div>{{a}} </div> 
+            <div>{{b}} </div> 
+
+            <div>{{c}} </div> 
+            <div>{{d()}} </div> 111
+            <div style="color:red"><input ms-duplex="nest.a"/></div>11111111111
+            <ul>
+                <li ms-repeat="array">{{el}}</li>
+            </ul>
+            <hr/>
+             <ul>
+                <li ms-repeat="nest.array">{{el}}</li>
+            </ul>
+            <hr/>
+            <div ms-repeat="array2">{{el.a}}</div>
+            <div ms-repeat="object">{{$key}}--{{$val}}</div>
+        </div>
+    </body>
+</html>

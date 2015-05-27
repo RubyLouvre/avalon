@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+    <html lang="zh-cn"><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <script type="text/javascript" src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aa: 1
+
+            })
+            setTimeout(function () {
+                vm.aa = 1000
+                avalon.define({
+                    $id: "test2",
+                    aa: 55
+
+                })
+            },1000)
+
+        </script>
+
+    </head>
+    <body>
+        <div ms-controller="test">
+            <h2>{{aa}}</h2>
+            
+    </body>
+</html>

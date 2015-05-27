@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="avalon.js"></script>
+        <script>
+            avalon.config({maxRepeatSize: 5})
+
+            window.onload = function () {
+                function expect(a) {
+                    return {
+                        to: {
+                            be: function (b) {
+                                console.log(a === b)
+                            }
+                        }
+                    }
+                }
+                function heredoc(fn) {
+                    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').replace(/\*\/[^\/]+$/, '')
+                }
+                function fireClick(el) {
+                    if (document.createEvent) {
+                        //https://developer.mozilla.org/samples/domref/dispatchEvent.html
+                        var evt = document.createEvent("MouseEvents")
+                        evt.initMouseEvent("click", true, true, window,
+                                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                        !el.dispatchEvent(evt);
+                    } else if (el.click) {
+                        el.click()
+                    }
+                }
+                var vm = avalon.define({
+                    $id: "test",
+           
+                        list: ["1"],
+                 
+                    click: function () {
+                        vm.list.push("3")
+                    },
+                    clear: function () {
+                        vm.list = []
+                    },
+                    serialize: function () {
+                        return vm.list.$model + ""
+                    }
+                })
+                var body = document.body
+                var div = document.createElement("div")
+                div.innerHTML = heredoc(function () {
+                    /*
+                     <a href="#"  ms-on-click="click">add</a> <br>
+                     <a href="#"  ms-on-click="serialize">serialize</a> <br>
+                     <a href="#"  ms-on-click="clear">clear</a>
+                     <p ms-repeat-el="list">
+                     <input type="text" ms-attr-hehe="$index"  ms-duplex="el">
+                     </p>
+                     */
+                })
+                body.appendChild(div)
+                avalon.scan(div, vm)
+                setTimeout(function () {
+                    var input = div.getElementsByTagName("input")[0]
+                    avalon.log("应该等于1:")
+                    expect(vm.serialize()).to.be("1")
+                    input.value = "2"
+                }, 100)
+                setTimeout(function () {
+                    avalon.log("应该等于2:")
+                    expect(vm.serialize()).to.be("2")
+                }, 200)
+                setTimeout(function () {
+                    var as = div.getElementsByTagName("a")
+                    fireClick(as[2]) //请空
+                    setTimeout(function () {
+                        var input = div.getElementsByTagName("input")
+                        avalon.log("页面上的input应该全部被清空:")
+                        expect(input.length).to.be(0)
+                        fireClick(as[0]) //添加3
+                     
+                        console.log("++++++++++++++++=")
+                        fireClick(as[0]) //添加3
+                        fireClick(as[0]) //添加3
+                        //    fireClick(as[0]) //添加3
+                    }, 300)
+                    setTimeout(function () {
+                        var input = div.getElementsByTagName("input")
+                        input[0].value = 8 //请空
+                        input[0].style.borderColor = "red"
+                        input[2].value = 7 //请空
+                    }, 600)
+
+                    setTimeout(function () {
+                        var input = div.getElementsByTagName("input")
+                        avalon.log("应该等于8:")
+                        expect(input[0].value).to.be("8")
+                        avalon.log("应该等于8,3,7:")
+                        expect(vm.serialize()).to.be("8,3,7")
+                        //    clearTest("repeat-has-duplex", div, done)
+                    }, 1000)
+                }, 300)
+
+            }
+        </script>
+    </head>
+    <body>
+        <div>TODO write content</div>
+    </body>
+</html>

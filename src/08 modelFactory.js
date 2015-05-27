@@ -173,11 +173,11 @@ var makeComputedAccessor = function (name, options) {
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-            if (accessor.dirty) {
+          //  if (accessor.dirty) {
                 accessor.depCount = accessor.curCount = 0
                 //将自己注入到低层访问器的订阅数组中
                 oldValue = computeAndInjectSubscribers(this, accessor, true)
-            }
+        //    }
             return oldValue
         }
     }
