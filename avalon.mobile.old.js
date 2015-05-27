@@ -1240,69 +1240,42 @@ var makeComputedAccessor = function (name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
+        var name = accessor._name
+        var getter = accessor.get
+        var setter = accessor.set
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.callSet = true
-            accessor.set.call(this, value)
-            accessor.callSet = false
+            var $events = this.$events
+            var lock = $events[name]
+            $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+            setter.call(this, value)
+            $events[name] = lock
+            value = getter.call(this)
+            if (!isEqual(oldValue, value)) {
+                accessor.updateValue(this, value)
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-          //  if (accessor.dirty) {
-                accessor.depCount = accessor.curCount = 0
-                //将自己注入到低层访问器的订阅数组中
-                oldValue = computeAndInjectSubscribers(this, accessor, true)
-        //    }
-            return oldValue
+            value = getter.call(this)
+            if (oldValue !== value) {
+                accessor.updateValue(this, value)
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
+            //将自己注入到低层访问器的订阅数组中
+            return value
         }
     }
     accessor.set = options.set
     accessor.get = options.get
-    accessor.dirty = true
     accessorFactory(accessor, name)
     return accessor
 }
 
-function computeAndInjectSubscribers(vmodel, accessor, collect) {
-    var oldValue = accessor._value
-    if (collect) {
-        dependencyDetection.begin({
-            callback: function (vm, dependency) {//dependency为一个accessor
-                var name = dependency._name
-                if (dependency !== accessor) {
-                    var list = vm.$events[name]
-                    accessor.depCount++
-                    injectSubscribers(list, function fn() {
-                        accessor.curCount++
-                        accessor.dirty = true
-                        //这是由低层访问器触发的$watch回调，并阻止冗余的依赖收集
-                        computeAndInjectSubscribers(vmodel, accessor)
-                        avalon.Array.remove(list, fn)
-                    })
-                }
-            }
-        })
-    }
-    try {
-        var newValue = accessor.get.call(vmodel)
-    } finally {
-        collect && dependencyDetection.end()
-    }
-    if (!isEqual(newValue, oldValue)) {
-        accessor.updateValue(vmodel, newValue)
-        accessor.dirty = false
-        //如果是setter触发，需要依赖次数depCount等于调用次数curCount
-        if (accessor.callSet ? accessor.depCount === accessor.curCount : 1) {
-            accessor.curCount = 0
-            accessor.notify(vmodel, newValue, oldValue)
-        }
-        oldValue = newValue
-    }
-    return oldValue
-}
 //创建一个复杂访问器
 var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
