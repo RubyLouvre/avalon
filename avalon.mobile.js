@@ -956,7 +956,7 @@ var makeSimpleAccessor = function (name, value) {
     return accessor;
 }
 
-//创建一个计算访问器
+///创建一个计算访问器
 var makeComputedAccessor = function (name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
@@ -965,64 +965,49 @@ var makeComputedAccessor = function (name, options) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.callSet = true
             accessor.set.call(this, value)
-            accessor.callSet = false
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-            if (accessor.dirty) {
-                accessor.depCount = accessor.curCount = 0
-                //将自己注入到低层访问器的订阅数组中
-                oldValue = computeAndInjectSubscribers(this, accessor, true)
+            if (!accessor.digest) {
+                var vm = this
+                var id
+                accessor.digest = function () {
+                    clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
+                    id = setTimeout(function () {
+                        accessor.call(vm)
+                    })
+                }
             }
-            return oldValue
+            dependencyDetection.begin({
+                callback: function (vm, dependency) {//dependency为一个accessor
+                    var name = dependency._name
+                    if (dependency !== accessor) {
+                        var list = vm.$events[name]
+                        injectSubscribers(list, accessor.digest)
+                    }
+                }
+            })
+            try {
+                value = accessor.get.call(this)
+            } finally {
+                dependencyDetection.end()
+            }
+            if (oldValue !== value) {
+                accessor.updateValue(this, value)
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
+            //将自己注入到低层访问器的订阅数组中
+            return value
         }
     }
-    accessor.set = options.set
+    accessor.set = options.set || noop
     accessor.get = options.get
-    accessor.dirty = true
     accessorFactory(accessor, name)
     return accessor
 }
 
-function computeAndInjectSubscribers(vmodel, accessor, collect) {
-    var oldValue = accessor._value
-    if (collect) {
-        dependencyDetection.begin({
-            callback: function (vm, dependency) {//dependency为一个accessor
-                var name = dependency._name
-                if (dependency !== accessor) {
-                    var list = vm.$events[name]
-                    accessor.depCount++
-                    injectSubscribers(list, function () {
-                        accessor.curCount++
-                        accessor.dirty = true
-                        //这是由低层访问器触发的$watch回调，并阻止冗余的依赖收集
-                        return  computeAndInjectSubscribers(vmodel, accessor, false)
-                    })
-                }
-            }
-        })
-    }
-    try {
-        var newValue = accessor.get.call(vmodel)
-    } finally {
-        collect && dependencyDetection.end()
-    }
-    if (!isEqual(newValue, oldValue)) {
-        accessor.updateValue(vmodel, newValue)
-        accessor.dirty = false
-        //如果是setter触发，需要依赖次数depCount等于调用次数curCount
-        if (accessor.callSet ? accessor.depCount === accessor.curCount : 1) {
-            accessor.curCount = 0
-            accessor.notify(vmodel, newValue, oldValue)
-        }
-        oldValue = newValue
-    }
-    return oldValue
-}
 //创建一个复杂访问器
 var makeComplexAccessor = function (name, initValue, valueType) {
     function accessor(value) {
@@ -1045,9 +1030,9 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son.$proxy = $proxy
                 if (observes.length) {
                     observes.forEach(function (data) {
-                        if (data.$repeat) {
-                            data.handler("clear")
-                            data.handler("append", data.$repeat = son)
+                        if (data.rollback && data.type !== "duplex") {
+                            data.rollback() //还原 ms-with ms-on
+                            bindingHandlers[data.type](data, data.vmodels)
                         }
                     })
                     son.$events[name] = observes
@@ -1072,7 +1057,6 @@ function accessorFactory(accessor, name) {
     accessor.updateValue = function (vmodel, value) {
         vmodel.$model[this._name] = this._value = value
     }
-
     accessor.notify = function (vmodel, value, oldValue) {
         var name = this._name
         var array = vmodel.$events[name] //刷新值
@@ -1108,7 +1092,7 @@ function isObservable(name, value, $skipArray) {
     return true
 }
 
-var descriptorFactory =  function (obj) {
+var descriptorFactory = function (obj) {
     var descriptors = {}
     for (var i in obj) {
         descriptors[i] = {

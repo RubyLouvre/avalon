@@ -23,7 +23,7 @@ if (!canHideOwn) {
         }
     }
     if (IEVersion) {
-        var VBClass = {}
+        var VBClassPool = {}
         window.execScript([// jshint ignore:line
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
@@ -81,10 +81,9 @@ if (!canHideOwn) {
 
             buffer.push("End Class")
             var body = buffer.join("\r\n")
-            var className = "VBClass" + setTimeout("1")
-            if (VBClass[body]) {
-                className = VBClass[body]
-            } else {
+            var className =VBClassPool[body]   
+            if (!className) {
+                className = generateID("VBClass")
                 window.parseVB("Class " + className + body)
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
@@ -93,7 +92,7 @@ if (!canHideOwn) {
                     "\tSet " + className + "Factory = o",
                     "End Function"
                 ].join("\r\n"))
-                VBClass[body] = className
+                VBClassPool[body] = className
             }
             var ret = window[className + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品

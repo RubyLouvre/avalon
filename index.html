@@ -7,29 +7,27 @@
         <script type="text/javascript">
             var vm = avalon.define({
                 $id: "test",
-              
                 a: 2,
-                  b: 1,
-//                array: ["aaa", "bbb", "ccc"],
-//                object: {
-//                    aaa: 11,
-//                    bbb: 22,
-//                    ccc: 33
-//                },
-//                nest: {
-//                    
-//                },
-//                array2: [{a: 1}, {a: 2}],
-//                d: function () {
-//                    return vm.c + "#d"
-//                },
+                b: 1,
+                array: ["aaa", "bbb", "ccc"],
+                object: {
+                    aaa: 11,
+                    bbb: 22,
+                    ccc: 33
+                },
+                nest: {
+                },
+                array2: [{a: 1}, {a: 2}],
+                d: function () {
+                    return vm.c + "#d"
+                },
                 c: {
                     get: function () {
                         return this.a + this.b
                     },
                     set: function (v) {
                         var arr = v.split(" ")
-                        this.a = Number(arr[0])
+                        this.a = Number(arr[0]) || 0
                         this.b = ~~arr[1]
                     }
                 }
@@ -41,16 +39,16 @@
 
             setTimeout(function () {
                 vm.c = "7 8";
-//                vm.array2[0].a = "111"
-//                vm.array = [111, 222, 333]
-//                vm.nest = {
-//                    a: 888,
-//                    array:[5,6,7,8]
-//                }
-//                vm.object.aaa = 888
+                vm.array2[0].a = "111"
+                vm.array = [111, 222, 333]
+                vm.nest = {
+                    a: 888,
+                    array: [5, 6, 7, 8]
+                }
+                vm.object.aaa = 888
             }, 2000)
             setTimeout(function () {
-              //  vm.a = 10
+                vm.a = 10
 
             }, 4000)
         </script>
@@ -60,14 +58,14 @@
             <div>{{a}} </div> 
             <div>{{b}} </div> 
 
-            <div>{{c}} </div> 
-<!--            <div>{{d()}} </div> -->
-<!--            <div style="color:red"><input ms-duplex="nest.a"/></div>11111111111
+            <div>{{c}}</div> 
+<!--            <div>{{d()}} </div> 
+            <div style="color:red"><input ms-duplex="nest.a"/></div>11111111111
             <ul>
                 <li ms-repeat="array">{{el}}</li>
             </ul>
             <hr/>
-             <ul>
+            <ul>
                 <li ms-repeat="nest.array">{{el}}</li>
             </ul>
             <hr/>

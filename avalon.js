@@ -1240,28 +1240,39 @@ var makeComputedAccessor = function (name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var name = accessor._name
-        var getter = accessor.get
-        var setter = accessor.set
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            var $events = this.$events
-            var lock = $events[name]
-            $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
-            setter.call(this, value)
-            $events[name] = lock
-            value = getter.call(this)
-            if (!isEqual(oldValue, value)) {
-                accessor.updateValue(this, value)
-                accessor.notify(this, value, oldValue) //触发$watch回调
-            }
+            accessor.set.call(this, value)
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             dependencyDetection.collectDependency(this, accessor)
-            value = getter.call(this)
+            if (!accessor.digest) {
+                var vm = this
+                var id
+                accessor.digest = function () {
+                    clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
+                    id = setTimeout(function(){
+                         accessor.call(vm)
+                    })
+                }
+            }
+            dependencyDetection.begin({
+                callback: function (vm, dependency) {//dependency为一个accessor
+                    var name = dependency._name
+                    if (dependency !== accessor) {
+                        var list = vm.$events[name]
+                        injectSubscribers(list, accessor.digest)
+                    }
+                }
+            })
+            try {
+                value = accessor.get.call(this)
+            } finally {
+                dependencyDetection.end()
+            }
             if (oldValue !== value) {
                 accessor.updateValue(this, value)
                 accessor.notify(this, value, oldValue) //触发$watch回调
@@ -1270,7 +1281,7 @@ var makeComputedAccessor = function (name, options) {
             return value
         }
     }
-    accessor.set = options.set
+    accessor.set = options.set || noop
     accessor.get = options.get
     accessorFactory(accessor, name)
     return accessor
@@ -1401,7 +1412,7 @@ if (!canHideOwn) {
         }
     }
     if (IEVersion) {
-        var VBClass = {}
+        var VBClassPool = {}
         window.execScript([// jshint ignore:line
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
@@ -1459,10 +1470,9 @@ if (!canHideOwn) {
 
             buffer.push("End Class")
             var body = buffer.join("\r\n")
-            var className = "VBClass" + setTimeout("1")
-            if (VBClass[body]) {
-                className = VBClass[body]
-            } else {
+            var className =VBClassPool[body]   
+            if (!className) {
+                className = generateID("VBClass")
                 window.parseVB("Class " + className + body)
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
@@ -1471,7 +1481,7 @@ if (!canHideOwn) {
                     "\tSet " + className + "Factory = o",
                     "End Function"
                 ].join("\r\n"))
-                VBClass[body] = className
+                VBClassPool[body] = className
             }
             var ret = window[className + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品
