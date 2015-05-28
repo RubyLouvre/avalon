@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.44 built in 2015.5.27
+ avalon.mobile.js 1.44 built in 2015.5.28
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -961,6 +961,7 @@ var makeComputedAccessor = function (name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
+        var init = "_value" in accessor
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
@@ -974,8 +975,12 @@ var makeComputedAccessor = function (name, options) {
                 var vm = this
                 var id
                 accessor.digest = function () {
+                    accessor.updateValue = globalUpdateModelValue
+                    accessor.notify = noop
+                    accessor.call(vm)
                     clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
                     id = setTimeout(function () {
+                        accessorFactory(accessor, accessor._name)
                         accessor.call(vm)
                     })
                 }
@@ -996,7 +1001,7 @@ var makeComputedAccessor = function (name, options) {
             }
             if (oldValue !== value) {
                 accessor.updateValue(this, value)
-                accessor.notify(this, value, oldValue) //触发$watch回调
+                init && accessor.notify(this, value, oldValue) //触发$watch回调
             }
             //将自己注入到低层访问器的订阅数组中
             return value
@@ -1030,7 +1035,7 @@ var makeComplexAccessor = function (name, initValue, valueType) {
                 son.$proxy = $proxy
                 if (observes.length) {
                     observes.forEach(function (data) {
-                        if (data.rollback && data.type !== "duplex") {
+                        if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                             bindingHandlers[data.type](data, data.vmodels)
                         }
@@ -1051,22 +1056,27 @@ var makeComplexAccessor = function (name, initValue, valueType) {
     return accessor
 }
 
-function accessorFactory(accessor, name) {
-    accessor._name = name
-    //同时更新_value与model
-    accessor.updateValue = function (vmodel, value) {
-        vmodel.$model[this._name] = this._value = value
-    }
-    accessor.notify = function (vmodel, value, oldValue) {
-        var name = this._name
-        var array = vmodel.$events[name] //刷新值
-        if (array) {
-            notifySubscribers(array) //同步视图
-            EventBus.$fire.call(vmodel, name, value, oldValue) //触发$watch回调
-        }
+function globalUpdateValue(vmodel, value) {
+    vmodel.$model[this._name] = this._value = value
+}
+function globalUpdateModelValue(vmodel, value) {
+    vmodel.$model[this._name] = value
+}
+function globalNotify(vmodel, value, oldValue) {
+    var name = this._name
+    var array = vmodel.$events[name] //刷新值
+    if (array) {
+        notifySubscribers(array) //同步视图
+        EventBus.$fire.call(vmodel, name, value, oldValue) //触发$watch回调
     }
 }
 
+function accessorFactory(accessor, name) {
+    accessor._name = name
+    //同时更新_value与model
+    accessor.updateValue = globalUpdateValue
+    accessor.notify = globalNotify
+}
 //比较两个值是否相等
 var isEqual = Object.is || function (v1, v2) {
     if (v1 === 0 && v2 === 0) {
@@ -1418,6 +1428,7 @@ function eachProxyAgent(index, host) {
     proxy.$first = index === 0
     proxy.$last = index === last
     proxy.$map = host.$map
+//    proxy.el = host[index]
     proxy.$remove = function () {
         return host.removeAt(proxy.$index)
     }
@@ -3918,7 +3929,7 @@ var filters = avalon.filters = {
     truncate: function(str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         length = length || 30
-        truncation = truncation === void(0) ? "..." : truncation
+        truncation = typeof truncation === "string" ?  truncation : "..." 
         return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
     $filter: function(val) {
