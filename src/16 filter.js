@@ -56,7 +56,7 @@ var filters = avalon.filters = {
     truncate: function(str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         length = length || 30
-        truncation = truncation === void(0) ? "..." : truncation
+        truncation = typeof truncation === "string" ?  truncation : "..." 
         return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
     $filter: function(val) {
