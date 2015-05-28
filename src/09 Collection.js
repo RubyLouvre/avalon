@@ -310,7 +310,6 @@ function eachProxyAgent(index, host) {
     proxy.$first = index === 0
     proxy.$last = index === last
     proxy.$map = host.$map
-//    proxy.el = host[index]
     proxy.$remove = function () {
         return host.removeAt(proxy.$index)
     }
