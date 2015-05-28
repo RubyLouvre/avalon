@@ -1180,9 +1180,6 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-//    $vmodel.$reset = function (fn) {
-//        fn.call($vmodel, accessors)
-//    }
     for (i in EventBus) {
         var fn = EventBus[i]
         if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
@@ -1213,7 +1210,7 @@ function modelFactory(source, $special, $model) {
     return $vmodel
 }
 //创建一个简单访问器
-var makeSimpleAccessor = function (name, value) {
+function makeSimpleAccessor(name, value) {
     function accessor(value) {
         var oldValue = accessor._value
         if (arguments.length > 0) {
@@ -1236,7 +1233,7 @@ var makeSimpleAccessor = function (name, value) {
 }
 
 //创建一个计算访问器
-var makeComputedAccessor = function (name, options) {
+function makeComputedAccessor(name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
@@ -1293,7 +1290,7 @@ var makeComputedAccessor = function (name, options) {
 }
 
 //创建一个复杂访问器
-var makeComplexAccessor = function (name, initValue, valueType) {
+function makeComplexAccessor(name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
@@ -1812,7 +1809,6 @@ function eachProxyAgent(index, host) {
     proxy.$first = index === 0
     proxy.$last = index === last
     proxy.$map = host.$map
-//    proxy.el = host[index]
     proxy.$remove = function () {
         return host.removeAt(proxy.$index)
     }

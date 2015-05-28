@@ -110,7 +110,7 @@ function modelFactory(source, $special, $model) {
 }
 
 //创建一个简单访问器
-var makeSimpleAccessor = function (name, value) {
+function makeSimpleAccessor(name, value) {
     function accessor(value) {
         var oldValue = accessor._value
         if (arguments.length > 0) {
@@ -133,7 +133,7 @@ var makeSimpleAccessor = function (name, value) {
 }
 
 ///创建一个计算访问器
-var makeComputedAccessor = function (name, options) {
+function makeComputedAccessor(name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
@@ -190,7 +190,7 @@ var makeComputedAccessor = function (name, options) {
 }
 
 //创建一个复杂访问器
-var makeComplexAccessor = function (name, initValue, valueType) {
+function makeComplexAccessor(name, initValue, valueType) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
