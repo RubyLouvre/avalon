@@ -4480,7 +4480,7 @@ new function () {// jshint ignore:line
                 pkg = typeof pkg === "string" ? {name: pkg} : pkg
                 var name = pkg.name
                 if (!uniq[name]) {
-                    var url =  joinPath(pkg.location || name, pkg.main || "main")
+                    var url = joinPath(pkg.location || name, pkg.main || "main")
                     url = url.replace(rjsext, "")
                     ret.push(pkg)
                     uniq[name] = pkg.location = url
@@ -4642,7 +4642,9 @@ new function () {// jshint ignore:line
                         onLoad(xhr.responseText)
                     }
                 }
-                xhr.open("GET", url, true)
+                var time = "_=" + (new Date() - 0)
+                var _url = url.indexOf("?") === -1 ? url + "?" + time : url + "&" + time
+                xhr.open("GET", _url, true)
                 if ("withCredentials" in xhr) {//这是处理跨域
                     xhr.withCredentials = true
                 }

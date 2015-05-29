@@ -5259,7 +5259,7 @@ new function () {// jshint ignore:line
         }
     }
 
-    var rreadyState = /complete|loaded/ 
+    var rreadyState = /complete|loaded/
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
@@ -5278,7 +5278,7 @@ new function () {// jshint ignore:line
                 checkDeps()
             }
         }
-        var index = 0,  loadID
+        var index = 0, loadID
         node[onEvent] = supportLoad ? onload : function () {
             if (rreadyState.test(node.readyState)) {
                 ++index
@@ -5347,7 +5347,9 @@ new function () {// jshint ignore:line
                         }
                     }
                 }
-                xhr.open("GET", url, true)
+                var time = "_=" + (new Date() - 0)
+                var _url = url.indexOf("?") === -1 ? url + "?" + time : url + "&" + time
+                xhr.open("GET", _url, true)
                 if ("withCredentials" in xhr) {//这是处理跨域
                     xhr.withCredentials = true
                 }
