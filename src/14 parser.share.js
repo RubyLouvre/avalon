@@ -145,6 +145,7 @@ function parseExpr(code, scopes, data) {
     //---------------args----------------
     data.args = args
     //---------------cache----------------
+    delete data.vars
     var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
     if (fn) {
         data.evaluator = fn

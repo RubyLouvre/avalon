@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.44 built in 2015.5.28
+ avalon.shim.js(无加载器版本) 1.44 built in 2015.5.29
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1818,39 +1818,7 @@ function eachProxyAgent(index, host) {
 /*********************************************************************
  *                           依赖调度系统                             *
  **********************************************************************/
-var ronduplex = /^(duplex|on)$/
-
-avalon.injectBinding = function (data) {
-    var fn = data.evaluator
-    if (fn) { //如果是求值函数
-        dependencyDetection.begin({
-            callback: function (vmodel, dependency) {
-                injectSubscribers(vmodel.$events[dependency._name], data)
-            }
-        })
-        try {
-            var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-            if (!data.noRefresh)
-                data.handler(c, data.element, data)
-        } catch (e) {
-            //log("warning:exception throwed in [avalon.injectBinding] " + e)
-            delete data.evaluator
-            var node = data.element
-            if (node.nodeType === 3) {
-                var parent = node.parentNode
-                if (kernel.commentInterpolate) {
-                    parent.replaceChild(DOC.createComment(data.value), node)
-                } else {
-                    node.data = openTag + data.value + closeTag
-                }
-            }
-        } finally {
-            dependencyDetection.end()
-        }
-    }
-}
-
-
+//检测两个对象间的依赖关系
 var dependencyDetection = (function () {
     var outerFrames = []
     var currentFrame
@@ -1871,6 +1839,36 @@ var dependencyDetection = (function () {
         }
     };
 })()
+//将绑定对象注入到其依赖项的订阅数组中
+var ronduplex = /^(duplex|on)$/
+avalon.injectBinding = function (data) {
+    var fn = data.evaluator
+    if (fn) { //如果是求值函数
+        dependencyDetection.begin({
+            callback: function (vmodel, dependency) {
+                injectSubscribers(vmodel.$events[dependency._name], data)
+            }
+        })
+        try {
+            var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
+            data.handler(c, data.element, data)
+        } catch (e) {
+            //log("warning:exception throwed in [avalon.injectBinding] " + e)
+            delete data.evaluator
+            var node = data.element
+            if (node.nodeType === 3) {
+                var parent = node.parentNode
+                if (kernel.commentInterpolate) {
+                    parent.replaceChild(DOC.createComment(data.value), node)
+                } else {
+                    node.data = openTag + data.value + closeTag
+                }
+            }
+        } finally {
+            dependencyDetection.end()
+        }
+    }
+}
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
 function injectSubscribers(list, data) {
@@ -1879,94 +1877,31 @@ function injectSubscribers(list, data) {
         addSubscribers(data, list)
     }
 }
+var disposeCount = 0
+function getUid(obj) { //IE9+,标准浏览器
+    return obj.uniqueNumber || (obj.uniqueNumber = ++disposeCount)
+}
 
-
+//添加到回收列队中
 function addSubscribers(data, list) {
-    data.$uuid = data.$uuid || generateID()
-    list.$uuid = list.$uuid || generateID()
-    var obj = {
-        data: data,
-        list: list,
-        $$uuid: data.$uuid + list.$uuid
-    }
-    if (!$$subscribers[obj.$$uuid]) {
-        $$subscribers[obj.$$uuid] = 1
-        $$subscribers.push(obj)
-    }
-}
-
-function disposeData(data) {
-    data.element = null
-    data.rollback && data.rollback()
-    for (var key in data) {
-        data[key] = null
-    }
-}
-
-function isRemove(el) {
-    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
-        if (!el.parentNode) {
-            return true
-        }
-    } catch (e) {
-        return true
-    }
-    return el.msRetain ? 0 : (el.nodeType === 1 ? typeof el.sourceIndex === "number" ?
-            el.sourceIndex === 0 : !root.contains(el) : !avalon.contains(root, el))
-}
-var $$subscribers = avalon.$$subscribers = []
-var beginTime = new Date()
-var oldInfo = {}
-function removeSubscribers() {
-    var i = $$subscribers.length
-    var n = i
-    var k = 0
-    var obj
-    var types = []
-    var newInfo = {}
-    var needTest = {}
-    while (obj = $$subscribers[--i]) {
-        var data = obj.data
-        var type = data.type
-        if (newInfo[type]) {
-            newInfo[type]++
+    var elem = data.element
+    if (!data.uuid) {
+        if (elem.nodeType !== 1) {
+            data.uuid = data.type + (data.pos || 0) + "-" + getUid(elem.parentNode)
         } else {
-            newInfo[type] = 1
-            types.push(type)
+            data.uuid = data.name + "-" + getUid(elem)
         }
     }
-    var diff = false
-    types.forEach(function (type) {
-        if (oldInfo[type] !== newInfo[type]) {
-            needTest[type] = 1
-            diff = true
-        }
-    })
-    i = n
-    //avalon.log("需要检测的个数 " + i)
-    if (diff) {
-        //avalon.log("有需要移除的元素")
-        while (obj = $$subscribers[--i]) {
-            data = obj.data
-            if (data.element === void 0)
-                continue
-            if (needTest[data.type] && isRemove(data.element)) { //如果它没有在DOM树
-                k++
-                $$subscribers.splice(i, 1)
-                delete $$subscribers[obj.$$uuid]
-                avalon.Array.remove(obj.list, data)
-                //log("debug: remove " + data.type)
-                disposeData(data)
-                obj.data = obj.list = null
-            }
-        }
+    var lists = data.lists || (data.lists = [])
+    avalon.Array.ensure(lists, list)
+    list.$uuid = list.$uuid || generateID()
+    if (!$$subscribers[data.uuid]) {
+        $$subscribers[data.uuid] = 1
+        $$subscribers.push(data)
     }
-    oldInfo = newInfo
-    // avalon.log("已经移除的个数 " + k)
-    beginTime = new Date()
 }
-
-function notifySubscribers(list) { //通知依赖于这个访问器的订阅者更新自身
+//通知依赖于这个访问器的订阅者更新自身
+function notifySubscribers(list) {
     if (list && list.length) {
         if (new Date() - beginTime > 444 && typeof list[0] === "object") {
             removeSubscribers()
@@ -1984,6 +1919,75 @@ function notifySubscribers(list) { //通知依赖于这个访问器的订阅者�
             }
         }
     }
+}
+
+var $$subscribers = avalon.$$subscribers = []
+var beginTime = new Date()
+var oldInfo = {}
+function removeSubscribers(data) {
+    var i = $$subscribers.length
+    var n = i
+    var allTypes = []
+    var iffishTypes = {}
+    var newInfo = {}
+    //对页面上所有绑定对象进行分门别类, 只检测个数发生变化的类型
+    while (data = $$subscribers[--i]) {
+        var type = data.type
+        if (newInfo[type]) {
+            newInfo[type]++
+        } else {
+            newInfo[type] = 1
+            allTypes.push(type)
+        }
+    }
+    var diff = false
+    allTypes.forEach(function (type) {
+        if (oldInfo[type] !== newInfo[type]) {
+            iffishTypes[type] = 1
+            diff = true
+        }
+    })
+    i = n
+    if (diff) {
+        while (data = $$subscribers[--i]) {
+            if (!data.element)
+                continue
+            if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
+                $$subscribers.splice(i, 1)
+                delete $$subscribers[data.uuid]
+                var lists = data.lists
+                for (var k = 0, list; list = lists[k++]; ) {
+                    avalon.Array.remove(lists, list)
+                }
+                disposeData(data)
+            }
+        }
+    }
+    oldInfo = newInfo
+    beginTime = new Date()
+}
+
+function disposeData(data) {
+    data.element = null
+    data.rollback && data.rollback()
+    for (var key in data) {
+        data[key] = null
+    }
+}
+
+
+var supportSourceIndex = root.sourceIndex === "number"
+
+function shouldDispose(el) {
+    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
+        if (!el.parentNode) {
+            return true
+        }
+    } catch (e) {
+        return true
+    }
+
+   return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }
 
 /************************************************************************
@@ -2414,7 +2418,7 @@ var rhasHtml = /\|\s*html\s*/,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
         rstringLiteral  = /(['"])(\\\1|.)+?\1/g
-function getToken(value) {
+function getToken(value, pos) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace( rstringLiteral, function(_){
             return Array(_.length+1).join("1")// jshint ignore:line
@@ -2424,6 +2428,7 @@ function getToken(value) {
             return {
                 filters: value.slice(index),
                 value: value.slice(0, index),
+                pos: pos || 0,
                 expr: true
             }
         }
@@ -2459,7 +2464,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value))
+            tokens.push(getToken(value, start))
         }
         start = stop + closeTag.length
     } while (1)
@@ -3217,6 +3222,7 @@ function parseExpr(code, scopes, data) {
     //---------------args----------------
     data.args = args
     //---------------cache----------------
+    delete data.vars
     var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
     if (fn) {
         data.evaluator = fn

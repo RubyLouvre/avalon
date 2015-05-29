@@ -3,7 +3,7 @@ var rhasHtml = /\|\s*html\s*/,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
         rstringLiteral  = /(['"])(\\\1|.)+?\1/g
-function getToken(value) {
+function getToken(value, pos) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace( rstringLiteral, function(_){
             return Array(_.length+1).join("1")// jshint ignore:line
@@ -13,6 +13,7 @@ function getToken(value) {
             return {
                 filters: value.slice(index),
                 value: value.slice(0, index),
+                pos: pos || 0,
                 expr: true
             }
         }
@@ -48,7 +49,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value))
+            tokens.push(getToken(value, start))
         }
         start = stop + closeTag.length
     } while (1)
