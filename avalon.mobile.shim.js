@@ -1593,9 +1593,6 @@ function disposeData(data) {
     }
 }
 
-
-var supportSourceIndex = root.sourceIndex === "number"
-
 function shouldDispose(el) {
     try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
         if (!el.parentNode) {
