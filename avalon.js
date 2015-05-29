@@ -4189,6 +4189,17 @@ bindingHandlers.repeat = function (data, vmodels) {
     var check0 = "$key"
     var check1 = "$val"
     if (Array.isArray($repeat)) {
+        if (!$repeat.$map) {
+            $repeat.$map = {
+                el: 1
+            }
+            var m = $repeat.length
+            var $proxy = []
+            for ( i = 0; i < m; i++) {//生成代理VM
+                $proxy.push(eachProxyAgent(i, $repeat))
+            }
+            $repeat.$proxy = $proxy
+        }
         $repeat.$map[data.param || "el"] = 1
         check0 = "$first"
         check1 = "$last"
