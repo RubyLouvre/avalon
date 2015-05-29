@@ -5,8 +5,8 @@ bindingExecutors.html = function(val, elem, data) {
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
         return
-    if (typeof val === "string") {
-        var fragment = avalon.parseHTML(val)
+     if (typeof val !== "object") {//string, number, boolean
+        var fragment = avalon.parseHTML(String(val))
     } else if (val.nodeType === 11) { //将val转换为文档碎片
         fragment = val
     } else if (val.nodeType === 1 || val.item) {
