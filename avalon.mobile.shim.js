@@ -1576,6 +1576,7 @@ function removeSubscribers(data) {
                 var lists = data.lists
                 for (var k = 0, list; list = lists[k++]; ) {
                     avalon.Array.remove(lists, list)
+                    avalon.Array.remove(list, data)
                 }
                 disposeData(data)
             }
@@ -1602,7 +1603,7 @@ function shouldDispose(el) {
         return true
     }
 
-   return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
+    return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }
 
 /************************************************************************
