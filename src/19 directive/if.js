@@ -10,9 +10,7 @@ bindingExecutors["if"] = function(val, elem, data) {
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)
-            
-            
-            animate.enter(data.template, elem.parentNode, elem)
+            animate.enter(data.template, elem.parentNode)
             elem = data.element = data.template //这时可能为null
         }
         if (elem.getAttribute(data.name)) {
@@ -24,7 +22,7 @@ bindingExecutors["if"] = function(val, elem, data) {
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
-            animate.leave(elem)
+            animate.leave(elem, node.parentNode, node)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
             data.rollback = function() {
