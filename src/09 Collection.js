@@ -73,7 +73,7 @@ var _splice = ap.splice
 var arrayPrototype = {
     _splice: _splice,
     _fire: function (method, a, b) {
-        notifySubscribers(this.$events[subscribers], method, a, b)
+        fireDependencies(this.$events[subscribers], method, a, b)
     },
     size: function () { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
@@ -200,7 +200,7 @@ var arrayPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    notifySubscribers(proxy.$events.el)
+                    fireDependencies(proxy.$events.el)
                 }
             }
         }

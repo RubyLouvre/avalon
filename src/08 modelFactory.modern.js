@@ -166,7 +166,7 @@ function makeComputedAccessor(name, options) {
                     var name = dependency._name
                     if (dependency !== accessor) {
                         var list = vm.$events[name]
-                        injectSubscribers(list, accessor.digest)
+                        injectDependency(list, accessor.digest)
                     }
                 }
             })
@@ -242,7 +242,7 @@ function globalNotify(vmodel, value, oldValue) {
     var name = this._name
     var array = vmodel.$events[name] //刷新值
     if (array) {
-        notifySubscribers(array) //同步视图
+        fireDependencies(array) //同步视图
         EventBus.$fire.call(vmodel, name, value, oldValue) //触发$watch回调
     }
 }

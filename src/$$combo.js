@@ -9,7 +9,7 @@ var now = new Date
 var version = 1.42
 var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 function directive(name) {
-    return path.join("15 directive", name)
+    return path.join("18 directive", name)
 }
 
 new function() {
@@ -62,15 +62,15 @@ function comboFiles(files, writer, lastCallback, statement) {
 var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core","03 cache", "04 es5.shim",
     "05 dom.polyfill", "06 configuration", "07 EventBus", "07 EventBus.share",
-    "08 modelFactory", "08 modelFactory.shim", "09 Collection", "10 dispatcher",
-    "11 HTML", "12 scan", "12 scanTag", "12 scanNode", "12 scanAttr", "12 scanText",
-    "13 dom", "14 parser", "14 parser.share",
+    "08 modelFactory", "08 modelFactory.shim", "09 Collection", "10 dependency",  "11 gc",
+    "12 animate", "13 HTML", "16 dom", "17 parser", "17 parser.share",
+    "18 scan", "18 scanTag", "18 scanNode", "18 scanAttr", "18 scanText",
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
     directive("text"), directive("html"), directive("if"), directive("visible"), directive("on"),
     directive("widget"), directive("duplex.1"), directive("duplex.2"),
     directive("duplex.3"), directive("repeat"),
-    "16 filter", "17 loader", "18 domReady", "19 outer"
+    "20 filter", "21 loader", "22 domReady", "24 outer"
 ]
 //avalon.modern.js 所需要合并的子文件
 var modernFiles = compatibleFiles.concat()
@@ -81,31 +81,31 @@ modernFiles[modernFiles.indexOf("02 core")] = "02 core.modern"
 modernFiles[modernFiles.indexOf("05 dom.polyfill")] = "05 dom.polyfill.modern"
 modernFiles[modernFiles.indexOf("07 EventBus")] = "07 EventBus.modern"
 modernFiles[modernFiles.indexOf("08 modelFactory")] = "08 modelFactory.modern"
-modernFiles[modernFiles.indexOf("11 HTML")] = "11 HTML.modern"
-modernFiles[modernFiles.indexOf("12 scanAttr")] = "12 scanAttr.modern"
-modernFiles[modernFiles.indexOf("12 scanTag")] = "12 scanTag.modern"
-modernFiles[modernFiles.indexOf("13 dom")] = "13 dom.modern"
-modernFiles[modernFiles.indexOf("14 parser")] = "14 parser.modern"
-modernFiles[modernFiles.indexOf("17 loader")] = "17 loader.modern"
+modernFiles[modernFiles.indexOf("13 HTML")] = "13 HTML.modern"
+modernFiles[modernFiles.indexOf("16 dom")] = "16 dom.modern"
+modernFiles[modernFiles.indexOf("17 parser")] = "17 parser.modern"
+modernFiles[modernFiles.indexOf("18 scanAttr")] = "18 scanAttr.modern"
+modernFiles[modernFiles.indexOf("18 scanTag")] = "18 scanTag.modern"
+modernFiles[modernFiles.indexOf("21 loader")] = "21 loader.modern"
 modernFiles[modernFiles.indexOf(directive("text"))] = directive("text.modern")
 modernFiles[modernFiles.indexOf(directive("duplex.2"))] = directive("duplex.2.modern")
-modernFiles[modernFiles.indexOf("18 domReady")] = "18 domReady.modern"
+modernFiles[modernFiles.indexOf("22 domReady")] = "22 domReady.modern"
 
 
 //avalon.shim.js 所需要合并的子文件
-var shimFiles = compatibleFiles.slice(0, -3).concat("18 domReady.noop", "19 outer")
+var shimFiles = compatibleFiles.slice(0, -3).concat("22 domReady.noop", "24 outer")
 
 //avalon.modern.shim.js 所需要合并的子文件
-var modernShimFiles = modernFiles.slice(0, -3).concat("18 domReady.noop", "19 outer")
+var modernShimFiles = modernFiles.slice(0, -3).concat("22 domReady.noop", "24 outer")
 
 //avalon.mobiles.js 所需要合并的子文件
 var mobileFiles = modernFiles.concat()
 
 mobileFiles.pop()
-mobileFiles.push("20 touch", "19 outer")
+mobileFiles.push("23 touch", "24 outer")
 
 //avalon.mobile.shim.js 所需要合并的子文件
-var mobileShimFiles = modernFiles.slice(0, -3).concat("20 touch", "18 domReady.noop", "19 outer")
+var mobileShimFiles = modernFiles.slice(0, -3).concat("22 domReady.noop","23 touch", "24 outer")
 
 
 //开始合并avalon.js
@@ -189,7 +189,7 @@ if(oldMobileFiles[0] !== "00 inter"){
 }
 
 oldMobileFiles.pop()
-oldMobileFiles.push("20 touch", "19 outer")
+oldMobileFiles.push("23 touch", "24 outer")
 
 //开始合并avalon.mobile.js
 new function() {
