@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.44 built in 2015.5.31
+ avalon.js 1.44 built in 2015.6.1
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1992,62 +1992,6 @@ function shouldDispose(el) {
     return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }
 
-var animateQueue = []
-var animate = {
-    enter: function(elem) {
-        var el = avalon(elem)
-        el.bind(transitionName, function fn() {
-            el.removeClass("ms-enter ms-enter-active")
-            el.unbind(transitionName, fn)
-        })
-
-        el.addClass("ms-enter")
-        setTimeout(function() {
-            el.addClass("ms-enter-active")
-        })
-    },
-    leave: function(elem, parent, after) {
-        elem = elem.cloneNode(true)
-        parent.insertBefore(elem, after)
-        var el = avalon(elem)
-        el.bind(transitionName, function fn() {
-            el.removeClass("ms-leave ms-leave-active")
-            el.unbind(transitionName, fn)
-            parent.removeChild(elem)
-        })
-        el.addClass("ms-leave")
-        setTimeout(function() {
-            el.addClass("ms-leave-active")
-        })
-    }
-
-}
-var getTransitionEndEventName = function() {
-    var obj = {
-        'TransitionEvent': 'transitionend',
-        'WebKitTransitionEvent': 'webkitTransitionEnd',
-        'OTransitionEvent': 'oTransitionEnd',
-        'otransitionEvent': 'otransitionEnd'
-    }
-    var ret
-    //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-    for (var name in obj) {
-        if (window[name]) {
-            ret = obj[name]
-            break;
-        }
-        try {
-            var a = document.createEvent(name);
-            ret = obj[name]
-            break;
-        } catch (e) {}
-    } //这是一个惰性函数，只检测一次，下次直接返回缓存结果
-    getTransitionEndEventName = function() {
-        return ret
-    }
-    return ret
-}
-var transitionName = getTransitionEndEventName()
 /************************************************************************
  *            HTML处理(parseHTML, innerHTML, clearHTML)                  *
  ************************************************************************/
@@ -4118,7 +4062,7 @@ bindingExecutors["if"] = function(val, elem, data) {
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)
-            animate.enter(data.template, elem.parentNode)
+         //   animate.enter(data.template, elem.parentNode)
             elem = data.element = data.template //这时可能为null
         }
         if (elem.getAttribute(data.name)) {
@@ -4130,7 +4074,7 @@ bindingExecutors["if"] = function(val, elem, data) {
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
-            animate.leave(elem, node.parentNode, node)
+       //     animate.leave(elem, node.parentNode, node)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
             data.rollback = function() {

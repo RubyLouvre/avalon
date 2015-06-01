@@ -556,6 +556,7 @@
 			return runloop = circular.runloop;
 		} );
 		var Binding = function( ractive, keypath, otherInstance, otherKeypath ) {
+                         // console.log("Binding", keypath)
 			var this$0 = this;
 			this.root = ractive;
 			this.keypath = keypath;
@@ -12304,6 +12305,7 @@
 
 		var wildcard = /\*/;
 		return function Ractive$set( keypath, value, callback ) {
+                    
 			var this$0 = this;
 			var map, promise;
 			promise = runloop.start( this, true );
@@ -12320,6 +12322,7 @@
 				}
 			} else {
 				keypath = normaliseKeypath( keypath );
+                                console.log("keypath", keypath)
 				if ( wildcard.test( keypath ) ) {
 					getMatchingKeypaths( this, keypath ).forEach( function( keypath ) {
 						this$0.viewmodel.set( keypath, value );
@@ -13158,6 +13161,7 @@
 		}
 
 		function notifyBindings( viewmodel, bindings, changes ) {
+           
 			bindings.forEach( function( binding ) {
 				var useSet = false,
 					i = 0,
@@ -13593,6 +13597,8 @@
 			computation.invalidate();
 		}
 		if ( this.changes.indexOf( keypath ) === -1 ) {
+                    //司徒正美
+                    console.log("changes", keypath)
 			this.changes.push( keypath );
 		}
 		this.clearCache( keypath );
@@ -13743,6 +13749,7 @@
 		__export = function Viewmodel$set( keypath, value, silent ) {
 			var computation, wrapper, dontTeardownWrapper;
 			computation = this.computations[ keypath ];
+                        console.log(this.computations)
 			if ( computation ) {
 				if ( computation.setting ) {
 					// let the other computation set() handle things...
@@ -14084,9 +14091,11 @@
 					root: ractive,
 					owner: ractive
 				} );
+                                console.log(ractive.fragment)
 			}
 			initHook.end( ractive );
 			// render automatically ( if `el` is specified )
+                        //渲染视图
 			if ( el ) {
 				ractive.render( el, ractive.append );
 			}

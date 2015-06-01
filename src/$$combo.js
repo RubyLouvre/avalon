@@ -63,7 +63,7 @@ var compatibleFiles = [
     "00 inter", "01 variable", "01 variable.share", "02 core","03 cache", "04 es5.shim",
     "05 dom.polyfill", "06 configuration", "07 EventBus", "07 EventBus.share",
     "08 modelFactory", "08 modelFactory.shim", "09 Collection", "10 dependency",  "11 gc",
-    "12 animate", "13 HTML", "16 dom", "17 parser", "17 parser.share",
+    "12 nextTick","13 promise","14 animate", "15 HTML", "16 dom", "17 parser", "17 parser.share",
     "18 scan", "18 scanTag", "18 scanNode", "18 scanAttr", "18 scanText",
     directive("skip"), directive("controller"), directive("important"),
     directive("attr"), directive("include"), directive("class.hover.active"), directive("data"),
@@ -81,7 +81,7 @@ modernFiles[modernFiles.indexOf("02 core")] = "02 core.modern"
 modernFiles[modernFiles.indexOf("05 dom.polyfill")] = "05 dom.polyfill.modern"
 modernFiles[modernFiles.indexOf("07 EventBus")] = "07 EventBus.modern"
 modernFiles[modernFiles.indexOf("08 modelFactory")] = "08 modelFactory.modern"
-modernFiles[modernFiles.indexOf("13 HTML")] = "13 HTML.modern"
+modernFiles[modernFiles.indexOf("15 HTML")] = "15 HTML.modern"
 modernFiles[modernFiles.indexOf("16 dom")] = "16 dom.modern"
 modernFiles[modernFiles.indexOf("17 parser")] = "17 parser.modern"
 modernFiles[modernFiles.indexOf("18 scanAttr")] = "18 scanAttr.modern"

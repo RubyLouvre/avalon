@@ -27,7 +27,7 @@ gulp.task('combo', function () {
         var compatibleFiles = b.filter(function (f) {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
-        
+
         var version = 1.44 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
@@ -54,24 +54,6 @@ gulp.task('combo', function () {
             return path.join($$pathName, name + ".js")
         }
 
-//        var eonFiles = compatibleFiles.concat()
-//        replaceUrls(eonFiles, {
-//            "09 Collection": "09 Collection.eon",
-//            "14 parser.share": "14 parser.share.eon",
-//            "12 scanTag": "12 scanTag.modern",
-//            "repeat": "repeat.eon"
-//        })
-//        gulp.src(eonFiles)
-//                .pipe(concat('avalon.eon.js'))
-//                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-//                    return "version: " + version
-//                }))
-//                .pipe(replace(/!!/, function (a, b) {
-//                    return  "avalon.eon.js " + version + " built in " + date + "\n new repeat"
-//                }))
-//                .pipe(gulp.dest('./'))
-
-
         //avalon.shim.js 所需要合并的子文件
         var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("19 outer"))
         gulp.src(shimFiles)
@@ -95,11 +77,11 @@ gulp.task('combo', function () {
             "05 dom.polyfill": "05 dom.polyfill.modern",
             "07 EventBus": "07 EventBus.modern",
             "08 modelFactory": "08 modelFactory.modern",
-            "13 HTML": "13 HTML.modern",
-            "18 scanAttr": "18 scanAttr.modern",
-            "18 scanTag": "18 scanTag.modern",
+            "15 HTML": "15 HTML.modern",
             "16 dom": "16 dom.modern",
             "17 parser": "17 parser.modern",
+            "18 scanAttr": "18 scanAttr.modern",
+            "18 scanTag": "18 scanTag.modern",
             "21 loader": "21 loader.modern",
             "text": "text.modern",
             "duplex.2": "duplex.2.modern",

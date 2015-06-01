@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="ractive.js"></script>
+
+    </head>
+    <body>
+        <div id="container">
+
+        </div>
+        <script>
+            var ractive = new Ractive({
+                el: 'container',
+                template: '<p>{{greeting}}, {{recipient}}!{{age.aa}}</p>' +
+                        '<p>{{width}} * {{height}} = {{ area }}</p>'
+                ,
+                data: {greeting: 'Hello',
+                    recipient: 'world',
+                    width: 100,
+                    height: 100,
+                    dd: {
+                        aa: 1,
+                        bb: 2
+                    }},
+                computed: {
+                    area: function () {
+                        return this.get('width') * this.get('height');
+                    }
+                }
+//                onteardown: function (a) {
+//                    console.log(a, 'eardown');
+//                },
+//                oninit: function (a) {
+//                    console.log(a, "init");
+//                },
+//                onrender: function (a) {
+//                    console.log(a, "render");
+//                },
+//                oncomplete: function (a) {
+//                    console.log(a, "complete");
+//                },
+//                onchange: function (a) {
+//                    console.log(a, "change");
+//                }
+            });
+
+            setTimeout(function () {
+                console.log(ractive)
+                ractive.set("recipient", 2000)
+                ractive.set("age", {
+                    aa: 3,
+                    bb: 4
+                })
+            }, 3000)
+        </script>
+    </body>
+</html>
