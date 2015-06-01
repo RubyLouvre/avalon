@@ -80,7 +80,6 @@ function scanText(textNode, vmodels) {
                 token.element = node
                 token.filters = token.filters.replace(rhasHtml, function() {
                     token.type = "html"
-                    token.group = 1
                     return ""
                 })// jshint ignore:line
                 bindings.push(token) //收集带有插值表达式的文本

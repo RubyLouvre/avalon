@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.44 built in 2015.6.1
+ avalon.js 1.44 built in 2015.6.2
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3288,7 +3288,6 @@ function scanText(textNode, vmodels) {
                 token.element = node
                 token.filters = token.filters.replace(rhasHtml, function() {
                     token.type = "html"
-                    token.group = 1
                     return ""
                 })// jshint ignore:line
                 bindings.push(token) //收集带有插值表达式的文本
@@ -4011,13 +4010,22 @@ duplexBinding.SELECT = function(element, evaluator, data) {
     }
 }
 // bindingHandlers.html 定义在if.js
-bindingExecutors.html = function(val, elem, data) {
-    val = val == null ? "" : val
-    var isHtmlFilter = "group" in data
+bindingExecutors.html = function (val, elem, data) {
+
+    var isHtmlFilter = elem.nodeType !== 1
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
         return
-     if (typeof val !== "object") {//string, number, boolean
+    val = val == null ? "" : val
+
+    if (elem.nodeType === 3) {
+        var signature = generateID("html")
+        parent.insertBefore(DOC.createComment(signature), elem)
+        data.element = DOC.createComment(signature + ":end")
+        parent.replaceChild(data.element, elem)
+        elem = data.element
+    }
+    if (typeof val !== "object") {//string, number, boolean
         var fragment = avalon.parseHTML(String(val))
     } else if (val.nodeType === 11) { //将val转换为文档碎片
         fragment = val
@@ -4028,28 +4036,22 @@ bindingExecutors.html = function(val, elem, data) {
             fragment.appendChild(nodes[0])
         }
     }
-    if (!fragment.firstChild) {
-        fragment.appendChild(DOC.createComment("ms-html"))
-    }
+
     nodes = avalon.slice(fragment.childNodes)
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     if (isHtmlFilter) {
-        var n = data.group,
-            i = 1
-
-            data.group = nodes.length
-            data.element = nodes[0]
-
-        while (i < n) {
-            var node = elem.nextSibling
-            if (node) {
+        var endValue = elem.nodeValue.slice(0,-4)
+            while (true) {
+            var node = elem.previousSibling
+            if (!node || node.nodeType === 8 && node.nodeValue === endValue) {
+                break
+            } else {
                 parent.removeChild(node)
-                i++
             }
-        }
-        parent.replaceChild(fragment, elem)
+       }
+       parent.insertBefore(fragment, elem)
     } else {
-        avalon.clearHTML(parent).appendChild(fragment)
+        avalon.clearHTML(elem).appendChild(fragment)
     }
     scanNodeArray(nodes, data.vmodels)
 }
