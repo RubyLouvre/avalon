@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.44 built in 2015.6.2
+ avalon.mobile.shim.js 1.44 built in 2015.6.3
  ==================================================*/
 (function(global, factory) {
 
@@ -1278,15 +1278,13 @@ var arrayPrototype = {
     removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
              for (var i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all.indexOf(el) !== -1) {
+                if (all.indexOf(this[i]) !== -1) {
                     this.removeAt(i)
                 }
             }
         } else if (typeof all === "function") {
-            for (var i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
+            for ( i = this.length - 1; i >= 0; i--) {
+                if (all(this[i], i)) {
                     this.removeAt(i)
                 }
             }
@@ -3331,7 +3329,6 @@ duplexBinding.SELECT = function(element, evaluator, data) {
 }
 // bindingHandlers.html 定义在if.js
 bindingExecutors.html = function (val, elem, data) {
-
     var isHtmlFilter = elem.nodeType !== 1
     var parent = isHtmlFilter ? elem.parentNode : elem
     if (!parent)
@@ -3384,6 +3381,9 @@ bindingHandlers["if"] =
 }
 
 bindingExecutors["if"] = function(val, elem, data) {
+     try {
+         if(!elem.parentNode) return
+     } catch(e) {return}
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)

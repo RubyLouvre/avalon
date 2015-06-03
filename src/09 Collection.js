@@ -161,15 +161,13 @@ var arrayPrototype = {
     removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
              for (var i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all.indexOf(el) !== -1) {
+                if (all.indexOf(this[i]) !== -1) {
                     this.removeAt(i)
                 }
             }
         } else if (typeof all === "function") {
-            for (var i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
+            for ( i = this.length - 1; i >= 0; i--) {
+                if (all(this[i], i)) {
                     this.removeAt(i)
                 }
             }
