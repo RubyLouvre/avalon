@@ -41,12 +41,13 @@ gulp.task('combo', function () {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.min.js'))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
         var $$pathName = compatibleFiles[0]
         $$pathName = $$pathName.slice(0, $$pathName.indexOf("00"))
@@ -64,7 +65,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
         //avalon.modern.js 所需要合并的子文件
         var modernFiles = compatibleFiles.filter(function (el) {
@@ -96,11 +97,11 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.js " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
         var modernShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
 
@@ -113,7 +114,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
 
         //avalon.mobiles.js 所需要合并的子文件
@@ -130,12 +131,12 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.js " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(uglify())
                 .pipe(rename('avalon.mobile.min.js'))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
 
         //avalon.mobiles.shim.js 所需要合并的子文件
@@ -151,7 +152,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.shim.js " + version + " built in " + date
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
         //avalon.mobiles.old.js 所需要合并的子文件
         var mobileOldFiles = compatibleFiles.concat()
@@ -166,7 +167,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.old.js " + version + " built in " + date + "\n support IE8 and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dest/'))
 
     })
 
