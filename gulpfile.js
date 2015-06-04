@@ -46,7 +46,7 @@ gulp.task('combo', function () {
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./'))
 
         var $$pathName = compatibleFiles[0]
         $$pathName = $$pathName.slice(0, $$pathName.indexOf("00"))
@@ -100,7 +100,7 @@ gulp.task('combo', function () {
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./'))
 
         var modernShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
 
@@ -135,7 +135,7 @@ gulp.task('combo', function () {
                 .pipe(jshint.reporter('default'))
                 .pipe(uglify())
                 .pipe(rename('avalon.mobile.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./'))
 
 
         //avalon.mobiles.shim.js 所需要合并的子文件

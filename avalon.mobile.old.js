@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.44 built in 2015.6.3
+ avalon.mobile.old.js 1.44 built in 2015.6.4
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3151,13 +3151,17 @@ if (!"1" [0]) {
     }
 }
 
+//function scanNodeList(parent, vmodels) {
+//    var node = parent.firstChild
+//    while (node) {
+//        var nextNode = node.nextSibling
+//        scanNode(node, node.nodeType, vmodels)
+//        node = nextNode
+//    }
+//}
 function scanNodeList(parent, vmodels) {
-    var node = parent.firstChild
-    while (node) {
-        var nextNode = node.nextSibling
-        scanNode(node, node.nodeType, vmodels)
-        node = nextNode
-    }
+    var nodes = avalon.slice(parent.childNodes)
+    scanNodeArray(nodes, vmodels)
 }
 
 function scanNodeArray(nodes, vmodels) {

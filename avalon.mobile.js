@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.44 built in 2015.6.3
+ avalon.mobile.js 1.44 built in 2015.6.4
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2520,13 +2520,17 @@ function scanAttr(elem, vmodels, match) {
 
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
+//function scanNodeList(parent, vmodels) {
+//    var node = parent.firstChild
+//    while (node) {
+//        var nextNode = node.nextSibling
+//        scanNode(node, node.nodeType, vmodels)
+//        node = nextNode
+//    }
+//}
 function scanNodeList(parent, vmodels) {
-    var node = parent.firstChild
-    while (node) {
-        var nextNode = node.nextSibling
-        scanNode(node, node.nodeType, vmodels)
-        node = nextNode
-    }
+    var nodes = avalon.slice(parent.childNodes)
+    scanNodeArray(nodes, vmodels)
 }
 
 function scanNodeArray(nodes, vmodels) {
