@@ -56,7 +56,7 @@ gulp.task('combo', function () {
         }
 
         //avalon.shim.js 所需要合并的子文件
-        var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("19 outer"))
+        var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
         gulp.src(shimFiles)
                 .pipe(concat('avalon.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
