@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.44 built in 2015.6.5
+ avalon.mobile.old.js 1.44 built in 2015.6.13
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4166,35 +4166,33 @@ bindingHandlers.repeat = function (data, vmodels) {
     }
 
     var elem = data.element
-    elem.removeAttribute(data.name)
-    data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
-    data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
-    var signature = generateID(type)
-    var comment = data.element = DOC.createComment(signature + ":end")
-    data.clone = DOC.createComment(signature)
-    hyperspace.appendChild(comment)
-
-    if (type === "each" || type === "with") {
-        data.template = elem.innerHTML.trim()
-        avalon.clearHTML(elem).appendChild(comment)
-    } else {
-        data.template = elem.outerHTML.trim()
-        elem.parentNode.replaceChild(comment, elem)
-    }
-    data.template = avalon.parseHTML(data.template)
-    data.handler = bindingExecutors.repeat
-    data.rollback = function () {
-        var elem = data.element
-        if (!elem)
-            return
-        data.handler("clear")
-        var parentNode = elem.parentNode
-        var content = data.template
-        var target = content.firstChild
-        parentNode.replaceChild(content, elem)
-        var start = data.$with
-        start && start.parentNode && start.parentNode.removeChild(start)
-        target = data.element = data.type === "repeat" ? target : parentNode
+    if (elem.nodeType === 1) {
+        elem.removeAttribute(data.name)
+        data.sortedCallback = getBindingCallback(elem, "data-with-sorted", vmodels)
+        data.renderedCallback = getBindingCallback(elem, "data-" + type + "-rendered", vmodels)
+        var signature = generateID(type)
+        var start = DOC.createComment(signature)
+        var end = DOC.createComment(signature + ":end")
+        var template = type === "repeat" ? elem.outerHTML.trim() : elem.innerHTML.trim()
+        data.template = avalon.parseHTML(template)
+        data.signature = signature
+        if (type === "repeat") {
+            var parent = elem.parentNode
+            parent.replaceChild(end, elem)
+            parent.insertBefore(start, end)
+        } else {
+            avalon.clearHTML(elem)
+            elem.appendChild(start)
+            elem.appendChild(end)
+        }
+        data.element = end
+        data.handler = bindingExecutors.repeat
+        data.rollback = function () {
+            var elem = data.element
+            if (!elem)
+                return
+            data.handler("clear")
+        }
     }
     if (freturn) {
         return
@@ -4210,7 +4208,7 @@ bindingHandlers.repeat = function (data, vmodels) {
             }
             var m = $repeat.length
             var $proxy = []
-            for ( i = 0; i < m; i++) {//生成代理VM
+            for (i = 0; i < m; i++) {//生成代理VM
                 $proxy.push(eachProxyAgent(i, $repeat))
             }
             $repeat.$proxy = $proxy
@@ -4321,8 +4319,8 @@ bindingExecutors.repeat = function (method, pos, el) {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-                var comment = data.$with = data.clone
-                parent.insertBefore(comment, end)
+              //   var comment = data.$with = data.clone
+               // parent.insertBefore(comment, end)
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
@@ -4351,7 +4349,7 @@ function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)
     if (!data.$with) {
-        content.insertBefore(data.clone.cloneNode(false), content.firstChild)
+        content.insertBefore(DOC.createComment(data.signature), content.firstChild)
     }
     transation.appendChild(content)
     var nv = [proxy].concat(data.vmodels)
