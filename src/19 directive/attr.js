@@ -32,7 +32,7 @@ var getXHR = function() {
     return new(window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP") // jshint ignore:line
 }
 
-var cacheTmpls = avalon.templateCache = {}
+var templatePool = avalon.templateCache = {}
 
 bindingHandlers.attr = function(data, vmodels) {
     var text = data.value.trim(),
@@ -142,12 +142,12 @@ bindingExecutors.attr = function(val, elem, data) {
         }
 
         if (data.param === "src") {
-            if (typeof cacheTmpls[val] === "string") {
+            if (typeof templatePool[val] === "string") {
                 avalon.nextTick(function() {
-                    scanTemplate(cacheTmpls[val])
+                    scanTemplate(templatePool[val])
                 })
-            } else if (Array.isArray(cacheTmpls[val])) { //#805 防止在循环绑定中发出许多相同的请求
-                cacheTmpls[val].push(scanTemplate)
+            } else if (Array.isArray(templatePool[val])) { //#805 防止在循环绑定中发出许多相同的请求
+                templatePool[val].push(scanTemplate)
             } else {
                 var xhr = getXHR()
                 xhr.onreadystatechange = function() {
@@ -155,14 +155,14 @@ bindingExecutors.attr = function(val, elem, data) {
                         var s = xhr.status
                         if (s >= 200 && s < 300 || s === 304 || s === 1223) {
                             var text = xhr.responseText
-                            for (var f = 0, fn; fn = cacheTmpls[val][f++];) {
+                            for (var f = 0, fn; fn = templatePool[val][f++];) {
                                 fn(text)
                             }
-                            cacheTmpls[val] = text
+                            templatePool[val] = text
                         }
                     }
                 }
-                cacheTmpls[val] = [scanTemplate]
+                templatePool[val] = [scanTemplate]
                 xhr.open("GET", val, true)
                 if ("withCredentials" in xhr) {
                     xhr.withCredentials = true

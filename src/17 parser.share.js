@@ -13,10 +13,10 @@ var rsplit = /[^\w$]+/g
 var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
 var rnumber = /\b\d[^,]*/g
 var rcomma = /^,+|,+$/g
-var cacheVars = new Cache(512)
+var variablePool = new Cache(512)
 var getVariables = function (code) {
     var key = "," + code.trim()
-    var ret = cacheVars.get(key)
+    var ret = variablePool.get(key)
     if (ret) {
         return ret
     }
@@ -27,7 +27,7 @@ var getVariables = function (code) {
             .replace(rnumber, "")
             .replace(rcomma, "")
             .split(/^$|,+/)
-    return cacheVars.put(key, uniqSet(match))
+    return variablePool.put(key, uniqSet(match))
 }
 /*添加赋值语句*/
 
@@ -62,7 +62,7 @@ function uniqSet(array) {
     return ret
 }
 //缓存求值函数，以便多次利用
-var cacheExprs = new Cache(128)
+var evaluatorPool = new Cache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -146,7 +146,7 @@ function parseExpr(code, scopes, data) {
     data.args = args
     //---------------cache----------------
     delete data.vars
-    var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
+    var fn = evaluatorPool.get(exprId) //直接从缓存，免得重复生成
     if (fn) {
         data.evaluator = fn
         return
@@ -170,7 +170,7 @@ function parseExpr(code, scopes, data) {
                 "= vvv;\n} "
         try {
             fn = Function.apply(noop, names.concat(_body))
-            data.evaluator = cacheExprs.put(exprId, fn)
+            data.evaluator = evaluatorPool.put(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
         }
@@ -192,7 +192,7 @@ function parseExpr(code, scopes, data) {
     }
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-        data.evaluator = cacheExprs.put(exprId, fn)
+        data.evaluator = evaluatorPool.put(exprId, fn)
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {

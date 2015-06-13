@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.44 built in 2015.6.13
+ avalon.mobile.old.js 1.44 built in 2015.6.14
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2707,10 +2707,10 @@ var rsplit = /[^\w$]+/g
 var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
 var rnumber = /\b\d[^,]*/g
 var rcomma = /^,+|,+$/g
-var cacheVars = new Cache(512)
+var variablePool = new Cache(512)
 var getVariables = function (code) {
     var key = "," + code.trim()
-    var ret = cacheVars.get(key)
+    var ret = variablePool.get(key)
     if (ret) {
         return ret
     }
@@ -2721,7 +2721,7 @@ var getVariables = function (code) {
             .replace(rnumber, "")
             .replace(rcomma, "")
             .split(/^$|,+/)
-    return cacheVars.put(key, uniqSet(match))
+    return variablePool.put(key, uniqSet(match))
 }
 /*添加赋值语句*/
 
@@ -2756,7 +2756,7 @@ function uniqSet(array) {
     return ret
 }
 //缓存求值函数，以便多次利用
-var cacheExprs = new Cache(128)
+var evaluatorPool = new Cache(128)
 //取得求值函数及其传参
 var rduplex = /\w\[.*\]|\w\.\w/
 var rproxy = /(\$proxy\$[a-z]+)\d+$/
@@ -2840,7 +2840,7 @@ function parseExpr(code, scopes, data) {
     data.args = args
     //---------------cache----------------
     delete data.vars
-    var fn = cacheExprs.get(exprId) //直接从缓存，免得重复生成
+    var fn = evaluatorPool.get(exprId) //直接从缓存，免得重复生成
     if (fn) {
         data.evaluator = fn
         return
@@ -2864,7 +2864,7 @@ function parseExpr(code, scopes, data) {
                 "= vvv;\n} "
         try {
             fn = Function.apply(noop, names.concat(_body))
-            data.evaluator = cacheExprs.put(exprId, fn)
+            data.evaluator = evaluatorPool.put(exprId, fn)
         } catch (e) {
             log("debug: parse error," + e.message)
         }
@@ -2886,7 +2886,7 @@ function parseExpr(code, scopes, data) {
     }
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-        data.evaluator = cacheExprs.put(exprId, fn)
+        data.evaluator = evaluatorPool.put(exprId, fn)
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
@@ -3105,7 +3105,7 @@ var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
 if (!"1" [0]) {
-    var cacheAttrs = new Cache(512)
+    var attrPool = new Cache(512)
     var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
             rquote = /^['"]/,
             rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
@@ -3129,7 +3129,7 @@ if (!"1" [0]) {
         var attributes = [],
                 match,
                 k, v
-        var ret = cacheAttrs.get(str)
+        var ret = attrPool.get(str)
         if (ret) {
             return ret
         }
@@ -3147,7 +3147,7 @@ if (!"1" [0]) {
             }
             attributes.push(binding)
         }
-        return cacheAttrs.put(str, attributes)
+        return attrPool.put(str, attributes)
     }
 }
 
@@ -3336,7 +3336,7 @@ var getXHR = function() {
     return new(window.XMLHttpRequest || ActiveXObject)("Microsoft.XMLHTTP") // jshint ignore:line
 }
 
-var cacheTmpls = avalon.templateCache = {}
+var templatePool = avalon.templateCache = {}
 
 bindingHandlers.attr = function(data, vmodels) {
     var text = data.value.trim(),
@@ -3446,12 +3446,12 @@ bindingExecutors.attr = function(val, elem, data) {
         }
 
         if (data.param === "src") {
-            if (typeof cacheTmpls[val] === "string") {
+            if (typeof templatePool[val] === "string") {
                 avalon.nextTick(function() {
-                    scanTemplate(cacheTmpls[val])
+                    scanTemplate(templatePool[val])
                 })
-            } else if (Array.isArray(cacheTmpls[val])) { //#805 防止在循环绑定中发出许多相同的请求
-                cacheTmpls[val].push(scanTemplate)
+            } else if (Array.isArray(templatePool[val])) { //#805 防止在循环绑定中发出许多相同的请求
+                templatePool[val].push(scanTemplate)
             } else {
                 var xhr = getXHR()
                 xhr.onreadystatechange = function() {
@@ -3459,14 +3459,14 @@ bindingExecutors.attr = function(val, elem, data) {
                         var s = xhr.status
                         if (s >= 200 && s < 300 || s === 304 || s === 1223) {
                             var text = xhr.responseText
-                            for (var f = 0, fn; fn = cacheTmpls[val][f++];) {
+                            for (var f = 0, fn; fn = templatePool[val][f++];) {
                                 fn(text)
                             }
-                            cacheTmpls[val] = text
+                            templatePool[val] = text
                         }
                     }
                 }
-                cacheTmpls[val] = [scanTemplate]
+                templatePool[val] = [scanTemplate]
                 xhr.open("GET", val, true)
                 if ("withCredentials" in xhr) {
                     xhr.withCredentials = true
@@ -4319,8 +4319,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-              //   var comment = data.$with = data.clone
-               // parent.insertBefore(comment, end)
+
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)

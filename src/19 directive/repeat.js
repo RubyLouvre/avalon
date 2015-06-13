@@ -180,8 +180,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
-              //   var comment = data.$with = data.clone
-               // parent.insertBefore(comment, end)
+
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
