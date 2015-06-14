@@ -2450,7 +2450,7 @@ function scanAttr(elem, vmodels, match) {
                         }
                         param = type
                         type = "attr"
-                        name = "ms-" + type + param
+                        name = "ms-" + type +"-" +param
                         fixAttrs.push([attr.name, name, value])
                     }
                     msData[name] = value
