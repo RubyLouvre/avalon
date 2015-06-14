@@ -34,15 +34,17 @@ bindingHandlers.repeat = function (data, vmodels) {
         var signature = generateID(type)
         var start = DOC.createComment(signature)
         var end = DOC.createComment(signature + ":end")
-        var template = type === "repeat" ? elem.outerHTML.trim() : elem.innerHTML.trim()
-        data.template = avalon.parseHTML(template)
         data.signature = signature
+        data.template = avalonFragment.cloneNode(false)
         if (type === "repeat") {
             var parent = elem.parentNode
             parent.replaceChild(end, elem)
             parent.insertBefore(start, end)
+            data.template.appendChild(elem)
         } else {
-            avalon.clearHTML(elem)
+            while (elem.firstChild) {
+                data.template.appendChild(elem.firstChild)
+            }
             elem.appendChild(start)
             elem.appendChild(end)
         }
@@ -55,6 +57,7 @@ bindingHandlers.repeat = function (data, vmodels) {
             data.handler("clear")
         }
     }
+
     if (freturn) {
         return
     }
@@ -102,7 +105,7 @@ bindingExecutors.repeat = function (method, pos, el) {
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
-        var transation = hyperspace.cloneNode(false)
+        var transation = avalonFragment.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
                 var n = pos + el

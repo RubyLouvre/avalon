@@ -67,7 +67,7 @@ var aslice = ap.slice
 var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
 var W3C = window.dispatchEvent
 var root = DOC.documentElement
-var hyperspace = DOC.createDocumentFragment()
+var avalonFragment = DOC.createDocumentFragment()
 var cinerator = DOC.createElement("div")
 var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
@@ -2024,7 +2024,7 @@ var rnest = /<(?:tb|td|tf|th|tr|col|opt|leg|cap|area)/ //需要处理套嵌关�
 var script = DOC.createElement("script")
 var rhtml = /<|&#?\w+;/
 avalon.parseHTML = function (html) {
-    var fragment = hyperspace.cloneNode(false)
+    var fragment = avalonFragment.cloneNode(false)
     if (typeof html !== "string") {
         return fragment
     }
@@ -3294,9 +3294,9 @@ function scanText(textNode, vmodels) {
                 })// jshint ignore:line
                 bindings.push(token) //收集带有插值表达式的文本
             }
-            hyperspace.appendChild(node)
+            avalonFragment.appendChild(node)
         }
-        textNode.parentNode.replaceChild(hyperspace, textNode)
+        textNode.parentNode.replaceChild(avalonFragment, textNode)
         if (bindings.length)
             executeBindings(bindings, vmodels)
     }
@@ -4032,7 +4032,7 @@ bindingExecutors.html = function (val, elem, data) {
         fragment = val
     } else if (val.nodeType === 1 || val.item) {
         var nodes = val.nodeType === 1 ? val.childNodes : val.item
-        fragment = hyperspace.cloneNode(true)
+        fragment = avalonFragment.cloneNode(true)
         while (nodes[0]) {
             fragment.appendChild(nodes[0])
         }
@@ -4173,15 +4173,17 @@ bindingHandlers.repeat = function (data, vmodels) {
         var signature = generateID(type)
         var start = DOC.createComment(signature)
         var end = DOC.createComment(signature + ":end")
-        var template = type === "repeat" ? elem.outerHTML.trim() : elem.innerHTML.trim()
-        data.template = avalon.parseHTML(template)
         data.signature = signature
+        data.template = avalonFragment.cloneNode(false)
         if (type === "repeat") {
             var parent = elem.parentNode
             parent.replaceChild(end, elem)
             parent.insertBefore(start, end)
+            data.template.appendChild(elem)
         } else {
-            avalon.clearHTML(elem)
+            while (elem.firstChild) {
+                data.template.appendChild(elem.firstChild)
+            }
             elem.appendChild(start)
             elem.appendChild(end)
         }
@@ -4194,6 +4196,7 @@ bindingHandlers.repeat = function (data, vmodels) {
             data.handler("clear")
         }
     }
+
     if (freturn) {
         return
     }
@@ -4241,7 +4244,7 @@ bindingExecutors.repeat = function (method, pos, el) {
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
-        var transation = hyperspace.cloneNode(false)
+        var transation = avalonFragment.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
                 var n = pos + el
