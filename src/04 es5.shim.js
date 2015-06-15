@@ -24,7 +24,7 @@ var hasDontEnumBug = !({
         dontEnumsLength = dontEnums.length;
 if (!Object.keys) {
     Object.keys = function (object) { //ecma262v5 15.2.3.14
-        var theKeys = [];
+        var theKeys = []
         var skipProto = hasProtoEnumBug && typeof object === "function"
         if (typeof object === "string" || (object && object.callee)) {
             for (var i = 0; i < object.length; ++i) {
@@ -40,7 +40,7 @@ if (!Object.keys) {
 
         if (hasDontEnumBug) {
             var ctor = object.constructor,
-                    skipConstructor = ctor && ctor.prototype === object;
+                    skipConstructor = ctor && ctor.prototype === object
             for (var j = 0; j < dontEnumsLength; j++) {
                 var dontEnum = dontEnums[j]
                 if (!(skipConstructor && dontEnum === "constructor") && ohasOwn.call(object, dontEnum)) {

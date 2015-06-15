@@ -23,28 +23,11 @@ if (!canHideOwn) {
         }
     }
     if (IEVersion) {
-        window.execScript([ // jshint ignore:line
+        var VBClassPool = {}
+        window.execScript([// jshint ignore:line
             "Function parseVB(code)",
             "\tExecuteGlobal(code)",
-            "End Function",
-            "Dim VBClassBodies",
-            "Set VBClassBodies=CreateObject(\"Scripting.Dictionary\")",
-            "Function findOrDefineVBClass(name,body)",
-            "\tDim found",
-            "\tfound=\"\"",
-            "\tFor Each key in VBClassBodies",
-            "\t\tIf body=VBClassBodies.Item(key) Then",
-            "\t\t\tfound=key",
-            "\t\t\tExit For",
-            "\t\tEnd If",
-            "\tnext",
-            "\tIf found=\"\" Then",
-            "\t\tparseVB(\"Class \" + name + body)",
-            "\t\tVBClassBodies.Add name, body",
-            "\t\tfound=name",
-            "\tEnd If",
-            "\tfindOrDefineVBClass=found",
-            "End Function"
+            "End Function" //转换一段文本为VB代码
         ].join("\n"), "VBScript")
         function VBMediator(instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
@@ -55,8 +38,8 @@ if (!canHideOwn) {
             }
         }
         defineProperties = function (name, accessors, properties) {
-            var className = "VBClass" + setTimeout("1"),// jshint ignore:line
-                    buffer = []
+            // jshint ignore:line
+            var buffer = []
             buffer.push(
                     "\r\n\tPrivate [__data__], [__proxy__]",
                     "\tPublic Default Function [__const__](d, p)",
@@ -97,9 +80,11 @@ if (!canHideOwn) {
             }
 
             buffer.push("End Class")
-            var code = buffer.join("\r\n"),
-                    realClassName = window['findOrDefineVBClass'](className, code) //如果该VB类已定义，返回类名。否则用className创建一个新类。
-            if (realClassName === className) {
+            var body = buffer.join("\r\n")
+            var className =VBClassPool[body]   
+            if (!className) {
+                className = generateID("VBClass")
+                window.parseVB("Class " + className + body)
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数
                     "\tDim o",
@@ -107,8 +92,9 @@ if (!canHideOwn) {
                     "\tSet " + className + "Factory = o",
                     "End Function"
                 ].join("\r\n"))
+                VBClassPool[body] = className
             }
-            var ret = window[realClassName + "Factory"](accessors, VBMediator) //得到其产品
+            var ret = window[className + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品
         }
     }

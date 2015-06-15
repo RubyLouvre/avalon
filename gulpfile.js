@@ -27,7 +27,8 @@ gulp.task('combo', function () {
         var compatibleFiles = b.filter(function (f) {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
-        var version = 1.43 //当前版本号
+
+        var version = 1.44 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 
@@ -40,12 +41,13 @@ gulp.task('combo', function () {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./dist/'))
 
         var $$pathName = compatibleFiles[0]
         $$pathName = $$pathName.slice(0, $$pathName.indexOf("00"))
@@ -54,7 +56,7 @@ gulp.task('combo', function () {
         }
 
         //avalon.shim.js 所需要合并的子文件
-        var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("19 outer"))
+        var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
         gulp.src(shimFiles)
                 .pipe(concat('avalon.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
@@ -63,7 +65,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
 
         //avalon.modern.js 所需要合并的子文件
         var modernFiles = compatibleFiles.filter(function (el) {
@@ -76,15 +78,15 @@ gulp.task('combo', function () {
             "05 dom.polyfill": "05 dom.polyfill.modern",
             "07 EventBus": "07 EventBus.modern",
             "08 modelFactory": "08 modelFactory.modern",
-            "11 HTML": "11 HTML.modern",
-            "12 scanAttr": "12 scanAttr.modern",
-            "12 scanTag": "12 scanTag.modern",
-            "13 dom": "13 dom.modern",
-            "14 parser": "14 parser.modern",
-            "17 loader": "17 loader.modern",
+            "15 HTML": "15 HTML.modern",
+            "16 dom": "16 dom.modern",
+            "17 parser": "17 parser.modern",
+            "18 scanAttr": "18 scanAttr.modern",
+            "18 scanTag": "18 scanTag.modern",
+            "21 loader": "21 loader.modern",
             "text": "text.modern",
             "duplex.2": "duplex.2.modern",
-            "18 domReady": "18 domReady.modern"
+            "22 domReady": "22 domReady.modern"
         })
 
         gulp.src(modernFiles)
@@ -95,13 +97,13 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.js " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./dist/'))
 
-        var modernShimFiles = modernFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("19 outer"))
+        var modernShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
 
         gulp.src(modernShimFiles)
                 .pipe(concat('avalon.modern.shim.js'))
@@ -112,14 +114,14 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
 
 
         //avalon.mobiles.js 所需要合并的子文件
         var mobileFiles = modernFiles.concat()
 
         mobileFiles.pop()
-        mobileFiles.push(fixPath("20 touch"), fixPath("19 outer"))
+        mobileFiles.push(fixPath("23 touch"), fixPath("24 outer"))
 
         gulp.src(mobileFiles)
                 .pipe(concat('avalon.mobile.js'))
@@ -129,16 +131,16 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.js " + version + " built in " + date + "\n support IE10+ and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(uglify())
                 .pipe(rename('avalon.mobile.min.js'))
-                .pipe(gulp.dest('./min/'))
+                .pipe(gulp.dest('./dist/'))
 
 
         //avalon.mobiles.shim.js 所需要合并的子文件
-        var mobileShimFiles = modernFiles.slice(0, -3).concat(fixPath("18 domReady.noop"), fixPath("20 touch"), fixPath("19 outer"))
+        var mobileShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("23 touch"), fixPath("24 outer"))
         console.log(mobileShimFiles)
 
         gulp.src(mobileShimFiles)
@@ -150,12 +152,12 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.shim.js " + version + " built in " + date
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
 
         //avalon.mobiles.old.js 所需要合并的子文件
         var mobileOldFiles = compatibleFiles.concat()
         mobileOldFiles.pop()
-        mobileOldFiles.push(fixPath("20 touch"), fixPath("19 outer"))
+        mobileOldFiles.push(fixPath("23 touch"), fixPath("24 outer"))
 
         gulp.src(mobileOldFiles)
                 .pipe(concat('avalon.mobile.old.js'))
@@ -165,7 +167,7 @@ gulp.task('combo', function () {
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.old.js " + version + " built in " + date + "\n support IE8 and other browsers"
                 }))
-                .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
 
     })
 
