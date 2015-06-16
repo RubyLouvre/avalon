@@ -1096,9 +1096,8 @@ avalon.define = function (id, factory) {
             $watch: noop
         }
         factory(scope) //得到所有定义
-        avalon.collectDependency = true
+     
         model = modelFactory(scope) //偷天换日，将scope换为model
-        avalon.collectDependency = false
         stopRepeatAssign = true
         factory(model)
         stopRepeatAssign = false
@@ -1696,7 +1695,7 @@ var arrayPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    fireDependencies(proxy.$events.el)
+                    fireDependencies(proxy.$events.$index)
                 }
             }
         }
@@ -1793,6 +1792,8 @@ function eachProxyAgent(index, host) {
     var proxy = eachProxyPool.shift()
     if (!proxy) {
         proxy = eachProxyFactory( )
+    }else{
+        proxy.$compute()
     }
     var last = host.length - 1
     proxy.$host = host
@@ -4008,7 +4009,11 @@ bindingExecutors.html = function (val, elem, data) {
     if (!parent)
         return
     val = val == null ? "" : val
-
+    if (data.oldText !== val) {
+        data.oldText = val
+    } else {
+        return
+    }
     if (elem.nodeType === 3) {
         var signature = generateID("html")
         parent.insertBefore(DOC.createComment(signature), elem)
@@ -4031,16 +4036,16 @@ bindingExecutors.html = function (val, elem, data) {
     nodes = avalon.slice(fragment.childNodes)
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     if (isHtmlFilter) {
-        var endValue = elem.nodeValue.slice(0,-4)
-            while (true) {
+        var endValue = elem.nodeValue.slice(0, -4)
+        while (true) {
             var node = elem.previousSibling
             if (!node || node.nodeType === 8 && node.nodeValue === endValue) {
                 break
             } else {
                 parent.removeChild(node)
             }
-       }
-       parent.insertBefore(fragment, elem)
+        }
+        parent.insertBefore(fragment, elem)
     } else {
         avalon.clearHTML(elem).appendChild(fragment)
     }
