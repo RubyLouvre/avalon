@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                firstName: "司徒",
+                lastName: "正美",
+                fullName: {
+                    get: function () {
+                        return this.firstName + " " + this.lastName
+                    },
+                    set: function (val) {
+                        var arr = String(val).split(" ")
+                        this.firstName = arr[0]
+                        this.lastName = arr[1]
+                    }
+                }
+            })
+            vm.$watch("fullName", function (a, b) {
+                console.log(a)
+            })
+            console.log(vm.fullName + "!")
+            vm.fullName = "清风 火羽"
+            console.log(vm.firstName)
+            console.log(vm.lastName)
+
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <div><input ms-duplex="firstName">{{firstName}}</div>
+            <div><input ms-duplex="lastName">{{lastName}}</div>
+            <div><input ms-duplex="fullName" data-duplex-event="change">{{fullName}}</div>
+        </div>
+    </body>
+</html>

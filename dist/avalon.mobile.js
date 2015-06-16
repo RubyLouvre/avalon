@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.44 built in 2015.6.14
+ avalon.mobile.js 1.44 built in 2015.6.16
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1278,13 +1278,13 @@ var arrayPrototype = {
     },
     removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
-             for (var i = this.length - 1; i >= 0; i--) {
+            for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
                     this.removeAt(i)
                 }
             }
         } else if (typeof all === "function") {
-            for ( i = this.length - 1; i >= 0; i--) {
+            for (i = this.length - 1; i >= 0; i--) {
                 if (all(this[i], i)) {
                     this.removeAt(i)
                 }
@@ -1388,19 +1388,13 @@ function eachProxyFactory() {
         $first: NaN,
         $last: NaN,
         $map: {},
-        $host:{},
+        $host: {},
         $outer: {},
         $remove: avalon.noop,
         el: {
             get: function () {
-                var e = this.$events
-                var array = e.$index
-                e.$index = e.el //#817 通过$index为el收集依赖
-                try {
-                    return this.$host[this.$index]
-                } finally {
-                    e.$index = array
-                }
+                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
+                return this.$host[this.$index]
             },
             set: function (val) {
                 this.$host.set(this.$index, val)
