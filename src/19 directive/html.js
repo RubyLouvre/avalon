@@ -5,7 +5,11 @@ bindingExecutors.html = function (val, elem, data) {
     if (!parent)
         return
     val = val == null ? "" : val
-
+    if (data.oldText !== val) {
+        data.oldText = val
+    } else {
+        return
+    }
     if (elem.nodeType === 3) {
         var signature = generateID("html")
         parent.insertBefore(DOC.createComment(signature), elem)
@@ -28,16 +32,16 @@ bindingExecutors.html = function (val, elem, data) {
     nodes = avalon.slice(fragment.childNodes)
     //插入占位符, 如果是过滤器,需要有节制地移除指定的数量,如果是html指令,直接清空
     if (isHtmlFilter) {
-        var endValue = elem.nodeValue.slice(0,-4)
-            while (true) {
+        var endValue = elem.nodeValue.slice(0, -4)
+        while (true) {
             var node = elem.previousSibling
             if (!node || node.nodeType === 8 && node.nodeValue === endValue) {
                 break
             } else {
                 parent.removeChild(node)
             }
-       }
-       parent.insertBefore(fragment, elem)
+        }
+        parent.insertBefore(fragment, elem)
     } else {
         avalon.clearHTML(elem).appendChild(fragment)
     }

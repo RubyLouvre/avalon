@@ -18,9 +18,8 @@ avalon.define = function (id, factory) {
             $watch: noop
         }
         factory(scope) //得到所有定义
-        avalon.collectDependency = true
+     
         model = modelFactory(scope) //偷天换日，将scope换为model
-        avalon.collectDependency = false
         stopRepeatAssign = true
         factory(model)
         stopRepeatAssign = false
