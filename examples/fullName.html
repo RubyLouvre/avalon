@@ -8,8 +8,8 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                firstName: "xxx",
-                lastName: "yyy",
+                firstName: "司徒",
+                lastName: "正美",
                 fullName: {
                     get: function () {
                         return this.firstName + " " + this.lastName
@@ -24,15 +24,18 @@
             vm.$watch("fullName", function (a, b) {
                 console.log(a)
             })
-            vm.firstName = "111"
-            vm.lastName = "222"
+            console.log(vm.fullName + "!")
+            vm.fullName = "清风 火羽"
+            console.log(vm.firstName)
+            console.log(vm.lastName)
+
         </script>
     </head>
     <body>
         <div ms-controller="test">
             <div><input ms-duplex="firstName">{{firstName}}</div>
             <div><input ms-duplex="lastName">{{lastName}}</div>
-            <div>{{fullName}}</div>
+            <div><input ms-duplex="fullName" data-duplex-event="change">{{fullName}}</div>
         </div>
     </body>
 </html>

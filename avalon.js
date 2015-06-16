@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.44 built in 2015.6.15
+ avalon.js 1.44 built in 2015.6.16
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1096,10 +1096,12 @@ avalon.define = function (id, factory) {
             $watch: noop
         }
         factory(scope) //得到所有定义
+        avalon.collectDependency = true
         model = modelFactory(scope) //偷天换日，将scope换为model
-//        stopRepeatAssign = true
-//        factory(model)
-//        stopRepeatAssign = false
+        avalon.collectDependency = false
+        stopRepeatAssign = true
+        factory(model)
+        stopRepeatAssign = false
     }
     model.$id = $id
     return VMODELS[$id] = model
@@ -1138,7 +1140,6 @@ function modelFactory(source, $special, $model) {
     $model = $model || {} //vmodels.$model属性
     var $events = {} //vmodel.$events属性
     var accessors = {} //监控属性
-    var methods = []
     var computed = []
     $$skipArray.forEach(function (name) {
         delete source[name]
@@ -1147,9 +1148,6 @@ function modelFactory(source, $special, $model) {
     for (var i in source) {
         (function (name, val, accessor) {
             $model[name] = val
-            if(typeof val === "function"){
-                methods.push(name)
-            }
             if (!isObservable(name, val, $skipArray)) {
                 return //过滤所有非监控属性
             }
@@ -1161,11 +1159,7 @@ function modelFactory(source, $special, $model) {
                 accessor = makeComputedAccessor(name, val)
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
-                accessor = makeComplexAccessor(name, val, valueType)
-                initCallbacks.push(function () {
-                    var son = accessor._vmodel
-                    son.$events[subscribers] = this.$events[name]
-                })
+                accessor = makeComplexAccessor(name, val, valueType, $events[name])
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -1207,16 +1201,8 @@ function modelFactory(source, $special, $model) {
         }
         /* jshint ignore:end */
     }
+    
     $vmodel.$compute = function () {
-        methods.forEach(function(){
-            var old = $vmodel[name]
-            $vmodel[name] =function fn(e){
-                     var bindEvent = e && e.type && e.target
-                     var bindObject = fn.bindObject && !bindEvent ? fn.bindObject : this
-                     old.apply(bindObject, arguments)
-                }
-                fn.bindObject = $vmodel
-        })
         computed.forEach(function (accessor) {
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
@@ -1243,10 +1229,7 @@ function makeSimpleAccessor(name, value) {
     function accessor(value) {
         var oldValue = accessor._value
         if (arguments.length > 0) {
-//            if (stopRepeatAssign) {
-//                return this
-//            }
-            if (!isEqual(value, oldValue)) {
+            if (!stopRepeatAssign && !isEqual(value, oldValue)) {
                 accessor.updateValue(this, value)
                 accessor.notify(this, value, oldValue)
             }
@@ -1266,21 +1249,19 @@ function makeComputedAccessor(name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-//        var init = "_value" in accessor
+          var init = "_value" in accessor
         if (arguments.length > 0) {
-//            if (stopRepeatAssign) {
-//                return this
-//            }
+            if (stopRepeatAssign) {
+                return this
+            }
             accessor.set.call(this, value)
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-
- 
             value = accessor.get.call(this)
             if (oldValue !== value) {
                 accessor.updateValue(this, value)
-                accessor.notify(this, value, oldValue) //触发$watch回调
+               init &&  accessor.notify(this, value, oldValue) //触发$watch回调
             }
             //将自己注入到低层访问器的订阅数组中
             return value
@@ -1293,7 +1274,7 @@ function makeComputedAccessor(name, options) {
     accessor.digest = function () {
         accessor.updateValue = globalUpdateModelValue
         accessor.notify = noop
-       // accessor.call(accessor.vm)
+        accessor.call(accessor.vm)
         clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
         id = setTimeout(function () {
             accessorFactory(accessor, accessor._name)
@@ -1304,7 +1285,7 @@ function makeComputedAccessor(name, options) {
 }
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType) {
+function makeComplexAccessor(name, initValue, valueType, list) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
@@ -1322,6 +1303,7 @@ function makeComplexAccessor(name, initValue, valueType) {
                 var $proxy = son.$proxy
                 var observes = this.$events[name] || []
                 son = accessor._vmodel = modelFactory(value)
+                son.$events[subscribers] = observes
                 son.$proxy = $proxy
                 if (observes.length) {
                     observes.forEach(function (data) {
@@ -1330,7 +1312,6 @@ function makeComplexAccessor(name, initValue, valueType) {
                             bindingHandlers[data.type](data, data.vmodels)
                         }
                     })
-                    son.$events[name] = observes
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -1342,7 +1323,8 @@ function makeComplexAccessor(name, initValue, valueType) {
         }
     }
     accessorFactory(accessor, name)
-    accessor._vmodel = modelFactory(initValue)
+    var son = accessor._vmodel = modelFactory(initValue)
+    son.$events[subscribers] = list
     return accessor
 }
 
@@ -1673,13 +1655,13 @@ var arrayPrototype = {
     },
     removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
-             for (var i = this.length - 1; i >= 0; i--) {
+            for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
                     this.removeAt(i)
                 }
             }
         } else if (typeof all === "function") {
-            for ( i = this.length - 1; i >= 0; i--) {
+            for (i = this.length - 1; i >= 0; i--) {
                 if (all(this[i], i)) {
                     this.removeAt(i)
                 }
@@ -1783,19 +1765,13 @@ function eachProxyFactory() {
         $first: NaN,
         $last: NaN,
         $map: {},
-        $host:{},
+        $host: {},
         $outer: {},
         $remove: avalon.noop,
         el: {
             get: function () {
-                var e = this.$events
-                var array = e.$index
-                e.$index = e.el //#817 通过$index为el收集依赖
-                try {
-                    return this.$host[this.$index]
-                } finally {
-                    e.$index = array
-                }
+                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
+                return this.$host[this.$index]
             },
             set: function (val) {
                 this.$host.set(this.$index, val)
