@@ -1096,7 +1096,7 @@ avalon.define = function (id, factory) {
             $watch: noop
         }
         factory(scope) //得到所有定义
-     
+
         model = modelFactory(scope) //偷天换日，将scope换为model
         stopRepeatAssign = true
         factory(model)
@@ -1200,7 +1200,7 @@ function modelFactory(source, $special, $model) {
         }
         /* jshint ignore:end */
     }
-    
+
     $vmodel.$compute = function () {
         computed.forEach(function (accessor) {
             dependencyDetection.begin({
@@ -1248,7 +1248,7 @@ function makeComputedAccessor(name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-          var init = "_value" in accessor
+        var init = "_value" in accessor
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
@@ -1260,7 +1260,7 @@ function makeComputedAccessor(name, options) {
             value = accessor.get.call(this)
             if (oldValue !== value) {
                 accessor.updateValue(this, value)
-               init &&  accessor.notify(this, value, oldValue) //触发$watch回调
+                init && accessor.notify(this, value, oldValue) //触发$watch回调
             }
             //将自己注入到低层访问器的订阅数组中
             return value
@@ -1308,8 +1308,8 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                     observes.forEach(function (data) {
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
-                            bindingHandlers[data.type](data, data.vmodels)
                         }
+                        bindingHandlers[data.type](data, data.vmodels)
                     })
                 }
             }
