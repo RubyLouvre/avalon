@@ -201,7 +201,7 @@ var arrayPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    fireDependencies(proxy.$events.el)
+                    fireDependencies(proxy.$events.$index)
                 }
             }
         }
@@ -298,6 +298,8 @@ function eachProxyAgent(index, host) {
     var proxy = eachProxyPool.shift()
     if (!proxy) {
         proxy = eachProxyFactory( )
+    }else{
+        proxy.$compute()
     }
     var last = host.length - 1
     proxy.$host = host
