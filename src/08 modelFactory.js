@@ -29,7 +29,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$compute").match(rword)
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
