@@ -142,7 +142,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
 
             function newSetter(value) { // jshint ignore:line
-                if (avalon.contains(root, this)) {
+                if (avalon.optimize ||  this.parentNode) {
                     setters[this.tagName].call(this, value)
                     if (!rmsinput.test(this.type))
                         return

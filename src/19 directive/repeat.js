@@ -116,11 +116,17 @@ bindingExecutors.repeat = function (method, pos, el) {
                     proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
-                parent.insertBefore(transation, comments[pos] || end)
+                var now = new Date - 0
+                avalon.optimize = avalon.optimize || now
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
+                if(avalon.optimize === now){
+                    delete avalon.optimize
+                }
+                parent.insertBefore(transation, comments[pos] || end)
+                console.log("插入操作花费了 "+ (new Date - now))
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
                 sweepNodes(comments[pos], comments[pos + el] || end)

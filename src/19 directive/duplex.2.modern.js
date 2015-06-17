@@ -100,7 +100,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
         if (rmsinput.test($type)) {
             watchValueInTimer(function() {
-                if (root.contains(element)) {
+                if (avalon.optimize || element.parentNode) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
                     }

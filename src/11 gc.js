@@ -29,6 +29,8 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
+    if(avalon.optimize)
+        return
     var i = disposeQueue.length
     var n = i
     var allTypes = []

@@ -10,6 +10,7 @@ bindingExecutors["if"] = function(val, elem, data) {
      try {
          if(!elem.parentNode) return
      } catch(e) {return}
+    // console.log(elem.parentNode)
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)

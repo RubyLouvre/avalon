@@ -73,6 +73,7 @@ bindingExecutors.attr = function(val, elem, data) {
     if (method === "css") {
         avalon(elem).css(attrName, val)
     } else if (method === "attr") {
+       
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
@@ -91,7 +92,6 @@ bindingExecutors.attr = function(val, elem, data) {
         if (toRemove) {
             return elem.removeAttribute(attrName)
         }
-
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {

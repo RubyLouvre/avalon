@@ -1921,6 +1921,8 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
+    if(avalon.optimize)
+        return
     var i = disposeQueue.length
     var n = i
     var allTypes = []
@@ -3368,6 +3370,7 @@ bindingExecutors.attr = function(val, elem, data) {
     if (method === "css") {
         avalon(elem).css(attrName, val)
     } else if (method === "attr") {
+       
         // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
         // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
         // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
@@ -3386,7 +3389,6 @@ bindingExecutors.attr = function(val, elem, data) {
         if (toRemove) {
             return elem.removeAttribute(attrName)
         }
-
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {
@@ -3769,7 +3771,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
 
             function newSetter(value) { // jshint ignore:line
-                if (avalon.contains(root, this)) {
+                if (avalon.optimize ||  this.parentNode) {
                     setters[this.tagName].call(this, value)
                     if (!rmsinput.test(this.type))
                         return
@@ -3940,7 +3942,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
         if (rmsinput.test($type)) {
             watchValueInTimer(function() {
-                if (root.contains(element)) {
+                if (avalon.optimize || element.parentNode) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
                     }
@@ -4063,6 +4065,7 @@ bindingExecutors["if"] = function(val, elem, data) {
      try {
          if(!elem.parentNode) return
      } catch(e) {return}
+    // console.log(elem.parentNode)
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)
@@ -4250,11 +4253,17 @@ bindingExecutors.repeat = function (method, pos, el) {
                     proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
-                parent.insertBefore(transation, comments[pos] || end)
+                var now = new Date - 0
+                avalon.optimize = avalon.optimize || now
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
+                if(avalon.optimize === now){
+                    delete avalon.optimize
+                }
+                parent.insertBefore(transation, comments[pos] || end)
+                console.log("插入操作花费了 "+ (new Date - now))
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
                 sweepNodes(comments[pos], comments[pos + el] || end)
