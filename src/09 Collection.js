@@ -2,7 +2,7 @@
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
 
-function Collection(model) {
+function arrayFactory(model) {
     var array = []
     array.$id = generateID()
     array.$model = model //数据模型
@@ -21,7 +21,7 @@ function Collection(model) {
         el: 1
     }
     array.$proxy = []
-    avalon.mix(array, CollectionPrototype)
+    avalon.mix(array, arrayPrototype)
     return array
 }
 
@@ -39,18 +39,18 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
                         return el
                     }
                 })
+                _splice.apply(this, [pos, 0].concat(array))
                 /* jshint ignore:end */
                 for (var i = pos; i < m; i++) {//生成代理VM
                     var proxy = eachProxyAgent(i, this)
                     this.$proxy.splice(i, 0, proxy)
                 }
-                _splice.apply(this, [pos, 0].concat(array))
                 this._fire("add", pos, n)
                 break
             case "del":
                 var ret = this._splice(pos, n)
                 var removed = this.$proxy.splice(pos, n) //回收代理VM
-                recycleProxies(removed, "each")
+                eachProxyRecycler(removed, "each")
                 this._fire("del", pos, n)
                 break
         }
@@ -70,10 +70,10 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
 }
 
 var _splice = ap.splice
-var CollectionPrototype = {
+var arrayPrototype = {
     _splice: _splice,
     _fire: function (method, a, b) {
-        notifySubscribers(this.$events[subscribers], method, a, b)
+        fireDependencies(this.$events[subscribers], method, a, b)
     },
     size: function () { //取得数组长度，这个函数可以同步视图，length不能
         return this._.length
@@ -153,20 +153,21 @@ var CollectionPrototype = {
         return  []
     },
     clear: function () {
-        recycleProxies(this.$proxy, "each")
+        eachProxyRecycler(this.$proxy, "each")
         this.$model.length = this.$proxy.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
     },
     removeAll: function (all) { //移除N个元素
         if (Array.isArray(all)) {
-            all.forEach(function (el) {
-                this.remove(el)
-            }, this)
-        } else if (typeof all === "function") {
             for (var i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
+                if (all.indexOf(this[i]) !== -1) {
+                    this.removeAt(i)
+                }
+            }
+        } else if (typeof all === "function") {
+            for (i = this.length - 1; i >= 0; i--) {
+                if (all(this[i], i)) {
                     this.removeAt(i)
                 }
             }
@@ -200,9 +201,8 @@ var CollectionPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    notifySubscribers(proxy.$events.el)
+                    fireDependencies(proxy.$events.$index)
                 }
-                //  this._fire("set", index, val)
             }
         }
         return this
@@ -233,7 +233,7 @@ function sortByIndex(array, indexes) {
 }
 
 "sort,reverse".replace(rword, function (method) {
-    CollectionPrototype[method] = function () {
+    arrayPrototype[method] = function () {
         var newArray = this.$model//这是要排序的新数组
         var oldArray = newArray.concat() //保持原来状态的旧数组
         var mask = Math.random()
@@ -261,3 +261,54 @@ function sortByIndex(array, indexes) {
         return this
     }
 })
+
+var eachProxyPool = []
+
+function eachProxyFactory() {
+    var source = {
+        $index: NaN,
+        $first: NaN,
+        $last: NaN,
+        $map: {},
+        $host: {},
+        $outer: {},
+        $remove: avalon.noop,
+        el: {
+            get: function () {
+                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
+                return this.$host[this.$index]
+            },
+            set: function (val) {
+                this.$host.set(this.$index, val)
+            }
+        }
+    }
+
+    var second = {
+        $last: 1,
+        $first: 1,
+        $index: 1
+    }
+    var proxy = modelFactory(source, second)
+    proxy.$id = generateID("$proxy$each")
+    return proxy
+}
+
+function eachProxyAgent(index, host) {
+    var proxy = eachProxyPool.shift()
+    if (!proxy) {
+        proxy = eachProxyFactory( )
+    }else{
+        proxy.$compute()
+    }
+    var last = host.length - 1
+    proxy.$host = host
+    proxy.$index = index
+    proxy.$first = index === 0
+    proxy.$last = index === last
+    proxy.$map = host.$map
+    proxy.$remove = function () {
+        return host.removeAt(proxy.$index)
+    }
+    return proxy
+}

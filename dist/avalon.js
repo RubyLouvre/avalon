@@ -4458,7 +4458,6 @@ function proxyRecycler(proxy, proxyPool) {
         proxyPool.pop()
     }
 }
-
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
@@ -5704,11 +5703,6 @@ avalon.ready(function() {
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
-    
-    window._injectTer = function(code) {
-        return eval(code)
-    }
-    
     return avalon
 
 }));
