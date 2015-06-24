@@ -126,7 +126,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     delete avalon.optimize
                 }
                 parent.insertBefore(transation, comments[pos] || end)
-                console.log("插入操作花费了 "+ (new Date - now))
+                avalon.profile("插入操作花费了 "+ (new Date - now))
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
                 sweepNodes(comments[pos], comments[pos + el] || end)

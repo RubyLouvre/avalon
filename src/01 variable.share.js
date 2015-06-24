@@ -19,7 +19,7 @@ var root = DOC.documentElement
 var avalonFragment = DOC.createDocumentFragment()
 var cinerator = DOC.createElement("div")
 var class2type = {}
-"Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
+"Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
 
@@ -41,7 +41,7 @@ function oneObject(array, val) {
 }
 
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = function(prefix) {
+var generateID = function (prefix) {
     prefix = prefix || "avalon"
     return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
 }
@@ -55,12 +55,18 @@ function IE() {
 }
 var IEVersion = IE()
 
-avalon = function(el) { //创建jQuery式的无new 实例化结构
+avalon = function (el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)
 }
 
+avalon.profile = function () {
+    if (window.console && avalon.config.profile) {
+        Function.apply.call(console.log, console, arguments)
+    }
+}
+
 /*视浏览器情况采用最快的异步回调*/
-avalon.nextTick = new function() {// jshint ignore:line
+avalon.nextTick = new function () {// jshint ignore:line
     var tickImmediate = window.setImmediate
     var tickObserver = window.MutationObserver
     var tickPost = W3C && window.postMessage
@@ -80,14 +86,14 @@ avalon.nextTick = new function() {// jshint ignore:line
     if (tickObserver) {
         var node = document.createTextNode("avalon")
         new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
-        return function(fn) {
+        return function (fn) {
             queue.push(fn)
             node.data = Math.random()
         }
     }
 
     if (tickPost) {
-        window.addEventListener("message", function(e) {
+        window.addEventListener("message", function (e) {
             var source = e.source
             if ((source === window || source === null) && e.data === "process-tick") {
                 e.stopPropagation()
@@ -95,13 +101,13 @@ avalon.nextTick = new function() {// jshint ignore:line
             }
         })
 
-        return function(fn) {
+        return function (fn) {
             queue.push(fn)
             window.postMessage('process-tick', '*')
         }
     }
 
-    return function(fn) {
+    return function (fn) {
         setTimeout(fn, 0)
     }
 }// jshint ignore:line
