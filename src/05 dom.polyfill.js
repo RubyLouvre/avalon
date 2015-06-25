@@ -100,38 +100,7 @@ if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
 
 
 
-//针对firefox, chrome修正mouseenter, mouseleave
-if (!("onmouseenter" in root)) {
-    avalon.each({
-        mouseenter: "mouseover",
-        mouseleave: "mouseout"
-    }, function (origType, fixType) {
-        eventHooks[origType] = {
-            type: fixType,
-            deel: function (elem, _, fn) {
-                return function (e) {
-                    var t = e.relatedTarget
-                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
-                        delete e.type
-                        e.type = origType
-                        return fn.call(elem, e)
-                    }
-                }
-            }
-        }
-    })
-}
-//针对IE9+, w3c修正animationend
-avalon.each({
-    AnimationEvent: "animationend",
-    WebKitAnimationEvent: "webkitAnimationEnd"
-}, function (construct, fixType) {
-    if (window[construct] && !eventHooks.animationend) {
-        eventHooks.animationend = {
-            type: fixType
-        }
-    }
-})
+
 //针对IE6-8修正input
 if (!("oninput" in DOC.createElement("input"))) {
     eventHooks.input = {
