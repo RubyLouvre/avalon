@@ -97,36 +97,9 @@ if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
     HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
 }
 
-//============================= event binding =======================
-var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-function fixEvent(event) {
-    var ret = {}
-    for (var i in event) {
-        ret[i] = event[i]
-    }
-    var target = ret.target = event.srcElement
-    if (event.type.indexOf("key") === 0) {
-        ret.which = event.charCode != null ? event.charCode : event.keyCode
-    } else if (rmouseEvent.test(event.type)) {
-        var doc = target.ownerDocument || DOC
-        var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-        ret.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-        ret.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
-        ret.wheelDeltaY = ret.wheelDelta
-        ret.wheelDeltaX = 0
-    }
-    ret.timeStamp = new Date() - 0
-    ret.originalEvent = event
-    ret.preventDefault = function () { //阻止默认行为
-        event.returnValue = false
-    }
-    ret.stopPropagation = function () { //阻止事件在DOM树中的传播
-        event.cancelBubble = true
-    }
-    return ret
-}
 
-var eventHooks = avalon.eventHooks
+
+
 //针对firefox, chrome修正mouseenter, mouseleave
 if (!("onmouseenter" in root)) {
     avalon.each({
