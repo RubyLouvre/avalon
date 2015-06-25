@@ -1311,11 +1311,12 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 son.$events[subscribers] = observes
                 son.$proxy = $proxy
                 if (observes.length) {
-                    observes.forEach(function (data) {
-                        if (data.rollback) {
-                            data.rollback() //还原 ms-with ms-on
+                    observes.forEach(function (el) {
+                        var fn = bindingHandlers[el.type]
+                        if (fn) { //#753
+                            el.rollback && el.rollback() //还原 ms-with ms-on
+                            fn(el, el.vmodels)
                         }
-                        bindingHandlers[data.type](data, data.vmodels)
                     })
                 }
             }
