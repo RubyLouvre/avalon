@@ -40,7 +40,7 @@ bindingExecutors.on = function (callback, elem, data) {
 var bankForEvent = {}
 var hasRegistryEvent = {}
 function createTopCallback(event) {
-    for (var cur = event.target; cur.nodeType && !event.isPropagationStopped; cur = cur.parentNode) {
+    for (var cur = event.target; cur && cur.nodeType && !event.isPropagationStopped; cur = cur.parentNode) {
         if (cur.disabled === true && event.type === "click") {
             break
         }
@@ -50,7 +50,7 @@ function createTopCallback(event) {
             for (var k = 0, data; !event.isImmediatePropagationStopped && (data = datas[k++]); ) {
                 var fn = data.evaluator
                 if (fn) {
-                    var ret = fn.apply(cur, data.args.concat(e))
+                    var ret = fn.apply(cur, data.args.concat(event))
                     if (ret === false) {
                         event.preventDefault()
                         event.stopPropagation()
@@ -74,7 +74,7 @@ function fixEvent(nativeEvent, type) {
     }
     event.init(nativeEvent, type)
     for (var i = 0, h; h = avalon.eventHooks[i++]; ) {
-        if (h.match(type)) {
+        if (h.match(type) && h.fix) {
             h.fix(type)
         }
     }
