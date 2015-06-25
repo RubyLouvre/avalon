@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.44 built in 2015.6.24
+ avalon.shim.js(无加载器版本) 1.44 built in 2015.6.25
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1886,11 +1886,15 @@ function fireDependencies(list) {
         for (var i = list.length, fn; fn = list[--i]; ) {
             var el = fn.element
             if (el && el.parentNode) {
-                if (fn.$repeat) {
-                    fn.handler.apply(fn, args) //处理监控数组的方法
-                } else if (fn.type !== "on") { //事件绑定只能由用户触发,不能由程序触发
-                    var fun = fn.evaluator || noop
-                    fn.handler(fun.apply(0, fn.args || []), el, fn)
+                try {
+                    if (fn.$repeat) {
+                        fn.handler.apply(fn, args) //处理监控数组的方法
+                    } else if (fn.type !== "on") { //事件绑定只能由用户触发,不能由程序触发
+                        var fun = fn.evaluator || noop
+                        fn.handler(fun.apply(0, fn.args || []), el, fn)
+
+                    }
+                } catch (e) {
                 }
             }
         }
