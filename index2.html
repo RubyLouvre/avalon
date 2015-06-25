@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-on</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <script src="avalon.js" ></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                array: [1,2,3,4],
+                fn: function(){
+                    alert(this.getAttribute("data-index"))
+                }
+            })
+ 
+        </script>
+    </head>
+    <body>
+
+        <div ms-controller="test">
+            <div  ms-repeat="array" ms-data-index="$index" ms-click="fn">{{el}}</div>
+        </div>
+
+
+    </body>
+</html>

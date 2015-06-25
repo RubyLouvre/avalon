@@ -19,16 +19,14 @@ function createTopCallback(type){
     return function(e){
         var event = fixEvent(e)
         event.type = type
-        
-        
-        
+        console.log(e.target)
     }
 }
 
 bindingExecutors.on = function(callback, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
     if(hasRegistryEvent[eventType]){
-        
+        hasRegistryEvent[eventType].push(data)
     }else{
         avalon.bind(DOC, eventType, createTopCallback(eventType))
         hasRegistryEvent[eventType] = [data]
