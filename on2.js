@@ -126,16 +126,14 @@ function executeDispatchesAndRelease(event) {
         }
         var dispatchListeners = event._dispatchListeners
         var dispatchIDs = event._dispatchIDs
-        console.log("执行所有回调")
+        avalon.log("执行所有回调")
         for (var i = 0; i < dispatchListeners.length; i++) {
             if (event.isPropagationStopped) {
                 break
             }
             callback(event, dispatchListeners[i], dispatchIDs[i])
         }
-        event._dispatchListeners = null
-        event._dispatchIDs = null
-        event.dispose()
+        eventFactory.release(event)
     }
 }
 
@@ -159,24 +157,31 @@ var eventFactory = (function () {
     function eventFactory(nativeEvent, type, id) {
         var event = eventPool.shift()
         if (!event) {
-            event = new DOMEvent()
+            event = new SyntheticEvent()
         }
-        event.init(nativeEvent, type)
-        event.id = id
+        event.timeStamp = new Date() - 0
+        event.nativeEvent = nativeEvent
+        event.type = type
+        var target = nativeEvent.target || nativeEvent.srcElement || window
+        if (target.nodeType === 3) {
+            target = target.parentNode
+        }
+        event.target = target
         return event
     }
-    function DOMEvent() {
-    }
-    var ep = DOMEvent.prototype
-    ep.init = function (original, type) {
-        this.timeStamp = new Date() - 0
-        this.nativeEvent = original
-        this.type = type
-        this.target = original.target || original.srcElement || window
-        if (this.target.nodeType === 3) {
-            this.target = this.target.parentNode
+    eventFactory.release = function (event) {
+        for (var i in event) {
+            if (event.hasOwnProperty(i)) {
+                event[i] = null
+            }
+        }
+        if (eventPool.length < 20) {
+            eventPool.push(event)
         }
     }
+    function SyntheticEvent() {
+    }
+    var ep = SyntheticEvent.prototype
 //阻止默认行为
     ep.preventDefault = function () {
         if (this.nativeEvent.preventDefault) {
@@ -200,21 +205,12 @@ var eventFactory = (function () {
         this.isImmediatePropagationStopped = true
         this.stopPropagation()
     }
-    ep.dispose = function () {
-        for (var i in this) {
-            if (this.hasOwnProperty(i)) {
-                this[i] = null
-            }
-        }
-        if (eventPool.length < 20) {
-            eventPool.push(this)
-        }
-    }
     return eventFactory
 })()
 
 // 各类型事件的装饰器
-function SyntheticEvent(event, nativeEvent) {
+// http://www.w3.org/TR/html5/index.html#events-0
+function SyntheticHTMLEvent(event, nativeEvent) {
     var _interface = "eventPhase,cancelable,bubbles"
     _interface.replace(rword, function (name) {
         event[name] = nativeEvent[name]
@@ -222,7 +218,7 @@ function SyntheticEvent(event, nativeEvent) {
 }
 
 function SyntheticUIEvent(event, nativeEvent) {
-    SyntheticEvent(event, nativeEvent)
+    SyntheticHTMLEvent(event, nativeEvent)
     event.view = nativeEvent.view || window
     event.detail = nativeEvent.detail || 0
 }
@@ -235,7 +231,7 @@ function SyntheticTouchEvent(event, nativeEvent) {
     })
 }
 function SyntheticInputEvent(event, nativeEvent) {
-    SyntheticEvent(event, nativeEvent)
+    SyntheticHTMLEvent(event, nativeEvent)
     event.data = nativeEvent.data
 }
 //http://www.w3.org/TR/DOM-Level-3-Events/
@@ -411,9 +407,7 @@ var SimpleEventPlugin = {
             case "error":
             case "reset":
             case "submit":
-                // HTML Events
-                // @see http://www.w3.org/TR/html5/index.html#events-0
-                EventConstructor = SyntheticEvent;
+                EventConstructor = SyntheticHTMLEvent;
                 break;
             case "keypress":
                 // FireFox creates a keypress event for function keys too. This removes
@@ -437,7 +431,6 @@ var SimpleEventPlugin = {
                 if (nativeEvent.button === 2) {
                     return null;
                 }
-                /* falls through */
             case "contextenu":
             case "doubleclick":
             case "mousedown":
