@@ -2,10 +2,10 @@ var rdash = /\(([^)]*)\)/
 bindingHandlers.on = function (data, vmodels) {
     var value = data.value
     data.type = "on"
-    var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
-    if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
-        bindingHandlers.on[eventType + "Hook"](data)
-    }
+//    var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+//    if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
+//        bindingHandlers.on[eventType + "Hook"](data)
+//    }
     if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
         var matched = (value.match(rdash) || ["", ""])[1].trim()
         if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -18,9 +18,22 @@ bindingHandlers.on = function (data, vmodels) {
 
 bindingExecutors.on = function (callback, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
-    if (!hasRegistryEvent[eventType]) {
-        avalon.bind(DOC, eventType, createTopCallback)
-        hasRegistryEvent[eventType] = true
+    if (!isListening[eventType]) {
+        if (eventType === "change") {
+            avalon.bind(DOC, "focus", createTopCallback, true)
+            avalon.bind(DOC, "blur", createTopCallback, true)
+            avalon.bind(DOC, "change", createTopCallback, true)
+            isListening.focus = true
+            isListening.blur = true
+        } else if (eventType === "focus" || eventType === "blur") {
+            avalon.bind(DOC, "focus", createTopCallback, true)
+            avalon.bind(DOC, "blur", createTopCallback, true)
+            isListening.focus = true
+            isListening.blur = true
+        } else {
+            avalon.bind(DOC, eventType, createTopCallback)
+        }
+        isListening[eventType] = true
     }
     var uuid = getUid(elem)
     var obj = bankForEvent[uuid] || (bankForEvent[uuid] = {})
@@ -38,8 +51,9 @@ bindingExecutors.on = function (callback, elem, data) {
 }
 
 var bankForEvent = {}
-var hasRegistryEvent = {}
+var isListening = {}
 function createTopCallback(event) {
+    // console.log("createTopCallback" + event.type)
     for (var cur = event.target; cur && cur.nodeType && !event.isPropagationStopped; cur = cur.parentNode) {
         if (cur.disabled === true && event.type === "click") {
             break
@@ -75,7 +89,7 @@ function fixEvent(nativeEvent, type) {
     event.init(nativeEvent, type)
     for (var i = 0, h; h = avalon.eventHooks[i++]; ) {
         if (h.match(type) && h.fix) {
-            h.fix(type)
+            h.fix(event, nativeEvent)
         }
     }
     return event
@@ -84,11 +98,18 @@ function fixEvent(nativeEvent, type) {
 function SyntheticEvent() {
 }
 var ep = SyntheticEvent.prototype
-ep.init = function (nativeEvent, type) {
+ep.init = function (original, type) {
+    var ret = this
+    String("altKey bubbles cancelable ctrlKey currentTarget detail eventPhase " +
+            "metaKey relatedTarget shiftKey target timeStamp which").replace(rword, function (prop) {
+        ret[prop] = original[prop]
+    })
     this.timeStamp = new Date() - 0
-    this.nativeEvent = nativeEvent
+    this.nativeEvent = original
     this.type = type
-    this.target = nativeEvent.target || nativeEvent.srcElement
+    if (!this.target) {
+        this.target = original.srcElement || window
+    }
     if (this.target.nodeType === 3) {
         this.target = this.target.parentNode
     }
@@ -110,8 +131,11 @@ ep.stopPropagation = function () {
     this.nativeEvent.cancelBubble = true;
 }
 ep.dispose = function () {
-    this.isPropagationStopped = this.isImmediatePropagationStopped = false
-    this.target = this.currentTarget = this.nativeEvent = null
+    for (var i in this) {
+        if (this.hasOwnProperty(i)) {
+            this[i] = null
+        }
+    }
     if (eventPool.length < 20) {
         eventPool.push(this)
     }
@@ -129,10 +153,11 @@ var normalizeEventPlugin = {
         return normalizeEvent
     },
     on: function (data) {
-        return function (e) {
+        var oldFn = data.fn
+        data.fn = function (e) {
             var event = fixEvent(e, data.origType)
             try {
-                return data.fn.call(data.el, event)
+                return oldFn.call(data.el, event)
             } finally {
                 event.dispose()
             }
@@ -145,16 +170,22 @@ var mouseEventPlugin = {
     match: function (type) {
         return rmouseEvent.test(type)
     },
-    fix: function (ret, event) {
-        if (typeof event.pageY !== 'undefined') {
-            ret.pageX = event.pageX
-            ret.pageY = event.pageY
-        } else {
-            var target = ret.target
+    fix: function (event, original) {
+        String("button buttons clientX clientY offsetX offsetY pageX pageY " +
+                "screenX screenY toElement").replace(rword, function (prop) {
+            event[prop] = original[prop]
+        })
+        if (!isFinite(event.pageX)) {
+            var target = event.target
             var doc = target.ownerDocument || DOC
             var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-            ret.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-            ret.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+            event.pageX = original.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+            event.pageY = original.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+        }
+        var button = original.button;
+        //  1 === left; 2 === middle; 3 === right
+        if (!event.which && button !== undefined) {
+            event.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
         }
     }
 }
@@ -163,11 +194,9 @@ var keyboardEventPlugin = {
     match: function (type) {
         return type.indexOf("key") === 0
     },
-    fix: function (ret, event) {
-        if (event.which) {
-            ret.which = event.which
-        } else {
-            ret.which = event.charCode != null ? event.charCode : event.keyCode
+    fix: function (event, original) {
+        if (!isFinite(event.which)) {
+            event.which = original.charCode != null ? original.charCode : original.keyCode
         }
     }
 }
@@ -197,7 +226,41 @@ if (!("onmouseenter" in root)) {
     })
 }
 
-
+//if (!root.addEventListener) {//IE6-8下不支持focus,blur事件冒泡
+eventHooks.push({
+    match: function (type) {
+        return type === "focus" || type === "blur"
+    },
+    on: function (data) {
+        if (data.phase && !root.addEventListener) {
+            data.type = data.type === "focus" ? "focusin" : "focusout"
+        }
+    },
+    off: function (data) {
+        if (data.phase && !root.addEventListener) {
+            data.type = data.type === "focus" ? "focusin" : "focusout"
+        }
+    },
+    fix: function(event, original){
+        
+    }
+})
+eventHooks.push({
+    match: function (type) {
+        return type === "change" //依赖于focus
+    },
+    on: function (data) {
+        if (data.phase) {
+            //  data.type = data.type === "focus" ? "focusin" : "focusout"
+        }
+    },
+    off: function (data) {
+        if (data.phase) {
+            //  data.type = data.type === "focus" ? "focusin" : "focusout"
+        }
+    }
+})
+//}
 //针对IE9+, w3c修正animationend
 if (!window.AnimationEvent && window.WebKitAnimationEvent) {
     eventHooks.push({

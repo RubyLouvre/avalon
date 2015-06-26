@@ -10,7 +10,10 @@
                 $id: "test",
                 array: [1,2,3,4],
                 fn: function(){
-                    alert(this.getAttribute("data-index"))
+                    console.log(this.getAttribute("data-index"))
+                },
+                handler: function(e){
+                    console.log(e.type+"!")
                 }
             })
  
@@ -20,6 +23,7 @@
 
         <div ms-controller="test">
             <div  ms-repeat="array" ms-data-index="$index" ms-click="fn">{{el}}</div>
+            <p><input ms-focus="handler" ms-blur="handler" ms-on-focusin="handler"></p>
         </div>
 
 
