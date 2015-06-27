@@ -13,7 +13,7 @@ bindingHandlers.on = function (data, vmodels) {
 
 bindingExecutors.on = function (_, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
-    avalon.log("绑定" + eventType + "事件！")
+    // avalon.log("绑定" + eventType + "事件！")
     var uuid = getUid(elem)
     try {
         listenTo(eventType, document)
@@ -51,6 +51,8 @@ function listenTo(eventType, mountAt) {
                 } else {
                     trapBubbledEvent("scroll", 'scroll', window)
                 }
+            } else if (dependency === "select" && W3C) {
+                trapBubbledEvent("select", 'select', mountAt)
             } else if (dependency === "focus" || dependency === "blur") {
                 if (W3C) {
                     trapCapturedEvent("focus", 'focus', mountAt);
@@ -69,13 +71,13 @@ function listenTo(eventType, mountAt) {
     }
 }
 
-var trapBubbledEvent = function (topLevelType, handlerBaseName, element) {
-    return addEventListener(element, handlerBaseName, function (nativeEvent) {
+var trapBubbledEvent = function (topLevelType, type, element) {
+    return addEventListener(element, type, function (nativeEvent) {
         topEventDispatch(nativeEvent, topLevelType)
     })
 }
-var trapCapturedEvent = function (topLevelType, handlerBaseName, element) {
-    return addEventListener(element, handlerBaseName, function (nativeEvent) {
+var trapCapturedEvent = function (topLevelType, type, element) {
+    return addEventListener(element, type, function (nativeEvent) {
         topEventDispatch(nativeEvent, topLevelType)
     }, true)
 }
@@ -367,6 +369,9 @@ var EventPluginHub = {
     },
     extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
         var events = []
+        if (!topLevelTarget) {
+            return events
+        }
         var plugins = EventPluginRegistry.plugins;
         for (var i = 0; i < plugins.length; i++) {
             var possiblePlugin = plugins[i];
@@ -387,11 +392,10 @@ var EventPluginHub = {
 // SimpleEventPlugin
 var SimpleEventTypes = {}
 String("blur,click,contextMenu,copy,cut,doubleClick,drag,dragEnd,dragEnter,dragExit,dragLeave" +
-        "dragOver,dragStart,drop,focus,input,keyDown,keyPress,keyUp,load,error,mouseDown" +
-        "mouseMove,mouseOut,mouseOver,mouseUp,paste,reset,scroll,submit,touchCancel" +
+        "dragOver,dragStart,drop,focus,keyDown,keyPress,keyUp,load,error,mouseDown" +
+        "mouseMove,mouseOut,mouseOver,mouseUp,input,paste,reset,scroll,submit,touchCancel" +
         "touchCancel,touchEnd,touchStart,wheel").toLowerCase().replace(rword, function (eventName) {
     SimpleEventTypes[eventName] = {
-        name: eventName,
         dependencies: [eventName]
     }
 })
@@ -412,7 +416,7 @@ var SimpleEventPlugin = {
         }
         var EventConstructor;
         switch (topLevelType) {
-            case "input":
+            //   case "input":
             case "load":
             case "error":
             case "reset":
@@ -527,14 +531,12 @@ var TapEventPlugin = ResponderEventPlugin
 var EnterLeaveEventPlugin = {
     eventTypes: {
         mouseenter: {
-            name: "mouseenter",
             dependencies: [
                 "mouseout",
                 "mouseover"
             ]
         },
         mouseleave: {
-            name: "mouseleave",
             dependencies: [
                 "mouseout",
                 "mouseover"
@@ -614,7 +616,6 @@ var ChangeEventPlugin = (function () {
     var EventPlugin = {
         eventTypes: {
             change: {
-                name: "change",
                 dependencies: [
                     "blur",
                     "change",
@@ -624,7 +625,7 @@ var ChangeEventPlugin = (function () {
             }
         },
         extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
-            var elementType = topLevelTarget ? topLevelTarget.nodeName.toLowerCase() : ""
+            var elementType = topLevelTarget.nodeName.toLowerCase()
             if (elementType === "select" || elementType === "textarea" || elementType === "input") {
                 if (elementType === "input") {
                     elementType = topLevelTarget.type
@@ -655,10 +656,10 @@ var ChangeEventPlugin = (function () {
                     case "radio":
                     case "checkbox":
                         if (topLevelType === "focus") {
-                            topLevelTarget._oldChecked = topLevelTarget.checked
+                            topLevelTarget.oldChecked = topLevelTarget.checked
                         } else if (topLevelType === "click") {
-                            if (topLevelTarget._oldChecked !== topLevelTarget.checked) {
-                                topLevelTarget._oldChecked = topLevelTarget.checked
+                            if (topLevelTarget.oldChecked !== topLevelTarget.checked) {
+                                topLevelTarget.oldChecked = topLevelTarget.checked
                                 isChange = true
                             }
                         }
@@ -668,10 +669,10 @@ var ChangeEventPlugin = (function () {
                             isChange = topLevelType === "change"
                         } else {
                             if (topLevelType === "focus") {
-                                topLevelTarget._oldValue = topLevelTarget.value
+                                topLevelTarget.oldValue = topLevelTarget.value
                             } else if (topLevelType === "blur") {
-                                if (topLevelTarget._oldValue !== topLevelTarget.value) {
-                                    topLevelTarget._oldValue = topLevelTarget.value
+                                if (topLevelTarget.oldValue !== topLevelTarget.value) {
+                                    topLevelTarget.oldValue = topLevelTarget.value
                                     isChange = true
                                 }
                             }
@@ -719,7 +720,7 @@ var SelectEventPlugin = (function () {
         if ('selectionStart' in node) {
             return {
                 start: node.selectionStart,
-                end: node.selectionEnd,
+                end: node.selectionEnd
             };
         } else if (window.getSelection) {
             var selection = window.getSelection();
@@ -781,7 +782,6 @@ var SelectEventPlugin = (function () {
     var EventPlugin = {
         eventTypes: {
             select: {
-                name: "select",
                 dependencies: [
                     "blur",
                     "contextmenu",
@@ -789,7 +789,7 @@ var SelectEventPlugin = (function () {
                     "keydown",
                     "mousedown",
                     "mouseup",
-                    "selectionchange"
+                    "select"//W3C
                 ]
             }
         },
@@ -800,13 +800,8 @@ var SelectEventPlugin = (function () {
             switch (topLevelType) {
                 // Track the input node that has focus.
                 case "focus":
-                    var canSelected = topLevelTarget.contentEditable === 'true'
-                    if (!canSelected) {
-                        var elementType = topLevelTarget.nodeName
-                        canSelected = elementType === "INPUT" ?
-                                !/button|submit|reset|radio|checkbox/.test(topLevelTarget.type) :
-                                elementType === "TEXTAREA"
-                    }
+                    var canSelected = topLevelTarget.contentEditable === 'true' ||
+                            isTextInputElement(topLevelTarget)
                     if (canSelected) {
                         activeElement = topLevelTarget
                         lastSelection = null
@@ -833,8 +828,8 @@ var SelectEventPlugin = (function () {
                     // keyup, but we check on keydown as well in the case of holding down a
                     // key, when multiple keydown events are fired but only one keyup is.
                 case "selectionchange":
-                case "keydown":
-                case "keyup":
+                case "select":
+                    //   case "keyup":
                     return constructSelectEvent(nativeEvent, uuids)
             }
         },
@@ -846,7 +841,167 @@ var SelectEventPlugin = (function () {
     }
     return EventPlugin
 })()
-var BeforeInputEventPlugin = ResponderEventPlugin
+
+var supportedInputTypes = {
+    'color': true,
+    'date': true,
+    'datetime': true,
+    'datetime-local': true,
+    'email': true,
+    'month': true,
+    'number': true,
+    'password': true,
+    'range': true,
+    'search': true,
+    'tel': true,
+    'text': true,
+    'time': true,
+    'url': true,
+    'week': true
+};
+
+function isTextInputElement(elem) {
+    return elem && ((elem.nodeName === 'INPUT' ? supportedInputTypes[elem.type] : elem.nodeName === 'TEXTAREA'));
+}
+
+
+var InputEventPlugin = (function () {
+    var activeElement
+    var activeElementValueProp
+    var newValueProp = {
+        get: function () {
+            return activeElementValueProp.get.call(this);
+        },
+        set: function (val) {
+            activeElementValueProp.set.call(this, val)
+            if (this.msFocus && val + "" !== this.oldValue) {
+                fireDatasetChanged(this)
+            }
+        }
+    };
+    function valueChange(e) {
+        if (e.propertyName === "value") {
+            fireDatasetChanged(activeElement)
+        }
+    }
+    function selectionChange() {
+        fireDatasetChanged(activeElement)
+    }
+    function fireDatasetChanged(elem) {
+        if (DOC.createEvent) {
+            var hackEvent = DOC.createEvent("Events");
+            hackEvent.initEvent("datasetchanged", true, true, {})
+            hackEvent.isInputEvent = true
+            elem.dispatchEvent(hackEvent)
+        } else {
+            var hackEvent = DOC.createEventObject()
+            hackEvent.isInputEvent = true
+            elem.fireEvent("ondatasetchanged", hackEvent)
+        }
+    }
+    var composing = false
+    var EventPlugin = {
+        eventTypes: {
+            input: {
+                dependencies: [
+                    "compositionstart",
+                    "compositionend",
+                    "input",
+                    "DOMAutoComplete",
+                    "focus",
+                    "blur",
+                    "datasetchanged"
+                ]
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+            if (isTextInputElement(topLevelTarget)) {
+                var isValueChange = false
+                activeElement = topLevelTarget
+                switch (topLevelType) {
+                    case "compositionstart":
+                        composing = false
+                        break
+                    case "compositionend":
+                        composing = true
+                        break
+                    case "input":
+                    case "DOMAutoComplete":
+                        if (!composing) {
+                            isValueChange = true
+                        }
+                        break
+                    case "datasetchanged":
+                        isValueChange = nativeEvent.isInputEvent
+                        break
+                    case "focus":
+                    case "blur":
+                        topLevelTarget.msFocus = topLevelType === "focus"
+                        if (IEVersion < 9) {
+                            //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            //IE9使用propertychange无法监听中文输入改动
+                            topLevelTarget.detachEvent("onpropertychange", valueChange)
+                            if (topLevelTarget.msFocus) {
+                                topLevelTarget.attachEvent("onpropertychange", valueChange)
+                            }
+                        } else if (IEVersion === 9) {
+                            DOC.removeEventListener("selectionchange", selectionChange, false)
+                            if (topLevelTarget.msFocus) {
+                                DOC.addEventListener("selectionchange", selectionChange, false)
+                            }
+                        }
+                        break
+                }
+                if (isValueChange) {
+                    var event = eventFactory(nativeEvent, "input")
+                    collectDispatches(event, uuids)
+                    topLevelTarget.oldValue = topLevelTarget.value
+                    return event
+                }
+            }
+        },
+        didPutListener: function (id) {
+            var element = getNode(id)
+
+            if (isTextInputElement(element) && !element.msInputHack) {
+                element.msInputHack = true
+                try {
+                    activeElementValueProp = Object.getOwnPropertyDescriptor(
+                            element.constructor.prototype, "value")
+                    Object.defineProperty(activeElement, "value", newValueProp)
+                } catch (e) {
+                    element.msInputHack = function () {
+                        if (element.parentNode) {
+                            if (!element.msFocus && element.oldValue !== element.value) {
+                                fireDatasetChanged(element)
+                            }
+                        } else if (!element.msRetain) {
+                            element.msInputHack = null
+                            return false
+                        }
+                    }
+                    avalon.tick(element.msInputHack)
+                }
+            }
+        },
+        willDeleteListener: function (id, type, fn) {
+            var pool = callbackPool[type]
+            var arr = pool && pool[id]
+            if (!fn || !arr || (arr.length == 1 && pool[0] == fn)) {
+                var element = getNode(id) || {}
+                if (element.msInputHack == true) {
+                    delete element.value
+                } else if (typeof element.msInputHack == "function") {
+                    avalon.Array.remove(ribbon, element.msInputHack)
+                    element.msInputHack = void 0
+                }
+            }
+        }
+    }
+
+
+    return EventPlugin
+})()
 var AnalyticsEventPlugin = ResponderEventPlugin
 
 var EventPluginRegistry = {
@@ -858,7 +1013,7 @@ var EventPluginRegistry = {
         EnterLeaveEventPlugin,
         ChangeEventPlugin,
         SelectEventPlugin,
-        BeforeInputEventPlugin,
+        InputEventPlugin,
         AnalyticsEventPlugin
     ]
 }
