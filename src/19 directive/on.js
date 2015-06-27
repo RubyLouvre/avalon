@@ -13,12 +13,12 @@ bindingHandlers.on = function (data, vmodels) {
 
 bindingExecutors.on = function (_, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
+    avalon.log("绑定" + eventType + "事件！")
     var uuid = getUid(elem)
     try {
         listenTo(eventType, document)
     } catch (e) {
         console.log(e)
-        console.log(eventType)
     }
     EventPluginHub.putListener(uuid, eventType, data)
     data.rollback = function () {
@@ -478,10 +478,12 @@ var SimpleEventPlugin = {
                 EventConstructor = SyntheticClipboardEvent;
                 break;
         }
-        var event = eventFactory(nativeEvent, topLevelType)
-        EventConstructor(event, nativeEvent)
-        collectDispatches(event, uuids) //收集回调
-        return event;
+        if (EventConstructor) {
+            var event = eventFactory(nativeEvent, topLevelType)
+            EventConstructor(event, nativeEvent)
+            collectDispatches(event, uuids) //收集回调
+            return event
+        }
     },
     didPutListener: function (id, type) {
         // Mobile Safari does not fire properly bubble click events on
@@ -584,13 +586,8 @@ function isEventSupported(eventNameSuffix, capture) {
 }
 
 var ChangeEventPlugin = (function () {
-    var supportChangeEventBubble = !('documentMode' in document) || document.documentMode > 8
-    var supportInputEvent = isEventSupported("input", true)
-    var IEInputChangeEvents = {
-        "selectchange": true,
-        "keyup": true,
-        "keydown": true
-    }
+
+
     var activeElement
 
     var IESelectFileChange = false
@@ -622,10 +619,7 @@ var ChangeEventPlugin = (function () {
                     "blur",
                     "change",
                     "click",
-                    "focus",
-                    "keydown"
-//                    "keyup",
-//                    "selectionchange"
+                    "focus"
                 ]
             }
         },
@@ -643,14 +637,16 @@ var ChangeEventPlugin = (function () {
                         return
                     case "select":
                     case "file":
-                        if (supportChangeEventBubble) { //如果支持change事件冒泡
+                        if (W3C) { //如果支持change事件冒泡
                             isChange = topLevelType === "change"
-
                         } else {
                             // 这里的事件依次是 focus change click blur
                             if (topLevelType === "focus") {
                                 stopWatchingForChangeEventIE()
-                                startWatchingForChangeEventIE(topLevelTarget);
+                                startWatchingForChangeEventIE(topLevelTarget)
+                            } else if (IESelectFileChange && topLevelType === "click") {
+                                IESelectFileChange = false
+                                isChange = true
                             } else if (topLevelType === "blur") {
                                 stopWatchingForChangeEventIE();
                             }
@@ -658,20 +654,20 @@ var ChangeEventPlugin = (function () {
                         break
                     case "radio":
                     case "checkbox":
-                             if (topLevelType === "focus" ) {
+                        if (topLevelType === "focus") {
+                            topLevelTarget._oldChecked = topLevelTarget.checked
+                        } else if (topLevelType === "click") {
+                            if (topLevelTarget._oldChecked !== topLevelTarget.checked) {
                                 topLevelTarget._oldChecked = topLevelTarget.checked
-                            } else if (topLevelType === "click") {
-                                if (topLevelTarget._oldChecked !== topLevelTarget.checked) {
-                                    topLevelTarget._oldChecked = topLevelTarget.checked
-                                    isChange = true
-                                }
+                                isChange = true
                             }
+                        }
                         break
-                    default:
-                        if (supportChangeEventBubble) { //如果支持change事件冒泡
+                    default://其他控件的change事件需要在失去焦点时才触发
+                        if (W3C) { //如果支持change事件冒泡
                             isChange = topLevelType === "change"
                         } else {
-                            if (topLevelType === "focus" ) {
+                            if (topLevelType === "focus") {
                                 topLevelTarget._oldValue = topLevelTarget.value
                             } else if (topLevelType === "blur") {
                                 if (topLevelTarget._oldValue !== topLevelTarget.value) {
@@ -681,10 +677,6 @@ var ChangeEventPlugin = (function () {
                             }
                         }
                         break
-                }
-                if (IESelectFileChange && topLevelType === "click") {
-                    IESelectFileChange = false
-                    isChange = true
                 }
                 if (isChange) {
                     var event = eventFactory(nativeEvent, "change")
@@ -700,23 +692,160 @@ var ChangeEventPlugin = (function () {
 
 
 
-
-
-// For IE8 and IE9.
-
-function getTargetIDForInputEventIE(topLevelType) {
-    if (topLevelType === "selectchange" ||
-            topLevelType === "keyup" ||
-            topLevelType === "keydown") {
-
-        if (activeElement && activeElement.value !== activeElementValue) {
-            activeElementValue = activeElement.value;
-            return activeElementID;
-        }
+/**
+ * Same as document.activeElement but wraps in a try-catch block. In IE it is
+ * not safe to call document.activeElement if there is nothing focused.
+ *
+ * The activeElement will be null only if the document body is not yet defined.
+ */
+function getActiveElement() /*?DOMElement*/ {
+    try {
+        return document.activeElement || document.body;
+    } catch (e) {
+        return document.body;
     }
 }
 
-var SelectEventPlugin = ResponderEventPlugin
+var SelectEventPlugin = (function () {
+    var activeElement = null;
+    var lastSelection = null;
+    var mouseDown = false;
+
+// Track whether a listener exists for this plugin. If none exist, we do
+// not extract events.
+    var hasListener = false;
+
+    function getSelection(node) {
+        if ('selectionStart' in node) {
+            return {
+                start: node.selectionStart,
+                end: node.selectionEnd,
+            };
+        } else if (window.getSelection) {
+            var selection = window.getSelection();
+            return {
+                anchorNode: selection.anchorNode,
+                anchorOffset: selection.anchorOffset,
+                focusNode: selection.focusNode,
+                focusOffset: selection.focusOffset
+            };
+        } else if (document.selection) {
+            var range = document.selection.createRange();
+            return {
+                parentElement: range.parentElement(),
+                text: range.text,
+                top: range.boundingTop,
+                left: range.boundingLeft
+            };
+        }
+    }
+    function shallowEqual(objA, objB) {
+        if (objA === objB) {
+            return true;
+        }
+        var key;
+        // Test for A's keys different from B.
+        for (key in objA) {
+            if (objA.hasOwnProperty(key) &&
+                    (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
+                return false;
+            }
+        }
+        // Test for B's keys missing from A.
+        for (key in objB) {
+            if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    function constructSelectEvent(nativeEvent, uuids) {
+        // Ensure we have the right element, and that the user is not dragging a
+        // selection (this matches native `select` event behavior). In HTML5, select
+        // fires only on input and textarea thus if there's no focused element we
+        // won't dispatch.
+        if (mouseDown || activeElement == null || activeElement !== getActiveElement()) {
+            return null;
+        }
+
+        // Only fire when selection has actually changed.
+        var currentSelection = getSelection(activeElement);
+        if (!lastSelection || !shallowEqual(lastSelection, currentSelection)) {
+            lastSelection = currentSelection
+            var event = eventFactory(nativeEvent, 'select')
+            event.target = activeElement;
+            collectDispatches(event, uuids)
+            return event
+        }
+    }
+    var EventPlugin = {
+        eventTypes: {
+            select: {
+                name: "select",
+                dependencies: [
+                    "blur",
+                    "contextmenu",
+                    "focus",
+                    "keydown",
+                    "mousedown",
+                    "mouseup",
+                    "selectionchange"
+                ]
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+            if (!hasListener) {
+                return null;
+            }
+            switch (topLevelType) {
+                // Track the input node that has focus.
+                case "focus":
+                    var canSelected = topLevelTarget.contentEditable === 'true'
+                    if (!canSelected) {
+                        var elementType = topLevelTarget.nodeName
+                        canSelected = elementType === "INPUT" ?
+                                !/button|submit|reset|radio|checkbox/.test(topLevelTarget.type) :
+                                elementType === "TEXTAREA"
+                    }
+                    if (canSelected) {
+                        activeElement = topLevelTarget
+                        lastSelection = null
+                    }
+                    break;
+                case "blur":
+                    activeElement = null
+                    lastSelection = null
+                    break;
+
+                    // Don't fire the event while the user is dragging. This matches the
+                    // semantics of the native select event.
+                case "mousedown":
+                    mouseDown = true;
+                    break;
+                case "contextmenu":
+                case "mouseup":
+                    mouseDown = false
+                    return constructSelectEvent(nativeEvent, uuids)
+                    // Chrome and IE fire non-standard event when selection is changed (and
+                    // sometimes when it hasn't).
+                    // Firefox doesn't support selectionchange, so check selection status
+                    // after each key entry. The selection changes after keydown and before
+                    // keyup, but we check on keydown as well in the case of holding down a
+                    // key, when multiple keydown events are fired but only one keyup is.
+                case "selectionchange":
+                case "keydown":
+                case "keyup":
+                    return constructSelectEvent(nativeEvent, uuids)
+            }
+        },
+        didPutListener: function (id, type) {
+            if (type === "select") {
+                hasListener = true;
+            }
+        }
+    }
+    return EventPlugin
+})()
 var BeforeInputEventPlugin = ResponderEventPlugin
 var AnalyticsEventPlugin = ResponderEventPlugin
 
