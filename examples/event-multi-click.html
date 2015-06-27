@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-on</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js" ></script>
+        <script>
+            var count = 0
+            var vm = avalon.define({
+                $id: "multi-click",
+                str1: "1",
+                str2: "2",
+                str3: "3",
+                click0: function () {
+                    vm.str1 = "xxxxxxxxx" + (count++)
+                },
+                click1: function () {
+                    vm.str2 = "xxxxxxxxx" + (count++)
+                },
+                click2: function () {
+                    vm.str3 = "xxxxxxxxx" + (count++)
+                }
+            })
+        </script>
+        <style>
+            #clickme{
+                background: red;
+                width:500px;
+                height:60px;
+            }
+        </style>
+    </head>
+    <body>
+        <fieldset>
+            <legend>一个元素绑定多个同种事件的回调</legend>
+            <div ms-controller="multi-click">
+                <div ms-click="click0" ms-click-1="click1" ms-click-2="click2" id="clickme">请点我</div>
+                <div>{{str1}}</div>
+                <div>{{str2}}</div>
+                <div>{{str3}}</div>
+            </div>
+        </fieldset>
+    </body>
+</html>

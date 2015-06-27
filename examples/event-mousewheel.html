@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-on-mousewheel</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                text: "",
+                callback: function(e) {
+                    vm.text = e.delta +" " + e.deltaX+ "  " + e.type
+                }
+            })
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <div ms-on-mousewheel="callback"  style="background: red;width:600px;height: 200px;">
+            <p>请使用鼠标滚轮</p>
+            {{text}} 
+        </div>
+    </body>
+</html>

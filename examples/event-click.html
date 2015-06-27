@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                click: function (e) {
+                    avalon.log(e.currentTarget.id)
+                }
+            })
+        </script>
+        <style>
+            #level-1{
+                background:#2FECDC;
+                padding:40px;
+            }
+            #level-2{
+                background:orange;
+                padding:40px;
+            }
+            #level-3{
+                background:orangered;
+                padding:40px;
+            }
+            #level-4{
+                background:orchid;
+                padding:40px;
+            }
+        </style>
+    </head>
+    <body ms-controller="test">
+        <div ms-click="click" id="level-1">
+            <div ms-click="click" id="level-2">
+                <div ms-click="click" id="level-3">
+                    <div ms-click="click" id="level-4">
+                        点我
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

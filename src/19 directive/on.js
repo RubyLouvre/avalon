@@ -31,21 +31,18 @@ var isListening = {}
 function listenTo(eventType, mountAt) {
     //通过事件名得到对应的插件
     var plugin = getPluginByEventType(eventType)
+    if (!plugin) {
+        avalon.log(eventType + " 事件不存在对应的插件模块 !")
+    }
+    console.log(eventType)
     //得到对应的依赖
-    var dependencies = plugin.eventTypes[eventType].dependencies
+    var dependencies = plugin ? plugin.eventTypes[eventType].dependencies : [eventType]
     //IE6-8下`keyup`/`keypress`/`keydown` 只能冒泡到 document
     for (var i = 0; i < dependencies.length; i++) {
         var dependency = dependencies[i];
         if (isListening[dependency] !== true) {
-            if (dependency === "wheel") {
-                if (isEventSupported("wheel")) {
-                    trapBubbledEvent("wheel", 'wheel', mountAt) //IE9+
-                } else if (isEventSupported("mousewheel")) {
-                    trapBubbledEvent("wheel", 'mousewheel', mountAt)
-                } else {
-                    trapBubbledEvent("wheel", 'DOMMouseScroll', mountAt) //firefox
-                }
-            } else if (dependency === "scroll") {
+
+            if (dependency === "scroll") {
                 if (W3C) {
                     trapCapturedEvent("scroll", 'scroll', mountAt)
                 } else {
@@ -64,7 +61,7 @@ function listenTo(eventType, mountAt) {
                 isListening.focus = true
                 isListening.blur = true
             } else {
-                trapBubbledEvent(dependency, dependency, mountAt);
+                trapBubbledEvent(eventType, dependency, mountAt);
             }
             isListening[dependency] = true;
         }
@@ -244,15 +241,7 @@ function SyntheticFocusEvent(event, nativeEvent) {
     SyntheticUIEvent(event, nativeEvent)
     event.relatedTarget = nativeEvent.relatedTarget
 }
-//https://developer.mozilla.org/en-US/docs/Web/Events/wheel
 
-function SyntheticWheelEvent(event, nativeEvent) {
-    SyntheticMouseEvent(event, nativeEvent)
-    var fixWheelType = DOC.onwheel !== void 0 ? "wheel" : "DOMMouseScroll"
-    var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
-    event.deltaY = event.delta = nativeEvent[fixWheelDelta] > 0 ? -120 : 120
-    event.deltaX = event.deltaZ = 0
-}
 
 function SyntheticClipboardEvent(event, nativeEvent) {
     SyntheticEvent(event, nativeEvent)
@@ -402,10 +391,10 @@ function collectDispatches(event, uuids) {
 var SimpleEventPlugin = (function () {
     var EventTypes = {}
     var onClickListeners = {}
-    String("blur,click,contextMenu,copy,cut,doubleClick,drag,dragEnd,dragEnter,dragExit,dragLeave" +
-            "dragOver,dragStart,drop,focus,keyDown,keyPress,keyUp,load,error,mouseDown" +
-            "mouseMove,mouseOut,mouseOver,mouseUp,input,paste,reset,scroll,submit,touchCancel" +
-            "touchCancel,touchEnd,touchStart,wheel").toLowerCase().replace(rword, function (eventName) {
+    String("click,contextmenu,doubleclick,keydown,keypress,keyup,focus,blur,copy,cut,paste," + //键盘点击
+            "drag,dragend,dragenter,dragexit,dragleave,touchcancel,touchend,touchstart,touchmove," + //拖放触摸
+            "mousedown,mousemove,mouseout,mouseover,mouseup," + //鼠标操作
+            "load,error,reset,scroll,submit").toLowerCase().replace(rword, function (eventName) {
         EventTypes[eventName] = {
             dependencies: [eventName]
         }
@@ -425,7 +414,6 @@ var SimpleEventPlugin = (function () {
             }
             var EventConstructor;
             switch (topLevelType) {
-                //   case "input":
                 case "load":
                 case "error":
                 case "reset":
@@ -482,9 +470,6 @@ var SimpleEventPlugin = (function () {
                 case "scroll":
                     EventConstructor = SyntheticUIEvent;
                     break;
-                case "wheel":
-                    EventConstructor = SyntheticWheelEvent;
-                    break;
                 case "copy":
                 case "cut":
                 case "paste":
@@ -517,10 +502,154 @@ var SimpleEventPlugin = (function () {
         }
     }
     return EventPlugin
-})
+})()
+//https://github.com/jquery/jquery-mousewheel/blob/master/jquery.mousewheel.js
+var WheelEventPlugin = (function () {
+    var dependencies = ('onwheel' in document || document.documentMode >= 9) ? ['wheel'] :
+            isEventSupported("mousewheel") ? ['mousewheel'] :
+            ['DomMouseScroll', 'MozMousePixelScroll']
+    var lineHeight
+    var pageHeight
+    var lastTarget
+    function shouldAdjustOldDeltas(orgEvent, absDelta) {
+        // If this is an older event and the delta is divisable by 120,
+        // then we are assuming that the browser is treating this as an
+        // older mouse wheel event and that we should divide the deltas
+        // by 40 to try and get a more usable deltaFactor.
+        // Side note, this actually impacts the reported scroll distance
+        // in older browsers and can cause scrolling to be slower than native.
+        // Turn this off by setting $.event.special.mousewheel.settings.adjustOldDeltas to false.
+        return  orgEvent.type === 'mousewheel' && absDelta % 120 === 0;
+    }
+    function nullLowestDelta() {
+        lowestDelta = null;
+    }
+    var nullLowestDeltaTimeout, lowestDelta
+    var EventPlugin = {
+        eventTypes: {
+            mousewheel: {
+                dependencies: dependencies
+            },
+            wheel: {
+                dependencies: dependencies
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, orgEvent, uuids) {
+            var delta = 0
+            var deltaX = 0
+            var deltaY = 0
+            var absDelta = 0
+
+            if (lastTarget !== topLevelTarget) {
+                lastTarget = topLevelTarget
+                lineHeight = parseInt(avalon(document.body).css('fontSize'), 10) || 16
+                pageHeight = avalon(document).height()
+            }
+
+            // Old school scrollwheel delta
+            if ('detail'      in orgEvent) {
+                deltaY = orgEvent.detail * -1;
+            }
+            if ('wheelDelta'  in orgEvent) {
+                deltaY = orgEvent.wheelDelta;
+            }
+            if ('wheelDeltaY' in orgEvent) {
+                deltaY = orgEvent.wheelDeltaY;
+            }
+            if ('wheelDeltaX' in orgEvent) {
+                deltaX = orgEvent.wheelDeltaX * -1;
+            }
+
+            // Firefox < 17 horizontal scrolling related to DOMMouseScroll event
+            if ('axis' in orgEvent && orgEvent.axis === orgEvent.HORIZONTAL_AXIS) {
+                deltaX = deltaY * -1;
+                deltaY = 0;
+            }
+
+            // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
+            delta = deltaY === 0 ? deltaX : deltaY;
+
+            // New school wheel delta (wheel event)
+            if ('deltaY' in orgEvent) {
+                deltaY = orgEvent.deltaY * -1;
+                delta = deltaY;
+            }
+            if ('deltaX' in orgEvent) {
+                deltaX = orgEvent.deltaX;
+                if (deltaY === 0) {
+                    delta = deltaX * -1;
+                }
+            }
+            // No change actually happened, no reason to go any further
+            if (deltaY === 0 && deltaX === 0) {
+                return;
+            }
+            // Need to convert lines and pages to pixels if we aren't already in pixels
+            // There are three delta modes:
+            //   * deltaMode 0 is by pixels, nothing to do
+            //   * deltaMode 1 is by lines
+            //   * deltaMode 2 is by pages
+            if (orgEvent.deltaMode === 1) {
+                delta *= lineHeight;
+                deltaY *= lineHeight;
+                deltaX *= lineHeight;
+            } else if (orgEvent.deltaMode === 2) {
+                delta *= pageHeight;
+                deltaY *= pageHeight;
+                deltaX *= pageHeight;
+            }
+           
+            // Store lowest absolute delta to normalize the delta values
+            absDelta = Math.max(Math.abs(deltaY), Math.abs(deltaX));
+
+            if (!lowestDelta || absDelta < lowestDelta) {
+                lowestDelta = absDelta;
+
+                // Adjust older deltas if necessary
+                if (shouldAdjustOldDeltas(orgEvent, absDelta)) {
+                    lowestDelta /= 40;
+                }
+            }
+
+            // Adjust older deltas if necessary
+            if (shouldAdjustOldDeltas(orgEvent, absDelta)) {
+                // Divide all the things by 40!
+                delta /= 40;
+                deltaX /= 40;
+                deltaY /= 40;
+            }
+
+            // Get a whole, normalized value for the deltas
+            delta = Math[ delta >= 1 ? 'floor' : 'ceil' ](delta / lowestDelta);
+            deltaX = Math[ deltaX >= 1 ? 'floor' : 'ceil' ](deltaX / lowestDelta);
+            deltaY = Math[ deltaY >= 1 ? 'floor' : 'ceil' ](deltaY / lowestDelta);
+
+            var event = eventFactory(orgEvent, topLevelType)
+            // Add information to the event object
+            event.deltaX = deltaX;
+            event.delta = event.deltaY = deltaY;
+            event.deltaFactor = lowestDelta;
+           
+            // Go ahead and set deltaMode to 0 since we converted to pixels
+            // Although this is a little odd since we overwrite the deltaX/Y
+            // properties with normalized deltas.
+            event.deltaMode = 0;
 
 
-
+            // Clearout lowestDelta after sometime to better
+            // handle multiple device types that give different
+            // a different lowestDelta
+            // Ex: trackpad = 3 and mouse wheel = 120
+            if (nullLowestDeltaTimeout) {
+                clearTimeout(nullLowestDeltaTimeout);
+            }
+            nullLowestDeltaTimeout = setTimeout(nullLowestDelta, 200);
+            collectDispatches(event, uuids) //收集回调
+            return event
+        }
+    }
+    return EventPlugin
+})()
 
 var ResponderEventPlugin = {
     extractEvents: noop
@@ -556,16 +685,16 @@ var TapEventPlugin = (function () {
         x: {page: 'pageX', client: 'clientX', envScroll: 'scrollLeft'},
         y: {page: 'pageY', client: 'clientY', envScroll: 'scrollTop'},
     };
-    var extractSingleTouch = function(nativeEvent) {
-    var touches = nativeEvent.touches;
-    var changedTouches = nativeEvent.changedTouches;
-    var hasTouches = touches && touches.length > 0;
-    var hasChangedTouches = changedTouches && changedTouches.length > 0;
+    var extractSingleTouch = function (nativeEvent) {
+        var touches = nativeEvent.touches;
+        var changedTouches = nativeEvent.changedTouches;
+        var hasTouches = touches && touches.length > 0;
+        var hasChangedTouches = changedTouches && changedTouches.length > 0;
 
-    return !hasTouches && hasChangedTouches ? changedTouches[0] :
-           hasTouches ? touches[0] :
-           nativeEvent;
-  }
+        return !hasTouches && hasChangedTouches ? changedTouches[0] :
+                hasTouches ? touches[0] :
+                nativeEvent;
+    }
     function getAxisCoordOfEvent(axis, nativeEvent) {
         var singleTouch = extractSingleTouch(nativeEvent);
         if (singleTouch) {
@@ -1104,6 +1233,7 @@ var EventPluginRegistry = {
     plugins: [
         ResponderEventPlugin,
         SimpleEventPlugin,
+        WheelEventPlugin,
         TapEventPlugin,
         EnterLeaveEventPlugin,
         ChangeEventPlugin,
@@ -1113,10 +1243,6 @@ var EventPluginRegistry = {
     ]
 }
 
-var DefaultEventPluginOrder = [
-    "ResponderEventPlugin", "SimpleEventPlugin", "TapEventPlugin", "EnterLeaveEventPlugin",
-    "ChangeEventPlugin", "SelectEventPlugin", "BeforeInputEventPlugin", "AnalyticsEventPlugin"
-]
 var getPluginByEventType = (function () {
     var type2plugin = {}
     for (var i = 0, plugin; plugin = EventPluginRegistry.plugins[i++]; ) {
@@ -1124,7 +1250,9 @@ var getPluginByEventType = (function () {
             type2plugin[e] = plugin
         }
     }
+    console.log(type2plugin)
     return function (type) {
         return type2plugin[type]
     }
 })()
+
