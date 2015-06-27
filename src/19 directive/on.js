@@ -238,10 +238,6 @@ function SyntheticTouchEvent(event, nativeEvent) {
     })
 }
 
-function SyntheticInputEvent(event, nativeEvent) {
-    SyntheticHTMLEvent(event, nativeEvent)
-    event.data = nativeEvent.data
-}
 //http://www.w3.org/TR/DOM-Level-3-Events/
 
 function SyntheticFocusEvent(event, nativeEvent) {
@@ -386,129 +382,6 @@ var EventPluginHub = {
     }
 }
 
-
-
-//--------------------------------
-// SimpleEventPlugin
-var SimpleEventTypes = {}
-String("blur,click,contextMenu,copy,cut,doubleClick,drag,dragEnd,dragEnter,dragExit,dragLeave" +
-        "dragOver,dragStart,drop,focus,keyDown,keyPress,keyUp,load,error,mouseDown" +
-        "mouseMove,mouseOut,mouseOver,mouseUp,input,paste,reset,scroll,submit,touchCancel" +
-        "touchCancel,touchEnd,touchStart,wheel").toLowerCase().replace(rword, function (eventName) {
-    SimpleEventTypes[eventName] = {
-        dependencies: [eventName]
-    }
-})
-
-
-var SimpleEventPlugin = {
-    eventTypes: SimpleEventTypes,
-    executeDispatch: function (event, listener, domID) {
-        var returnValue = executeDispatch(event, listener, domID);
-        if (returnValue === false) {
-            event.stopPropagation()
-            event.preventDefault()
-        }
-    },
-    extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
-        if (!SimpleEventPlugin.eventTypes[topLevelType]) {
-            return null;
-        }
-        var EventConstructor;
-        switch (topLevelType) {
-            //   case "input":
-            case "load":
-            case "error":
-            case "reset":
-            case "submit":
-                EventConstructor = SyntheticHTMLEvent;
-                break;
-            case "keypress":
-                // FireFox creates a keypress event for function keys too. This removes
-                // the unwanted keypress events. Enter is however both printable and
-                // non-printable. One would expect Tab to be as well (but it isn't).
-                if (getEventCharCode(nativeEvent) === 0) {
-                    return null;
-                }
-
-            case "keydown":
-            case "keyup":
-                EventConstructor = SyntheticKeyboardEvent;
-                break;
-            case "blur":
-            case "focus":
-                EventConstructor = SyntheticFocusEvent;
-                break;
-            case "click":
-                // Firefox creates a click event on right mouse clicks. This removes the
-                // unwanted click events.
-                if (nativeEvent.button === 2) {
-                    return null;
-                }
-            case "contextenu":
-            case "doubleclick":
-            case "mousedown":
-            case "mousemove":
-            case "mouseout":
-            case "mouseover":
-            case "mouseup":
-                EventConstructor = SyntheticMouseEvent;
-                break;
-            case "drag":
-            case "dragend":
-            case "dragenter":
-            case "dragexit":
-            case "dragleave":
-            case "dragover":
-            case "dragstart":
-            case "drop":
-                EventConstructor = SyntheticDragEvent;
-                break;
-            case "touchcancel":
-            case "touchend":
-            case "touchmove":
-            case "touchstart":
-                EventConstructor = SyntheticTouchEvent;
-                break;
-            case "scroll":
-                EventConstructor = SyntheticUIEvent;
-                break;
-            case "wheel":
-                EventConstructor = SyntheticWheelEvent;
-                break;
-            case "copy":
-            case "cut":
-            case "paste":
-                EventConstructor = SyntheticClipboardEvent;
-                break;
-        }
-        if (EventConstructor) {
-            var event = eventFactory(nativeEvent, topLevelType)
-            EventConstructor(event, nativeEvent)
-            collectDispatches(event, uuids) //收集回调
-            return event
-        }
-    },
-    didPutListener: function (id, type) {
-        // Mobile Safari does not fire properly bubble click events on
-        // non-interactive elements, which means delegated click listeners do not
-        // fire. The workaround for this bug involves attaching an empty click
-        // listener on the target node.
-        if (type === "click") {
-            if (!onClickListeners[id]) {
-                onClickListeners[id] = addEventListener(getNode(id), 'click', noop);
-            }
-        }
-    },
-    willDeleteListener: function (id, type) {
-        if (type === "click") {
-            onClickListeners[id].remove();
-            delete onClickListeners[id];
-        }
-    }
-}
-var onClickListeners = {}
-
 function collectDispatches(event, uuids) {
     //收集事件回调
     var _dispatchListeners = []
@@ -524,10 +397,237 @@ function collectDispatches(event, uuids) {
     event._dispatchIDs = _dispatchIDs
 }
 
+//--------------------------------
+// SimpleEventPlugin
+var SimpleEventPlugin = (function () {
+    var EventTypes = {}
+    var onClickListeners = {}
+    String("blur,click,contextMenu,copy,cut,doubleClick,drag,dragEnd,dragEnter,dragExit,dragLeave" +
+            "dragOver,dragStart,drop,focus,keyDown,keyPress,keyUp,load,error,mouseDown" +
+            "mouseMove,mouseOut,mouseOver,mouseUp,input,paste,reset,scroll,submit,touchCancel" +
+            "touchCancel,touchEnd,touchStart,wheel").toLowerCase().replace(rword, function (eventName) {
+        EventTypes[eventName] = {
+            dependencies: [eventName]
+        }
+    })
+    var EventPlugin = {
+        eventTypes: EventTypes,
+        executeDispatch: function (event, listener, domID) {
+            var returnValue = executeDispatch(event, listener, domID);
+            if (returnValue === false) {
+                event.stopPropagation()
+                event.preventDefault()
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+            if (!EventTypes[topLevelType]) {
+                return null;
+            }
+            var EventConstructor;
+            switch (topLevelType) {
+                //   case "input":
+                case "load":
+                case "error":
+                case "reset":
+                case "submit":
+                    EventConstructor = SyntheticHTMLEvent;
+                    break;
+                case "keypress":
+                    // FireFox creates a keypress event for function keys too. This removes
+                    // the unwanted keypress events. Enter is however both printable and
+                    // non-printable. One would expect Tab to be as well (but it isn't).
+                    if (getEventCharCode(nativeEvent) === 0) {
+                        return null;
+                    }
+
+                case "keydown":
+                case "keyup":
+                    EventConstructor = SyntheticKeyboardEvent;
+                    break;
+                case "blur":
+                case "focus":
+                    EventConstructor = SyntheticFocusEvent;
+                    break;
+                case "click":
+                    // Firefox creates a click event on right mouse clicks. This removes the
+                    // unwanted click events.
+                    if (nativeEvent.button === 2) {
+                        return null;
+                    }
+                case "contextenu":
+                case "doubleclick":
+                case "mousedown":
+                case "mousemove":
+                case "mouseout":
+                case "mouseover":
+                case "mouseup":
+                    EventConstructor = SyntheticMouseEvent;
+                    break;
+                case "drag":
+                case "dragend":
+                case "dragenter":
+                case "dragexit":
+                case "dragleave":
+                case "dragover":
+                case "dragstart":
+                case "drop":
+                    EventConstructor = SyntheticDragEvent;
+                    break;
+                case "touchcancel":
+                case "touchend":
+                case "touchmove":
+                case "touchstart":
+                    EventConstructor = SyntheticTouchEvent;
+                    break;
+                case "scroll":
+                    EventConstructor = SyntheticUIEvent;
+                    break;
+                case "wheel":
+                    EventConstructor = SyntheticWheelEvent;
+                    break;
+                case "copy":
+                case "cut":
+                case "paste":
+                    EventConstructor = SyntheticClipboardEvent;
+                    break;
+            }
+            if (EventConstructor) {
+                var event = eventFactory(nativeEvent, topLevelType)
+                EventConstructor(event, nativeEvent)
+                collectDispatches(event, uuids) //收集回调
+                return event
+            }
+        },
+        didPutListener: function (id, type) {
+            // Mobile Safari does not fire properly bubble click events on
+            // non-interactive elements, which means delegated click listeners do not
+            // fire. The workaround for this bug involves attaching an empty click
+            // listener on the target node.
+            if (type === "click") {
+                if (!onClickListeners[id]) {
+                    onClickListeners[id] = addEventListener(getNode(id), 'click', noop);
+                }
+            }
+        },
+        willDeleteListener: function (id, type) {
+            if (type === "click") {
+                onClickListeners[id].remove();
+                delete onClickListeners[id];
+            }
+        }
+    }
+    return EventPlugin
+})
+
+
+
+
 var ResponderEventPlugin = {
     extractEvents: noop
 }
-var TapEventPlugin = ResponderEventPlugin
+var TapEventPlugin = (function () {
+    function isEndish(topLevelType) {
+        return topLevelType === "mouseup" ||
+                topLevelType === "touchend" ||
+                topLevelType === "touchcancel";
+    }
+
+    function isMoveish(topLevelType) {
+        return topLevelType === "mousemove" ||
+                topLevelType === "touchmove";
+    }
+    function isStartish(topLevelType) {
+        return topLevelType === "mousedown" ||
+                topLevelType === "touchstart";
+    }
+    var touchEvents = [
+        "touchstart",
+        "touchcanel",
+        "touchend",
+        "touchmove"
+    ]
+    /**
+     * Number of pixels that are tolerated in between a `touchStart` and `touchEnd`
+     * in order to still be considered a 'tap' event.
+     */
+    var tapMoveThreshold = 10;
+    var startCoords = {x: null, y: null};
+    var Axis = {
+        x: {page: 'pageX', client: 'clientX', envScroll: 'scrollLeft'},
+        y: {page: 'pageY', client: 'clientY', envScroll: 'scrollTop'},
+    };
+    var extractSingleTouch = function(nativeEvent) {
+    var touches = nativeEvent.touches;
+    var changedTouches = nativeEvent.changedTouches;
+    var hasTouches = touches && touches.length > 0;
+    var hasChangedTouches = changedTouches && changedTouches.length > 0;
+
+    return !hasTouches && hasChangedTouches ? changedTouches[0] :
+           hasTouches ? touches[0] :
+           nativeEvent;
+  }
+    function getAxisCoordOfEvent(axis, nativeEvent) {
+        var singleTouch = extractSingleTouch(nativeEvent);
+        if (singleTouch) {
+            return singleTouch[axis.page];
+        }
+        return axis.page in nativeEvent ?
+                nativeEvent[axis.page] :
+                nativeEvent[axis.client] + root[axis.envScroll];
+    }
+
+    function getDistance(coords, nativeEvent) {
+        var pageX = getAxisCoordOfEvent(Axis.x, nativeEvent);
+        var pageY = getAxisCoordOfEvent(Axis.y, nativeEvent);
+        return Math.pow(
+                Math.pow(pageX - coords.x, 2) + Math.pow(pageY - coords.y, 2),
+                0.5
+                );
+    }
+    var usedTouch = false;
+    var usedTouchTime = 0;
+    var TOUCH_DELAY = 1000;
+    var EventPlugin = {
+        tapMoveThreshold: tapMoveThreshold,
+        eventTypes: {
+            tap: {
+                dependencies: touchEvents.concat("mousedown", "mouseup", "mouseup")
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+            if (!isStartish(topLevelType) && !isEndish(topLevelType)) {
+                return null;
+            }
+            // on ios, there is a delay after touch event and synthetic
+            // mouse events, so that user can perform double tap
+            // solution: ignore mouse events following touchevent within small timeframe
+            if (touchEvents.indexOf(topLevelType) !== -1) {
+                usedTouch = true;
+                usedTouchTime = new Date() - 0;
+            } else {
+                if (usedTouch && (new Date() - usedTouchTime < TOUCH_DELAY)) {
+                    return null;
+                }
+            }
+            var event = null;
+            var distance = getDistance(startCoords, nativeEvent);
+            if (isEndish(topLevelType) && distance < tapMoveThreshold) {
+                event = eventFactory(nativeEvent, "tap")
+            }
+            if (isStartish(topLevelType)) {
+                startCoords.x = getAxisCoordOfEvent(Axis.x, nativeEvent);
+                startCoords.y = getAxisCoordOfEvent(Axis.y, nativeEvent);
+            } else if (isEndish(topLevelType)) {
+                startCoords.x = 0;
+                startCoords.y = 0;
+            }
+            event && collectDispatches(event, uuids)
+
+            return event;
+        }
+    }
+    return EventPlugin
+})()
 var EnterLeaveEventPlugin = {
     eventTypes: {
         mouseenter: {
@@ -573,7 +673,6 @@ function isEventSupported(eventNameSuffix, capture) {
 
     var eventName = 'on' + eventNameSuffix;
     var isSupported = eventName in document;
-
     if (!isSupported) {
         var element = document.createElement('div');
         element.setAttribute(eventName, 'return;');
@@ -711,11 +810,9 @@ var SelectEventPlugin = (function () {
     var activeElement = null;
     var lastSelection = null;
     var mouseDown = false;
-
 // Track whether a listener exists for this plugin. If none exist, we do
 // not extract events.
     var hasListener = false;
-
     function getSelection(node) {
         if ('selectionStart' in node) {
             return {
@@ -811,7 +908,6 @@ var SelectEventPlugin = (function () {
                     activeElement = null
                     lastSelection = null
                     break;
-
                     // Don't fire the event while the user is dragging. This matches the
                     // semantics of the native select event.
                 case "mousedown":
@@ -859,7 +955,6 @@ var supportedInputTypes = {
     'url': true,
     'week': true
 };
-
 function isTextInputElement(elem) {
     return elem && ((elem.nodeName === 'INPUT' ? supportedInputTypes[elem.type] : elem.nodeName === 'TEXTAREA'));
 }
