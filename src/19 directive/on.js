@@ -18,12 +18,53 @@ bindingExecutors.on = function (_, elem, data) {
     try {
         listenTo(eventType, document)
     } catch (e) {
-        console.log(e)
+        avalon.log(e)
     }
-    EventPluginHub.putListener(uuid, eventType, data)
+    EventPluginHub.addListener(uuid, eventType, data)
     data.rollback = function () {
-        EventPluginHub.deleteListener(uuid, eventType, data)
+        EventPluginHub.removeListener(uuid, eventType, data)
     }
+}
+
+function isEventSupported(eventNameSuffix, capture) {
+    if (capture && !('addEventListener' in document)) {
+        return false
+    }
+
+    var eventName = 'on' + eventNameSuffix;
+    var isSupported = eventName in document;
+    if (!isSupported) {
+        var element = document.createElement('div');
+        element.setAttribute(eventName, 'return;');
+        isSupported = typeof element[eventName] === 'function';
+    }
+
+    if (!isSupported && eventNameSuffix === 'wheel') {
+        isSupported = !!window.WheelEvent
+    }
+
+    return isSupported;
+}
+
+function getEventCharCode(nativeEvent) {
+    var charCode;
+    var keyCode = nativeEvent.keyCode;
+    if ('charCode' in nativeEvent) {
+        charCode = nativeEvent.charCode;
+        // FF does not set `charCode` for the Enter-key, check against `keyCode`.
+        if (charCode === 0 && keyCode === 13) {
+            charCode = 13;
+        }
+    } else {
+        // IE8 does not implement `charCode`, but `keyCode` has the correct value.
+        charCode = keyCode;
+    }
+    // Some non-printable keys are reported in `charCode`/`keyCode`, discard them.
+    // Must not discard the (non-)printable Enter-key.
+    if (charCode >= 32 || charCode === 13) {
+        return charCode;
+    }
+    return 0;
 }
 
 var isListening = {}
@@ -34,48 +75,46 @@ function listenTo(eventType, mountAt) {
     if (!plugin) {
         avalon.log(eventType + " 事件不存在对应的插件模块 !")
     }
-    console.log(eventType)
     //得到对应的依赖
     var dependencies = plugin ? plugin.eventTypes[eventType].dependencies : [eventType]
     //IE6-8下`keyup`/`keypress`/`keydown` 只能冒泡到 document
     for (var i = 0; i < dependencies.length; i++) {
         var dependency = dependencies[i];
         if (isListening[dependency] !== true) {
-
             if (dependency === "scroll") {
                 if (W3C) {
-                    trapCapturedEvent("scroll", 'scroll', mountAt)
+                    addCapturedEvent("scroll", 'scroll', mountAt)
                 } else {
-                    trapBubbledEvent("scroll", 'scroll', window)
+                    addBubbledEvent("scroll", 'scroll', window)
                 }
             } else if (dependency === "select" && W3C) {
-                trapBubbledEvent("select", 'select', mountAt)
+                addBubbledEvent("select", 'select', mountAt)
             } else if (dependency === "focus" || dependency === "blur") {
                 if (W3C) {
-                    trapCapturedEvent("focus", 'focus', mountAt);
-                    trapCapturedEvent("blur", 'blur', mountAt);
+                    addCapturedEvent("focus", 'focus', mountAt);
+                    addCapturedEvent("blur", 'blur', mountAt);
                 } else if (isEventSupported("focusin")) {
-                    trapBubbledEvent("focus", 'focusin', mountAt);
-                    trapBubbledEvent("blur", 'focusout', mountAt);
+                    addBubbledEvent("focus", 'focusin', mountAt);
+                    addBubbledEvent("blur", 'focusout', mountAt);
                 }
                 isListening.focus = true
                 isListening.blur = true
             } else {
-                trapBubbledEvent(eventType, dependency, mountAt);
+                addBubbledEvent(eventType, dependency, mountAt);
             }
             isListening[dependency] = true;
         }
     }
 }
 
-var trapBubbledEvent = function (topLevelType, type, element) {
+var addBubbledEvent = function (topLevelType, type, element) {
     return addEventListener(element, type, function (nativeEvent) {
-        topEventDispatch(nativeEvent, topLevelType)
+        topEventListener(nativeEvent, topLevelType)
     })
 }
-var trapCapturedEvent = function (topLevelType, type, element) {
+var addCapturedEvent = function (topLevelType, type, element) {
     return addEventListener(element, type, function (nativeEvent) {
-        topEventDispatch(nativeEvent, topLevelType)
+        topEventListener(nativeEvent, topLevelType)
     }, true)
 }
 
@@ -98,7 +137,7 @@ function addEventListener(target, eventType, callback, capture) {
 }
 //顶层事件监听器
 
-function topEventDispatch(nativeEvent, topLevelType) {
+function topEventListener(nativeEvent, topLevelType) {
     var topLevelTarget = nativeEvent.target || nativeEvent.srcElement
     var ancestors = []
     var ancestor = topLevelTarget
@@ -138,7 +177,6 @@ function executeDispatchesAndRelease(event) {
 }
 
 //执行单个事件回调
-
 function executeDispatch(event, fn, domID) {
     var elem = event.currentTarget = getNode(domID);
     if (typeof fn === "function") {
@@ -211,118 +249,13 @@ var eventFactory = (function () {
     return eventFactory
 })()
 
-// 各类型事件的装饰器
-// http://www.w3.org/TR/html5/index.html#events-0
 
-function SyntheticHTMLEvent(event, nativeEvent) {
-    var _interface = "eventPhase,cancelable,bubbles"
-    _interface.replace(rword, function (name) {
-        event[name] = nativeEvent[name]
-    })
-}
-
-function SyntheticUIEvent(event, nativeEvent) {
-    SyntheticHTMLEvent(event, nativeEvent)
-    event.view = nativeEvent.view || window
-    event.detail = nativeEvent.detail || 0
-}
-
-function SyntheticTouchEvent(event, nativeEvent) {
-    SyntheticUIEvent(event, nativeEvent)
-    var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
-    _interface.replace(rword, function (name) {
-        event[name] = nativeEvent[name]
-    })
-}
-
-//http://www.w3.org/TR/DOM-Level-3-Events/
-
-function SyntheticFocusEvent(event, nativeEvent) {
-    SyntheticUIEvent(event, nativeEvent)
-    event.relatedTarget = nativeEvent.relatedTarget
-}
-
-
-function SyntheticClipboardEvent(event, nativeEvent) {
-    SyntheticEvent(event, nativeEvent)
-    event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
-}
-
-function getEventCharCode(nativeEvent) {
-    var charCode;
-    var keyCode = nativeEvent.keyCode;
-    if ('charCode' in nativeEvent) {
-        charCode = nativeEvent.charCode;
-        // FF does not set `charCode` for the Enter-key, check against `keyCode`.
-        if (charCode === 0 && keyCode === 13) {
-            charCode = 13;
-        }
-    } else {
-        // IE8 does not implement `charCode`, but `keyCode` has the correct value.
-        charCode = keyCode;
-    }
-    // Some non-printable keys are reported in `charCode`/`keyCode`, discard them.
-    // Must not discard the (non-)printable Enter-key.
-    if (charCode >= 32 || charCode === 13) {
-        return charCode;
-    }
-    return 0;
-}
-
-function SyntheticKeyboardEvent(event, nativeEvent) {
-    SyntheticUIEvent(event, nativeEvent)
-    var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
-    _interface.replace(rword, function (name) {
-        event[name] = nativeEvent[name]
-    })
-    if (event.type === 'keypress') {
-        event.charCode = getEventCharCode(event)
-        event.keyCode = 0
-    } else if (event.type === 'keydown' || event.type === 'keyup') {
-        event.charCode = 0
-        event.keyCode = nativeEvent.keyCode
-    }
-    event.which = event.type === 'keypress' ? event.charCode : event.keyCode
-}
-
-function SyntheticMouseEvent(event, nativeEvent) {
-    SyntheticUIEvent(event, nativeEvent)
-    var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
-    _interface.replace(rword, function (name) {
-        event[name] = nativeEvent[name]
-    })
-    // Webkit, Firefox, IE9+
-    // which:  1 2 3
-    // button: 0 1 2 (standard)
-    var button = nativeEvent.button;
-    if ('which' in nativeEvent) {
-        event.which = button
-    } else {
-        // IE<9
-        // which:  undefined
-        // button: 0 0 0
-        // button: 1 4 2 (onmouseup)
-        event.which = button === 2 ? 2 : button === 4 ? 1 : 0;
-    }
-    if (!isFinite(event.pageX)) {
-        var target = event.target
-        var doc = target.ownerDocument || DOC
-        var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-        event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-        event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
-    }
-}
-
-function SyntheticDragEvent(event, nativeEvent) {
-    SyntheticMouseEvent(event, nativeEvent)
-    event.dataTransfer = nativeEvent.dataTransfer
-}
 
 //====================================================
 var callbackPool = {};
 var EventPluginHub = {
     //添加事件回调到 回调池 中
-    putListener: function (id, type, callback) {
+    addListener: function (id, type, callback) {
         var pool = callbackPool[type] || (callbackPool[type] = {});
         if (pool[id]) {
             pool[id].push(callback)
@@ -336,9 +269,9 @@ var EventPluginHub = {
     },
     getListener: function (id, eventType) {
         var pool = callbackPool[eventType]
-        return pool && pool[id];
+        return pool && pool[id] || []
     },
-    deleteListener: function (id, type, fn) {
+    removeListener: function (id, type, fn) {
         var plugin = getPluginByEventType(type)
         if (plugin && plugin.willDeleteListener) {
             plugin.willDeleteListener(id, type);
@@ -376,10 +309,21 @@ function collectDispatches(event, uuids) {
     var _dispatchListeners = []
     var _dispatchIDs = []
     for (var i = 0, n = uuids.length; i < n; i++) {
-        var listener = EventPluginHub.getListener(uuids[i], event.type)
-        if (listener) {
-            _dispatchListeners = _dispatchListeners.concat(listener)
-            _dispatchIDs.push(uuids[i])
+        var id = uuids[i]
+        //从事件仓库中取得回调数组
+        var listener = EventPluginHub.getListener(id, event.type)
+        var node = getNode(id)
+        //从元素上取得直接用onxxx绑定的回调
+        var onFn = node && node["on" + event.type]
+        if (typeof onFn === "function") {
+            listener.push(onFn)
+        }
+        var jn = listener.length
+        if (jn) {
+            for (var j = 0; j < jn; j++) {
+                _dispatchListeners.push(listener[j])
+                _dispatchIDs.push(id)
+            }
         }
     }
     event._dispatchListeners = _dispatchListeners
@@ -394,7 +338,7 @@ var SimpleEventPlugin = (function () {
     String("click,contextmenu,doubleclick,keydown,keypress,keyup,focus,blur,copy,cut,paste," + //键盘点击
             "drag,dragend,dragenter,dragexit,dragleave,touchcancel,touchend,touchstart,touchmove," + //拖放触摸
             "mousedown,mousemove,mouseout,mouseover,mouseup," + //鼠标操作
-            "load,error,reset,scroll,submit").toLowerCase().replace(rword, function (eventName) {
+            "load,error,reset,scroll").toLowerCase().replace(rword, function (eventName) {
         EventTypes[eventName] = {
             dependencies: [eventName]
         }
@@ -412,13 +356,12 @@ var SimpleEventPlugin = (function () {
             if (!EventTypes[topLevelType]) {
                 return null;
             }
-            var EventConstructor;
+            var eventDecorator;
             switch (topLevelType) {
                 case "load":
                 case "error":
                 case "reset":
-                case "submit":
-                    EventConstructor = SyntheticHTMLEvent;
+                    eventDecorator = SyntheticHTMLEvent;
                     break;
                 case "keypress":
                     // FireFox creates a keypress event for function keys too. This removes
@@ -430,11 +373,11 @@ var SimpleEventPlugin = (function () {
 
                 case "keydown":
                 case "keyup":
-                    EventConstructor = SyntheticKeyboardEvent;
+                    eventDecorator = SyntheticKeyboardEvent;
                     break;
                 case "blur":
                 case "focus":
-                    EventConstructor = SyntheticFocusEvent;
+                    eventDecorator = SyntheticFocusEvent;
                     break;
                 case "click":
                     // Firefox creates a click event on right mouse clicks. This removes the
@@ -449,7 +392,7 @@ var SimpleEventPlugin = (function () {
                 case "mouseout":
                 case "mouseover":
                 case "mouseup":
-                    EventConstructor = SyntheticMouseEvent;
+                    eventDecorator = SyntheticMouseEvent;
                     break;
                 case "drag":
                 case "dragend":
@@ -459,26 +402,26 @@ var SimpleEventPlugin = (function () {
                 case "dragover":
                 case "dragstart":
                 case "drop":
-                    EventConstructor = SyntheticDragEvent;
+                    eventDecorator = SyntheticDragEvent;
                     break;
                 case "touchcancel":
                 case "touchend":
                 case "touchmove":
                 case "touchstart":
-                    EventConstructor = SyntheticTouchEvent;
+                    eventDecorator = SyntheticTouchEvent;
                     break;
                 case "scroll":
-                    EventConstructor = SyntheticUIEvent;
+                    eventDecorator = SyntheticUIEvent;
                     break;
                 case "copy":
                 case "cut":
                 case "paste":
-                    EventConstructor = SyntheticClipboardEvent;
+                    eventDecorator = SyntheticClipboardEvent;
                     break;
             }
-            if (EventConstructor) {
+            if (eventDecorator) {
                 var event = eventFactory(nativeEvent, topLevelType)
-                EventConstructor(event, nativeEvent)
+                eventDecorator(event, nativeEvent)
                 collectDispatches(event, uuids) //收集回调
                 return event
             }
@@ -501,6 +444,92 @@ var SimpleEventPlugin = (function () {
             }
         }
     }
+// 各类型事件的装饰器
+// http://www.w3.org/TR/html5/index.html#events-0
+
+    function SyntheticHTMLEvent(event, nativeEvent) {
+        var _interface = "eventPhase,cancelable,bubbles"
+        _interface.replace(rword, function (name) {
+            event[name] = nativeEvent[name]
+        })
+    }
+
+    function SyntheticUIEvent(event, nativeEvent) {
+        SyntheticHTMLEvent(event, nativeEvent)
+        event.view = nativeEvent.view || window
+        event.detail = nativeEvent.detail || 0
+    }
+
+    function SyntheticTouchEvent(event, nativeEvent) {
+        SyntheticUIEvent(event, nativeEvent)
+        var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
+        _interface.replace(rword, function (name) {
+            event[name] = nativeEvent[name]
+        })
+    }
+
+//http://www.w3.org/TR/DOM-Level-3-Events/
+
+    function SyntheticFocusEvent(event, nativeEvent) {
+        SyntheticUIEvent(event, nativeEvent)
+        event.relatedTarget = nativeEvent.relatedTarget
+    }
+
+
+    function SyntheticClipboardEvent(event, nativeEvent) {
+        SyntheticEvent(event, nativeEvent)
+        event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
+    }
+
+
+    function SyntheticKeyboardEvent(event, nativeEvent) {
+        SyntheticUIEvent(event, nativeEvent)
+        var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
+        _interface.replace(rword, function (name) {
+            event[name] = nativeEvent[name]
+        })
+        if (event.type === 'keypress') {
+            event.charCode = getEventCharCode(event)
+            event.keyCode = 0
+        } else if (event.type === 'keydown' || event.type === 'keyup') {
+            event.charCode = 0
+            event.keyCode = nativeEvent.keyCode
+        }
+        event.which = event.type === 'keypress' ? event.charCode : event.keyCode
+    }
+
+    function SyntheticMouseEvent(event, nativeEvent) {
+        SyntheticUIEvent(event, nativeEvent)
+        var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
+        _interface.replace(rword, function (name) {
+            event[name] = nativeEvent[name]
+        })
+        // Webkit, Firefox, IE9+
+        // which:  1 2 3
+        // button: 0 1 2 (standard)
+        var button = nativeEvent.button;
+        if ('which' in nativeEvent) {
+            event.which = button
+        } else {
+            // IE<9
+            // which:  undefined
+            // button: 0 0 0
+            // button: 1 4 2 (onmouseup)
+            event.which = button === 2 ? 2 : button === 4 ? 1 : 0;
+        }
+        if (!isFinite(event.pageX)) {
+            var target = event.target
+            var doc = target.ownerDocument || DOC
+            var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
+            event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+            event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+        }
+    }
+
+    function SyntheticDragEvent(event, nativeEvent) {
+        SyntheticMouseEvent(event, nativeEvent)
+        event.dataTransfer = nativeEvent.dataTransfer
+    }
     return EventPlugin
 })()
 //https://github.com/jquery/jquery-mousewheel/blob/master/jquery.mousewheel.js
@@ -508,23 +537,10 @@ var WheelEventPlugin = (function () {
     var dependencies = ('onwheel' in document || document.documentMode >= 9) ? ['wheel'] :
             isEventSupported("mousewheel") ? ['mousewheel'] :
             ['DomMouseScroll', 'MozMousePixelScroll']
-    var lineHeight
-    var pageHeight
-    var lastTarget
-    function shouldAdjustOldDeltas(orgEvent, absDelta) {
-        // If this is an older event and the delta is divisable by 120,
-        // then we are assuming that the browser is treating this as an
-        // older mouse wheel event and that we should divide the deltas
-        // by 40 to try and get a more usable deltaFactor.
-        // Side note, this actually impacts the reported scroll distance
-        // in older browsers and can cause scrolling to be slower than native.
-        // Turn this off by setting $.event.special.mousewheel.settings.adjustOldDeltas to false.
-        return  orgEvent.type === 'mousewheel' && absDelta % 120 === 0;
+
+    function ajusetNumber(delta) {
+        return delta === 0 ? 0 : delta > 0 ? 120 : -120
     }
-    function nullLowestDelta() {
-        lowestDelta = null;
-    }
-    var nullLowestDeltaTimeout, lowestDelta
     var EventPlugin = {
         eventTypes: {
             mousewheel: {
@@ -538,15 +554,7 @@ var WheelEventPlugin = (function () {
             var delta = 0
             var deltaX = 0
             var deltaY = 0
-            var absDelta = 0
-
-            if (lastTarget !== topLevelTarget) {
-                lastTarget = topLevelTarget
-                lineHeight = parseInt(avalon(document.body).css('fontSize'), 10) || 16
-                pageHeight = avalon(document).height()
-            }
-
-            // Old school scrollwheel delta
+            //从原始事件对象抽取有用信息
             if ('detail'      in orgEvent) {
                 deltaY = orgEvent.detail * -1;
             }
@@ -569,7 +577,7 @@ var WheelEventPlugin = (function () {
             // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
             delta = deltaY === 0 ? deltaX : deltaY;
 
-            // New school wheel delta (wheel event)
+            // 如果是wheel事件
             if ('deltaY' in orgEvent) {
                 deltaY = orgEvent.deltaY * -1;
                 delta = deltaY;
@@ -580,70 +588,17 @@ var WheelEventPlugin = (function () {
                     delta = deltaX * -1;
                 }
             }
-            // No change actually happened, no reason to go any further
+            // 如果没有移动过，就立即返回
             if (deltaY === 0 && deltaX === 0) {
                 return;
             }
-            // Need to convert lines and pages to pixels if we aren't already in pixels
-            // There are three delta modes:
-            //   * deltaMode 0 is by pixels, nothing to do
-            //   * deltaMode 1 is by lines
-            //   * deltaMode 2 is by pages
-            if (orgEvent.deltaMode === 1) {
-                delta *= lineHeight;
-                deltaY *= lineHeight;
-                deltaX *= lineHeight;
-            } else if (orgEvent.deltaMode === 2) {
-                delta *= pageHeight;
-                deltaY *= pageHeight;
-                deltaX *= pageHeight;
-            }
-           
-            // Store lowest absolute delta to normalize the delta values
-            absDelta = Math.max(Math.abs(deltaY), Math.abs(deltaX));
-
-            if (!lowestDelta || absDelta < lowestDelta) {
-                lowestDelta = absDelta;
-
-                // Adjust older deltas if necessary
-                if (shouldAdjustOldDeltas(orgEvent, absDelta)) {
-                    lowestDelta /= 40;
-                }
-            }
-
-            // Adjust older deltas if necessary
-            if (shouldAdjustOldDeltas(orgEvent, absDelta)) {
-                // Divide all the things by 40!
-                delta /= 40;
-                deltaX /= 40;
-                deltaY /= 40;
-            }
-
-            // Get a whole, normalized value for the deltas
-            delta = Math[ delta >= 1 ? 'floor' : 'ceil' ](delta / lowestDelta);
-            deltaX = Math[ deltaX >= 1 ? 'floor' : 'ceil' ](deltaX / lowestDelta);
-            deltaY = Math[ deltaY >= 1 ? 'floor' : 'ceil' ](deltaY / lowestDelta);
 
             var event = eventFactory(orgEvent, topLevelType)
-            // Add information to the event object
-            event.deltaX = deltaX;
-            event.delta = event.deltaY = deltaY;
-            event.deltaFactor = lowestDelta;
-           
-            // Go ahead and set deltaMode to 0 since we converted to pixels
-            // Although this is a little odd since we overwrite the deltaX/Y
-            // properties with normalized deltas.
-            event.deltaMode = 0;
 
+            event.deltaX = ajusetNumber(deltaX)
+            event.deltaY = ajusetNumber(deltaY)
+            event.delta = ajusetNumber(delta)
 
-            // Clearout lowestDelta after sometime to better
-            // handle multiple device types that give different
-            // a different lowestDelta
-            // Ex: trackpad = 3 and mouse wheel = 120
-            if (nullLowestDeltaTimeout) {
-                clearTimeout(nullLowestDeltaTimeout);
-            }
-            nullLowestDeltaTimeout = setTimeout(nullLowestDelta, 200);
             collectDispatches(event, uuids) //收集回调
             return event
         }
@@ -683,7 +638,7 @@ var TapEventPlugin = (function () {
     var startCoords = {x: null, y: null};
     var Axis = {
         x: {page: 'pageX', client: 'clientX', envScroll: 'scrollLeft'},
-        y: {page: 'pageY', client: 'clientY', envScroll: 'scrollTop'},
+        y: {page: 'pageY', client: 'clientY', envScroll: 'scrollTop'}
     };
     var extractSingleTouch = function (nativeEvent) {
         var touches = nativeEvent.touches;
@@ -792,32 +747,63 @@ var EnterLeaveEventPlugin = {
         }
     }
 }
-
-//=====================
-
-function isEventSupported(eventNameSuffix, capture) {
-    if (capture && !('addEventListener' in document)) {
-        return false
+//==================================
+var SubmitEventPlugin = (function () {
+    //IE6-8, submit事件只能冒泡到form元素
+    var dependencies = ["submit"]
+    if (IEVersion < 9) {
+        dependencies.push("click", "keypress")
     }
+    var EventPlugin = {
+        eventTypes: {
+            submit: {
+                dependencies: dependencies
+            }
+        },
+        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+            if (dependencies.indexOf(topLevelType) === -1) {
+                return
+            }
 
-    var eventName = 'on' + eventNameSuffix;
-    var isSupported = eventName in document;
-    if (!isSupported) {
-        var element = document.createElement('div');
-        element.setAttribute(eventName, 'return;');
-        isSupported = typeof element[eventName] === 'function';
+            var elementType = topLevelTarget.nodeName.toLowerCase()
+            if (elementType === 'input' || elementType === 'button') {
+                if (!topLevelTarget.form) {
+                    return
+                }
+                elementType = topLevelTarget.type
+            } else if (elementType !== "form") {
+                return
+            }
+           
+            switch (elementType) {
+                case "reset":
+                case "hidden":
+                case "radio":
+                case "checkbox":
+                    return
+                case "button"://IE8-11 点击[button]可以触发submit,IE6,7不可以
+                case "submit":
+                    if (topLevelType === "keypress") {
+                        return
+                    }
+                    break
+                default:
+                    if (topLevelType !== "submit") {
+                        var which = nativeEvent.which || nativeEvent.keyCode
+                        if (which !== 13) {
+                            return
+                        }
+                    }
+            }
+            var event = eventFactory(nativeEvent, "submit")
+            collectDispatches(event, uuids) //收集回调
+            return event
+        }
     }
-
-    if (!isSupported && eventNameSuffix === 'wheel') {
-        isSupported = !!window.WheelEvent
-    }
-
-    return isSupported;
-}
-
+    return EventPlugin
+})()
+//==================================
 var ChangeEventPlugin = (function () {
-
-
     var activeElement
 
     var IESelectFileChange = false
@@ -986,7 +972,7 @@ var SelectEventPlugin = (function () {
         }
         return true;
     }
-    function constructSelectEvent(nativeEvent, uuids) {
+    function selectEventFactory(nativeEvent, uuids) {
         // Ensure we have the right element, and that the user is not dragging a
         // selection (this matches native `select` event behavior). In HTML5, select
         // fires only on input and textarea thus if there's no focused element we
@@ -1045,7 +1031,7 @@ var SelectEventPlugin = (function () {
                 case "contextmenu":
                 case "mouseup":
                     mouseDown = false
-                    return constructSelectEvent(nativeEvent, uuids)
+                    return selectEventFactory(nativeEvent, uuids)
                     // Chrome and IE fire non-standard event when selection is changed (and
                     // sometimes when it hasn't).
                     // Firefox doesn't support selectionchange, so check selection status
@@ -1054,8 +1040,7 @@ var SelectEventPlugin = (function () {
                     // key, when multiple keydown events are fired but only one keyup is.
                 case "selectionchange":
                 case "select":
-                    //   case "keyup":
-                    return constructSelectEvent(nativeEvent, uuids)
+                    return selectEventFactory(nativeEvent, uuids)
             }
         },
         didPutListener: function (id, type) {
@@ -1223,7 +1208,6 @@ var InputEventPlugin = (function () {
         }
     }
 
-
     return EventPlugin
 })()
 var AnalyticsEventPlugin = ResponderEventPlugin
@@ -1233,6 +1217,7 @@ var EventPluginRegistry = {
     plugins: [
         ResponderEventPlugin,
         SimpleEventPlugin,
+        SubmitEventPlugin,
         WheelEventPlugin,
         TapEventPlugin,
         EnterLeaveEventPlugin,
@@ -1250,7 +1235,7 @@ var getPluginByEventType = (function () {
             type2plugin[e] = plugin
         }
     }
-    console.log(type2plugin)
+    avalon.log(type2plugin)
     return function (type) {
         return type2plugin[type]
     }
