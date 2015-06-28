@@ -172,7 +172,7 @@ function executeDispatchesAndRelease(event) {
             }
             callback(event, dispatchListeners[i], dispatchIDs[i])
         }
-        eventFactory.release(event)
+        // eventFactory.release(event)
     }
 }
 
@@ -294,8 +294,10 @@ var EventPluginHub = {
         for (var i = 0; i < plugins.length; i++) {
             var possiblePlugin = plugins[i];
             if (possiblePlugin) {
+
                 var extractedEvents = possiblePlugin.extractEvents(topLevelType, topLevelTarget, nativeEvent, uuids)
                 if (extractedEvents) {
+                    extractedEvents.plugn = possiblePlugin.name
                     events = events.concat(extractedEvents);
                 }
             }
@@ -344,6 +346,7 @@ var SimpleEventPlugin = (function () {
         }
     })
     var EventPlugin = {
+        name: "SimpleEventPlugin",
         eventTypes: EventTypes,
         executeDispatch: function (event, listener, domID) {
             var returnValue = executeDispatch(event, listener, domID);
@@ -542,6 +545,7 @@ var WheelEventPlugin = (function () {
         return delta === 0 ? 0 : delta > 0 ? 120 : -120
     }
     var EventPlugin = {
+        name: "WheelEventPlugin",
         eventTypes: {
             mousewheel: {
                 dependencies: dependencies
@@ -551,6 +555,9 @@ var WheelEventPlugin = (function () {
             }
         },
         extractEvents: function (topLevelType, topLevelTarget, orgEvent, uuids) {
+            if (dependencies.indexOf(topLevelType) === -1) {
+                return
+            }
             var delta = 0
             var deltaX = 0
             var deltaY = 0
@@ -672,6 +679,7 @@ var TapEventPlugin = (function () {
     var usedTouchTime = 0;
     var TOUCH_DELAY = 1000;
     var EventPlugin = {
+        name: "TapEventPlugin",
         tapMoveThreshold: tapMoveThreshold,
         eventTypes: {
             tap: {
@@ -713,6 +721,7 @@ var TapEventPlugin = (function () {
     return EventPlugin
 })()
 var EnterLeaveEventPlugin = {
+    name: "EnterLeaveEventPlugin",
     eventTypes: {
         mouseenter: {
             dependencies: [
@@ -755,6 +764,7 @@ var SubmitEventPlugin = (function () {
         dependencies.push("click", "keypress")
     }
     var EventPlugin = {
+        name: "SubmitEventPlugin",
         eventTypes: {
             submit: {
                 dependencies: dependencies
@@ -774,7 +784,7 @@ var SubmitEventPlugin = (function () {
             } else if (elementType !== "form") {
                 return
             }
-           
+
             switch (elementType) {
                 case "reset":
                 case "hidden":
@@ -806,11 +816,8 @@ var SubmitEventPlugin = (function () {
 var ChangeEventPlugin = (function () {
     var activeElement
 
-    var IESelectFileChange = false
-
     function startWatchingForChangeEventIE(target) {
         activeElement = target
-        IESelectFileChange = false
         activeElement.attachEvent('onchange', isChange);
     }
 
@@ -819,22 +826,27 @@ var ChangeEventPlugin = (function () {
             return;
         }
         activeElement.detachEvent('onchange', isChange)
-        IESelectFileChange = false
     }
 
     function isChange() {
-        IESelectFileChange = true
+        if (activeElement) {
+            var hackEvent = DOC.createEventObject()
+            hackEvent.isChangeEvent = true
+            activeElement.fireEvent("ondatasetchanged", hackEvent)
+        }
     }
 
 
     var EventPlugin = {
+        name: "ChangeEventPlugin",
         eventTypes: {
             change: {
                 dependencies: [
                     "blur",
                     "change",
                     "click",
-                    "focus"
+                    "focus",
+                    "datasetchanged"
                 ]
             }
         },
@@ -844,6 +856,7 @@ var ChangeEventPlugin = (function () {
                 if (elementType === "input") {
                     elementType = topLevelTarget.type
                 }
+                var nativeType = nativeEvent.type
                 var isChange = false
                 switch (elementType) {
                     case "button":
@@ -853,41 +866,41 @@ var ChangeEventPlugin = (function () {
                     case "select":
                     case "file":
                         if (W3C) { //如果支持change事件冒泡
-                            isChange = topLevelType === "change"
+                            isChange = nativeType === "change"
                         } else {
+                            if (nativeType === "datasetchanged") {
+                                isChange = nativeEvent.isChangeEvent === true
+                            }
                             // 这里的事件依次是 focus change click blur
-                            if (topLevelType === "focus") {
+                            if ( nativeType === "click") {
                                 stopWatchingForChangeEventIE()
                                 startWatchingForChangeEventIE(topLevelTarget)
-                            } else if (IESelectFileChange && topLevelType === "click") {
-                                IESelectFileChange = false
-                                isChange = true
-                            } else if (topLevelType === "blur") {
-                                stopWatchingForChangeEventIE();
+                            } else if (nativeType === "focusout") {
+                                stopWatchingForChangeEventIE()
                             }
                         }
                         break
                     case "radio":
                     case "checkbox":
-                        if (topLevelType === "focus") {
+                        if (nativeType === "focus" || nativeType === "focusin") {
                             topLevelTarget.oldChecked = topLevelTarget.checked
-                        } else if (topLevelType === "click") {
+                        } else if (nativeType === "click") {
                             if (topLevelTarget.oldChecked !== topLevelTarget.checked) {
-                                topLevelTarget.oldChecked = topLevelTarget.checked
                                 isChange = true
+                                topLevelTarget.oldChecked = topLevelTarget.checked
                             }
                         }
                         break
                     default://其他控件的change事件需要在失去焦点时才触发
                         if (W3C) { //如果支持change事件冒泡
-                            isChange = topLevelType === "change"
+                            isChange = nativeType === "change"
                         } else {
                             if (topLevelType === "focus") {
                                 topLevelTarget.oldValue = topLevelTarget.value
                             } else if (topLevelType === "blur") {
                                 if (topLevelTarget.oldValue !== topLevelTarget.value) {
+                                    isChange = topLevelTarget.oldValue !== void 0
                                     topLevelTarget.oldValue = topLevelTarget.value
-                                    isChange = true
                                 }
                             }
                         }
@@ -992,6 +1005,7 @@ var SelectEventPlugin = (function () {
         }
     }
     var EventPlugin = {
+        name: "SelectEventPlugin",
         eventTypes: {
             select: {
                 dependencies: [
@@ -1110,6 +1124,7 @@ var InputEventPlugin = (function () {
     }
     var composing = false
     var EventPlugin = {
+        name: "InputEventPlugin",
         eventTypes: {
             input: {
                 dependencies: [
