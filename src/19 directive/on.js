@@ -947,7 +947,7 @@ var SelectEventPlugin = (function () {
                 start: node.selectionStart,
                 end: node.selectionEnd
             };
-        } else if (window.getSelection) {
+        } else if (window.getSelection) {//W3C
             var selection = window.getSelection();
             return {
                 anchorNode: selection.anchorNode,
@@ -955,7 +955,7 @@ var SelectEventPlugin = (function () {
                 focusNode: selection.focusNode,
                 focusOffset: selection.focusOffset
             };
-        } else if (document.selection) {
+        } else if (document.selection) {//IE6-8
             var range = document.selection.createRange();
             return {
                 parentElement: range.parentElement(),
