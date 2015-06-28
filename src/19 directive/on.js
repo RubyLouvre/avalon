@@ -364,8 +364,9 @@ var SimpleEventPlugin = (function () {
                 case "load":
                 case "error":
                 case "reset":
-                    eventDecorator = SyntheticHTMLEvent;
-                    break;
+                    eventDecorator = simulateHTMLEvent
+                    break
+                    /* jshint ignore:start */
                 case "keypress":
                     // FireFox creates a keypress event for function keys too. This removes
                     // the unwanted keypress events. Enter is however both printable and
@@ -376,12 +377,14 @@ var SimpleEventPlugin = (function () {
 
                 case "keydown":
                 case "keyup":
-                    eventDecorator = SyntheticKeyboardEvent;
-                    break;
+                    eventDecorator = simulateKeyboardEvent
+                    break
+                    /* jshint ignore:end */
                 case "blur":
                 case "focus":
-                    eventDecorator = SyntheticFocusEvent;
-                    break;
+                    eventDecorator = simulateFocusEvent;
+                    break
+                    /* jshint ignore:start */
                 case "click":
                     // Firefox creates a click event on right mouse clicks. This removes the
                     // unwanted click events.
@@ -389,13 +392,14 @@ var SimpleEventPlugin = (function () {
                         return null;
                     }
                 case "contextenu":
+                    /* jshint ignore:end */
                 case "doubleclick":
                 case "mousedown":
                 case "mousemove":
                 case "mouseout":
                 case "mouseover":
                 case "mouseup":
-                    eventDecorator = SyntheticMouseEvent;
+                    eventDecorator = simulateMouseEvent;
                     break;
                 case "drag":
                 case "dragend":
@@ -405,21 +409,21 @@ var SimpleEventPlugin = (function () {
                 case "dragover":
                 case "dragstart":
                 case "drop":
-                    eventDecorator = SyntheticDragEvent;
+                    eventDecorator = simulateDragEvent;
                     break;
                 case "touchcancel":
                 case "touchend":
                 case "touchmove":
                 case "touchstart":
-                    eventDecorator = SyntheticTouchEvent;
+                    eventDecorator = simulateTouchEvent;
                     break;
                 case "scroll":
-                    eventDecorator = SyntheticUIEvent;
+                    eventDecorator = simulateUIEvent;
                     break;
                 case "copy":
                 case "cut":
                 case "paste":
-                    eventDecorator = SyntheticClipboardEvent;
+                    eventDecorator = simulateClipboardEvent;
                     break;
             }
             if (eventDecorator) {
@@ -450,21 +454,21 @@ var SimpleEventPlugin = (function () {
 // 各类型事件的装饰器
 // http://www.w3.org/TR/html5/index.html#events-0
 
-    function SyntheticHTMLEvent(event, nativeEvent) {
+    function simulateHTMLEvent(event, nativeEvent) {
         var _interface = "eventPhase,cancelable,bubbles"
         _interface.replace(rword, function (name) {
             event[name] = nativeEvent[name]
         })
     }
 
-    function SyntheticUIEvent(event, nativeEvent) {
-        SyntheticHTMLEvent(event, nativeEvent)
+    function simulateUIEvent(event, nativeEvent) {
+        simulateHTMLEvent(event, nativeEvent)
         event.view = nativeEvent.view || window
         event.detail = nativeEvent.detail || 0
     }
 
-    function SyntheticTouchEvent(event, nativeEvent) {
-        SyntheticUIEvent(event, nativeEvent)
+    function simulateTouchEvent(event, nativeEvent) {
+        simulateUIEvent(event, nativeEvent)
         var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
         _interface.replace(rword, function (name) {
             event[name] = nativeEvent[name]
@@ -473,20 +477,20 @@ var SimpleEventPlugin = (function () {
 
 //http://www.w3.org/TR/DOM-Level-3-Events/
 
-    function SyntheticFocusEvent(event, nativeEvent) {
-        SyntheticUIEvent(event, nativeEvent)
+    function simulateFocusEvent(event, nativeEvent) {
+        simulateUIEvent(event, nativeEvent)
         event.relatedTarget = nativeEvent.relatedTarget
     }
 
 
-    function SyntheticClipboardEvent(event, nativeEvent) {
-        SyntheticEvent(event, nativeEvent)
+    function simulateClipboardEvent(event, nativeEvent) {
+        simulateHTMLEvent(event, nativeEvent)
         event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
     }
 
 
-    function SyntheticKeyboardEvent(event, nativeEvent) {
-        SyntheticUIEvent(event, nativeEvent)
+    function simulateKeyboardEvent(event, nativeEvent) {
+        simulateUIEvent(event, nativeEvent)
         var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
         _interface.replace(rword, function (name) {
             event[name] = nativeEvent[name]
@@ -501,8 +505,8 @@ var SimpleEventPlugin = (function () {
         event.which = event.type === 'keypress' ? event.charCode : event.keyCode
     }
 
-    function SyntheticMouseEvent(event, nativeEvent) {
-        SyntheticUIEvent(event, nativeEvent)
+    function simulateMouseEvent(event, nativeEvent) {
+        simulateUIEvent(event, nativeEvent)
         var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
         _interface.replace(rword, function (name) {
             event[name] = nativeEvent[name]
@@ -529,8 +533,8 @@ var SimpleEventPlugin = (function () {
         }
     }
 
-    function SyntheticDragEvent(event, nativeEvent) {
-        SyntheticMouseEvent(event, nativeEvent)
+    function simulateDragEvent(event, nativeEvent) {
+        simulateMouseEvent(event, nativeEvent)
         event.dataTransfer = nativeEvent.dataTransfer
     }
     return EventPlugin
@@ -872,7 +876,7 @@ var ChangeEventPlugin = (function () {
                                 isChange = nativeEvent.isChangeEvent === true
                             }
                             // 这里的事件依次是 focus change click blur
-                            if ( nativeType === "click") {
+                            if (nativeType === "click") {
                                 stopWatchingForChangeEventIE()
                                 startWatchingForChangeEventIE(topLevelTarget)
                             } else if (nativeType === "focusout") {
@@ -1111,13 +1115,15 @@ var InputEventPlugin = (function () {
         fireDatasetChanged(activeElement)
     }
     function fireDatasetChanged(elem) {
+        if (elem.oldValue === elem.value)
+            return
         if (DOC.createEvent) {
             var hackEvent = DOC.createEvent("Events");
             hackEvent.initEvent("datasetchanged", true, true, {})
             hackEvent.isInputEvent = true
             elem.dispatchEvent(hackEvent)
         } else {
-            var hackEvent = DOC.createEventObject()
+            hackEvent = DOC.createEventObject()
             hackEvent.isInputEvent = true
             elem.fireEvent("ondatasetchanged", hackEvent)
         }
@@ -1134,6 +1140,7 @@ var InputEventPlugin = (function () {
                     "DOMAutoComplete",
                     "focus",
                     "blur",
+                    "keyup",
                     "datasetchanged"
                 ]
             }
@@ -1152,23 +1159,39 @@ var InputEventPlugin = (function () {
                     case "input":
                     case "DOMAutoComplete":
                         if (!composing) {
-                            isValueChange = true
+                            isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
                         }
                         break
                     case "datasetchanged":
                         isValueChange = nativeEvent.isInputEvent
+                    case "keyup"://fix IE6-8
+                        isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
                         break
                     case "focus":
                     case "blur":
                         topLevelTarget.msFocus = topLevelType === "focus"
                         if (IEVersion < 9) {
-                            //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
-                            //IE9使用propertychange无法监听中文输入改动
+                            //IE6-8下的onpropertychange近乎无敌，可以监听用户或程序做出的任何修改
+                            //但好像第一次修改时不会触发, 我们可以用keyup事件进行修正
                             topLevelTarget.detachEvent("onpropertychange", valueChange)
                             if (topLevelTarget.msFocus) {
                                 topLevelTarget.attachEvent("onpropertychange", valueChange)
                             }
                         } else if (IEVersion === 9) {
+                            //* 改变输入框内容的行为有多种，主要有：
+                            //1.键盘输入（可通过keyup事件处理，但有按键不一定有改变输入的行为）
+                            //2.鼠标拖拽（可通过dragend / drop事件处理）
+                            //3.剪切（可通过cut事件处理，剪切可以通过快捷键也可以通过浏览器菜单，所以keydown/keyup靠不住）
+                            //4.粘贴（可通过paste事件处理，粘贴可以通过快捷键也可以通过浏览器菜单，所以keydown/keyup靠不住）
+                            //5.删除（悲催，并没有一个delete事件，如果是按键来删除还好办，如果是通过上下文菜单来删除，IE9下，propertychange和input都不会触发）
+                            //* IE9的问题在于：
+                            //1. 按键BackSpace / 按键Delete / 拖拽 / 剪切 / 删除，不会触发propertychange和input事件
+                            //2. addEventListener绑定的propertychange事件无法监听任何改动
+                            //3. 无法监听中文输入改动
+                            //* 解决方法 
+                            //1. 使用attachEvent绑定propertychange事件，但还是个残缺品，依然无法处理问题1, 3
+                            //2. 使用document的selectionchange事件，注意它的target, srcElement永远是document
+                            //   因此需要在focus时绑定，blur时移除，才能区分该selectionchange事件是当前元素触发的 
                             DOC.removeEventListener("selectionchange", selectionChange, false)
                             if (topLevelTarget.msFocus) {
                                 DOC.addEventListener("selectionchange", selectionChange, false)
@@ -1192,8 +1215,12 @@ var InputEventPlugin = (function () {
                 try {
                     activeElementValueProp = Object.getOwnPropertyDescriptor(
                             element.constructor.prototype, "value")
-                    Object.defineProperty(activeElement, "value", newValueProp)
+                    console.log(activeElementValueProp)
+                //    Object.defineProperty(element, "value", newValueProp)
+                    avalon.log("使用Object.defineProperty重写element.value")
                 } catch (e) {
+                    avalon.log(e)
+                    element.oldValue = element.value
                     element.msInputHack = function () {
                         if (element.parentNode) {
                             if (!element.msFocus && element.oldValue !== element.value) {
@@ -1211,11 +1238,11 @@ var InputEventPlugin = (function () {
         willDeleteListener: function (id, type, fn) {
             var pool = callbackPool[type]
             var arr = pool && pool[id]
-            if (!fn || !arr || (arr.length == 1 && pool[0] == fn)) {
+            if (!fn || !arr || (arr.length === 1 && pool[0] === fn)) {
                 var element = getNode(id) || {}
-                if (element.msInputHack == true) {
+                if (element.msInputHack === true) {
                     delete element.value
-                } else if (typeof element.msInputHack == "function") {
+                } else if (typeof element.msInputHack === "function") {
                     avalon.Array.remove(ribbon, element.msInputHack)
                     element.msInputHack = void 0
                 }

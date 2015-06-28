@@ -116,7 +116,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
-                var now = new Date - 0
+                var now = new Date() - 0
                 avalon.optimize = avalon.optimize || now
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
