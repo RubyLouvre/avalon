@@ -151,16 +151,16 @@ new function() { // jshint ignore:line
                     }
                 }
             }
-        var inputProto = HTMLInputElement.prototype
-        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-        Object.defineProperty(aproto, "value", {
-            set: newSetter
-        })
-        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-        Object.defineProperty(bproto, "value", {
-            set: newSetter
-        })
+//        var inputProto = HTMLInputElement.prototype
+//        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+//        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+//        Object.defineProperty(aproto, "value", {
+//            set: newSetter
+//        })
+//        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+//        Object.defineProperty(bproto, "value", {
+//            set: newSetter
+//        })
     } catch (e) {
         //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
         // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype

@@ -1,5 +1,5 @@
 var rdash = /\(([^)]*)\)/
-bindingHandlers.on = function (data, vmodels) {
+bindingHandlers.on = function(data, vmodels) {
     var value = data.value
     data.type = "on"
     if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
@@ -11,7 +11,7 @@ bindingHandlers.on = function (data, vmodels) {
     parseExprProxy(value, vmodels, data)
 }
 
-bindingExecutors.on = function (_, elem, data) {
+bindingExecutors.on = function(_, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
     // avalon.log("绑定" + eventType + "事件！")
     var uuid = getUid(elem)
@@ -21,7 +21,7 @@ bindingExecutors.on = function (_, elem, data) {
         avalon.log(e)
     }
     EventPluginHub.addListener(uuid, eventType, data)
-    data.rollback = function () {
+    data.rollback = function() {
         EventPluginHub.removeListener(uuid, eventType, data)
     }
 }
@@ -40,7 +40,7 @@ function isEventSupported(eventNameSuffix, capture) {
     }
 
     if (!isSupported && eventNameSuffix === 'wheel') {
-        isSupported = !!window.WheelEvent
+        isSupported = !! window.WheelEvent
     }
 
     return isSupported;
@@ -69,147 +69,148 @@ function getEventCharCode(nativeEvent) {
 
 var isListening = {}
 
-function listenTo(eventType, mountAt) {
-    //通过事件名得到对应的插件
-    var plugin = getPluginByEventType(eventType)
-    if (!plugin) {
-        avalon.log(eventType + " 事件不存在对应的插件模块 !")
-    }
-    //得到对应的依赖
-    var dependencies = plugin ? plugin.eventTypes[eventType].dependencies : [eventType]
-    //IE6-8下`keyup`/`keypress`/`keydown` 只能冒泡到 document
-    for (var i = 0; i < dependencies.length; i++) {
-        var dependency = dependencies[i];
-        if (isListening[dependency] !== true) {
-            if (dependency === "scroll") {
-                if (W3C) {
-                    addCapturedEvent("scroll", 'scroll', mountAt)
+    function listenTo(eventType, mountAt) {
+        //通过事件名得到对应的插件
+        var plugin = getPluginByEventType(eventType)
+        if (!plugin) {
+            avalon.log(eventType + " 事件不存在对应的插件模块 !")
+        }
+        //得到对应的依赖
+        var dependencies = plugin ? plugin.eventTypes[eventType].dependencies : [eventType]
+        //IE6-8下`keyup`/`keypress`/`keydown` 只能冒泡到 document
+        for (var i = 0; i < dependencies.length; i++) {
+            var dependency = dependencies[i];
+            if (isListening[dependency] !== true) {
+                if (dependency === "scroll") {
+                    if (W3C) {
+                        addCapturedEvent("scroll", 'scroll', mountAt)
+                    } else {
+                        addBubbledEvent("scroll", 'scroll', window)
+                    }
+                } else if (dependency === "select" && W3C) {
+                    addBubbledEvent("select", 'select', mountAt)
+                } else if (dependency === "focus" || dependency === "blur") {
+                    if (W3C) {
+                        addCapturedEvent("focus", 'focus', mountAt);
+                        addCapturedEvent("blur", 'blur', mountAt);
+                    } else if (isEventSupported("focusin")) {
+                        addBubbledEvent("focus", 'focusin', mountAt);
+                        addBubbledEvent("blur", 'focusout', mountAt);
+                    }
+                    isListening.focus = true
+                    isListening.blur = true
                 } else {
-                    addBubbledEvent("scroll", 'scroll', window)
+                    addBubbledEvent(eventType, dependency, mountAt);
                 }
-            } else if (dependency === "select" && W3C) {
-                addBubbledEvent("select", 'select', mountAt)
-            } else if (dependency === "focus" || dependency === "blur") {
-                if (W3C) {
-                    addCapturedEvent("focus", 'focus', mountAt);
-                    addCapturedEvent("blur", 'blur', mountAt);
-                } else if (isEventSupported("focusin")) {
-                    addBubbledEvent("focus", 'focusin', mountAt);
-                    addBubbledEvent("blur", 'focusout', mountAt);
-                }
-                isListening.focus = true
-                isListening.blur = true
-            } else {
-                addBubbledEvent(eventType, dependency, mountAt);
+                isListening[dependency] = true;
             }
-            isListening[dependency] = true;
         }
     }
-}
 
-var addBubbledEvent = function (topLevelType, type, element) {
-    return addEventListener(element, type, function (nativeEvent) {
+var addBubbledEvent = function(topLevelType, type, element) {
+    return addEventListener(element, type, function(nativeEvent) {
         topEventListener(nativeEvent, topLevelType)
     })
 }
-var addCapturedEvent = function (topLevelType, type, element) {
-    return addEventListener(element, type, function (nativeEvent) {
+var addCapturedEvent = function(topLevelType, type, element) {
+    return addEventListener(element, type, function(nativeEvent) {
         topEventListener(nativeEvent, topLevelType)
     }, true)
 }
 
-function addEventListener(target, eventType, callback, capture) {
-    if (target.addEventListener) {
-        target.addEventListener(eventType, callback, !!capture)
-        return {
-            remove: function () {
-                target.removeEventListener(eventType, callback, !!capture)
+    function addEventListener(target, eventType, callback, capture) {
+        if (target.addEventListener) {
+            target.addEventListener(eventType, callback, !! capture)
+            return {
+                remove: function() {
+                    target.removeEventListener(eventType, callback, !! capture)
+                }
+            }
+        } else if (target.attachEvent) {
+            target.attachEvent('on' + eventType, callback)
+            return {
+                remove: function() {
+                    target.detachEvent('on' + eventType, callback)
+                }
             }
         }
-    } else if (target.attachEvent) {
-        target.attachEvent('on' + eventType, callback)
-        return {
-            remove: function () {
-                target.detachEvent('on' + eventType, callback)
+    }
+    //顶层事件监听器
+
+    function topEventListener(nativeEvent, topLevelType) {
+        var topLevelTarget = nativeEvent.target || nativeEvent.srcElement
+        var ancestors = []
+        var ancestor = topLevelTarget
+        while (ancestor && ancestor.nodeType) {
+            ancestors.push(ancestor)
+            ancestor = ancestor.parentNode
+        }
+        var uuids = []
+        while (ancestor = ancestors.shift()) {
+            uuids.push(getUid(ancestor))
+        }
+        //收集事件
+        var events = EventPluginHub.extractEvents(topLevelType, topLevelTarget, nativeEvent, uuids)
+        //执行所有回调
+        events.forEach(executeDispatchesAndRelease)
+    }
+
+
+    function executeDispatchesAndRelease(event) {
+        if (event) {
+            var callback = executeDispatch;
+            var PluginModule = getPluginByEventType(event.type);
+            if (PluginModule && PluginModule.executeDispatch) {
+                callback = PluginModule.executeDispatch;
             }
-        }
-    }
-}
-//顶层事件监听器
-
-function topEventListener(nativeEvent, topLevelType) {
-    var topLevelTarget = nativeEvent.target || nativeEvent.srcElement
-    var ancestors = []
-    var ancestor = topLevelTarget
-    while (ancestor && ancestor.nodeType) {
-        ancestors.push(ancestor)
-        ancestor = ancestor.parentNode
-    }
-    var uuids = []
-    while (ancestor = ancestors.shift()) {
-        uuids.push(getUid(ancestor))
-    }
-    //收集事件
-    var events = EventPluginHub.extractEvents(topLevelType, topLevelTarget, nativeEvent, uuids)
-    //执行所有回调
-    events.forEach(executeDispatchesAndRelease)
-}
-
-
-function executeDispatchesAndRelease(event) {
-    if (event) {
-        var callback = executeDispatch;
-        var PluginModule = getPluginByEventType(event.type);
-        if (PluginModule && PluginModule.executeDispatch) {
-            callback = PluginModule.executeDispatch;
-        }
-        var dispatchListeners = event._dispatchListeners
-        var dispatchIDs = event._dispatchIDs
-        // avalon.log("执行所有回调" + event.type)
-        for (var i = 0; i < dispatchListeners.length; i++) {
-            if (event.isPropagationStopped) {
-                break
+            var dispatchListeners = event._dispatchListeners
+            var dispatchIDs = event._dispatchIDs
+            // avalon.log("执行所有回调" + event.type)
+            for (var i = 0; i < dispatchListeners.length; i++) {
+                if (event.isPropagationStopped) {
+                    break
+                }
+                callback(event, dispatchListeners[i], dispatchIDs[i])
             }
-            callback(event, dispatchListeners[i], dispatchIDs[i])
+            // eventFactory.release(event)
         }
-        // eventFactory.release(event)
     }
-}
 
-//执行单个事件回调
-function executeDispatch(event, fn, domID) {
-    var elem = event.currentTarget = getNode(domID);
-    if (typeof fn === "function") {
-        var returnValue = fn.call(elem, event)
-    } else if (fn.args) {
-        var callback = fn.evaluator || noop
-        returnValue = callback.apply(elem, fn.args.concat(event))
+    //执行单个事件回调
+
+    function executeDispatch(event, fn, domID) {
+        var elem = event.currentTarget = getNode(domID);
+        if (typeof fn === "function") {
+            var returnValue = fn.call(elem, event)
+        } else if (fn.args) {
+            var callback = fn.evaluator || noop
+            returnValue = callback.apply(elem, fn.args.concat(event))
+        }
+        event.currentTarget = null;
+        return returnValue;
     }
-    event.currentTarget = null;
-    return returnValue;
-}
 
 
-//=================事件工厂===================
-var eventFactory = (function () {
+    //=================事件工厂===================
+var eventFactory = (function() {
     var eventPool = []
 
-    function eventFactory(nativeEvent, type) {
-        var event = eventPool.shift()
-        if (!event) {
-            event = new SyntheticEvent()
+        function eventFactory(nativeEvent, type) {
+            var event = eventPool.shift()
+            if (!event) {
+                event = new SyntheticEvent()
+            }
+            event.timeStamp = new Date() - 0
+            event.nativeEvent = nativeEvent
+            event.type = type
+            var target = nativeEvent.target || nativeEvent.srcElement || window
+            if (target.nodeType === 3) {
+                target = target.parentNode
+            }
+            event.target = target
+            return event
         }
-        event.timeStamp = new Date() - 0
-        event.nativeEvent = nativeEvent
-        event.type = type
-        var target = nativeEvent.target || nativeEvent.srcElement || window
-        if (target.nodeType === 3) {
-            target = target.parentNode
-        }
-        event.target = target
-        return event
-    }
-    eventFactory.release = function (event) {
+    eventFactory.release = function(event) {
         for (var i in event) {
             if (event.hasOwnProperty(i)) {
                 event[i] = null
@@ -220,11 +221,10 @@ var eventFactory = (function () {
         }
     }
 
-    function SyntheticEvent() {
-    }
+    function SyntheticEvent() {}
     var ep = SyntheticEvent.prototype
     //阻止默认行为
-    ep.preventDefault = function () {
+    ep.preventDefault = function() {
         if (this.nativeEvent.preventDefault) {
             this.nativeEvent.preventDefault();
         } else {
@@ -232,7 +232,7 @@ var eventFactory = (function () {
         }
     }
     //阻止事件往上下传播
-    ep.stopPropagation = function () {
+    ep.stopPropagation = function() {
         this.isPropagationStopped = true;
         if (this.nativeEvent.stopPropagation) {
             this.nativeEvent.stopPropagation();
@@ -241,7 +241,7 @@ var eventFactory = (function () {
     }
 
     //阻止事件往上下传播
-    ep.stopImmediatePropagation = function () {
+    ep.stopImmediatePropagation = function() {
         //阻止事件在一个元素的同种事件的回调中传播
         this.isImmediatePropagationStopped = true
         this.stopPropagation()
@@ -255,7 +255,7 @@ var eventFactory = (function () {
 var callbackPool = {};
 var EventPluginHub = {
     //添加事件回调到 回调池 中
-    addListener: function (id, type, callback) {
+    addListener: function(id, type, callback) {
         var pool = callbackPool[type] || (callbackPool[type] = {});
         if (pool[id]) {
             pool[id].push(callback)
@@ -267,11 +267,11 @@ var EventPluginHub = {
             plugin.didPutListener(id, type, callback);
         }
     },
-    getListener: function (id, eventType) {
+    getListener: function(id, eventType) {
         var pool = callbackPool[eventType]
         return pool && pool[id] || []
     },
-    removeListener: function (id, type, fn) {
+    removeListener: function(id, type, fn) {
         var plugin = getPluginByEventType(type)
         if (plugin && plugin.willDeleteListener) {
             plugin.willDeleteListener(id, type);
@@ -285,7 +285,7 @@ var EventPluginHub = {
             }
         }
     },
-    extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+    extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
         var events = []
         if (!topLevelTarget) {
             return events
@@ -306,41 +306,41 @@ var EventPluginHub = {
     }
 }
 
-function collectDispatches(event, uuids) {
-    //收集事件回调
-    var _dispatchListeners = []
-    var _dispatchIDs = []
-    for (var i = 0, n = uuids.length; i < n; i++) {
-        var id = uuids[i]
-        //从事件仓库中取得回调数组
-        var listener = EventPluginHub.getListener(id, event.type)
-        var node = getNode(id)
-        //从元素上取得直接用onxxx绑定的回调
-        var onFn = node && node["on" + event.type]
-        if (typeof onFn === "function") {
-            listener.push(onFn)
-        }
-        var jn = listener.length
-        if (jn) {
-            for (var j = 0; j < jn; j++) {
-                _dispatchListeners.push(listener[j])
-                _dispatchIDs.push(id)
+    function collectDispatches(event, uuids) {
+        //收集事件回调
+        var _dispatchListeners = []
+        var _dispatchIDs = []
+        for (var i = 0, n = uuids.length; i < n; i++) {
+            var id = uuids[i]
+            //从事件仓库中取得回调数组
+            var listener = EventPluginHub.getListener(id, event.type)
+            var node = getNode(id)
+            //从元素上取得直接用onxxx绑定的回调
+            var onFn = node && node["on" + event.type]
+            if (typeof onFn === "function") {
+                listener.push(onFn)
+            }
+            var jn = listener.length
+            if (jn) {
+                for (var j = 0; j < jn; j++) {
+                    _dispatchListeners.push(listener[j])
+                    _dispatchIDs.push(id)
+                }
             }
         }
+        event._dispatchListeners = _dispatchListeners
+        event._dispatchIDs = _dispatchIDs
     }
-    event._dispatchListeners = _dispatchListeners
-    event._dispatchIDs = _dispatchIDs
-}
 
-//--------------------------------
-// SimpleEventPlugin
-var SimpleEventPlugin = (function () {
+    //--------------------------------
+    // SimpleEventPlugin
+var SimpleEventPlugin = (function() {
     var EventTypes = {}
     var onClickListeners = {}
     String("click,contextmenu,doubleclick,keydown,keypress,keyup,focus,blur,copy,cut,paste," + //键盘点击
-            "drag,dragend,dragenter,dragexit,dragleave,touchcancel,touchend,touchstart,touchmove," + //拖放触摸
-            "mousedown,mousemove,mouseout,mouseover,mouseup," + //鼠标操作
-            "load,error,reset,scroll").toLowerCase().replace(rword, function (eventName) {
+        "drag,dragend,dragenter,dragexit,dragleave,touchcancel,touchend,touchstart,touchmove," + //拖放触摸
+        "mousedown,mousemove,mouseout,mouseover,mouseup," + //鼠标操作
+        "load,error,reset,scroll").toLowerCase().replace(rword, function(eventName) {
         EventTypes[eventName] = {
             dependencies: [eventName]
         }
@@ -348,14 +348,14 @@ var SimpleEventPlugin = (function () {
     var EventPlugin = {
         name: "SimpleEventPlugin",
         eventTypes: EventTypes,
-        executeDispatch: function (event, listener, domID) {
+        executeDispatch: function(event, listener, domID) {
             var returnValue = executeDispatch(event, listener, domID);
             if (returnValue === false) {
                 event.stopPropagation()
                 event.preventDefault()
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (!EventTypes[topLevelType]) {
                 return null;
             }
@@ -433,7 +433,7 @@ var SimpleEventPlugin = (function () {
                 return event
             }
         },
-        didPutListener: function (id, type) {
+        didPutListener: function(id, type) {
             // Mobile Safari does not fire properly bubble click events on
             // non-interactive elements, which means delegated click listeners do not
             // fire. The workaround for this bug involves attaching an empty click
@@ -444,110 +444,110 @@ var SimpleEventPlugin = (function () {
                 }
             }
         },
-        willDeleteListener: function (id, type) {
+        willDeleteListener: function(id, type) {
             if (type === "click") {
                 onClickListeners[id].remove();
                 delete onClickListeners[id];
             }
         }
     }
-// 各类型事件的装饰器
-// http://www.w3.org/TR/html5/index.html#events-0
+    // 各类型事件的装饰器
+    // http://www.w3.org/TR/html5/index.html#events-0
 
-    function simulateHTMLEvent(event, nativeEvent) {
-        var _interface = "eventPhase,cancelable,bubbles"
-        _interface.replace(rword, function (name) {
-            event[name] = nativeEvent[name]
-        })
-    }
-
-    function simulateUIEvent(event, nativeEvent) {
-        simulateHTMLEvent(event, nativeEvent)
-        event.view = nativeEvent.view || window
-        event.detail = nativeEvent.detail || 0
-    }
-
-    function simulateTouchEvent(event, nativeEvent) {
-        simulateUIEvent(event, nativeEvent)
-        var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
-        _interface.replace(rword, function (name) {
-            event[name] = nativeEvent[name]
-        })
-    }
-
-//http://www.w3.org/TR/DOM-Level-3-Events/
-
-    function simulateFocusEvent(event, nativeEvent) {
-        simulateUIEvent(event, nativeEvent)
-        event.relatedTarget = nativeEvent.relatedTarget
-    }
-
-
-    function simulateClipboardEvent(event, nativeEvent) {
-        simulateHTMLEvent(event, nativeEvent)
-        event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
-    }
-
-
-    function simulateKeyboardEvent(event, nativeEvent) {
-        simulateUIEvent(event, nativeEvent)
-        var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
-        _interface.replace(rword, function (name) {
-            event[name] = nativeEvent[name]
-        })
-        if (event.type === 'keypress') {
-            event.charCode = getEventCharCode(event)
-            event.keyCode = 0
-        } else if (event.type === 'keydown' || event.type === 'keyup') {
-            event.charCode = 0
-            event.keyCode = nativeEvent.keyCode
+        function simulateHTMLEvent(event, nativeEvent) {
+            var _interface = "eventPhase,cancelable,bubbles"
+            _interface.replace(rword, function(name) {
+                event[name] = nativeEvent[name]
+            })
         }
-        event.which = event.type === 'keypress' ? event.charCode : event.keyCode
-    }
 
-    function simulateMouseEvent(event, nativeEvent) {
-        simulateUIEvent(event, nativeEvent)
-        var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
-        _interface.replace(rword, function (name) {
-            event[name] = nativeEvent[name]
-        })
-        // Webkit, Firefox, IE9+
-        // which:  1 2 3
-        // button: 0 1 2 (standard)
-        var button = nativeEvent.button;
-        if ('which' in nativeEvent) {
-            event.which = button
-        } else {
-            // IE<9
-            // which:  undefined
-            // button: 0 0 0
-            // button: 1 4 2 (onmouseup)
-            event.which = button === 2 ? 2 : button === 4 ? 1 : 0;
+        function simulateUIEvent(event, nativeEvent) {
+            simulateHTMLEvent(event, nativeEvent)
+            event.view = nativeEvent.view || window
+            event.detail = nativeEvent.detail || 0
         }
-        if (!isFinite(event.pageX)) {
-            var target = event.target
-            var doc = target.ownerDocument || DOC
-            var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-            event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-            event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
-        }
-    }
 
-    function simulateDragEvent(event, nativeEvent) {
-        simulateMouseEvent(event, nativeEvent)
-        event.dataTransfer = nativeEvent.dataTransfer
-    }
+        function simulateTouchEvent(event, nativeEvent) {
+            simulateUIEvent(event, nativeEvent)
+            var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
+            _interface.replace(rword, function(name) {
+                event[name] = nativeEvent[name]
+            })
+        }
+
+        //http://www.w3.org/TR/DOM-Level-3-Events/
+
+        function simulateFocusEvent(event, nativeEvent) {
+            simulateUIEvent(event, nativeEvent)
+            event.relatedTarget = nativeEvent.relatedTarget
+        }
+
+
+        function simulateClipboardEvent(event, nativeEvent) {
+            simulateHTMLEvent(event, nativeEvent)
+            event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
+        }
+
+
+        function simulateKeyboardEvent(event, nativeEvent) {
+            simulateUIEvent(event, nativeEvent)
+            var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
+            _interface.replace(rword, function(name) {
+                event[name] = nativeEvent[name]
+            })
+            if (event.type === 'keypress') {
+                event.charCode = getEventCharCode(event)
+                event.keyCode = 0
+            } else if (event.type === 'keydown' || event.type === 'keyup') {
+                event.charCode = 0
+                event.keyCode = nativeEvent.keyCode
+            }
+            event.which = event.type === 'keypress' ? event.charCode : event.keyCode
+        }
+
+        function simulateMouseEvent(event, nativeEvent) {
+            simulateUIEvent(event, nativeEvent)
+            var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
+            _interface.replace(rword, function(name) {
+                event[name] = nativeEvent[name]
+            })
+            // Webkit, Firefox, IE9+
+            // which:  1 2 3
+            // button: 0 1 2 (standard)
+            var button = nativeEvent.button;
+            if ('which' in nativeEvent) {
+                event.which = button
+            } else {
+                // IE<9
+                // which:  undefined
+                // button: 0 0 0
+                // button: 1 4 2 (onmouseup)
+                event.which = button === 2 ? 2 : button === 4 ? 1 : 0;
+            }
+            if (!isFinite(event.pageX)) {
+                var target = event.target
+                var doc = target.ownerDocument || DOC
+                var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
+                event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+                event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+            }
+        }
+
+        function simulateDragEvent(event, nativeEvent) {
+            simulateMouseEvent(event, nativeEvent)
+            event.dataTransfer = nativeEvent.dataTransfer
+        }
     return EventPlugin
 })()
 //https://github.com/jquery/jquery-mousewheel/blob/master/jquery.mousewheel.js
-var WheelEventPlugin = (function () {
+var WheelEventPlugin = (function() {
     var dependencies = ('onwheel' in document || document.documentMode >= 9) ? ['wheel'] :
-            isEventSupported("mousewheel") ? ['mousewheel'] :
-            ['DomMouseScroll', 'MozMousePixelScroll']
+        isEventSupported("mousewheel") ? ['mousewheel'] :
+        ['DomMouseScroll', 'MozMousePixelScroll']
 
-    function ajusetNumber(delta) {
-        return delta === 0 ? 0 : delta > 0 ? 120 : -120
-    }
+        function ajusetNumber(delta) {
+            return delta === 0 ? 0 : delta > 0 ? 120 : -120
+        }
     var EventPlugin = {
         name: "WheelEventPlugin",
         eventTypes: {
@@ -558,7 +558,7 @@ var WheelEventPlugin = (function () {
                 dependencies: dependencies
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, orgEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, orgEvent, uuids) {
             if (dependencies.indexOf(topLevelType) === -1) {
                 return
             }
@@ -566,10 +566,10 @@ var WheelEventPlugin = (function () {
             var deltaX = 0
             var deltaY = 0
             //从原始事件对象抽取有用信息
-            if ('detail'      in orgEvent) {
+            if ('detail' in orgEvent) {
                 deltaY = orgEvent.detail * -1;
             }
-            if ('wheelDelta'  in orgEvent) {
+            if ('wheelDelta' in orgEvent) {
                 deltaY = orgEvent.wheelDelta;
             }
             if ('wheelDeltaY' in orgEvent) {
@@ -620,20 +620,21 @@ var WheelEventPlugin = (function () {
 var ResponderEventPlugin = {
     extractEvents: noop
 }
-var TapEventPlugin = (function () {
+var TapEventPlugin = (function() {
     function isEndish(topLevelType) {
         return topLevelType === "mouseup" ||
-                topLevelType === "touchend" ||
-                topLevelType === "touchcancel";
+            topLevelType === "touchend" ||
+            topLevelType === "touchcancel";
     }
 
     function isMoveish(topLevelType) {
         return topLevelType === "mousemove" ||
-                topLevelType === "touchmove";
+            topLevelType === "touchmove";
     }
+
     function isStartish(topLevelType) {
         return topLevelType === "mousedown" ||
-                topLevelType === "touchstart";
+            topLevelType === "touchstart";
     }
     var touchEvents = [
         "touchstart",
@@ -646,39 +647,51 @@ var TapEventPlugin = (function () {
      * in order to still be considered a 'tap' event.
      */
     var tapMoveThreshold = 10;
-    var startCoords = {x: null, y: null};
-    var Axis = {
-        x: {page: 'pageX', client: 'clientX', envScroll: 'scrollLeft'},
-        y: {page: 'pageY', client: 'clientY', envScroll: 'scrollTop'}
+    var startCoords = {
+        x: null,
+        y: null
     };
-    var extractSingleTouch = function (nativeEvent) {
+    var Axis = {
+        x: {
+            page: 'pageX',
+            client: 'clientX',
+            envScroll: 'scrollLeft'
+        },
+        y: {
+            page: 'pageY',
+            client: 'clientY',
+            envScroll: 'scrollTop'
+        }
+    };
+    var extractSingleTouch = function(nativeEvent) {
         var touches = nativeEvent.touches;
         var changedTouches = nativeEvent.changedTouches;
         var hasTouches = touches && touches.length > 0;
         var hasChangedTouches = changedTouches && changedTouches.length > 0;
 
         return !hasTouches && hasChangedTouches ? changedTouches[0] :
-                hasTouches ? touches[0] :
-                nativeEvent;
-    }
-    function getAxisCoordOfEvent(axis, nativeEvent) {
-        var singleTouch = extractSingleTouch(nativeEvent);
-        if (singleTouch) {
-            return singleTouch[axis.page];
-        }
-        return axis.page in nativeEvent ?
-                nativeEvent[axis.page] :
-                nativeEvent[axis.client] + root[axis.envScroll];
+            hasTouches ? touches[0] :
+            nativeEvent;
     }
 
-    function getDistance(coords, nativeEvent) {
-        var pageX = getAxisCoordOfEvent(Axis.x, nativeEvent);
-        var pageY = getAxisCoordOfEvent(Axis.y, nativeEvent);
-        return Math.pow(
+        function getAxisCoordOfEvent(axis, nativeEvent) {
+            var singleTouch = extractSingleTouch(nativeEvent);
+            if (singleTouch) {
+                return singleTouch[axis.page];
+            }
+            return axis.page in nativeEvent ?
+                nativeEvent[axis.page] :
+                nativeEvent[axis.client] + root[axis.envScroll];
+        }
+
+        function getDistance(coords, nativeEvent) {
+            var pageX = getAxisCoordOfEvent(Axis.x, nativeEvent);
+            var pageY = getAxisCoordOfEvent(Axis.y, nativeEvent);
+            return Math.pow(
                 Math.pow(pageX - coords.x, 2) + Math.pow(pageY - coords.y, 2),
                 0.5
-                );
-    }
+            );
+        }
     var usedTouch = false;
     var usedTouchTime = 0;
     var TOUCH_DELAY = 1000;
@@ -690,7 +703,7 @@ var TapEventPlugin = (function () {
                 dependencies: touchEvents.concat("mousedown", "mouseup", "mouseup")
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (!isStartish(topLevelType) && !isEndish(topLevelType)) {
                 return null;
             }
@@ -740,11 +753,11 @@ var EnterLeaveEventPlugin = {
             ]
         }
     },
-    extractEvents: function (topLevelType, topLevelTarget, nativeEvent) {
+    extractEvents: function(topLevelType, topLevelTarget, nativeEvent) {
         if (topLevelType === "mouseout" || topLevelType === "mouseover") {
 
             var related = nativeEvent.relatedTarget || (topLevelType === "mouseover" ?
-                    nativeEvent.fromElement : nativeEvent.toElement)
+                nativeEvent.fromElement : nativeEvent.toElement)
 
             if (!related || (related !== topLevelTarget && !avalon.contains(topLevelTarget, related))) {
                 var type = topLevelType === "mouseout" ? "mouseleave" : "mouseenter"
@@ -761,7 +774,7 @@ var EnterLeaveEventPlugin = {
     }
 }
 //==================================
-var SubmitEventPlugin = (function () {
+var SubmitEventPlugin = (function() {
     //IE6-8, submit事件只能冒泡到form元素
     var dependencies = ["submit"]
     if (IEVersion < 9) {
@@ -774,7 +787,7 @@ var SubmitEventPlugin = (function () {
                 dependencies: dependencies
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (dependencies.indexOf(topLevelType) === -1) {
                 return
             }
@@ -795,7 +808,7 @@ var SubmitEventPlugin = (function () {
                 case "radio":
                 case "checkbox":
                     return
-                case "button"://IE8-11 点击[button]可以触发submit,IE6,7不可以
+                case "button": //IE8-11 点击[button]可以触发submit,IE6,7不可以
                 case "submit":
                     if (topLevelType === "keypress") {
                         return
@@ -817,28 +830,28 @@ var SubmitEventPlugin = (function () {
     return EventPlugin
 })()
 //==================================
-var ChangeEventPlugin = (function () {
+var ChangeEventPlugin = (function() {
     var activeElement
 
-    function startWatchingForChangeEventIE(target) {
-        activeElement = target
-        activeElement.attachEvent('onchange', isChange);
-    }
-
-    function stopWatchingForChangeEventIE() {
-        if (!activeElement) {
-            return;
+        function startWatchingForChangeEventIE(target) {
+            activeElement = target
+            activeElement.attachEvent('onchange', isChange);
         }
-        activeElement.detachEvent('onchange', isChange)
-    }
 
-    function isChange() {
-        if (activeElement) {
-            var hackEvent = DOC.createEventObject()
-            hackEvent.isChangeEvent = true
-            activeElement.fireEvent("ondatasetchanged", hackEvent)
+        function stopWatchingForChangeEventIE() {
+            if (!activeElement) {
+                return;
+            }
+            activeElement.detachEvent('onchange', isChange)
         }
-    }
+
+        function isChange() {
+            if (activeElement) {
+                var hackEvent = DOC.createEventObject()
+                hackEvent.isChangeEvent = true
+                activeElement.fireEvent("ondatasetchanged", hackEvent)
+            }
+        }
 
 
     var EventPlugin = {
@@ -854,7 +867,7 @@ var ChangeEventPlugin = (function () {
                 ]
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             var elementType = topLevelTarget.nodeName.toLowerCase()
             if (elementType === "select" || elementType === "textarea" || elementType === "input") {
                 if (elementType === "input") {
@@ -895,7 +908,7 @@ var ChangeEventPlugin = (function () {
                             }
                         }
                         break
-                    default://其他控件的change事件需要在失去焦点时才触发
+                    default: //其他控件的change事件需要在失去焦点时才触发
                         if (W3C) { //如果支持change事件冒泡
                             isChange = nativeType === "change"
                         } else {
@@ -923,35 +936,36 @@ var ChangeEventPlugin = (function () {
 
 
 
-
 /**
  * Same as document.activeElement but wraps in a try-catch block. In IE it is
  * not safe to call document.activeElement if there is nothing focused.
  *
  * The activeElement will be null only if the document body is not yet defined.
  */
-function getActiveElement() /*?DOMElement*/ {
-    try {
-        return document.activeElement || document.body;
-    } catch (e) {
-        return document.body;
-    }
-}
 
-var SelectEventPlugin = (function () {
+    function getActiveElement() /*?DOMElement*/ {
+        try {
+            return document.activeElement || document.body;
+        } catch (e) {
+            return document.body;
+        }
+    }
+
+var SelectEventPlugin = (function() {
     var activeElement = null;
     var lastSelection = null;
     var mouseDown = false;
-// Track whether a listener exists for this plugin. If none exist, we do
-// not extract events.
+    // Track whether a listener exists for this plugin. If none exist, we do
+    // not extract events.
     var hasListener = false;
+
     function getSelection(node) {
         if ('selectionStart' in node) {
             return {
                 start: node.selectionStart,
                 end: node.selectionEnd
             };
-        } else if (window.getSelection) {//W3C
+        } else if (window.getSelection) { //W3C
             var selection = window.getSelection();
             return {
                 anchorNode: selection.anchorNode,
@@ -959,7 +973,7 @@ var SelectEventPlugin = (function () {
                 focusNode: selection.focusNode,
                 focusOffset: selection.focusOffset
             };
-        } else if (document.selection) {//IE6-8
+        } else if (document.selection) { //IE6-8
             var range = document.selection.createRange();
             return {
                 parentElement: range.parentElement(),
@@ -969,6 +983,7 @@ var SelectEventPlugin = (function () {
             };
         }
     }
+
     function shallowEqual(objA, objB) {
         if (objA === objB) {
             return true;
@@ -977,7 +992,7 @@ var SelectEventPlugin = (function () {
         // Test for A's keys different from B.
         for (key in objA) {
             if (objA.hasOwnProperty(key) &&
-                    (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
+                (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
                 return false;
             }
         }
@@ -989,6 +1004,7 @@ var SelectEventPlugin = (function () {
         }
         return true;
     }
+
     function selectEventFactory(nativeEvent, uuids) {
         // Ensure we have the right element, and that the user is not dragging a
         // selection (this matches native `select` event behavior). In HTML5, select
@@ -997,7 +1013,7 @@ var SelectEventPlugin = (function () {
         if (mouseDown || activeElement == null || activeElement !== getActiveElement()) {
             return null;
         }
-
+        console.log(mouseDown)
         // Only fire when selection has actually changed.
         var currentSelection = getSelection(activeElement);
         if (!lastSelection || !shallowEqual(lastSelection, currentSelection)) {
@@ -1019,11 +1035,11 @@ var SelectEventPlugin = (function () {
                     "keydown",
                     "mousedown",
                     "mouseup",
-                    "select"//W3C
+                    "dragend"
                 ]
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (!hasListener) {
                 return null;
             }
@@ -1031,7 +1047,7 @@ var SelectEventPlugin = (function () {
                 // Track the input node that has focus.
                 case "focus":
                     var canSelected = topLevelTarget.contentEditable === 'true' ||
-                            isTextInputElement(topLevelTarget)
+                        isTextInputElement(topLevelTarget)
                     if (canSelected) {
                         activeElement = topLevelTarget
                         lastSelection = null
@@ -1049,19 +1065,13 @@ var SelectEventPlugin = (function () {
                 case "contextmenu":
                 case "mouseup":
                     mouseDown = false
+                    console.log("======")
                     return selectEventFactory(nativeEvent, uuids)
-                    // Chrome and IE fire non-standard event when selection is changed (and
-                    // sometimes when it hasn't).
-                    // Firefox doesn't support selectionchange, so check selection status
-                    // after each key entry. The selection changes after keydown and before
-                    // keyup, but we check on keydown as well in the case of holding down a
-                    // key, when multiple keydown events are fired but only one keyup is.
-                case "selectionchange":
-                case "select":
+                case "dragend":
                     return selectEventFactory(nativeEvent, uuids)
             }
         },
-        didPutListener: function (id, type) {
+        didPutListener: function(id, type) {
             if (type === "select") {
                 hasListener = true;
             }
@@ -1087,33 +1097,64 @@ var supportedInputTypes = {
     'url': true,
     'week': true
 };
+
 function isTextInputElement(elem) {
     return elem && ((elem.nodeName === 'INPUT' ? supportedInputTypes[elem.type] : elem.nodeName === 'TEXTAREA'));
 }
 
 
-var InputEventPlugin = (function () {
-    var activeElement
-    var activeElementValueProp
-    var newValueProp = {
-        get: function () {
-            return activeElementValueProp.get.call(this);
-        },
-        set: function (val) {
-            activeElementValueProp.set.call(this, val)
-            if (this.msFocus && val + "" !== this.oldValue) {
+var InputEventPlugin = (function() {
+   
+
+    var setters = {}
+    var useTicker
+        function newSetter(val) {
+            setters[this.tagName].call(this, val)
+            if (this.msInputHack && val !== this.oldValue) {
                 fireDatasetChanged(this)
             }
         }
-    };
+
+        function msInputHack() {
+            if (this.parentNode) {
+                if (this.oldValue !== this.value) {
+                    fireDatasetChanged(this)
+                }
+            } else if (!this.msRetain) {
+                this.msInputHack = null
+                return false
+            }
+        }
+   
+    if (Object.getOwnPropertyDescriptor) {
+        try {
+            var aproto = HTMLInputElement.prototype
+            Object.getOwnPropertyNames(aproto) //故意引发IE6-8等浏览器报错
+            setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+            Object.defineProperty(aproto, "value", {
+                set: newSetter
+            })
+            var bproto = HTMLTextAreaElement.prototype
+            setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+            Object.defineProperty(bproto, "value", {
+                set: newSetter
+            })
+        } catch (e) {
+            avalon.log(e)
+            useTicker = true
+        }
+    }
+    var activeElement
     function valueChange(e) {
         if (e.propertyName === "value") {
             fireDatasetChanged(activeElement)
         }
     }
+
     function selectionChange() {
         fireDatasetChanged(activeElement)
     }
+
     function fireDatasetChanged(elem) {
         if (elem.oldValue === elem.value)
             return
@@ -1145,7 +1186,7 @@ var InputEventPlugin = (function () {
                 ]
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (isTextInputElement(topLevelTarget)) {
                 var isValueChange = false
                 activeElement = topLevelTarget
@@ -1164,12 +1205,11 @@ var InputEventPlugin = (function () {
                         break
                     case "datasetchanged":
                         isValueChange = nativeEvent.isInputEvent
-                    case "keyup"://fix IE6-8
+                    case "keyup": //fix IE6-8
                         isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
                         break
                     case "focus":
                     case "blur":
-                        topLevelTarget.msFocus = topLevelType === "focus"
                         if (IEVersion < 9) {
                             //IE6-8下的onpropertychange近乎无敌，可以监听用户或程序做出的任何修改
                             //但好像第一次修改时不会触发, 我们可以用keyup事件进行修正
@@ -1207,43 +1247,30 @@ var InputEventPlugin = (function () {
                 }
             }
         },
-        didPutListener: function (id) {
+        didPutListener: function(id) {
             var element = getNode(id)
-
-            if (isTextInputElement(element) && !element.msInputHack) {
-                element.msInputHack = true
-                try {
-                    activeElementValueProp = Object.getOwnPropertyDescriptor(
-                            element.constructor.prototype, "value")
-                    console.log(activeElementValueProp)
-                //    Object.defineProperty(element, "value", newValueProp)
-                    avalon.log("使用Object.defineProperty重写element.value")
-                } catch (e) {
-                    avalon.log(e)
+            if (isTextInputElement(element)) {
+                if (useTicker) {
                     element.oldValue = element.value
-                    element.msInputHack = function () {
-                        if (element.parentNode) {
-                            if (!element.msFocus && element.oldValue !== element.value) {
-                                fireDatasetChanged(element)
-                            }
-                        } else if (!element.msRetain) {
-                            element.msInputHack = null
-                            return false
-                        }
-                    }
+                    element.msInputHack = msInputHack
                     avalon.tick(element.msInputHack)
+                } else {//IE9+ chrome43+ firefox30+
+        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+                    element.msInputHack = true
+                    avalon.log("使用Object.defineProperty重写element.value")
                 }
             }
         },
-        willDeleteListener: function (id, type, fn) {
+        willDeleteListener: function(id, type, fn) {
             var pool = callbackPool[type]
             var arr = pool && pool[id]
             if (!fn || !arr || (arr.length === 1 && pool[0] === fn)) {
                 var element = getNode(id) || {}
                 if (element.msInputHack === true) {
-                    delete element.value
-                } else if (typeof element.msInputHack === "function") {
-                    avalon.Array.remove(ribbon, element.msInputHack)
+                    delete element.msInputHack
+                } else if (element.msInputHack === msInputHack) {
+                    avalon.Array.remove(ribbon, msInputHack)
                     element.msInputHack = void 0
                 }
             }
@@ -1270,16 +1297,15 @@ var EventPluginRegistry = {
     ]
 }
 
-var getPluginByEventType = (function () {
+var getPluginByEventType = (function() {
     var type2plugin = {}
-    for (var i = 0, plugin; plugin = EventPluginRegistry.plugins[i++]; ) {
+    for (var i = 0, plugin; plugin = EventPluginRegistry.plugins[i++];) {
         for (var e in plugin.eventTypes) {
             type2plugin[e] = plugin
         }
     }
     avalon.log(type2plugin)
-    return function (type) {
+    return function(type) {
         return type2plugin[type]
     }
 })()
-
