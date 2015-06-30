@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                select: function (e) {
+                    avalon.log("成功触发 "+e.type+" 事件")
+                }
+            })
+        </script>
+ 
+    </head>
+    <body ms-controller="test">
+       <input ms-on-select="select" value="选择我"/>
+       <textarea ms-on-select="select">选择我</textarea>
+       <div ms-on-select="select" contenteditable="true">选择我</div>
+
+    </body>
+</html>
