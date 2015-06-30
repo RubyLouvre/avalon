@@ -37,19 +37,6 @@ var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
             params.push("string")
         }
         data.param = params.join("-")
-        data.bound = function(type, callback) {
-            if (elem.addEventListener) {
-                elem.addEventListener(type, callback, false)
-            } else {
-                elem.attachEvent("on" + type, callback)
-            }
-            var old = data.rollback
-            data.rollback = function() {
-                elem.avalonSetter = null
-                avalon.unbind(elem, type, callback)
-                old && old()
-            }
-        }
         for (var i in avalon.vmodels) {
             var v = avalon.vmodels[i]
             v.$fire("avalon-ms-duplex-init", data)
@@ -133,38 +120,5 @@ var TimerID, ribbon = []
         }
     }
 
-var watchValueInTimer = noop
-var rmsinput = /text|password|hidden/
-new function() { // jshint ignore:line
-    try { //#272 IE9-IE11, firefox
-        var setters = {}
-        var aproto = HTMLInputElement.prototype
-        var bproto = HTMLTextAreaElement.prototype
 
-            function newSetter(value) { // jshint ignore:line
-                if (avalon.optimize ||  this.parentNode) {
-                    setters[this.tagName].call(this, value)
-                    if (!rmsinput.test(this.type))
-                        return
-                    if (!this.msFocus && this.avalonSetter) {
-                        this.avalonSetter()
-                    }
-                }
-            }
-//        var inputProto = HTMLInputElement.prototype
-//        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-//        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-//        Object.defineProperty(aproto, "value", {
-//            set: newSetter
-//        })
-//        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-//        Object.defineProperty(bproto, "value", {
-//            set: newSetter
-//        })
-    } catch (e) {
-        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
-        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
-        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-        watchValueInTimer = avalon.tick
-    }
-} // jshint ignore:line
+var rmsinput = /text|password|hidden/

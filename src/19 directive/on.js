@@ -13,16 +13,32 @@ bindingHandlers.on = function (data, vmodels) {
 
 bindingExecutors.on = function (_, elem, data) {
     var eventType = data.param.replace(/-\d+$/, "")
-    // avalon.log("绑定" + eventType + "事件！")
+    data.rollback = delegateEvent(elem, eventType, data)
+}
+
+function delegateEvent(elem, type, fn) {
     var uuid = getUid(elem)
     try {
-        listenTo(eventType, document)
+        listenTo(type, document)
     } catch (e) {
         avalon.log(e)
     }
-    EventPluginHub.addListener(uuid, eventType, data)
-    data.rollback = function () {
-        EventPluginHub.removeListener(uuid, eventType, data)
+    EventPluginHub.addListener(uuid, type, fn)
+    return function () {
+        EventPluginHub.removeListener(uuid, type, fn)
+    }
+}
+
+function fireHackEvent(elem, prop) {
+    if (DOC.createEvent) {
+        var hackEvent = DOC.createEvent("Events");
+        hackEvent.initEvent("datasetchanged", true, true, {})
+        hackEvent[prop] = true
+        elem.dispatchEvent(hackEvent)
+    } else {
+        hackEvent = DOC.createEventObject()
+        hackEvent[prop] = true
+        elem.fireEvent("ondatasetchanged", hackEvent)
     }
 }
 
@@ -121,17 +137,13 @@ var addCapturedEvent = function (topLevelType, type, element) {
 function addEventListener(target, eventType, callback, capture) {
     if (target.addEventListener) {
         target.addEventListener(eventType, callback, !!capture)
-        return {
-            remove: function () {
-                target.removeEventListener(eventType, callback, !!capture)
-            }
+        return  function () {
+            target.removeEventListener(eventType, callback, !!capture)
         }
     } else if (target.attachEvent) {
         target.attachEvent('on' + eventType, callback)
-        return {
-            remove: function () {
-                target.detachEvent('on' + eventType, callback)
-            }
+        return  function () {
+            target.detachEvent('on' + eventType, callback)
         }
     }
 }
@@ -172,7 +184,7 @@ function executeDispatchesAndRelease(event) {
             }
             callback(event, dispatchListeners[i], dispatchIDs[i])
         }
-        // eventFactory.release(event)
+        eventFactory.release(event)
     }
 }
 
@@ -447,7 +459,7 @@ var SimpleEventPlugin = (function () {
         },
         willDeleteListener: function (id, type) {
             if (type === "click") {
-                onClickListeners[id].remove();
+                onClickListeners[id]()
                 delete onClickListeners[id];
             }
         }
@@ -618,126 +630,7 @@ var WheelEventPlugin = (function () {
     return EventPlugin
 })()
 
-var ResponderEventPlugin = {
-    extractEvents: noop
-}
-var TapEventPlugin = (function () {
-    function isEndish(topLevelType) {
-        return topLevelType === "mouseup" ||
-                topLevelType === "touchend" ||
-                topLevelType === "touchcancel";
-    }
 
-    function isMoveish(topLevelType) {
-        return topLevelType === "mousemove" ||
-                topLevelType === "touchmove";
-    }
-
-    function isStartish(topLevelType) {
-        return topLevelType === "mousedown" ||
-                topLevelType === "touchstart";
-    }
-    var touchEvents = [
-        "touchstart",
-        "touchcanel",
-        "touchend",
-        "touchmove"
-    ]
-    /**
-     * Number of pixels that are tolerated in between a `touchStart` and `touchEnd`
-     * in order to still be considered a 'tap' event.
-     */
-    var tapMoveThreshold = 10;
-    var startCoords = {
-        x: null,
-        y: null
-    };
-    var Axis = {
-        x: {
-            page: 'pageX',
-            client: 'clientX',
-            envScroll: 'scrollLeft'
-        },
-        y: {
-            page: 'pageY',
-            client: 'clientY',
-            envScroll: 'scrollTop'
-        }
-    };
-    var extractSingleTouch = function (nativeEvent) {
-        var touches = nativeEvent.touches;
-        var changedTouches = nativeEvent.changedTouches;
-        var hasTouches = touches && touches.length > 0;
-        var hasChangedTouches = changedTouches && changedTouches.length > 0;
-
-        return !hasTouches && hasChangedTouches ? changedTouches[0] :
-                hasTouches ? touches[0] :
-                nativeEvent;
-    }
-
-    function getAxisCoordOfEvent(axis, nativeEvent) {
-        var singleTouch = extractSingleTouch(nativeEvent);
-        if (singleTouch) {
-            return singleTouch[axis.page];
-        }
-        return axis.page in nativeEvent ?
-                nativeEvent[axis.page] :
-                nativeEvent[axis.client] + root[axis.envScroll];
-    }
-
-    function getDistance(coords, nativeEvent) {
-        var pageX = getAxisCoordOfEvent(Axis.x, nativeEvent);
-        var pageY = getAxisCoordOfEvent(Axis.y, nativeEvent);
-        return Math.pow(
-                Math.pow(pageX - coords.x, 2) + Math.pow(pageY - coords.y, 2),
-                0.5
-                );
-    }
-    var usedTouch = false;
-    var usedTouchTime = 0;
-    var TOUCH_DELAY = 1000;
-    var EventPlugin = {
-        name: "TapEventPlugin",
-        tapMoveThreshold: tapMoveThreshold,
-        eventTypes: {
-            tap: {
-                dependencies: touchEvents.concat("mousedown", "mouseup", "mouseup")
-            }
-        },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (!isStartish(topLevelType) && !isEndish(topLevelType)) {
-                return null;
-            }
-            // on ios, there is a delay after touch event and synthetic
-            // mouse events, so that user can perform double tap
-            // solution: ignore mouse events following touchevent within small timeframe
-            if (touchEvents.indexOf(topLevelType) !== -1) {
-                usedTouch = true;
-                usedTouchTime = new Date() - 0;
-            } else {
-                if (usedTouch && (new Date() - usedTouchTime < TOUCH_DELAY)) {
-                    return null;
-                }
-            }
-            var event = null;
-            var distance = getDistance(startCoords, nativeEvent);
-            if (isEndish(topLevelType) && distance < tapMoveThreshold) {
-                event = eventFactory(nativeEvent, "tap")
-            }
-            if (isStartish(topLevelType)) {
-                startCoords.x = getAxisCoordOfEvent(Axis.x, nativeEvent);
-                startCoords.y = getAxisCoordOfEvent(Axis.y, nativeEvent);
-            } else if (isEndish(topLevelType)) {
-                startCoords.x = 0;
-                startCoords.y = 0;
-            }
-            event && collectDispatches(event, uuids)
-
-            return event;
-        }
-    }
-    return EventPlugin
-})()
 var EnterLeaveEventPlugin = {
     name: "EnterLeaveEventPlugin",
     eventTypes: {
@@ -848,7 +741,7 @@ var ChangeEventPlugin = (function () {
 
     function isChange() {
         if (activeElement) {
-            fireDatasetchanged(activeElement, "isChangeEvent")
+            fireHackEvent(activeElement, "isChangeEvent")
         }
     }
 
@@ -932,18 +825,7 @@ var ChangeEventPlugin = (function () {
     return EventPlugin
 })()
 
-function fireDatasetchanged(elem, prop) {
-    if (DOC.createEvent) {
-        var hackEvent = DOC.createEvent("Events");
-        hackEvent.initEvent("datasetchanged", true, true, {})
-        hackEvent[prop] = true
-        elem.dispatchEvent(hackEvent)
-    } else {
-        hackEvent = DOC.createEventObject()
-        hackEvent[prop] = true
-        elem.fireEvent("ondatasetchanged", hackEvent)
-    }
-}
+
 
 var SelectEventPlugin = (function () {
     /**
@@ -960,19 +842,19 @@ var SelectEventPlugin = (function () {
             return document.body;
         }
     }
-function Selection(a, b) {
+    function Selection(a, b) {
         this.start = a
         this.end = b
     }
     Selection.prototype = {
         hasSelect: function () {
-            if("text" in this){
+            if ("text" in this) {
                 return !!this.text
-            }else if(typeof this.start === "number"){
+            } else if (typeof this.start === "number") {
                 return this.start !== this.end
-            }else{
+            } else {
                 return false
-            } 
+            }
         }
     }
     function getSelection(node) {
@@ -982,7 +864,7 @@ function Selection(a, b) {
             var selecObj = window.getSelection();
             var range = selecObj.getRangeAt(0)
             if (range) {
-               var selection = new Selection(range.startOffset, range.endOffset)
+                var selection = new Selection(range.startOffset, range.endOffset)
                 selection.anchorNode = selecObj.anchorNode
                 selection.focusNode = selecObj.focusNode
                 return selection
@@ -991,9 +873,9 @@ function Selection(a, b) {
             range = document.selection.createRange()
             selection = new Selection()
             selection.parentElement = range.parentElement(),
-            selection.text = range.text,
-            selection.top =  range.boundingTop,
-            selection.left = range.boundingLeft
+                    selection.text = range.text,
+                    selection.top = range.boundingTop,
+                    selection.left = range.boundingLeft
             return selection
         }
         return new Selection()
@@ -1036,7 +918,7 @@ function Selection(a, b) {
         }
         if (!lastSelection || !shallowEqual(lastSelection, currentSelection)) {
             lastSelection = currentSelection
-            fireDatasetchanged(activeElement, "isSelectEvent")
+            fireHackEvent(activeElement, "isSelectEvent")
 
         }
     }
@@ -1106,8 +988,10 @@ var supportedInputTypes = {
     'text': true,
     'time': true,
     'url': true,
-    'week': true
+    'week': true,
+    'hidden': true
 };
+
 
 function isTextInputElement(elem) {
     return elem && ((elem.nodeName === 'INPUT' ? supportedInputTypes[elem.type] : elem.nodeName === 'TEXTAREA'));
@@ -1120,39 +1004,27 @@ var InputEventPlugin = (function () {
     function newSetter(val) {
         setters[this.tagName].call(this, val)
         if (this.msInputHack && val !== this.oldValue) {
-            fireDatasetChanged(this, "isInputEvent")
+            fireHackEvent(this, "isInputEvent")
         }
     }
 
-    function msInputHack() {//IE6-8
-        if (this.parentNode) {
-            if (this.oldValue !== this.value) {
-                fireDatasetChanged(this, "isInputEvent")
-            }
-        } else if (!this.msRetain) {
-            this.msInputHack = null
-            return false
-        }
+
+    try {
+        var aproto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(aproto) //故意引发IE6-8等浏览器报错
+        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+        Object.defineProperty(aproto, "value", {
+            set: newSetter
+        })
+        var bproto = HTMLTextAreaElement.prototype
+        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+        Object.defineProperty(bproto, "value", {
+            set: newSetter
+        })
+    } catch (e) {
+        useTicker = true
     }
 
-    if (Object.getOwnPropertyDescriptor) {
-        try {
-            var aproto = HTMLInputElement.prototype
-            Object.getOwnPropertyNames(aproto) //故意引发IE6-8等浏览器报错
-            setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-            Object.defineProperty(aproto, "value", {
-                set: newSetter
-            })
-            var bproto = HTMLTextAreaElement.prototype
-            setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-            Object.defineProperty(bproto, "value", {
-                set: newSetter
-            })
-        } catch (e) {
-            avalon.log(e)
-            useTicker = true
-        }
-    }
     var activeElement
     function valueChange(e) {//针对IE6-8
         if (e.propertyName === "value") {
@@ -1167,7 +1039,7 @@ var InputEventPlugin = (function () {
     function fireInputEvent(elem) {
         if (elem.oldValue === elem.value)
             return
-        fireDatasetChanged(elem, "isInputEvent")
+        fireHackEvent(elem, "isInputEvent")
     }
     var composing = false
     var EventPlugin = {
@@ -1205,6 +1077,7 @@ var InputEventPlugin = (function () {
                         break
                     case "datasetchanged":
                         isValueChange = nativeEvent.isInputEvent
+                        break
                     case "keyup": //fix IE6-8
                         isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
                         break
@@ -1252,7 +1125,16 @@ var InputEventPlugin = (function () {
             if (isTextInputElement(element)) {
                 if (useTicker) {
                     element.oldValue = element.value
-                    element.msInputHack = msInputHack
+                    element.msInputHack = function () {//IE6-8
+                        if (element.parentNode) {
+                            if (element.oldValue !== element.value) {
+                                fireHackEvent(element, "isInputEvent")
+                            }
+                        } else if (!element.msRetain) {
+                            element.msInputHack = null
+                            return false
+                        }
+                    }
                     avalon.tick(element.msInputHack)
                 } else {//IE9+ chrome43+ firefox30+
                     // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
@@ -1269,8 +1151,8 @@ var InputEventPlugin = (function () {
                 var element = getNode(id) || {}
                 if (element.msInputHack === true) {
                     delete element.msInputHack
-                } else if (element.msInputHack === msInputHack) {
-                    avalon.Array.remove(ribbon, msInputHack)
+                } else if (typeof element.msInputHack === "function") {
+                    avalon.Array.remove(ribbon, element.msInputHack)
                     element.msInputHack = void 0
                 }
             }
@@ -1279,21 +1161,17 @@ var InputEventPlugin = (function () {
 
     return EventPlugin
 })()
-var AnalyticsEventPlugin = ResponderEventPlugin
 
 var EventPluginRegistry = {
     registrationNameModules: {},
     plugins: [
-        ResponderEventPlugin,
         SimpleEventPlugin,
         SubmitEventPlugin,
         WheelEventPlugin,
-        TapEventPlugin,
         EnterLeaveEventPlugin,
         ChangeEventPlugin,
         SelectEventPlugin,
-        InputEventPlugin,
-        AnalyticsEventPlugin
+        InputEventPlugin
     ]
 }
 

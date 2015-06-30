@@ -36,7 +36,7 @@ duplexBinding.SELECT = function(element, evaluator, data) {
             element.oldValue = val + ""
         }
     }
-    data.bound("change", updateVModel)
+    data.rollback = delegateEvent(element,"change", updateVModel)
     element.msCallback = function() {
         avalon.injectBinding(data)
         data.changed.call(element, evaluator(), data)
