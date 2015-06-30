@@ -480,7 +480,7 @@ new function () {// jshint ignore:line
         try {
             var ret = factory.apply(window, array)
         } catch (e) {
-            log("执行[" + id + "]模块的factory抛错： " + e)
+            log("执行[" + id + "]模块的factory抛错： ", e)
         }
         if (ret !== void 0) {
             module.exports = ret

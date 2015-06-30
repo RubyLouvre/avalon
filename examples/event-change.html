@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title></title>
+        <script src="../avalon.js"></script>
+
+        <style>
+            #outer1{
+                padding:40px;
+                background: goldenrod;
+            }
+            #outer2{
+                padding:30px;
+                background:#a9ea00;
+            }
+            #inner{
+                padding:10px;
+                background:blueviolet;
+            }
+        </style>
+        <script >
+            avalon.define({
+                $id: "test",
+                change: function (e) {
+                    console.log(e.target.value+" !! "+e.type)
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div id="outer1">
+            <p><input ms-change="change"/><input type="password" ms-change="change"/></p>
+            <p><textarea ms-change="change"></textarea></p>
+            <p><input type="radio" ms-change="change"  name="aaa" value="aaa"/>
+                <input type="radio" ms-change="change" name="aaa" value="bbb"/></p>
+            <p><input type="checkbox" ms-change="change" name="bbb" value="b1"/>
+                <input type="checkbox" ms-change="change"name="bbb" value="b2"/></p>
+            <p><select ms-change="change"><option>1111</option><option>2222</option><option>3333</option></select></p>
+        </div>
+    </body>
+</html>

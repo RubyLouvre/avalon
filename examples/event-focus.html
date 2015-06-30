@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>ms-on</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <script src="../avalon.js" ></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                handler: function (e) {
+                   vm.text = e.type
+                },
+                text: ""
+            })
+        </script>
+    </head>
+    <body>
+
+        <div ms-controller="test">
+            <p><input ms-focus="handler" ms-blur="handler"></p>
+            <p>{{text}}</p>
+                
+        </div>
+
+
+    </body>
+</html>

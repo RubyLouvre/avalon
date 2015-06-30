@@ -6,20 +6,20 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../avalon.js"></script>
         <script>
-            var model = avalon.define({
+            var vm = avalon.define({
                 $id: "test",
                 text: "",
                 callback: function(e) {
-                    model.text = e.wheelDelta + "  " + e.type
+                    vm.text = e.delta +" " + e.deltaX+ "  " + e.type
                 }
             })
-
         </script>
     </head>
 
     <body ms-controller="test">
-        <div ms-on-mousewheel="callback" id="aaa" style="background: red;width:200px;height: 200px;">
-            {{text}}
+        <div ms-on-mousewheel="callback"  style="background: red;width:600px;height: 200px;">
+            <p>请使用鼠标滚轮</p>
+            {{text}} 
         </div>
     </body>
 </html>

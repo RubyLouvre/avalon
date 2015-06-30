@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../avalon.js"></script>
+        <style>
+            #outer1{
+                padding:40px;
+                background: goldenrod;
+            }
+            #outer2{
+                padding:30px;
+                background:#a9ea00;
+            }
+            #inner{
+                padding:10px;
+                background:blueviolet;
+            }
+            #move{
+                height:50px;
+                background:orange;
+            }
+        </style>
+        <script >
+            avalon.define({
+                $id: "test",
+                mouseleave: function () {
+                    avalon.log("mouseleave Outer")
+                },
+                mouseleave2: function () {
+                    avalon.log("mouseleave Inner")
+                },
+                mouseenter: function () {
+                    avalon.log("mouseenter Outer")
+                },
+                mouseenter2: function () {
+                    avalon.log("mouseenter Inner")
+                },
+                eventType: function (e) {
+                    avalon.log(e.type + "  ========  ")
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div id="outer1">
+            <div id="outer2" ms-mouseover="eventType" ms-mouseout="eventType" ms-mouseleave="mouseleave" ms-mouseenter="mouseenter" >
+                Outer
+                <div id="inner"  ms-mouseleave="mouseleave2"  ms-mouseenter="mouseenter2">
+                    <p>Inner<input ms-mousedown="eventType" ms-mouseup="eventType" /></p>
+                    <div id="move" ms-mousemove="eventType">move</div>
+                </div>
+                Outer
+            </div>
+        </div>
+    </body>
+</html>

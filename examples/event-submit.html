@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../avalon.js"></script>
+        <script>
+    function submit(e) {
+        avalon.log(e.currentTarget.id)
+    }
+    //    avalon.ready(function () {
+    avalon.define({
+        $id: "test",
+        submit: function (e) {
+            avalon.log(e.currentTarget.id)
+        }
+    })
+    //       avalon.scan(document.documentElement)
+    //   })
+
+        </script>
+        <style>
+            #level-1{
+                background:#2FECDC;
+                padding:40px;
+            }
+            #level-2{
+                background:orange;
+                padding:40px;
+            }
+            #level-3{
+                background:orangered;
+                padding:40px;
+            }
+            #level-4{
+                background:orchid;
+                padding:40px;
+            }
+        </style>
+    </head>
+    <body ms-controller="test" ms-on-submit="submit" id="body">
+        <div ms-on-submit="submit"  id="level-1">
+            <div ms-on-submit="submit"  id="level-2">
+                <form ms-on-submit="submit" id="level-3" action="javascript:void(0)">
+                    <button>
+                        点我
+                    </button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

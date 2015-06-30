@@ -1,0 +1,20 @@
+ 
+<!doctype html>
+<html dir="ltr" lang="zh-CN" onsubmit="alert('能冒泡到html元素')">
+  <head id="head">
+    <meta charset="utf-8"/>
+    <title>事件冒泡 by司徒正美</title>
+<script>
+  document.onsubmit = function(){alert("能冒泡到文档对象")}
+  window.onsubmit = function(){alert("能冒泡到window对象")}
+</script>
+  </head>
+  <body onsubmit="alert('能冒泡到body元素')">
+    <div onsubmit="alert('能冒泡到form元素的父元素')">
+      <form onsubmit="alert('能冒泡到form元素')">
+        <button type="submit">提交</button>
+        <input type="submit" value="提交">
+      </form>
+    </div>
+  </body>
+</html>
