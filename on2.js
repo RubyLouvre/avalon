@@ -880,27 +880,53 @@ function isTextInputElement(elem) {
 
 
 var InputEventPlugin = (function () {
-    var activeElement
-    var activeElementValueProp
-    var newValueProp = {
-        get: function () {
-            return activeElementValueProp.get.call(this);
-        },
-        set: function (val) {
-            activeElementValueProp.set.call(this, val)
-            if (this.msFocus && val + "" !== this.oldValue) {
+    var setters = {}
+    var useTicker
+        function newSetter(val) {
+            setters[this.tagName].call(this, val)
+            if (this.msInputHack && val !== this.oldValue) {
                 fireDatasetChanged(this)
             }
         }
+
+        function msInputHack() {
+            if (this.parentNode) {
+                if (this.oldValue !== this.value) {
+                    fireDatasetChanged(this)
+                }
+            } else if (!this.msRetain) {
+                this.msInputHack = null
+                return false
+            }
+        }
+   
+    if (Object.getOwnPropertyDescriptor) {
+        try {
+            var aproto = HTMLInputElement.prototype
+            Object.getOwnPropertyNames(aproto) //故意引发IE6-8等浏览器报错
+            setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+            Object.defineProperty(aproto, "value", {
+                set: newSetter
+            })
+            var bproto = HTMLTextAreaElement.prototype
+            setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+            Object.defineProperty(bproto, "value", {
+                set: newSetter
+            })
+        } catch (e) {
+            avalon.log(e)
+            useTicker = true
+        }
     }
+    var activeElement
 
     function fireDatasetChanged(elem) {
-        //if (DOC.createEvent) {
-        var hackEvent = DOC.createEvent("Events");
-        hackEvent.initEvent("datasetchanged", true, true, {})
-        hackEvent.isInputEvent = true
-        elem.dispatchEvent(hackEvent)
-        //}
+        if (elem.oldValue === elem.value)
+            return
+            var hackEvent = DOC.createEvent("Events");
+            hackEvent.initEvent("datasetchanged", true, true, {})
+            hackEvent.isInputEvent = true
+            elem.dispatchEvent(hackEvent)
     }
     var composing = false
     var EventPlugin = {
@@ -916,7 +942,7 @@ var InputEventPlugin = (function () {
                 ]
             }
         },
-        extractEvents: function (topLevelType, topLevelTarget, nativeEvent, uuids) {
+        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
             if (isTextInputElement(topLevelTarget)) {
                 var isValueChange = false
                 activeElement = topLevelTarget
@@ -930,7 +956,7 @@ var InputEventPlugin = (function () {
                     case "input":
                     case "DOMAutoComplete":
                         if (!composing) {
-                            isValueChange = true
+                            isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
                         }
                         break
                     case "datasetchanged":
@@ -945,39 +971,30 @@ var InputEventPlugin = (function () {
                 }
             }
         },
-        didPutListener: function (id) {
+        didPutListener: function(id) {
             var element = getNode(id)
-
-            if (isTextInputElement(element) && !element.msInputHack) {
-                element.msInputHack = true
-                try {
-                    activeElementValueProp = Object.getOwnPropertyDescriptor(
-                            element.constructor.prototype, "value")
-                    Object.defineProperty(activeElement, "value", newValueProp)
-                } catch (e) {
-                    element.msInputHack = function () {
-                        if (element.parentNode) {
-                            if (!element.msFocus && element.oldValue !== element.value) {
-                                fireDatasetChanged(element)
-                            }
-                        } else if (!element.msRetain) {
-                            element.msInputHack = null
-                            return false
-                        }
-                    }
+            if (isTextInputElement(element)) {
+                if (useTicker) {
+                    element.oldValue = element.value
+                    element.msInputHack = msInputHack
                     avalon.tick(element.msInputHack)
+                } else {//IE9+ chrome43+ firefox30+
+        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+                    element.msInputHack = true
+                    avalon.log("使用Object.defineProperty重写element.value")
                 }
             }
         },
-        willDeleteListener: function (id, type, fn) {
+        willDeleteListener: function(id, type, fn) {
             var pool = callbackPool[type]
             var arr = pool && pool[id]
-            if (!fn || !arr || (arr.length == 1 && pool[0] == fn)) {
+            if (!fn || !arr || (arr.length === 1 && pool[0] === fn)) {
                 var element = getNode(id) || {}
-                if (element.msInputHack == true) {
-                    delete element.value
-                } else if (typeof element.msInputHack == "function") {
-                    avalon.Array.remove(ribbon, element.msInputHack)
+                if (element.msInputHack === true) {
+                    delete element.msInputHack
+                } else if (element.msInputHack === msInputHack) {
+                    avalon.Array.remove(ribbon, msInputHack)
                     element.msInputHack = void 0
                 }
             }

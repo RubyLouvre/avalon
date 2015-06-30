@@ -24,14 +24,6 @@
                 $id: "test",
                 change: function (e) {
                     console.log(e.target.value+" !! "+e.type)
-                },
-                manualChange: function(){
-                    var el = document.getElementById("aaa")
-                    el.value = (new Date - 0) +""
-                },
-                 manualChange2: function(){
-                    var el = document.getElementById("bbb")
-                    el.value = (new Date - 0) +""
                 }
             })
 
@@ -39,10 +31,13 @@
     </head>
     <body ms-controller="test">
         <div id="outer1">
-            <p><input ms-on-input="change" id="aaa"/><input type="password" ms-on-input="change"/></p>
-            <p><textarea ms-on-input="change" id="bbb"></textarea></p>
-            <p><button ms-click="manualChange" type="button">点我</button></p>
-             <p><button ms-click="manualChange2" type="button">点我</button></p>
+            <p><input ms-change="change"/><input type="password" ms-change="change"/></p>
+            <p><textarea ms-change="change"></textarea></p>
+            <p><input type="radio" ms-change="change"  name="aaa" value="aaa"/>
+                <input type="radio" ms-change="change" name="aaa" value="bbb"/></p>
+            <p><input type="checkbox" ms-change="change" name="bbb" value="b1"/>
+                <input type="checkbox" ms-change="change"name="bbb" value="b2"/></p>
+            <p><select ms-change="change"><option>1111</option><option>2222</option><option>3333</option></select></p>
         </div>
     </body>
 </html>
