@@ -84,15 +84,11 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-        console.log(element)
-        console.log("被绑定")
         var fn0 = delegateEvent(element, "input", updateVModel)
         if (inputEvent !== "input") {
             var fn1 = delegateEvent(element, inputEvent, updateVModel)
         }
         data.rollback = function () {
-            console.log(element)
-            console.log("被移除")
             fn0()
             fn1 && fn1()
         }

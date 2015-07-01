@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <title>home</title>
+    </head>
+    <body>
+
+        <script>
+            var vm = avalon.define({
+                $id: "computed5",
+                a: 1,
+                b: 2,
+                c: {
+                    get: function () {
+                        return this.a + " " + this.b
+                    },
+                    set: function (v) {
+                        var arr = v.split(" ")
+                        this.a = arr[0] || ""
+                        this.b = arr[1]
+                    }
+                }
+            });
+            function expect(a){
+                return {
+                    to:{
+                        be: function(b){
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
+            var index = 0
+            vm.$watch("c", function () {
+                index++
+                console.log("触发")
+            })
+            expect(vm.c).to.be("1 2")
+            console.log("ccccccccccccccccc")
+            vm.a = "xx"
+            vm.b = "yy"
+            expect(vm.c).to.be("xx yy")
+            expect(index).to.be(2)
+            setTimeout(function () {
+                expect(index).to.be(2)
+             //   delete avalon.vmodels.computed5
+             //   done()
+            }, 300)
+        </script>
+    </body>
+</html>

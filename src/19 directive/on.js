@@ -1062,7 +1062,7 @@ var InputEventPlugin = (function () {
             if (isTextInputElement(topLevelTarget)) {
                 var isValueChange = false
                 activeElement = topLevelTarget
-                switch (topLevelType) {
+                switch (nativeEvent.type) {
                     case "compositionstart":
                         composing = false
                         break

@@ -8,40 +8,49 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                array: [1, 2, 3, 4],
-                fn: function (e) {
-                    console.log(e.type + "!!!")
-                },
-                fn2: function (e) {
-                    console.log(e.type + "!!!!!!")
-                },
-                aaaa: function (e) {
-                    console.log(e.type + "!!select")
-                },
-                input: function (e) {
-                    console.log(e.target.value + "!!input")
-                },
-                handler: function (e) {
-                    console.log(e.type + "!!!")
+                firstName: "司徒",
+                lastName: "正美",
+                fullName: {
+                    get: function () {
+                        return this.firstName + " " + this.lastName
+                    },
+                    set: function (val) {
+                     
+                        var arr = String(val).split(" ")
+                        this.firstName = arr[0]
+                        this.lastName = arr[1]
+                    }
                 }
             })
-            setTimeout(function(){
-               var el = document.getElementById("aaa")
-               el.value = "77777"
-            },4000)
+
+            vm.$watch("firstName", function (a, b) {
+                console.log("firstName发生改动了", a, b)
+            })
+             vm.$watch("lastName", function (a, b) {
+                 console.log("lastName发生改动了", a, b)
+            })
+            vm.$watch("fullName", function (a, b) {
+                console.log("fullName发生改动了", a, b)
+            })
+            console.log(vm.fullName + " !!!")
+            vm.fullName = "清风 火羽"
+           
+            
+//            setTimeout(function(){
+//                console.log("=============")
+//                vm.firstName = "3333"
+//            }, 1000)
+//            setTimeout(function(){
+//                console.log("=============")
+//                vm.lastName = "4444"
+//            }, 2000)
         </script>
     </head>
     <body>
-
-        <div ms-controller="test">
-            <blockquote ms-click="fn2" data-index="99">
-                <div  ms-repeat="array" ms-data-index="$index" ms-click="fn">{{el}}</div>
-            </blockquote>
-            <input ms-on-select="aaaa"  value="select"/>
-            <input ms-on-input="input" id="aaa" value="input"/>
-            <p><input ms-focus="handler" ms-blur="handler"></p>
-        </div>
-
-
+<!--      <div ms-controller="test">
+            <div><input ms-duplex="firstName">{{firstName}}</div>
+            <div><input ms-duplex="lastName">{{lastName}}</div>
+            <div><input ms-duplex="fullName" data-duplex-event="change">{{fullName}}</div>
+        </div>-->
     </body>
 </html>

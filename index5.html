@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="avalon.js"></script>
+    </head>
+    <body>
+        <script>
+            var vm = avalon.define({
+    $id: "computed6",
+    a: 10,
+    b: 20,
+    c: {
+        get: function () {
+            return this.a + " " + this.b
+        },
+        set: function (v) {
+            var arr = v.split(" ")
+            this.a = arr[0] || ""
+            this.b = arr[1]
+        }
+    }
+});
+            function expect(a){
+                return {
+                    to:{
+                        be: function(b){
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
+var arr = []
+vm.$watch("a", function () {
+    arr.push("a")
+})
+vm.$watch("b", function () {
+    arr.push("b")
+})
+vm.$watch("c", function () {
+
+    arr.push("c")
+})
+expect(vm.c).to.be("10 20")
+console.log(arr)
+console.log("=======================")
+vm.c = "30 40"
+console.log("++++++++++++++++++++++++")
+expect(vm.a).to.be("30")
+expect(vm.b).to.be("40")
+setTimeout(function () {
+    console.log(arr.join(" "))
+    expect(arr.join(" ")).to.be("a b c")
+   // delete avalon.vmodels.computed6
+  //  done()
+}, 300)
+        </script>
+    </body>
+</html>

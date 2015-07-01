@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <style>
+  
+        </style>
+        <script>
+          var vm = avalon.define({
+                $id: "test",
+                checked: true,
+                array: [1,2,3,4],
+                change: function(){
+                   vm.array = [7,8]
+                }
+                
+            })
+            vm.$watch("array", function(a){
+                console.log(a+"!!!")
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <ul>
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
+        <button ms-click="change">btn</button>
+    </body>
+</html>

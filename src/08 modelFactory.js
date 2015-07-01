@@ -125,13 +125,18 @@ function modelFactory(source, $special, $model) {
 
     $vmodel.$compute = function () {
         computed.forEach(function (accessor) {
+            accessor.digest = function(){
+                accessor.isChange = true
+                accessor.call($vmodel)
+            }
+            accessor.dependencies = {}
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
                     if (dependency !== accessor) {
                         var list = vm.$events[name]
-                        accessor.vm = $vmodel
-                        injectDependency(list, accessor.digest)
+                         accessor.dependencies[name] = dependency
+                         injectDependency(list, accessor.digest)
                     }
                 }
             })
@@ -170,38 +175,61 @@ function makeComputedAccessor(name, options) {
     options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var init = "_value" in accessor
+        var init = ("_value" in accessor)
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
+            var fnArr = [], valArr = []
+            var backup = accessor.digest
+            accessor.digest = function(){
+                accessor.isChange = true
+            }
+            for(var i in accessor.dependencies){
+                if(accessor.dependencies.hasOwnProperty(i)){
+                   var fn = accessor.dependencies[i]
+                   fnArr.push(fn)
+                   valArr.push(fn._value)
+                   fn.notify = noop
+                }
+            }
             accessor.set.call(this, value)
-            return this
+            for(var i =0; fn = fnArr[i];i++){
+                fn.notify = globalNotify
+                if(!isEqual(valArr[i], fn._value)){//判定依赖有没有发生变动
+                    fn.notify(this, valArr[i], fn._value )
+                }
+            }
+           accessor.digest =  backup
+           if(accessor.isChange){
+               accessor.call(this)
+           }
+           return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-            value = accessor.get.call(this)
-            if (oldValue !== value) {
-                accessor.updateValue(this, value)
-                init && accessor.notify(this, value, oldValue) //触发$watch回调
-            }
             //将自己注入到低层访问器的订阅数组中
-            return value
+            if(!init){
+                value = accessor.get.call(this)
+                accessor.updateValue(this, value)
+                return value
+            }else if(accessor.isChange){
+                value = accessor.get.call(this)
+                if (oldValue !== value) {
+                   accessor.updateValue(this, value)
+                   accessor.notify(this, value, oldValue) //触发$watch回调
+                }
+                accessor.isChange = false
+                return value
+            }else{
+                return oldValue
+            }
+
+            
         }
     }
     accessor.set = options.set || noop
     accessor.get = options.get
     accessorFactory(accessor, name)
-    var id
-    accessor.digest = function () {
-        accessor.updateValue = globalUpdateModelValue
-        accessor.notify = noop
-        accessor.call(accessor.vm)
-        clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
-        id = setTimeout(function () {
-            accessorFactory(accessor, accessor._name)
-            accessor.call(accessor.vm)
-        })
-    }
     return accessor
 }
 
@@ -253,9 +281,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
 function globalUpdateValue(vmodel, value) {
     vmodel.$model[this._name] = this._value = value
 }
-function globalUpdateModelValue(vmodel, value) {
-    vmodel.$model[this._name] = value
-}
+
 function globalNotify(vmodel, value, oldValue) {
     var name = this._name
     var array = vmodel.$events[name] //刷新值
