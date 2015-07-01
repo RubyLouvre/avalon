@@ -286,6 +286,8 @@ function withProxyAgent(proxy, key, data) {
     proxy = proxy || withProxyPool.pop()
     if (!proxy) {
         proxy = withProxyFactory()
+    }else{
+        proxy.$reinitialize()
     }
     var host = data.$repeat
     proxy.$key = key

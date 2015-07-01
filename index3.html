@@ -10,18 +10,13 @@
       
         <script>
             var model = avalon.define({
-                $id: "computed4",
-                test1: "test1",
-                test2: {
-                    get: function () {
-                        return this.test1;
-                    }
-                }
+                $id: "test",
+                array:[1]
             });
-            console.log(model.test2)
-            model.test1 = "test@@@"
-            console.log(model.$model.test2)
-            //delete avalon.vmodels.computed4
+          
         </script>
+        <ul ms-controller="test">
+            <li ms-repeat="array" ms-value="$index">{{el}}</li>
+        </ul>
     </body>
 </html>

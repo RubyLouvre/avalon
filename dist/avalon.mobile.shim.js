@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.44 built in 2015.6.25
+ avalon.mobile.shim.js 1.45 built in 2015.7.1
  ==================================================*/
 (function(global, factory) {
 
@@ -109,7 +109,7 @@ function IE() {
         var mode = document.documentMode
         return mode ? mode : window.XMLHttpRequest ? 7 : 6
     } else {
-        return 0
+        return NaN
     }
 }
 var IEVersion = IE()
@@ -268,7 +268,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.44,
+    version: 1.45,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
@@ -647,7 +647,6 @@ if (DOC.onmousewheel === void 0) {
         }
     }
 }
-
 /*********************************************************************
  *                           配置系统                                 *
  **********************************************************************/
@@ -925,8 +924,13 @@ function modelFactory(source, $special, $model) {
         enumerable: false,
         configurable: true
     })
-    $vmodel.$compute = function () {
+    $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
+            delete accessor._value
+            delete accessor.oldArgs
+            accessor.digest = function () {
+                accessor.call($vmodel)
+            }
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
@@ -944,7 +948,7 @@ function modelFactory(source, $special, $model) {
             }
         })
     }
-    $vmodel.$compute()
+    $vmodel.$reinitialize()
     return $vmodel
 }
 
@@ -970,44 +974,46 @@ function makeSimpleAccessor(name, value) {
 
 ///创建一个计算访问器
 function makeComputedAccessor(name, options) {
-    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var init = "_value" in accessor
+        var init = ("_value" in accessor)
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.set.call(this, value)
+            if (typeof accessor.set === "function") {
+                if (accessor.oldArgs !== value) {
+                    accessor.oldArgs = value
+                    var $events = this.$events
+                    var lock = $events[name]
+                    $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                    accessor.set.call(this, value)
+                    $events[name] = lock
+                    value = accessor.get.call(this)
+                    if (value !== oldValue) {
+                        accessor.updateValue(this, value)
+                        accessor.notify(this, value, oldValue) //触发$watch回调
+                    }
+                }
+            }
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-            value = accessor.get.call(this)
-            if (oldValue !== value) {
-                accessor.updateValue(this, value)
-                init && accessor.notify(this, value, oldValue) //触发$watch回调
-            }
             //将自己注入到低层访问器的订阅数组中
+            value = accessor.get.call(this)
+            accessor.updateValue(this, value)
+            if (init && oldValue !== value) {
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
             return value
         }
-
     }
-    accessor.set = options.set || noop
+    accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
-    var id
-    accessor.digest = function () {
-        accessor.updateValue = globalUpdateModelValue
-        accessor.notify = noop
-        accessor.call(accessor.vm)
-        clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
-        id = setTimeout(function () {
-            accessorFactory(accessor, accessor._name)
-            accessor.call(accessor.vm)
-        })
-    }
     return accessor
 }
+
 
 //创建一个复杂访问器
 function makeComplexAccessor(name, initValue, valueType, list) {
@@ -1317,7 +1323,7 @@ var arrayPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    fireDependencies(proxy.$events.$index)
+                    fireDependencies(proxy.$events.el)
                 }
             }
         }
@@ -1391,11 +1397,24 @@ function eachProxyFactory() {
         $remove: avalon.noop,
         el: {
             get: function () {
-                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
-                return this.$host[this.$index]
+                var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
+                    return this.$host[this.$index]
+                } finally {
+                    e.$index = array
+                }
             },
             set: function (val) {
+                  var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
                 this.$host.set(this.$index, val)
+                 } finally {
+                    e.$index = array
+                }
             }
         }
     }
@@ -1415,7 +1434,7 @@ function eachProxyAgent(index, host) {
     if (!proxy) {
         proxy = eachProxyFactory( )
     }else{
-        proxy.$compute()
+        proxy.$reinitialize()
     }
     var last = host.length - 1
     proxy.$host = host
@@ -1523,10 +1542,17 @@ var disposeCount = 0
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
-function getUid(obj) { //IE9+,标准浏览器
-    return obj.uniqueNumber || (obj.uniqueNumber = ++disposeCount)
+var uuid2Node = {}
+function getUid(obj, makeID) { //IE9+,标准浏览器
+    if (!obj.uuid && !makeID) {
+        obj.uuid = ++disposeCount
+        uuid2Node[obj.uuid] = obj
+    }
+    return obj.uuid
 }
-
+function getNode(uuid) {
+    return uuid2Node[uuid]
+}
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var elem = data.element
@@ -1547,7 +1573,7 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
-    if(avalon.optimize)
+    if (avalon.optimize)
         return
     var i = disposeQueue.length
     var n = i
@@ -1579,6 +1605,7 @@ function rejectDisposeQueue(data) {
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
+                delete uuid2Node[data.element.uuid]
                 var lists = data.lists
                 for (var k = 0, list; list = lists[k++]; ) {
                     avalon.Array.remove(lists, list)
@@ -2763,7 +2790,7 @@ bindingExecutors.attr = function(val, elem, data) {
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {
-            elem[attrName] = val
+            elem[attrName] = val+""
         } else {
             elem.setAttribute(attrName, val)
         }
@@ -3140,20 +3167,16 @@ new function() { // jshint ignore:line
         var setters = {}
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
-
-            function newSetter(value) { // jshint ignore:line
-                if (avalon.optimize ||  this.parentNode) {
-                    setters[this.tagName].call(this, value)
-                    if (!rmsinput.test(this.type))
-                        return
-                    if (!this.msFocus && this.avalonSetter) {
-                        this.avalonSetter()
-                    }
+        function newSetter(value) { // jshint ignore:line
+                setters[this.tagName].call(this, value)
+                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                    this.avalonSetter()
                 }
-            }
+        }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
         setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+    
         Object.defineProperty(aproto, "value", {
             set: newSetter
         })
@@ -3270,7 +3293,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
         if (rmsinput.test($type)) {
             watchValueInTimer(function() {
-                if (avalon.optimize || element.parentNode) {
+                if (root.contains(element)) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
                     }
@@ -3580,7 +3603,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     proxy.$outer = data.$outer
                     shimController(data, transation, proxy, fragments)
                 }
-                var now = new Date - 0
+                var now = new Date() - 0
                 avalon.optimize = avalon.optimize || now
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
@@ -3750,6 +3773,8 @@ function withProxyAgent(proxy, key, data) {
     proxy = proxy || withProxyPool.pop()
     if (!proxy) {
         proxy = withProxyFactory()
+    }else{
+        proxy.$reinitialize()
     }
     var host = data.$repeat
     proxy.$key = key

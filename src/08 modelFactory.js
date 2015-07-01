@@ -29,7 +29,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$compute").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$reinitialize").match(rword)
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -123,20 +123,19 @@ function modelFactory(source, $special, $model) {
         /* jshint ignore:end */
     }
 
-    $vmodel.$compute = function () {
+    $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
-            accessor.digest = function(){
-                accessor.isChange = true
+            delete accessor._value
+            delete accessor.oldArgs
+            accessor.digest = function () {
                 accessor.call($vmodel)
             }
-            accessor.dependencies = {}
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
                     if (dependency !== accessor) {
                         var list = vm.$events[name]
-                         accessor.dependencies[name] = dependency
-                         injectDependency(list, accessor.digest)
+                        injectDependency(list, accessor.digest)
                     }
                 }
             })
@@ -147,7 +146,7 @@ function modelFactory(source, $special, $model) {
             }
         })
     }
-    $vmodel.$compute()
+    $vmodel.$reinitialize()
     return $vmodel
 }
 //创建一个简单访问器
@@ -172,7 +171,6 @@ function makeSimpleAccessor(name, value) {
 
 //创建一个计算访问器
 function makeComputedAccessor(name, options) {
-    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
         var init = ("_value" in accessor)
@@ -180,54 +178,34 @@ function makeComputedAccessor(name, options) {
             if (stopRepeatAssign) {
                 return this
             }
-            var fnArr = [], valArr = []
-            var backup = accessor.digest
-            accessor.digest = function(){
-                accessor.isChange = true
-            }
-            for(var i in accessor.dependencies){
-                if(accessor.dependencies.hasOwnProperty(i)){
-                   var fn = accessor.dependencies[i]
-                   fnArr.push(fn)
-                   valArr.push(fn._value)
-                   fn.notify = noop
+            if (typeof accessor.set === "function") {
+                if (accessor.oldArgs !== value) {
+                    accessor.oldArgs = value
+                    var $events = this.$events
+                    var lock = $events[name]
+                    $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                    accessor.set.call(this, value)
+                    $events[name] = lock
+                    value = accessor.get.call(this)
+                    if (value !== oldValue) {
+                        accessor.updateValue(this, value)
+                        accessor.notify(this, value, oldValue) //触发$watch回调
+                    }
                 }
             }
-            accessor.set.call(this, value)
-            for(var i =0; fn = fnArr[i];i++){
-                fn.notify = globalNotify
-                if(!isEqual(valArr[i], fn._value)){//判定依赖有没有发生变动
-                    fn.notify(this, valArr[i], fn._value )
-                }
-            }
-           accessor.digest =  backup
-           if(accessor.isChange){
-               accessor.call(this)
-           }
-           return this
+            return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
             //将自己注入到低层访问器的订阅数组中
-            if(!init){
-                value = accessor.get.call(this)
-                accessor.updateValue(this, value)
-                return value
-            }else if(accessor.isChange){
-                value = accessor.get.call(this)
-                if (oldValue !== value) {
-                   accessor.updateValue(this, value)
-                   accessor.notify(this, value, oldValue) //触发$watch回调
-                }
-                accessor.isChange = false
-                return value
-            }else{
-                return oldValue
+            value = accessor.get.call(this)
+            accessor.updateValue(this, value)
+            if (init && oldValue !== value) {
+                accessor.notify(this, value, oldValue) //触发$watch回调
             }
-
-            
+            return value
         }
     }
-    accessor.set = options.set || noop
+    accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
     return accessor

@@ -86,3 +86,58 @@ if (window.SVGElement) {
         })
     }
 }
+//========================= event binding ====================
+var eventHooks = avalon.eventHooks
+//针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
+if (!("onmouseenter" in root)) {
+    avalon.each({
+        mouseenter: "mouseover",
+        mouseleave: "mouseout"
+    }, function (origType, fixType) {
+        eventHooks[origType] = {
+            type: fixType,
+            deel: function (elem, _, fn) {
+                return function (e) {
+                    var t = e.relatedTarget
+                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
+                        delete e.type
+                        e.type = origType
+                        return fn.call(elem, e)
+                    }
+                }
+            }
+        }
+    })
+}
+//针对IE9+, w3c修正animationend
+avalon.each({
+    AnimationEvent: "animationend",
+    WebKitAnimationEvent: "webkitAnimationEnd"
+}, function (construct, fixType) {
+    if (window[construct] && !eventHooks.animationend) {
+        eventHooks.animationend = {
+            type: fixType
+        }
+    }
+})
+
+if (DOC.onmousewheel === void 0) {
+    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
+     firefox DOMMouseScroll detail 下3 上-3
+     firefox wheel detlaY 下3 上-3
+     IE9-11 wheel deltaY 下40 上-40
+     chrome wheel deltaY 下100 上-100 */
+    eventHooks.mousewheel = {
+        type: "wheel",
+        deel: function (elem, _, fn) {
+            return function (e) {
+                e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
+                e.wheelDeltaX = 0
+                Object.defineProperty(e, "type", {
+                    value: "mousewheel"
+                })
+                fn.call(elem, e)
+            }
+        }
+    }
+}

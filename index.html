@@ -12,20 +12,23 @@
           var vm = avalon.define({
                 $id: "test",
                 checked: true,
-                array: [1,2,3,4],
+                array: [{
+                       a: 1
+                }],
                 change: function(){
-                   vm.array = [7,8]
+                    vm.array.clear()
+                   vm.array.push({
+                       a: 2
+                   })
                 }
                 
             })
-            vm.$watch("array", function(a){
-                console.log(a+"!!!")
-            })
+           
         </script>
     </head>
     <body ms-controller="test">
         <ul>
-            <li ms-repeat="array">{{el}}</li>
+            <li ms-repeat="array">{{el.a}}</li>
         </ul>
         <button ms-click="change">btn</button>
     </body>

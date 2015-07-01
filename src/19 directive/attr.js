@@ -95,7 +95,7 @@ bindingExecutors.attr = function(val, elem, data) {
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {
-            elem[attrName] = val
+            elem[attrName] = val+""
         } else {
             elem.setAttribute(attrName, val)
         }

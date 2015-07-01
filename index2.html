@@ -5,52 +5,62 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <script src="avalon.js" ></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test",
-                firstName: "司徒",
-                lastName: "正美",
-                fullName: {
-                    get: function () {
-                        return this.firstName + " " + this.lastName
-                    },
-                    set: function (val) {
-                     
-                        var arr = String(val).split(" ")
-                        this.firstName = arr[0]
-                        this.lastName = arr[1]
-                    }
-                }
-            })
 
-            vm.$watch("firstName", function (a, b) {
-                console.log("firstName发生改动了", a, b)
-            })
-             vm.$watch("lastName", function (a, b) {
-                 console.log("lastName发生改动了", a, b)
-            })
-            vm.$watch("fullName", function (a, b) {
-                console.log("fullName发生改动了", a, b)
-            })
-            console.log(vm.fullName + " !!!")
-            vm.fullName = "清风 火羽"
-           
-            
-//            setTimeout(function(){
-//                console.log("=============")
-//                vm.firstName = "3333"
-//            }, 1000)
-//            setTimeout(function(){
-//                console.log("=============")
-//                vm.lastName = "4444"
-//            }, 2000)
-        </script>
     </head>
     <body>
-<!--      <div ms-controller="test">
-            <div><input ms-duplex="firstName">{{firstName}}</div>
-            <div><input ms-duplex="lastName">{{lastName}}</div>
-            <div><input ms-duplex="fullName" data-duplex-event="change">{{fullName}}</div>
-        </div>-->
+        <script>
+            function expect(a) {
+                return {
+                    to: {
+                        be: function (b) {
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').replace(/\*\/[^\/]+$/, '')
+            }
+  
+            var m2 = avalon.define({
+                $id: "test",
+                fighters: []
+            })
+            var body = document.body
+            var div = document.createElement("div")
+            div.innerHTML = heredoc(function () {
+                /*
+                 <div ms-controller="test" id="getEachProxyBUG2">
+                 <h1 ms-repeat="fighters">{{el}}</h1>
+                 </div>'
+                 */
+            })
+            body.appendChild(div)
+            avalon.scan(div)
+
+            setTimeout(function () {
+                m2.fighters = ['su-35', 'su-22'];
+            }, 500);
+            setTimeout(function () {
+                console.log("11111111111111111")
+                m2.fighters.set(0, 'j-31')
+                 m2.fighters.set(1, 'j-10')
+            }, 1700);
+            
+           setTimeout(function () {
+                console.log("11111111111111111")
+                m2.fighters.set(0, 'j-3111')
+                 m2.fighters.set(1, 'j-1222')
+            }, 3700);
+//            setTimeout(function () {
+//                var els = div.getElementsByTagName("h1")
+//                var prop = "textContent" in div ? "textContent" : "innerText"
+//              //  expect(els.length).to.be(2)
+//                expect(els[0][prop]).to.be("j-31")
+//                expect(els[1][prop]).to.be("j-10")
+//                //   clearTest("getEachProxyBUG1", div, done)
+//                //  delete avalon.vmodels.getEachProxyBUG2
+//            }, 900);
+        </script>
     </body>
 </html>

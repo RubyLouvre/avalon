@@ -201,7 +201,7 @@ var arrayPrototype = {
                 this.$model[index] = val
                 var proxy = this.$proxy[index]
                 if (proxy) {
-                    fireDependencies(proxy.$events.$index)
+                    fireDependencies(proxy.$events.el)
                 }
             }
         }
@@ -275,11 +275,24 @@ function eachProxyFactory() {
         $remove: avalon.noop,
         el: {
             get: function () {
-                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
-                return this.$host[this.$index]
+                var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
+                    return this.$host[this.$index]
+                } finally {
+                    e.$index = array
+                }
             },
             set: function (val) {
+                  var e = this.$events
+                var array = e.$index
+                e.$index = e.el //#817 通过$index为el收集依赖
+                try {
                 this.$host.set(this.$index, val)
+                 } finally {
+                    e.$index = array
+                }
             }
         }
     }
@@ -299,7 +312,7 @@ function eachProxyAgent(index, host) {
     if (!proxy) {
         proxy = eachProxyFactory( )
     }else{
-        proxy.$compute()
+        proxy.$reinitialize()
     }
     var last = host.length - 1
     proxy.$host = host

@@ -96,8 +96,13 @@ function modelFactory(source, $special, $model) {
         enumerable: false,
         configurable: true
     })
-    $vmodel.$compute = function () {
+    $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
+            delete accessor._value
+            delete accessor.oldArgs
+            accessor.digest = function () {
+                accessor.call($vmodel)
+            }
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
@@ -115,7 +120,7 @@ function modelFactory(source, $special, $model) {
             }
         })
     }
-    $vmodel.$compute()
+    $vmodel.$reinitialize()
     return $vmodel
 }
 
@@ -141,44 +146,46 @@ function makeSimpleAccessor(name, value) {
 
 ///创建一个计算访问器
 function makeComputedAccessor(name, options) {
-    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var init = "_value" in accessor
+        var init = ("_value" in accessor)
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.set.call(this, value)
+            if (typeof accessor.set === "function") {
+                if (accessor.oldArgs !== value) {
+                    accessor.oldArgs = value
+                    var $events = this.$events
+                    var lock = $events[name]
+                    $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                    accessor.set.call(this, value)
+                    $events[name] = lock
+                    value = accessor.get.call(this)
+                    if (value !== oldValue) {
+                        accessor.updateValue(this, value)
+                        accessor.notify(this, value, oldValue) //触发$watch回调
+                    }
+                }
+            }
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-            value = accessor.get.call(this)
-            if (oldValue !== value) {
-                accessor.updateValue(this, value)
-                init && accessor.notify(this, value, oldValue) //触发$watch回调
-            }
             //将自己注入到低层访问器的订阅数组中
+            value = accessor.get.call(this)
+            accessor.updateValue(this, value)
+            if (init && oldValue !== value) {
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
             return value
         }
-
     }
-    accessor.set = options.set || noop
+    accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
-    var id
-    accessor.digest = function () {
-        accessor.updateValue = globalUpdateModelValue
-        accessor.notify = noop
-        accessor.call(accessor.vm)
-        clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
-        id = setTimeout(function () {
-            accessorFactory(accessor, accessor._name)
-            accessor.call(accessor.vm)
-        })
-    }
     return accessor
 }
+
 
 //创建一个复杂访问器
 function makeComplexAccessor(name, initValue, valueType, list) {
