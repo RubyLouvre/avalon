@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.45 built in 2015.7.1
+ avalon.mobile.shim.js 1.45 built in 2015.7.2
  ==================================================*/
 (function(global, factory) {
 
@@ -916,14 +916,7 @@ function modelFactory(source, $special, $model) {
         $vmodel[i] = EventBus[i]
     }
 
-    Object.defineProperty($vmodel, "hasOwnProperty", {
-        value: function (name) {
-            return name in this.$model
-        },
-        writable: false,
-        enumerable: false,
-        configurable: true
-    })
+    Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
     $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
             delete accessor._value
@@ -950,6 +943,15 @@ function modelFactory(source, $special, $model) {
     }
     $vmodel.$reinitialize()
     return $vmodel
+}
+
+var hasOwnDescriptor = {
+    value: function (name) {
+        return name in this.$model
+    },
+    writable: false,
+    enumerable: false,
+    configurable: true
 }
 
 //创建一个简单访问器
@@ -1025,11 +1027,21 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 return this
             }
             if (valueType === "array") {
-                var old = son._
-                son._ = []
-                son.clear()
-                son._ = old
-                son.pushArray(value)
+               var a = son, b = value,
+                an = a.length,
+                  bn = b.length
+                  a.$lock = true
+                  if (an > bn) {
+                      a.splice(bn, an - bn)
+                  } else if (bn > an) {
+                      a.push.apply(a, b.slice(an))
+                  }
+                  var n = Math.min(an, bn)
+                  for (var i = 0; i < n; i++) {
+                      a.set(i, b[i])
+                  }
+                  delete a.$lock
+                  a._fire("set")
             } else if (valueType === "object") {
                 var $proxy = son.$proxy
                 var observes = this.$events[name] || []
@@ -3687,16 +3699,16 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
                 break
         }
-        if (method === "clear")
+            if(!data.$repeat|| data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
+                return
+                   if (method === "clear")
             method = "del"
-        var callback = data.renderedCallback || noop,
+            var callback = data.renderedCallback || noop,
                 args = arguments
-        checkScan(parent, function () {
-            callback.apply(parent, args)
             if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
                 avalon(parent).val(parent.oldValue.split(","))
             }
-        }, NaN)
+            callback.apply(parent, args)
     }
 }
 

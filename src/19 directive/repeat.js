@@ -200,16 +200,16 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
                 break
         }
-        if (method === "clear")
+            if(!data.$repeat|| data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
+                return
+                   if (method === "clear")
             method = "del"
-        var callback = data.renderedCallback || noop,
+            var callback = data.renderedCallback || noop,
                 args = arguments
-        checkScan(parent, function () {
-            callback.apply(parent, args)
             if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
                 avalon(parent).val(parent.oldValue.split(","))
             }
-        }, NaN)
+            callback.apply(parent, args)
     }
 }
 
