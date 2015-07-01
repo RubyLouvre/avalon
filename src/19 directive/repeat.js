@@ -135,6 +135,9 @@ bindingExecutors.repeat = function (method, pos, el) {
                 start = comments[0]
                 if (start) {
                     sweepNodes(start, end)
+                    if(data.$with){
+                        parent.insertBefore(start, end)
+                    }
                 }
                 break
             case "move":
