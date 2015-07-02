@@ -1044,18 +1044,17 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                   a._fire("set")
             } else if (valueType === "object") {
                 var $proxy = son.$proxy
-                var observes = this.$events[name] || []
                 son = accessor._vmodel = modelFactory(value)
+                var observes = son.$events[subscribers] = this.$events[name] || []
+                var iterators = observes.concat()
+                observes.length = 0
                 son.$proxy = $proxy
-                if (observes.length) {
-                    observes.forEach(function (el) {
-                        var fn = bindingHandlers[el.type]
-                        if (fn) { //#753
-                            el.rollback && el.rollback() //还原 ms-with ms-on
-                            fn(el, el.vmodels)
-                        }
-                    })
-                    son.$events[name] = observes
+                while (a = iterators.shift()) {//#890 必须移掉旧的binding对象
+                     var fn = bindingHandlers[a.type]
+                     if (fn) { //#753
+                         a.rollback && a.rollback() //还原 ms-with ms-on
+                         fn(a, a.vmodels)
+                     }
                 }
             }
             accessor.updateValue(this, son.$model)
