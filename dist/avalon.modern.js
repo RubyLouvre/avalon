@@ -2109,14 +2109,12 @@ var getVariables = function (code) {
 function addAssign(vars, scope, name, data) {
     var ret = [],
             prefix = " = " + name + "."
-    //var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var el =  prop
-        if (scope.hasOwnProperty(el)) {
-            ret.push(prop + prefix + el)
+        if (scope.hasOwnProperty(prop)) {
+            ret.push(prop + prefix + prop)
             data.vars.push(prop)
             if (data.type === "duplex") {
-                vars.get = name + "." + el
+                vars.get = name + "." + prop
             }
             vars.splice(i, 1)
         }
@@ -3592,7 +3590,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 if (proxy) {
                     fireDependencies(proxy.$events[data.param || "el"])
                 }
-                return
+                break
             case "append":
                 var object = pos //原来第2参数， 被循环对象
                 var pool = object.$proxy   //代理对象组成的hash

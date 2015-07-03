@@ -34,14 +34,12 @@ var getVariables = function (code) {
 function addAssign(vars, scope, name, data) {
     var ret = [],
             prefix = " = " + name + "."
-    //var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var el =  prop
-        if (scope.hasOwnProperty(el)) {
-            ret.push(prop + prefix + el)
+        if (scope.hasOwnProperty(prop)) {
+            ret.push(prop + prefix + prop)
             data.vars.push(prop)
             if (data.type === "duplex") {
-                vars.get = name + "." + el
+                vars.get = name + "." + prop
             }
             vars.splice(i, 1)
         }

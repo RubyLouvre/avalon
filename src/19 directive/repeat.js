@@ -170,7 +170,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 if (proxy) {
                     fireDependencies(proxy.$events[data.param || "el"])
                 }
-                return
+                break
             case "append":
                 var object = pos //原来第2参数， 被循环对象
                 var pool = object.$proxy   //代理对象组成的hash
