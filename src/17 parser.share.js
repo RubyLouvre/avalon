@@ -34,9 +34,9 @@ var getVariables = function (code) {
 function addAssign(vars, scope, name, data) {
     var ret = [],
             prefix = " = " + name + "."
-    var isProxy = /\$proxy\$each/.test(scope.$id)
+    //var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var el = isProxy && scope.$map[prop] ? "el" : prop
+        var el =  prop
         if (scope.hasOwnProperty(el)) {
             ret.push(prop + prefix + el)
             data.vars.push(prop)
