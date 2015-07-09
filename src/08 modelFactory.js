@@ -65,9 +65,11 @@ function modelFactory(source, $special, $model) {
     $$skipArray.forEach(function (name) {
         delete source[name]
     })
-
+    var names = []
     for (var i in source) {
+        if(source.hasOwnProperty(i)){
         (function (name, val, accessor) {
+            names.push(name)
             $model[name] = val
             if (!isObservable(name, val, $skipArray)) {
                 return //过滤所有非监控属性
@@ -87,10 +89,12 @@ function modelFactory(source, $special, $model) {
             accessors[name] = accessor
         })(i, source[i])// jshint ignore:line
     }
+    }
 
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
-    for (var name in source) {
-        if (!accessors[name]) {
+    for(i = 0; i < names.length; i++){
+        var  name = names[i]
+         if (!accessors[name]) {
             $vmodel[name] = source[name]
         }
     }
@@ -216,6 +220,7 @@ function makeComputedAccessor(name, options) {
 function makeComplexAccessor(name, initValue, valueType, list) {
     function accessor(value) {
         var oldValue = accessor._value
+        
         var son = accessor._vmodel
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
@@ -326,3 +331,30 @@ var descriptorFactory = W3C ? function (obj) {
     return a
 }
 
+//    function diff(newObject, oldObject) {
+//        var added = []
+//        for (var i in newObject) {
+//            if (newObject.hasOwnProperty(i)) {
+//                if (!oldObject.hasOwnerProperty(i)) {
+//                    added.push({
+//                        name: i,
+//                        value: newObject[i]
+//                    })
+//                }
+//            }
+//        }
+//        var deleted = []
+//        for (var i in newObject) {
+//            if (oldObject.hasOwnProperty(i)) {
+//                if (!newObject.hasOwnerProperty(i)) {
+//                    deleted.push( Object.getOwnPropertyDescriptor(oldObject, i).get)
+//                }
+//            }
+//        }
+//        for(var i = 0; i < added.length; i++){
+//            var a = added[i]
+//            var fn = deleted.shift()
+//            fn._name = a.name
+//            fn._value = a.value
+//        }
+//    }
