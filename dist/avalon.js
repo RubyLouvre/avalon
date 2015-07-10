@@ -5757,5 +5757,4 @@ avalon.ready(function() {
         window.avalon = avalon
     }
     return avalon
-
 }));
