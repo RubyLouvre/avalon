@@ -44,7 +44,7 @@ avalon.injectBinding = function (data) {
                 if (kernel.commentInterpolate) {
                     parent.replaceChild(DOC.createComment(data.value), node)
                 } else {
-                    node.data = openTag + data.value + closeTag
+                    node.data = openTag + (data.oneTime ? "::" : "") + data.value + closeTag
                 }
             }
         } finally {
@@ -56,6 +56,8 @@ avalon.injectBinding = function (data) {
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
 function injectDependency(list, data) {
     data = data || Registry[expose]
+    if (data.oneTime)
+        return
     if (list && data && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
     }

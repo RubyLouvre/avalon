@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.45 built in 2015.7.3
+ avalon.mobile.js 1.45 built in 2015.7.11
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -686,9 +686,9 @@ var plugins = {
         closeTag = array[1]
         if (openTag === closeTag) {
             throw new SyntaxError("openTag!==closeTag")
-        } else if (array + "" === "<!--,-->") {
-            kernel.commentInterpolate = true
-        } else {
+//        } else if (array + "" === "<!--,-->") {
+//            kernel.commentInterpolate = true
+//        } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
             if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
@@ -1288,7 +1288,7 @@ var arrayPrototype = {
                 }
             }
         } else if (typeof all === "function") {
-            for (var i = this.length - 1; i >= 0; i--) {
+            for ( i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
                     this.removeAt(i)
@@ -1429,7 +1429,7 @@ avalon.injectBinding = function (data) {
                 if (kernel.commentInterpolate) {
                     parent.replaceChild(DOC.createComment(data.value), node)
                 } else {
-                    node.data = openTag + data.value + closeTag
+                    node.data = openTag + (data.oneTime ? "::" : "") + data.value + closeTag
                 }
             }
         } finally {
@@ -1441,6 +1441,8 @@ avalon.injectBinding = function (data) {
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
 function injectDependency(list, data) {
     data = data || Registry[expose]
+    if (data.oneTime)
+        return
     if (list && data && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
     }
@@ -2415,12 +2417,15 @@ function scanAttr(elem, vmodels, match) {
                     }
                     msData[name] = value
                     if (typeof bindingHandlers[type] === "function") {
+                        var newValue = value.replace(roneTime, "")
+                        var oneTime = value !== newValue
                         var binding = {
                             type: type,
                             param: param,
                             element: elem,
                             name: name,
-                            value: value,
+                            value: newValue,
+                            oneTime: oneTime,
                             priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
@@ -2507,9 +2512,10 @@ function scanNode(node, nodeType, vmodels) {
        }
     } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
-    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-        scanText(node, vmodels) //扫描注释节点
     }
+//    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+//        scanText(node, vmodels) //扫描注释节点
+//    }
 }
 function scanTag(elem, vmodels, node) {
     //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
@@ -2610,6 +2616,10 @@ function scanText(textNode, vmodels) {
         for (var i = 0; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
+                token.value =  token.value.replace(roneTime, function(){
+                    token.oneTime = true
+                    return ""
+                })
                 token.type = "text"
                 token.element = node
                 token.filters = token.filters.replace(rhasHtml, function() {
@@ -3420,6 +3430,7 @@ bindingExecutors.on = function(callback, elem, data) {
 }
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
+    console.log(data)
     parseExprProxy(data.value, vmodels, data, 0, 1)
     data.proxies = []
     var freturn = false
@@ -3771,7 +3782,7 @@ function eachProxyFactory(name) {
                 var array = e.$index
                 e.$index = []
                 this.$host.set(this.$index, val)
-            } catch (e) {
+            } finally {
                 e.$index = array
             }
         }

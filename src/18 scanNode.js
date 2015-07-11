@@ -25,7 +25,8 @@ function scanNode(node, nodeType, vmodels) {
        }
     } else if (nodeType === 3 && rexpr.test(node.data)){
         scanText(node, vmodels) //扫描文本节点
-    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-        scanText(node, vmodels) //扫描注释节点
     }
+//    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
+//        scanText(node, vmodels) //扫描注释节点
+//    }
 }

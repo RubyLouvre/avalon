@@ -1,5 +1,6 @@
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
+    console.log(data)
     parseExprProxy(data.value, vmodels, data, 0, 1)
     data.proxies = []
     var freturn = false
@@ -351,7 +352,7 @@ function eachProxyFactory(name) {
                 var array = e.$index
                 e.$index = []
                 this.$host.set(this.$index, val)
-            } catch (e) {
+            } finally {
                 e.$index = array
             }
         }

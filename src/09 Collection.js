@@ -154,7 +154,7 @@ var arrayPrototype = {
                 }
             }
         } else if (typeof all === "function") {
-            for (var i = this.length - 1; i >= 0; i--) {
+            for ( i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
                     this.removeAt(i)
