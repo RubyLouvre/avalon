@@ -2502,7 +2502,7 @@ function scanNodeArray(nodes, vmodels) {
                if(rexpr.test(node.nodeValue)){
                     scanText(node, vmodels, i) //扫描文本节点
                }
-
+               break
         }
     }
 }
