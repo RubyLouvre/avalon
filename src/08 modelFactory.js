@@ -29,7 +29,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$reinitialize").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$reinitialize,$propertyNames").match(rword)
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -65,15 +65,12 @@ function modelFactory(source, $special, $model) {
     $$skipArray.forEach(function (name) {
         delete source[name]
     })
-    var names = []
-    for (var i in source) {
-        if(source.hasOwnProperty(i)){
-        (function (name, val, accessor) {
-            names.push(name)
-            $model[name] = val
-            if (!isObservable(name, val, $skipArray)) {
-                return //过滤所有非监控属性
-            }
+    var names = Object.keys(source)
+    /* jshint ignore:start */
+    names.forEach(function (name, accessor) {
+        var val = source[name]
+        $model[name] = val
+        if (isObservable(name, val, $skipArray)) {
             //总共产生三种accessor
             $events[name] = []
             var valueType = avalon.type(val)
@@ -87,18 +84,19 @@ function modelFactory(source, $special, $model) {
                 accessor = makeSimpleAccessor(name, val)
             }
             accessors[name] = accessor
-        })(i, source[i])// jshint ignore:line
-    }
-    }
+        }
+    })
+    /* jshint ignore:end */
 
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
-    for(i = 0; i < names.length; i++){
-        var  name = names[i]
-         if (!accessors[name]) {
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i]
+        if (!accessors[name]) {
             $vmodel[name] = source[name]
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
+    $vmodel.$propertyNames = names.sort().join("&shy;")
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
@@ -220,42 +218,49 @@ function makeComputedAccessor(name, options) {
 function makeComplexAccessor(name, initValue, valueType, list) {
     function accessor(value) {
         var oldValue = accessor._value
-        
+
         var son = accessor._vmodel
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
             if (valueType === "array") {
-          var a = son, b = value,
-                  an = a.length,
-                    bn = b.length
-                    a.$lock = true
-                    if (an > bn) {
-                        a.splice(bn, an - bn)
-                    } else if (bn > an) {
-                        a.push.apply(a, b.slice(an))
-                    }
-                    var n = Math.min(an, bn)
-                    for (var i = 0; i < n; i++) {
-                        a.set(i, b[i])
-                    }
-                    delete a.$lock 
-                    a._fire("set")
+                var a = son, b = value,
+                        an = a.length,
+                        bn = b.length
+                a.$lock = true
+                if (an > bn) {
+                    a.splice(bn, an - bn)
+                } else if (bn > an) {
+                    a.push.apply(a, b.slice(an))
+                }
+                var n = Math.min(an, bn)
+                for (var i = 0; i < n; i++) {
+                    a.set(i, b[i])
+                }
+                delete a.$lock
+                a._fire("set")
             } else if (valueType === "object") {
-                var $proxy = son.$proxy
-                son = accessor._vmodel = modelFactory(value)
-                var observes = son.$events[subscribers] = this.$events[name] || []
-                var iterators = observes.concat()
-                observes.length = 0
-                son.$proxy = $proxy
-                while (a = iterators.shift()) {
-                     var fn = bindingHandlers[a.type]
-                     if (fn) { //#753
-                         a.rollback && a.rollback() //还原 ms-with ms-on
-                         fn(a, a.vmodels)
-                     }
-                 }
+                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                if (son.$propertyNames === newPropertyNames) {
+                    for (i in value) {
+                        son[i] = value[i]
+                    }
+                } else {
+                    var $proxy = son.$proxy
+                    son = accessor._vmodel = modelFactory(value)
+                    var observes = son.$events[subscribers] = this.$events[name] || []
+                    var iterators = observes.concat()
+                    observes.length = 0
+                    son.$proxy = $proxy
+                    while (a = iterators.shift()) {
+                        var fn = bindingHandlers[a.type]
+                        if (fn) { //#753
+                            a.rollback && a.rollback() //还原 ms-with ms-on
+                            fn(a, a.vmodels)
+                        }
+                    }
+                }
             }
             accessor.updateValue(this, son.$model)
             accessor.notify(this, this._value, oldValue)

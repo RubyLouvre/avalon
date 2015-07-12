@@ -685,9 +685,6 @@ var plugins = {
         closeTag = array[1]
         if (openTag === closeTag) {
             throw new SyntaxError("openTag!==closeTag")
-//        } else if (array + "" === "<!--,-->") {
-//            kernel.commentInterpolate = true
-//        } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
             if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
@@ -880,12 +877,13 @@ function modelFactory(source, $special, $model) {
     $$skipArray.forEach(function (name) {
         delete source[name]
     })
-    for (var i in source) {
-        (function (name, val, accessor) {
-            $model[name] = val
-            if (!isObservable(name, val, $skipArray)) {
-                return //过滤所有非监控属性
-            }
+
+    var names = Object.keys(source)
+    /* jshint ignore:start */
+    names.forEach(function (name, accessor) {
+        var val = source[name]
+        $model[name] = val
+        if (isObservable(name, val, $skipArray)) {
             //总共产生三种accessor
             $events[name] = []
             var valueType = avalon.type(val)
@@ -899,11 +897,12 @@ function modelFactory(source, $special, $model) {
                 accessor = makeSimpleAccessor(name, val)
             }
             accessors[name] = accessor
-        })(i, source[i])// jshint ignore:line
-    }
-
+        }
+    })
+    /* jshint ignore:end */
     $vmodel = Object.defineProperties($vmodel, descriptorFactory(accessors)) //生成一个空的ViewModel
-    for (var name in source) {
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i]
         if (!accessors[name]) {
             $vmodel[name] = source[name]
         }
@@ -912,6 +911,7 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
+    $vmodel.$propertyNames = names.sort().join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
@@ -1027,34 +1027,41 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 return this
             }
             if (valueType === "array") {
-               var a = son, b = value,
-                an = a.length,
-                  bn = b.length
-                  a.$lock = true
-                  if (an > bn) {
-                      a.splice(bn, an - bn)
-                  } else if (bn > an) {
-                      a.push.apply(a, b.slice(an))
-                  }
-                  var n = Math.min(an, bn)
-                  for (var i = 0; i < n; i++) {
-                      a.set(i, b[i])
-                  }
-                  delete a.$lock
-                  a._fire("set")
+                var a = son, b = value,
+                        an = a.length,
+                        bn = b.length
+                a.$lock = true
+                if (an > bn) {
+                    a.splice(bn, an - bn)
+                } else if (bn > an) {
+                    a.push.apply(a, b.slice(an))
+                }
+                var n = Math.min(an, bn)
+                for (var i = 0; i < n; i++) {
+                    a.set(i, b[i])
+                }
+                delete a.$lock
+                a._fire("set")
             } else if (valueType === "object") {
-                var $proxy = son.$proxy
-                son = accessor._vmodel = modelFactory(value)
-                var observes = son.$events[subscribers] = this.$events[name] || []
-                var iterators = observes.concat()
-                observes.length = 0
-                son.$proxy = $proxy
-                while (a = iterators.shift()) {//#890 必须移掉旧的binding对象
-                     var fn = bindingHandlers[a.type]
-                     if (fn) { //#753
-                         a.rollback && a.rollback() //还原 ms-with ms-on
-                         fn(a, a.vmodels)
-                     }
+                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                if (son.$propertyNames === newPropertyNames) {
+                    for (i in value) {
+                        son[i] = value[i]
+                    }
+                } else {
+                    var $proxy = son.$proxy
+                    son = accessor._vmodel = modelFactory(value)
+                    var observes = son.$events[subscribers] = this.$events[name] || []
+                    var iterators = observes.concat()
+                    observes.length = 0
+                    son.$proxy = $proxy
+                    while (a = iterators.shift()) {//#890 必须移掉旧的binding对象
+                        var fn = bindingHandlers[a.type]
+                        if (fn) { //#753
+                            a.rollback && a.rollback() //还原 ms-with ms-on
+                            fn(a, a.vmodels)
+                        }
+                    }
                 }
             }
             accessor.updateValue(this, son.$model)
