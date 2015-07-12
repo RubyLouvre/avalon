@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.45 built in 2015.7.11
+ avalon.js 1.45 built in 2015.7.12
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1854,10 +1854,9 @@ avalon.injectBinding = function (data) {
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
 function injectDependency(list, data) {
-    data = data || Registry[expose]
     if (data.oneTime)
         return
-    if (list && data && avalon.Array.ensure(list, data) && data.element) {
+    if (list && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
     }
 }
@@ -2981,7 +2980,7 @@ var mergeTextNodes = IEVersion && window.MutationObserver ? function (elem) {
         node = aaa
     }
 } : 0
-
+var roneTime = /^\s*::/
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
     "if": 10,
@@ -3040,6 +3039,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
+                            uuid: name+"-"+getUid(elem),
                              //chrome与firefox下Number(param)得到的值不一样 #855
                             priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
                         }
@@ -3097,7 +3097,6 @@ function scanAttr(elem, vmodels, match) {
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
 }
-var roneTime = /^\s*::/
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
@@ -3149,38 +3148,31 @@ if (!"1" [0]) {
     }
 }
 
-//function scanNodeList(parent, vmodels) {
-//    var node = parent.firstChild
-//    while (node) {
-//        var nextNode = node.nextSibling
-//        scanNode(node, node.nodeType, vmodels)
-//        node = nextNode
-//    }
-//}
 function scanNodeList(parent, vmodels) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodels)
 }
 
 function scanNodeArray(nodes, vmodels) {
-    for (var i = 0, node; node = nodes[i++]; ) {
-        scanNode(node, node.nodeType, vmodels)
+    for (var i = 0, node; node = nodes[i++];) {
+        switch (node.nodeType) {
+            case 1:
+                scanTag(node, vmodels) //扫描元素节点
+                if (node.msCallback) {
+                    node.msCallback()
+                    node.msCallback = void 0
+                }
+                break
+            case 3:
+               if(rexpr.test(node.nodeValue)){
+                    scanText(node, vmodels, i) //扫描文本节点
+               }
+
+        }
     }
 }
-function scanNode(node, nodeType, vmodels) {
-    if (nodeType === 1) {
-        scanTag(node, vmodels) //扫描元素节点
-        if( node.msCallback){
-            node.msCallback()
-            node.msCallback = void 0
-       }
-    } else if (nodeType === 3 && rexpr.test(node.data)){
-        scanText(node, vmodels) //扫描文本节点
-    }
-//    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-//        scanText(node, vmodels) //扫描注释节点
-//    }
-}
+
+
 function scanTag(elem, vmodels, node) {
     //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
     //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后
@@ -3211,18 +3203,17 @@ var rhasHtml = /\|\s*html\s*/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
-        rstringLiteral  = /(['"])(\\\1|.)+?\1/g
-function getToken(value, pos) {
+        rstringLiteral = /(['"])(\\\1|.)+?\1/g
+function getToken(value) {
     if (value.indexOf("|") > 0) {
-        var scapegoat = value.replace( rstringLiteral, function(_){
-            return Array(_.length+1).join("1")// jshint ignore:line
+        var scapegoat = value.replace(rstringLiteral, function (_) {
+            return Array(_.length + 1).join("1")// jshint ignore:line
         })
         var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
             return {
                 filters: value.slice(index),
                 value: value.slice(0, index),
-                pos: pos || 0,
                 expr: true
             }
         }
@@ -3273,28 +3264,24 @@ function scanExpr(str) {
     return tokens
 }
 
-function scanText(textNode, vmodels) {
+function scanText(textNode, vmodels, index) {
     var bindings = []
-    if (textNode.nodeType === 8) {
-        var token = getToken(textNode.nodeValue)
-        var tokens = [token]
-    } else {
-        tokens = scanExpr(textNode.data)
-    }
+    tokens = scanExpr(textNode.data)
     if (tokens.length) {
         for (var i = 0; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
-                token.value =  token.value.replace(roneTime, function(){
+                token.value = token.value.replace(roneTime, function () {
                     token.oneTime = true
                     return ""
                 })
                 token.type = "text"
                 token.element = node
-                token.filters = token.filters.replace(rhasHtml, function() {
+                token.filters = token.filters.replace(rhasHtml, function () {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
+                token.pos = index * 1000 + i
                 bindings.push(token) //收集带有插值表达式的文本
             }
             avalonFragment.appendChild(node)
@@ -4144,7 +4131,6 @@ bindingExecutors.on = function(callback, elem, data) {
 }
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
-    console.log(data)
     parseExprProxy(data.value, vmodels, data, 0, 1)
     data.proxies = []
     var freturn = false
