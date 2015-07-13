@@ -18,19 +18,10 @@ function parseDisplay(nodeName, val) {
 avalon.parseDisplay = parseDisplay
 
 bindingHandlers.visible = function(data, vmodels) {
-    var elem = avalon(data.element)
-    var display = elem.css("display")
-    if (display === "none") {
-        var style = elem[0].style
-        var has = /visibility/i.test(style.cssText)
-        var visible = elem.css("visibility")
-        style.display = ""
-        style.visibility = "hidden"
-        display = elem.css("display")
-        if (display === "none") {
-            display = parseDisplay(elem[0].nodeName)
-        }
-        style.visibility = has ? visible : ""
+    var elem = data.element
+    var display = elem.style.display
+    if(display === "none"){
+        display = parseDisplay(elem.nodeName)
     }
     data.display = display
     parseExprProxy(data.value, vmodels, data)
