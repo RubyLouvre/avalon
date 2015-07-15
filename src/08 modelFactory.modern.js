@@ -224,19 +224,18 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                         son[i] = value[i]
                     }
                 } else {
-                    var $proxy = son.$proxy
-                    son = accessor._vmodel = modelFactory(value)
-                    var observes = son.$events[subscribers] = this.$events[name] || []
-                    var iterators = observes.concat()
-                    observes.length = 0
-                    son.$proxy = $proxy
-                    while (a = iterators.shift()) {//#890 必须移掉旧的binding对象
-                        var fn = bindingHandlers[a.type]
-                        if (fn) { //#753
-                            a.rollback && a.rollback() //还原 ms-with ms-on
-                            fn(a, a.vmodels)
+                    var sson = accessor._vmodel = modelFactory(value)
+                    var sevent = sson.$events
+                    var oevent = son.$events
+                    for (var i in sevent) {
+                        var arr = sevent[i]
+                        if (Array.isArray(arr)) {
+                            arr = arr.concat(oevent[i])
                         }
                     }
+                    sevent[subscribers] = oevent[subscribers]
+                    sson.$proxy = son.$proxy
+                    son = sson
                 }
             }
             accessor.updateValue(this, son.$model)

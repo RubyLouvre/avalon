@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.45 built in 2015.7.12
+ avalon.shim.js(无加载器版本) 1.45 built in 2015.7.15
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1330,19 +1330,18 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                         son[i] = value[i]
                     }
                 } else {
-                    var $proxy = son.$proxy
-                    son = accessor._vmodel = modelFactory(value)
-                    var observes = son.$events[subscribers] = this.$events[name] || []
-                    var iterators = observes.concat()
-                    observes.length = 0
-                    son.$proxy = $proxy
-                    while (a = iterators.shift()) {
-                        var fn = bindingHandlers[a.type]
-                        if (fn) { //#753
-                            a.rollback && a.rollback() //还原 ms-with ms-on
-                            fn(a, a.vmodels)
+                    var sson = accessor._vmodel = modelFactory(value)
+                    var sevent = sson.$events
+                    var oevent = son.$events
+                    for (var i in sevent) {
+                        var arr = sevent[i]
+                        if (Array.isArray(arr)) {
+                            arr = arr.concat(oevent[i])
                         }
                     }
+                    sevent[subscribers] = oevent[subscribers]
+                    sson.$proxy = son.$proxy
+                    son = sson
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -1826,16 +1825,19 @@ var dependencyDetection = (function () {
 //将绑定对象注入到其依赖项的订阅数组中
 var ronduplex = /^(duplex|on)$/
 avalon.injectBinding = function (data) {
-    var fn = data.evaluator
-    if (fn) { //如果是求值函数
+    var valueFn = data.evaluator
+    if (valueFn) { //如果是求值函数
         dependencyDetection.begin({
             callback: function (vmodel, dependency) {
                 injectDependency(vmodel.$events[dependency._name], data)
             }
         })
         try {
-            var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-            data.handler(c, data.element, data)
+            var value = ronduplex.test(data.type) ? data : valueFn.apply(0, data.args)
+            if(value === void 0){
+                delete data.evaluator
+            }
+            data.handler(value, data.element, data)
         } catch (e) {
             //log("warning:exception throwed in [avalon.injectBinding] " + e)
             delete data.evaluator
@@ -1874,15 +1876,16 @@ function fireDependencies(list) {
             var el = fn.element
             if (el && el.parentNode) {
                 try {
+                    var valueFn = fn.evaluator
                     if (fn.$repeat) {
                         fn.handler.apply(fn, args) //处理监控数组的方法
+                    }else if("$repeat" in fn || !valueFn ){//如果没有eval,先eval
+                        bindingHandlers[fn.type](fn, fn.vmodels)
                     } else if (fn.type !== "on") { //事件绑定只能由用户触发,不能由程序触发
-                        var fun = fn.evaluator || noop
-                        fn.handler(fun.apply(0, fn.args || []), el, fn)
-
+                       var value = valueFn.apply(0, fn.args || [])
+                       fn.handler(value, el, fn)
                     }
-                } catch (e) {
-                }
+                } catch (e) {  }
             }
         }
     }
@@ -4203,7 +4206,7 @@ bindingHandlers.repeat = function (data, vmodels) {
         check0 = "$first"
         check1 = "$last"
     }
-   
+
     for (i = 0; v = vmodels[i++]; ) {
         if (v.hasOwnProperty(check0) && v.hasOwnProperty(check1)) {
             data.$outer = v
@@ -4223,6 +4226,10 @@ bindingHandlers.repeat = function (data, vmodels) {
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
+    if (!method && this.$with) {
+        method = "append"
+        var flag = "update"
+    }
     if (method) {
         var data = this, start, fragment
         var end = data.element
@@ -4246,7 +4253,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     fragment.nodes = fragment.vmodels = null
                 }
                 if (avalon.optimize === now) {
-                    delete avalon.optimize
+                    avalon.optimize = null
                 }
                 parent.insertBefore(transation, comments[pos] || end)
                 avalon.profile("插入操作花费了 " + (new Date - now))
@@ -4290,7 +4297,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                     parent.insertBefore(transation, end)
                 }
                 break
-        case "index": //将proxies中的第pos个起的所有元素重新索引
+            case "index": //将proxies中的第pos个起的所有元素重新索引
                 var last = proxies.length - 1
                 for (; el = proxies[pos]; pos++) {
                     el.$index = pos
@@ -4305,40 +4312,100 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
                 break
             case "append":
-                var object = pos //原来第2参数， 被循环对象
+                var object = data.$repeat //原来第2参数， 被循环对象
                 var pool = object.$proxy   //代理对象组成的hash
                 var keys = []
-                fragments = []
-                for (var key in pool) {
-                    if (!object.hasOwnProperty(key)) {
-                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
-                        delete(pool[key])
+                now = new Date() - 0
+                avalon.optimize = avalon.optimize || now
+                if (flag === "update") {
+                    if (!data.evaluator) {
+                        parseExprProxy(data.value, data.vmodels, data, 0, 1)
+                    }
+                    object = data.$repeat = data.evaluator.apply(0, data.args || [])
+                    pool = object.$proxy = {}
+                }
+                removed = []
+                var nodes = data.element.parentNode.childNodes
+                var add = false
+                for (i = 0; node = nodes[i++]; ) {
+                    if (node.nodeValue === data.signature) {
+                        add = true
+                    } else if (node.nodeValue === data.signature + ":end") {
+                        add = false
+                    }
+                    if (add) {
+                        removed.push(node)
                     }
                 }
-                for (key in object) { //得到所有键名
+
+                var indexNode = [], item
+                var keyIndex = data.keyIndex || (data.keyIndex = {})
+                //将现有的节点全部移出DOM树
+                for ( i = 0; i < removed.length; i++) {
+                    el = removed[i]
+                    if (el.nodeValue === data.signature) {
+                        item = avalonFragment.cloneNode(false)
+                        indexNode.push(item)
+                    }
+                    item.appendChild(el)
+                }
+
+
+                for (var key in object) { //当前对象的所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
                     }
                 }
-                if (data.sortedCallback) { //如果有回调，则让它们排序
-                    var keys2 = data.sortedCallback.call(parent, keys)
-                    if (keys2 && Array.isArray(keys2) && keys2.length) {
-                        keys = keys2
+
+                for (var i = 0; key = keys[i++]; ) {
+                    if (!pool.hasOwnProperty(key)) {//添加缺失的代理VM
+                        pool[key] = withProxyAgent(pool[key], key, data)
+                    } else {
+                        pool[key].$val = object[key]
                     }
                 }
 
-                for (i = 0; key = keys[i++]; ) {
-                    if (key !== "hasOwnProperty") {
-                        pool[key] = withProxyAgent(pool[key], key, data)
+                for ( key in pool) {
+                    if (keys.indexOf(key) === -1) {//删除没用的代理VM
+                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
+                        delete pool[key]
+                    }
+                }
+                var fragments = []
+                var renderKeys = keys //需要渲染到DOM树去的键名
+                var end = data.element
+                if (data.sortedCallback) { //如果有回调，则让它们排序
+                    var keys2 = data.sortedCallback.call(parent, keys)
+                    if (keys2 && Array.isArray(keys2)) {
+                        renderKeys = keys2
+                    }
+                }
+
+                for (i = 0; i < renderKeys.length; i++) {
+                    key = renderKeys[i]
+                    if (typeof keyIndex[key] === "number") {
+                        transation.appendChild(indexNode[keyIndex[key]])
+                        fragments.push({})
+                    } else {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
 
-                parent.insertBefore(transation, end)
-                for (i = 0; fragment = fragments[i++]; ) {
-                    scanNodeArray(fragment.nodes, fragment.vmodels)
-                    fragment.nodes = fragment.vmodels = null
+                for (i = 0; i < renderKeys.length; i++) {
+                    keyIndex[renderKeys[i]] = i
                 }
+
+                for (i = 0; fragment = fragments[i++]; ) {
+                    if (fragment.nodes) {
+                        scanNodeArray(fragment.nodes, fragment.vmodels)
+                        fragment.nodes = fragment.vmodels = null
+                    }
+                }
+                if (avalon.optimize === now) {
+                    avalon.optimize = null
+                }
+                parent.insertBefore(transation, end)
+                avalon.profile("插入操作花费了 " + (new Date - now))
                 break
         }
         if (!data.$repeat || data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
@@ -4353,7 +4420,6 @@ bindingExecutors.repeat = function (method, pos, el) {
         callback.apply(parent, args)
     }
 }
-
 "with,each".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.repeat
 })
@@ -4361,9 +4427,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)
-    if (!data.$with) {
-        content.insertBefore(DOC.createComment(data.signature), content.firstChild)
-    }
+    content.insertBefore(DOC.createComment(data.signature), content.firstChild)
     transation.appendChild(content)
     var nv = [proxy].concat(data.vmodels)
     var fragment = {
@@ -4374,17 +4438,16 @@ function shimController(data, transation, proxy, fragments) {
 }
 
 function getComments(data) {
-    var end = data.element
-    var signature = end.nodeValue.replace(":end", "")
-    var node = end.previousSibling
-    var array = []
-    while (node) {
-        if (node.nodeValue === signature) {
-            array.unshift(node)
+    var ret = []
+    var nodes = data.element.parentNode.childNodes
+    for(var i= 0, node; node = nodes[i++];){
+        if(node.nodeValue === data.signature){
+            ret.push( node )
+        }else if(node.nodeValue === data.signature+":end"){
+            break
         }
-        node = node.previousSibling
     }
-    return array
+    return ret
 }
 
 
@@ -4580,19 +4643,10 @@ function parseDisplay(nodeName, val) {
 avalon.parseDisplay = parseDisplay
 
 bindingHandlers.visible = function(data, vmodels) {
-    var elem = avalon(data.element)
-    var display = elem.css("display")
-    if (display === "none") {
-        var style = elem[0].style
-        var has = /visibility/i.test(style.cssText)
-        var visible = elem.css("visibility")
-        style.display = ""
-        style.visibility = "hidden"
-        display = elem.css("display")
-        if (display === "none") {
-            display = parseDisplay(elem[0].nodeName)
-        }
-        style.visibility = has ? visible : ""
+    var elem = data.element
+    var display = elem.style.display
+    if(display === "none"){
+        display = parseDisplay(elem.nodeName)
     }
     data.display = display
     parseExprProxy(data.value, vmodels, data)
