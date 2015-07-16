@@ -1,4 +1,4 @@
-var rhasHtml = /\|\s*html\s*/,
+var rhasHtml = /\|\s*html(?:\b|$)/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
@@ -76,7 +76,7 @@ function scanText(textNode, vmodels, index) {
                 })
                 token.type = "text"
                 token.element = node
-                token.filters = token.filters.replace(rhasHtml, function () {
+                token.filters = token.filters.replace(rhasHtml, function (a, b,c) {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.45 built in 2015.7.15
+ avalon.mobile.shim.js 1.45 built in 2015.7.16
  ==================================================*/
 (function(global, factory) {
 
@@ -2539,7 +2539,7 @@ function scanTag(elem, vmodels, node) {
     }
     scanAttr(elem, vmodels) //扫描特性节点
 }
-var rhasHtml = /\|\s*html\s*/,
+var rhasHtml = /\|\s*html(?:\b|$)/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
@@ -2617,7 +2617,9 @@ function scanText(textNode, vmodels, index) {
                 })
                 token.type = "text"
                 token.element = node
-                token.filters = token.filters.replace(rhasHtml, function () {
+             
+                token.filters = token.filters.replace(rhasHtml, function (a, b,c) {
+                    console.log(a,b,c)
                     token.type = "html"
                     return ""
                 })// jshint ignore:line

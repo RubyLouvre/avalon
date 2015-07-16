@@ -12,7 +12,7 @@ function modelFactory(scope) {
 }
 
 function makeGetSet(key, value) {
-    var childOb = Observe(value)
+    var childOb = observe(value)
     var dep = new Dep()
     if (childOb) {
         childOb.deps.push(dep)
@@ -166,7 +166,7 @@ arrayMethods.forEach(function (method, index) {
     }
 })
 
-newProto.notify = function () {
+newProto.$notify = function () {
   var deps = this.deps
   for (var i = 0, l = deps.length; i < l; i++) {
     deps[i].notify()
