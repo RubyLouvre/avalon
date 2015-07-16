@@ -2618,9 +2618,7 @@ function scanText(textNode, vmodels, index) {
                 })
                 token.type = "text"
                 token.element = node
-             
                 token.filters = token.filters.replace(rhasHtml, function (a, b,c) {
-                    console.log(a,b,c)
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
