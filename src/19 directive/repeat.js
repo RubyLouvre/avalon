@@ -219,7 +219,6 @@ bindingExecutors.repeat = function (method, pos, el) {
                 for (var key in object) { //当前对象的所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
-                      
                     }
                 }
 
