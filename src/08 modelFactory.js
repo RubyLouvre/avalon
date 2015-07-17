@@ -96,7 +96,7 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$propertyNames = names.sort().join("&shy;")
+    $vmodel.$propertyNames = names.join("&shy;")
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
@@ -241,7 +241,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                var newPropertyNames = Object.keys(value).join("&shy;")
                 if (son.$propertyNames === newPropertyNames) {
                     for (i in value) {
                         son[i] = value[i]
@@ -334,31 +334,3 @@ var descriptorFactory = W3C ? function (obj) {
 } : function (a) {
     return a
 }
-
-//    function diff(newObject, oldObject) {
-//        var added = []
-//        for (var i in newObject) {
-//            if (newObject.hasOwnProperty(i)) {
-//                if (!oldObject.hasOwnerProperty(i)) {
-//                    added.push({
-//                        name: i,
-//                        value: newObject[i]
-//                    })
-//                }
-//            }
-//        }
-//        var deleted = []
-//        for (var i in newObject) {
-//            if (oldObject.hasOwnProperty(i)) {
-//                if (!newObject.hasOwnerProperty(i)) {
-//                    deleted.push( Object.getOwnPropertyDescriptor(oldObject, i).get)
-//                }
-//            }
-//        }
-//        for(var i = 0; i < added.length; i++){
-//            var a = added[i]
-//            var fn = deleted.shift()
-//            fn._name = a.name
-//            fn._value = a.value
-//        }
-//    }

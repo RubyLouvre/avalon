@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.45 built in 2015.7.16
+ avalon.mobile.shim.js 1.45 built in 2015.7.17
  ==================================================*/
 (function(global, factory) {
 
@@ -3603,7 +3603,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
-                var pool = object.$proxy   //代理对象组成的hash
+                var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
                 now = new Date() - 0
                 avalon.optimize = avalon.optimize || now
@@ -3612,8 +3612,9 @@ bindingExecutors.repeat = function (method, pos, el) {
                         parseExprProxy(data.value, data.vmodels, data, 0, 1)
                     }
                     object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                    pool = object.$proxy = {}
+                    object.$proxy = oldProxy 
                 }
+                var pool = object.$proxy || {}
                 removed = []
                 var nodes = data.element.parentNode.childNodes
                 var add = false
@@ -3644,6 +3645,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 for (var key in object) { //当前对象的所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
+                      
                     }
                 }
 

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.45 built in 2015.7.16
+ avalon.js 1.45 built in 2015.7.17
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1179,7 +1179,7 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$propertyNames = names.sort().join("&shy;")
+    $vmodel.$propertyNames = names.join("&shy;")
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
@@ -1324,7 +1324,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                var newPropertyNames = Object.keys(value).join("&shy;")
                 if (son.$propertyNames === newPropertyNames) {
                     for (i in value) {
                         son[i] = value[i]
@@ -1418,33 +1418,6 @@ var descriptorFactory = W3C ? function (obj) {
     return a
 }
 
-//    function diff(newObject, oldObject) {
-//        var added = []
-//        for (var i in newObject) {
-//            if (newObject.hasOwnProperty(i)) {
-//                if (!oldObject.hasOwnerProperty(i)) {
-//                    added.push({
-//                        name: i,
-//                        value: newObject[i]
-//                    })
-//                }
-//            }
-//        }
-//        var deleted = []
-//        for (var i in newObject) {
-//            if (oldObject.hasOwnProperty(i)) {
-//                if (!newObject.hasOwnerProperty(i)) {
-//                    deleted.push( Object.getOwnPropertyDescriptor(oldObject, i).get)
-//                }
-//            }
-//        }
-//        for(var i = 0; i < added.length; i++){
-//            var a = added[i]
-//            var fn = deleted.shift()
-//            fn._name = a.name
-//            fn._value = a.value
-//        }
-//    }
 //===================修复浏览器对Object.defineProperties的支持=================
 if (!canHideOwn) {
     if ("__defineGetter__" in avalon) {
@@ -4313,7 +4286,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
-                var pool = object.$proxy   //代理对象组成的hash
+                var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
                 now = new Date() - 0
                 avalon.optimize = avalon.optimize || now
@@ -4322,8 +4295,9 @@ bindingExecutors.repeat = function (method, pos, el) {
                         parseExprProxy(data.value, data.vmodels, data, 0, 1)
                     }
                     object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                    pool = object.$proxy = {}
+                    object.$proxy = oldProxy 
                 }
+                var pool = object.$proxy || {}
                 removed = []
                 var nodes = data.element.parentNode.childNodes
                 var add = false
@@ -4354,6 +4328,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 for (var key in object) { //当前对象的所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
+                      
                     }
                 }
 
