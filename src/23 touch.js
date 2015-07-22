@@ -76,10 +76,13 @@ new function() {// jshint ignore:line
                 event.propagationStopped = true
             }
             event.stopPropagation() 
-            event.preventDefault()
             if (event.type === 'click') {
                 touchProxy.element = null
-            }
+                if (event.target.tagName.toLowerCase() === 'input') { // 当点击label的时候浏览器会默认触发input的click事件，从而控制ipnut的状态，如果不做判断全部阻止的话这种默认行为就会失效
+                    return false
+                }
+            } 
+            event.preventDefault()
         }
     }
     function cancelLongTap() {
