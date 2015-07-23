@@ -71,7 +71,7 @@ var mergeTextNodes = IEVersion && window.MutationObserver ? function (elem) {
         node = aaa
     }
 } : 0
-
+var roneTime = /^\s*::/
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
     "if": 10,

@@ -92,12 +92,12 @@
                 </form>
             </header>
             <section id="main" ms-visible="todos.size()" >
-                <input id="toggle-all" type="checkbox" ms-duplex-radio="allChecked">
+                <input id="toggle-all" type="checkbox" ms-duplex-checked="allChecked">
                 <label for="toggle-all">Mark all as complete</label>
                 <ul id="todo-list">
                     <li ms-repeat-todo="todos" ms-class="completed: todo.completed" ms-class-1="editing: $index === editingIndex">
                         <div class="view">
-                            <input class="toggle" type="checkbox" ms-duplex-radio="todo.completed" data-duplex-changed="checkOne">
+                            <input class="toggle" type="checkbox" ms-duplex-checked="todo.completed" data-duplex-changed="checkOne">
                             <label ms-dblclick="editTodo($index)">{{todo.title}}</label>
                             <button class="destroy" ms-click="$remove">X</button>
                         </div>

@@ -52,12 +52,13 @@ function modelFactory(source, $special, $model) {
     $$skipArray.forEach(function (name) {
         delete source[name]
     })
-    for (var i in source) {
-        (function (name, val, accessor) {
-            $model[name] = val
-            if (!isObservable(name, val, $skipArray)) {
-                return //过滤所有非监控属性
-            }
+
+    var names = Object.keys(source)
+    /* jshint ignore:start */
+    names.forEach(function (name, accessor) {
+        var val = source[name]
+        $model[name] = val
+        if (isObservable(name, val, $skipArray)) {
             //总共产生三种accessor
             $events[name] = []
             var valueType = avalon.type(val)
@@ -71,11 +72,12 @@ function modelFactory(source, $special, $model) {
                 accessor = makeSimpleAccessor(name, val)
             }
             accessors[name] = accessor
-        })(i, source[i])// jshint ignore:line
-    }
-
+        }
+    })
+    /* jshint ignore:end */
     $vmodel = Object.defineProperties($vmodel, descriptorFactory(accessors)) //生成一个空的ViewModel
-    for (var name in source) {
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i]
         if (!accessors[name]) {
             $vmodel[name] = source[name]
         }
@@ -84,20 +86,19 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
+    $vmodel.$propertyNames = names.sort().join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
 
-    Object.defineProperty($vmodel, "hasOwnProperty", {
-        value: function (name) {
-            return name in this.$model
-        },
-        writable: false,
-        enumerable: false,
-        configurable: true
-    })
-    $vmodel.$compute = function () {
+    Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
+    $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
+            delete accessor._value
+            delete accessor.oldArgs
+            accessor.digest = function () {
+                accessor.call($vmodel)
+            }
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
@@ -115,8 +116,17 @@ function modelFactory(source, $special, $model) {
             }
         })
     }
-    $vmodel.$compute()
+    $vmodel.$reinitialize()
     return $vmodel
+}
+
+var hasOwnDescriptor = {
+    value: function (name) {
+        return name in this.$model
+    },
+    writable: false,
+    enumerable: false,
+    configurable: true
 }
 
 //创建一个简单访问器
@@ -141,44 +151,46 @@ function makeSimpleAccessor(name, value) {
 
 ///创建一个计算访问器
 function makeComputedAccessor(name, options) {
-    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var init = "_value" in accessor
+        var init = ("_value" in accessor)
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.set.call(this, value)
+            if (typeof accessor.set === "function") {
+                if (accessor.oldArgs !== value) {
+                    accessor.oldArgs = value
+                    var $events = this.$events
+                    var lock = $events[name]
+                    $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                    accessor.set.call(this, value)
+                    $events[name] = lock
+                    value = accessor.get.call(this)
+                    if (value !== oldValue) {
+                        accessor.updateValue(this, value)
+                        accessor.notify(this, value, oldValue) //触发$watch回调
+                    }
+                }
+            }
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-            value = accessor.get.call(this)
-            if (oldValue !== value) {
-                accessor.updateValue(this, value)
-                init && accessor.notify(this, value, oldValue) //触发$watch回调
-            }
             //将自己注入到低层访问器的订阅数组中
+            value = accessor.get.call(this)
+            accessor.updateValue(this, value)
+            if (init && oldValue !== value) {
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
             return value
         }
-
     }
-    accessor.set = options.set || noop
+    accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
-    var id
-    accessor.digest = function () {
-        accessor.updateValue = globalUpdateModelValue
-        accessor.notify = noop
-        accessor.call(accessor.vm)
-        clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
-        id = setTimeout(function () {
-            accessorFactory(accessor, accessor._name)
-            accessor.call(accessor.vm)
-        })
-    }
     return accessor
 }
+
 
 //创建一个复杂访问器
 function makeComplexAccessor(name, initValue, valueType, list) {
@@ -190,25 +202,40 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 return this
             }
             if (valueType === "array") {
-                var old = son._
-                son._ = []
-                son.clear()
-                son._ = old
-                son.pushArray(value)
+                var a = son, b = value,
+                        an = a.length,
+                        bn = b.length
+                a.$lock = true
+                if (an > bn) {
+                    a.splice(bn, an - bn)
+                } else if (bn > an) {
+                    a.push.apply(a, b.slice(an))
+                }
+                var n = Math.min(an, bn)
+                for (var i = 0; i < n; i++) {
+                    a.set(i, b[i])
+                }
+                delete a.$lock
+                a._fire("set")
             } else if (valueType === "object") {
-                var $proxy = son.$proxy
-                var observes = this.$events[name] || []
-                son = accessor._vmodel = modelFactory(value)
-                son.$proxy = $proxy
-                if (observes.length) {
-                    observes.forEach(function (el) {
-                        var fn = bindingHandlers[el.type]
-                        if (fn) { //#753
-                            el.rollback && el.rollback() //还原 ms-with ms-on
-                            fn(el, el.vmodels)
+                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                if (son.$propertyNames === newPropertyNames) {
+                    for (i in value) {
+                        son[i] = value[i]
+                    }
+                } else {
+                    var sson = accessor._vmodel = modelFactory(value)
+                    var sevent = sson.$events
+                    var oevent = son.$events
+                    for (var i in sevent) {
+                        var arr = sevent[i]
+                        if (Array.isArray(arr)) {
+                            arr = arr.concat(oevent[i])
                         }
-                    })
-                    son.$events[name] = observes
+                    }
+                    sevent[subscribers] = oevent[subscribers]
+                    sson.$proxy = son.$proxy
+                    son = sson
                 }
             }
             accessor.updateValue(this, son.$model)

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.44 built in 2015.7.22
+ avalon.mobile.js 1.45 built in 2015.7.21
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -269,7 +269,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.44,
+    version: 1.45,
     ui: {},
     log: log,
     slice: function(nodes, start, end) {
@@ -593,7 +593,61 @@ if (window.SVGElement) {
         })
     }
 }
+//========================= event binding ====================
+var eventHooks = avalon.eventHooks
+//针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
+if (!("onmouseenter" in root)) {
+    avalon.each({
+        mouseenter: "mouseover",
+        mouseleave: "mouseout"
+    }, function (origType, fixType) {
+        eventHooks[origType] = {
+            type: fixType,
+            deel: function (elem, _, fn) {
+                return function (e) {
+                    var t = e.relatedTarget
+                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
+                        delete e.type
+                        e.type = origType
+                        return fn.call(elem, e)
+                    }
+                }
+            }
+        }
+    })
+}
+//针对IE9+, w3c修正animationend
+avalon.each({
+    AnimationEvent: "animationend",
+    WebKitAnimationEvent: "webkitAnimationEnd"
+}, function (construct, fixType) {
+    if (window[construct] && !eventHooks.animationend) {
+        eventHooks.animationend = {
+            type: fixType
+        }
+    }
+})
 
+if (DOC.onmousewheel === void 0) {
+    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
+     firefox DOMMouseScroll detail 下3 上-3
+     firefox wheel detlaY 下3 上-3
+     IE9-11 wheel deltaY 下40 上-40
+     chrome wheel deltaY 下100 上-100 */
+    eventHooks.mousewheel = {
+        type: "wheel",
+        deel: function (elem, _, fn) {
+            return function (e) {
+                e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
+                e.wheelDeltaX = 0
+                Object.defineProperty(e, "type", {
+                    value: "mousewheel"
+                })
+                fn.call(elem, e)
+            }
+        }
+    }
+}
 /*********************************************************************
  *                           配置系统                                 *
  **********************************************************************/
@@ -632,9 +686,6 @@ var plugins = {
         closeTag = array[1]
         if (openTag === closeTag) {
             throw new SyntaxError("openTag!==closeTag")
-        } else if (array + "" === "<!--,-->") {
-            kernel.commentInterpolate = true
-        } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
             if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
@@ -827,12 +878,13 @@ function modelFactory(source, $special, $model) {
     $$skipArray.forEach(function (name) {
         delete source[name]
     })
-    for (var i in source) {
-        (function (name, val, accessor) {
-            $model[name] = val
-            if (!isObservable(name, val, $skipArray)) {
-                return //过滤所有非监控属性
-            }
+
+    var names = Object.keys(source)
+    /* jshint ignore:start */
+    names.forEach(function (name, accessor) {
+        var val = source[name]
+        $model[name] = val
+        if (isObservable(name, val, $skipArray)) {
             //总共产生三种accessor
             $events[name] = []
             var valueType = avalon.type(val)
@@ -846,11 +898,12 @@ function modelFactory(source, $special, $model) {
                 accessor = makeSimpleAccessor(name, val)
             }
             accessors[name] = accessor
-        })(i, source[i])// jshint ignore:line
-    }
-
+        }
+    })
+    /* jshint ignore:end */
     $vmodel = Object.defineProperties($vmodel, descriptorFactory(accessors)) //生成一个空的ViewModel
-    for (var name in source) {
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i]
         if (!accessors[name]) {
             $vmodel[name] = source[name]
         }
@@ -859,20 +912,19 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
+    $vmodel.$propertyNames = names.sort().join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
 
-    Object.defineProperty($vmodel, "hasOwnProperty", {
-        value: function (name) {
-            return name in this.$model
-        },
-        writable: false,
-        enumerable: false,
-        configurable: true
-    })
-    $vmodel.$compute = function () {
+    Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
+    $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
+            delete accessor._value
+            delete accessor.oldArgs
+            accessor.digest = function () {
+                accessor.call($vmodel)
+            }
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
@@ -890,8 +942,17 @@ function modelFactory(source, $special, $model) {
             }
         })
     }
-    $vmodel.$compute()
+    $vmodel.$reinitialize()
     return $vmodel
+}
+
+var hasOwnDescriptor = {
+    value: function (name) {
+        return name in this.$model
+    },
+    writable: false,
+    enumerable: false,
+    configurable: true
 }
 
 //创建一个简单访问器
@@ -916,44 +977,46 @@ function makeSimpleAccessor(name, value) {
 
 ///创建一个计算访问器
 function makeComputedAccessor(name, options) {
-    options.set = options.set || noop
     function accessor(value) {//计算属性
         var oldValue = accessor._value
-        var init = "_value" in accessor
+        var init = ("_value" in accessor)
         if (arguments.length > 0) {
             if (stopRepeatAssign) {
                 return this
             }
-            accessor.set.call(this, value)
+            if (typeof accessor.set === "function") {
+                if (accessor.oldArgs !== value) {
+                    accessor.oldArgs = value
+                    var $events = this.$events
+                    var lock = $events[name]
+                    $events[name] = [] //清空回调，防止内部冒泡而触发多次$fire
+                    accessor.set.call(this, value)
+                    $events[name] = lock
+                    value = accessor.get.call(this)
+                    if (value !== oldValue) {
+                        accessor.updateValue(this, value)
+                        accessor.notify(this, value, oldValue) //触发$watch回调
+                    }
+                }
+            }
             return this
         } else {
             //将依赖于自己的高层访问器或视图刷新函数（以绑定对象形式）放到自己的订阅数组中
-            value = accessor.get.call(this)
-            if (oldValue !== value) {
-                accessor.updateValue(this, value)
-                init && accessor.notify(this, value, oldValue) //触发$watch回调
-            }
             //将自己注入到低层访问器的订阅数组中
+            value = accessor.get.call(this)
+            accessor.updateValue(this, value)
+            if (init && oldValue !== value) {
+                accessor.notify(this, value, oldValue) //触发$watch回调
+            }
             return value
         }
-
     }
-    accessor.set = options.set || noop
+    accessor.set = options.set
     accessor.get = options.get
     accessorFactory(accessor, name)
-    var id
-    accessor.digest = function () {
-        accessor.updateValue = globalUpdateModelValue
-        accessor.notify = noop
-        accessor.call(accessor.vm)
-        clearTimeout(id)//如果计算属性存在多个依赖项，那么等它们都更新了才更新视图
-        id = setTimeout(function () {
-            accessorFactory(accessor, accessor._name)
-            accessor.call(accessor.vm)
-        })
-    }
     return accessor
 }
+
 
 //创建一个复杂访问器
 function makeComplexAccessor(name, initValue, valueType, list) {
@@ -965,25 +1028,40 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 return this
             }
             if (valueType === "array") {
-                var old = son._
-                son._ = []
-                son.clear()
-                son._ = old
-                son.pushArray(value)
+                var a = son, b = value,
+                        an = a.length,
+                        bn = b.length
+                a.$lock = true
+                if (an > bn) {
+                    a.splice(bn, an - bn)
+                } else if (bn > an) {
+                    a.push.apply(a, b.slice(an))
+                }
+                var n = Math.min(an, bn)
+                for (var i = 0; i < n; i++) {
+                    a.set(i, b[i])
+                }
+                delete a.$lock
+                a._fire("set")
             } else if (valueType === "object") {
-                var $proxy = son.$proxy
-                var observes = this.$events[name] || []
-                son = accessor._vmodel = modelFactory(value)
-                son.$proxy = $proxy
-                if (observes.length) {
-                    observes.forEach(function (el) {
-                        var fn = bindingHandlers[el.type]
-                        if (fn) { //#753
-                            el.rollback && el.rollback() //还原 ms-with ms-on
-                            fn(el, el.vmodels)
+                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                if (son.$propertyNames === newPropertyNames) {
+                    for (i in value) {
+                        son[i] = value[i]
+                    }
+                } else {
+                    var sson = accessor._vmodel = modelFactory(value)
+                    var sevent = sson.$events
+                    var oevent = son.$events
+                    for (var i in sevent) {
+                        var arr = sevent[i]
+                        if (Array.isArray(arr)) {
+                            arr = arr.concat(oevent[i])
                         }
-                    })
-                    son.$events[name] = observes
+                    }
+                    sevent[subscribers] = oevent[subscribers]
+                    sson.$proxy = son.$proxy
+                    son = sson
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -1079,10 +1157,6 @@ function arrayFactory(model) {
     for (var i in EventBus) {
         array[i] = EventBus[i]
     }
-    array.$map = {
-        el: 1
-    }
-    array.$proxy = []
     avalon.mix(array, arrayPrototype)
     return array
 }
@@ -1091,28 +1165,21 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
     var oldLen = this.length, loop = 2
     while (--loop) {
         switch (method) {
-            case "add":
+      case "add":
                 /* jshint ignore:start */
-                var m = pos + n
-                var array = this.$model.slice(pos, m).map(function (el) {
-                    if (rcomplexType.test(avalon.type(el))) {//转换为VM
+                var array = this.$model.slice(pos, pos + n).map(function (el) {
+                    if (rcomplexType.test(avalon.type(el))) {
                         return el.$id ? el : modelFactory(el, 0, el)
                     } else {
                         return el
                     }
                 })
-                _splice.apply(this, [pos, 0].concat(array))
                 /* jshint ignore:end */
-                for (var i = pos; i < m; i++) {//生成代理VM
-                    var proxy = eachProxyAgent(i, this)
-                    this.$proxy.splice(i, 0, proxy)
-                }
+                _splice.apply(this, [pos, 0].concat(array))
                 this._fire("add", pos, n)
                 break
             case "del":
                 var ret = this._splice(pos, n)
-                var removed = this.$proxy.splice(pos, n) //回收代理VM
-                eachProxyRecycler(removed, "each")
                 this._fire("del", pos, n)
                 break
         }
@@ -1124,7 +1191,7 @@ function mutateArray(method, pos, n, index, method2, pos2, n2) {
             method2 = 0
         }
     }
-    resetIndex(this.$proxy, index)
+    this._fire("index", index)
     if (this.length !== oldLen) {
         this._.length = this.length
     }
@@ -1215,8 +1282,7 @@ var arrayPrototype = {
         return  []
     },
     clear: function () {
-        eachProxyRecycler(this.$proxy, "each")
-        this.$model.length = this.$proxy.length = this.length = this._.length = 0 //清空数组
+        this.$model.length = this.length = this._.length = 0 //清空数组
         this._fire("clear", 0)
         return this
     },
@@ -1228,8 +1294,9 @@ var arrayPrototype = {
                 }
             }
         } else if (typeof all === "function") {
-            for (i = this.length - 1; i >= 0; i--) {
-                if (all(this[i], i)) {
+            for ( i = this.length - 1; i >= 0; i--) {
+                var el = this[i]
+                if (all(el, i)) {
                     this.removeAt(i)
                 }
             }
@@ -1261,10 +1328,7 @@ var arrayPrototype = {
             } else if (target !== val) {
                 this[index] = val
                 this.$model[index] = val
-                var proxy = this.$proxy[index]
-                if (proxy) {
-                    fireDependencies(proxy.$events.$index)
-                }
+                this._fire("set", index, val)
             }
         }
         return this
@@ -1316,64 +1380,14 @@ function sortByIndex(array, indexes) {
         }
         if (hasSort) {
             sortByIndex(this, indexes)
-            sortByIndex(this.$proxy, indexes)
+            // sortByIndex(this.$proxy, indexes)
             this._fire("move", indexes)
-            resetIndex(this.$proxy, 0)
+              this._fire("index", 0)
         }
         return this
     }
 })
 
-var eachProxyPool = []
-
-function eachProxyFactory() {
-    var source = {
-        $index: NaN,
-        $first: NaN,
-        $last: NaN,
-        $map: {},
-        $host: {},
-        $outer: {},
-        $remove: avalon.noop,
-        el: {
-            get: function () {
-                //avalon1.4.4中，计算属性的订阅数组不再添加绑定对象
-                return this.$host[this.$index]
-            },
-            set: function (val) {
-                this.$host.set(this.$index, val)
-            }
-        }
-    }
-
-    var second = {
-        $last: 1,
-        $first: 1,
-        $index: 1
-    }
-    var proxy = modelFactory(source, second)
-    proxy.$id = generateID("$proxy$each")
-    return proxy
-}
-
-function eachProxyAgent(index, host) {
-    var proxy = eachProxyPool.shift()
-    if (!proxy) {
-        proxy = eachProxyFactory( )
-    }else{
-        proxy.$compute()
-    }
-    var last = host.length - 1
-    proxy.$host = host
-    proxy.$index = index
-    proxy.$first = index === 0
-    proxy.$last = index === last
-    proxy.$map = host.$map
-    proxy.$remove = function () {
-        return host.removeAt(proxy.$index)
-    }
-    return proxy
-}
 
 /*********************************************************************
  *                           依赖调度系统                             *
@@ -1402,16 +1416,19 @@ var dependencyDetection = (function () {
 //将绑定对象注入到其依赖项的订阅数组中
 var ronduplex = /^(duplex|on)$/
 avalon.injectBinding = function (data) {
-    var fn = data.evaluator
-    if (fn) { //如果是求值函数
+    var valueFn = data.evaluator
+    if (valueFn) { //如果是求值函数
         dependencyDetection.begin({
             callback: function (vmodel, dependency) {
                 injectDependency(vmodel.$events[dependency._name], data)
             }
         })
         try {
-            var c = ronduplex.test(data.type) ? data : fn.apply(0, data.args)
-            data.handler(c, data.element, data)
+            var value = ronduplex.test(data.type) ? data : valueFn.apply(0, data.args)
+            if(value === void 0){
+                delete data.evaluator
+            }
+            data.handler(value, data.element, data)
         } catch (e) {
             //log("warning:exception throwed in [avalon.injectBinding] " + e)
             delete data.evaluator
@@ -1421,7 +1438,7 @@ avalon.injectBinding = function (data) {
                 if (kernel.commentInterpolate) {
                     parent.replaceChild(DOC.createComment(data.value), node)
                 } else {
-                    node.data = openTag + data.value + closeTag
+                    node.data = openTag + (data.oneTime ? "::" : "") + data.value + closeTag
                 }
             }
         } finally {
@@ -1432,8 +1449,9 @@ avalon.injectBinding = function (data) {
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
 function injectDependency(list, data) {
-    data = data || Registry[expose]
-    if (list && data && avalon.Array.ensure(list, data) && data.element) {
+    if (data.oneTime)
+        return
+    if (list && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
     }
 }
@@ -1449,15 +1467,16 @@ function fireDependencies(list) {
             var el = fn.element
             if (el && el.parentNode) {
                 try {
+                    var valueFn = fn.evaluator
                     if (fn.$repeat) {
                         fn.handler.apply(fn, args) //处理监控数组的方法
+                    }else if("$repeat" in fn || !valueFn ){//如果没有eval,先eval
+                        bindingHandlers[fn.type](fn, fn.vmodels)
                     } else if (fn.type !== "on") { //事件绑定只能由用户触发,不能由程序触发
-                        var fun = fn.evaluator || noop
-                        fn.handler(fun.apply(0, fn.args || []), el, fn)
-
+                       var value = valueFn.apply(0, fn.args || [])
+                       fn.handler(value, el, fn)
                     }
-                } catch (e) {
-                }
+                } catch (e) {  }
             }
         }
     }
@@ -1863,7 +1882,7 @@ var prefixes = ["", "-webkit-", "-moz-", "-ms-"] //去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
 }
-avalon.cssNumber = oneObject("columnCount,order,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+avalon.cssNumber = oneObject("columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function(name, host, camelCase) {
     if (cssMap[name]) {
@@ -2101,14 +2120,12 @@ var getVariables = function (code) {
 function addAssign(vars, scope, name, data) {
     var ret = [],
             prefix = " = " + name + "."
-    var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var el = isProxy && scope.$map[prop] ? "el" : prop
-        if (scope.hasOwnProperty(el)) {
-            ret.push(prop + prefix + el)
+        if (scope.hasOwnProperty(prop)) {
+            ret.push(prop + prefix + prop)
             data.vars.push(prop)
             if (data.type === "duplex") {
-                vars.get = name + "." + el
+                vars.get = name + "." + prop
             }
             vars.splice(i, 1)
         }
@@ -2359,7 +2376,7 @@ var mergeTextNodes = IEVersion && window.MutationObserver ? function (elem) {
         node = aaa
     }
 } : 0
-
+var roneTime = /^\s*::/
 var rmsAttr = /ms-(\w+)-?(.*)/
 var priorityMap = {
     "if": 10,
@@ -2409,12 +2426,15 @@ function scanAttr(elem, vmodels, match) {
                     }
                     msData[name] = value
                     if (typeof bindingHandlers[type] === "function") {
+                        var newValue = value.replace(roneTime, "")
+                        var oneTime = value !== newValue
                         var binding = {
                             type: type,
                             param: param,
                             element: elem,
                             name: name,
-                            value: value,
+                            value: newValue,
+                            oneTime: oneTime,
                             priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
@@ -2474,37 +2494,31 @@ function scanAttr(elem, vmodels, match) {
 
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
-//function scanNodeList(parent, vmodels) {
-//    var node = parent.firstChild
-//    while (node) {
-//        var nextNode = node.nextSibling
-//        scanNode(node, node.nodeType, vmodels)
-//        node = nextNode
-//    }
-//}
 function scanNodeList(parent, vmodels) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodels)
 }
 
 function scanNodeArray(nodes, vmodels) {
-    for (var i = 0, node; node = nodes[i++]; ) {
-        scanNode(node, node.nodeType, vmodels)
+    for (var i = 0, node; node = nodes[i++];) {
+        switch (node.nodeType) {
+            case 1:
+                scanTag(node, vmodels) //扫描元素节点
+                if (node.msCallback) {
+                    node.msCallback()
+                    node.msCallback = void 0
+                }
+                break
+            case 3:
+               if(rexpr.test(node.nodeValue)){
+                    scanText(node, vmodels, i) //扫描文本节点
+               }
+               break
+        }
     }
 }
-function scanNode(node, nodeType, vmodels) {
-    if (nodeType === 1) {
-        scanTag(node, vmodels) //扫描元素节点
-        if( node.msCallback){
-            node.msCallback()
-            node.msCallback = void 0
-       }
-    } else if (nodeType === 3 && rexpr.test(node.data)){
-        scanText(node, vmodels) //扫描文本节点
-    } else if (kernel.commentInterpolate && nodeType === 8 && !rexpr.test(node.nodeValue)) {
-        scanText(node, vmodels) //扫描注释节点
-    }
-}
+
+
 function scanTag(elem, vmodels, node) {
     //扫描顺序  ms-skip(0) --> ms-important(1) --> ms-controller(2) --> ms-if(10) --> ms-repeat(100) 
     //--> ms-if-loop(110) --> ms-attr(970) ...--> ms-each(1400)-->ms-with(1500)--〉ms-duplex(2000)垫后        
@@ -2526,22 +2540,21 @@ function scanTag(elem, vmodels, node) {
     }
     scanAttr(elem, vmodels) //扫描特性节点
 }
-var rhasHtml = /\|\s*html\s*/,
+var rhasHtml = /\|\s*html(?:\b|$)/,
         r11a = /\|\|/g,
         rlt = /&lt;/g,
         rgt = /&gt;/g,
-        rstringLiteral  = /(['"])(\\\1|.)+?\1/g
-function getToken(value, pos) {
+        rstringLiteral = /(['"])(\\\1|.)+?\1/g
+function getToken(value) {
     if (value.indexOf("|") > 0) {
-        var scapegoat = value.replace( rstringLiteral, function(_){
-            return Array(_.length+1).join("1")// jshint ignore:line
+        var scapegoat = value.replace(rstringLiteral, function (_) {
+            return Array(_.length + 1).join("1")// jshint ignore:line
         })
         var index = scapegoat.replace(r11a, "\u1122\u3344").indexOf("|") //干掉所有短路或
         if (index > -1) {
             return {
                 filters: value.slice(index),
                 value: value.slice(0, index),
-                pos: pos || 0,
                 expr: true
             }
         }
@@ -2592,24 +2605,24 @@ function scanExpr(str) {
     return tokens
 }
 
-function scanText(textNode, vmodels) {
+function scanText(textNode, vmodels, index) {
     var bindings = []
-    if (textNode.nodeType === 8) {
-        var token = getToken(textNode.nodeValue)
-        var tokens = [token]
-    } else {
-        tokens = scanExpr(textNode.data)
-    }
+    tokens = scanExpr(textNode.data)
     if (tokens.length) {
         for (var i = 0; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
+                token.value = token.value.replace(roneTime, function () {
+                    token.oneTime = true
+                    return ""
+                })
                 token.type = "text"
                 token.element = node
-                token.filters = token.filters.replace(rhasHtml, function() {
+                token.filters = token.filters.replace(rhasHtml, function (a, b,c) {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
+                token.pos = index * 1000 + i
                 bindings.push(token) //收集带有插值表达式的文本
             }
             avalonFragment.appendChild(node)
@@ -2717,7 +2730,7 @@ bindingExecutors.attr = function(val, elem, data) {
         //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
         var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
         if (isInnate) {
-            elem[attrName] = val
+            elem[attrName] = val+""
         } else {
             elem.setAttribute(attrName, val)
         }
@@ -3094,27 +3107,23 @@ new function() { // jshint ignore:line
         var setters = {}
         var aproto = HTMLInputElement.prototype
         var bproto = HTMLTextAreaElement.prototype
-
-            function newSetter(value) { // jshint ignore:line
-                if (avalon.optimize ||  this.parentNode) {
-                    setters[this.tagName].call(this, value)
-                    if (!rmsinput.test(this.type))
-                        return
-                    if (!this.msFocus && this.avalonSetter) {
-                        this.avalonSetter()
-                    }
+        function newSetter(value) { // jshint ignore:line
+                setters[this.tagName].call(this, value)
+                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                    this.avalonSetter()
                 }
-            }
-//        var inputProto = HTMLInputElement.prototype
-//        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-//        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-//        Object.defineProperty(aproto, "value", {
-//            set: newSetter
-//        })
-//        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-//        Object.defineProperty(bproto, "value", {
-//            set: newSetter
-//        })
+        }
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+    
+        Object.defineProperty(aproto, "value", {
+            set: newSetter
+        })
+        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+        Object.defineProperty(bproto, "value", {
+            set: newSetter
+        })
     } catch (e) {
         //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
         // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
@@ -3224,7 +3233,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         })
         if (rmsinput.test($type)) {
             watchValueInTimer(function() {
-                if (avalon.optimize || element.parentNode) {
+                if (root.contains(element)) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
                     }
@@ -3380,6 +3389,10 @@ var rdash = /\(([^)]*)\)/
 bindingHandlers.on = function(data, vmodels) {
     var value = data.value
     data.type = "on"
+    var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+    if (typeof bindingHandlers.on[eventType + "Hook"] === "function") {
+        bindingHandlers.on[eventType + "Hook"](data)
+    }
     if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
         var matched = (value.match(rdash) || ["", ""])[1].trim()
         if (matched === "" || matched === "$event") { // aaa() aaa($event)当成aaa处理
@@ -3389,1307 +3402,33 @@ bindingHandlers.on = function(data, vmodels) {
     parseExprProxy(value, vmodels, data)
 }
 
-bindingExecutors.on = function(_, elem, data) {
-    var eventType = data.param.replace(/-\d+$/, "")
-    // avalon.log("绑定" + eventType + "事件！")
-    var uuid = getUid(elem)
-    try {
-        listenTo(eventType, document)
-    } catch (e) {
-        avalon.log(e)
+bindingExecutors.on = function(callback, elem, data) {
+    callback = function(e) {
+        var fn = data.evaluator || noop
+        return fn.apply(this, data.args.concat(e))
     }
-    EventPluginHub.addListener(uuid, eventType, data)
-    data.rollback = function() {
-        EventPluginHub.removeListener(uuid, eventType, data)
-    }
-}
-
-function isEventSupported(eventNameSuffix, capture) {
-    if (capture && !('addEventListener' in document)) {
-        return false
-    }
-
-    var eventName = 'on' + eventNameSuffix;
-    var isSupported = eventName in document;
-    if (!isSupported) {
-        var element = document.createElement('div');
-        element.setAttribute(eventName, 'return;');
-        isSupported = typeof element[eventName] === 'function';
-    }
-
-    if (!isSupported && eventNameSuffix === 'wheel') {
-        isSupported = !! window.WheelEvent
-    }
-
-    return isSupported;
-}
-
-function getEventCharCode(nativeEvent) {
-    var charCode;
-    var keyCode = nativeEvent.keyCode;
-    if ('charCode' in nativeEvent) {
-        charCode = nativeEvent.charCode;
-        // FF does not set `charCode` for the Enter-key, check against `keyCode`.
-        if (charCode === 0 && keyCode === 13) {
-            charCode = 13;
-        }
+    var eventType = data.param.replace(/-\d+$/, "") // ms-on-mousemove-10
+    if (eventType === "scan") {
+        callback.call(elem, {
+            type: eventType
+        })
+    } else if (typeof data.specialBind === "function") {
+        data.specialBind(elem, callback)
     } else {
-        // IE8 does not implement `charCode`, but `keyCode` has the correct value.
-        charCode = keyCode;
+        var removeFn = avalon.bind(elem, eventType, callback)
     }
-    // Some non-printable keys are reported in `charCode`/`keyCode`, discard them.
-    // Must not discard the (non-)printable Enter-key.
-    if (charCode >= 32 || charCode === 13) {
-        return charCode;
-    }
-    return 0;
-}
-
-var isListening = {}
-
-    function listenTo(eventType, mountAt) {
-        //通过事件名得到对应的插件
-        var plugin = getPluginByEventType(eventType)
-        if (!plugin) {
-            avalon.log(eventType + " 事件不存在对应的插件模块 !")
-        }
-        //得到对应的依赖
-        var dependencies = plugin ? plugin.eventTypes[eventType].dependencies : [eventType]
-        //IE6-8下`keyup`/`keypress`/`keydown` 只能冒泡到 document
-        for (var i = 0; i < dependencies.length; i++) {
-            var dependency = dependencies[i];
-            if (isListening[dependency] !== true) {
-                if (dependency === "scroll") {
-                    if (W3C) {
-                        addCapturedEvent("scroll", 'scroll', mountAt)
-                    } else {
-                        addBubbledEvent("scroll", 'scroll', window)
-                    }
-                } else if (dependency === "select" && W3C) {
-                    addBubbledEvent("select", 'select', mountAt)
-                } else if (dependency === "focus" || dependency === "blur") {
-                    if (W3C) {
-                        addCapturedEvent("focus", 'focus', mountAt);
-                        addCapturedEvent("blur", 'blur', mountAt);
-                    } else if (isEventSupported("focusin")) {
-                        addBubbledEvent("focus", 'focusin', mountAt);
-                        addBubbledEvent("blur", 'focusout', mountAt);
-                    }
-                    isListening.focus = true
-                    isListening.blur = true
-                } else {
-                    addBubbledEvent(eventType, dependency, mountAt);
-                }
-                isListening[dependency] = true;
-            }
-        }
-    }
-
-var addBubbledEvent = function(topLevelType, type, element) {
-    return addEventListener(element, type, function(nativeEvent) {
-        topEventListener(nativeEvent, topLevelType)
-    })
-}
-var addCapturedEvent = function(topLevelType, type, element) {
-    return addEventListener(element, type, function(nativeEvent) {
-        topEventListener(nativeEvent, topLevelType)
-    }, true)
-}
-
-    function addEventListener(target, eventType, callback, capture) {
-        if (target.addEventListener) {
-            target.addEventListener(eventType, callback, !! capture)
-            return {
-                remove: function() {
-                    target.removeEventListener(eventType, callback, !! capture)
-                }
-            }
-        } else if (target.attachEvent) {
-            target.attachEvent('on' + eventType, callback)
-            return {
-                remove: function() {
-                    target.detachEvent('on' + eventType, callback)
-                }
-            }
-        }
-    }
-    //顶层事件监听器
-
-    function topEventListener(nativeEvent, topLevelType) {
-        var topLevelTarget = nativeEvent.target || nativeEvent.srcElement
-        var ancestors = []
-        var ancestor = topLevelTarget
-        while (ancestor && ancestor.nodeType) {
-            ancestors.push(ancestor)
-            ancestor = ancestor.parentNode
-        }
-        var uuids = []
-        while (ancestor = ancestors.shift()) {
-            uuids.push(getUid(ancestor))
-        }
-        //收集事件
-        var events = EventPluginHub.extractEvents(topLevelType, topLevelTarget, nativeEvent, uuids)
-        //执行所有回调
-        events.forEach(executeDispatchesAndRelease)
-    }
-
-
-    function executeDispatchesAndRelease(event) {
-        if (event) {
-            var callback = executeDispatch;
-            var PluginModule = getPluginByEventType(event.type);
-            if (PluginModule && PluginModule.executeDispatch) {
-                callback = PluginModule.executeDispatch;
-            }
-            var dispatchListeners = event._dispatchListeners
-            var dispatchIDs = event._dispatchIDs
-            // avalon.log("执行所有回调" + event.type)
-            for (var i = 0; i < dispatchListeners.length; i++) {
-                if (event.isPropagationStopped) {
-                    break
-                }
-                callback(event, dispatchListeners[i], dispatchIDs[i])
-            }
-            // eventFactory.release(event)
-        }
-    }
-
-    //执行单个事件回调
-
-    function executeDispatch(event, fn, domID) {
-        var elem = event.currentTarget = getNode(domID);
-        if (typeof fn === "function") {
-            var returnValue = fn.call(elem, event)
-        } else if (fn.args) {
-            var callback = fn.evaluator || noop
-            returnValue = callback.apply(elem, fn.args.concat(event))
-        }
-        event.currentTarget = null;
-        return returnValue;
-    }
-
-
-    //=================事件工厂===================
-var eventFactory = (function() {
-    var eventPool = []
-
-        function eventFactory(nativeEvent, type) {
-            var event = eventPool.shift()
-            if (!event) {
-                event = new SyntheticEvent()
-            }
-            event.timeStamp = new Date() - 0
-            event.nativeEvent = nativeEvent
-            event.type = type
-            var target = nativeEvent.target || nativeEvent.srcElement || window
-            if (target.nodeType === 3) {
-                target = target.parentNode
-            }
-            event.target = target
-            return event
-        }
-    eventFactory.release = function(event) {
-        for (var i in event) {
-            if (event.hasOwnProperty(i)) {
-                event[i] = null
-            }
-        }
-        if (eventPool.length < 20) {
-            eventPool.push(event)
-        }
-    }
-
-    function SyntheticEvent() {}
-    var ep = SyntheticEvent.prototype
-    //阻止默认行为
-    ep.preventDefault = function() {
-        if (this.nativeEvent.preventDefault) {
-            this.nativeEvent.preventDefault();
+    data.rollback = function() {
+        if (typeof data.specialUnbind === "function") {
+            data.specialUnbind()
         } else {
-            this.nativeEvent.returnValue = false;
-        }
-    }
-    //阻止事件往上下传播
-    ep.stopPropagation = function() {
-        this.isPropagationStopped = true;
-        if (this.nativeEvent.stopPropagation) {
-            this.nativeEvent.stopPropagation();
-        }
-        this.nativeEvent.cancelBubble = true;
-    }
-
-    //阻止事件往上下传播
-    ep.stopImmediatePropagation = function() {
-        //阻止事件在一个元素的同种事件的回调中传播
-        this.isImmediatePropagationStopped = true
-        this.stopPropagation()
-    }
-    return eventFactory
-})()
-
-
-
-//====================================================
-var callbackPool = {};
-var EventPluginHub = {
-    //添加事件回调到 回调池 中
-    addListener: function(id, type, callback) {
-        var pool = callbackPool[type] || (callbackPool[type] = {});
-        if (pool[id]) {
-            pool[id].push(callback)
-        } else {
-            pool[id] = [callback]
-        }
-        var plugin = getPluginByEventType(type)
-        if (plugin && plugin.didPutListener) {
-            plugin.didPutListener(id, type, callback);
-        }
-    },
-    getListener: function(id, eventType) {
-        var pool = callbackPool[eventType]
-        return pool && pool[id] || []
-    },
-    removeListener: function(id, type, fn) {
-        var plugin = getPluginByEventType(type)
-        if (plugin && plugin.willDeleteListener) {
-            plugin.willDeleteListener(id, type);
-        }
-        var pool = callbackPool[type]
-        if (pool) {
-            if (fn) {
-                avalon.Array.remove(pool[id], fn)
-            } else {
-                delete pool[id]
-            }
-        }
-    },
-    extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-        var events = []
-        if (!topLevelTarget) {
-            return events
-        }
-        var plugins = EventPluginRegistry.plugins;
-        for (var i = 0; i < plugins.length; i++) {
-            var possiblePlugin = plugins[i];
-            if (possiblePlugin) {
-
-                var extractedEvents = possiblePlugin.extractEvents(topLevelType, topLevelTarget, nativeEvent, uuids)
-                if (extractedEvents) {
-                    extractedEvents.plugn = possiblePlugin.name
-                    events = events.concat(extractedEvents);
-                }
-            }
-        }
-        return events;
-    }
-}
-
-    function collectDispatches(event, uuids) {
-        //收集事件回调
-        var _dispatchListeners = []
-        var _dispatchIDs = []
-        for (var i = 0, n = uuids.length; i < n; i++) {
-            var id = uuids[i]
-            //从事件仓库中取得回调数组
-            var listener = EventPluginHub.getListener(id, event.type)
-            var node = getNode(id)
-            //从元素上取得直接用onxxx绑定的回调
-            var onFn = node && node["on" + event.type]
-            if (typeof onFn === "function") {
-                listener.push(onFn)
-            }
-            var jn = listener.length
-            if (jn) {
-                for (var j = 0; j < jn; j++) {
-                    _dispatchListeners.push(listener[j])
-                    _dispatchIDs.push(id)
-                }
-            }
-        }
-        event._dispatchListeners = _dispatchListeners
-        event._dispatchIDs = _dispatchIDs
-    }
-
-    //--------------------------------
-    // SimpleEventPlugin
-var SimpleEventPlugin = (function() {
-    var EventTypes = {}
-    var onClickListeners = {}
-    String("click,contextmenu,doubleclick,keydown,keypress,keyup,focus,blur,copy,cut,paste," + //键盘点击
-        "drag,dragend,dragenter,dragexit,dragleave,touchcancel,touchend,touchstart,touchmove," + //拖放触摸
-        "mousedown,mousemove,mouseout,mouseover,mouseup," + //鼠标操作
-        "load,error,reset,scroll").toLowerCase().replace(rword, function(eventName) {
-        EventTypes[eventName] = {
-            dependencies: [eventName]
-        }
-    })
-    var EventPlugin = {
-        name: "SimpleEventPlugin",
-        eventTypes: EventTypes,
-        executeDispatch: function(event, listener, domID) {
-            var returnValue = executeDispatch(event, listener, domID);
-            if (returnValue === false) {
-                event.stopPropagation()
-                event.preventDefault()
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (!EventTypes[topLevelType]) {
-                return null;
-            }
-            var eventDecorator;
-            switch (topLevelType) {
-                case "load":
-                case "error":
-                case "reset":
-                    eventDecorator = simulateHTMLEvent
-                    break
-                    /* jshint ignore:start */
-                case "keypress":
-                    // FireFox creates a keypress event for function keys too. This removes
-                    // the unwanted keypress events. Enter is however both printable and
-                    // non-printable. One would expect Tab to be as well (but it isn't).
-                    if (getEventCharCode(nativeEvent) === 0) {
-                        return null;
-                    }
-
-                case "keydown":
-                case "keyup":
-                    eventDecorator = simulateKeyboardEvent
-                    break
-                    /* jshint ignore:end */
-                case "blur":
-                case "focus":
-                    eventDecorator = simulateFocusEvent;
-                    break
-                    /* jshint ignore:start */
-                case "click":
-                    // Firefox creates a click event on right mouse clicks. This removes the
-                    // unwanted click events.
-                    if (nativeEvent.button === 2) {
-                        return null;
-                    }
-                case "contextenu":
-                    /* jshint ignore:end */
-                case "doubleclick":
-                case "mousedown":
-                case "mousemove":
-                case "mouseout":
-                case "mouseover":
-                case "mouseup":
-                    eventDecorator = simulateMouseEvent;
-                    break;
-                case "drag":
-                case "dragend":
-                case "dragenter":
-                case "dragexit":
-                case "dragleave":
-                case "dragover":
-                case "dragstart":
-                case "drop":
-                    eventDecorator = simulateDragEvent;
-                    break;
-                case "touchcancel":
-                case "touchend":
-                case "touchmove":
-                case "touchstart":
-                    eventDecorator = simulateTouchEvent;
-                    break;
-                case "scroll":
-                    eventDecorator = simulateUIEvent;
-                    break;
-                case "copy":
-                case "cut":
-                case "paste":
-                    eventDecorator = simulateClipboardEvent;
-                    break;
-            }
-            if (eventDecorator) {
-                var event = eventFactory(nativeEvent, topLevelType)
-                eventDecorator(event, nativeEvent)
-                collectDispatches(event, uuids) //收集回调
-                return event
-            }
-        },
-        didPutListener: function(id, type) {
-            // Mobile Safari does not fire properly bubble click events on
-            // non-interactive elements, which means delegated click listeners do not
-            // fire. The workaround for this bug involves attaching an empty click
-            // listener on the target node.
-            if (type === "click") {
-                if (!onClickListeners[id]) {
-                    onClickListeners[id] = addEventListener(getNode(id), 'click', noop);
-                }
-            }
-        },
-        willDeleteListener: function(id, type) {
-            if (type === "click") {
-                onClickListeners[id].remove();
-                delete onClickListeners[id];
-            }
-        }
-    }
-    // 各类型事件的装饰器
-    // http://www.w3.org/TR/html5/index.html#events-0
-
-        function simulateHTMLEvent(event, nativeEvent) {
-            var _interface = "eventPhase,cancelable,bubbles"
-            _interface.replace(rword, function(name) {
-                event[name] = nativeEvent[name]
-            })
-        }
-
-        function simulateUIEvent(event, nativeEvent) {
-            simulateHTMLEvent(event, nativeEvent)
-            event.view = nativeEvent.view || window
-            event.detail = nativeEvent.detail || 0
-        }
-
-        function simulateTouchEvent(event, nativeEvent) {
-            simulateUIEvent(event, nativeEvent)
-            var _interface = "touches,targetTouches,changedTouches,ctrlKey,shiftKey,metaKey,altKey"
-            _interface.replace(rword, function(name) {
-                event[name] = nativeEvent[name]
-            })
-        }
-
-        //http://www.w3.org/TR/DOM-Level-3-Events/
-
-        function simulateFocusEvent(event, nativeEvent) {
-            simulateUIEvent(event, nativeEvent)
-            event.relatedTarget = nativeEvent.relatedTarget
-        }
-
-
-        function simulateClipboardEvent(event, nativeEvent) {
-            simulateHTMLEvent(event, nativeEvent)
-            event.clipboardData = 'clipboardData' in nativeEvent ? nativeEvent.clipboardData : window.clipboardData
-        }
-
-
-        function simulateKeyboardEvent(event, nativeEvent) {
-            simulateUIEvent(event, nativeEvent)
-            var _interface = "ctrlKey,shiftKey,metaKey,altKey,repeat,locale,location"
-            _interface.replace(rword, function(name) {
-                event[name] = nativeEvent[name]
-            })
-            if (event.type === 'keypress') {
-                event.charCode = getEventCharCode(event)
-                event.keyCode = 0
-            } else if (event.type === 'keydown' || event.type === 'keyup') {
-                event.charCode = 0
-                event.keyCode = nativeEvent.keyCode
-            }
-            event.which = event.type === 'keypress' ? event.charCode : event.keyCode
-        }
-
-        function simulateMouseEvent(event, nativeEvent) {
-            simulateUIEvent(event, nativeEvent)
-            var _interface = "screenX,screenY,clientX,clientY,ctrlKey,shiftKey,altKey,metaKey"
-            _interface.replace(rword, function(name) {
-                event[name] = nativeEvent[name]
-            })
-            // Webkit, Firefox, IE9+
-            // which:  1 2 3
-            // button: 0 1 2 (standard)
-            var button = nativeEvent.button;
-            if ('which' in nativeEvent) {
-                event.which = button
-            } else {
-                // IE<9
-                // which:  undefined
-                // button: 0 0 0
-                // button: 1 4 2 (onmouseup)
-                event.which = button === 2 ? 2 : button === 4 ? 1 : 0;
-            }
-            if (!isFinite(event.pageX)) {
-                var target = event.target
-                var doc = target.ownerDocument || DOC
-                var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
-                event.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-                event.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
-            }
-        }
-
-        function simulateDragEvent(event, nativeEvent) {
-            simulateMouseEvent(event, nativeEvent)
-            event.dataTransfer = nativeEvent.dataTransfer
-        }
-    return EventPlugin
-})()
-//https://github.com/jquery/jquery-mousewheel/blob/master/jquery.mousewheel.js
-var WheelEventPlugin = (function() {
-    var dependencies = ('onwheel' in document || document.documentMode >= 9) ? ['wheel'] :
-        isEventSupported("mousewheel") ? ['mousewheel'] :
-        ['DomMouseScroll', 'MozMousePixelScroll']
-
-        function ajusetNumber(delta) {
-            return delta === 0 ? 0 : delta > 0 ? 120 : -120
-        }
-    var EventPlugin = {
-        name: "WheelEventPlugin",
-        eventTypes: {
-            mousewheel: {
-                dependencies: dependencies
-            },
-            wheel: {
-                dependencies: dependencies
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, orgEvent, uuids) {
-            if (dependencies.indexOf(topLevelType) === -1) {
-                return
-            }
-            var delta = 0
-            var deltaX = 0
-            var deltaY = 0
-            //从原始事件对象抽取有用信息
-            if ('detail' in orgEvent) {
-                deltaY = orgEvent.detail * -1;
-            }
-            if ('wheelDelta' in orgEvent) {
-                deltaY = orgEvent.wheelDelta;
-            }
-            if ('wheelDeltaY' in orgEvent) {
-                deltaY = orgEvent.wheelDeltaY;
-            }
-            if ('wheelDeltaX' in orgEvent) {
-                deltaX = orgEvent.wheelDeltaX * -1;
-            }
-
-            // Firefox < 17 horizontal scrolling related to DOMMouseScroll event
-            if ('axis' in orgEvent && orgEvent.axis === orgEvent.HORIZONTAL_AXIS) {
-                deltaX = deltaY * -1;
-                deltaY = 0;
-            }
-
-            // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
-            delta = deltaY === 0 ? deltaX : deltaY;
-
-            // 如果是wheel事件
-            if ('deltaY' in orgEvent) {
-                deltaY = orgEvent.deltaY * -1;
-                delta = deltaY;
-            }
-            if ('deltaX' in orgEvent) {
-                deltaX = orgEvent.deltaX;
-                if (deltaY === 0) {
-                    delta = deltaX * -1;
-                }
-            }
-            // 如果没有移动过，就立即返回
-            if (deltaY === 0 && deltaX === 0) {
-                return;
-            }
-
-            var event = eventFactory(orgEvent, topLevelType)
-
-            event.deltaX = ajusetNumber(deltaX)
-            event.deltaY = ajusetNumber(deltaY)
-            event.delta = ajusetNumber(delta)
-
-            collectDispatches(event, uuids) //收集回调
-            return event
-        }
-    }
-    return EventPlugin
-})()
-
-var ResponderEventPlugin = {
-    extractEvents: noop
-}
-var TapEventPlugin = (function() {
-    function isEndish(topLevelType) {
-        return topLevelType === "mouseup" ||
-            topLevelType === "touchend" ||
-            topLevelType === "touchcancel";
-    }
-
-    function isMoveish(topLevelType) {
-        return topLevelType === "mousemove" ||
-            topLevelType === "touchmove";
-    }
-
-    function isStartish(topLevelType) {
-        return topLevelType === "mousedown" ||
-            topLevelType === "touchstart";
-    }
-    var touchEvents = [
-        "touchstart",
-        "touchcanel",
-        "touchend",
-        "touchmove"
-    ]
-    /**
-     * Number of pixels that are tolerated in between a `touchStart` and `touchEnd`
-     * in order to still be considered a 'tap' event.
-     */
-    var tapMoveThreshold = 10;
-    var startCoords = {
-        x: null,
-        y: null
-    };
-    var Axis = {
-        x: {
-            page: 'pageX',
-            client: 'clientX',
-            envScroll: 'scrollLeft'
-        },
-        y: {
-            page: 'pageY',
-            client: 'clientY',
-            envScroll: 'scrollTop'
-        }
-    };
-    var extractSingleTouch = function(nativeEvent) {
-        var touches = nativeEvent.touches;
-        var changedTouches = nativeEvent.changedTouches;
-        var hasTouches = touches && touches.length > 0;
-        var hasChangedTouches = changedTouches && changedTouches.length > 0;
-
-        return !hasTouches && hasChangedTouches ? changedTouches[0] :
-            hasTouches ? touches[0] :
-            nativeEvent;
-    }
-
-        function getAxisCoordOfEvent(axis, nativeEvent) {
-            var singleTouch = extractSingleTouch(nativeEvent);
-            if (singleTouch) {
-                return singleTouch[axis.page];
-            }
-            return axis.page in nativeEvent ?
-                nativeEvent[axis.page] :
-                nativeEvent[axis.client] + root[axis.envScroll];
-        }
-
-        function getDistance(coords, nativeEvent) {
-            var pageX = getAxisCoordOfEvent(Axis.x, nativeEvent);
-            var pageY = getAxisCoordOfEvent(Axis.y, nativeEvent);
-            return Math.pow(
-                Math.pow(pageX - coords.x, 2) + Math.pow(pageY - coords.y, 2),
-                0.5
-            );
-        }
-    var usedTouch = false;
-    var usedTouchTime = 0;
-    var TOUCH_DELAY = 1000;
-    var EventPlugin = {
-        name: "TapEventPlugin",
-        tapMoveThreshold: tapMoveThreshold,
-        eventTypes: {
-            tap: {
-                dependencies: touchEvents.concat("mousedown", "mouseup", "mouseup")
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (!isStartish(topLevelType) && !isEndish(topLevelType)) {
-                return null;
-            }
-            // on ios, there is a delay after touch event and synthetic
-            // mouse events, so that user can perform double tap
-            // solution: ignore mouse events following touchevent within small timeframe
-            if (touchEvents.indexOf(topLevelType) !== -1) {
-                usedTouch = true;
-                usedTouchTime = new Date() - 0;
-            } else {
-                if (usedTouch && (new Date() - usedTouchTime < TOUCH_DELAY)) {
-                    return null;
-                }
-            }
-            var event = null;
-            var distance = getDistance(startCoords, nativeEvent);
-            if (isEndish(topLevelType) && distance < tapMoveThreshold) {
-                event = eventFactory(nativeEvent, "tap")
-            }
-            if (isStartish(topLevelType)) {
-                startCoords.x = getAxisCoordOfEvent(Axis.x, nativeEvent);
-                startCoords.y = getAxisCoordOfEvent(Axis.y, nativeEvent);
-            } else if (isEndish(topLevelType)) {
-                startCoords.x = 0;
-                startCoords.y = 0;
-            }
-            event && collectDispatches(event, uuids)
-
-            return event;
-        }
-    }
-    return EventPlugin
-})()
-var EnterLeaveEventPlugin = {
-    name: "EnterLeaveEventPlugin",
-    eventTypes: {
-        mouseenter: {
-            dependencies: [
-                "mouseout",
-                "mouseover"
-            ]
-        },
-        mouseleave: {
-            dependencies: [
-                "mouseout",
-                "mouseover"
-            ]
-        }
-    },
-    extractEvents: function(topLevelType, topLevelTarget, nativeEvent) {
-        if (topLevelType === "mouseout" || topLevelType === "mouseover") {
-
-            var related = nativeEvent.relatedTarget || (topLevelType === "mouseover" ?
-                nativeEvent.fromElement : nativeEvent.toElement)
-
-            if (!related || (related !== topLevelTarget && !avalon.contains(topLevelTarget, related))) {
-                var type = topLevelType === "mouseout" ? "mouseleave" : "mouseenter"
-                var id = getUid(topLevelTarget)
-                var listener = EventPluginHub.getListener(id, type)
-                if (listener && listener.length) {
-                    var event = eventFactory(nativeEvent, type)
-                    event._dispatchIDs = [id]
-                    event._dispatchListeners = listener
-                    return event
-                }
-            }
+            avalon.unbind(elem, eventType, removeFn)
         }
     }
 }
-//==================================
-var SubmitEventPlugin = (function() {
-    //IE6-8, submit事件只能冒泡到form元素
-    var dependencies = ["submit"]
-    if (IEVersion < 9) {
-        dependencies.push("click", "keypress")
-    }
-    var EventPlugin = {
-        name: "SubmitEventPlugin",
-        eventTypes: {
-            submit: {
-                dependencies: dependencies
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (dependencies.indexOf(topLevelType) === -1) {
-                return
-            }
-
-            var elementType = topLevelTarget.nodeName.toLowerCase()
-            if (elementType === 'input' || elementType === 'button') {
-                if (!topLevelTarget.form) {
-                    return
-                }
-                elementType = topLevelTarget.type
-            } else if (elementType !== "form") {
-                return
-            }
-
-            switch (elementType) {
-                case "reset":
-                case "hidden":
-                case "radio":
-                case "checkbox":
-                    return
-                case "button": //IE8-11 点击[button]可以触发submit,IE6,7不可以
-                case "submit":
-                    if (topLevelType === "keypress") {
-                        return
-                    }
-                    break
-                default:
-                    if (topLevelType !== "submit") {
-                        var which = nativeEvent.which || nativeEvent.keyCode
-                        if (which !== 13) {
-                            return
-                        }
-                    }
-            }
-            var event = eventFactory(nativeEvent, "submit")
-            collectDispatches(event, uuids) //收集回调
-            return event
-        }
-    }
-    return EventPlugin
-})()
-//==================================
-var ChangeEventPlugin = (function() {
-    var activeElement
-
-        function startWatchingForChangeEventIE(target) {
-            activeElement = target
-            activeElement.attachEvent('onchange', isChange);
-        }
-
-        function stopWatchingForChangeEventIE() {
-            if (!activeElement) {
-                return;
-            }
-            activeElement.detachEvent('onchange', isChange)
-        }
-
-        function isChange() {
-            if (activeElement) {
-                var hackEvent = DOC.createEventObject()
-                hackEvent.isChangeEvent = true
-                activeElement.fireEvent("ondatasetchanged", hackEvent)
-            }
-        }
-
-
-    var EventPlugin = {
-        name: "ChangeEventPlugin",
-        eventTypes: {
-            change: {
-                dependencies: [
-                    "blur",
-                    "change",
-                    "click",
-                    "focus",
-                    "datasetchanged"
-                ]
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            var elementType = topLevelTarget.nodeName.toLowerCase()
-            if (elementType === "select" || elementType === "textarea" || elementType === "input") {
-                if (elementType === "input") {
-                    elementType = topLevelTarget.type
-                }
-                var nativeType = nativeEvent.type
-                var isChange = false
-                switch (elementType) {
-                    case "button":
-                    case "submit":
-                    case "reset":
-                        return
-                    case "select":
-                    case "file":
-                        if (W3C) { //如果支持change事件冒泡
-                            isChange = nativeType === "change"
-                        } else {
-                            if (nativeType === "datasetchanged") {
-                                isChange = nativeEvent.isChangeEvent === true
-                            }
-                            // 这里的事件依次是 focus change click blur
-                            if (nativeType === "click") {
-                                stopWatchingForChangeEventIE()
-                                startWatchingForChangeEventIE(topLevelTarget)
-                            } else if (nativeType === "focusout") {
-                                stopWatchingForChangeEventIE()
-                            }
-                        }
-                        break
-                    case "radio":
-                    case "checkbox":
-                        if (nativeType === "focus" || nativeType === "focusin") {
-                            topLevelTarget.oldChecked = topLevelTarget.checked
-                        } else if (nativeType === "click") {
-                            if (topLevelTarget.oldChecked !== topLevelTarget.checked) {
-                                isChange = true
-                                topLevelTarget.oldChecked = topLevelTarget.checked
-                            }
-                        }
-                        break
-                    default: //其他控件的change事件需要在失去焦点时才触发
-                        if (W3C) { //如果支持change事件冒泡
-                            isChange = nativeType === "change"
-                        } else {
-                            if (topLevelType === "focus") {
-                                topLevelTarget.oldValue = topLevelTarget.value
-                            } else if (topLevelType === "blur") {
-                                if (topLevelTarget.oldValue !== topLevelTarget.value) {
-                                    isChange = topLevelTarget.oldValue !== void 0
-                                    topLevelTarget.oldValue = topLevelTarget.value
-                                }
-                            }
-                        }
-                        break
-                }
-                if (isChange) {
-                    var event = eventFactory(nativeEvent, "change")
-                    collectDispatches(event, uuids)
-                    return event
-                }
-            }
-        }
-    }
-    return EventPlugin
-})()
-
-
-
-/**
- * Same as document.activeElement but wraps in a try-catch block. In IE it is
- * not safe to call document.activeElement if there is nothing focused.
- *
- * The activeElement will be null only if the document body is not yet defined.
- */
-
-    function getActiveElement() /*?DOMElement*/ {
-        try {
-            return document.activeElement || document.body;
-        } catch (e) {
-            return document.body;
-        }
-    }
-
-var SelectEventPlugin = (function() {
-    var activeElement = null;
-    var lastSelection = null;
-    var mouseDown = false;
-    // Track whether a listener exists for this plugin. If none exist, we do
-    // not extract events.
-    var hasListener = false;
-
-    function getSelection(node) {
-        if ('selectionStart' in node) {
-            return {
-                start: node.selectionStart,
-                end: node.selectionEnd
-            };
-        } else if (window.getSelection) { //W3C
-            var selection = window.getSelection();
-            return {
-                anchorNode: selection.anchorNode,
-                anchorOffset: selection.anchorOffset,
-                focusNode: selection.focusNode,
-                focusOffset: selection.focusOffset
-            };
-        } else if (document.selection) { //IE6-8
-            var range = document.selection.createRange();
-            return {
-                parentElement: range.parentElement(),
-                text: range.text,
-                top: range.boundingTop,
-                left: range.boundingLeft
-            };
-        }
-    }
-
-    function shallowEqual(objA, objB) {
-        if (objA === objB) {
-            return true;
-        }
-        var key;
-        // Test for A's keys different from B.
-        for (key in objA) {
-            if (objA.hasOwnProperty(key) &&
-                (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
-                return false;
-            }
-        }
-        // Test for B's keys missing from A.
-        for (key in objB) {
-            if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function selectEventFactory(nativeEvent, uuids) {
-        // Ensure we have the right element, and that the user is not dragging a
-        // selection (this matches native `select` event behavior). In HTML5, select
-        // fires only on input and textarea thus if there's no focused element we
-        // won't dispatch.
-        if (mouseDown || activeElement == null || activeElement !== getActiveElement()) {
-            return null;
-        }
-        console.log(mouseDown)
-        // Only fire when selection has actually changed.
-        var currentSelection = getSelection(activeElement);
-        if (!lastSelection || !shallowEqual(lastSelection, currentSelection)) {
-            lastSelection = currentSelection
-            var event = eventFactory(nativeEvent, 'select')
-            event.target = activeElement;
-            collectDispatches(event, uuids)
-            return event
-        }
-    }
-    var EventPlugin = {
-        name: "SelectEventPlugin",
-        eventTypes: {
-            select: {
-                dependencies: [
-                    "blur",
-                    "contextmenu",
-                    "focus",
-                    "keydown",
-                    "mousedown",
-                    "mouseup",
-                    "dragend"
-                ]
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (!hasListener) {
-                return null;
-            }
-            switch (topLevelType) {
-                // Track the input node that has focus.
-                case "focus":
-                    var canSelected = topLevelTarget.contentEditable === 'true' ||
-                        isTextInputElement(topLevelTarget)
-                    if (canSelected) {
-                        activeElement = topLevelTarget
-                        lastSelection = null
-                    }
-                    break;
-                case "blur":
-                    activeElement = null
-                    lastSelection = null
-                    break;
-                    // Don't fire the event while the user is dragging. This matches the
-                    // semantics of the native select event.
-                case "mousedown":
-                    mouseDown = true;
-                    break;
-                case "contextmenu":
-                case "mouseup":
-                    mouseDown = false
-                    console.log("======")
-                    return selectEventFactory(nativeEvent, uuids)
-                case "dragend":
-                    return selectEventFactory(nativeEvent, uuids)
-            }
-        },
-        didPutListener: function(id, type) {
-            if (type === "select") {
-                hasListener = true;
-            }
-        }
-    }
-    return EventPlugin
-})()
-
-var supportedInputTypes = {
-    'color': true,
-    'date': true,
-    'datetime': true,
-    'datetime-local': true,
-    'email': true,
-    'month': true,
-    'number': true,
-    'password': true,
-    'range': true,
-    'search': true,
-    'tel': true,
-    'text': true,
-    'time': true,
-    'url': true,
-    'week': true
-};
-
-function isTextInputElement(elem) {
-    return elem && ((elem.nodeName === 'INPUT' ? supportedInputTypes[elem.type] : elem.nodeName === 'TEXTAREA'));
-}
-
-
-var InputEventPlugin = (function() {
-   
-
-    var setters = {}
-    var useTicker
-        function newSetter(val) {
-            setters[this.tagName].call(this, val)
-            if (this.msInputHack && val !== this.oldValue) {
-                fireDatasetChanged(this)
-            }
-        }
-
-        function msInputHack() {
-            if (this.parentNode) {
-                if (this.oldValue !== this.value) {
-                    fireDatasetChanged(this)
-                }
-            } else if (!this.msRetain) {
-                this.msInputHack = null
-                return false
-            }
-        }
-   
-    if (Object.getOwnPropertyDescriptor) {
-        try {
-            var aproto = HTMLInputElement.prototype
-            Object.getOwnPropertyNames(aproto) //故意引发IE6-8等浏览器报错
-            setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-            Object.defineProperty(aproto, "value", {
-                set: newSetter
-            })
-            var bproto = HTMLTextAreaElement.prototype
-            setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-            Object.defineProperty(bproto, "value", {
-                set: newSetter
-            })
-        } catch (e) {
-            avalon.log(e)
-            useTicker = true
-        }
-    }
-    var activeElement
-    function valueChange(e) {
-        if (e.propertyName === "value") {
-            fireDatasetChanged(activeElement)
-        }
-    }
-
-    function selectionChange() {
-        fireDatasetChanged(activeElement)
-    }
-
-    function fireDatasetChanged(elem) {
-        if (elem.oldValue === elem.value)
-            return
-        if (DOC.createEvent) {
-            var hackEvent = DOC.createEvent("Events");
-            hackEvent.initEvent("datasetchanged", true, true, {})
-            hackEvent.isInputEvent = true
-            elem.dispatchEvent(hackEvent)
-        } else {
-            hackEvent = DOC.createEventObject()
-            hackEvent.isInputEvent = true
-            elem.fireEvent("ondatasetchanged", hackEvent)
-        }
-    }
-    var composing = false
-    var EventPlugin = {
-        name: "InputEventPlugin",
-        eventTypes: {
-            input: {
-                dependencies: [
-                    "compositionstart",
-                    "compositionend",
-                    "input",
-                    "DOMAutoComplete",
-                    "focus",
-                    "blur",
-                    "keyup",
-                    "datasetchanged"
-                ]
-            }
-        },
-        extractEvents: function(topLevelType, topLevelTarget, nativeEvent, uuids) {
-            if (isTextInputElement(topLevelTarget)) {
-                var isValueChange = false
-                activeElement = topLevelTarget
-                switch (topLevelType) {
-                    case "compositionstart":
-                        composing = false
-                        break
-                    case "compositionend":
-                        composing = true
-                        break
-                    case "input":
-                    case "DOMAutoComplete":
-                        if (!composing) {
-                            isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
-                        }
-                        break
-                    case "datasetchanged":
-                        isValueChange = nativeEvent.isInputEvent
-                    case "keyup": //fix IE6-8
-                        isValueChange = topLevelTarget.oldValue !== topLevelTarget.value
-                        break
-                    case "focus":
-                    case "blur":
-                        if (IEVersion < 9) {
-                            //IE6-8下的onpropertychange近乎无敌，可以监听用户或程序做出的任何修改
-                            //但好像第一次修改时不会触发, 我们可以用keyup事件进行修正
-                            topLevelTarget.detachEvent("onpropertychange", valueChange)
-                            if (topLevelTarget.msFocus) {
-                                topLevelTarget.attachEvent("onpropertychange", valueChange)
-                            }
-                        } else if (IEVersion === 9) {
-                            //* 改变输入框内容的行为有多种，主要有：
-                            //1.键盘输入（可通过keyup事件处理，但有按键不一定有改变输入的行为）
-                            //2.鼠标拖拽（可通过dragend / drop事件处理）
-                            //3.剪切（可通过cut事件处理，剪切可以通过快捷键也可以通过浏览器菜单，所以keydown/keyup靠不住）
-                            //4.粘贴（可通过paste事件处理，粘贴可以通过快捷键也可以通过浏览器菜单，所以keydown/keyup靠不住）
-                            //5.删除（悲催，并没有一个delete事件，如果是按键来删除还好办，如果是通过上下文菜单来删除，IE9下，propertychange和input都不会触发）
-                            //* IE9的问题在于：
-                            //1. 按键BackSpace / 按键Delete / 拖拽 / 剪切 / 删除，不会触发propertychange和input事件
-                            //2. addEventListener绑定的propertychange事件无法监听任何改动
-                            //3. 无法监听中文输入改动
-                            //* 解决方法 
-                            //1. 使用attachEvent绑定propertychange事件，但还是个残缺品，依然无法处理问题1, 3
-                            //2. 使用document的selectionchange事件，注意它的target, srcElement永远是document
-                            //   因此需要在focus时绑定，blur时移除，才能区分该selectionchange事件是当前元素触发的 
-                            DOC.removeEventListener("selectionchange", selectionChange, false)
-                            if (topLevelTarget.msFocus) {
-                                DOC.addEventListener("selectionchange", selectionChange, false)
-                            }
-                        }
-                        break
-                }
-                if (isValueChange) {
-                    var event = eventFactory(nativeEvent, "input")
-                    collectDispatches(event, uuids)
-                    topLevelTarget.oldValue = topLevelTarget.value
-                    return event
-                }
-            }
-        },
-        didPutListener: function(id) {
-            var element = getNode(id)
-            if (isTextInputElement(element)) {
-                if (useTicker) {
-                    element.oldValue = element.value
-                    element.msInputHack = msInputHack
-                    avalon.tick(element.msInputHack)
-                } else {//IE9+ chrome43+ firefox30+
-        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
-        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-                    element.msInputHack = true
-                    avalon.log("使用Object.defineProperty重写element.value")
-                }
-            }
-        },
-        willDeleteListener: function(id, type, fn) {
-            var pool = callbackPool[type]
-            var arr = pool && pool[id]
-            if (!fn || !arr || (arr.length === 1 && pool[0] === fn)) {
-                var element = getNode(id) || {}
-                if (element.msInputHack === true) {
-                    delete element.msInputHack
-                } else if (element.msInputHack === msInputHack) {
-                    avalon.Array.remove(ribbon, msInputHack)
-                    element.msInputHack = void 0
-                }
-            }
-        }
-    }
-
-    return EventPlugin
-})()
-var AnalyticsEventPlugin = ResponderEventPlugin
-
-var EventPluginRegistry = {
-    registrationNameModules: {},
-    plugins: [
-        ResponderEventPlugin,
-        SimpleEventPlugin,
-        SubmitEventPlugin,
-        WheelEventPlugin,
-        TapEventPlugin,
-        EnterLeaveEventPlugin,
-        ChangeEventPlugin,
-        SelectEventPlugin,
-        InputEventPlugin,
-        AnalyticsEventPlugin
-    ]
-}
-
-var getPluginByEventType = (function() {
-    var type2plugin = {}
-    for (var i = 0, plugin; plugin = EventPluginRegistry.plugins[i++];) {
-        for (var e in plugin.eventTypes) {
-            type2plugin[e] = plugin
-        }
-    }
-    avalon.log(type2plugin)
-    return function(type) {
-        return type2plugin[type]
-    }
-})()
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
     parseExprProxy(data.value, vmodels, data, 0, 1)
+    data.proxies = []
     var freturn = false
     try {
         var $repeat = data.$repeat = data.evaluator.apply(0, data.args || [])
@@ -4755,21 +3494,10 @@ bindingHandlers.repeat = function (data, vmodels) {
     var check0 = "$key"
     var check1 = "$val"
     if (Array.isArray($repeat)) {
-        if (!$repeat.$map) {
-            $repeat.$map = {
-                el: 1
-            }
-            var m = $repeat.length
-            var $proxy = []
-            for (i = 0; i < m; i++) {//生成代理VM
-                $proxy.push(eachProxyAgent(i, $repeat))
-            }
-            $repeat.$proxy = $proxy
-        }
-        $repeat.$map[data.param || "el"] = 1
         check0 = "$first"
         check1 = "$last"
     }
+
     for (i = 0; v = vmodels[i++]; ) {
         if (v.hasOwnProperty(check0) && v.hasOwnProperty(check1)) {
             data.$outer = v
@@ -4789,20 +3517,24 @@ bindingHandlers.repeat = function (data, vmodels) {
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
+    if (!method && this.$with) {
+        method = "append"
+        var flag = "update"
+    }
     if (method) {
         var data = this, start, fragment
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
+        var proxies = data.proxies
         var transation = avalonFragment.cloneNode(false)
         switch (method) {
             case "add": //在pos位置后添加el数组（pos为插入位置,el为要插入的个数）
                 var n = pos + el
                 var fragments = []
-                var array = data.$repeat
                 for (var i = pos; i < n; i++) {
-                    var proxy = array.$proxy[i]
-                    proxy.$outer = data.$outer
+                    var proxy = eachProxyAgent(i, data)
+                    proxies.splice(i, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
                 var now = new Date() - 0
@@ -4811,20 +3543,26 @@ bindingExecutors.repeat = function (method, pos, el) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
-                if(avalon.optimize === now){
-                    delete avalon.optimize
+                if (avalon.optimize === now) {
+                    avalon.optimize = null
                 }
                 parent.insertBefore(transation, comments[pos] || end)
-                avalon.profile("插入操作花费了 "+ (new Date - now))
+                avalon.profile("插入操作花费了 " + (new Date - now))
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
                 sweepNodes(comments[pos], comments[pos + el] || end)
+                var removed = proxies.splice(pos, el)
+                recycleProxies(removed, "each")
                 break
             case "clear":
                 start = comments[0]
                 if (start) {
                     sweepNodes(start, end)
+                    if (data.$with) {
+                        parent.insertBefore(start, end)
+                    }
                 }
+                recycleProxies(proxies, "each")
                 break
             case "move":
                 start = comments[0]
@@ -4841,6 +3579,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                         }
                     })
                     sortByIndex(rooms, pos)
+                    sortByIndex(proxies, pos)
                     while (room = rooms.shift()) {
                         while (node = room.shift()) {
                             transation.appendChild(node)
@@ -4849,66 +3588,138 @@ bindingExecutors.repeat = function (method, pos, el) {
                     parent.insertBefore(transation, end)
                 }
                 break
+            case "index": //将proxies中的第pos个起的所有元素重新索引
+                var last = proxies.length - 1
+                for (; el = proxies[pos]; pos++) {
+                    el.$index = pos
+                    el.$first = pos === 0
+                    el.$last = pos === last
+                }
+                return
+            case "set": //将proxies中的第pos个元素的VM设置为el（pos为数字，el任意）
+                proxy = proxies[pos]
+                if (proxy) {
+                    fireDependencies(proxy.$events[data.param || "el"])
+                }
+                break
             case "append":
-                var object = pos //原来第2参数， 被循环对象
-                var pool = object.$proxy   //代理对象组成的hash
+                var object = data.$repeat //原来第2参数， 被循环对象
+                var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
-                fragments = []
-                for (var key in pool) {
-                    if (!object.hasOwnProperty(key)) {
-                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
-                        delete(pool[key])
+                now = new Date() - 0
+                avalon.optimize = avalon.optimize || now
+                if (flag === "update") {
+                    if (!data.evaluator) {
+                        parseExprProxy(data.value, data.vmodels, data, 0, 1)
+                    }
+                    object = data.$repeat = data.evaluator.apply(0, data.args || [])
+                    object.$proxy = oldProxy 
+                }
+                var pool = object.$proxy || {}
+                removed = []
+                var nodes = data.element.parentNode.childNodes
+                var add = false
+                for (i = 0; node = nodes[i++]; ) {
+                    if (node.nodeValue === data.signature) {
+                        add = true
+                    } else if (node.nodeValue === data.signature + ":end") {
+                        add = false
+                    }
+                    if (add) {
+                        removed.push(node)
                     }
                 }
-                for (key in object) { //得到所有键名
+
+                var indexNode = [], item
+                var keyIndex = data.keyIndex || (data.keyIndex = {})
+                //将现有的节点全部移出DOM树
+                for ( i = 0; i < removed.length; i++) {
+                    el = removed[i]
+                    if (el.nodeValue === data.signature) {
+                        item = avalonFragment.cloneNode(false)
+                        indexNode.push(item)
+                    }
+                    item.appendChild(el)
+                }
+
+
+                for (var key in object) { //当前对象的所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
                     }
                 }
-                if (data.sortedCallback) { //如果有回调，则让它们排序
-                    var keys2 = data.sortedCallback.call(parent, keys)
-                    if (keys2 && Array.isArray(keys2) && keys2.length) {
-                        keys = keys2
+
+                for (var i = 0; key = keys[i++]; ) {
+                    if (!pool.hasOwnProperty(key)) {//添加缺失的代理VM
+                        pool[key] = withProxyAgent(pool[key], key, data)
+                    } else {
+                        pool[key].$val = object[key]
                     }
                 }
 
-                for (i = 0; key = keys[i++]; ) {
-                    if (key !== "hasOwnProperty") {
-                        pool[key] = withProxyAgent(pool[key], key, data)
+                for ( key in pool) {
+                    if (keys.indexOf(key) === -1) {//删除没用的代理VM
+                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
+                        delete pool[key]
+                    }
+                }
+                var fragments = []
+                var renderKeys = keys //需要渲染到DOM树去的键名
+                var end = data.element
+                if (data.sortedCallback) { //如果有回调，则让它们排序
+                    var keys2 = data.sortedCallback.call(parent, keys)
+                    if (keys2 && Array.isArray(keys2)) {
+                        renderKeys = keys2
+                    }
+                }
+
+                for (i = 0; i < renderKeys.length; i++) {
+                    key = renderKeys[i]
+                    if (typeof keyIndex[key] === "number") {
+                        transation.appendChild(indexNode[keyIndex[key]])
+                        fragments.push({})
+                    } else {
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
 
-                parent.insertBefore(transation, end)
-                for (i = 0; fragment = fragments[i++]; ) {
-                    scanNodeArray(fragment.nodes, fragment.vmodels)
-                    fragment.nodes = fragment.vmodels = null
+                for (i = 0; i < renderKeys.length; i++) {
+                    keyIndex[renderKeys[i]] = i
                 }
+
+                for (i = 0; fragment = fragments[i++]; ) {
+                    if (fragment.nodes) {
+                        scanNodeArray(fragment.nodes, fragment.vmodels)
+                        fragment.nodes = fragment.vmodels = null
+                    }
+                }
+                if (avalon.optimize === now) {
+                    avalon.optimize = null
+                }
+                parent.insertBefore(transation, end)
+                avalon.profile("插入操作花费了 " + (new Date - now))
                 break
         }
+        if (!data.$repeat || data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
+            return
         if (method === "clear")
             method = "del"
         var callback = data.renderedCallback || noop,
                 args = arguments
-        checkScan(parent, function () {
-            callback.apply(parent, args)
-            if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
-                avalon(parent).val(parent.oldValue.split(","))
-            }
-        }, NaN)
+        if (parent.oldValue && parent.tagName === "SELECT") { //fix #503
+            avalon(parent).val(parent.oldValue.split(","))
+        }
+        callback.apply(parent, args)
     }
 }
-
 "with,each".replace(rword, function (name) {
     bindingHandlers[name] = bindingHandlers.repeat
 })
-avalon.pool = eachProxyPool
+
 function shimController(data, transation, proxy, fragments) {
     var content = data.template.cloneNode(true)
     var nodes = avalon.slice(content.childNodes)
-    if (!data.$with) {
-        content.insertBefore(DOC.createComment(data.signature), content.firstChild)
-    }
+    content.insertBefore(DOC.createComment(data.signature), content.firstChild)
     transation.appendChild(content)
     var nv = [proxy].concat(data.vmodels)
     var fragment = {
@@ -4919,17 +3730,16 @@ function shimController(data, transation, proxy, fragments) {
 }
 
 function getComments(data) {
-    var end = data.element
-    var signature = end.nodeValue.replace(":end", "")
-    var node = end.previousSibling
-    var array = []
-    while (node) {
-        if (node.nodeValue === signature) {
-            array.unshift(node)
+    var ret = []
+    var nodes = data.element.parentNode.childNodes
+    for(var i= 0, node; node = nodes[i++];){
+        if(node.nodeValue === data.signature){
+            ret.push( node )
+        }else if(node.nodeValue === data.signature+":end"){
+            break
         }
-        node = node.previousSibling
     }
-    return array
+    return ret
 }
 
 
@@ -4975,6 +3785,8 @@ function withProxyAgent(proxy, key, data) {
     proxy = proxy || withProxyPool.pop()
     if (!proxy) {
         proxy = withProxyFactory()
+    } else {
+        proxy.$reinitialize()
     }
     var host = data.$repeat
     proxy.$key = key
@@ -4988,12 +3800,86 @@ function withProxyAgent(proxy, key, data) {
     return proxy
 }
 
+
+function  recycleProxies(proxies) {
+    eachProxyRecycler(proxies)
+}
 function eachProxyRecycler(proxies) {
     proxies.forEach(function (proxy) {
         proxyRecycler(proxy, eachProxyPool)
     })
     proxies.length = 0
 }
+
+
+var eachProxyPool = []
+function eachProxyFactory(name) {
+    var source = {
+        $host: [],
+        $outer: {},
+        $index: 0,
+        $first: false,
+        $last: false,
+        $remove: avalon.noop
+    }
+    source[name] = {
+        get: function () {
+            var e = this.$events
+            var array = e.$index
+            e.$index = e[name] //#817 通过$index为el收集依赖
+            try {
+                return this.$host[this.$index]
+            } finally {
+                e.$index = array
+            }
+        },
+        set: function (val) {
+            try {
+                var e = this.$events
+                var array = e.$index
+                e.$index = []
+                this.$host.set(this.$index, val)
+            } finally {
+                e.$index = array
+            }
+        }
+    }
+    var second = {
+        $last: 1,
+        $first: 1,
+        $index: 1
+    }
+    var proxy = modelFactory(source, second)
+    proxy.$id = generateID("$proxy$each")
+    return proxy
+}
+
+function eachProxyAgent(index, data) {
+    var param = data.param || "el",
+            proxy
+    for (var i = 0, n = eachProxyPool.length; i < n; i++) {
+        var candidate = eachProxyPool[i]
+        if (candidate && candidate.hasOwnProperty(param)) {
+            proxy = candidate
+            eachProxyPool.splice(i, 1)
+        }
+    }
+    if (!proxy) {
+        proxy = eachProxyFactory(param)
+    }
+    var host = data.$repeat
+    var last = host.length - 1
+    proxy.$index = index
+    proxy.$first = index === 0
+    proxy.$last = index === last
+    proxy.$host = host
+    proxy.$outer = data.$outer
+    proxy.$remove = function () {
+        return host.removeAt(proxy.$index)
+    }
+    return proxy
+}
+
 
 function proxyRecycler(proxy, proxyPool) {
     for (var i in proxy.$events) {
@@ -5045,19 +3931,10 @@ function parseDisplay(nodeName, val) {
 avalon.parseDisplay = parseDisplay
 
 bindingHandlers.visible = function(data, vmodels) {
-    var elem = avalon(data.element)
-    var display = elem.css("display")
-    if (display === "none") {
-        var style = elem[0].style
-        var has = /visibility/i.test(style.cssText)
-        var visible = elem.css("visibility")
-        style.display = ""
-        style.visibility = "hidden"
-        display = elem.css("display")
-        if (display === "none") {
-            display = parseDisplay(elem[0].nodeName)
-        }
-        style.visibility = has ? visible : ""
+    var elem = data.element
+    var display = elem.style.display
+    if(display === "none"){
+        display = parseDisplay(elem.nodeName)
     }
     data.display = display
     parseExprProxy(data.value, vmodels, data)
@@ -6166,3 +5043,316 @@ avalon.config({
 avalon.ready(function () {
     avalon.scan(DOC.body)
 })
+new function() {// jshint ignore:line
+    // http://www.cnblogs.com/yexiaochai/p/3462657.html
+    var ua = navigator.userAgent
+    var isAndroid = ua.indexOf("Android") > 0
+    var isIOS = /iP(ad|hone|od)/.test(ua)
+    var me = bindingHandlers.on
+    var touchProxy = {}
+
+    var IE11touch = navigator.pointerEnabled
+    var IE9_10touch = navigator.msPointerEnabled
+    var w3ctouch = (function() {
+        var supported = isIOS || false
+        //http://stackoverflow.com/questions/5713393/creating-and-firing-touch-events-on-a-touch-enabled-browser
+        try {
+            var div = document.createElement("div")
+            div.ontouchstart = function() {
+                supported = true
+            }
+            var e = document.createEvent("TouchEvent")
+            e.initUIEvent("touchstart", true, true)
+            div.dispatchEvent(e)
+        } catch (err) {
+        }
+        div = div.ontouchstart = null
+        return supported
+    })()
+    var touchSupported = !!(w3ctouch || IE11touch || IE9_10touch)
+    //合成做成触屏事件所需要的各种原生事件
+    var touchNames = ["mousedown", "mousemove", "mouseup", ""]
+    if (w3ctouch) {
+        touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
+    } else if (IE11touch) {
+        touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
+    } else if (IE9_10touch) {
+        touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
+    }
+    function isPrimaryTouch(event){
+        return (event.pointerType === 'touch' || event.pointerType === event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
+    }
+
+    function isPointerEventType(e, type){
+        return (e.type === 'pointer'+type || e.type.toLowerCase() === 'mspointer'+type)
+    }
+
+    var touchTimeout, longTapTimeout
+    //判定滑动方向
+    function swipeDirection(x1, x2, y1, y2) {
+        return Math.abs(x1 - x2) >=
+                Math.abs(y1 - y2) ? (x1 - x2 > 0 ? "left" : "right") : (y1 - y2 > 0 ? "up" : "down")
+    }
+    function getCoordinates(event) {
+        var touches = event.touches && event.touches.length ? event.touches : [event];
+        var e = event.changedTouches ? event.changedTouches[0] : touches[0]
+        return {
+            x: e.clientX,
+            y: e.clientY
+        }
+    }
+    function fireEvent(el, name, detail) {
+        var event = document.createEvent("Events")
+        event.initEvent(name, true, true)
+        event.fireByAvalon = true//签名，标记事件是由avalon触发
+        //event.isTrusted = false 设置这个opera会报错
+        if (detail)
+            event.detail = detail
+        el.dispatchEvent(event)
+    }
+    function onMouse(event) { 
+        if (event.fireByAvalon) { 
+            return true
+        }
+        if (touchProxy.element && event.target.tagName.toLowerCase()!=='select') { // 如果是pc端,不判断touchProxy.element的话此监听函数先触发的话之后所有的事件都不能正常触发
+            if (event.stopImmediatePropagation) {
+                event.stopImmediatePropagation()
+            } else {
+                event.propagationStopped = true
+            }
+            event.stopPropagation() 
+            event.preventDefault()
+            if (event.type === 'click') {
+                touchProxy.element = null
+            }
+        }
+    }
+    function cancelLongTap() {
+        if (longTapTimeout) clearTimeout(longTapTimeout)
+        longTapTimeout = null
+    }
+    function touchstart(event) {
+        var _isPointerType = isPointerEventType(event, 'down'),
+            firstTouch = _isPointerType ? event : (event.touches && event.touches[0] || event),
+            element = 'tagName' in firstTouch.target ? firstTouch.target: firstTouch.target.parentNode,
+            now = Date.now(),
+            delta = now - (touchProxy.last || now)
+        if (_isPointerType && !isPrimaryTouch(event)) return
+        avalon.mix(touchProxy, getCoordinates(event))
+        touchProxy.mx = 0
+        touchProxy.my = 0
+        if (delta > 0 && delta <= 250) {
+            touchProxy.isDoubleTap = true
+        }
+        touchProxy.last = now
+        touchProxy.element = element
+        /*
+            当触发hold和longtap事件时会触发touchcancel事件，从而阻止touchend事件的触发，继而保证在同时绑定tap和hold(longtap)事件时只触发其中一个事件
+        */
+        avalon(element).addClass(fastclick.activeClass)
+        longTapTimeout = setTimeout(function() {
+            longTapTimeout = null
+            fireEvent(element, "hold")
+            fireEvent(element, "longtap")
+            touchProxy = {}
+            avalon(element).removeClass(fastclick.activeClass)
+        }, fastclick.clickDuration)
+        return true
+    }
+    function touchmove(event) {
+        var _isPointerType = isPointerEventType(event, 'down'),
+            e = getCoordinates(event)
+        /*
+            android下某些浏览器触发了touchmove事件的话touchend事件不触发，禁用touchmove可以解决此bug
+            http://stackoverflow.com/questions/14486804/understanding-touch-events
+        */
+        if (isAndroid && Math.abs(touchProxy.x - e.x) > 10) {
+            event.preventDefault()
+        }
+        if (_isPointerType && !isPrimaryTouch(event)) return
+          
+        cancelLongTap()
+        touchProxy.mx += Math.abs(touchProxy.x - e.x)
+        touchProxy.my += Math.abs(touchProxy.y - e.y)
+    }
+    function touchend(event) { 
+        var _isPointerType = isPointerEventType(event, 'down')
+            element = touchProxy.element
+
+        if (_isPointerType && !isPrimaryTouch(event)) return
+
+        if (!element) { // longtap|hold触发后touchProxy为{}
+            return
+        }
+        cancelLongTap()
+        var e = getCoordinates(event)
+        var totalX = Math.abs(touchProxy.x - e.x)
+        var totalY = Math.abs(touchProxy.y - e.y)
+        if (totalX > 30 || totalY > 30) {
+            //如果用户滑动的距离有点大，就认为是swipe事件
+            var direction = swipeDirection(touchProxy.x, e.x, touchProxy.y, e.y)
+            var details = {
+                direction: direction
+            }
+            fireEvent(element, "swipe", details)
+            fireEvent(element, "swipe" + direction, details)
+            avalon(element).removeClass(fastclick.activeClass)
+            touchProxy = {}
+            touchProxy.element = element
+        } else {
+            if (fastclick.canClick(element) && touchProxy.mx < fastclick.dragDistance && touchProxy.my < fastclick.dragDistance) {
+                // 失去焦点的处理
+                if (document.activeElement && document.activeElement !== element) {
+                    document.activeElement.blur()
+                }
+                //如果此元素不为表单元素,或者它没有disabled
+                var forElement
+                if (element.tagName.toLowerCase() === "label") {
+                    forElement = element.htmlFor ? document.getElementById(element.htmlFor) : null
+                }
+                if (forElement) {
+                    fastclick.focus(forElement)
+                } else {
+                    fastclick.focus(element)
+                }
+                if (event.target.tagName.toLowerCase() !== 'select') { //select无法通过click或者focus事件触发其下拉款的显示，只能让其通过原生的方式触发
+                    event.preventDefault()
+                }
+                fireEvent(element, 'tap')
+                avalon.fastclick.fireEvent(element, "click", event)
+                avalon(element).removeClass(fastclick.activeClass)
+                if (touchProxy.isDoubleTap) {
+                    fireEvent(element, "doubletap")
+                    avalon.fastclick.fireEvent(element, "dblclick", event)
+                    touchProxy = {}
+                    avalon(element).removeClass(fastclick.activeClass)
+                    touchProxy.element = element
+                } else {
+                    touchTimeout = setTimeout(function() {
+                        clearTimeout(touchTimeout)
+                        touchTimeout = null
+                        touchProxy = {}
+                        avalon(element).removeClass(fastclick.activeClass)
+                        touchProxy.element = element
+                    }, 250)
+                }
+            }
+        }
+    }
+    document.addEventListener('mousedown', onMouse, true)
+    document.addEventListener('click', onMouse, true)
+    document.addEventListener(touchNames[0], touchstart)
+    document.addEventListener(touchNames[1], touchmove)
+    document.addEventListener(touchNames[2], touchend)
+    if (touchNames[3]) {
+        document.addEventListener(touchNames[3], function(event) {
+            if (longTapTimeout) clearTimeout(longTapTimeout)
+            if (touchTimeout) clearTimeout(touchTimeout)
+            longTapTimeout = touchTimeout = null
+            touchProxy = {}
+        })
+    }
+    //fastclick只要是处理移动端点击存在300ms延迟的问题
+    //这是苹果乱搞异致的，他们想在小屏幕设备上通过快速点击两次，将放大了的网页缩放至原始比例。
+    var fastclick = avalon.fastclick = {
+        activeClass: "ms-click-active",
+        clickDuration: 750, //小于750ms是点击，长于它是长按或拖动
+        dragDistance: 30, //最大移动的距离
+        fireEvent: function(element, type, event) {
+            var clickEvent = document.createEvent("MouseEvents")
+            clickEvent.initMouseEvent(type, true, true, window, 1, event.screenX, event.screenY,
+                    event.clientX, event.clientY, false, false, false, false, 0, null)
+            Object.defineProperty(clickEvent, "fireByAvalon", {
+                value: true
+            })
+            element.dispatchEvent(clickEvent)
+        },
+        focus: function(target) {
+            if (this.canFocus(target)) {
+                //https://github.com/RubyLouvre/avalon/issues/254
+                var value = target.value
+                target.value = value
+                if (isIOS && target.setSelectionRange && target.type.indexOf("date") !== 0 && target.type !== 'time') {
+                    // iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
+                    var n = value.length
+                    target.setSelectionRange(n, n)
+                } else {
+                    target.focus()
+                }
+            }
+        },
+        canClick: function(target) {
+            switch (target.nodeName.toLowerCase()) {
+                case "textarea":
+                case "select":
+                case "input":
+                    return !target.disabled
+                default:
+                    return true
+            }
+        },
+        canFocus: function(target) {
+            switch (target.nodeName.toLowerCase()) {
+                case "textarea":
+                    return true;
+                case "select":
+                    return !isAndroid
+                case "input":
+                    switch (target.type) {
+                        case "button":
+                        case "checkbox":
+                        case "file":
+                        case "image":
+                        case "radio":
+                        case "submit":
+                            return false
+                    }
+                    // No point in attempting to focus disabled inputs
+                    return !target.disabled && !target.readOnly
+                default:
+                    return false
+            }
+        }
+    };
+
+
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "dblclick", "longtap", "hold"].forEach(function(method) {
+        me[method + "Hook"] = me["clickHook"]
+    })
+
+    //各种摸屏事件的示意图 http://quojs.tapquo.com/  http://touch.code.baidu.com/
+}// jshint ignore:line
+
+// Register as a named AMD module, since avalon can be concatenated with other
+// files that may use define, but not via a proper concatenation script that
+// understands anonymous AMD modules. A named AMD is safest and most robust
+// way to register. Lowercase avalon is used because AMD module names are
+// derived from file names, and Avalon is normally delivered in a lowercase
+// file name. Do this after creating the global so that if an AMD module wants
+// to call noConflict to hide this version of avalon, it will work.
+
+// Note that for maximum portability, libraries that are not avalon should
+// declare themselves as anonymous modules, and avoid setting a global if an
+// AMD loader is present. avalon is a special case. For more information, see
+// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
+    if (typeof define === "function" && define.amd) {
+        define("avalon", [], function() {
+            return avalon
+        })
+    }
+// Map over avalon in case of overwrite
+    var _avalon = window.avalon
+    avalon.noConflict = function(deep) {
+        if (deep && window.avalon === avalon) {
+            window.avalon = _avalon
+        }
+        return avalon
+    }
+// Expose avalon identifiers, even in AMD
+// and CommonJS for browser emulators
+    if (noGlobal === void 0) {
+        window.avalon = avalon
+    }
+    return avalon
+
+}));

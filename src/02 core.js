@@ -194,46 +194,40 @@ avalon.mix({
     },
     eventHooks: [],
     /*绑定事件*/
-    bind: function (el, type, fn, phase) {
+    bind: function(el, type, fn, phase) {
         var hooks = avalon.eventHooks
-        var data = {
-            el: el,
-            type: type,
-            origType: type,
-            fn: fn,
-            phase: !!phase
-        }
-        for (var i = 0, hook; hook = hooks[i++]; ) {
-            if (hook.match(type) && hook.on) {
-                hook.on(data)
+        var hook = hooks[type]
+        if (typeof hook === "object") {
+            type = hook.type
+            if (hook.deel) {
+                 fn = hook.deel(el, type, fn, phase)
             }
         }
-        if (W3C) {
-            el.addEventListener(data.type, data.fn, data.phase)
-        } else {
-            el.attachEvent("on" + data.type, data.fn)
+        var callback = W3C ? fn : function(e) {
+            fn.call(el, fixEvent(e));
         }
-        return data.fn
+        if (W3C) {
+            el.addEventListener(type, callback, !!phase)
+        } else {
+            el.attachEvent("on" + type, callback)
+        }
+        return callback
     },
     /*卸载事件*/
-    unbind: function (el, type, fn, phase) {
+    unbind: function(el, type, fn, phase) {
         var hooks = avalon.eventHooks
-        var data = {
-            el: el,
-            type: type,
-            origType: type,
-            fn: fn || noop,
-            phase: !!phase
-        }
-        for (var i = 0, hook; hook = hooks[i++]; ) {
-            if (hook.match(type) && hook.off) {
-                hook.off(data)
+        var hook = hooks[type]
+        var callback = fn || noop
+        if (typeof hook === "object") {
+            type = hook.type
+            if (hook.deel) {
+                fn = hook.deel(el, type, fn, false)
             }
         }
         if (W3C) {
-            el.removeEventListener(data.type, data.fn, data.phase)
+            el.removeEventListener(type, callback, !!phase)
         } else {
-            el.detachEvent("on" + data.type, data.fn)
+            el.detachEvent("on" + type, callback)
         }
     },
     /*读写删除元素节点的样式*/
