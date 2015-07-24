@@ -1,37 +1,20 @@
 new function() {// jshint ignore:line
-    // http://www.cnblogs.com/yexiaochai/p/3462657.html
-    var ua = navigator.userAgent
-    var isAndroid = ua.indexOf("Android") > 0
-    var isIOS = /iP(ad|hone|od)/.test(ua)
-    var me = bindingHandlers.on
     var touchProxy = {}
-
-    var IE11touch = navigator.pointerEnabled
-    var IE9_10touch = navigator.msPointerEnabled
-    var w3ctouch = (function() {
-        var supported = isIOS || false
-        //http://stackoverflow.com/questions/5713393/creating-and-firing-touch-events-on-a-touch-enabled-browser
-        try {
-            var div = document.createElement("div")
-            div.ontouchstart = function() {
-                supported = true
-            }
-            var e = document.createEvent("TouchEvent")
-            e.initUIEvent("touchstart", true, true)
-            div.dispatchEvent(e)
-        } catch (err) {
-        }
-        div = div.ontouchstart = null
-        return supported
-    })()
-    var touchSupported = !!(w3ctouch || IE11touch || IE9_10touch)
+    var IEtouch = navigator.pointerEnabled
+    var IEMStouch = navigator.msPointerEnabled
+    var isAndroid = navigator.userAgent.indexOf("Android") > 0
     //合成做成触屏事件所需要的各种原生事件
-    var touchNames = ["mousedown", "mousemove", "mouseup", ""]
-    if (w3ctouch) {
-        touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
-    } else if (IE11touch) {
+    var touchNames = ["touchstart", "touchmove", "touchend", "touchcancel"]
+    var touchTimeout = null
+    var longTapTimeout = null
+    var dragDistance = 30
+    var clickDuration = 750 //小于750ms是点击，长于它是长按或拖动
+    var me = bindingHandlers.on
+
+    if (IEtouch) {
         touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
-    } else if (IE9_10touch) {
+    } 
+    if (IEMStouch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
     function isPrimaryTouch(event){
@@ -42,46 +25,35 @@ new function() {// jshint ignore:line
         return (e.type === 'pointer'+type || e.type.toLowerCase() === 'mspointer'+type)
     }
 
-    var touchTimeout, longTapTimeout
     //判定滑动方向
     function swipeDirection(x1, x2, y1, y2) {
         return Math.abs(x1 - x2) >=
                 Math.abs(y1 - y2) ? (x1 - x2 > 0 ? "left" : "right") : (y1 - y2 > 0 ? "up" : "down")
     }
-    function getCoordinates(event) {
-        var touches = event.touches && event.touches.length ? event.touches : [event];
-        var e = event.changedTouches ? event.changedTouches[0] : touches[0]
-        return {
-            x: e.clientX,
-            y: e.clientY
-        }
-    }
+
     function fireEvent(el, name, detail) {
         var event = document.createEvent("Events")
         event.initEvent(name, true, true)
-        event.fireByAvalon = true//签名，标记事件是由avalon触发
-        //event.isTrusted = false 设置这个opera会报错
-        if (detail)
+        if (detail) {
             event.detail = detail
+        }
         el.dispatchEvent(event)
     }
+
     function onMouse(event) { 
-        if (event.fireByAvalon) { 
-            return true
-        }
-        if (touchProxy.element && event.target.tagName.toLowerCase()!=='select') { // 如果是pc端,不判断touchProxy.element的话此监听函数先触发的话之后所有的事件都不能正常触发
+        var target = event.target,
+            element = touchProxy.element
+
+        if (element !== target) {
+            if (target.tagName.toLowerCase() === 'input' && element.tagName.toLowerCase() === "label") {
+                return false
+            }
             if (event.stopImmediatePropagation) {
                 event.stopImmediatePropagation()
             } else {
                 event.propagationStopped = true
             }
             event.stopPropagation() 
-            if (event.type === 'click') {
-                touchProxy.element = null
-                if (event.target.tagName.toLowerCase() === 'input') { // 当点击label的时候浏览器会默认触发input的click事件，从而控制ipnut的状态，如果不做判断全部阻止的话这种默认行为就会失效
-                    return false
-                }
-            } 
             event.preventDefault()
         }
     }
@@ -90,110 +62,91 @@ new function() {// jshint ignore:line
         longTapTimeout = null
     }
     function touchstart(event) {
-        var _isPointerType = isPointerEventType(event, 'down'),
-            firstTouch = _isPointerType ? event : (event.touches && event.touches[0] || event),
-            element = 'tagName' in firstTouch.target ? firstTouch.target: firstTouch.target.parentNode,
+        var _isPointerType = isPointerEventType(event, "down"),
+            firstTouch = _isPointerType ? event : event.touches[0],
+            element = "tagName" in firstTouch.target ? firstTouch.target: firstTouch.target.parentNode,
             now = Date.now(),
             delta = now - (touchProxy.last || now)
+
         if (_isPointerType && !isPrimaryTouch(event)) return
-        avalon.mix(touchProxy, getCoordinates(event))
-        touchProxy.mx = 0
-        touchProxy.my = 0
+        if (touchProxy.x1 || touchProxy.y1) {
+            touchProxy.x1 = undefined
+            touchProxy.y1 = undefined
+        }
         if (delta > 0 && delta <= 250) {
             touchProxy.isDoubleTap = true
         }
+        touchProxy.x = firstTouch.pageX
+        touchProxy.y = firstTouch.pageY
+        touchProxy.mx = 0
+        touchProxy.my = 0
         touchProxy.last = now
         touchProxy.element = element
-        /*
-            当触发hold和longtap事件时会触发touchcancel事件，从而阻止touchend事件的触发，继而保证在同时绑定tap和hold(longtap)事件时只触发其中一个事件
-        */
-        avalon(element).addClass(fastclick.activeClass)
+
         longTapTimeout = setTimeout(function() {
             longTapTimeout = null
             fireEvent(element, "hold")
             fireEvent(element, "longtap")
             touchProxy = {}
-            avalon(element).removeClass(fastclick.activeClass)
-        }, fastclick.clickDuration)
+        }, clickDuration)
         return true
     }
     function touchmove(event) {
+
         var _isPointerType = isPointerEventType(event, 'down'),
-            e = getCoordinates(event)
+            firstTouch = _isPointerType ? event : event.touches[0],
+            x = firstTouch.pageX,
+            y = firstTouch.pageY
+        if (_isPointerType && !isPrimaryTouch(event)) return
         /*
             android下某些浏览器触发了touchmove事件的话touchend事件不触发，禁用touchmove可以解决此bug
             http://stackoverflow.com/questions/14486804/understanding-touch-events
         */
-        if (isAndroid && Math.abs(touchProxy.x - e.x) > 10) {
+        if (isAndroid && Math.abs(touchProxy.x - x) > 10) {
             event.preventDefault()
         }
-        if (_isPointerType && !isPrimaryTouch(event)) return
-          
         cancelLongTap()
-        touchProxy.mx += Math.abs(touchProxy.x - e.x)
-        touchProxy.my += Math.abs(touchProxy.y - e.y)
+        
+        touchProxy.x1 = x // touchend事件没有pageX、pageY始终为0，且没有clientX和clientY事件
+        touchProxy.y1 = y
+        touchProxy.mx += Math.abs(touchProxy.x - x)
+        touchProxy.my += Math.abs(touchProxy.y - y)
     }
     function touchend(event) { 
-        var _isPointerType = isPointerEventType(event, 'down')
+        var _isPointerType = isPointerEventType(event, 'down'),
             element = touchProxy.element
 
         if (_isPointerType && !isPrimaryTouch(event)) return
+        if (!element) return // longtap|hold触发后touchProxy为{}
 
-        if (!element) { // longtap|hold触发后touchProxy为{}
-            return
-        }
         cancelLongTap()
-        var e = getCoordinates(event)
-        var totalX = Math.abs(touchProxy.x - e.x)
-        var totalY = Math.abs(touchProxy.y - e.y)
-        if (totalX > 30 || totalY > 30) {
+        if ((touchProxy.x1 && Math.abs(touchProxy.x1 - touchProxy.x) > dragDistance) || (touchProxy.y1 && Math.abs(touchProxy.y1 - touchProxy.y) > dragDistance)) {
             //如果用户滑动的距离有点大，就认为是swipe事件
-            var direction = swipeDirection(touchProxy.x, e.x, touchProxy.y, e.y)
+            var direction = swipeDirection(touchProxy.x, touchProxy.x1, touchProxy.y, touchProxy.y1)
             var details = {
                 direction: direction
             }
             fireEvent(element, "swipe", details)
             fireEvent(element, "swipe" + direction, details)
-            avalon(element).removeClass(fastclick.activeClass)
             touchProxy = {}
-            touchProxy.element = element
         } else {
-            if (fastclick.canClick(element) && touchProxy.mx < fastclick.dragDistance && touchProxy.my < fastclick.dragDistance) {
-                // 失去焦点的处理
-                if (document.activeElement && document.activeElement !== element) {
-                    document.activeElement.blur()
-                }
-                //如果此元素不为表单元素,或者它没有disabled
-                var forElement
-                if (element.tagName.toLowerCase() === "label") {
-                    forElement = element.htmlFor ? document.getElementById(element.htmlFor) : null
-                }
-                if (forElement) {
-                    fastclick.focus(forElement)
-                } else {
-                    fastclick.focus(element)
-                }
-                if (event.target.tagName.toLowerCase() !== 'select') { //select无法通过click或者focus事件触发其下拉款的显示，只能让其通过原生的方式触发
-                    event.preventDefault()
-                }
+            if (touchProxy.mx < dragDistance && touchProxy.my < dragDistance) {
                 fireEvent(element, 'tap')
-                avalon.fastclick.fireEvent(element, "click", event)
-                avalon(element).removeClass(fastclick.activeClass)
                 if (touchProxy.isDoubleTap) {
                     fireEvent(element, "doubletap")
-                    avalon.fastclick.fireEvent(element, "dblclick", event)
                     touchProxy = {}
-                    avalon(element).removeClass(fastclick.activeClass)
                     touchProxy.element = element
                 } else {
                     touchTimeout = setTimeout(function() {
                         clearTimeout(touchTimeout)
                         touchTimeout = null
-                        touchProxy = {}
-                        avalon(element).removeClass(fastclick.activeClass)
+                        if (touchProxy.element) fireEvent(touchProxy.element, "singletap")
+                        touchProxy = {};
                         touchProxy.element = element
                     }, 250)
                 }
+            } else {
+                touchProxy = {}
             }
         }
     }
@@ -210,71 +163,7 @@ new function() {// jshint ignore:line
             touchProxy = {}
         })
     }
-    //fastclick只要是处理移动端点击存在300ms延迟的问题
-    //这是苹果乱搞异致的，他们想在小屏幕设备上通过快速点击两次，将放大了的网页缩放至原始比例。
-    var fastclick = avalon.fastclick = {
-        activeClass: "ms-click-active",
-        clickDuration: 750, //小于750ms是点击，长于它是长按或拖动
-        dragDistance: 30, //最大移动的距离
-        fireEvent: function(element, type, event) {
-            var clickEvent = document.createEvent("MouseEvents")
-            clickEvent.initMouseEvent(type, true, true, window, 1, event.screenX, event.screenY,
-                    event.clientX, event.clientY, false, false, false, false, 0, null)
-            Object.defineProperty(clickEvent, "fireByAvalon", {
-                value: true
-            })
-            element.dispatchEvent(clickEvent)
-        },
-        focus: function(target) {
-            if (this.canFocus(target)) {
-                //https://github.com/RubyLouvre/avalon/issues/254
-                var value = target.value
-                target.value = value
-                if (isIOS && target.setSelectionRange && target.type.indexOf("date") !== 0 && target.type !== 'time') {
-                    // iOS 7, date datetime等控件直接对selectionStart,selectionEnd赋值会抛错
-                    var n = value.length
-                    target.setSelectionRange(n, n)
-                } else {
-                    target.focus()
-                }
-            }
-        },
-        canClick: function(target) {
-            switch (target.nodeName.toLowerCase()) {
-                case "textarea":
-                case "select":
-                case "input":
-                    return !target.disabled
-                default:
-                    return true
-            }
-        },
-        canFocus: function(target) {
-            switch (target.nodeName.toLowerCase()) {
-                case "textarea":
-                    return true;
-                case "select":
-                    return !isAndroid
-                case "input":
-                    switch (target.type) {
-                        case "button":
-                        case "checkbox":
-                        case "file":
-                        case "image":
-                        case "radio":
-                        case "submit":
-                            return false
-                    }
-                    // No point in attempting to focus disabled inputs
-                    return !target.disabled && !target.readOnly
-                default:
-                    return false
-            }
-        }
-    };
-
-
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "dblclick", "longtap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "dblclick", "longtap", "hold"].forEach(function(method) {
         me[method + "Hook"] = me["clickHook"]
     })
 

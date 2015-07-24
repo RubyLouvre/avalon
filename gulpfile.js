@@ -50,7 +50,7 @@ gulp.task('combo', function () {
                 .pipe(gulp.dest('./dist/'))
 
         var $$pathName = compatibleFiles[0]
-        $$pathName = $$pathName.slice(0, $$pathName.indexOf("00"))
+        $$pathName = $$pathName.slice(0, $$pathName.lastIndexOf("00"))
         var fixPath = function (name) {
             return path.join($$pathName, name + ".js")
         }
