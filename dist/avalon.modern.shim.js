@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.45 built in 2015.7.24
+ avalon.modern.shim.js(无加载器版本) 1.45 built in 2015.7.27
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3930,18 +3930,19 @@ function parseDisplay(nodeName, val) {
 
 avalon.parseDisplay = parseDisplay
 
-bindingHandlers.visible = function(data, vmodels) {
-    var elem = data.element
-    var display = elem.style.display
-    if(display === "none"){
-        display = parseDisplay(elem.nodeName)
-    }
-    data.display = display
+bindingHandlers.visible = function (data, vmodels) {
     parseExprProxy(data.value, vmodels, data)
 }
 
-bindingExecutors.visible = function(val, elem, data) {
-    elem.style.display = val ? data.display : "none"
+bindingExecutors.visible = function (val, elem, binding) {
+    if (val) {
+        elem.style.display = binding.display || ""
+        if (avalon(elem).css("display") === "none") {
+            elem.style.display = binding.display = parseDisplay(elem.nodeName)
+        }
+    } else {
+        elem.style.display = "none"
+    }
 }
 bindingHandlers.widget = function(data, vmodels) {
     var args = data.value.match(rword)
