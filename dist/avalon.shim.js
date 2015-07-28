@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.45 built in 2015.7.27
+ avalon.shim.js(无加载器版本) 1.45 built in 2015.7.28
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1462,8 +1462,8 @@ if (!canHideOwn) {
             var buffer = []
             buffer.push(
                     "\r\n\tPrivate [__data__], [__proxy__]",
-                    "\tPublic Default Function [__const__](d, p)",
-                    "\t\tSet [__data__] = d: set [__proxy__] = p",
+                    "\tPublic Default Function [__const__](d"+expose+", p"+expose+")",
+                    "\t\tSet [__data__] = d"+expose+": set [__proxy__] = p"+expose,
                     "\t\tSet [__const__] = Me", //链式调用
                     "\tEnd Function")
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
