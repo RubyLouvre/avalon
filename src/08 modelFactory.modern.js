@@ -67,6 +67,8 @@ function modelFactory(source, $special, $model) {
                 accessor = makeComputedAccessor(name, val)
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
+                // issue #940 解决$model层次依赖丢失 https://github.com/RubyLouvre/avalon/issues/940
+                $model[name] = {}
                 accessor = makeComplexAccessor(name, val, valueType, $events[name])
             } else {
                 accessor = makeSimpleAccessor(name, val)
@@ -193,7 +195,7 @@ function makeComputedAccessor(name, options) {
 
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType, list) {
+function makeComplexAccessor(name, initValue, valueType, list, $model) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
@@ -224,7 +226,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value)
+                    var sson = accessor._vmodel = modelFactory(value, 0, $model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in sevent) {
@@ -247,7 +249,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
         }
     }
     accessorFactory(accessor, name)
-    var son = accessor._vmodel = modelFactory(initValue)
+    var son = accessor._vmodel = modelFactory(initValue, 0, $model)
     son.$events[subscribers] = list
     return accessor
 }
