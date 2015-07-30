@@ -10,6 +10,9 @@ A lightweight,high-performance and easy-to-learn JavaScript MVVM framework
   [http://avalonjs.github.io/](http://avalonjs.github.io/)
 
   [Fork it](https://github.com/avalonjs/avalonjs.github.io)
+##nuget  
+  [nuget](https://www.nuget.org/packages/avalon/1.45.0)
+  
 
 ##Loader
 Avalon uses a AMD-style loader. If you like Node.js's CommonJS loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
