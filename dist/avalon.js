@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.46 built in 2015.8.3
+ avalon.js 1.46 built in 2015.8.4
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1165,8 +1165,8 @@ function modelFactory(source, $special, $model) {
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 // issue #940 解决$model层次依赖丢失 https://github.com/RubyLouvre/avalon/issues/940
-                $model[name] = {}
-                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model[name])
+                //  $model[name] = {}
+                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model)
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -1302,7 +1302,9 @@ function makeComputedAccessor(name, options) {
 }
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType, list, $model) {
+function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
+
+
     function accessor(value) {
         var oldValue = accessor._value
 
@@ -1334,7 +1336,7 @@ function makeComplexAccessor(name, initValue, valueType, list, $model) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, $model)
+                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in sevent) {
@@ -1357,7 +1359,12 @@ function makeComplexAccessor(name, initValue, valueType, list, $model) {
         }
     }
     accessorFactory(accessor, name)
-    var son = accessor._vmodel = modelFactory(initValue, 0, $model)
+    if (Array.isArray(initValue)) {
+        parentModel[name] = initValue
+    } else {
+        parentModel[name] = parentModel[name] || {}
+    }
+    var son = accessor._vmodel = modelFactory(initValue, 0, parentModel[name])
     son.$events[subscribers] = list
     return accessor
 }

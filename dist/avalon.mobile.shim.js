@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.46 built in 2015.8.3
+ avalon.mobile.shim.js 1.46 built in 2015.8.4
  ==================================================*/
 (function(global, factory) {
 
@@ -895,8 +895,7 @@ function modelFactory(source, $special, $model) {
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
                 // issue #940 解决$model层次依赖丢失 https://github.com/RubyLouvre/avalon/issues/940
-                $model[name] = {}
-                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model[name])
+                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model)
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -915,7 +914,7 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    $vmodel.$propertyNames = names.sort().join("&shy;")
+    $vmodel.$propertyNames = names.join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
@@ -1022,7 +1021,7 @@ function makeComputedAccessor(name, options) {
 
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType, list, $model) {
+function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
     function accessor(value) {
         var oldValue = accessor._value
         var son = accessor._vmodel
@@ -1047,13 +1046,13 @@ function makeComplexAccessor(name, initValue, valueType, list, $model) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).sort().join("&shy;")
+                var newPropertyNames = Object.keys(value).join("&shy;")
                 if (son.$propertyNames === newPropertyNames) {
                     for (i in value) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, $model)
+                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in sevent) {
@@ -1076,7 +1075,12 @@ function makeComplexAccessor(name, initValue, valueType, list, $model) {
         }
     }
     accessorFactory(accessor, name)
-    var son = accessor._vmodel = modelFactory(initValue, 0, $model)
+    if (Array.isArray(initValue)) {
+        parentModel[name] = initValue
+    } else {
+        parentModel[name] = parentModel[name] || {}
+    }
+    var son = accessor._vmodel = modelFactory(initValue, 0, parentModel[name])
     son.$events[subscribers] = list
     return accessor
 }
