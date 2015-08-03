@@ -41,6 +41,8 @@ var plugins = {
             if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
                 throw new SyntaxError("此定界符不合法")
             }
+            kernel.openTag = openTag
+            kernel.closeTag = closeTag
             cinerator.innerHTML = ""
         }
         var o = escapeRegExp(openTag),
