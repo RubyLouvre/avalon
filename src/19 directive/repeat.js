@@ -174,8 +174,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 var object = data.$repeat //原来第2参数， 被循环对象
                 var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
-                now = new Date() - 0
-                avalon.optimize = avalon.optimize || now
+              
                 if (flag === "update") {
                     if (!data.evaluator) {
                         parseExprProxy(data.value, data.vmodels, data, 0, 1)
@@ -243,7 +242,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 
                 for (i = 0; i < renderKeys.length; i++) {
                     key = renderKeys[i]
-                    if (typeof keyIndex[key] === "number") {
+                    if (indexNode[keyIndex[key]]) {
                         transation.appendChild(indexNode[keyIndex[key]])
                         fragments.push({})
                     } else {

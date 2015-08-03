@@ -29,6 +29,9 @@ avalon.injectBinding = function (data) {
     if (valueFn) { //如果是求值函数
         dependencyDetection.begin({
             callback: function (vmodel, dependency) {
+                if(data.signature){
+                    console.log(data.$repeat,"array")
+                }
                 injectDependency(vmodel.$events[dependency._name], data)
             }
         })
@@ -39,7 +42,7 @@ avalon.injectBinding = function (data) {
             }
             data.handler(value, data.element, data)
         } catch (e) {
-            //log("warning:exception throwed in [avalon.injectBinding] " + e)
+            log("warning:exception throwed in [avalon.injectBinding] " , e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {

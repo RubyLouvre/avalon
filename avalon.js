@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.45 built in 2015.7.28
+ avalon.js 1.46 built in 2015.8.3
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -305,7 +305,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.45,
+    version: 1.46,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -1162,7 +1162,9 @@ function modelFactory(source, $special, $model) {
                 accessor = makeComputedAccessor(name, val)
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
-                accessor = makeComplexAccessor(name, val, valueType, $events[name])
+                // issue #940 解决$model层次依赖丢失 https://github.com/RubyLouvre/avalon/issues/940
+                $model[name] = {}
+                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model[name])
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -1298,7 +1300,7 @@ function makeComputedAccessor(name, options) {
 }
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType, list) {
+function makeComplexAccessor(name, initValue, valueType, list, $model) {
     function accessor(value) {
         var oldValue = accessor._value
 
@@ -1330,7 +1332,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value)
+                    var sson = accessor._vmodel = modelFactory(value, 0, $model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in sevent) {
@@ -1353,7 +1355,7 @@ function makeComplexAccessor(name, initValue, valueType, list) {
         }
     }
     accessorFactory(accessor, name)
-    var son = accessor._vmodel = modelFactory(initValue)
+    var son = accessor._vmodel = modelFactory(initValue, 0, $model)
     son.$events[subscribers] = list
     return accessor
 }
@@ -1802,6 +1804,9 @@ avalon.injectBinding = function (data) {
     if (valueFn) { //如果是求值函数
         dependencyDetection.begin({
             callback: function (vmodel, dependency) {
+                if(data.signature){
+                    console.log(data.$repeat,"array")
+                }
                 injectDependency(vmodel.$events[dependency._name], data)
             }
         })
@@ -1812,7 +1817,7 @@ avalon.injectBinding = function (data) {
             }
             data.handler(value, data.element, data)
         } catch (e) {
-            //log("warning:exception throwed in [avalon.injectBinding] " + e)
+            log("warning:exception throwed in [avalon.injectBinding] " , e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -4283,8 +4288,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 var object = data.$repeat //原来第2参数， 被循环对象
                 var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
-                now = new Date() - 0
-                avalon.optimize = avalon.optimize || now
+              
                 if (flag === "update") {
                     if (!data.evaluator) {
                         parseExprProxy(data.value, data.vmodels, data, 0, 1)
@@ -4352,7 +4356,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 
                 for (i = 0; i < renderKeys.length; i++) {
                     key = renderKeys[i]
-                    if (typeof keyIndex[key] === "number") {
+                    if (indexNode[keyIndex[key]]) {
                         transation.appendChild(indexNode[keyIndex[key]])
                         fragments.push({})
                     } else {
