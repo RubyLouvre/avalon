@@ -172,17 +172,20 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
-                var oldProxy = object.$proxy   //代理对象组成的hash
                 var keys = []
-              
+
                 if (flag === "update") {
                     if (!data.evaluator) {
                         parseExprProxy(data.value, data.vmodels, data, 0, 1)
                     }
                     object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                    object.$proxy = oldProxy
+                 //   object.$proxy = oldProxy
                 }
-                var pool = object.$proxy || {}
+                //用于放置 所有代理VM
+                data.proxies =  data.proxies || {}
+                var pool = data.proxies
+                
+                //收集所有要移除的节点,除了第一个与最后一个注释节点
                 removed = []
                 var nodes = data.element.parentNode.childNodes
                 var add = false
@@ -209,23 +212,25 @@ bindingExecutors.repeat = function (method, pos, el) {
                     item.appendChild(el)
                 }
 
-
-                for (var key in object) { //当前对象的所有键名
+                //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
+                for (var key in object) { 
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
                         keys.push(key)
                     }
                 }
-
+                //为pool添加代理VM
                 for (var i = 0; key = keys[i++]; ) {
-                    if (!pool.hasOwnProperty(key)) {//添加缺失的代理VM
+                    if (!pool.hasOwnProperty(key)) {
+                        //如果不存在就从withProxyPool中拿,再不存在就创建
                         pool[key] = withProxyAgent(pool[key], key, data)
-                    } else {
+                    } else {//存在就重写$val
                         pool[key].$val = object[key]
                     }
                 }
-
+                //从pool中删除不再使用代理VM
                 for (key in pool) {
-                    if (keys.indexOf(key) === -1) {//删除没用的代理VM
+                    if (keys.indexOf(key) === -1) {
+                        delete keyIndex[key]
                         proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
                         delete pool[key]
                     }
@@ -242,7 +247,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 
                 for (i = 0; i < renderKeys.length; i++) {
                     key = renderKeys[i]
-                    if (indexNode[keyIndex[key]]) {
+                    if (indexNode[keyIndex[key]]) {//重用已有节点
                         transation.appendChild(indexNode[keyIndex[key]])
                         fragments.push({})
                     } else {
@@ -353,6 +358,7 @@ function withProxyAgent(proxy, key, data) {
     }
     var host = data.$repeat
     proxy.$key = key
+
     proxy.$host = host
     proxy.$outer = data.$outer
     if (host.$events) {
@@ -446,12 +452,13 @@ function eachProxyAgent(index, data) {
 
 function proxyRecycler(proxy, proxyPool) {
     for (var i in proxy.$events) {
-        if (Array.isArray(proxy.$events[i])) {
-            proxy.$events[i].forEach(function (data) {
+        var arr = proxy.$events[i]
+        if (Array.isArray(arr)) {
+            arr.forEach(function (data) {
                 if (typeof data === "object")
                     disposeData(data)
             })// jshint ignore:line
-            proxy.$events[i].length = 0
+            arr.length = 0
         }
     }
     proxy.$host = proxy.$outer = {}

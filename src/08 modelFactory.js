@@ -219,7 +219,6 @@ function makeComputedAccessor(name, options) {
 //创建一个复杂访问器
 function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
 
-
     function accessor(value) {
         var oldValue = accessor._value
 
@@ -251,18 +250,21 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         son[i] = value[i]
                     }
                 } else {
+
                     var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
-                    for (var i in sevent) {
-                        var arr = sevent[i]
-                        if (Array.isArray(arr)) {
-                            arr = arr.concat(oevent[i])
+                    for (var i in oevent) {
+                        var arr = oevent[i]
+                        if (Array.isArray(sevent[i])) {
+                            sevent[i] = sevent[i].concat(arr)
+                        } else{
+                            delete sson.$model[i]
                         }
                     }
                     sevent[subscribers] = oevent[subscribers]
-                    sson.$proxy = son.$proxy
                     son = sson
+
                 }
             }
             accessor.updateValue(this, son.$model)
