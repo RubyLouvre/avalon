@@ -9,6 +9,8 @@ bindingHandlers.repeat = function (data, vmodels) {
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
             avalon.log("warning:" + data.value + "只能是对象或数组")
+        }else{
+            data.xtype = xtype
         }
     } catch (e) {
         freturn = true
@@ -81,21 +83,35 @@ bindingHandlers.repeat = function (data, vmodels) {
     var $list = ($events || {})[subscribers]
     injectDependency($list, data)
     if (xtype === "object") {
-        data.$with = true
-        $repeat.$proxy || ($repeat.$proxy = {})
-        data.handler("append", $repeat)
+        data.handler("append")
     } else if ($repeat.length) {
         data.handler("add", 0, $repeat.length)
     }
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
-    if (!method && this.$with) {
-        method = "append"
-        var flag = "update"
+     var data = this
+    if (!method && data.xtype) {
+        var old = data.$repeat
+        var neo = data.evaluator.apply(0, data.args || [])
+        if(data.xtype === "array"){
+            if(old.length === neo.length){
+                return
+            }
+            method = "add"
+            pos = 0
+            data.$repeat = neo
+            el = neo.length
+        }else{
+            if( keysVM(old).join(";;") === keysVM(neo).join(";;")){
+                return
+            }
+            method = "append"
+            data.$repeat = neo
+        }
     }
     if (method) {
-        var data = this, start, fragment
+        var  start, fragment
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
@@ -126,7 +142,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 start = comments[0]
                 if (start) {
                     sweepNodes(start, end)
-                    if (data.$with) {
+                    if (data.xtype === "object") {
                         parent.insertBefore(start, end)
                     }
                 }
@@ -173,14 +189,6 @@ bindingExecutors.repeat = function (method, pos, el) {
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
                 var keys = []
-
-                if (flag === "update") {
-                    if (!data.evaluator) {
-                        parseExprProxy(data.value, data.vmodels, data, 0, 1)
-                    }
-                    object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                 //   object.$proxy = oldProxy
-                }
                 //用于放置 所有代理VM
                 data.proxies =  data.proxies || {}
                 var pool = data.proxies
@@ -214,7 +222,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 
                 //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
                 for (var key in object) { 
-                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
+                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" ) {
                         keys.push(key)
                     }
                 }

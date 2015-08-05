@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.8.4
+ avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.8.5
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -856,7 +856,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$reinitialize").match(rword)
 
 function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
@@ -915,7 +915,6 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    $vmodel.$propertyNames = names.join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
@@ -957,7 +956,16 @@ var hasOwnDescriptor = {
     enumerable: false,
     configurable: true
 }
-
+function keysVM(obj) {
+    var arr = Object.keys(obj)
+    for (var i = 0; i < $$skipArray.length; i++) {
+        var index = arr.indexOf($$skipArray[i])
+        if (index !== -1) {
+            arr.splice(index, 1)
+        }
+    }
+    return arr
+}
 //创建一个简单访问器
 function makeSimpleAccessor(name, value) {
     function accessor(value) {
@@ -1047,13 +1055,12 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).join("&shy;")
-                if (son.$propertyNames === newPropertyNames) {
+                if (keysVM(son).join(";") === keysVM(value).join(";")) {
                     for (i in value) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
+                     var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in oevent) {
@@ -3448,6 +3455,8 @@ bindingHandlers.repeat = function (data, vmodels) {
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
             avalon.log("warning:" + data.value + "只能是对象或数组")
+        }else{
+            data.xtype = xtype
         }
     } catch (e) {
         freturn = true
@@ -3520,21 +3529,35 @@ bindingHandlers.repeat = function (data, vmodels) {
     var $list = ($events || {})[subscribers]
     injectDependency($list, data)
     if (xtype === "object") {
-        data.$with = true
-        $repeat.$proxy || ($repeat.$proxy = {})
-        data.handler("append", $repeat)
+        data.handler("append")
     } else if ($repeat.length) {
         data.handler("add", 0, $repeat.length)
     }
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
-    if (!method && this.$with) {
-        method = "append"
-        var flag = "update"
+     var data = this
+    if (!method && data.xtype) {
+        var old = data.$repeat
+        var neo = data.evaluator.apply(0, data.args || [])
+        if(data.xtype === "array"){
+            if(old.length === neo.length){
+                return
+            }
+            method = "add"
+            pos = 0
+            data.$repeat = neo
+            el = neo.length
+        }else{
+            if( keysVM(old).join(";;") === keysVM(neo).join(";;")){
+                return
+            }
+            method = "append"
+            data.$repeat = neo
+        }
     }
     if (method) {
-        var data = this, start, fragment
+        var  start, fragment
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
@@ -3565,7 +3588,7 @@ bindingExecutors.repeat = function (method, pos, el) {
                 start = comments[0]
                 if (start) {
                     sweepNodes(start, end)
-                    if (data.$with) {
+                    if (data.xtype === "object") {
                         parent.insertBefore(start, end)
                     }
                 }
@@ -3612,14 +3635,6 @@ bindingExecutors.repeat = function (method, pos, el) {
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
                 var keys = []
-
-                if (flag === "update") {
-                    if (!data.evaluator) {
-                        parseExprProxy(data.value, data.vmodels, data, 0, 1)
-                    }
-                    object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                 //   object.$proxy = oldProxy
-                }
                 //用于放置 所有代理VM
                 data.proxies =  data.proxies || {}
                 var pool = data.proxies
@@ -3653,7 +3668,7 @@ bindingExecutors.repeat = function (method, pos, el) {
 
                 //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
                 for (var key in object) { 
-                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
+                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" ) {
                         keys.push(key)
                     }
                 }

@@ -29,7 +29,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$reinitialize,$propertyNames").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$reinitialize").match(rword)
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -98,7 +98,6 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$propertyNames = names.join("&shy;")
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
@@ -244,13 +243,11 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).join("&shy;")
-                if (son.$propertyNames === newPropertyNames) {
+                if (keysVM(son).join(";") === keysVM(value).join(";")) {
                     for (i in value) {
                         son[i] = value[i]
                     }
                 } else {
-
                     var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
@@ -258,13 +255,12 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         var arr = oevent[i]
                         if (Array.isArray(sevent[i])) {
                             sevent[i] = sevent[i].concat(arr)
-                        } else{
+                        } else {
                             delete sson.$model[i]
                         }
                     }
                     sevent[subscribers] = oevent[subscribers]
                     son = sson
-
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -330,7 +326,16 @@ function isObservable(name, value, $skipArray) {
     }
     return true
 }
-
+function keysVM(obj) {
+    var arr = Object.keys(obj)
+    for (var i = 0; i < $$skipArray.length; i++) {
+        var index = arr.indexOf($$skipArray[i])
+        if (index !== -1) {
+            arr.splice(index, 1)
+        }
+    }
+    return arr
+}
 var descriptorFactory = W3C ? function (obj) {
     var descriptors = {}
     for (var i in obj) {

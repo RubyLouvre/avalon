@@ -28,7 +28,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$reinitialize").match(rword)
 
 function modelFactory(source, $special, $model) {
     if (Array.isArray(source)) {
@@ -87,7 +87,6 @@ function modelFactory(source, $special, $model) {
     $vmodel.$id = generateID()
     $vmodel.$model = $model
     $vmodel.$events = $events
-    $vmodel.$propertyNames = names.join("&shy;")
     for (i in EventBus) {
         $vmodel[i] = EventBus[i]
     }
@@ -129,7 +128,16 @@ var hasOwnDescriptor = {
     enumerable: false,
     configurable: true
 }
-
+function keysVM(obj) {
+    var arr = Object.keys(obj)
+    for (var i = 0; i < $$skipArray.length; i++) {
+        var index = arr.indexOf($$skipArray[i])
+        if (index !== -1) {
+            arr.splice(index, 1)
+        }
+    }
+    return arr
+}
 //创建一个简单访问器
 function makeSimpleAccessor(name, value) {
     function accessor(value) {
@@ -219,13 +227,12 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).join("&shy;")
-                if (son.$propertyNames === newPropertyNames) {
+                if (keysVM(son).join(";") === keysVM(value).join(";")) {
                     for (i in value) {
                         son[i] = value[i]
                     }
                 } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
+                     var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in oevent) {
