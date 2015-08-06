@@ -29,9 +29,6 @@ avalon.injectBinding = function (data) {
     if (valueFn) { //如果是求值函数
         dependencyDetection.begin({
             callback: function (vmodel, dependency) {
-                if(data.signature){
-                    console.log(data.$repeat,"array")
-                }
                 injectDependency(vmodel.$events[dependency._name], data)
             }
         })
@@ -88,7 +85,9 @@ function fireDependencies(list) {
                        var value = valueFn.apply(0, fn.args || [])
                        fn.handler(value, el, fn)
                     }
-                } catch (e) {  }
+                } catch (e) { 
+                    console.log(e)
+                }
             }
         }
     }

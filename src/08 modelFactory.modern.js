@@ -235,7 +235,7 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                      var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
-                    for (var i in oevent) {
+                    for (i in oevent) {
                         var arr = oevent[i]
                         if (Array.isArray(sevent[i])) {
                             sevent[i] = sevent[i].concat(arr)

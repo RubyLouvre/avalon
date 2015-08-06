@@ -1,6 +1,6 @@
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
-    parseExprProxy(data.value, vmodels, data, 0, 1)
+    parseExprProxy(data.value, vmodels, data, 1)
     data.proxies = []
     var freturn = false
     try {
@@ -9,7 +9,7 @@ bindingHandlers.repeat = function (data, vmodels) {
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
             avalon.log("warning:" + data.value + "只能是对象或数组")
-        }else{
+        } else {
             data.xtype = xtype
         }
     } catch (e) {
@@ -90,20 +90,20 @@ bindingHandlers.repeat = function (data, vmodels) {
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
-     var data = this
+    var data = this
     if (!method && data.xtype) {
         var old = data.$repeat
         var neo = data.evaluator.apply(0, data.args || [])
-        if(data.xtype === "array"){
-            if(old.length === neo.length){
+        if (data.xtype === "array") {
+            if (old.length === neo.length) {
                 return
             }
             method = "add"
             pos = 0
             data.$repeat = neo
             el = neo.length
-        }else{
-            if( keysVM(old).join(";;") === keysVM(neo).join(";;")){
+        } else {
+            if (keysVM(old).join(";;") === keysVM(neo).join(";;")) {
                 return
             }
             method = "append"
@@ -111,7 +111,7 @@ bindingExecutors.repeat = function (method, pos, el) {
         }
     }
     if (method) {
-        var  start, fragment
+        var start, fragment
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
@@ -190,9 +190,9 @@ bindingExecutors.repeat = function (method, pos, el) {
                 var object = data.$repeat //原来第2参数， 被循环对象
                 var keys = []
                 //用于放置 所有代理VM
-                data.proxies =  data.proxies || {}
+                data.proxies = data.proxies || {}
                 var pool = data.proxies
-                
+
                 //收集所有要移除的节点,除了第一个与最后一个注释节点
                 removed = []
                 var nodes = data.element.parentNode.childNodes
@@ -221,13 +221,13 @@ bindingExecutors.repeat = function (method, pos, el) {
                 }
 
                 //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
-                for (var key in object) { 
-                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" ) {
+                for (var key in object) {
+                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
                         keys.push(key)
                     }
                 }
                 //为pool添加代理VM
-                for (var i = 0; key = keys[i++]; ) {
+                for (i = 0; key = keys[i++]; ) {
                     if (!pool.hasOwnProperty(key)) {
                         //如果不存在就从withProxyPool中拿,再不存在就创建
                         pool[key] = withProxyAgent(pool[key], key, data)
@@ -243,9 +243,8 @@ bindingExecutors.repeat = function (method, pos, el) {
                         delete pool[key]
                     }
                 }
-                var fragments = []
+                fragments = []
                 var renderKeys = keys //需要渲染到DOM树去的键名
-                var end = data.element
                 if (data.sortedCallback) { //如果有回调，则让它们排序
                     var keys2 = data.sortedCallback.call(parent, keys)
                     if (keys2 && Array.isArray(keys2)) {

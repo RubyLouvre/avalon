@@ -197,16 +197,23 @@ function parseExpr(code, scopes, data) {
         vars = assigns = names = null //释放内存
     }
 }
-
-
-//parseExpr的智能引用代理
-
-function parseExprProxy(code, scopes, data, tokens, noRegister) {
-    if (Array.isArray(tokens)) {
-        code = tokens.map(function (el) {
+function stringifyExpr(code) {
+    var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
+    if (hasExpr) {
+        var array = scanExpr(code)
+        if (array.length === 1) {
+            return array[0].value
+        }
+        return array.map(function (el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
         }).join(" + ")
+    } else {
+        return code
     }
+}
+//parseExpr的智能引用代理
+
+function parseExprProxy(code, scopes, data, noRegister) {
     parseExpr(code, scopes, data)
     if (data.evaluator && !noRegister) {
         data.handler = bindingExecutors[data.handlerName || data.type]
