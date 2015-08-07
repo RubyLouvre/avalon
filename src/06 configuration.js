@@ -34,7 +34,7 @@ var plugins = {
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
-        if (openTag === closeTag) 
+        if (openTag === closeTag) {
             throw new SyntaxError("openTag===closeTag")
         } else {
             var test = openTag + "test" + closeTag
