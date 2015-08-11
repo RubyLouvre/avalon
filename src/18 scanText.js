@@ -73,7 +73,7 @@ function scanText(textNode, vmodels, index) {
                 token.value = token.value.replace(roneTime, function () {
                     token.oneTime = true
                     return ""
-                })
+                })// jshint ignore:line
                 token.type = "text"
                 token.element = node
                 token.filters = token.filters.replace(rhasHtml, function (a, b,c) {

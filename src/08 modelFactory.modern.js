@@ -228,14 +228,14 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 a._fire("set")
             } else if (valueType === "object") {
                 if (keysVM(son).join(";") === keysVM(value).join(";")) {
-                    for (i in value) {
+                    for (var i in value) {// jshint ignore:line
                         son[i] = value[i]
                     }
                 } else {
                      var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
-                    for (i in oevent) {
+                    for (var i in oevent) {// jshint ignore:line
                         var arr = oevent[i]
                         if (Array.isArray(sevent[i])) {
                             sevent[i] = sevent[i].concat(arr)
