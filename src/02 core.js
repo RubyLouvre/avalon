@@ -1,12 +1,12 @@
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
-avalon.init = function(el) {
+avalon.init = function (el) {
     this[0] = this.element = el
 }
 avalon.fn = avalon.prototype = avalon.init.prototype
 
-avalon.type = function(obj) { //取得目标的类型
+avalon.type = function (obj) { //取得目标的类型
     if (obj == null) {
         return String(obj)
     }
@@ -16,18 +16,18 @@ avalon.type = function(obj) { //取得目标的类型
             typeof obj
 }
 
-var isFunction = typeof alert === "object" ? function(fn) {
+var isFunction = typeof alert === "object" ? function (fn) {
     try {
         return /^\s*\bfunction\b/.test(fn + "")
     } catch (e) {
         return false
     }
-} : function(fn) {
+} : function (fn) {
     return serialize.call(fn) === "[object Function]"
 }
 avalon.isFunction = isFunction
 
-avalon.isWindow = function(obj) {
+avalon.isWindow = function (obj) {
     if (!obj)
         return false
     // 利用IE678 window == document为true,document == window竟然为false的神奇特性
@@ -47,7 +47,7 @@ for (enu in avalon({})) {
 }
 var enumerateBUG = enu !== "0" //IE6下为true, 其他为false
 /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
-avalon.isPlainObject = function(obj, key) {
+avalon.isPlainObject = function (obj, key) {
     if (!obj || avalon.type(obj) !== "object" || obj.nodeType || avalon.isWindow(obj)) {
         return false;
     }
@@ -68,13 +68,13 @@ avalon.isPlainObject = function(obj, key) {
     return key === void 0 || ohasOwn.call(obj, key)
 }
 if (rnative.test(Object.getPrototypeOf)) {
-    avalon.isPlainObject = function(obj) {
+    avalon.isPlainObject = function (obj) {
         // 简单的 typeof obj === "object"检测，会致使用isPlainObject(window)在opera下通不过
         return serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
     }
 }
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
-avalon.mix = avalon.fn.mix = function() {
+avalon.mix = avalon.fn.mix = function () {
     var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
             i = 1,
@@ -144,9 +144,9 @@ avalon.mix({
     version: 1.4,
     ui: {},
     log: log,
-    slice: W3C ? function(nodes, start, end) {
+    slice: W3C ? function (nodes, start, end) {
         return aslice.call(nodes, start, end)
-    } : function(nodes, start, end) {
+    } : function (nodes, start, end) {
         var ret = []
         var len = nodes.length
         if (end === void 0)
@@ -162,7 +162,7 @@ avalon.mix({
     },
     noop: noop,
     /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
-    error: function(str, e) {
+    error: function (str, e) {
         throw  (e || Error)(str)
     },
     /*将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象*/
@@ -177,7 +177,7 @@ avalon.mix({
      => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
      avalon.range(0)
      => []*/
-    range: function(start, end, step) { // 用于生成整数数组
+    range: function (start, end, step) { // 用于生成整数数组
         step || (step = 1)
         if (end == null) {
             end = start || 0
@@ -192,7 +192,7 @@ avalon.mix({
         }
         return result
     },
-    eventHooks: {},
+    eventHooks: [],
     /*绑定事件*/
     bind: function(el, type, fn, phase) {
         var hooks = avalon.eventHooks
@@ -231,7 +231,7 @@ avalon.mix({
         }
     },
     /*读写删除元素节点的样式*/
-    css: function(node, name, value) {
+    css: function (node, name, value) {
         if (node instanceof avalon) {
             node = node[0]
         }
@@ -258,7 +258,7 @@ avalon.mix({
         }
     },
     /*遍历数组与对象,回调的第一个参数为索引或键名,第二个或元素或键值*/
-    each: function(obj, fn) {
+    each: function (obj, fn) {
         if (obj) { //排除null, undefined
             var i = 0
             if (isArrayLike(obj)) {
@@ -276,12 +276,12 @@ avalon.mix({
         }
     },
     //收集元素的data-{{prefix}}-*属性，并转换为对象
-    getWidgetData: function(elem, prefix) {
+    getWidgetData: function (elem, prefix) {
         var raw = avalon(elem).data()
         var result = {}
         for (var i in raw) {
             if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function(a) {
+                result[i.replace(prefix, "").replace(/\w/, function (a) {
                     return a.toLowerCase()
                 })] = raw[i]
             }
@@ -290,17 +290,17 @@ avalon.mix({
     },
     Array: {
         /*只有当前数组不存在此元素时只添加它*/
-        ensure: function(target, item) {
+        ensure: function (target, item) {
             if (target.indexOf(item) === -1) {
                 return target.push(item)
             }
         },
         /*移除数组中指定位置的元素，返回布尔表示成功与否*/
-        removeAt: function(target, index) {
+        removeAt: function (target, index) {
             return !!target.splice(index, 1).length
         },
         /*移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否*/
-        remove: function(target, item) {
+        remove: function (target, item) {
             var index = target.indexOf(item)
             if (~index)
                 return avalon.Array.removeAt(target, index)

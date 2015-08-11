@@ -34,14 +34,12 @@ var getVariables = function (code) {
 function addAssign(vars, scope, name, data) {
     var ret = [],
             prefix = " = " + name + "."
-    var isProxy = /\$proxy\$each/.test(scope.$id)
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var el = isProxy && scope.$map[prop] ? "el" : prop
-        if (scope.hasOwnProperty(el)) {
-            ret.push(prop + prefix + el)
+        if (scope.hasOwnProperty(prop)) {
+            ret.push(prop + prefix + prop)
             data.vars.push(prop)
             if (data.type === "duplex") {
-                vars.get = name + "." + el
+                vars.get = name + "." + prop
             }
             vars.splice(i, 1)
         }
@@ -118,9 +116,11 @@ function parseExpr(code, scopes, data) {
         //https://github.com/RubyLouvre/avalon/issues/583
         data.vars.forEach(function (v) {
             var reg = new RegExp("\\b" + v + "(?:\\.\\w+|\\[\\w+\\])+", "ig")
-            code = code.replace(reg, function (_) {
+            code = code.replace(reg, function (_, cap) {
                 var c = _.charAt(v.length)
-                var r = IEVersion ? code.slice(arguments[1] + _.length) : RegExp.rightContext
+                //var r = IEVersion ? code.slice(arguments[1] + _.length) : RegExp.rightContext
+                //https://github.com/RubyLouvre/avalon/issues/966
+                var r = code.slice(cap + _.length)
                 var method = /^\s*\(/.test(r)
                 if (c === "." || c === "[" || method) {//比如v为aa,我们只匹配aa.bb,aa[cc],不匹配aaa.xxx
                     var name = "var" + String(Math.random()).replace(/^0\./, "")
@@ -199,16 +199,24 @@ function parseExpr(code, scopes, data) {
         vars = assigns = names = null //释放内存
     }
 }
-
-
-//parseExpr的智能引用代理
-
-function parseExprProxy(code, scopes, data, tokens, noRegister) {
-    if (Array.isArray(tokens)) {
-        code = tokens.map(function (el) {
+function stringifyExpr(code) {
+    var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
+    if (hasExpr) {
+        var array = scanExpr(code)
+        if (array.length === 1) {
+            return array[0].value
+        }
+        return array.map(function (el) {
             return el.expr ? "(" + el.value + ")" : quote(el.value)
         }).join(" + ")
+    } else {
+        return code
     }
+}
+//parseExpr的智能引用代理
+
+function parseExprProxy(code, scopes, data, noRegister) {
+    code = code || "" //code 可能未定义
     parseExpr(code, scopes, data)
     if (data.evaluator && !noRegister) {
         data.handler = bindingExecutors[data.handlerName || data.type]

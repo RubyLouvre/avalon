@@ -12,15 +12,8 @@ bools.replace(rword, function(name) {
 var templatePool = avalon.templateCache = {}
 
 bindingHandlers.attr = function(data, vmodels) {
-    var text = data.value.trim(),
-        simple = true
-    if (text.indexOf(openTag) > -1 && text.indexOf(closeTag) > 2) {
-        simple = false
-        if (rexpr.test(text) && RegExp.rightContext === "" && RegExp.leftContext === "") {
-            simple = true
-            text = RegExp.$1
-        }
-    }
+    var value = stringifyExpr(data.value.trim())
+
     if (data.type === "include") {
         var elem = data.element
         data.includeRendered = getBindingCallback(elem, "data-include-rendered", vmodels)
@@ -41,7 +34,7 @@ bindingHandlers.attr = function(data, vmodels) {
         }
     }
     data.handlerName = "attr" //handleName用于处理多种绑定共用同一种bindingExecutor的情况
-    parseExprProxy(text, vmodels, data, (simple ? 0 : scanExpr(data.value)))
+    parseExprProxy(value, vmodels, data)
 }
 
 bindingExecutors.attr = function(val, elem, data) {

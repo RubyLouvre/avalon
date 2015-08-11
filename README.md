@@ -1,6 +1,6 @@
 # Avalon
 
-A lightweight,high-performance and easy-to-learn javascript MVVM framework
+A lightweight,high-performance and easy-to-learn JavaScript MVVM framework
 
 * Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices. For requirejs or AMD-like loader, use the corresponding shim version.
 * The component libraries are now maintained by [Qunar UED(Chinese page)](http://ued.qunar.com/). First here are the three pillars: 1. [mmRouter](https://github.com/RubyLouvre/mmRouter) for router, 2. [mmAnimate](https://github.com/RubyLouvre/mmAnimate) for animation, 3. [mmRequest](https://github.com/RubyLouvre/mmRequest) for AJAX utils; and the UI component OniUI, you can check it out [at here](https://github.com/RubyLouvre/avalon.oniui)
@@ -10,10 +10,13 @@ A lightweight,high-performance and easy-to-learn javascript MVVM framework
   [http://avalonjs.github.io/](http://avalonjs.github.io/)
 
   [Fork it](https://github.com/avalonjs/avalonjs.github.io)
+##nuget  
+  [nuget](https://www.nuget.org/packages/avalon/1.45.0)
+  
 
 ##Loader
-Avalon uses a amd-style loader. If you like nodejs's commonjs loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
-to converts amd to commonjs.
+Avalon uses a AMD-style loader. If you like Node.js's CommonJS loader, you can use [this tools](https://github.com/ilife5/cat) this tool </a> 
+to converts AMD to CommonJS.
  
 ## Advantages
 
@@ -49,7 +52,7 @@ Here are some of the benefits:
 * *Data Manipulation as DOM Manipulation*, actions on ViewModels will all be synchronized to the relevant Views and Models.
 * Ships with a built-in AMD loader.
 
-## To compress javascript files, run:
+## To compress JavaScript files, run:
 
 ```sh
 java -jar compiler.jar --js avalon.js --js_output_file avalon.min.js
@@ -207,7 +210,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 ![](https://raw.github.com/RubyLouvre/avalon/master/examples/images/example.jpg)
 
 ###加载器
-avalon是使用自带AMD式加载器,如果你喜欢nodejs那种commonjs风格加载器,你可以用[这个工具](https://github.com/ilife5/cat)进行转换。
+avalon是使用自带AMD式加载器,如果你喜欢Node.js那种CommonJS风格加载器,你可以用[这个工具](https://github.com/ilife5/cat)进行转换。
 
 ### JS文件的压缩
 ```

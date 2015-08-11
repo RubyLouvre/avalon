@@ -83,14 +83,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     log("ms-duplex应用于checkbox上要对应一个数组")
                     array = [array]
                 }
-                avalon.Array[method](array, data.pipe(element.value, data, "get"))
+                var val = data.pipe(element.value, data, "get")
+                avalon.Array[method](array, val)
                 callback.call(element, array)
             }
         }
 
         data.handler = function() {
             var array = [].concat(evaluator()) //强制转换为数组
-            element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
+            var val = data.pipe(element.value, data, "get")
+            element.checked = array.indexOf(val) > -1
         }
         bound(W3C ? "change" : "click", updateVModel)
     } else {
@@ -143,7 +145,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
 
         if (rmsinput.test($type)) {
             watchValueInTimer(function() {
-                if (avalon.optimize || element.parentNode) {
+                if (root.contains(element)) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
                     }

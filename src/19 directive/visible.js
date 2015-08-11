@@ -17,25 +17,17 @@ function parseDisplay(nodeName, val) {
 
 avalon.parseDisplay = parseDisplay
 
-bindingHandlers.visible = function(data, vmodels) {
-    var elem = avalon(data.element)
-    var display = elem.css("display")
-    if (display === "none") {
-        var style = elem[0].style
-        var has = /visibility/i.test(style.cssText)
-        var visible = elem.css("visibility")
-        style.display = ""
-        style.visibility = "hidden"
-        display = elem.css("display")
-        if (display === "none") {
-            display = parseDisplay(elem[0].nodeName)
-        }
-        style.visibility = has ? visible : ""
-    }
-    data.display = display
+bindingHandlers.visible = function (data, vmodels) {
     parseExprProxy(data.value, vmodels, data)
 }
 
-bindingExecutors.visible = function(val, elem, data) {
-    elem.style.display = val ? data.display : "none"
+bindingExecutors.visible = function (val, elem, binding) {
+    if (val) {
+        elem.style.display = binding.display || ""
+        if (avalon(elem).css("display") === "none") {
+            elem.style.display = binding.display = parseDisplay(elem.nodeName)
+        }
+    } else {
+        elem.style.display = "none"
+    }
 }

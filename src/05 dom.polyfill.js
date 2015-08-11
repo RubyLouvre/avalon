@@ -97,6 +97,7 @@ if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
     HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
 }
 
+
 //============================= event binding =======================
 var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
 function fixEvent(event) {
@@ -197,4 +198,5 @@ if (DOC.onmousewheel === void 0) {
         }
     }
 }
+
 

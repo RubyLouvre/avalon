@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title></title>
+        <script src="../avalon.js"></script>
+
+        <style>
+            #outer1{
+                padding:40px;
+                background: goldenrod;
+            }
+            #outer2{
+                padding:30px;
+                background:#a9ea00;
+            }
+            #inner{
+                padding:10px;
+                background:blueviolet;
+            }
+        </style>
+        <script >
+            avalon.define({
+                $id: "test",
+                change: function (e) {
+                    console.log(e.target.value+" !! "+e.type)
+                },
+                manualChange: function(){
+                    var el = document.getElementById("aaa")
+                    el.value = (new Date - 0) +""
+                },
+                 manualChange2: function(){
+                    var el = document.getElementById("bbb")
+                    el.value = (new Date - 0) +""
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div id="outer1">
+            <p><input ms-on-input="change" id="aaa"/><input type="password" ms-on-input="change"/></p>
+            <p><textarea ms-on-input="change" id="bbb"></textarea></p>
+            <p><button ms-click="manualChange" type="button">点我</button></p>
+             <p><button ms-click="manualChange2" type="button">点我</button></p>
+        </div>
+    </body>
+</html>

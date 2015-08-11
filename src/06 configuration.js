@@ -35,15 +35,15 @@ var plugins = {
         openTag = array[0]
         closeTag = array[1]
         if (openTag === closeTag) {
-            throw new SyntaxError("openTag!==closeTag")
-        } else if (array + "" === "<!--,-->") {
-            kernel.commentInterpolate = true
+            throw new SyntaxError("openTag===closeTag")
         } else {
             var test = openTag + "test" + closeTag
             cinerator.innerHTML = test
             if (cinerator.innerHTML !== test && cinerator.innerHTML.indexOf("&lt;") > -1) {
                 throw new SyntaxError("此定界符不合法")
             }
+            kernel.openTag = openTag
+            kernel.closeTag = closeTag
             cinerator.innerHTML = ""
         }
         var o = escapeRegExp(openTag),

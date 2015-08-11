@@ -28,7 +28,7 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = 1.44 //当前版本号
+        var version = 1.46 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 
@@ -50,7 +50,7 @@ gulp.task('combo', function () {
                 .pipe(gulp.dest('./dist/'))
 
         var $$pathName = compatibleFiles[0]
-        $$pathName = $$pathName.slice(0, $$pathName.indexOf("00"))
+        $$pathName = $$pathName.slice(0, $$pathName.lastIndexOf("00"))
         var fixPath = function (name) {
             return path.join($$pathName, name + ".js")
         }
