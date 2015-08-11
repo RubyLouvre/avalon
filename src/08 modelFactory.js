@@ -89,7 +89,6 @@ function modelFactory(source, $special, $model) {
         }
     })
     /* jshint ignore:end */
-
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
     for (var i = 0; i < names.length; i++) {
         var name = names[i]
@@ -98,24 +97,17 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$id = generateID()
-    $vmodel.$model = $model
-    $vmodel.$events = $events
-    for (i in EventBus) {
-        var fn = EventBus[i]
-        if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
-            fn = fn.bind($vmodel)
-        }
-        $vmodel[i] = fn
-    }
-    if (canHideOwn) {
-        Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
-    } else {
-        /* jshint ignore:start */
-        $vmodel.hasOwnProperty = function (name) {
-            return name in $vmodel.$model
-        }
-        /* jshint ignore:end */
+    hideProperty($vmodel, "$id", generateID())
+    hideProperty($vmodel, "$model", $model)
+    hideProperty($vmodel, "$events", $events)
+    /* jshint ignore:start */
+    hideProperty($vmodel, "hasOwnProperty", function () {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
+        return name in that.$model
+    })
+    /* jshint ignore:end */
+    for (var i in EventBus) {
+        hideProperty($vmodel, i, EventBus[i])
     }
 
     $vmodel.$reinitialize = function () {
@@ -145,13 +137,18 @@ function modelFactory(source, $special, $model) {
     return $vmodel
 }
 
-var hasOwnDescriptor = {
-    value: function (name) {
-        return name in this.$model
-    },
-    writable: false,
-    enumerable: false,
-    configurable: true
+
+function hideProperty(host, name, value) {
+    if (canHideOwn) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else {
+        host[name] = value
+    }
 }
 //创建一个简单访问器
 function makeSimpleAccessor(name, value) {

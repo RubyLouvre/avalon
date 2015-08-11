@@ -165,7 +165,7 @@ new function() {// jshint ignore:line
             touchProxy = {}
         })
     }
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "dblclick", "longtap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "longtap", "hold"].forEach(function(method) {
         me[method + "Hook"] = me["clickHook"]
     })
 

@@ -84,14 +84,19 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$id = generateID()
-    $vmodel.$model = $model
-    $vmodel.$events = $events
-    for (i in EventBus) {
-        $vmodel[i] = EventBus[i]
+    hideProperty($vmodel, "$id", generateID())
+    hideProperty($vmodel, "$model", $model)
+    hideProperty($vmodel, "$events", $events)
+    /* jshint ignore:start */
+    hideProperty($vmodel, "hasOwnProperty", function () {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
+        return name in that.$model
+    })
+    /* jshint ignore:end */
+    for (var i in EventBus) {
+        hideProperty($vmodel, i, EventBus[i])
     }
 
-    Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
     $vmodel.$reinitialize = function () {
         computed.forEach(function (accessor) {
             delete accessor._value
@@ -120,14 +125,15 @@ function modelFactory(source, $special, $model) {
     return $vmodel
 }
 
-var hasOwnDescriptor = {
-    value: function (name) {
-        return name in this.$model
-    },
-    writable: false,
-    enumerable: false,
-    configurable: true
+function hideProperty(host, name, value) {
+    Object.defineProperty(host, name, {
+        value: value,
+        writable: true,
+        enumerable: false,
+        configurable: true
+    })
 }
+
 function keysVM(obj) {
     var arr = Object.keys(obj)
     for (var i = 0; i < $$skipArray.length; i++) {
@@ -232,7 +238,7 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         son[i] = value[i]
                     }
                 } else {
-                     var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
+                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
                     for (var i in oevent) {// jshint ignore:line
