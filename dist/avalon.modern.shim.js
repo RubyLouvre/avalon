@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.8.7
+ avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.8.11
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -130,7 +130,7 @@ avalon.nextTick = new function () {// jshint ignore:line
     var tickImmediate = window.setImmediate
     var tickObserver = window.MutationObserver
     var tickPost = W3C && window.postMessage
-    if (tickImmediate) {
+    if (tickImmediate) {//IE10 \11 edage
         return tickImmediate.bind(window)
     }
 
@@ -143,7 +143,7 @@ avalon.nextTick = new function () {// jshint ignore:line
         queue = queue.slice(n)
     }
 
-    if (tickObserver) {
+    if (tickObserver) {// 支持MutationObserver
         var node = document.createTextNode("avalon")
         new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
         return function (fn) {
@@ -167,8 +167,23 @@ avalon.nextTick = new function () {// jshint ignore:line
         }
     }
 
+    if (window.VBArray) {
+        return function () {
+            queue.push(fn)
+            var node = DOC.createElement("script")
+            node.onreadystatechange = function () {
+                callback() //在interactive阶段就触发
+                node.onreadystatechange = null
+                head.removeChild(node)
+                node = null
+            }
+            head.appendChild(node)
+        }
+    }
+
+
     return function (fn) {
-        setTimeout(fn, 0)
+        setTimeout(fn, 4)
     }
 }// jshint ignore:line
 /*********************************************************************
@@ -1057,14 +1072,14 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 a._fire("set")
             } else if (valueType === "object") {
                 if (keysVM(son).join(";") === keysVM(value).join(";")) {
-                    for (i in value) {
+                    for (var i in value) {// jshint ignore:line
                         son[i] = value[i]
                     }
                 } else {
                      var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
                     var sevent = sson.$events
                     var oevent = son.$events
-                    for (i in oevent) {
+                    for (var i in oevent) {// jshint ignore:line
                         var arr = oevent[i]
                         if (Array.isArray(sevent[i])) {
                             sevent[i] = sevent[i].concat(arr)
@@ -2321,6 +2336,7 @@ function stringifyExpr(code) {
 //parseExpr的智能引用代理
 
 function parseExprProxy(code, scopes, data, noRegister) {
+    code = code || "" //code 可能未定义
     parseExpr(code, scopes, data)
     if (data.evaluator && !noRegister) {
         data.handler = bindingExecutors[data.handlerName || data.type]
@@ -2643,7 +2659,7 @@ function scanText(textNode, vmodels, index) {
                 token.value = token.value.replace(roneTime, function () {
                     token.oneTime = true
                     return ""
-                })
+                })// jshint ignore:line
                 token.type = "text"
                 token.element = node
                 token.filters = token.filters.replace(rhasHtml, function (a, b,c) {
@@ -3913,6 +3929,7 @@ function proxyRecycler(proxy, proxyPool) {
         proxyPool.pop()
     }
 }
+
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
@@ -4443,6 +4460,7 @@ new function () {
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
+    
     return avalon
 
 }));

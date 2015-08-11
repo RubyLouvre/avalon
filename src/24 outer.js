@@ -29,6 +29,7 @@
     if (noGlobal === void 0) {
         window.avalon = avalon
     }
+    
     return avalon
 
 }));
