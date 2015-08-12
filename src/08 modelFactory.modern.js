@@ -233,6 +233,12 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 a._fire("set")
             } else if (valueType === "object") {
                 var observes = this.$events[name] || []
+                var newObject = avalon.mix(true, {}, value)
+                for (i in son) {
+                    if (son.hasOwnProperty(i) && ohasOwn.call(newObject, i)) {
+                        son[i] = newObject[i]
+                    }
+                }
                 son = accessor._vmodel = modelFactory(value)
                 son.$events[subscribers] = observes
                 if (observes.length) {
