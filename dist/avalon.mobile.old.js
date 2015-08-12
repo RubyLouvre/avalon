@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.46 built in 2015.8.11
+ avalon.mobile.old.js 1.46 built in 2015.8.12
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -992,27 +992,29 @@ var findNodes = DOC.querySelectorAll ? function(str) {
  **********************************************************************/
 var EventBus = {
     $watch: function (type, callback) {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
         if (typeof callback === "function") {
-            var callbacks = this.$events[type]
+            var callbacks = that.$events[type]
             if (callbacks) {
                 callbacks.push(callback)
             } else {
-                this.$events[type] = [callback]
+                that.$events[type] = [callback]
             }
         } else { //重新开始监听此VM的第一重简单属性的变动
-            this.$events = this.$watch.backup
+            that.$events = that.$watch.backup
         }
-        return this
+        return that
     },
     $unwatch: function (type, callback) {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
         var n = arguments.length
         if (n === 0) { //让此VM的所有$watch回调无效化
-            this.$watch.backup = this.$events
-            this.$events = {}
+            that.$watch.that = that.$events
+            that.$events = {}
         } else if (n === 1) {
-            this.$events[type] = []
+            that.$events[type] = []
         } else {
-            var callbacks = this.$events[type] || []
+            var callbacks = that.$events[type] || []
             var i = callbacks.length
             while (~--i < 0) {
                 if (callbacks[i] === callback) {
@@ -1020,15 +1022,16 @@ var EventBus = {
                 }
             }
         }
-        return this
+        return that
     },
     $fire: function (type) {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
         var special, i, v, callback
         if (/^(\w+)!(\S+)$/.test(type)) {
             special = RegExp.$1
             type = RegExp.$2
         }
-        var events = this.$events
+        var events = that.$events
         if (!events)
             return
         var args = aslice.call(arguments, 1)
@@ -1036,7 +1039,7 @@ var EventBus = {
         if (special === "all") {
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== this) {
+                if (v !== that) {
                     v.$fire.apply(v, detail)
                 }
             }
@@ -1046,7 +1049,7 @@ var EventBus = {
                 return
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== this) {
+                if (v !== that) {
                     if (v.$events.expr) {
                         var eventNodes = findNodes(v.$events.expr)
                         if (eventNodes.length === 0) {
@@ -1089,11 +1092,11 @@ var EventBus = {
             var all = events.$all || []
             for (i = 0; callback = callbacks[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(this, args)
+                    callback.apply(that, args)
             }
             for (i = 0; callback = all[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(this, arguments)
+                    callback.apply(that, arguments)
             }
         }
     }
@@ -1190,7 +1193,6 @@ function modelFactory(source, $special, $model) {
         }
     })
     /* jshint ignore:end */
-
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
     for (var i = 0; i < names.length; i++) {
         var name = names[i]
@@ -1199,24 +1201,17 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$id = generateID()
-    $vmodel.$model = $model
-    $vmodel.$events = $events
-    for (i in EventBus) {
-        var fn = EventBus[i]
-        if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
-            fn = fn.bind($vmodel)
-        }
-        $vmodel[i] = fn
-    }
-    if (canHideOwn) {
-        Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
-    } else {
-        /* jshint ignore:start */
-        $vmodel.hasOwnProperty = function (name) {
-            return name in $vmodel.$model
-        }
-        /* jshint ignore:end */
+    hideProperty($vmodel, "$id", generateID())
+    hideProperty($vmodel, "$model", $model)
+    hideProperty($vmodel, "$events", $events)
+    /* jshint ignore:start */
+    hideProperty($vmodel, "hasOwnProperty", function () {
+        var that = IEVersion && (typeof me == "undefined") ? me : this
+        return name in that.$model
+    })
+    /* jshint ignore:end */
+    for (var i in EventBus) {
+        hideProperty($vmodel, i, EventBus[i])
     }
 
     $vmodel.$reinitialize = function () {
@@ -1246,13 +1241,18 @@ function modelFactory(source, $special, $model) {
     return $vmodel
 }
 
-var hasOwnDescriptor = {
-    value: function (name) {
-        return name in this.$model
-    },
-    writable: false,
-    enumerable: false,
-    configurable: true
+
+function hideProperty(host, name, value) {
+    if (canHideOwn) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else {
+        host[name] = value
+    }
 }
 //创建一个简单访问器
 function makeSimpleAccessor(name, value) {
@@ -5987,7 +5987,7 @@ new function() {// jshint ignore:line
             touchProxy = {}
         })
     }
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "dblclick", "longtap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "longtap", "hold"].forEach(function(method) {
         me[method + "Hook"] = me["clickHook"]
     })
 
