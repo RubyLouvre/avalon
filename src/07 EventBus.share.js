@@ -3,29 +3,27 @@
  **********************************************************************/
 var EventBus = {
     $watch: function (type, callback) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         if (typeof callback === "function") {
-            var callbacks = that.$events[type]
+            var callbacks = this.$events[type]
             if (callbacks) {
                 callbacks.push(callback)
             } else {
-                that.$events[type] = [callback]
+                this.$events[type] = [callback]
             }
         } else { //重新开始监听此VM的第一重简单属性的变动
-            that.$events = that.$watch.backup
+            this.$events = this.$watch.backup
         }
-        return that
+        return this
     },
     $unwatch: function (type, callback) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         var n = arguments.length
         if (n === 0) { //让此VM的所有$watch回调无效化
-            that.$watch.that = that.$events
-            that.$events = {}
+            this.$watch.backup = this.$events
+            this.$events = {}
         } else if (n === 1) {
-            that.$events[type] = []
+            this.$events[type] = []
         } else {
-            var callbacks = that.$events[type] || []
+            var callbacks = this.$events[type] || []
             var i = callbacks.length
             while (~--i < 0) {
                 if (callbacks[i] === callback) {
@@ -33,16 +31,15 @@ var EventBus = {
                 }
             }
         }
-        return that
+        return this
     },
     $fire: function (type) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         var special, i, v, callback
         if (/^(\w+)!(\S+)$/.test(type)) {
             special = RegExp.$1
             type = RegExp.$2
         }
-        var events = that.$events
+        var events = this.$events
         if (!events)
             return
         var args = aslice.call(arguments, 1)
@@ -50,7 +47,7 @@ var EventBus = {
         if (special === "all") {
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== that) {
+                if (v !== this) {
                     v.$fire.apply(v, detail)
                 }
             }
@@ -60,7 +57,7 @@ var EventBus = {
                 return
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== that) {
+                if (v !== this) {
                     if (v.$events.expr) {
                         var eventNodes = findNodes(v.$events.expr)
                         if (eventNodes.length === 0) {
@@ -103,11 +100,11 @@ var EventBus = {
             var all = events.$all || []
             for (i = 0; callback = callbacks[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(that, args)
+                    callback.apply(this, args)
             }
             for (i = 0; callback = all[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(that, arguments)
+                    callback.apply(this, arguments)
             }
         }
     }

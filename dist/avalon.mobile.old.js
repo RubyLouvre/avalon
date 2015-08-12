@@ -992,29 +992,27 @@ var findNodes = DOC.querySelectorAll ? function(str) {
  **********************************************************************/
 var EventBus = {
     $watch: function (type, callback) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         if (typeof callback === "function") {
-            var callbacks = that.$events[type]
+            var callbacks = this.$events[type]
             if (callbacks) {
                 callbacks.push(callback)
             } else {
-                that.$events[type] = [callback]
+                this.$events[type] = [callback]
             }
         } else { //重新开始监听此VM的第一重简单属性的变动
-            that.$events = that.$watch.backup
+            this.$events = this.$watch.backup
         }
-        return that
+        return this
     },
     $unwatch: function (type, callback) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         var n = arguments.length
         if (n === 0) { //让此VM的所有$watch回调无效化
-            that.$watch.that = that.$events
-            that.$events = {}
+            this.$watch.backup = this.$events
+            this.$events = {}
         } else if (n === 1) {
-            that.$events[type] = []
+            this.$events[type] = []
         } else {
-            var callbacks = that.$events[type] || []
+            var callbacks = this.$events[type] || []
             var i = callbacks.length
             while (~--i < 0) {
                 if (callbacks[i] === callback) {
@@ -1022,16 +1020,15 @@ var EventBus = {
                 }
             }
         }
-        return that
+        return this
     },
     $fire: function (type) {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
         var special, i, v, callback
         if (/^(\w+)!(\S+)$/.test(type)) {
             special = RegExp.$1
             type = RegExp.$2
         }
-        var events = that.$events
+        var events = this.$events
         if (!events)
             return
         var args = aslice.call(arguments, 1)
@@ -1039,7 +1036,7 @@ var EventBus = {
         if (special === "all") {
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== that) {
+                if (v !== this) {
                     v.$fire.apply(v, detail)
                 }
             }
@@ -1049,7 +1046,7 @@ var EventBus = {
                 return
             for (i in avalon.vmodels) {
                 v = avalon.vmodels[i]
-                if (v !== that) {
+                if (v !== this) {
                     if (v.$events.expr) {
                         var eventNodes = findNodes(v.$events.expr)
                         if (eventNodes.length === 0) {
@@ -1092,16 +1089,15 @@ var EventBus = {
             var all = events.$all || []
             for (i = 0; callback = callbacks[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(that, args)
+                    callback.apply(this, args)
             }
             for (i = 0; callback = all[i++]; ) {
                 if (isFunction(callback))
-                    callback.apply(that, arguments)
+                    callback.apply(this, arguments)
             }
         }
     }
 }
-
 /*********************************************************************
  *                           modelFactory                             *
  **********************************************************************/
@@ -1205,13 +1201,18 @@ function modelFactory(source, $special, $model) {
     hideProperty($vmodel, "$model", $model)
     hideProperty($vmodel, "$events", $events)
     /* jshint ignore:start */
-    hideProperty($vmodel, "hasOwnProperty", function () {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
-        return name in that.$model
-    })
+    if (canHideOwn) {
+       hideProperty($vmodel, "hasOwnProperty", function (name) {
+            return name in $vmodel.$model
+        })
+    } else {
+        $vmodel.hasOwnProperty = function (name) {
+            return (name in $vmodel.$model) && (name !== "hasOwnProperty")
+        }
+    }
     /* jshint ignore:end */
-    for (var i in EventBus) {
-        hideProperty($vmodel, i, EventBus[i])
+    for ( i in EventBus) {
+        hideProperty($vmodel, i, EventBus[i].bind($vmodel))
     }
 
     $vmodel.$reinitialize = function () {
@@ -1344,24 +1345,16 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                if (keysVM(son).join(";") === keysVM(value).join(";")) {
-                    for (var i in value) {// jshint ignore:line
-                        son[i] = value[i]
-                    }
-                } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
-                    var sevent = sson.$events
-                    var oevent = son.$events
-                    for (var i in oevent) {// jshint ignore:line
-                        var arr = oevent[i]
-                        if (Array.isArray(sevent[i])) {
-                            sevent[i] = sevent[i].concat(arr)
-                        } else {
-                            delete sson.$model[i]
+                var observes = this.$events[name] || []
+                son = accessor._vmodel = modelFactory(value)
+                son.$events[subscribers] = observes
+                if (observes.length) {
+                    observes.forEach(function (data) {
+                        if (data.rollback) {
+                            data.rollback() //还原 ms-with ms-on
                         }
-                    }
-                    sevent[subscribers] = oevent[subscribers]
-                    son = sson
+                        bindingHandlers[data.type](data, data.vmodels)
+                    })
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -1428,7 +1421,7 @@ function isObservable(name, value, $skipArray) {
     return true
 }
 function keysVM(obj) {
-    var arr = Object.keys(obj)
+    var arr = Object.keys(obj.$model ? obj.$model: obj)
     for (var i = 0; i < $$skipArray.length; i++) {
         var index = arr.indexOf($$skipArray[i])
         if (index !== -1) {
@@ -4234,6 +4227,7 @@ bindingExecutors.repeat = function (method, pos, el) {
     if (!method && data.xtype) {
         var old = data.$repeat
         var neo = data.evaluator.apply(0, data.args || [])
+
         if (data.xtype === "array") {
             if (old.length === neo.length) {
                 return
@@ -4284,9 +4278,10 @@ bindingExecutors.repeat = function (method, pos, el) {
                     sweepNodes(start, end)
                     if (data.xtype === "object") {
                         parent.insertBefore(start, end)
+                    }else{
+                        recycleProxies(proxies, "each")
                     }
                 }
-                recycleProxies(proxies, "each")
                 break
             case "move":
                 start = comments[0]
@@ -4328,91 +4323,39 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
+                var pool = Array.isArray(proxies) ||!proxies ?  {}: proxies   //代理对象组成的hash
+                data.proxies = pool
                 var keys = []
-                //用于放置 所有代理VM
-                data.proxies = data.proxies || {}
-                var pool = data.proxies
-
-                //收集所有要移除的节点,除了第一个与最后一个注释节点
-                removed = []
-                var nodes = data.element.parentNode.childNodes
-                var add = false
-                for (i = 0; node = nodes[i++]; ) {
-                    if (node.nodeValue === data.signature) {
-                        add = true
-                    } else if (node.nodeValue === data.signature + ":end") {
-                        add = false
-                    }
-                    if (add) {
-                        removed.push(node)
+                fragments = []
+                for (var key in pool) {
+                    if (!object.hasOwnProperty(key)) {
+                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
+                        delete(pool[key])
                     }
                 }
-
-                var indexNode = [], item
-                var keyIndex = data.keyIndex || (data.keyIndex = {})
-                //将现有的节点全部移出DOM树
-                for (i = 0; i < removed.length; i++) {
-                    el = removed[i]
-                    if (el.nodeValue === data.signature) {
-                        item = avalonFragment.cloneNode(false)
-                        indexNode.push(item)
-                    }
-                    item.appendChild(el)
-                }
-
-                //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
-                for (var key in object) {
+                for (key in object) { //得到所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
                         keys.push(key)
                     }
                 }
-                //为pool添加代理VM
-                for (i = 0; key = keys[i++]; ) {
-                    if (!pool.hasOwnProperty(key)) {
-                        //如果不存在就从withProxyPool中拿,再不存在就创建
-                        pool[key] = withProxyAgent(pool[key], key, data)
-                    } else {//存在就重写$val
-                        pool[key].$val = object[key]
-                    }
-                }
-                //从pool中删除不再使用代理VM
-                for (key in pool) {
-                    if (keys.indexOf(key) === -1) {
-                        delete keyIndex[key]
-                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
-                        delete pool[key]
-                    }
-                }
-                fragments = []
-                var renderKeys = keys //需要渲染到DOM树去的键名
                 if (data.sortedCallback) { //如果有回调，则让它们排序
                     var keys2 = data.sortedCallback.call(parent, keys)
-                    if (keys2 && Array.isArray(keys2)) {
-                        renderKeys = keys2
+                    if (keys2 && Array.isArray(keys2) && keys2.length) {
+                        keys = keys2
                     }
                 }
-
-                for (i = 0; i < renderKeys.length; i++) {
-                    key = renderKeys[i]
-                    if (indexNode[keyIndex[key]]) {//重用已有节点
-                        transation.appendChild(indexNode[keyIndex[key]])
-                        fragments.push({})
-                    } else {
+                for (i = 0; key = keys[i++]; ) {
+                    if (key !== "hasOwnProperty") {
+                        pool[key] = withProxyAgent(pool[key], key, data)
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
 
-                for (i = 0; i < renderKeys.length; i++) {
-                    keyIndex[renderKeys[i]] = i
-                }
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++]; ) {
-                    if (fragment.nodes) {
-                        scanNodeArray(fragment.nodes, fragment.vmodels)
-                        fragment.nodes = fragment.vmodels = null
-                    }
+                    scanNodeArray(fragment.nodes, fragment.vmodels)
+                    fragment.nodes = fragment.vmodels = null
                 }
-
                 break
         }
         if (!data.$repeat || data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在

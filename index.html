@@ -3,9 +3,9 @@
         <meta charset="utf-8">
         <title>duplexHooks</title>
         <meta http-equiv="X-UA-Compatible" content="IE=8" />
-        <script src="avalon.js"></script>
-         <link rel="stylesheet" href="animate.css" type="text/css">
-        
+        <script src="dist/avalon.modern.js"></script>
+        <link rel="stylesheet" href="animate.css" type="text/css">
+
         <style>
             .bp{
                 border: 1px  solid green;
@@ -14,26 +14,38 @@
                 border: 1px solid red;
             }
         </style>
-        <script>
-  
-  
-            var a = avalon.define({
-                $id: "test",
-                aaa: "aaa.html",
-                xxx:"http://www.theworld.cn/v5/front/v5_logo.jpg",
-                change: function() {
-                    a.aaa = a.aaa === "aaa.html" ? "bbb.html" : "aaa.html"
-                }
-            })
-    
-            for(var i in a.$model){
-                console.log(i)
-            }
-        </script>
+
+
     </head>
-    <body ms-controller="test">
-        <button type="button" ms-click="change">change</button>
-        <div ms-include-src="'include2'+aaa" class="contain" ms-effect="xxx"></div>
-        <div ms-include-src="'include2'+aaa" class="contain" data-include-replace="true"></div>
+    <body>
+        <script>
+            function expect(a) {
+                return {
+                    to: {
+                        be: function (b) {
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').replace(/\*\/[^\/]+$/, '')
+            }
+            var vm = avalon.define({
+                $id: "testx",
+                object: {A: 1, B: 3, C: 5, D: 6, E: 8}
+            })
+            var keys = []
+            for (var i in vm.object) {
+                if (vm.object.hasOwnProperty(i)) {
+                    keys.push(i)
+                }
+            }
+            console.log(vm.object.$model)
+// var keys = Object.keys(vm.object)
+           console.log(keys)
+         //   expect(keys).to.eql(["A", "B", "C", "D", "E"])
+            delete avalon.vmodels.testx
+        </script>
     </body>
 </html>

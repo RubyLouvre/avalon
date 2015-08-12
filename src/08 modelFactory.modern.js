@@ -88,9 +88,8 @@ function modelFactory(source, $special, $model) {
     hideProperty($vmodel, "$model", $model)
     hideProperty($vmodel, "$events", $events)
     /* jshint ignore:start */
-    hideProperty($vmodel, "hasOwnProperty", function () {
-        var that = IEVersion && (typeof me == "undefined") ? me : this
-        return name in that.$model
+    hideProperty($vmodel, "hasOwnProperty", function (name) {
+        return name in this.$model
     })
     /* jshint ignore:end */
     for (var i in EventBus) {
@@ -233,24 +232,16 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                if (keysVM(son).join(";") === keysVM(value).join(";")) {
-                    for (var i in value) {// jshint ignore:line
-                        son[i] = value[i]
-                    }
-                } else {
-                    var sson = accessor._vmodel = modelFactory(value, 0, son.$model)
-                    var sevent = sson.$events
-                    var oevent = son.$events
-                    for (var i in oevent) {// jshint ignore:line
-                        var arr = oevent[i]
-                        if (Array.isArray(sevent[i])) {
-                            sevent[i] = sevent[i].concat(arr)
-                        } else {
-                            delete sson.$model[i]
+                var observes = this.$events[name] || []
+                son = accessor._vmodel = modelFactory(value)
+                son.$events[subscribers] = observes
+                if (observes.length) {
+                    observes.forEach(function (data) {
+                        if (data.rollback) {
+                            data.rollback() //还原 ms-with ms-on
                         }
-                    }
-                    sevent[subscribers] = oevent[subscribers]
-                    son = sson
+                        bindingHandlers[data.type](data, data.vmodels)
+                    })
                 }
             }
             accessor.updateValue(this, son.$model)

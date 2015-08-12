@@ -94,6 +94,7 @@ bindingExecutors.repeat = function (method, pos, el) {
     if (!method && data.xtype) {
         var old = data.$repeat
         var neo = data.evaluator.apply(0, data.args || [])
+
         if (data.xtype === "array") {
             if (old.length === neo.length) {
                 return
@@ -144,9 +145,10 @@ bindingExecutors.repeat = function (method, pos, el) {
                     sweepNodes(start, end)
                     if (data.xtype === "object") {
                         parent.insertBefore(start, end)
+                    }else{
+                        recycleProxies(proxies, "each")
                     }
                 }
-                recycleProxies(proxies, "each")
                 break
             case "move":
                 start = comments[0]
@@ -188,91 +190,39 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
+                var pool = Array.isArray(proxies) ||!proxies ?  {}: proxies   //代理对象组成的hash
+                data.proxies = pool
                 var keys = []
-                //用于放置 所有代理VM
-                data.proxies = data.proxies || {}
-                var pool = data.proxies
-
-                //收集所有要移除的节点,除了第一个与最后一个注释节点
-                removed = []
-                var nodes = data.element.parentNode.childNodes
-                var add = false
-                for (i = 0; node = nodes[i++]; ) {
-                    if (node.nodeValue === data.signature) {
-                        add = true
-                    } else if (node.nodeValue === data.signature + ":end") {
-                        add = false
-                    }
-                    if (add) {
-                        removed.push(node)
+                fragments = []
+                for (var key in pool) {
+                    if (!object.hasOwnProperty(key)) {
+                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
+                        delete(pool[key])
                     }
                 }
-
-                var indexNode = [], item
-                var keyIndex = data.keyIndex || (data.keyIndex = {})
-                //将现有的节点全部移出DOM树
-                for (i = 0; i < removed.length; i++) {
-                    el = removed[i]
-                    if (el.nodeValue === data.signature) {
-                        item = avalonFragment.cloneNode(false)
-                        indexNode.push(item)
-                    }
-                    item.appendChild(el)
-                }
-
-                //收集当前所有用户添加的键名(不包括框架架上的$xxxx)
-                for (var key in object) {
+                for (key in object) { //得到所有键名
                     if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
                         keys.push(key)
                     }
                 }
-                //为pool添加代理VM
-                for (i = 0; key = keys[i++]; ) {
-                    if (!pool.hasOwnProperty(key)) {
-                        //如果不存在就从withProxyPool中拿,再不存在就创建
-                        pool[key] = withProxyAgent(pool[key], key, data)
-                    } else {//存在就重写$val
-                        pool[key].$val = object[key]
-                    }
-                }
-                //从pool中删除不再使用代理VM
-                for (key in pool) {
-                    if (keys.indexOf(key) === -1) {
-                        delete keyIndex[key]
-                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
-                        delete pool[key]
-                    }
-                }
-                fragments = []
-                var renderKeys = keys //需要渲染到DOM树去的键名
                 if (data.sortedCallback) { //如果有回调，则让它们排序
                     var keys2 = data.sortedCallback.call(parent, keys)
-                    if (keys2 && Array.isArray(keys2)) {
-                        renderKeys = keys2
+                    if (keys2 && Array.isArray(keys2) && keys2.length) {
+                        keys = keys2
                     }
                 }
-
-                for (i = 0; i < renderKeys.length; i++) {
-                    key = renderKeys[i]
-                    if (indexNode[keyIndex[key]]) {//重用已有节点
-                        transation.appendChild(indexNode[keyIndex[key]])
-                        fragments.push({})
-                    } else {
+                for (i = 0; key = keys[i++]; ) {
+                    if (key !== "hasOwnProperty") {
+                        pool[key] = withProxyAgent(pool[key], key, data)
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
 
-                for (i = 0; i < renderKeys.length; i++) {
-                    keyIndex[renderKeys[i]] = i
-                }
                 parent.insertBefore(transation, end)
                 for (i = 0; fragment = fragments[i++]; ) {
-                    if (fragment.nodes) {
-                        scanNodeArray(fragment.nodes, fragment.vmodels)
-                        fragment.nodes = fragment.vmodels = null
-                    }
+                    scanNodeArray(fragment.nodes, fragment.vmodels)
+                    fragment.nodes = fragment.vmodels = null
                 }
-
                 break
         }
         if (!data.$repeat || data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
