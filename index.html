@@ -4,28 +4,23 @@
         <title>Avalon by RubyLouvre</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="avalon.js" ></script>
-  
         <script>
-   avalon.define({
-        $id: "test",
-        string: "xxx",
-        bool: true,
-        number: 100,
-        object: {
-            aaa: "aaa",
-            bbb: "bbb"
-        }
-    })
+            var vm = avalon.define({
+                $id: 'xx',
+                dataid: 0
+            })
+            vm.$watch('dataid', function (value, oldValue) {
+                console.log(value, oldValue, "1")
+            });
+            vm.dataid = 2;
         </script>
+
+
     </head>
     <body>
-        <div ms-controller="test">
-            <input ms-duplex="string">{{string}}
-            <input ms-duplex="bool" type="radio">{{bool}}
-            <input ms-duplex="number" >{{number}}
-            <ul>
-                <li ms-repeat="object">{{$key}} --> {{$val}}</li>
-            </ul>
+        <div ms-controller="xx">
+            <input  id="sid"  name="sid" ms-duplex-number="dataid"/>
         </div>
+
     </body>
 </html>
