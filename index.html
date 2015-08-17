@@ -7,6 +7,7 @@
         <script>
             var vm = avalon.define({
                 $id: 'xx',
+                a: 1,
                 dataid: 0
             })
             vm.$watch('dataid', function (value, oldValue) {
@@ -19,6 +20,7 @@
     </head>
     <body>
         <div ms-controller="xx">
+            <div ms-class-xxx-yyy="a == 1"></div>
             <input  id="sid"  name="sid" ms-duplex-number="dataid"/>
         </div>
 
