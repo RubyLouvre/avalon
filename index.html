@@ -8,12 +8,12 @@
             var vm = avalon.define({
                 $id: 'xx',
                 a: 1,
+                data: [],
                 dataid: 0
             })
-            vm.$watch('dataid', function (value, oldValue) {
-                console.log(value, oldValue, "1")
-            });
-            vm.dataid = 2;
+            setTimeout(function(){
+                vm.data.push( {a: 1})
+            })
         </script>
 
 

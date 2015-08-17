@@ -1710,7 +1710,7 @@ var arrayPrototype = {
         return this
     },
     set: function (index, val) {
-        if (index >= 0) {
+        if (index < this.length && index > -1) {
             var valueType = avalon.type(val)
             if (val && val.$model) {
                 val = val.$model
