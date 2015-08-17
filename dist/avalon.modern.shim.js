@@ -2910,7 +2910,7 @@ bindingHandlers["class"] = function (binding, vmodels) {
         }
         binding.expr = "[" + className + "," + rightExpr + "]"
     } else {
-        binding.expr = '[' + quote(oldStyle) + "," + true + "]"
+        binding.expr = '[' + quote(oldStyle) + "," + text + "]"
         binding.oldStyle = oldStyle
     }
     var method = binding.type
