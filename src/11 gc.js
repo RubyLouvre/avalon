@@ -63,8 +63,10 @@ function rejectDisposeQueue(data) {
     i = n
     if (diff) {
         while (data = disposeQueue[--i]) {
-            if (!data.element)
+            if (data.element === null) {
+                disposeQueue.splice(i, 1)
                 continue
+            }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
@@ -98,6 +100,11 @@ function shouldDispose(el) {
     } catch (e) {
         return true
     }
-
+    if (el.ifRemove) {
+        if (!root.contains(el.ifRemove)) {
+            el.parentNode && el.parentNode.removeChild(el)
+            return true
+        }
+    }
     return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }

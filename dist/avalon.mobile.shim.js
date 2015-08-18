@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.46 built in 2015.8.17
+ avalon.mobile.shim.js 1.46 built in 2015.8.18
  ==================================================*/
 (function(global, factory) {
 
@@ -1565,8 +1565,10 @@ function rejectDisposeQueue(data) {
     i = n
     if (diff) {
         while (data = disposeQueue[--i]) {
-            if (!data.element)
+            if (data.element === null) {
+                disposeQueue.splice(i, 1)
                 continue
+            }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
@@ -1600,7 +1602,12 @@ function shouldDispose(el) {
     } catch (e) {
         return true
     }
-
+    if (el.ifRemove) {
+        if (!root.contains(el.ifRemove)) {
+            el.parentNode && el.parentNode.removeChild(el)
+            return true
+        }
+    }
     return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }
 
@@ -3373,6 +3380,7 @@ bindingExecutors["if"] = function(val, elem, data) {
     if (val) { //插回DOM树
         if (elem.nodeType === 8) {
             elem.parentNode.replaceChild(data.template, elem)
+            elem.ifRemove = null
          //   animate.enter(data.template, elem.parentNode)
             elem = data.element = data.template //这时可能为null
         }
@@ -3385,6 +3393,7 @@ bindingExecutors["if"] = function(val, elem, data) {
         if (elem.nodeType === 1) {
             var node = data.element = DOC.createComment("ms-if")
             elem.parentNode.replaceChild(node, elem)
+            elem.ifRemove = node
        //     animate.leave(elem, node.parentNode, node)
             data.template = elem //元素节点
             ifGroup.appendChild(elem)
