@@ -218,7 +218,7 @@ var prefixes = ["", "-webkit-", "-moz-", "-ms-"] //去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
 }
-avalon.cssNumber = oneObject("columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+avalon.cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function(name, host, camelCase) {
     if (cssMap[name]) {

@@ -259,7 +259,7 @@ var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
 var cssMap = {
     "float": W3C ? "cssFloat" : "styleFloat"
 }
-avalon.cssNumber = oneObject("columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+avalon.cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function(name, host, camelCase) {
     if (cssMap[name]) {

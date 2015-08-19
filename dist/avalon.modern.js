@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.46 built in 2015.8.18
+ avalon.modern.js 1.46 built in 2015.8.19
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1909,7 +1909,7 @@ var prefixes = ["", "-webkit-", "-moz-", "-ms-"] //去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
 }
-avalon.cssNumber = oneObject("columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
+avalon.cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function(name, host, camelCase) {
     if (cssMap[name]) {
