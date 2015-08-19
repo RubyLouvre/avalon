@@ -3971,8 +3971,8 @@ bindingHandlers.widget = function(data, vmodels) {
             } catch (e) {}
             data.rollback = function() {
                 try {
-                    vmodel.widgetElement = null
                     vmodel.$remove()
+                    vmodel.widgetElement = null // 放到$remove后边
                 } catch (e) {}
                 elem.msData = {}
                 delete avalon.vmodels[vmodel.$id]
