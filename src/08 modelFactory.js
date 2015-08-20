@@ -256,11 +256,13 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 son.$events[subscribers] = observes
                 if (observes.length) {
                     observes.forEach(function (data) {
+                        if (!data.type) {
+                           return //数据未准备好时忽略更新
+                        }
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                         }
-                       var fn = bindingHandlers[data.type]
-                       fn && fn(data, data.vmodels)
+                        bindingHandlers[data.type](data, data.vmodels)
                     })
                 }
             }
