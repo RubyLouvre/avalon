@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.46 built in 2015.8.19
+ avalon.mobile.shim.js 1.46 built in 2015.8.20
  ==================================================*/
 (function(global, factory) {
 
@@ -1072,7 +1072,8 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                         }
-                        bindingHandlers[data.type](data, data.vmodels)
+                        var fn = bindingHandlers[data.type]
+                        fn && fn(data, data.vmodels)
                     })
                 }
             }

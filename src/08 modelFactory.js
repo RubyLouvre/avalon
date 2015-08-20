@@ -259,7 +259,8 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                         }
-                        bindingHandlers[data.type](data, data.vmodels)
+                       var fn = bindingHandlers[data.type]
+                       fn && fn(data, data.vmodels)
                     })
                 }
             }
