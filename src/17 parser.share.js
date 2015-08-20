@@ -84,7 +84,7 @@ function parseFilter(val, filters) {
             .replace(rthimLeftParentheses, function () {
                 return '",'
             }) + "]"
-    return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
+    return  "return this.filters.$filter(" + val + ", " + filters + ")"
 }
 
 function parseExpr(code, scopes, data) {
@@ -170,7 +170,10 @@ function parseExpr(code, scopes, data) {
                 "= vvv;\n} "
         try {
             fn = Function.apply(noop, names.concat(_body))
-            data.evaluator = evaluatorPool.put(exprId, fn)
+            data.evaluator = evaluatorPool.put(exprId, function() {
+                //确保可以在编译代码中使用this获取avalon对象
+                return fn.apply(avalon, arguments)
+            })
         } catch (e) {
             log("debug: parse error," + e.message)
         }
@@ -192,7 +195,10 @@ function parseExpr(code, scopes, data) {
     }
     try {
         fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
-        data.evaluator = evaluatorPool.put(exprId, fn)
+        data.evaluator = evaluatorPool.put(exprId, function() {
+            //确保可以在编译代码中使用this获取avalon对象
+            return fn.apply(avalon, arguments)
+        })
     } catch (e) {
         log("debug: parse error," + e.message)
     } finally {
