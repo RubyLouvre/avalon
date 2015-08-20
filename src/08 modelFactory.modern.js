@@ -244,7 +244,7 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 if (observes.length) {
                     observes.forEach(function (data) {
                         if(!data.type) {
-                           return;//防止模板先加载报错
+                           return //防止模板先加载报错
                         }
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
