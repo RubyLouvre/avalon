@@ -84,7 +84,7 @@ function parseFilter(val, filters) {
             .replace(rthimLeftParentheses, function () {
                 return '",'
             }) + "]"
-    return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
+    return  "return this.filters.$filter(" + val + ", " + filters + ")"
 }
 
 function parseExpr(code, scopes, data) {
@@ -161,6 +161,16 @@ function parseExpr(code, scopes, data) {
         }
         code = "\nvar ret" + expose + " = " + code + ";\r\n"
         code += parseFilter("ret" + expose, filters)
+        try {
+            fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
+            data.evaluator = evaluatorPool.put(exprId, function() {
+                return fn.apply(avalon, arguments)//确保可以在编译代码中使用this获取avalon对象
+            })
+        } catch (e) {
+            log("debug: parse error," + e.message)
+        }
+        vars = assigns = names = null //释放内存
+        return
     } else if (dataType === "duplex") { //双工绑定
         var _body = "'use strict';\nreturn function(vvv){\n\t" +
                 prefix +
@@ -174,6 +184,7 @@ function parseExpr(code, scopes, data) {
         } catch (e) {
             log("debug: parse error," + e.message)
         }
+        vars = assigns = names = null //释放内存
         return
     } else if (dataType === "on") { //事件绑定
         if (code.indexOf("(") === -1) {
@@ -195,9 +206,8 @@ function parseExpr(code, scopes, data) {
         data.evaluator = evaluatorPool.put(exprId, fn)
     } catch (e) {
         log("debug: parse error," + e.message)
-    } finally {
-        vars = assigns = names = null //释放内存
     }
+    vars = assigns = names = null //释放内存
 }
 function stringifyExpr(code) {
     var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况

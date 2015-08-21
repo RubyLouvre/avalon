@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.46 built in 2015.8.19
+ avalon.mobile.shim.js 1.46 built in 2015.8.21
  ==================================================*/
 (function(global, factory) {
 
@@ -1072,7 +1072,8 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                         }
-                        bindingHandlers[data.type](data, data.vmodels)
+                        var fn = bindingHandlers[data.type]
+                        fn && fn(data, data.vmodels)
                     })
                 }
             }
@@ -4373,7 +4374,7 @@ new function () {
     })
 }
 
-new function() {// jshint ignore:line
+new function () {// jshint ignore:line
     var touchProxy = {}
     var IEtouch = navigator.pointerEnabled
     var IEMStouch = navigator.msPointerEnabled
@@ -4390,16 +4391,16 @@ new function() {// jshint ignore:line
 
     if (IEtouch) {
         touchNames = ["pointerdown", "pointermove", "pointerup", "pointercancel"]
-    } 
+    }
     if (IEMStouch) {
         touchNames = ["MSPointerDown", "MSPointerMove", "MSPointerUp", "MSPointerCancel"]
     }
-    function isPrimaryTouch(event){
+    function isPrimaryTouch(event) {
         return (event.pointerType === 'touch' || event.pointerType === event.MSPOINTER_TYPE_TOUCH) && event.isPrimary
     }
 
-    function isPointerEventType(e, type){
-        return (e.type === 'pointer'+type || e.type.toLowerCase() === 'mspointer'+type)
+    function isPointerEventType(e, type) {
+        return (e.type === 'pointer' + type || e.type.toLowerCase() === 'mspointer' + type)
     }
 
     //判定滑动方向
@@ -4416,36 +4417,63 @@ new function() {// jshint ignore:line
         }
         el.dispatchEvent(event)
     }
+    function needsClick(target) {
+        switch (target.nodeName.toLowerCase()) {
+            // Don't send a synthetic click to disabled inputs (issue #62)
+            case 'button':
+            case 'select':
+            case 'textarea':
+                if (target.disabled) {
+                    return true;
+                }
 
-    function onMouse(event) { 
-        var target = event.target,
-            element = touchProxy.element
+                break;
+            case 'input':
 
-        if (element !== target) {
-            if (target.tagName.toLowerCase() === 'input' && element.tagName.toLowerCase() === "label") {
-                return false
-            }
+                // File inputs need real clicks on iOS 6 due to a browser bug (issue #68)
+                if ((isAndroid && target.type === 'file') || target.disabled) {
+                    return true;
+                }
+
+                break;
+            case 'label':
+            case 'iframe': // iOS8 homescreen apps can prevent events bubbling into frames
+            case 'video':
+                return true;
+        }
+
+        return (/\bneedsclick\b/).test(target.className);
+    }
+    ;
+    function onMouse(event) {
+        var target = event.target
+              
+
+        if (!needsClick(target)|| touchProxy.cancelNextClick ) {
+            
             if (event.stopImmediatePropagation) {
                 event.stopImmediatePropagation()
             } else {
                 event.propagationStopped = true
             }
-            event.stopPropagation() 
+            event.stopPropagation()
             event.preventDefault()
         }
     }
     function cancelLongTap() {
-        if (longTapTimeout) clearTimeout(longTapTimeout)
+        if (longTapTimeout)
+            clearTimeout(longTapTimeout)
         longTapTimeout = null
     }
     function touchstart(event) {
         var _isPointerType = isPointerEventType(event, "down"),
-            firstTouch = _isPointerType ? event : event.touches[0],
-            element = "tagName" in firstTouch.target ? firstTouch.target: firstTouch.target.parentNode,
-            now = Date.now(),
-            delta = now - (touchProxy.last || now)
+                firstTouch = _isPointerType ? event : event.touches[0],
+                element = "tagName" in firstTouch.target ? firstTouch.target : firstTouch.target.parentNode,
+                now = Date.now(),
+                delta = now - (touchProxy.last || now)
 
-        if (_isPointerType && !isPrimaryTouch(event)) return
+        if (_isPointerType && !isPrimaryTouch(event))
+            return
         if (touchProxy.x1 || touchProxy.y1) {
             touchProxy.x1 = undefined
             touchProxy.y1 = undefined
@@ -4460,7 +4488,7 @@ new function() {// jshint ignore:line
         touchProxy.last = now
         touchProxy.element = element
 
-        longTapTimeout = setTimeout(function() {
+        longTapTimeout = setTimeout(function () {
             longTapTimeout = null
             fireEvent(element, "hold")
             fireEvent(element, "longtap")
@@ -4471,30 +4499,43 @@ new function() {// jshint ignore:line
     function touchmove(event) {
 
         var _isPointerType = isPointerEventType(event, 'down'),
-            firstTouch = _isPointerType ? event : event.touches[0],
-            x = firstTouch.pageX,
-            y = firstTouch.pageY
-        if (_isPointerType && !isPrimaryTouch(event)) return
+                firstTouch = _isPointerType ? event : event.touches[0],
+                x = firstTouch.pageX,
+                y = firstTouch.pageY
+        if (_isPointerType && !isPrimaryTouch(event))
+            return
         /*
-            android下某些浏览器触发了touchmove事件的话touchend事件不触发，禁用touchmove可以解决此bug
-            http://stackoverflow.com/questions/14486804/understanding-touch-events
-        */
+         android下某些浏览器触发了touchmove事件的话touchend事件不触发，禁用touchmove可以解决此bug
+         http://stackoverflow.com/questions/14486804/understanding-touch-events
+         */
         if (isGoingtoFixTouchEndEvent && Math.abs(touchProxy.x - x) > 10) {
             event.preventDefault()
         }
         cancelLongTap()
-        
+
         touchProxy.x1 = x // touchend事件没有pageX、pageY始终为0，且没有clientX和clientY事件
         touchProxy.y1 = y
         touchProxy.mx += Math.abs(touchProxy.x - x)
         touchProxy.my += Math.abs(touchProxy.y - y)
     }
-    function touchend(event) { 
-        var _isPointerType = isPointerEventType(event, 'down'),
-            element = touchProxy.element
+    function touchend(event) {
 
-        if (_isPointerType && !isPrimaryTouch(event)) return
-        if (!element) return // longtap|hold触发后touchProxy为{}
+
+        //如果点得太快,直接忽略 
+        if ((event.timeStamp - touchProxy.lastClickTime) < 200) {
+            touchProxy.cancelNextClick = true;
+            return true;
+        }
+        touchProxy.cancelNextClick = false;
+
+        touchProxy.lastClickTime = event.timeStamp;
+        var _isPointerType = isPointerEventType(event, 'down'),
+                element = touchProxy.element
+
+        if (_isPointerType && !isPrimaryTouch(event))
+            return
+        if (!element)
+            return // longtap|hold触发后touchProxy为{}
 
         cancelLongTap()
         if ((touchProxy.x1 && Math.abs(touchProxy.x1 - touchProxy.x) > dragDistance) || (touchProxy.y1 && Math.abs(touchProxy.y1 - touchProxy.y) > dragDistance)) {
@@ -4514,10 +4555,11 @@ new function() {// jshint ignore:line
                     touchProxy = {}
                     touchProxy.element = element
                 } else {
-                    touchTimeout = setTimeout(function() {
+                    touchTimeout = setTimeout(function () {
                         clearTimeout(touchTimeout)
                         touchTimeout = null
-                        if (touchProxy.element) fireEvent(touchProxy.element, "singletap")
+                        if (touchProxy.element)
+                            fireEvent(touchProxy.element, "singletap")
                         touchProxy = {};
                         touchProxy.element = element
                     }, 250)
@@ -4533,14 +4575,16 @@ new function() {// jshint ignore:line
     document.addEventListener(touchNames[1], touchmove)
     document.addEventListener(touchNames[2], touchend)
     if (touchNames[3]) {
-        document.addEventListener(touchNames[3], function(event) {
-            if (longTapTimeout) clearTimeout(longTapTimeout)
-            if (touchTimeout) clearTimeout(touchTimeout)
+        document.addEventListener(touchNames[3], function (event) {
+            if (longTapTimeout)
+                clearTimeout(longTapTimeout)
+            if (touchTimeout)
+                clearTimeout(touchTimeout)
             longTapTimeout = touchTimeout = null
             touchProxy = {}
         })
     }
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "longtap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "longtap", "hold"].forEach(function (method) {
         me[method + "Hook"] = me["clickHook"]
     })
 
