@@ -1,6 +1,6 @@
 bindingHandlers.repeat = function (data, vmodels) {
     var type = data.type
-    parseExprProxy(data.value, vmodels, data, 0, 1)
+    parseExprProxy(data.value, vmodels, data, 1)
     data.proxies = []
     var freturn = false
     try {
@@ -9,6 +9,8 @@ bindingHandlers.repeat = function (data, vmodels) {
         if (xtype !== "object" && xtype !== "array") {
             freturn = true
             avalon.log("warning:" + data.value + "只能是对象或数组")
+        } else {
+            data.xtype = xtype
         }
     } catch (e) {
         freturn = true
@@ -81,21 +83,36 @@ bindingHandlers.repeat = function (data, vmodels) {
     var $list = ($events || {})[subscribers]
     injectDependency($list, data)
     if (xtype === "object") {
-        data.$with = true
-        $repeat.$proxy || ($repeat.$proxy = {})
-        data.handler("append", $repeat)
+        data.handler("append")
     } else if ($repeat.length) {
         data.handler("add", 0, $repeat.length)
     }
 }
 
 bindingExecutors.repeat = function (method, pos, el) {
-    if (!method && this.$with) {
-        method = "append"
-        var flag = "update"
+    var data = this
+    if (!method && data.xtype) {
+        var old = data.$repeat
+        var neo = data.evaluator.apply(0, data.args || [])
+
+        if (data.xtype === "array") {
+            if (old.length === neo.length) {
+                return
+            }
+            method = "add"
+            pos = 0
+            data.$repeat = neo
+            el = neo.length
+        } else {
+            if (keysVM(old).join(";;") === keysVM(neo).join(";;")) {
+                return
+            }
+            method = "append"
+            data.$repeat = neo
+        }
     }
     if (method) {
-        var data = this, start, fragment
+        var start, fragment
         var end = data.element
         var comments = getComments(data)
         var parent = end.parentNode
@@ -110,17 +127,12 @@ bindingExecutors.repeat = function (method, pos, el) {
                     proxies.splice(i, 0, proxy)
                     shimController(data, transation, proxy, fragments)
                 }
-                var now = new Date() - 0
-                avalon.optimize = avalon.optimize || now
+                parent.insertBefore(transation, comments[pos] || end)
                 for (i = 0; fragment = fragments[i++]; ) {
                     scanNodeArray(fragment.nodes, fragment.vmodels)
                     fragment.nodes = fragment.vmodels = null
                 }
-                if (avalon.optimize === now) {
-                    avalon.optimize = null
-                }
-                parent.insertBefore(transation, comments[pos] || end)
-                avalon.profile("插入操作花费了 " + (new Date - now))
+
                 break
             case "del": //将pos后的el个元素删掉(pos, el都是数字)
                 sweepNodes(comments[pos], comments[pos + el] || end)
@@ -131,11 +143,12 @@ bindingExecutors.repeat = function (method, pos, el) {
                 start = comments[0]
                 if (start) {
                     sweepNodes(start, end)
-                    if (data.$with) {
+                    if (data.xtype === "object") {
                         parent.insertBefore(start, end)
+                    }else{
+                        recycleProxies(proxies, "each")
                     }
                 }
-                recycleProxies(proxies, "each")
                 break
             case "move":
                 start = comments[0]
@@ -177,100 +190,39 @@ bindingExecutors.repeat = function (method, pos, el) {
                 break
             case "append":
                 var object = data.$repeat //原来第2参数， 被循环对象
-                var oldProxy = object.$proxy   //代理对象组成的hash
+                var pool = Array.isArray(proxies) ||!proxies ?  {}: proxies   //代理对象组成的hash
+                data.proxies = pool
                 var keys = []
-                now = new Date() - 0
-                avalon.optimize = avalon.optimize || now
-                if (flag === "update") {
-                    if (!data.evaluator) {
-                        parseExprProxy(data.value, data.vmodels, data, 0, 1)
-                    }
-                    object = data.$repeat = data.evaluator.apply(0, data.args || [])
-                    object.$proxy = oldProxy 
-                }
-                var pool = object.$proxy || {}
-                removed = []
-                var nodes = data.element.parentNode.childNodes
-                var add = false
-                for (i = 0; node = nodes[i++]; ) {
-                    if (node.nodeValue === data.signature) {
-                        add = true
-                    } else if (node.nodeValue === data.signature + ":end") {
-                        add = false
-                    }
-                    if (add) {
-                        removed.push(node)
+                fragments = []
+                for (var key in pool) {
+                    if (!object.hasOwnProperty(key)) {
+                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
+                        delete(pool[key])
                     }
                 }
-
-                var indexNode = [], item
-                var keyIndex = data.keyIndex || (data.keyIndex = {})
-                //将现有的节点全部移出DOM树
-                for ( i = 0; i < removed.length; i++) {
-                    el = removed[i]
-                    if (el.nodeValue === data.signature) {
-                        item = avalonFragment.cloneNode(false)
-                        indexNode.push(item)
-                    }
-                    item.appendChild(el)
-                }
-
-
-                for (var key in object) { //当前对象的所有键名
-                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty" && key !== "$proxy") {
+                for (key in object) { //得到所有键名
+                    if (object.hasOwnProperty(key) && key !== "hasOwnProperty") {
                         keys.push(key)
                     }
                 }
-
-                for (var i = 0; key = keys[i++]; ) {
-                    if (!pool.hasOwnProperty(key)) {//添加缺失的代理VM
-                        pool[key] = withProxyAgent(pool[key], key, data)
-                    } else {
-                        pool[key].$val = object[key]
-                    }
-                }
-
-                for ( key in pool) {
-                    if (keys.indexOf(key) === -1) {//删除没用的代理VM
-                        proxyRecycler(pool[key], withProxyPool) //去掉之前的代理VM
-                        delete pool[key]
-                    }
-                }
-                var fragments = []
-                var renderKeys = keys //需要渲染到DOM树去的键名
-                var end = data.element
                 if (data.sortedCallback) { //如果有回调，则让它们排序
                     var keys2 = data.sortedCallback.call(parent, keys)
-                    if (keys2 && Array.isArray(keys2)) {
-                        renderKeys = keys2
+                    if (keys2 && Array.isArray(keys2) && keys2.length) {
+                        keys = keys2
                     }
                 }
-
-                for (i = 0; i < renderKeys.length; i++) {
-                    key = renderKeys[i]
-                    if (typeof keyIndex[key] === "number") {
-                        transation.appendChild(indexNode[keyIndex[key]])
-                        fragments.push({})
-                    } else {
+                for (i = 0; key = keys[i++]; ) {
+                    if (key !== "hasOwnProperty") {
+                        pool[key] = withProxyAgent(pool[key], key, data)
                         shimController(data, transation, pool[key], fragments)
                     }
                 }
 
-                for (i = 0; i < renderKeys.length; i++) {
-                    keyIndex[renderKeys[i]] = i
-                }
-
-                for (i = 0; fragment = fragments[i++]; ) {
-                    if (fragment.nodes) {
-                        scanNodeArray(fragment.nodes, fragment.vmodels)
-                        fragment.nodes = fragment.vmodels = null
-                    }
-                }
-                if (avalon.optimize === now) {
-                    avalon.optimize = null
-                }
                 parent.insertBefore(transation, end)
-                avalon.profile("插入操作花费了 " + (new Date - now))
+                for (i = 0; fragment = fragments[i++]; ) {
+                    scanNodeArray(fragment.nodes, fragment.vmodels)
+                    fragment.nodes = fragment.vmodels = null
+                }
                 break
         }
         if (!data.$repeat || data.$repeat.hasOwnProperty("$lock")) //IE6-8 VBScript对象会报错, 有时候data.$repeat不存在
@@ -305,10 +257,10 @@ function shimController(data, transation, proxy, fragments) {
 function getComments(data) {
     var ret = []
     var nodes = data.element.parentNode.childNodes
-    for(var i= 0, node; node = nodes[i++];){
-        if(node.nodeValue === data.signature){
-            ret.push( node )
-        }else if(node.nodeValue === data.signature+":end"){
+    for (var i = 0, node; node = nodes[i++]; ) {
+        if (node.nodeValue === data.signature) {
+            ret.push(node)
+        } else if (node.nodeValue === data.signature + ":end") {
             break
         }
     }
@@ -363,6 +315,7 @@ function withProxyAgent(proxy, key, data) {
     }
     var host = data.$repeat
     proxy.$key = key
+
     proxy.$host = host
     proxy.$outer = data.$outer
     if (host.$events) {
@@ -456,12 +409,13 @@ function eachProxyAgent(index, data) {
 
 function proxyRecycler(proxy, proxyPool) {
     for (var i in proxy.$events) {
-        if (Array.isArray(proxy.$events[i])) {
-            proxy.$events[i].forEach(function (data) {
+        var arr = proxy.$events[i]
+        if (Array.isArray(arr)) {
+            arr.forEach(function (data) {
                 if (typeof data === "object")
                     disposeData(data)
             })// jshint ignore:line
-            proxy.$events[i].length = 0
+            arr.length = 0
         }
     }
     proxy.$host = proxy.$outer = {}

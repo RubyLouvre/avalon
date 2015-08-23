@@ -29,7 +29,7 @@ avalon.define = function (id, factory) {
 }
 
 //一些不需要被监听的属性
-var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$proxy,$reinitialize,$propertyNames").match(rword)
+var $$skipArray = String("$id,$watch,$unwatch,$fire,$events,$model,$skipArray,$reinitialize").match(rword)
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -79,7 +79,9 @@ function modelFactory(source, $special, $model) {
                 accessor = makeComputedAccessor(name, val)
                 computed.push(accessor)
             } else if (rcomplexType.test(valueType)) {
-                accessor = makeComplexAccessor(name, val, valueType, $events[name])
+                // issue #940 解决$model层次依赖丢失 https://github.com/RubyLouvre/avalon/issues/940
+                //  $model[name] = {}
+                accessor = makeComplexAccessor(name, val, valueType, $events[name], $model)
             } else {
                 accessor = makeSimpleAccessor(name, val)
             }
@@ -87,7 +89,6 @@ function modelFactory(source, $special, $model) {
         }
     })
     /* jshint ignore:end */
-
     $vmodel = defineProperties($vmodel, descriptorFactory(accessors), source) //生成一个空的ViewModel
     for (var i = 0; i < names.length; i++) {
         var name = names[i]
@@ -96,25 +97,22 @@ function modelFactory(source, $special, $model) {
         }
     }
     //添加$id, $model, $events, $watch, $unwatch, $fire
-    $vmodel.$propertyNames = names.join("&shy;")
-    $vmodel.$id = generateID()
-    $vmodel.$model = $model
-    $vmodel.$events = $events
-    for (i in EventBus) {
-        var fn = EventBus[i]
-        if (!W3C) { //在IE6-8下，VB对象的方法里的this并不指向自身，需要用bind处理一下
-            fn = fn.bind($vmodel)
-        }
-        $vmodel[i] = fn
-    }
+    hideProperty($vmodel, "$id", generateID())
+    hideProperty($vmodel, "$model", $model)
+    hideProperty($vmodel, "$events", $events)
+    /* jshint ignore:start */
     if (canHideOwn) {
-        Object.defineProperty($vmodel, "hasOwnProperty", hasOwnDescriptor)
-    } else {
-        /* jshint ignore:start */
-        $vmodel.hasOwnProperty = function (name) {
+       hideProperty($vmodel, "hasOwnProperty", function (name) {
             return name in $vmodel.$model
+        })
+    } else {
+        $vmodel.hasOwnProperty = function (name) {
+            return (name in $vmodel.$model) && (name !== "hasOwnProperty")
         }
-        /* jshint ignore:end */
+    }
+    /* jshint ignore:end */
+    for ( i in EventBus) {
+        hideProperty($vmodel, i, EventBus[i].bind($vmodel))
     }
 
     $vmodel.$reinitialize = function () {
@@ -144,13 +142,18 @@ function modelFactory(source, $special, $model) {
     return $vmodel
 }
 
-var hasOwnDescriptor = {
-    value: function (name) {
-        return name in this.$model
-    },
-    writable: false,
-    enumerable: false,
-    configurable: true
+
+function hideProperty(host, name, value) {
+    if (canHideOwn) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else {
+        host[name] = value
+    }
 }
 //创建一个简单访问器
 function makeSimpleAccessor(name, value) {
@@ -215,7 +218,8 @@ function makeComputedAccessor(name, options) {
 }
 
 //创建一个复杂访问器
-function makeComplexAccessor(name, initValue, valueType, list) {
+function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
+
     function accessor(value) {
         var oldValue = accessor._value
 
@@ -241,24 +245,25 @@ function makeComplexAccessor(name, initValue, valueType, list) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
-                var newPropertyNames = Object.keys(value).join("&shy;")
-                if (son.$propertyNames === newPropertyNames) {
-                    for (i in value) {
-                        son[i] = value[i]
+                var observes = this.$events[name] || []
+                var newObject = avalon.mix(true, {}, value)
+                for(i in son ){
+                    if(son.hasOwnProperty(i) && ohasOwn.call(newObject,i)){
+                        son[i] = newObject[i]
                     }
-                } else {
-                    var sson = accessor._vmodel = modelFactory(value)
-                    var sevent = sson.$events
-                    var oevent = son.$events
-                    for (var i in sevent) {
-                        var arr = sevent[i]
-                        if (Array.isArray(arr)) {
-                            arr = arr.concat(oevent[i])
+                }
+                son = accessor._vmodel = modelFactory(value)
+                son.$events[subscribers] = observes
+                if (observes.length) {
+                    observes.forEach(function (data) {
+                        if (!data.type) {
+                           return //数据未准备好时忽略更新
                         }
-                    }
-                    sevent[subscribers] = oevent[subscribers]
-                    sson.$proxy = son.$proxy
-                    son = sson
+                        if (data.rollback) {
+                            data.rollback() //还原 ms-with ms-on
+                        }
+                        bindingHandlers[data.type](data, data.vmodels)
+                    })
                 }
             }
             accessor.updateValue(this, son.$model)
@@ -270,7 +275,12 @@ function makeComplexAccessor(name, initValue, valueType, list) {
         }
     }
     accessorFactory(accessor, name)
-    var son = accessor._vmodel = modelFactory(initValue)
+    if (Array.isArray(initValue)) {
+        parentModel[name] = initValue
+    } else {
+        parentModel[name] = parentModel[name] || {}
+    }
+    var son = accessor._vmodel = modelFactory(initValue, 0, parentModel[name])
     son.$events[subscribers] = list
     return accessor
 }
@@ -319,7 +329,16 @@ function isObservable(name, value, $skipArray) {
     }
     return true
 }
-
+function keysVM(obj) {
+    var arr = Object.keys(obj.$model ? obj.$model: obj)
+    for (var i = 0; i < $$skipArray.length; i++) {
+        var index = arr.indexOf($$skipArray[i])
+        if (index !== -1) {
+            arr.splice(index, 1)
+        }
+    }
+    return arr
+}
 var descriptorFactory = W3C ? function (obj) {
     var descriptors = {}
     for (var i in obj) {

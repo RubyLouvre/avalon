@@ -69,8 +69,7 @@ avalon.profile = function () {
 avalon.nextTick = new function () {// jshint ignore:line
     var tickImmediate = window.setImmediate
     var tickObserver = window.MutationObserver
-    var tickPost = W3C && window.postMessage
-    if (tickImmediate) {
+    if (tickImmediate) {//IE10 \11 edage
         return tickImmediate.bind(window)
     }
 
@@ -83,7 +82,7 @@ avalon.nextTick = new function () {// jshint ignore:line
         queue = queue.slice(n)
     }
 
-    if (tickObserver) {
+    if (tickObserver) {// 支持MutationObserver
         var node = document.createTextNode("avalon")
         new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
         return function (fn) {
@@ -92,22 +91,22 @@ avalon.nextTick = new function () {// jshint ignore:line
         }
     }
 
-    if (tickPost) {
-        window.addEventListener("message", function (e) {
-            var source = e.source
-            if ((source === window || source === null) && e.data === "process-tick") {
-                e.stopPropagation()
-                callback()
-            }
-        })
-
+    if (window.VBArray) {
         return function (fn) {
             queue.push(fn)
-            window.postMessage('process-tick', '*')
+            var node = DOC.createElement("script")
+            node.onreadystatechange = function () {
+                callback() //在interactive阶段就触发
+                node.onreadystatechange = null
+                head.removeChild(node)
+                node = null
+            }
+            head.appendChild(node)
         }
     }
 
+
     return function (fn) {
-        setTimeout(fn, 0)
+        setTimeout(fn, 4)
     }
 }// jshint ignore:line

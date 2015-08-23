@@ -2,7 +2,7 @@
 var duplexBinding = bindingHandlers.duplex = function(data, vmodels) {
     var elem = data.element,
         hasCast
-        parseExprProxy(data.value, vmodels, data, 0, 1)
+        parseExprProxy(data.value, vmodels, data, 1)
 
         data.changed = getBindingCallback(elem, "data-duplex-changed", vmodels) || noop
     if (data.evaluator && data.args) {

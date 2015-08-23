@@ -39,7 +39,7 @@ avalon.injectBinding = function (data) {
             }
             data.handler(value, data.element, data)
         } catch (e) {
-            //log("warning:exception throwed in [avalon.injectBinding] " + e)
+            log("warning:exception throwed in [avalon.injectBinding] " , e)
             delete data.evaluator
             var node = data.element
             if (node.nodeType === 3) {
@@ -85,7 +85,9 @@ function fireDependencies(list) {
                        var value = valueFn.apply(0, fn.args || [])
                        fn.handler(value, el, fn)
                     }
-                } catch (e) {  }
+                } catch (e) { 
+                    console.log(e)
+                }
             }
         }
     }

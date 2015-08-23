@@ -5,17 +5,17 @@ var disposeCount = 0
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
-var uuid2Node = {}
+//var uuid2Node = {}
 function getUid(obj, makeID) { //IE9+,标准浏览器
     if (!obj.uuid && !makeID) {
         obj.uuid = ++disposeCount
-        uuid2Node[obj.uuid] = obj
+        //uuid2Node[obj.uuid] = obj
     }
     return obj.uuid
 }
-function getNode(uuid) {
-    return uuid2Node[uuid]
-}
+//function getNode(uuid) {
+//    return uuid2Node[uuid]
+//}
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var elem = data.element
@@ -63,12 +63,14 @@ function rejectDisposeQueue(data) {
     i = n
     if (diff) {
         while (data = disposeQueue[--i]) {
-            if (!data.element)
+            if (data.element === null) {
+                disposeQueue.splice(i, 1)
                 continue
+            }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
-                delete uuid2Node[data.element.uuid]
+                //delete uuid2Node[data.element.uuid]
                 var lists = data.lists
                 for (var k = 0, list; list = lists[k++]; ) {
                     avalon.Array.remove(lists, list)
@@ -98,6 +100,11 @@ function shouldDispose(el) {
     } catch (e) {
         return true
     }
-
+    if (el.ifRemove) {
+        if (!root.contains(el.ifRemove)) {
+            el.parentNode && el.parentNode.removeChild(el)
+            return true
+        }
+    }
     return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
 }
