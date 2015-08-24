@@ -73,10 +73,7 @@ function scanAttr(elem, vmodels, match) {
             //http://bugs.jquery.com/ticket/7071
             //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
             if (hasDuplex) {
-                if (msData["ms-attr-checked"]) {
-                    log("warning!一个控件不能同时定义ms-attr-checked与" + hasDuplex)
-                }
-                if (msData["ms-attr-value"]) {
+                if (msData["ms-attr-value"] && elem.type === "text") {
                     log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
                 }
             }

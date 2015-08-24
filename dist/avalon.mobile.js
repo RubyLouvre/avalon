@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.46 built in 2015.8.21
+ avalon.mobile.js 1.46 built in 2015.8.24
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1070,11 +1070,13 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 son.$events[subscribers] = observes
                 if (observes.length) {
                     observes.forEach(function (data) {
+                        if(!data.type) {
+                           return //防止模板先加载报错
+                        }
                         if (data.rollback) {
                             data.rollback() //还原 ms-with ms-on
                         }
-                        var fn = bindingHandlers[data.type]
-                        fn && fn(data, data.vmodels)
+                        bindingHandlers[data.type](data, data.vmodels)
                     })
                 }
             }
@@ -2198,7 +2200,7 @@ function parseFilter(val, filters) {
             .replace(rthimLeftParentheses, function () {
                 return '",'
             }) + "]"
-    return  "return avalon.filters.$filter(" + val + ", " + filters + ")"
+    return  "return this.filters.$filter(" + val + ", " + filters + ")"
 }
 
 function parseExpr(code, scopes, data) {
@@ -2275,6 +2277,16 @@ function parseExpr(code, scopes, data) {
         }
         code = "\nvar ret" + expose + " = " + code + ";\r\n"
         code += parseFilter("ret" + expose, filters)
+        try {
+            fn = Function.apply(noop, names.concat("'use strict';\n" + prefix + code))
+            data.evaluator = evaluatorPool.put(exprId, function() {
+                return fn.apply(avalon, arguments)//确保可以在编译代码中使用this获取avalon对象
+            })
+        } catch (e) {
+            log("debug: parse error," + e.message)
+        }
+        vars = assigns = names = null //释放内存
+        return
     } else if (dataType === "duplex") { //双工绑定
         var _body = "'use strict';\nreturn function(vvv){\n\t" +
                 prefix +
@@ -2288,6 +2300,7 @@ function parseExpr(code, scopes, data) {
         } catch (e) {
             log("debug: parse error," + e.message)
         }
+        vars = assigns = names = null //释放内存
         return
     } else if (dataType === "on") { //事件绑定
         if (code.indexOf("(") === -1) {
@@ -2309,9 +2322,8 @@ function parseExpr(code, scopes, data) {
         data.evaluator = evaluatorPool.put(exprId, fn)
     } catch (e) {
         log("debug: parse error," + e.message)
-    } finally {
-        vars = assigns = names = null //释放内存
     }
+    vars = assigns = names = null //释放内存
 }
 function stringifyExpr(code) {
     var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
@@ -2459,7 +2471,7 @@ function scanAttr(elem, vmodels, match) {
                         }
                         param = type
                         type = "attr"
-                        name = "ms-" + type +"-" +param
+                        name = "ms-" + type + "-" + param
                         fixAttrs.push([attr.name, name, value])
                     }
                     msData[name] = value
@@ -2473,7 +2485,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
+                            priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
                             var token = getToken(value)
@@ -2505,10 +2517,7 @@ function scanAttr(elem, vmodels, match) {
             })
             var control = elem.type
             if (control && hasDuplex) {
-                if (msData["ms-attr-checked"]) {
-                    log("warning!" + control + "控件不能同时定义ms-attr-checked与" + hasDuplex)
-                }
-                if (msData["ms-attr-value"]) {
+                if (msData["ms-attr-value"] && elem.type === "text") {
                     log("warning!" + control + "控件不能同时定义ms-attr-value与" + hasDuplex)
                 }
             }
