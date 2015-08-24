@@ -24,7 +24,7 @@ function scanAttr(elem, vmodels, match) {
                         }
                         param = type
                         type = "attr"
-                        name = "ms-" + type +"-" +param
+                        name = "ms-" + type + "-" + param
                         fixAttrs.push([attr.name, name, value])
                     }
                     msData[name] = value
@@ -38,7 +38,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
+                            priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
                             var token = getToken(value)
@@ -70,10 +70,7 @@ function scanAttr(elem, vmodels, match) {
             })
             var control = elem.type
             if (control && hasDuplex) {
-                if (msData["ms-attr-checked"]) {
-                    log("warning!" + control + "控件不能同时定义ms-attr-checked与" + hasDuplex)
-                }
-                if (msData["ms-attr-value"]) {
+                if (msData["ms-attr-value"] && elem.type === "text") {
                     log("warning!" + control + "控件不能同时定义ms-attr-value与" + hasDuplex)
                 }
             }

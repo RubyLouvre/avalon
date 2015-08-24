@@ -1591,6 +1591,7 @@ function rejectDisposeQueue(data) {
 }
 
 function disposeData(data) {
+    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
     data.rollback && data.rollback()
     for (var key in data) {
@@ -1607,7 +1608,8 @@ function shouldDispose(el) {
         return true
     }
     if (el.ifRemove) {
-        if (!root.contains(el.ifRemove)) {
+        // 如果节点被放到ifGroup，才移除
+        if (!root.contains(el.ifRemove) && (ifGroup === ele.parentNode)) {
             el.parentNode && el.parentNode.removeChild(el)
             return true
         }
@@ -2471,7 +2473,7 @@ function scanAttr(elem, vmodels, match) {
                         }
                         param = type
                         type = "attr"
-                        name = "ms-" + type +"-" +param
+                        name = "ms-" + type + "-" + param
                         fixAttrs.push([attr.name, name, value])
                     }
                     msData[name] = value
@@ -2485,7 +2487,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
+                            priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
                             var token = getToken(value)
@@ -2517,10 +2519,7 @@ function scanAttr(elem, vmodels, match) {
             })
             var control = elem.type
             if (control && hasDuplex) {
-                if (msData["ms-attr-checked"]) {
-                    log("warning!" + control + "控件不能同时定义ms-attr-checked与" + hasDuplex)
-                }
-                if (msData["ms-attr-value"]) {
+                if (msData["ms-attr-value"] && elem.type === "text") {
                     log("warning!" + control + "控件不能同时定义ms-attr-value与" + hasDuplex)
                 }
             }
@@ -3984,8 +3983,8 @@ bindingHandlers.widget = function(data, vmodels) {
             } catch (e) {}
             data.rollback = function() {
                 try {
-                    vmodel.widgetElement = null
                     vmodel.$remove()
+                    vmodel.widgetElement = null // 放到$remove后边
                 } catch (e) {}
                 elem.msData = {}
                 delete avalon.vmodels[vmodel.$id]
