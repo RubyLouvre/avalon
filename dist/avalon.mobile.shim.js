@@ -1608,7 +1608,7 @@ function shouldDispose(el) {
     }
     if (el.ifRemove) {
         // 如果节点被放到ifGroup，才移除
-        if (!root.contains(el.ifRemove) && !avalon.contains(ifGroup, el)) {
+        if (!root.contains(el.ifRemove) && avalon.contains(ifGroup, el)) {
             el.parentNode && el.parentNode.removeChild(el)
             return true
         }
