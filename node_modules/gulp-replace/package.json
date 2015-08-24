@@ -1,0 +1,60 @@
+{
+  "name": "gulp-replace",
+  "version": "0.5.2",
+  "description": "A string replace plugin for gulp",
+  "main": "index.js",
+  "dependencies": {
+    "event-stream": "3.2.1",
+    "replacestream": "2.0.0",
+    "istextorbinary": "1.0.2"
+  },
+  "devDependencies": {
+    "should": "^4.6.0",
+    "mocha": "^2.1.0",
+    "gulp-util": "^3.0.2"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lazd/gulp-replace.git"
+  },
+  "keywords": [
+    "gulpplugin",
+    "replace"
+  ],
+  "author": {
+    "name": "Larry Davis",
+    "email": "lazdnet@gmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lazd/gulp-replace/issues"
+  },
+  "engines": {
+    "node": ">=0.10"
+  },
+  "homepage": "https://github.com/lazd/gulp-replace",
+  "_id": "gulp-replace@0.5.2",
+  "_shasum": "35e6dfcac67eb3e5d4ebd23cca9c48e0237d901c",
+  "_from": "gulp-replace@0.5.2",
+  "_npmVersion": "1.4.7",
+  "_npmUser": {
+    "name": "lazd",
+    "email": "lazdnet@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "lazd",
+      "email": "lazdnet@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "35e6dfcac67eb3e5d4ebd23cca9c48e0237d901c",
+    "tarball": "http://registry.npmjs.org/gulp-replace/-/gulp-replace-0.5.2.tgz"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/gulp-replace/-/gulp-replace-0.5.2.tgz",
+  "readme": "ERROR: No README data found!"
+}

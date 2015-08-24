@@ -1,0 +1,51 @@
+{
+  "name": "map-stream",
+  "version": "0.1.0",
+  "description": "construct pipes of streams of events",
+  "homepage": "http://github.com/dominictarr/map-stream",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/map-stream.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "asynct": "*",
+    "it-is": "1",
+    "ubelt": "~2.9",
+    "stream-spec": "~0.2",
+    "event-stream": "~2.1",
+    "from": "0.0.2"
+  },
+  "scripts": {
+    "test": "asynct test/"
+  },
+  "author": {
+    "name": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "http://dominictarr.com"
+  },
+  "bugs": {
+    "url": "https://github.com/dominictarr/map-stream/issues"
+  },
+  "_id": "map-stream@0.1.0",
+  "dist": {
+    "shasum": "e56aa94c4c8055a16404a0674b78f215f7c8e194",
+    "tarball": "http://registry.npmjs.org/map-stream/-/map-stream-0.1.0.tgz"
+  },
+  "_from": "map-stream@>=0.1.0 <0.2.0",
+  "_npmVersion": "1.3.21",
+  "_npmUser": {
+    "name": "dominictarr",
+    "email": "dominic.tarr@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "dominictarr",
+      "email": "dominic.tarr@gmail.com"
+    }
+  ],
+  "directories": {},
+  "_shasum": "e56aa94c4c8055a16404a0674b78f215f7c8e194",
+  "_resolved": "https://registry.npmjs.org/map-stream/-/map-stream-0.1.0.tgz",
+  "readme": "ERROR: No README data found!"
+}
