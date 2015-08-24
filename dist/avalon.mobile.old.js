@@ -1982,15 +1982,13 @@ function disposeData(data) {
 
 function shouldDispose(el) {
     try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
-        if (!el.parentNode) {
-            return true
-        }
+        var fireError = el.parentNode.nodeType
     } catch (e) {
         return true
     }
     if (el.ifRemove) {
         // 如果节点被放到ifGroup，才移除
-        if (!root.contains(el.ifRemove) && (ifGroup === ele.parentNode)) {
+        if (!root.contains(el.ifRemove) && (ifGroup === el.parentNode)) {
             el.parentNode && el.parentNode.removeChild(el)
             return true
         }
@@ -3054,7 +3052,7 @@ function scanAttr(elem, vmodels, match) {
                         }
                         param = type
                         type = "attr"
-                        name = "ms-" + type + "-"+ param
+                        name = "ms-" + type + "-" + param
                         fixAttrs.push([attr.name, name, value])
                     }
                     msData[name] = value
@@ -3068,9 +3066,9 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            uuid: name+"-"+getUid(elem),
-                             //chrome与firefox下Number(param)得到的值不一样 #855
-                            priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
+                            uuid: name + "-" + getUid(elem),
+                            //chrome与firefox下Number(param)得到的值不一样 #855
+                            priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
                             var token = getToken(value)
@@ -3102,10 +3100,8 @@ function scanAttr(elem, vmodels, match) {
             })
             //http://bugs.jquery.com/ticket/7071
             //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
-            if (hasDuplex) {
-                if (msData["ms-attr-value"] && elem.type === "text") {
-                    log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
-                }
+            if (hasDuplex && msData["ms-attr-value"] && !elem.scopeName && elem.type === "text") {
+                log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
             }
             for (i = 0; binding = bindings[i]; i++) {
                 type = binding.type
