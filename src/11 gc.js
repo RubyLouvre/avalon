@@ -103,7 +103,7 @@ function shouldDispose(el) {
     }
     if (el.ifRemove) {
         // 如果节点被放到ifGroup，才移除
-        if (!root.contains(el.ifRemove) && (ifGroup === ele.parentNode)) {
+        if (!root.contains(el.ifRemove) && (ifGroup === el.parentNode)) {
             el.parentNode && el.parentNode.removeChild(el)
             return true
         }
