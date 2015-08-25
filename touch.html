@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <title>ms-on-swipeleft and ms-on-swiperight</title>
+    <script src="dist/avalon.mobile.js"></script>
+    <script>
+        //ms-on-swipeleft ，ms-on-swiperight 在chrome上调试可以用  在手机上不行
+        var swiper  = avalon.define({
+            $id: "swiper",
+            swiperleft:function(){
+                console.log("swiperleft")
+                alert("swiperleft")
+            },
+            swiperright:function(){
+                console.log("swiperright")
+                alert("swiperright")
+            },
+            submit: function(e) {
+                e.preventDefault()
+                alert(2)
+            }
+        })
+
+        avalon.scan(document.body);
+
+    </script>
+</head>
+<body>
+<div ms-controller="swiper">
+    <div style="width: 100%;height: 200px;background-color: #ff0000" ms-on-swipeleft="swiperleft" ms-on-swiperight="swiperright"></div>
+
+    <form ms-submit="submit(e)">
+        nihao:<input type="text"><br>
+        <input type="submit" value="submit">
+    </form>
+</div>
+</body>
+</html>

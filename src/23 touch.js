@@ -46,8 +46,12 @@ new function() {// jshint ignore:line
         var target = event.target,
             element = touchProxy.element
 
-        if (element !== target) {
-            if (target.tagName.toLowerCase() === 'input' && element.tagName.toLowerCase() === "label") {
+        if (element && element !== target) {
+            var type = target.type || '',
+                targetTag = target.tagName.toLowerCase(),
+                elementTag = element.tagName.toLowerCase()
+            // 通过手机的“前往”提交表单时不可禁止默认行为；通过label focus input时也不可以阻止默认行为
+            if ((targetTag === 'input' &&  elementTag === "label") || type === 'submit') {
                 return false
             }
             if (event.stopImmediatePropagation) {
@@ -165,7 +169,7 @@ new function() {// jshint ignore:line
             touchProxy = {}
         })
     }
-    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "longtap", "hold"].forEach(function(method) {
+    ["swipe", "swipeleft", "swiperight", "swipeup", "swipedown", "doubletap", "tap", "singletap", "dblclick", "longtap", "hold"].forEach(function(method) {
         me[method + "Hook"] = me["clickHook"]
     })
 
