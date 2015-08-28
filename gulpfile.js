@@ -28,7 +28,7 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = 1.46 //当前版本号
+        var version = 1.5 //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 
@@ -41,33 +41,10 @@ gulp.task('combo', function () {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
-                .pipe(gulp.dest('./dist/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
-                .pipe(uglify())
-                .pipe(rename('avalon.min.js'))
-                .pipe(gulp.dest('./dist/'))
 
-        var $$pathName = compatibleFiles[0]
-        $$pathName = $$pathName.slice(0, $$pathName.lastIndexOf("00"))
-        var fixPath = function (name) {
-            return path.join($$pathName, name + ".js")
-        }
-
-        //avalon.shim.js 所需要合并的子文件
-        var shimFiles = compatibleFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
-        gulp.src(shimFiles)
-                .pipe(concat('avalon.shim.js'))
-                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
-                }))
-                .pipe(replace(/!!/, function (a, b) {
-                    return  "avalon.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE6+ and other browsers"
-                }))
-                .pipe(gulp.dest('./dist/'))
-
-        //avalon.modern.js 所需要合并的子文件
         var modernFiles = compatibleFiles.filter(function (el) {
             return !/shim/.test(el)
         })
@@ -102,73 +79,7 @@ gulp.task('combo', function () {
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
                 .pipe(gulp.dest('./dist/'))
-
-        var modernShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("24 outer"))
-
-        gulp.src(modernShimFiles)
-                .pipe(concat('avalon.modern.shim.js'))
-                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
-                }))
-                .pipe(replace(/loader:\s*true/, "loader: false"))
-                .pipe(replace(/!!/, function (a, b) {
-                    return  "avalon.modern.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE10+ and other browsers"
-                }))
-                .pipe(gulp.dest('./dist/'))
-
-
-        //avalon.mobiles.js 所需要合并的子文件
-        var mobileFiles = modernFiles.concat()
-
-        mobileFiles.pop()
-        mobileFiles.push(fixPath("23 touch"), fixPath("24 outer"))
-
-        gulp.src(mobileFiles)
-                .pipe(concat('avalon.mobile.js'))
-                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
-                }))
-                .pipe(replace(/!!/, function (a, b) {
-                    return  "avalon.mobile.js " + version + " built in " + date + "\n support IE10+ and other browsers"
-                }))
-                .pipe(gulp.dest('./dist/'))
-                .pipe(jshint())
-                .pipe(jshint.reporter('default'))
-                .pipe(uglify())
-                .pipe(rename('avalon.mobile.min.js'))
-                .pipe(gulp.dest('./dist/'))
-
-
-        //avalon.mobiles.shim.js 所需要合并的子文件
-        var mobileShimFiles = modernFiles.slice(0, -3).concat(fixPath("22 domReady.noop"), fixPath("23 touch"), fixPath("24 outer"))
-        console.log(mobileShimFiles)
-
-        gulp.src(mobileShimFiles)
-                .pipe(concat('avalon.mobile.shim.js'))
-                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
-                }))
-                .pipe(replace(/loader:\s*true/, "loader: false"))
-                .pipe(replace(/!!/, function (a, b) {
-                    return  "avalon.mobile.shim.js " + version + " built in " + date
-                }))
-                .pipe(gulp.dest('./dist/'))
-
-        //avalon.mobiles.old.js 所需要合并的子文件
-        var mobileOldFiles = compatibleFiles.concat()
-        mobileOldFiles.pop()
-        mobileOldFiles.push(fixPath("23 touch"), fixPath("24 outer"))
-
-        gulp.src(mobileOldFiles)
-                .pipe(concat('avalon.mobile.old.js'))
-                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
-                }))
-                .pipe(replace(/!!/, function (a, b) {
-                    return  "avalon.mobile.old.js " + version + " built in " + date + "\n support IE8 and other browsers"
-                }))
-                .pipe(gulp.dest('./dist/'))
-
+     
     })
 
 
