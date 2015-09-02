@@ -1820,6 +1820,9 @@ function injectDependency(list, binding) {
         return
     if (list && avalon.Array.ensure(list, binding) && binding.element) {
         injectDisposeQueue(binding, list)
+        if (new Date() - beginTime > 444) {
+            rejectDisposeQueue()
+        }
     }
 }
 
@@ -3667,10 +3670,7 @@ avalon.library = function (name, opts) {
 avalon.library("ms")
 
 function isWidget(el) { //如果为自定义标签,返回UI库的名字
-    if (el.scopeName) {
-        return el.scopeName
-    }
-    var fullName = el.localName
+    var fullName = el.localName || el.scopeName
     var index = fullName && fullName.indexOf(":")
     if (index > 0) {
         return fullName.slice(0, index)
