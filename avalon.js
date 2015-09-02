@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5 built in 2015.8.29
+ avalon.js 1.5 built in 2015.9.2
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1244,7 +1244,7 @@ function observeObject(source, options) {
     //必须设置了$active,$events
     simple.forEach(function (name) {
         var val = $vmodel[name] = source[name]
-        if (typeof val === "object") {
+        if (val && typeof val === "object") {
             val.$up = $vmodel
             val.$pathname = name
         }
@@ -3488,15 +3488,17 @@ avalon.component = function (name, opts) {
                 var vmOpts = getOptionsFromVM(host.vmodels, elem.getAttribute("configs") || host.fullName)
                 //从element的data-pager-xxx辅助指令中得到该组件的专有数据
                 var elemOpts = avalon.getWidgetData(elem, widget)
-                var parentDefinition
-                if (hooks.$extends) {
-                    var parentHooks = avalon.components[hooks.$extends]
-                    if (parentHooks) {
-                        parentDefinition = parentHooks.$construct({}, hooks, vmOpts)
-                    }
+                var componentDefinition = {}
+
+               
+                var parentHooks = avalon.components[hooks.$extends]
+                if (parentHooks) {
+                    avalon.mix(true, componentDefinition, parentHooks)
+                    componentDefinition = parentHooks.$construct.call(elem, componentDefinition, {}, {})
+                } else {
+                    avalon.mix(true, componentDefinition, hooks)
                 }
-                var componentDefinition = avalon.components[name].$construct({},
-                        parentDefinition || hooks, vmOpts, elemOpts)
+                componentDefinition = avalon.components[name].$construct.call(elem, componentDefinition, vmOpts, elemOpts)
 
                 componentDefinition.$refs = {}
                 componentDefinition.$id = elem.getAttribute("identifier") || generateID(widget)
@@ -3577,12 +3579,11 @@ avalon.component = function (name, opts) {
                     }
 
                     if (dependencies === 0) {
-                        console.log(children)
                         var id1 = setTimeout(function () {
                             clearTimeout(id1)
                             vmodel.$ready(vmodel, elem)
                             global.$ready(vmodel, elem)
-                        }, children? Math.max(children*17,100):17)
+                        }, children ? Math.max(children * 17, 100) : 17)
                         avalon.unbind(elem, "datasetchanged", removeFn)
                         //==================
                         host.rollback = function () {
@@ -3978,7 +3979,7 @@ var duplexBinding = avalon.directive("duplex", {
             case "checkbox":
                 binding.bound(W3C ? "change" : "click", function () {
                     var method = elem.checked ? "ensure" : "remove"
-                    var array = binding.getter()
+                    var array = binding.getter.apply(0, binding.vmodels)
                     if (!Array.isArray(array)) {
                         log("ms-duplex应用于checkbox上要对应一个数组")
                         array = [array]
