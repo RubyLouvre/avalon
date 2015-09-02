@@ -62,6 +62,9 @@ function injectDependency(list, data) {
         return
     if (list && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
+        if (new Date() - beginTime > 444 ) {
+            rejectDisposeQueue()
+        }
     }
 }
 

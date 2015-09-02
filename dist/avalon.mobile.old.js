@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.46 built in 2015.8.24
+ avalon.mobile.old.js 1.46 built in 2015.9.2
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1855,6 +1855,9 @@ function injectDependency(list, data) {
         return
     if (list && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
+        if (new Date() - beginTime > 444 ) {
+            rejectDisposeQueue()
+        }
     }
 }
 
