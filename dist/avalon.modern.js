@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5 built in 2015.9.2
+ avalon.modern.js 1.5 built in 2015.9.5
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2222,7 +2222,7 @@ function scanAttr(elem, vmodels, match) {
                                 binding.type = "html"
                                 binding.group = 1
                                 return ""
-                            }) // jshint ignore:line
+                            }).trim() // jshint ignore:line
                         } else if (type === "duplex") {
                             var hasDuplex = name
                         } else if (name === "ms-if-loop") {
@@ -2283,7 +2283,7 @@ function scanNodeArray(nodes, vmodels) {
 
                 if (!elem.msResolved && elem.parentNode && elem.parentNode.nodeType === 1) {
                     var library = isWidget(elem)
-                    if (library && avalon.libraries[library]) {
+                    if (library) {
                         var widget = elem.localName ? elem.localName.replace(library + ":", "") : elem.nodeName
                         var fullName = library + ":" + camelize(widget)
                         componentQueue.push({
@@ -2353,7 +2353,7 @@ function getToken(value) {
         if (index > -1) {
             return {
                 type: "text",
-                filters: value.slice(index),
+                filters: value.slice(index).trim(),
                 expr: value.slice(0, index)
             }
         }
@@ -2485,7 +2485,7 @@ avalon.component = function (name, opts) {
 
                 var dependencies = 1
                 var library = host.library
-                var global = avalon.libraries[library]
+                var global = avalon.libraries[library] || componentHooks
 
                 //===========收集各种配置=======
                 //从vmodels中得到业务数据
