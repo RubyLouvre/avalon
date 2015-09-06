@@ -10,16 +10,20 @@
                 $id: "test",
                 a: 111
             });
-            setTimeout(function(){
-                model.a = 444
-            }, 3000)
+            avalon.duplexHooks.add100 = {
+                get: function (val) {
+                    return val
+                },
+                set: function (val) {
+                    return val + 100
+                }
+            }
+
         </script>
     </head>
     <body>
         <div ms-controller="test">
-            <h3 style="text-align: center">data-duplex-focus</h3>
-            <input ms-duplex="a" data-duplex-focus="true" >
-            <input value="进入页面会点这里,方便观察data-duplex-focus的效果" size="30">
+            <input ms-duplex-number-add100="a" >{{a}}
         </div>
     </body>
 </html>

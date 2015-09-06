@@ -11,11 +11,12 @@
             }
         </style>
         <script>
-            avalon.define('xxx', function(vm) {
-                vm.data = {
+            var vm = avalon.define({
+                $id: "test",
+                data: {
                     toggle: true
-                }
-                vm.toggle = function() {
+                },
+                toggle: function () {
                     vm.data.toggle = !vm.data.toggle
                 }
             });
@@ -24,7 +25,7 @@
     </head>
     <body>
         <div class="avalonHide">测试avalonHide</div>
-        <div ms-controller="xxx">
+        <div ms-controller="test">
             <div ms-if="data.toggle" class="active">能动态添加移除</div>{{data.toggle}}
             <p><button type='button' ms-click='toggle'>点我</button></p>
         </div>

@@ -19,25 +19,20 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         //当value变化时改变model的值
 
     var updateVModel = function() {
-        if (composing) //处理中文输入法在minlengh下引发的BUG
+        var val = element.value //防止递归调用形成死循环
+        if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
-        var val = element.oldValue = element.value //防止递归调用形成死循环
         var lastValue = data.pipe(val, data, "get")
         if ($elem.data("duplexObserve") !== false) {
             evaluator(lastValue)
             callback.call(element, lastValue)
-            if ($elem.data("duplex-focus")) {
-                avalon.nextTick(function() {
-                    element.focus()
-                })
-            }
         }
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
         var val = data.pipe(evaluator(), data, "set") + ""
         if (val !== element.oldValue) {
-            element.value = val
+            element.value = element.oldValue = val
         }
     }
     if (data.isChecked || $type === "radio") {
