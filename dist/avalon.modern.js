@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5 built in 2015.9.5
+ avalon.modern.js 1.5 built in 2015.9.6
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -719,7 +719,7 @@ function $watch(expr, binding) {
         }
         binding.wildcard = /\*/.test(expr)
     }
-
+   
     if (!binding.update) {
         if (/\w\.*\B/.test(expr)) {
             binding.getter = noop
@@ -738,7 +738,7 @@ function $watch(expr, binding) {
         if (backup) {
             binding.handler = backup
         }
-    } else {
+    } else if (!binding.oneTime) {
         avalon.Array.ensure(queue, binding)
     }
     return function () {
@@ -2243,7 +2243,7 @@ function scanAttr(elem, vmodels, match) {
                 elem.removeAttribute(arr[0])
                 elem.setAttribute(arr[1], arr[2])
             })
-            if (hasDuplex && msData["ms-attr-value"] &&  elem.type === "text") {
+            if (hasDuplex && msData["ms-attr-value"] && elem.type === "text") {
                 log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
             }
 
@@ -2267,6 +2267,17 @@ function scanAttr(elem, vmodels, match) {
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 
+var rnoCollect = /^(ms-\S+|data-\S+|on[a-z]+|id|style|class|tabindex)$/
+function getOptionsFromTag(elem) {
+    var attributes = elem.attributes
+    var ret = {}
+    for (var i = 0, attr; attr = attributes[i++]; ) {
+        if (attr.specified && !rnoCollect.test(attr.name)) {
+            ret[camelize(attr.name)] = parseData(attr.value)
+        }
+    }
+    return ret
+}
 function scanNodeList(parent, vmodels) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodels)
@@ -2488,13 +2499,15 @@ avalon.component = function (name, opts) {
                 var global = avalon.libraries[library] || componentHooks
 
                 //===========收集各种配置=======
-                //从vmodels中得到业务数据
-                var vmOpts = getOptionsFromVM(host.vmodels, elem.getAttribute("configs") || host.fullName)
-                //从element的data-pager-xxx辅助指令中得到该组件的专有数据
-                var elemOpts = avalon.getWidgetData(elem, widget)
+
+                var elemOpts = getOptionsFromTag(elem)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.configs || host.fullName)
+                var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
+                delete elemOpts.configs
+                delete elemOpts.$id
+                delete elemOpts.identifier
                 var componentDefinition = {}
 
-               
                 var parentHooks = avalon.components[hooks.$extends]
                 if (parentHooks) {
                     avalon.mix(true, componentDefinition, parentHooks)
@@ -2505,7 +2518,7 @@ avalon.component = function (name, opts) {
                 componentDefinition = avalon.components[name].$construct.call(elem, componentDefinition, vmOpts, elemOpts)
 
                 componentDefinition.$refs = {}
-                componentDefinition.$id = elem.getAttribute("identifier") || generateID(widget)
+                componentDefinition.$id = $id
 
                 //==========构建VM=========
                 var keepSolt = componentDefinition.$slot
@@ -2654,6 +2667,7 @@ function getOptionsFromVM(vmodels, pre) {
     }
     return {}
 }
+
 
 
 avalon.libraries = []

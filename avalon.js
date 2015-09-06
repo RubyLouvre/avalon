@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5 built in 2015.9.5
+ avalon.js 1.5 built in 2015.9.6
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -966,7 +966,7 @@ function $watch(expr, binding) {
         }
         binding.wildcard = /\*/.test(expr)
     }
-
+   
     if (!binding.update) {
         if (/\w\.*\B/.test(expr)) {
             binding.getter = noop
@@ -985,7 +985,7 @@ function $watch(expr, binding) {
         if (backup) {
             binding.handler = backup
         }
-    } else {
+    } else if (!binding.oneTime) {
         avalon.Array.ensure(queue, binding)
     }
     return function () {
@@ -3191,13 +3191,13 @@ function scanAttr(elem, vmodels, match) {
             }
             for (i = 0; binding = bindings[i]; i++) {
                 type = binding.type
-                if (rnoscanAttrBinding.test(type) ) {
+                if (rnoscanAttrBinding.test(type)) {
                     return executeBindings(bindings.slice(0, i + 1), vmodels)
                 } else if (scanNode) {
-                    scanNode = !rnoscanNodeBinding.test(type) 
+                    scanNode = !rnoscanNodeBinding.test(type)
                 }
             }
-           
+
             executeBindings(bindings, vmodels)
         }
     }
@@ -3213,19 +3213,19 @@ var rnoscanNodeBinding = /^each|with|html|include$/
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
 if (!"1" [0]) {
     var attrPool = new Cache(512)
-    var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
+    var rattrs = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
             rquote = /^['"]/,
             rtag = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/i,
             ramp = /&amp;/g
-    //IE6-8解析HTML5新标签，会将它分解两个元素节点与一个文本节点
-    //<body><section>ddd</section></body>
-    //        window.onload = function() {
-    //            var body = document.body
-    //            for (var i = 0, el; el = body.children[i++]; ) {
-    //                avalon.log(el.outerHTML)
-    //            }
-    //        }
-    //依次输出<SECTION>, </SECTION>
+//IE6-8解析HTML5新标签，会将它分解两个元素节点与一个文本节点
+//<body><section>ddd</section></body>
+//        window.onload = function() {
+//            var body = document.body
+//            for (var i = 0, el; el = body.children[i++]; ) {
+//                avalon.log(el.outerHTML)
+//            }
+//        }
+//依次输出<SECTION>, </SECTION>
     var getAttributes = function (elem) {
         var html = elem.outerHTML
         //处理IE6-8解析HTML5新标签的情况，及<br>等半闭合标签outerHTML为空的情况
@@ -3234,7 +3234,6 @@ if (!"1" [0]) {
         }
         var str = html.match(rtag)[0]
         var attributes = [],
-                match,
                 k, v
         var ret = attrPool.get(str)
         if (ret) {
@@ -3258,6 +3257,17 @@ if (!"1" [0]) {
     }
 }
 
+var rnoCollect = /^(ms-\S+|data-\S+|on[a-z]+|id|style|class|tabindex)$/
+function getOptionsFromTag(elem) {
+    var attributes = getAttributes ? getAttributes(elem) : elem.attributes
+    var ret = {}
+    for (var i = 0, attr; attr = attributes[i++]; ) {
+        if (attr.specified && !rnoCollect.test(attr.name)) {
+            ret[camelize(attr.name)] = parseData(attr.value)
+        }
+    }
+    return ret
+}
 function scanNodeList(parent, vmodels) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodels)
@@ -3488,13 +3498,15 @@ avalon.component = function (name, opts) {
                 var global = avalon.libraries[library] || componentHooks
 
                 //===========收集各种配置=======
-                //从vmodels中得到业务数据
-                var vmOpts = getOptionsFromVM(host.vmodels, elem.getAttribute("configs") || host.fullName)
-                //从element的data-pager-xxx辅助指令中得到该组件的专有数据
-                var elemOpts = avalon.getWidgetData(elem, widget)
+
+                var elemOpts = getOptionsFromTag(elem)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.configs || host.fullName)
+                var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
+                delete elemOpts.configs
+                delete elemOpts.$id
+                delete elemOpts.identifier
                 var componentDefinition = {}
 
-               
                 var parentHooks = avalon.components[hooks.$extends]
                 if (parentHooks) {
                     avalon.mix(true, componentDefinition, parentHooks)
@@ -3505,7 +3517,7 @@ avalon.component = function (name, opts) {
                 componentDefinition = avalon.components[name].$construct.call(elem, componentDefinition, vmOpts, elemOpts)
 
                 componentDefinition.$refs = {}
-                componentDefinition.$id = elem.getAttribute("identifier") || generateID(widget)
+                componentDefinition.$id = $id
 
                 //==========构建VM=========
                 var keepSolt = componentDefinition.$slot
@@ -3654,6 +3666,7 @@ function getOptionsFromVM(vmodels, pre) {
     }
     return {}
 }
+
 
 
 avalon.libraries = []
