@@ -5,6 +5,7 @@ function scanAttr(elem, vmodels, match) {
         var bindings = []
         var fixAttrs = []
         var msData = {}
+        var uniq = {}
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
                 if (match = attr.name.match(rmsAttr)) {
@@ -13,6 +14,10 @@ function scanAttr(elem, vmodels, match) {
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
+                    if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
+                        continue
+                    }
+                    uniq[name] = 1
                     if (events[type]) {
                         param = type
                         type = "on"
@@ -95,7 +100,7 @@ var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
-if (!"1" [0]) {
+if (!W3C) {
     var attrPool = new Cache(512)
     var rattrs = /\s+(ms-[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
             rquote = /^['"]/,

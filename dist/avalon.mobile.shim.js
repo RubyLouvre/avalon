@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.46 built in 2015.9.6
+ avalon.mobile.shim.js 1.46 built in 2015.9.7
  ==================================================*/
 (function(global, factory) {
 
@@ -1514,16 +1514,13 @@ var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 //var uuid2Node = {}
-function getUid(obj, makeID) { //IE9+,标准浏览器
-    if (!obj.uuid && !makeID) {
-        obj.uuid = ++disposeCount
-        //uuid2Node[obj.uuid] = obj
+function getUid(elem, makeID) { //IE9+,标准浏览器
+    if (!elem.uuid && !makeID) {
+        elem.uuid = ++disposeCount
     }
-    return obj.uuid
+    return elem.uuid
 }
-//function getNode(uuid) {
-//    return uuid2Node[uuid]
-//}
+
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var elem = data.element
@@ -2453,6 +2450,7 @@ function scanAttr(elem, vmodels, match) {
         var attributes = elem.attributes
         var bindings = []
         var fixAttrs = []
+        var uniq = {}
         var msData = createMap()
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (attr.specified) {
@@ -2462,6 +2460,10 @@ function scanAttr(elem, vmodels, match) {
                     var param = match[2] || ""
                     var value = attr.value
                     var name = attr.name
+                    if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
+                        continue
+                    }
+                    uniq[name] = 1
                     if (events[type]) {
                         param = type
                         type = "on"

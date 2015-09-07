@@ -6,16 +6,13 @@ var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 //var uuid2Node = {}
-function getUid(obj, makeID) { //IE9+,标准浏览器
-    if (!obj.uuid && !makeID) {
-        obj.uuid = ++disposeCount
-        //uuid2Node[obj.uuid] = obj
+function getUid(elem, makeID) { //IE9+,标准浏览器
+    if (!elem.uuid && !makeID) {
+        elem.uuid = ++disposeCount
     }
-    return obj.uuid
+    return elem.uuid
 }
-//function getNode(uuid) {
-//    return uuid2Node[uuid]
-//}
+
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var elem = data.element

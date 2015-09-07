@@ -4,6 +4,7 @@ function scanAttr(elem, vmodels, match) {
         var attributes = elem.attributes
         var bindings = []
         var msData = {}
+        var uniq = {}
         for (var i = 0, attr; attr = attributes[i++]; ) {
             if (match = attr.name.match(rmsAttr)) {
                 //如果是以指定前缀命名的
@@ -12,6 +13,10 @@ function scanAttr(elem, vmodels, match) {
                 var value = attr.value
                 var name = attr.name
                 msData[name] = value
+                if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
+                    continue
+                }
+                uniq[name] = 1
                 if (events[type]) {
                     param = type
                     type = "on"
@@ -24,7 +29,7 @@ function scanAttr(elem, vmodels, match) {
                         name: name,
                         value: value,
                         //chrome与firefox下Number(param)得到的值不一样 #855
-                        priority:  (priorityMap[type] || type.charCodeAt(0) * 10 )+ (Number(param.replace(/\D/g, "")) || 0)
+                        priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                     }
                     if (type === "html" || type === "text") {
                         var token = getToken(value)
