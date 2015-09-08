@@ -6,7 +6,7 @@
  
  Released under the MIT license
  avalon.js 1.5 built in 2015.9.8
- support IE6+ and other browsers
+ support IE6+ and other browsers!!
  ==================================================*/
 (function(global, factory) {
 
