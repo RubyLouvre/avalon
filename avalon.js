@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5 built in 2015.9.6
+ avalon.js 1.5 built in 2015.9.8
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -935,6 +935,8 @@ var plugins = {
             }
             cinerator.innerHTML = ""
         }
+         kernel.openTag = openTag
+            kernel.closeTag = closeTag
         var o = escapeRegExp(openTag),
                 c = escapeRegExp(closeTag)
         rexpr = new RegExp(o + "(.*?)" + c)
@@ -3124,7 +3126,6 @@ function scanAttr(elem, vmodels, match) {
                         continue
                     }
                     uniq[name] = 1
-
                     if (events[type]) {
                         param = type
                         type = "on"
@@ -3211,7 +3212,7 @@ var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，
 //但如果我们去掉scanAttr中的attr.specified检测，一个元素会有80+个特性节点（因为它不区分固有属性与自定义属性），很容易卡死页面
-if (!"1" [0]) {
+if (!W3C) {
     var attrPool = new Cache(512)
     var rattrs = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,
             rquote = /^['"]/,
@@ -3500,9 +3501,9 @@ avalon.component = function (name, opts) {
                 //===========收集各种配置=======
 
                 var elemOpts = getOptionsFromTag(elem)
-                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.configs || host.fullName)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.fullName)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
-                delete elemOpts.configs
+                delete elemOpts.config
                 delete elemOpts.$id
                 delete elemOpts.identifier
                 var componentDefinition = {}
