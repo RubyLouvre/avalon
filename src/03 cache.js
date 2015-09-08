@@ -39,6 +39,7 @@ var Cache = new function() {// jshint ignore:line
                     entry.newer =
                     entry.older =
                     this._keymap[entry.key] = void 0
+            delete this._keymap[entry.key] //#1029
         }
     }
     p.get = function(key) {

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.9.7
+ avalon.modern.shim.js(无加载器版本) 1.46 built in 2015.9.8
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -471,6 +471,7 @@ var Cache = new function() {// jshint ignore:line
                     entry.newer =
                     entry.older =
                     this._keymap[entry.key] = void 0
+            delete this._keymap[entry.key] //#1029
         }
     }
     p.get = function(key) {

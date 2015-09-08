@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.46 built in 2015.9.7
+ avalon.mobile.old.js 1.46 built in 2015.9.8
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -539,6 +539,7 @@ var Cache = new function() {// jshint ignore:line
                     entry.newer =
                     entry.older =
                     this._keymap[entry.key] = void 0
+            delete this._keymap[entry.key] //#1029
         }
     }
     p.get = function(key) {
