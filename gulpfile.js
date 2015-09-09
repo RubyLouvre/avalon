@@ -8,6 +8,7 @@ var jshint = require('gulp-jshint')
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
 
+
 function replaceUrls(array, hash) {
     for (var i = 0, href; href = array[i]; i++) {
         for (var key in hash) {
@@ -19,7 +20,13 @@ function replaceUrls(array, hash) {
         }
     }
 }
-
+function fixVersion(v){
+   var arr = v.split(".")
+   if(arr.length > 2){
+       return arr.shift() +"." +arr.join("")
+   }
+   return v
+ }
 gulp.task('combo', function () {
 //https://github.com/isaacs/node-glob
 //http://www.linuxjournal.com/content/bash-extended-globbing
@@ -28,14 +35,13 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = 1.5 //当前版本号
+        var version = '1.5.1' //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
-
         gulp.src(compatibleFiles)
                 .pipe(concat('avalon.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
@@ -44,7 +50,10 @@ gulp.task('combo', function () {
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
-
+                .on('error', function (err) {
+			console.log(err.toString());
+			this.emit("end");
+		})
         var modernFiles = compatibleFiles.filter(function (el) {
             return !/shim/.test(el)
         })
@@ -69,7 +78,7 @@ gulp.task('combo', function () {
         gulp.src(modernFiles)
                 .pipe(concat('avalon.modern.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.js " + version + " built in " + date + "\n support IE10+ and other browsers"
@@ -79,7 +88,6 @@ gulp.task('combo', function () {
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
                 .pipe(gulp.dest('./dist/'))
-     
     })
 
 
