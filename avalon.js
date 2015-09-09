@@ -5,8 +5,8 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5 built in 2015.9.8
- support IE6+ and other browsers!!
+ avalon.js 1.5.1 built in 2015.9.10
+ support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
 
@@ -292,7 +292,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.5,
+    version: 1.51,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -535,6 +535,7 @@ var Cache = new function() {// jshint ignore:line
                     entry.newer =
                     entry.older =
                     this._keymap[entry.key] = void 0
+             delete this._keymap[entry.key] //#1029
         }
     }
     p.get = function(key) {
@@ -1238,7 +1239,15 @@ function observeObject(source, options) {
             return $watch.apply($vmodel, arguments)
         })
         hideProperty($vmodel, "$fire", function (path, a) {
-            $emit.call($vmodel, path, [a])
+            if(path.indexOf("all!") === 0 ){
+                var ee = path.slice(4)
+                for(var i in avalon.vmodels){
+                    var v = avalon.vmodels[i]
+                    v.$fire && v.$fire.apply(v, [ee, a])
+                }
+            }else{
+               $emit.call($vmodel, path, [a])
+            }
         })
     }
     /* jshint ignore:end */
@@ -3968,9 +3977,9 @@ var duplexBinding = avalon.directive("duplex", {
             composing = false
         }
         var updateVModel = function () {
-            if (composing) //处理中文输入法在minlengh下引发的BUG
+             var val = elem.value //防止递归调用形成死循环
+            if (composing || val === binding.oldValue) //处理中文输入法在minlengh下引发的BUG
                 return
-            var val = elem.value //防止递归调用形成死循环
             var lastValue = binding.pipe(val, binding, "get")
             try {
                 binding.setter(lastValue)
@@ -4059,7 +4068,7 @@ var duplexBinding = avalon.directive("duplex", {
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(elem)) {
-                    if (elem.oldValue !== elem.value) {
+                    if (binding.oldValue !== elem.value) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -4082,7 +4091,7 @@ var duplexBinding = avalon.directive("duplex", {
             case "change":
                 curValue = this.pipe(value, this, "set") + "" //fix #673
                 if (curValue !== this.oldValue) {
-                    elem.oldValue = elem.value = curValue
+                    elem.value = this.oldValue = curValue
                 }
                 break
             case "radio":

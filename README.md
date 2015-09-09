@@ -1,3 +1,11 @@
+#avalon1.5.1
+1. 精简自定义标签的设计
+2. fix cache内存泄漏
+3. 添加$fire("all!xxx")的支持
+4. fix ms-duplex使用拦截器时触发多次的BUG
+5. 公开openTag, closeTag到avalon.config
+
+
 # avalon1.5
 
 1. 添加动画指令 ms-effect avalon.effect http://avalonjs.github.io/#zh/bindings/effect.html
