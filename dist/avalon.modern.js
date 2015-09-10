@@ -3064,7 +3064,7 @@ chrome  ONI:BUTTON undefined  oni:button
 */
 function isWidget(el) { //如果为自定义标签,返回UI库的名字
     if(el.scopeName && el.scopeName !== "HTML" ){
-        return el.scopeNAme
+        return el.scopeName
     }
     var fullName = el.nodeName.toLowerCase() 
     var index = fullName.indexOf(":")
