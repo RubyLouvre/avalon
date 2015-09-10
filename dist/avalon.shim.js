@@ -3692,10 +3692,20 @@ avalon.library = function (name, opts) {
 }
 
 avalon.library("ms")
+/*
+broswer  nodeName  scopeName  localName
+IE9     ONI:BUTTON oni        button
+IE10    ONI:BUTTON undefined  oni:button
+IE8     button     oni        undefined
+chrome  ONI:BUTTON undefined  oni:button
 
+*/
 function isWidget(el) { //如果为自定义标签,返回UI库的名字
-    var fullName = el.localName || el.scopeName
-    var index = fullName && fullName.indexOf(":")
+    if(el.scopeName && el.scopeName !== "HTML" ){
+        return el.scopeNAme
+    }
+    var fullName = el.nodeName.toLowerCase() 
+    var index = fullName.indexOf(":")
     if (index > 0) {
         return fullName.slice(0, index)
     }
