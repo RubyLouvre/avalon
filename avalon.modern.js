@@ -4705,6 +4705,10 @@ new function () {// jshint ignore:line
         //5. 还原扩展名，query
         var urlNoQuery = url + ext
         url = urlNoQuery + this.query
+        urlNoQuery = url.replace(rquery, function (a) {
+            this.query = a
+            return ""
+        })
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function (value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
