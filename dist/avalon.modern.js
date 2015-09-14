@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.1 built in 2015.9.11
+ avalon.modern.js 1.5.1 built in 2015.9.14
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2846,7 +2846,7 @@ var componentHooks = {
     $container: null,
     $childReady: noop,
     $replace: false,
-    $extends: null,
+    $extend: null,
     $$template: function (str) {
         return str
     }
@@ -2879,7 +2879,7 @@ avalon.component = function (name, opts) {
                 delete elemOpts.identifier
                 var componentDefinition = {}
 
-                var parentHooks = avalon.components[hooks.$extends]
+                var parentHooks = avalon.components[hooks.$extend]
                 if (parentHooks) {
                     avalon.mix(true, componentDefinition, parentHooks)
                     componentDefinition = parentHooks.$construct.call(elem, componentDefinition, {}, {})
@@ -4714,86 +4714,6 @@ avalon.directive("visible", {
     }
 })
 
-avalon.directive("widget", {
-    priority: 110,
-    init: function (data) {
-        var args = data.expr.match(rword)
-        var elem = data.element
-        var vmodels = data.vmodels
-        var widget = args[0]
-        var id = args[1]
-        if (!id || id === "$") { //没有定义或为$时，取组件名+随机数
-            id = generateID(widget)
-        }
-        var optName = args[2] || widget //没有定义，取组件名
-        var constructor = avalon.ui[widget]
-        if (typeof constructor === "function") { //ms-widget="tabs,tabsAAA,optname"
-            vmodels = elem.vmodels || vmodels
-            for (var i = 0, v; v = vmodels[i++]; ) {
-                if (v.hasOwnProperty(optName) && typeof v[optName] === "object") {
-                    var vmOptions = v[optName]
-                    vmOptions = vmOptions.$model || vmOptions
-                    break
-                }
-            }
-            if (vmOptions) {
-                var wid = vmOptions[widget + "Id"]
-                if (typeof wid === "string") {
-                    log("warning!不再支持" + widget + "Id")
-                    id = wid
-                }
-            }
-            //抽取data-tooltip-text、data-tooltip-attr属性，组成一个配置对象
-            var widgetData = avalon.getWidgetData(elem, widget)
-            data.expr = [widget, id, optName].join(",")
-            data[widget + "Id"] = id
-            data.evaluator = noop
-            elem.msData["ms-widget-id"] = id
-            var options = data[widget + "Options"] = avalon.mix({}, constructor.defaults, vmOptions || {}, widgetData)
-            elem.removeAttribute("ms-widget")
-            var vmodel = constructor(elem, data, vmodels) || {} //防止组件不返回VM
-            if (vmodel.$id) {
-                avalon.vmodels[id] = vmodel
-                createSignalTower(elem, vmodel)
-                try {
-                    vmodel.$init(function () {
-                        avalon.scan(elem, [vmodel].concat(vmodels))
-                        if (typeof options.onInit === "function") {
-                            options.onInit.call(elem, vmodel, options, vmodels)
-                        }
-                    })
-                } catch (e) {
-                }
-                data.rollback = function () {
-                    try {
-                        vmodel.$remove()
-                        vmodel.widgetElement = null // 放到$remove后边
-                    } catch (e) {
-                    }
-                    elem.msData = {}
-                    delete avalon.vmodels[vmodel.$id]
-                }
-                injectDisposeQueue(data, widgetList)
-                if (window.chrome) {
-                    elem.addEventListener("DOMNodeRemovedFromDocument", function () {
-                        setTimeout(rejectDisposeQueue)
-                    })
-                }
-            } else {
-                avalon.scan(elem, vmodels)
-            }
-        } else if (vmodels.length) { //如果该组件还没有加载，那么保存当前的vmodels
-            elem.vmodels = vmodels
-        }
-    },
-    update: function (arr) {
-    
-    }
-    
-})
-var widgetList = []
-//不存在 bindingExecutors.widget
-
 /*********************************************************************
  *                             自带过滤器                            *
  **********************************************************************/
@@ -5675,6 +5595,10 @@ new function () {// jshint ignore:line
         //5. 还原扩展名，query
         var urlNoQuery = url + ext
         url = urlNoQuery + this.query
+        urlNoQuery = url.replace(rquery, function (a) {
+          this.query = a
+          return ""
+        })
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function (value) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
