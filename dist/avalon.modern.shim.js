@@ -3947,15 +3947,18 @@ avalon.directive("if", {
     update: function (val) {
         var binding = this
         var elem = this.element
-        var stamp = binding.stamp = + new Date()
+        var stamp = binding.stamp = +new Date()
         var par
-        var after = function() {
-            if(stamp !== binding.stamp) return
+        var after = function () {
+            if (stamp !== binding.stamp)
+                return
             binding.recoverNode = null
         }
-        if(binding.recoverNode) binding.recoverNode() // 还原现场，有移动节点的都需要还原现场
+        if (binding.recoverNode)
+            binding.recoverNode() // 还原现场，有移动节点的都需要还原现场
         try {
-            if (!elem.parentNode) return
+            if (!elem.parentNode)
+                return
             par = elem.parentNode
         } catch (e) {
             return
@@ -3971,9 +3974,21 @@ avalon.directive("if", {
             if (elem.nodeType === 8) {
                 var keep = binding.keep
                 var hasEffect = avalon.effect.apply(keep, 1, function () {
-                    if(stamp !== binding.stamp) return
+                    if (stamp !== binding.stamp)
+                        return
                     elem.parentNode.replaceChild(keep, elem)
                     elem = binding.element = keep //这时可能为null
+                    if (keep.getAttribute("_required")) {
+                      elem.required = true
+                      //  elem.setAttribute("required","required")
+                        console.log("111")
+                    }
+                    if (elem.querySelectorAll) {
+                        avalon.each(elem.querySelectorAll("_required"), function (el) {
+                           elem.required = true
+                           //  elem.setAttribute("required","required")
+                        })
+                    }
                     alway()
                 }, after)
                 hasEffect = hasEffect === false
@@ -3982,18 +3997,30 @@ avalon.directive("if", {
                 alway()
         } else { //移出DOM树，并用注释节点占据原位置
             if (elem.nodeType === 1) {
+                if (elem.required === true) {
+                    elem.required = false
+                    elem.setAttribute("_required", "true")
+                }
+                if (elem.querySelectorAll) {
+                    avalon.each(elem.querySelectorAll(":required"), function (el) {
+                        elem.required = false
+                        el.setAttribute("_required", "true")
+                    })
+                }
                 var node = binding.element = DOC.createComment("ms-if"),
-                    pos = elem.nextSibling
-                binding.recoverNode = function() {
+                        pos = elem.nextSibling
+                binding.recoverNode = function () {
                     binding.recoverNode = null
-                    if(node.parentNode !== par) {
+                    if (node.parentNode !== par) {
                         par.insertBefore(node, pos)
                         binding.keep = elem
                     }
                 }
+
                 avalon.effect.apply(elem, 0, function () {
                     binding.recoverNode = null
-                    if(stamp !== binding.stamp) return
+                    if (stamp !== binding.stamp)
+                        return
                     elem.parentNode.replaceChild(node, elem)
                     binding.keep = elem //元素节点
                     ifGroup.appendChild(elem)
