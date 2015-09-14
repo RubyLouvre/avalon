@@ -4668,15 +4668,14 @@ avalon.directive("if", {
                         return
                     elem.parentNode.replaceChild(keep, elem)
                     elem = binding.element = keep //这时可能为null
-                    if (keep.getAttribute("_required")) {
-                      elem.required = true
-                      //  elem.setAttribute("required","required")
-                        console.log("111")
+                    if (keep.getAttribute("_required")) {//#1044
+                        elem.required = true
+                        elem.removeAttribute("_required")
                     }
                     if (elem.querySelectorAll) {
-                        avalon.each(elem.querySelectorAll("_required"), function (el) {
-                           elem.required = true
-                           //  elem.setAttribute("required","required")
+                        avalon.each(elem.querySelectorAll("[_required=true]"), function (el) {
+                            el.required = true
+                            el.removeAttribute("_required")
                         })
                     }
                     alway()
