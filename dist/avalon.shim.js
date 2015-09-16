@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.1 built in 2015.9.14
+ avalon.shim.js 1.5.1 built in 2015.9.16
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3474,6 +3474,7 @@ Buffer.prototype = {
 
 var buffer = new Buffer()
 var componentQueue = []
+var widgetList = []
 var componentHooks = {
     $construct: function () {
         return avalon.mix.apply(null, arguments)
