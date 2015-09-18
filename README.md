@@ -181,7 +181,7 @@ avalon.mobile.js，添加了触屏事件与fastclick支持，用于移动端；
 一些个常用的 directive 也能快速实现一些原本可能需要较多代码才能实现的功能
 ```
 * 使用简单，在HTML中添加绑定，在JS中用avalon.define定义ViewModel，再调用avalon.scan方法，它就能动了！
-* 兼容到 **IE6** (其他MVVM框架，KnockoutJS(IE6), AngularJS(IE9), EmberJS(IE8), WinJS(IE9) )，另有avalon.mobile，它可以更高效地运行于IE10等新版本浏览器中
+* 兼容到 **IE6** (其他MVVM框架，KnockoutJS(IE6), AngularJS(IE9), EmberJS(IE8), WinJS(IE9) )，另有avalon.modern，它可以更高效地运行于IE10等新版本浏览器中
 * 没有任何依赖，不到5000行，压缩后不到50KiB
 * 支持管道符风格的过滤函数，方便格式化输出
 * 局部刷新的颗粒度已细化到一个文本节点，特性节点
