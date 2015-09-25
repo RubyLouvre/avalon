@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.2 built in 2015.9.22
+ avalon.shim.js 1.5.2 built in 2015.9.25
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -75,7 +75,7 @@ var class2type = {}
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
 function CSPcompile(array){
-    return Object.constructor.apply(0,array)
+    return Function.apply(noop,array)
 }
 function noop(){}
 
@@ -1600,21 +1600,24 @@ var newProto = {
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this, i, 1)
                     _splice.call(this.$track, i, 1)
+                    _splice.call(this, i, 1)
+                    
                 }
             }
         } else if (typeof all === "function") {
             for (i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
+                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                    _splice.call(this.$track, i, 1)
+                   
                 }
             }
         } else {
-            _splice.call(this, 0, this.length)
             _splice.call(this.$track, 0, this.length)
+            _splice.call(this, 0, this.length)
+
         }
         if (!W3C) {
             this.$model = toJson(this)
