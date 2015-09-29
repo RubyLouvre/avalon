@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.2 built in 2015.9.29
+ avalon.shim.js 1.5.3 built in 2015.9.29
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -286,7 +286,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.52,
+    version: 1.53,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -999,7 +999,7 @@ function $emit(key, args) {
         }
         notifySubscribers(event[key], args)
         var parent = this.$up
-        if (parent && parent.$event) {
+        if (parent) {
             if (this.$pathname) {
                 $emit.call(parent, this.$pathname + "." + key, args)//以确切的值往上冒泡
             }
