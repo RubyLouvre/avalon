@@ -8,6 +8,7 @@
 6. 将所有编译函数的地方抽象成一个方法cspCompile https://github.com/RubyLouvre/avalon2/commit/4169422645466d0f036aa7ad48e1b9dd6c874106
 7. fix toJson在IE6的BUG https://github.com/RubyLouvre/avalon/issues/1063
 8. fix avalon(window).width()在IE6下 取值不正确的BUG
+9. fix filter 只执行一次的BUG https://github.com/RubyLouvre/avalon/issues/1066
 
 #avalon1.5.2(主要在自定义标签上进行简化)
 

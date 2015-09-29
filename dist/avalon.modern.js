@@ -4716,9 +4716,9 @@ var filters = avalon.filters = {
     $filter: function(val) {
         for (var i = 1, n = arguments.length; i < n; i++) {
             var array = arguments[i]
-            var fn = avalon.filters[array.shift()]
+            var fn = avalon.filters[array[0]]
             if (typeof fn === "function") {
-                var arr = [val].concat(array)
+                var arr = [val].concat(array.slice(1))
                 val = fn.apply(null, arr)
             }
         }
