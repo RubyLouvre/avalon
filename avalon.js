@@ -1392,7 +1392,7 @@ function observeArray(array, old, watch) {
         }
         for (var j = 0, n = array.length; j < n; j++) {
             var el = array[j] = observe(array[j], 0, 1, 1)
-            if (Object(el)) {
+            if (Object(el) === el) {//#1077
                 el.$up = array
             }
         }
