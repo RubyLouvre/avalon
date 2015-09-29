@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.2 built in 2015.9.25
+ avalon.modern.js 1.5.2 built in 2015.9.29
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -83,7 +83,7 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
-function CSPcompile(array){
+function scpCompile(array){
     return Function.apply(noop,array)
 }
 function noop(){}
@@ -2088,200 +2088,101 @@ var keys = ["break,case,catch,continue,debugger,default,delete,do,else,false",
 keys.replace(/\w+/g, function (a) {
     keyMap[a] = true
 })
-var rbracket = /\[(['"]?)([^'"]+)\1\]/
-var isIdentifierStart = function (ch) {
-    return (ch === 36) || (ch === 95) || // `$` and `_`
-            (ch >= 65 && ch <= 90) || // A...Z
-            (ch >= 97 && ch <= 122); // a...z
-}
-function replaceText(str, start, $1, $2) {
-    return str.slice(0, start) + "." + str.slice(start).replace("[" + $1 + "]", $2)
-}
-function parser(input) {
-    //静态依赖分析器
-    var i = 0
-    var wordStart = 0
-    var words = {}
-    var endString = ""
-
-    var bracketIndex = []
-    var isSkip = false
-
-
-    var getWordContent = function (isWildcard) {
-        if (wordStart < 0)
-            return
-        var wordEnd = i
-        var content = input.slice(wordStart, wordEnd)
-        var key = wordStart + "-" + (wordEnd - 1)
-        words[key] = content
-        if (keyMap[content] && input.charAt(wordStart - 1) !== ".") {
-            delete words[key]
-        }
-
-        if (isWildcard) {
-            words[wordStart] = "*"
-        }
-        wordStart = -1
-    }
-
-
-    var getBracketContent = function (sub) {
-        var bracketStart = bracketIndex.pop()
-        var bracketEnd = sub ? i - 1 : i
-        var content = input.slice(bracketStart, bracketEnd)
-
-        try {
-            /* jshint ignore:start */
-            var execText = CSPcompile(["return " + content])()
-            /* jshint ignore:end */
-
-            execText += ''
-            input = replaceText(input, bracketStart - 1, content, execText)
-            i = bracketStart + execText.length - 1
-            //这个是字符串,不应该放上去
-            words[bracketStart + "-" + i] = execText
-
-            state = "word"
-            wordStart = -1
-        } catch (e) {
-            input = replaceText(input, bracketStart - 1, content, "*")
-            i = bracketStart
-            words[bracketStart] = "*"
-
-            state = "word"
-            wordStart = -1
-        }
-    }
-    var state = "unknown"//初始状态
-    var states = {
-        "unknown": function () {
-            if (isIdentifierStart(ch)) {
-                state = "word"
-                wordStart = i
-            } else if (ch === 34 || ch === 39) {//如果遇到 ' "
-                state = "string"
-                endString = ch
-
-            } else if (ch === 93) {// 遇到]
-                getBracketContent()
-            }
-        },
-        "word": function () {
-            if (/\B/.test(cw)) {
-                state = "unknown"
-                //去掉.与[两边的空白
-                input = input.slice(0, i) +
-                        input.slice(i).replace(/\s*(\.|\[)\s*/, function (a, b) {
-                    return b
-                })
-                cw = input.charAt(i)
-                if (ch === 46) {//如果遇到 .
-                    state = "dot"
-                    getWordContent()
-                    words[i] = "."
-                } else if (ch === 91) {// 如果遇到[
-                    words[i] = "."
-                    getWordContent()
-                    bracketIndex.push(i + 1)//先进后出
-                } else if (ch === 93) {// 如果遇到]
-                    if (wordStart > 0) {
-                        getWordContent(true)
-                    } else {
-                        getBracketContent(true)
-                    }
-                } else {//如果遇到~!#^&*(){}<>/空白
-                    getWordContent()
-                }
-
-            }
-        },
-        "dot": function () {
-            state = "unknown"
-            //如果是0-9, *, 或是标识符
-            if (ch >= 48 && ch <= 57 || ch === 42 || isIdentifierStart(ch)) {//0-9 
-                state = "word"
-                wordStart = i
-            }
-        },
-        "string": function () {
-            if (isSkip) {
-                isSkip = false //跳过当前字符的检测
-            } else {
-                if (ch === 92) {//如果遇到\\
-                    isSkip = true
-                }
-                if (ch === endString) {//如果遇到 " '
-                    state = "unknown"
-                }
-            }
-        }
-    };
-    var total = input.length
-    do {
-        var ch = input.charCodeAt(i)
-        if (ch !== ch) { //void 0 --> NaN
-            getWordContent()
-            break
-        }
-        if (total-- === 0) {
-            break
-        }
-        var cw = input.charAt(i)
-
-        states[state]()
-        i++
-    } while (true);
-
-    var sorted = []
-    for (i in words) {
-        var value = words[i]
-        var arr = i.split("-")
-
-        sorted.push({
-            first: ~~arr[0],
-            last: ~~arr[1] || ~~arr[0],
-            text: value
-        })
-    }
-    sorted.sort(function (a, b) {
-        return a.first - b.first
-    })
-
-
-    var map = {}
-    do {
-        var next = sorted.shift()
-        if (!next) {
-            break
-        }
-        var ok = true
-        loop:
-                for (i in map) {
-            arr = i.split("-")
-            if (Number(arr[1]) + 1 === next.first) {
-
-                map[arr[0] + "-" + next.last] = map[i] + next.text
-                delete map[i]
-                ok = false
-                break loop
-            }
-        }
-        if (ok) {
-            map[next.first + "-" + next.last] = next.text
-        }
-
-    } while (1);
+var ridentStart = /[a-z_$]/i
+var rwhiteSpace = /[\s\uFEFF\xA0]/
+function getIdent(input, lastIndex) {
     var result = []
-    var uniq = {}
-    for (i in map) {
-        var v = map[i]
-        if (!uniq[v]) {
-            uniq[v] = true
-            result.push(v)
+    var subroutine = !!lastIndex
+    lastIndex = lastIndex || 0
+
+    //将表达式中的标识符抽取出来
+    var state = "unknown"
+    var variable = ""
+    for (var i = 0; i < input.length; i++) {
+        var c = input.charAt(i)
+        if (c === "'" || c === '"') {//字符串开始
+            if (state === "unknown") {
+                state = c
+            } else if (state === c) {//字符串结束
+                state = "unknown"
+            }
+        } else if (c === "\\") {
+            if (state === "'" || state === '"') {
+                i++
+            }
+        } else if (ridentStart.test(c)) {//碰到标识符
+            if (state === "unknown") {
+                state = "variable"
+                variable = c
+            } else if (state === "maybePath") {
+                variable = result.pop()
+                variable += "." + c
+                state = "variable"
+            } else if (state === "variable") {
+                variable += c
+            }
+        } else if (/\w/.test(c)) {
+            if (state === "variable") {
+                variable += c
+            }
+        } else if (c === ".") {
+            if (state === "variable") {
+                if (variable) {
+                    result.push(variable)
+                    variable = ""
+                    state = "maybePath"
+                }
+            }
+        } else if (c === "[") {
+            if (state === "variable" || state === "maybePath") {
+                if (variable) {//如果前面存在变量,收集它
+                    result.push(variable)
+                    variable = ""
+                }
+                var lastLength = result.length
+                var last = result[lastLength - 1]
+                var innerResult = getIdent(input.slice(i), i)
+                if (innerResult.length) {//如果括号中存在变量,那么这里添加通配符
+                    result[lastLength - 1] = last + ".*"
+                    result = innerResult.concat(result)
+                } else { //如果括号中的东西是确定的,直接转换为其子属性
+                    var content = input.slice(i + 1, innerResult.i)
+                    try {
+                        var text = (scpCompile(["return " + content]))()
+                        result[lastLength - 1] = last + "." + text
+                    } catch (e) {
+                    }
+                }
+                state = "maybePath"//]后面可能还接东西
+                i = innerResult.i
+            }
+        } else if (c === "]") {
+            if (subroutine) {
+                result.i = i + lastIndex
+                addVar(result, variable)
+                return result
+            }
+        } else if (rwhiteSpace.test(c) && c !== "\r" && c !== "\n") {
+            if (state === "variable") {
+                if (addVar(result, variable)) {
+                    state = "maybePath" // aaa . bbb 这样的情况
+                }
+                variable = ""
+            }
+        } else {
+            addVar(result, variable)
+            state = "unknown"
+            variable = ""
         }
     }
+    addVar(result, variable)
     return result
+}
+function addVar(array, element) {
+    if (element && !keyMap[element]) {
+        array.push(element)
+        return true
+    }
 }
 function addAssign(vars, vmodel, name, binding) {
     var ret = [],
@@ -2315,8 +2216,16 @@ function getVars(expr) {
     if (ret) {
         return ret.concat()
     }
-    ret = parser(expr)
-    return variablePool.put(expr, ret).concat()
+    var array = getIdent(expr)
+    var uniq = {}
+    var result = []
+    for (var i = 0, el; el = array[i++]; ) {
+        if (!uniq[el]) {
+            uniq[el] = 1
+            result.push(el)
+        }
+    }
+    return variablePool.put(expr, result).concat()
 }
 
 function parseExpr(expr, vmodels, binding) {
@@ -2324,7 +2233,7 @@ function parseExpr(expr, vmodels, binding) {
     if (typeof filters === "string" && filters.trim() && !binding._filters) {
         binding._filters = parseFilter(filters.trim())
     }
-    
+
     var vars = getVars(expr)
 
     var expose = new Date() - 0
@@ -2368,7 +2277,7 @@ function parseExpr(expr, vmodels, binding) {
             return nameOne[a] ? nameOne[a] : a
         })
         /* jshint ignore:start */
-        var fn2 = CSPcompile(names.concat("'use strict';" +
+        var fn2 = scpCompile(names.concat("'use strict';" +
                 "return function(vvv){" + expr + " = vvv\n}\n"))
         /* jshint ignore:end */
         evaluatorPool.put(exprId + "setter", fn2)
@@ -2391,7 +2300,7 @@ function parseExpr(expr, vmodels, binding) {
         expr = "\nreturn " + expr + ";" //IE全家 Function("return ")出错，需要Function("return ;")
     }
     /* jshint ignore:start */
-    getter = CSPcompile(names.concat("'use strict';\nvar " +
+    getter = scpCompile(names.concat("'use strict';\nvar " +
             assigns.join(",\n") + expr))
     /* jshint ignore:end */
 
@@ -2447,7 +2356,7 @@ function parseFilter(filters) {
                 return '",'
             }) + "]"
     /* jshint ignore:start */
-    return  CSPcompile(["return [" + filters + "]"])()
+    return  scpCompile(["return [" + filters + "]"])()
     /* jshint ignore:end */
 
 }
