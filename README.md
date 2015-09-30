@@ -9,6 +9,8 @@
 7. fix toJson在IE6的BUG https://github.com/RubyLouvre/avalon/issues/1063
 8. fix avalon(window).width()在IE6下 取值不正确的BUG
 9. fix filter 只执行一次的BUG https://github.com/RubyLouvre/avalon/issues/1066
+10. 废掉ms-enabled与ms-attr-endabled
+11. 全新的touch模块
 
 #avalon1.5.2(主要在自定义标签上进行简化)
 
