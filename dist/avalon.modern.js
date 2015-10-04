@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.3 built in 2015.9.29
+ avalon.modern.js 1.5.3 built in 2015.10.4
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -156,12 +156,12 @@ avalon.nextTick = new function () {// jshint ignore:line
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
-avalon.init = function(el) {
+avalon.init = function (el) {
     this[0] = this.element = el
 }
 avalon.fn = avalon.prototype = avalon.init.prototype
 
-avalon.type = function(obj) { //取得目标的类型
+avalon.type = function (obj) { //取得目标的类型
     if (obj == null) {
         return String(obj)
     }
@@ -171,25 +171,25 @@ avalon.type = function(obj) { //取得目标的类型
             typeof obj
 }
 
-var isFunction = function(fn) {
+var isFunction = function (fn) {
     return serialize.call(fn) === "[object Function]"
 }
 
 avalon.isFunction = isFunction
 
-avalon.isWindow = function(obj) {
+avalon.isWindow = function (obj) {
     return rwindow.test(serialize.call(obj))
 }
 
 /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
 
-avalon.isPlainObject = function(obj) {
+avalon.isPlainObject = function (obj) {
     // 简单的 typeof obj === "object"检测，会致使用isPlainObject(window)在opera下通不过
     return serialize.call(obj) === "[object Object]" && Object.getPrototypeOf(obj) === oproto
 }
 
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
-avalon.mix = avalon.fn.mix = function() {
+avalon.mix = avalon.fn.mix = function () {
     var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
             i = 1,
@@ -254,12 +254,12 @@ avalon.mix({
     version: 1.53,
     ui: {},
     log: log,
-    slice: function(nodes, start, end) {
+    slice: function (nodes, start, end) {
         return aslice.call(nodes, start, end)
     },
     noop: noop,
     /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
-    error: function(str, e) {
+    error: function (str, e) {
         throw new (e || Error)(str)// jshint ignore:line
     },
     /*将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象*/
@@ -274,7 +274,7 @@ avalon.mix({
      => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
      avalon.range(0)
      => []*/
-    range: function(start, end, step) { // 用于生成整数数组
+    range: function (start, end, step) { // 用于生成整数数组
         step || (step = 1)
         if (end == null) {
             end = start || 0
@@ -291,34 +291,30 @@ avalon.mix({
     },
     eventHooks: {},
     /*绑定事件*/
-    bind: function(el, type, fn, phase) {
+    bind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, phase)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
+            fn = hook.fn ? hook.fn(el, fn) : fn
         }
-        if (!fn.unbind)
-            el.addEventListener(type, fn, !!phase)
+        el.addEventListener(type, fn, phase)
         return fn
     },
     /*卸载事件*/
-    unbind: function(el, type, fn, phase) {
+    unbind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         var callback = fn || noop
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, false)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
         }
-        el.removeEventListener(type, callback, !!phase)
+        el.removeEventListener(type, callback, phase)
     },
     /*读写删除元素节点的样式*/
-    css: function(node, name, value) {
+    css: function (node, name, value) {
         if (node instanceof avalon) {
             node = node[0]
         }
@@ -345,7 +341,7 @@ avalon.mix({
         }
     },
     /*遍历数组与对象,回调的第一个参数为索引或键名,第二个或元素或键值*/
-    each: function(obj, fn) {
+    each: function (obj, fn) {
         if (obj) { //排除null, undefined
             var i = 0
             if (isArrayLike(obj)) {
@@ -363,12 +359,12 @@ avalon.mix({
         }
     },
     //收集元素的data-{{prefix}}-*属性，并转换为对象
-    getWidgetData: function(elem, prefix) {
+    getWidgetData: function (elem, prefix) {
         var raw = avalon(elem).data()
         var result = {}
         for (var i in raw) {
             if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function(a) {
+                result[i.replace(prefix, "").replace(/\w/, function (a) {
                     return a.toLowerCase()
                 })] = raw[i]
             }
@@ -377,17 +373,17 @@ avalon.mix({
     },
     Array: {
         /*只有当前数组不存在此元素时只添加它*/
-        ensure: function(target, item) {
+        ensure: function (target, item) {
             if (target.indexOf(item) === -1) {
                 return target.push(item)
             }
         },
         /*移除数组中指定位置的元素，返回布尔表示成功与否*/
-        removeAt: function(target, index) {
+        removeAt: function (target, index) {
             return !!target.splice(index, 1).length
         },
         /*移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否*/
-        remove: function(target, item) {
+        remove: function (target, item) {
             var index = target.indexOf(item)
             if (~index)
                 return avalon.Array.removeAt(target, index)
@@ -401,11 +397,11 @@ var bindingExecutors = avalon.bindingExecutors = {}
 
 var directives = avalon.directives = {}
 avalon.directive = function (name, obj) {
-        bindingHandlers[name] = obj.init = (obj.init || noop)
-        bindingExecutors[name] = obj.update = (obj.update || noop)
-        
-        return directives[name] = obj
-    }
+    bindingHandlers[name] = obj.init = (obj.init || noop)
+    bindingExecutors[name] = obj.update = (obj.update || noop)
+
+    return directives[name] = obj
+}
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 function isArrayLike(obj) {
     if (obj && typeof obj === "object") {
@@ -593,7 +589,7 @@ if (!("onmouseenter" in root)) {
     }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            deel: function (elem, _, fn) {
+            fn: function (elem, fn) {
                 return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
@@ -626,7 +622,7 @@ if (DOC.onmousewheel === void 0) {
      chrome wheel deltaY 下100 上-100 */
     eventHooks.mousewheel = {
         type: "wheel",
-        deel: function (elem, _, fn) {
+        fn: function (elem, fn) {
             return function (e) {
                 e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0
@@ -2455,31 +2451,28 @@ function scanAttr(elem, vmodels, match) {
     if (vmodels.length) {
         var attributes = elem.attributes
         var bindings = []
-        var fixAttrs = []
-        var msData = createMap()
+        var uniq = {}
         for (var i = 0, attr; attr = attributes[i++]; ) {
+            var name = attr.name
+            if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
+                continue
+            }
+            uniq[name] = 1
             if (attr.specified) {
-                if (match = attr.name.match(rmsAttr)) {
+                if (match = name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
                     var param = match[2] || ""
                     var value = attr.value
-                    var name = attr.name
                     if (events[type]) {
                         param = type
                         type = "on"
                     } else if (obsoleteAttrs[type]) {
-                        if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
-                            log("warning!ms-enabled或ms-attr-enabled已经被废弃")
-                            type = "disabled"
-                            value = "!(" + value + ")"
-                        }
                         param = type
                         type = "attr"
                         name = "ms-" + type + "-" + param
-                        fixAttrs.push([attr.name, name, value])
+                        log("warning!请改用" + name + "代替" + attr.name + "!")
                     }
-                    msData[name] = value
                     if (directives[type]) {
                         var newValue = value.replace(roneTime, "")
                         var oneTime = value !== newValue
@@ -2505,23 +2498,18 @@ function scanAttr(elem, vmodels, match) {
                             var hasDuplex = name
                         } else if (name === "ms-if-loop") {
                             binding.priority += 100
+                        } else if (name === "ms-attr-value") {
+                            var hasAttrValue = name
                         }
                         bindings.push(binding)
-                        if (type === "widget") {
-                            elem.msData = elem.msData || msData
-                        }
                     }
                 }
             }
         }
         if (bindings.length) {
             bindings.sort(bindingSorter)
-            fixAttrs.forEach(function (arr) {
-                log("warning!请改用" + arr[1] + "代替" + arr[0] + "!")
-                elem.removeAttribute(arr[0])
-                elem.setAttribute(arr[1], arr[2])
-            })
-            if (hasDuplex && msData["ms-attr-value"] && elem.type === "text") {
+
+            if (hasDuplex && hasAttrValue && elem.type === "text") {
                 log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
             }
 
@@ -3195,9 +3183,7 @@ var duplexBinding = avalon.directive("duplex", {
             binding.param = "checked"
         }
         
-        if (elem.msData) {
-            elem.msData["ms-duplex"] = binding.expr
-        }
+        
         binding.param.replace(rw20g, function (name) {
             if (rduplexType.test(elem.type) && rduplexParam.test(name)) {
                 if (name === "radio")

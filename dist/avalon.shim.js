@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.3 built in 2015.9.29
+ avalon.shim.js 1.5.3 built in 2015.10.4
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -158,8 +158,8 @@ avalon.type = function (obj) { //取得目标的类型
     }
     // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
     return typeof obj === "object" || typeof obj === "function" ?
-        class2type[serialize.call(obj)] || "object" :
-        typeof obj
+            class2type[serialize.call(obj)] || "object" :
+            typeof obj
 }
 
 var isFunction = typeof alert === "object" ? function (fn) {
@@ -176,8 +176,8 @@ avalon.isFunction = isFunction
 avalon.isWindow = function (obj) {
     if (!obj)
         return false
-            // 利用IE678 window == document为true,document == window竟然为false的神奇特性
-            // 标准浏览器及IE9，IE10等使用 正则检测
+    // 利用IE678 window == document为true,document == window竟然为false的神奇特性
+    // 标准浏览器及IE9，IE10等使用 正则检测
     return obj == obj.document && obj.document != obj //jshint ignore:line
 }
 
@@ -192,7 +192,7 @@ for (enu in avalon({})) {
     break
 }
 var enumerateBUG = enu !== "0" //IE6下为true, 其他为false
-    /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
+/*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
 avalon.isPlainObject = function (obj, key) {
     if (!obj || avalon.type(obj) !== "object" || obj.nodeType || avalon.isWindow(obj)) {
         return false;
@@ -209,7 +209,8 @@ avalon.isPlainObject = function (obj, key) {
             return ohasOwn.call(obj, key)
         }
     }
-    for (key in obj) {}
+    for (key in obj) {
+    }
     return key === void 0 || ohasOwn.call(obj, key)
 }
 if (rnative.test(Object.getPrototypeOf)) {
@@ -221,10 +222,10 @@ if (rnative.test(Object.getPrototypeOf)) {
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
 avalon.mix = avalon.fn.mix = function () {
     var options, name, src, copy, copyIsArray, clone,
-        target = arguments[0] || {},
-        i = 1,
-        length = arguments.length,
-        deep = false
+            target = arguments[0] || {},
+            i = 1,
+            length = arguments.length,
+            deep = false
 
     // 如果第一个参数为布尔,判定是否深拷贝
     if (typeof target === "boolean") {
@@ -329,30 +330,29 @@ avalon.mix({
             start = 0
         }
         var index = -1,
-            length = Math.max(0, Math.ceil((end - start) / step)),
-            result = new Array(length)
+                length = Math.max(0, Math.ceil((end - start) / step)),
+                result = new Array(length)
         while (++index < length) {
             result[index] = start
             start += step
         }
         return result
     },
-    eventHooks: [],
+    eventHooks: {},
     /*绑定事件*/
     bind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, phase)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
+            fn = hook.fn ? hook.fn(el, fn) : fn
         }
         var callback = W3C ? fn : function (e) {
             fn.call(el, fixEvent(e));
         }
         if (W3C) {
-            el.addEventListener(type, callback, !!phase)
+            el.addEventListener(type, callback, phase)
         } else {
             el.attachEvent("on" + type, callback)
         }
@@ -364,13 +364,11 @@ avalon.mix({
         var hook = hooks[type]
         var callback = fn || noop
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, false)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
         }
         if (W3C) {
-            el.removeEventListener(type, callback, !!phase)
+            el.removeEventListener(type, callback, phase)
         } else {
             el.detachEvent("on" + type, callback)
         }
@@ -381,7 +379,7 @@ avalon.mix({
             node = node[0]
         }
         var prop = /[_-]/.test(name) ? camelize(name) : name,
-            fn
+                fn
         name = avalon.cssName(prop) || prop
         if (value === void 0 || typeof value === "boolean") { //获取样式
             fn = cssHooks[prop + ":get"] || cssHooks["@:get"]
@@ -460,12 +458,12 @@ var bindingExecutors = avalon.bindingExecutors = {}
 
 var directives = avalon.directives = {}
 avalon.directive = function (name, obj) {
-        bindingHandlers[name] = obj.init = (obj.init || noop)
-        bindingExecutors[name] = obj.update = (obj.update || noop)
-        
-        return directives[name] = obj
-    }
-    /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
+    bindingHandlers[name] = obj.init = (obj.init || noop)
+    bindingExecutors[name] = obj.update = (obj.update || noop)
+
+    return directives[name] = obj
+}
+/*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 function isArrayLike(obj) {
     if (!obj)
         return false
@@ -820,7 +818,7 @@ if (!("onmouseenter" in root)) {
     }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            deel: function (elem, _, fn) {
+            fn: function (elem, fn) {
                 return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
@@ -848,7 +846,7 @@ avalon.each({
 if (!("oninput" in DOC.createElement("input"))) {
     eventHooks.input = {
         type: "propertychange",
-        deel: function (elem, _, fn) {
+        deel: function (elem, fn) {
             return function (e) {
                 if (e.propertyName === "value") {
                     e.type = "input"
@@ -868,7 +866,7 @@ if (DOC.onmousewheel === void 0) {
     var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
     eventHooks.mousewheel = {
         type: fixWheelType,
-        deel: function (elem, _, fn) {
+        fn: function (elem, fn) {
             return function (e) {
                 e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
                 e.wheelDeltaX = 0
@@ -3031,36 +3029,28 @@ function scanAttr(elem, vmodels, match) {
     if (vmodels.length) {
         var attributes = getAttributes ? getAttributes(elem) : elem.attributes
         var bindings = []
-        var fixAttrs = []
-        var msData = {}
         var uniq = {}
         for (var i = 0, attr; attr = attributes[i++]; ) {
+            var name = attr.name
+            if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
+                continue
+            }
+            uniq[name] = 1
             if (attr.specified) {
-                if (match = attr.name.match(rmsAttr)) {
+                if (match = name.match(rmsAttr)) {
                     //如果是以指定前缀命名的
                     var type = match[1]
                     var param = match[2] || ""
                     var value = attr.value
-                    var name = attr.name
-                    if (uniq[name]) {//IE8下ms-repeat,ms-with BUG
-                        continue
-                    }
-                    uniq[name] = 1
                     if (events[type]) {
                         param = type
                         type = "on"
                     } else if (obsoleteAttrs[type]) {
-                        if (type === "enabled") { //吃掉ms-enabled绑定,用ms-disabled代替
-                            log("warning!ms-enabled或ms-attr-enabled已经被废弃")
-                            type = "disabled"
-                            value = "!(" + value + ")"
-                        }
                         param = type
                         type = "attr"
                         name = "ms-" + type + "-" + param
-                        fixAttrs.push([attr.name, name, value])
+                        log("warning!请改用" + name + "代替" + attr.name + "!")
                     }
-                    msData[name] = value
                     if (directives[type]) {
                         var newValue = value.replace(roneTime, "")
                         var oneTime = value !== newValue
@@ -3089,25 +3079,19 @@ function scanAttr(elem, vmodels, match) {
                             var hasDuplex = name
                         } else if (name === "ms-if-loop") {
                             binding.priority += 100
+                        } else if (name === "ms-attr-value") {
+                            var hasAttrValue = name
                         }
                         bindings.push(binding)
-                        if (type === "widget") {
-                            elem.msData = elem.msData || msData
-                        }
                     }
                 }
             }
         }
         if (bindings.length) {
             bindings.sort(bindingSorter)
-            fixAttrs.forEach(function (arr) {
-                log("warning!请改用" + arr[1] + "代替" + arr[0] + "!")
-                elem.removeAttribute(arr[0])
-                elem.setAttribute(arr[1], arr[2])
-            })
             //http://bugs.jquery.com/ticket/7071
             //在IE下对VML读取type属性,会让此元素所有属性都变成<Failed>
-            if (hasDuplex && msData["ms-attr-value"] && elem.nodeName === "INPUT" && elem.type === "text") {
+            if (hasDuplex && hasAttrValue && elem.nodeName === "INPUT" && elem.type === "text") {
                 log("warning!一个控件不能同时定义ms-attr-value与" + hasDuplex)
             }
             for (i = 0; binding = bindings[i]; i++) {
@@ -3836,9 +3820,7 @@ var duplexBinding = avalon.directive("duplex", {
         if (elem.type === "radio" && binding.param === "") {
             binding.param = "checked"
         }
-        if (elem.msData) {
-            elem.msData["ms-duplex"] = binding.expr
-        }
+       
    
         binding.param.replace(rw20g, function (name) {
             if (rduplexType.test(elem.type) && rduplexParam.test(name)) {
