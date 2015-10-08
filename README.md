@@ -1,5 +1,6 @@
 # Avalon
-
+[![Issue Stats](http://issuestats.com/github/RubyLouvre/avalon/badge/pr?style=flat)](http://issuestats.com/github/RubyLouvre/avalon)
+[![Issue Stats](http://issuestats.com/github/RubyLouvre/avalon/badge/issue?style=flat)](http://issuestats.com/github/RubyLouvre/avalon)
 A lightweight,high-performance and easy-to-learn JavaScript MVVM framework
 
 * Avalon now has 3 versions: `avalon.js` for IE6+ and modern browsers (including Webkit/Chromium based browsers), `avalon.modern.js` for IE10+ and HTML5 standard browsers and `avalon.mobile.js`, which added `Touch Event`, `Pointer Event` and `fastclick` support for mobile devices. For requirejs or AMD-like loader, use the corresponding shim version.
