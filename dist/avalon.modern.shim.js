@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js 1.5.3 built in 2015.10.4
+ avalon.modern.shim.js 1.5.3 built in 2015.10.9
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -870,7 +870,7 @@ function observeObject(source, options) {
     options = options || nullObject
     var force = options.force || nullObject
     var old = options.old
-    var oldAccessors = typeof old === "object" ? old.$accessors : nullObject
+    var oldAccessors = old && old.$accessors || nullObject
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var accessors = {} //监控属性
     var hasOwn = {}
@@ -2678,10 +2678,10 @@ function scanExpr(str) {
 }
 
 function scanText(textNode, vmodels, index) {
-    var bindings = []
+    var bindings = [],
     tokens = scanExpr(textNode.data)
     if (tokens.length) {
-        for (var i = 0; token = tokens[i++];) {
+        for (var i = 0, token; token = tokens[i++];) {
             var node = DOC.createTextNode(token.expr) //将文本转换为文本节点，并替换原来的文本节点
             if (token.type) {
                 token.expr = token.expr.replace(roneTime, function () {
