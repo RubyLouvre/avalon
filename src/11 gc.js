@@ -18,7 +18,7 @@ function injectDisposeQueue(data, list) {
     var elem = data.element
     if (!data.uuid) {
         if (elem.nodeType !== 1) {
-            data.uuid = data.type + (data.pos || 0) + "-" + getUid(elem.parentNode)
+            data.uuid = data.type + getUid(elem.parentNode)+ "-"+ (++disposeCount)
         } else {
             data.uuid = data.name + "-" + getUid(elem)
         }

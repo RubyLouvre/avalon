@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.46 built in 2015.10.3
+ avalon.js 1.46 built in 2015.10.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -51,9 +51,6 @@ function log() {
 
 
 var subscribers = "$" + expose
-var otherRequire = window.require
-var otherDefine = window.define
-var innerRequire
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rcomplexType = /^(?:object|array)$/
@@ -921,11 +918,7 @@ function escapeRegExp(target) {
 }
 
 var plugins = {
-    loader: function (builtin) {
-        var flag = innerRequire && builtin
-        window.require = flag ? innerRequire : otherRequire
-        window.define = flag ? innerRequire.define : otherDefine
-    },
+
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
@@ -1907,7 +1900,7 @@ function injectDisposeQueue(data, list) {
     var elem = data.element
     if (!data.uuid) {
         if (elem.nodeType !== 1) {
-            data.uuid = data.type + (data.pos || 0) + "-" + getUid(elem.parentNode)
+            data.uuid = data.type + getUid(elem.parentNode)+ "-"+ (++disposeCount)
         } else {
             data.uuid = data.name + "-" + getUid(elem)
         }
@@ -2565,8 +2558,8 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
             var node = this[0]
             if (arguments.length === 0) {
                 if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
-                    return node["inner" + name] || node.document.documentElement[clientProp] 
-                            || node.document.body[clientProp]//IE6下前两个分别为undefine,0
+                    return node["inner" + name] || node.document.documentElement[clientProp] ||
+                           node.document.body[clientProp]//IE6下前两个分别为undefine,0
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
                     var doc = node.documentElement
@@ -3276,7 +3269,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value, start))
+            tokens.push(getToken(value))
         }
         start = stop + closeTag.length
     } while (1)
@@ -3291,11 +3284,10 @@ function scanExpr(str) {
     return tokens
 }
 
-function scanText(textNode, vmodels, index) {
-    var bindings = []
-    tokens = scanExpr(textNode.data)
+function scanText(textNode, vmodels) {
+    var bindings = [], tokens = scanExpr(textNode.data)
     if (tokens.length) {
-        for (var i = 0; token = tokens[i++]; ) {
+        for (var i = 0, token; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
                 token.value = token.value.replace(roneTime, function () {
@@ -3308,7 +3300,6 @@ function scanText(textNode, vmodels, index) {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
-                token.pos = index * 1000 + i
                 bindings.push(token) //收集带有插值表达式的文本
             }
             avalonFragment.appendChild(node)
@@ -5047,6 +5038,16 @@ var modules = avalon.modules = {
         exports: avalon,
         state: 4
     }
+}
+
+var otherRequire = window.require
+var otherDefine = window.define
+var innerRequire
+
+plugins.loader = function (builtin) {
+    var flag = innerRequire && builtin
+    window.require = flag ? innerRequire : otherRequire
+    window.define = flag ? innerRequire.define : otherDefine
 }
 //Object(modules[id]).state拥有如下值 
 // undefined  没有定义
