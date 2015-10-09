@@ -1478,7 +1478,8 @@ function getUid(data) { //IE9+,标准浏览器
         var elem = data.element
         if (elem) {
             if (elem.nodeType !== 1) {
-                data.uniqueNumber = data.type + (data.pos || 0) + "-" + getUid(elem.parentNode)
+                //如果是注释节点,则data.pos不存在,当一个元素下有两个注释节点就会出问题
+                data.uniqueNumber = data.type + "-" + getUid(elem.parentNode) + "-" + (++disposeCount)
             } else {
                 data.uniqueNumber = data.name + "-" + getUid(elem)
             }

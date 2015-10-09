@@ -1,3 +1,9 @@
+#avalon1.5.4(新touch模块)
+
+1. 修正oldAccessors BUG https://github.com/RubyLouvre/avalon/issues/1091
+2. 修正当一个元素存在多个ms-if绑定时,由于注释节点不能提供pos,导致显示不正确 https://github.com/RubyLouvre/avalon/issues/1088
+3. 新的触屏模块
+
 #avalon1.5.3(各种奇葩BUG修复及更快的parser)
 
 1. 全新的parser
