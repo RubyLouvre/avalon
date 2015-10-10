@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.3 built in 2015.10.9
+ avalon.js 1.5.4 built in 2015.10.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -51,9 +51,7 @@ function log() {
 
 
 var subscribers = "$" + expose
-var otherRequire = window.require
-var otherDefine = window.define
-var innerRequire
+
 var stopRepeatAssign = false
 var nullObject = {} //作用类似于noop，只用于代码防御，千万不要在它上面添加属性
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
@@ -287,7 +285,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.53,
+    version: 1.54,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -911,11 +909,6 @@ function escapeRegExp(target) {
 }
 
 var plugins = {
-    loader: function (builtin) {
-        var flag = innerRequire && builtin
-        window.require = flag ? innerRequire : otherRequire
-        window.define = flag ? innerRequire.define : otherDefine
-    },
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
@@ -2883,17 +2876,8 @@ function stringifyExpr(code) {
         return code
     }
 }
-//parseExpr的智能引用代理
 
-function parseExprProxy(code, scopes, data) {
-    avalon.log("parseExprProxy方法即将被废弃")
-    var fn = data.evaluator = parseExpr(code, scopes, data)
-    if (fn) {
-        data.handler = bindingExecutors[data.handlerName || data.type]
-        avalon.injectBinding(data)
-    }
-}
-
+avalon.parseExprProxy = parseExpr
 
 var rthimRightParentheses = /\)\s*$/
 var rthimOtherParentheses = /\)\s*\|/g
@@ -3407,7 +3391,7 @@ avalon.component = function (name, opts) {
                 //===========收集各种配置=======
 
                 var elemOpts = getOptionsFromTag(elem)
-                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.fullName)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.widget)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
                 delete elemOpts.config
                 delete elemOpts.$id
@@ -3821,8 +3805,8 @@ var duplexBinding = avalon.directive("duplex", {
         if (elem.type === "radio" && binding.param === "") {
             binding.param = "checked"
         }
-       
-   
+
+
         binding.param.replace(rw20g, function (name) {
             if (rduplexType.test(elem.type) && rduplexParam.test(name)) {
                 if (name === "radio")
@@ -3847,7 +3831,6 @@ var duplexBinding = avalon.directive("duplex", {
             params.push("string")
         }
         binding.param = params.join("-")
-        binding.changed = getBindingCallback(elem, "binding-duplex-changed", vmodels) || noop
         if (!binding.xtype) {
             binding.xtype = elem.tagName === "SELECT" ? "select" :
                     elem.type === "checkbox" ? "checkbox" :
@@ -3880,7 +3863,7 @@ var duplexBinding = avalon.directive("duplex", {
             composing = false
         }
         var updateVModel = function () {
-             var val = elem.value //防止递归调用形成死循环
+            var val = elem.value //防止递归调用形成死循环
             if (composing || val === binding.oldValue) //处理中文输入法在minlengh下引发的BUG
                 return
             var lastValue = binding.pipe(val, binding, "get")
@@ -3967,11 +3950,17 @@ var duplexBinding = avalon.directive("duplex", {
                 })
                 break
         }
+        binding.bound("focus", function() {
+            elem.msFocus = true
+        })
+        binding.bound("blur", function() {
+            elem.msFocus = false
+        })
         if (binding.xtype === "input" && /^(text|password|hidden)/.test(elem.type)) {
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
-                if (root.contains(elem)) {
-                    if (binding.oldValue !== elem.value) {
+                if (elem.contains(elem)) {
+                    if (!this.msFocus && binding.oldValue !== elem.value) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -3980,15 +3969,18 @@ var duplexBinding = avalon.directive("duplex", {
             })
         }
 
-        for (var i in avalon.vmodels) {
-            var v = avalon.vmodels[i]
-            v.$fire("avalon-ms-duplex-init", binding)
-        }
-        var cpipe = binding.pipe || (binding.pipe = pipe)
-        cpipe(null, binding, "init")
     },
     update: function (value) {
         var elem = this.element, binding = this, curValue
+        if (!this.init) {
+            for (var i in avalon.vmodels) {
+                var v = avalon.vmodels[i]
+                v.$fire("avalon-ms-duplex-init", binding)
+            }
+            var cpipe = binding.pipe || (binding.pipe = pipe)
+            cpipe(null, binding, "init")
+            this.init = 1
+        }
         switch (this.xtype) {
             case "input":
             case "change":
@@ -4128,7 +4120,7 @@ new function () { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
             setters[this.tagName].call(this, value)
-            if ((typeof this.avalonSetter === "function") && this.oldValue !== value) {
+            if (!this.msFocus &&  this.avalonSetter && this.oldValue !== value) {
                 this.avalonSetter()
             }
         }
@@ -5699,23 +5691,30 @@ new function() {// jshint ignore:line
 //https://www.devbridge.com/articles/understanding-amd-requirejs/
 //http://maxogden.com/nested-dependencies.html
 var modules = avalon.modules = {
-        "domReady!": {
-            exports: avalon,
-            state: 3
-        },
-        "avalon": {
-            exports: avalon,
-            state: 4
-        }
+    "domReady!": {
+        exports: avalon,
+        state: 3
+    },
+    "avalon": {
+        exports: avalon,
+        state: 4
     }
-    //Object(modules[id]).state拥有如下值
-    // undefined  没有定义
-    // 1(send)    已经发出请求
-    // 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
-    // 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
-    // 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
+}
+//Object(modules[id]).state拥有如下值
+// undefined  没有定义
+// 1(send)    已经发出请求
+// 2(loading) 已经被执行但还没有执行完成，在这个阶段define方法会被执行
+// 3(loaded)  执行完毕，通过onload/onreadystatechange回调判定，在这个阶段checkDeps方法会执行
+// 4(execute)  其依赖也执行完毕, 值放到exports对象上，在这个阶段fireFactory方法会执行
 modules.exports = modules.avalon
-
+var otherRequire = window.require
+var otherDefine = window.define
+var innerRequire
+plugins.loader = function (builtin) {
+    var flag = innerRequire && builtin
+    window.require = flag ? innerRequire : otherRequire
+    window.define = flag ? innerRequire.define : otherDefine
+}
 new function () { // jshint ignore:line
     var loadings = [] //正在加载中的模块列表
     var factorys = [] //放置define方法的factory函数
@@ -5735,10 +5734,10 @@ new function () { // jshint ignore:line
         //2. 去掉querystring, hash
         var query = ""
         name = name.replace(rquery, function (a) {
-                query = a
-                return ""
-            })
-            //3. 去掉扩展名
+            query = a
+            return ""
+        })
+        //3. 去掉扩展名
         var suffix = "." + res
         var ext = /js|css/.test(suffix) ? suffix : ""
         name = name.replace(/\.[a-z0-9]+$/g, function (a) {
@@ -5763,7 +5762,7 @@ new function () { // jshint ignore:line
     function fireRequest(req) {
         var name = req.name
         var res = req.res
-            //1. 如果该模块已经发出请求，直接返回
+        //1. 如果该模块已经发出请求，直接返回
         var module = modules[name]
         var urlNoQuery = name && req.urlNoQuery
         if (module && module.state >= 1) {
@@ -5808,7 +5807,7 @@ new function () { // jshint ignore:line
             if (arguments.length <= 2) {
                 isUserFirstRequire = true
                 var queue = requireQueue.splice(0, requireQueue.length),
-                    args
+                        args
                 while (args = queue.shift()) {
                     innerRequire.apply(null, args)
                 }
@@ -5863,56 +5862,57 @@ new function () { // jshint ignore:line
 
     //核心API之二 require
     innerRequire.define = function (name, deps, factory) { //模块名,依赖列表,模块本身
-            if (typeof name !== "string") {
-                factory = deps
-                deps = name
-                name = "anonymous"
-            }
-            if (!Array.isArray(deps)) {
-                factory = deps
-                deps = []
-            }
-            var config = {
-                built: !isUserFirstRequire, //用r.js打包后,所有define方法会放到require方法之前()
-                defineName: name
-            }
-            var args = [deps, factory, config]
-            factory.require = function (url) {
-                    args.splice(2, 0, url)
-                    if (modules[url]) {
-                        modules[url].state = 3 //loaded
-                        var isCycle = false
-                        try {
-                            isCycle = checkCycle(modules[url].deps, url)
-                        } catch (e) {}
-                        if (isCycle) {
-                            avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
-                        }
-                    }
-                    delete factory.require //释放内存
-                    innerRequire.apply(null, args) //0,1,2 --> 1,2,0
-                }
-                //根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
-                //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
-                //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
-                //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
-                //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
-                //唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
-                //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
-            var url = config.built ? "unknown" : getCurrentScript()
-            if (url) {
-                var module = modules[url]
-                if (module) {
-                    module.state = 2
-                }
-                factory.require(url)
-            } else { //合并前后的safari，合并后的IE6-9走此分支
-                factorys.push(factory)
-            }
+        if (typeof name !== "string") {
+            factory = deps
+            deps = name
+            name = "anonymous"
         }
-        //核心API之三 require.config(settings)
+        if (!Array.isArray(deps)) {
+            factory = deps
+            deps = []
+        }
+        var config = {
+            built: !isUserFirstRequire, //用r.js打包后,所有define方法会放到require方法之前()
+            defineName: name
+        }
+        var args = [deps, factory, config]
+        factory.require = function (url) {
+            args.splice(2, 0, url)
+            if (modules[url]) {
+                modules[url].state = 3 //loaded
+                var isCycle = false
+                try {
+                    isCycle = checkCycle(modules[url].deps, url)
+                } catch (e) {
+                }
+                if (isCycle) {
+                    avalon.error(url + "模块与之前的模块存在循环依赖，请不要直接用script标签引入" + url + "模块")
+                }
+            }
+            delete factory.require //释放内存
+            innerRequire.apply(null, args) //0,1,2 --> 1,2,0
+        }
+        //根据标准,所有遵循W3C标准的浏览器,script标签会按标签的出现顺序执行。
+        //老的浏览器中，加载也是按顺序的：一个文件下载完成后，才开始下载下一个文件。
+        //较新的浏览器中（IE8+ 、FireFox3.5+ 、Chrome4+ 、Safari4+），为了减小请求时间以优化体验，
+        //下载可以是并行的，但是执行顺序还是按照标签出现的顺序。
+        //但如果script标签是动态插入的, 就未必按照先请求先执行的原则了,目测只有firefox遵守
+        //唯一比较一致的是,IE10+及其他标准浏览器,一旦开始解析脚本, 就会一直堵在那里,直接脚本解析完毕
+        //亦即，先进入loading阶段的script标签(模块)必然会先进入loaded阶段
+        var url = config.built ? "unknown" : getCurrentScript()
+        if (url) {
+            var module = modules[url]
+            if (module) {
+                module.state = 2
+            }
+            factory.require(url)
+        } else { //合并前后的safari，合并后的IE6-9走此分支
+            factorys.push(factory)
+        }
+    }
+    //核心API之三 require.config(settings)
     innerRequire.config = kernel
-        //核心API之四 define.amd 标识其符合AMD规范
+    //核心API之四 define.amd 标识其符合AMD规范
     innerRequire.define.amd = modules
 
     //==========================对用户配置项进行再加工==========================
@@ -5937,7 +5937,7 @@ new function () { // jshint ignore:line
             array = array.concat(allpackages)
             var uniq = {}
             var ret = []
-            for (var i = 0, pkg; pkg = array[i++];) {
+            for (var i = 0, pkg; pkg = array[i++]; ) {
                 pkg = typeof pkg === "string" ? {
                     name: pkg
                 } : pkg
@@ -5998,9 +5998,9 @@ new function () { // jshint ignore:line
     //==============================内部方法=================================
     function checkCycle(deps, nick) {
         //检测是否存在循环依赖
-        for (var i = 0, id; id = deps[i++];) {
+        for (var i = 0, id; id = deps[i++]; ) {
             if (modules[id].state !== 4 &&
-                (id === nick || checkCycle(modules[id].deps, nick))) {
+                    (id === nick || checkCycle(modules[id].deps, nick))) {
                 return true
             }
         }
@@ -6022,9 +6022,9 @@ new function () { // jshint ignore:line
 
     function checkDeps() {
         //检测此模块的依赖是否都执行完毕,是则执行自身
-        loop: for (var i = loadings.length, id; id = loadings[--i];) {
+        loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
             var obj = modules[id],
-                deps = obj.deps
+                    deps = obj.deps
             if (!deps)
                 continue
             for (var j = 0, key; key = deps[j]; j++) {
@@ -6046,7 +6046,7 @@ new function () { // jshint ignore:line
     function loadJS(url, id, callback) {
         //通过script节点加载目标模块
         var node = DOC.createElement("script")
-       
+
         var supportLoad = "onload" in node
         var onEvent = supportLoad ? "onload" : "onreadystatechange"
 
@@ -6073,7 +6073,7 @@ new function () { // jshint ignore:line
         node.className = subscribers //让getCurrentScript只处理类名为subscribers的script节点
         node.src = url //插入到head的第一个节点前，防止IE6下head标签没闭合前使用appendChild抛错
         head.insertBefore(node, head.firstChild) //chrome下第二个参数不能为null
-       
+
         log("debug: 正准备加载 " + url) //更重要的是IE6下可以收窄getCurrentScript的寻找范围
     }
 
@@ -6181,7 +6181,7 @@ new function () { // jshint ignore:line
             return trimQuery(stack.replace(/(:\d+)?:\d+$/i, "")) //去掉行号与或许存在的出错字符起始位置
         }
         var nodes = head.getElementsByTagName("script") //只在head标签中寻找
-        for (var i = nodes.length, node; node = nodes[--i];) {
+        for (var i = nodes.length, node; node = nodes[--i]; ) {
             if (node.className === subscribers && node.readyState === "interactive") {
                 var url = getFullUrl(node, "src")
                 return node.className = trimQuery(url)
@@ -6194,7 +6194,7 @@ new function () { // jshint ignore:line
     function fireFactory(id, deps, factory) {
         var module = Object(modules[id])
         module.state = 4
-        for (var i = 0, array = [], d; d = deps[i++];) {
+        for (var i = 0, array = [], d; d = deps[i++]; ) {
             if (d === "exports") {
                 var obj = module.exports || (module.exports = {})
                 array.push(obj)
@@ -6222,15 +6222,15 @@ new function () { // jshint ignore:line
             id = id.slice(this.res.length + 1) //处理define("css!style",[], function(){})的情况
         }
         var url = id
-            //1. 是否命中paths配置项
+        //1. 是否命中paths配置项
         var usePath = 0
         var baseUrl = this.baseUrl
         var rootUrl = this.parentUrl || baseUrl
         eachIndexArray(id, kernel.paths, function (value, key) {
-                url = url.replace(key, value)
-                usePath = 1
-            })
-            //2. 是否命中packages配置项
+            url = url.replace(key, value)
+            usePath = 1
+        })
+        //2. 是否命中packages配置项
         if (!usePath) {
             eachIndexArray(id, kernel.packages, function (value, key, item) {
                 url = url.replace(item.name, item.location)
@@ -6258,8 +6258,8 @@ new function () { // jshint ignore:line
         var urlNoQuery = url + ext
         url = urlNoQuery + this.query
         urlNoQuery = url.replace(rquery, function (a) {
-          this.query = a
-          return ""
+            this.query = a
+            return ""
         })
         //6. 处理urlArgs
         eachIndexArray(id, kernel.urlArgs, function (value) {
@@ -6311,7 +6311,7 @@ new function () { // jshint ignore:line
 
     function eachIndexArray(moduleID, array, matcher) {
         array = array || []
-        for (var i = 0, el; el = array[i++];) {
+        for (var i = 0, el; el = array[i++]; ) {
             if (el.reg.test(moduleID)) {
                 matcher(el.val, el.name, el)
                 return false

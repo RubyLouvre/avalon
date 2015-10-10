@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.3 built in 2015.10.9
+ avalon.shim.js 1.5.4 built in 2015.10.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -51,9 +51,7 @@ function log() {
 
 
 var subscribers = "$" + expose
-var otherRequire = window.require
-var otherDefine = window.define
-var innerRequire
+
 var stopRepeatAssign = false
 var nullObject = {} //作用类似于noop，只用于代码防御，千万不要在它上面添加属性
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
@@ -287,7 +285,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.53,
+    version: 1.54,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -911,11 +909,6 @@ function escapeRegExp(target) {
 }
 
 var plugins = {
-    loader: function (builtin) {
-        var flag = innerRequire && builtin
-        window.require = flag ? innerRequire : otherRequire
-        window.define = flag ? innerRequire.define : otherDefine
-    },
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
@@ -2883,17 +2876,8 @@ function stringifyExpr(code) {
         return code
     }
 }
-//parseExpr的智能引用代理
 
-function parseExprProxy(code, scopes, data) {
-    avalon.log("parseExprProxy方法即将被废弃")
-    var fn = data.evaluator = parseExpr(code, scopes, data)
-    if (fn) {
-        data.handler = bindingExecutors[data.handlerName || data.type]
-        avalon.injectBinding(data)
-    }
-}
-
+avalon.parseExprProxy = parseExpr
 
 var rthimRightParentheses = /\)\s*$/
 var rthimOtherParentheses = /\)\s*\|/g
@@ -3407,7 +3391,7 @@ avalon.component = function (name, opts) {
                 //===========收集各种配置=======
 
                 var elemOpts = getOptionsFromTag(elem)
-                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.fullName)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.widget)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
                 delete elemOpts.config
                 delete elemOpts.$id
@@ -3821,8 +3805,8 @@ var duplexBinding = avalon.directive("duplex", {
         if (elem.type === "radio" && binding.param === "") {
             binding.param = "checked"
         }
-       
-   
+
+
         binding.param.replace(rw20g, function (name) {
             if (rduplexType.test(elem.type) && rduplexParam.test(name)) {
                 if (name === "radio")
@@ -3847,7 +3831,6 @@ var duplexBinding = avalon.directive("duplex", {
             params.push("string")
         }
         binding.param = params.join("-")
-        binding.changed = getBindingCallback(elem, "binding-duplex-changed", vmodels) || noop
         if (!binding.xtype) {
             binding.xtype = elem.tagName === "SELECT" ? "select" :
                     elem.type === "checkbox" ? "checkbox" :
@@ -3880,7 +3863,7 @@ var duplexBinding = avalon.directive("duplex", {
             composing = false
         }
         var updateVModel = function () {
-             var val = elem.value //防止递归调用形成死循环
+            var val = elem.value //防止递归调用形成死循环
             if (composing || val === binding.oldValue) //处理中文输入法在minlengh下引发的BUG
                 return
             var lastValue = binding.pipe(val, binding, "get")
@@ -3967,11 +3950,17 @@ var duplexBinding = avalon.directive("duplex", {
                 })
                 break
         }
+        binding.bound("focus", function() {
+            elem.msFocus = true
+        })
+        binding.bound("blur", function() {
+            elem.msFocus = false
+        })
         if (binding.xtype === "input" && /^(text|password|hidden)/.test(elem.type)) {
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
-                if (root.contains(elem)) {
-                    if (binding.oldValue !== elem.value) {
+                if (elem.contains(elem)) {
+                    if (!this.msFocus && binding.oldValue !== elem.value) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -3980,15 +3969,18 @@ var duplexBinding = avalon.directive("duplex", {
             })
         }
 
-        for (var i in avalon.vmodels) {
-            var v = avalon.vmodels[i]
-            v.$fire("avalon-ms-duplex-init", binding)
-        }
-        var cpipe = binding.pipe || (binding.pipe = pipe)
-        cpipe(null, binding, "init")
     },
     update: function (value) {
         var elem = this.element, binding = this, curValue
+        if (!this.init) {
+            for (var i in avalon.vmodels) {
+                var v = avalon.vmodels[i]
+                v.$fire("avalon-ms-duplex-init", binding)
+            }
+            var cpipe = binding.pipe || (binding.pipe = pipe)
+            cpipe(null, binding, "init")
+            this.init = 1
+        }
         switch (this.xtype) {
             case "input":
             case "change":
@@ -4128,7 +4120,7 @@ new function () { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
             setters[this.tagName].call(this, value)
-            if ((typeof this.avalonSetter === "function") && this.oldValue !== value) {
+            if (!this.msFocus &&  this.avalonSetter && this.oldValue !== value) {
                 this.avalonSetter()
             }
         }
