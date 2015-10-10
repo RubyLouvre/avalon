@@ -19,7 +19,13 @@ function replaceUrls(array, hash) {
         }
     }
 }
-
+function fixVersion(v) {
+    var arr = v.split(".")
+    if (arr.length > 2) {
+        return arr.shift() + "." + arr.join("")
+    }
+    return v
+}
 gulp.task('combo', function () {
 //https://github.com/isaacs/node-glob
 //http://www.linuxjournal.com/content/bash-extended-globbing
@@ -28,14 +34,14 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = 1.46 //当前版本号
+        var version = "1.4.7" //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
 
         gulp.src(compatibleFiles)
                 .pipe(concat('avalon.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
@@ -60,7 +66,7 @@ gulp.task('combo', function () {
         gulp.src(shimFiles)
                 .pipe(concat('avalon.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.shim.js(无加载器版本) " + version + " built in " + date + "\n support IE6+ and other browsers"
@@ -92,7 +98,7 @@ gulp.task('combo', function () {
         gulp.src(modernFiles)
                 .pipe(concat('avalon.modern.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.modern.js " + version + " built in " + date + "\n support IE10+ and other browsers"
@@ -108,7 +114,7 @@ gulp.task('combo', function () {
         gulp.src(modernShimFiles)
                 .pipe(concat('avalon.modern.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/loader:\s*true/, "loader: false"))
                 .pipe(replace(/!!/, function (a, b) {
@@ -126,7 +132,7 @@ gulp.task('combo', function () {
         gulp.src(mobileFiles)
                 .pipe(concat('avalon.mobile.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.js " + version + " built in " + date + "\n support IE10+ and other browsers"
@@ -146,7 +152,7 @@ gulp.task('combo', function () {
         gulp.src(mobileShimFiles)
                 .pipe(concat('avalon.mobile.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/loader:\s*true/, "loader: false"))
                 .pipe(replace(/!!/, function (a, b) {
@@ -162,7 +168,7 @@ gulp.task('combo', function () {
         gulp.src(mobileOldFiles)
                 .pipe(concat('avalon.mobile.old.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
-                    return "version: " + version
+                    return "version: " + fixVersion(version)
                 }))
                 .pipe(replace(/!!/, function (a, b) {
                     return  "avalon.mobile.old.js " + version + " built in " + date + "\n support IE8 and other browsers"
