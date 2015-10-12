@@ -5,9 +5,10 @@
 var readyList = [], isReady
 var fireReady = function(fn) {
     isReady = true
-    if (innerRequire) {
+    var require = avalon.require
+    if (require && require.checkDeps) {
         modules["domReady!"].state = 4
-        innerRequire.checkDeps()
+        require.checkDeps()
     }
     while(fn = readyList.shift()){
         fn(avalon)
