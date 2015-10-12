@@ -3156,6 +3156,7 @@ avalon.directive("data", {
 //双工绑定
 var rduplexType = /^(?:checkbox|radio)$/
 var rduplexParam = /^(?:radio|checked)$/
+var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio)$/
 var duplexBinding = avalon.directive("duplex", {
     priority: 2000,
     init: function (binding, hasCast) {
@@ -3290,7 +3291,7 @@ var duplexBinding = avalon.directive("duplex", {
         binding.bound("blur", function () {
             elem.msFocus = false
         })
-        if (binding.xtype === "input" && /^(text|password|hidden)/.test(elem.type)) {
+        if (binding.xtype === "input" && !rnoduplexInput.test(elem.type)) {
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(elem)) {
@@ -3434,7 +3435,7 @@ new function () { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
             setters[this.tagName].call(this, value)
-            if (!this.msFocus &&  this.avalonSetter && this.oldValue !== value) {
+            if (!this.msFocus &&  this.avalonSetter) {
                 this.avalonSetter()
             }
         }
@@ -4987,9 +4988,10 @@ var readyList = [],
     isReady
 var fireReady = function (fn) {
     isReady = true
-    if (innerRequire) {
+    var require = avalon.require
+    if (require && require.checkDeps) {
         modules["domReady!"].state = 4
-        innerRequire.checkDeps()
+        require.checkDeps()
     }
     while (fn = readyList.shift()) {
         fn(avalon)
