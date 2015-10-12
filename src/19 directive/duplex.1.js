@@ -134,7 +134,6 @@ var TimerID, ribbon = []
     }
 
 var watchValueInTimer = noop
-var rmsinput = /text|password|hidden/
 new function() { // jshint ignore:line
     try { //#272 IE9-IE11, firefox
         var setters = {}
@@ -142,7 +141,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
                     this.avalonSetter()
                 }
         }

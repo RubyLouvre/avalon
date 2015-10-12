@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.4.7 built in 2015.10.10
+ avalon.shim.js(无加载器版本) 1.4.7 built in 2015.10.12
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3763,7 +3763,6 @@ var TimerID, ribbon = []
     }
 
 var watchValueInTimer = noop
-var rmsinput = /text|password|hidden/
 new function() { // jshint ignore:line
     try { //#272 IE9-IE11, firefox
         var setters = {}
@@ -3771,7 +3770,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
                     this.avalonSetter()
                 }
         }
@@ -3794,7 +3793,7 @@ new function() { // jshint ignore:line
     }
 } // jshint ignore:line
 if (IEVersion) {
-    avalon.bind(DOC, "selectionchange", function(e) {
+    avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement
         if (el && typeof el.avalonSetter === "function") {
             el.avalonSetter()
@@ -3803,25 +3802,25 @@ if (IEVersion) {
 }
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
-        bound = data.bound,
-        $elem = avalon(element),
-        composing = false
-
-        function callback(value) {
-            data.changed.call(this, value, data)
-        }
-
-        function compositionStart() {
-            composing = true
-        }
-
-        function compositionEnd() {
+            bound = data.bound,
+            $elem = avalon(element),
             composing = false
-        }
-        //当value变化时改变model的值
-    var updateVModel = function() {
+
+    function callback(value) {
+        data.changed.call(this, value, data)
+    }
+
+    function compositionStart() {
+        composing = true
+    }
+
+    function compositionEnd() {
+        composing = false
+    }
+    //当value变化时改变model的值
+    var updateVModel = function () {
         var val = element.value //防止递归调用形成死循环
         if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
@@ -3832,27 +3831,27 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set") +"" //fix #673
+    data.handler = function () {
+        var val = data.pipe(evaluator(), data, "set")  //fix #673
         if (val !== element.oldValue) {
-            element.value = element.oldValue = val 
+            element.value = element.oldValue = val
         }
     }
     if (data.isChecked || $type === "radio") {
         var IE6 = IEVersion === 6
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
-            var checked = data.isChecked ? !! val : val + "" === element.value
+            var checked = data.isChecked ? !!val : val + "" === element.value
             element.oldValue = checked
             if (IE6) {
-                setTimeout(function() {
+                setTimeout(function () {
                     //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                     //并且要先设置defaultChecked后设置checked
                     //并且必须设置延迟
@@ -3865,7 +3864,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3879,7 +3878,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
 
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             var val = data.pipe(element.value, data, "get")
             element.checked = array.indexOf(val) > -1
@@ -3892,11 +3891,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
 
         function delay(e) { // jshint ignore:line
-            setTimeout(function() {
+            setTimeout(function () {
                 updateVModel(e)
             })
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     if (!IEVersion) { // W3C
@@ -3910,7 +3909,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         if (IEVersion > 8) {
                             bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
                         } else {
-                            bound("propertychange", function(e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            bound("propertychange", function (e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
                                 if (e.propertyName === "value") {
                                     updateVModel()
                                 }
@@ -3926,15 +3925,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-        bound("focus", function() {
+        bound("focus", function () {
             element.msFocus = true
         })
-        bound("blur", function() {
+        bound("blur", function () {
             element.msFocus = false
         })
 
-        if (rmsinput.test($type)) {
-            watchValueInTimer(function() {
+        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+            element.avalonSetter = updateVModel //#765
+            watchValueInTimer(function () {
                 if (root.contains(element)) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
@@ -3944,11 +3944,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 }
             })
         }
-
-        element.avalonSetter = updateVModel //#765
+        
     }
 
-    element.oldValue = element.value
     avalon.injectBinding(data)
     callback.call(element, element.value)
 }

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.4.7 built in 2015.10.10
+ avalon.modern.js 1.4.7 built in 2015.10.12
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3126,7 +3126,6 @@ var TimerID, ribbon = []
     }
 
 var watchValueInTimer = noop
-var rmsinput = /text|password|hidden/
 new function() { // jshint ignore:line
     try { //#272 IE9-IE11, firefox
         var setters = {}
@@ -3134,7 +3133,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
                     this.avalonSetter()
                 }
         }
@@ -3188,7 +3187,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set") + ""
+        var val = data.pipe(evaluator(), data, "set") 
         if (val !== element.oldValue) {
             element.value = element.oldValue = val
         }
@@ -3251,10 +3250,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         bound("blur", function() {
             element.msFocus = false
         })
-        if (rmsinput.test($type)) {
-            watchValueInTimer(function() {
+        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+            element.avalonSetter = updateVModel //#765
+            watchValueInTimer(function () {
                 if (root.contains(element)) {
-                    if (!element.msFocus && element.oldValue !== element.value) {
+                    if (!element.msFocus && data.oldValue !== element.value) {
                         updateVModel()
                     }
                 } else if (!element.msRetain) {
@@ -3262,11 +3262,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 }
             })
         }
-
-        element.avalonSetter = updateVModel
     }
 
-    element.oldValue = element.value
+
     avalon.injectBinding(data)
     callback.call(element, element.value)
 }
