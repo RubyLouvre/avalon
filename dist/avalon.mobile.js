@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.4 built in 2015.10.10
+ avalon.mobile.js 1.5.4 built in 2015.10.12
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -5679,25 +5679,30 @@ avalon.ready(function () {
 var ua = navigator.userAgent.toLowerCase()
 //http://stackoverflow.com/questions/9038625/detect-if-device-is-ios
 function iOSversion() {
+    //https://developer.apple.com/library/prerelease/mac/releasenotes/General/WhatsNewInSafari/Articles/Safari_9.html
+    //http://mp.weixin.qq.com/s?__biz=MzA3MDQ4MzQzMg==&mid=256900619&idx=1&sn=b29f84cff0b8d7b9742e5d8b3cd8f218&scene=1&srcid=1009F9l4gh9nZ7rcQJEhmf7Q#rd
     if (/iPad|iPhone|iPod/i.test(ua) && !window.MSStream) {
+        if ("backdropFilter" in document.documentElement.style) {
+            return 9
+        }
         if (!!window.indexedDB) {
-            return 8;
+            return 8
         }
         if (!!window.SpeechSynthesisUtterance) {
-            return 7;
+            return 7
         }
         if (!!window.webkitAudioContext) {
-            return 6;
+            return 6
         }
         if (!!window.matchMedia) {
-            return 5;
+            return 5
         }
         if (!!window.history && 'pushState' in window.history) {
-            return 4;
+            return 4
         }
-        return 3;
+        return 3
     }
-    return NaN;
+    return NaN
 }
 
 var deviceIsAndroid = ua.indexOf('android') > 0
@@ -5817,8 +5822,8 @@ var gestureHooks = avalon.gestureHooks = {
         gesture.events.forEach(function (eventName) {
             avalon.eventHooks[eventName] = {
                 fn: function (el, fn) {
-                    if (!el.getAttribute('data-' + name)) {
-                        el.setAttribute('data-' + name, '1')
+                    if (!el['touch-' + name]) {
+                        el['touch-' + name] = '1'
                         el.addEventListener('touchstart', function (event) {
                             gesture.touchstart(event)
 
@@ -5859,7 +5864,7 @@ if (supportPointer) { // 支持pointer的设备可用样式来取消click事件�
   root.style.msTouchAction = root.style.touchAction = 'none'
 }
 var tapGesture = {
-  events: ['tap', 'click'],
+  events: ['tap'],
   touchBoundary: 10,
   tapDelay: 200,
   needClick: function(target) {
