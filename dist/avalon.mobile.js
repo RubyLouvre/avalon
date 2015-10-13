@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.4.7 built in 2015.10.12
+ avalon.mobile.js 1.4.7 built in 2015.10.13
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3476,6 +3476,9 @@ bindingHandlers.repeat = function (data, vmodels) {
         }
     }
 
+    data.handler = noop
+    avalon.injectBinding(data)
+
     var elem = data.element
     if (elem.nodeType === 1) {
         elem.removeAttribute(data.name)
@@ -3544,7 +3547,12 @@ bindingExecutors.repeat = function (method, pos, el) {
 
         if (data.xtype === "array") {
             if (old.length === neo.length) {
-                return
+                if (old !== neo && old.length > 0) {
+                    bindingExecutors.repeat.call(this, 'clear', pos, el)
+                }
+                else {
+                    return
+                }
             }
             method = "add"
             pos = 0
