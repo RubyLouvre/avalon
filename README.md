@@ -8,6 +8,7 @@
 6. 修正include指令在不与动画指令配合使用时,data-include-replace辅助指令失效的BUG
 7. fix avalon.modern下的ms-duplex-checked BUG
 8. fix ready模块对loader模块的innerRequire的依赖
+9. fix ms-visible的动画
 
 #avalon1.5.3(各种奇葩BUG修复及更快的parser)
 
