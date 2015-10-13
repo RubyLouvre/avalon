@@ -29,6 +29,9 @@ bindingHandlers.repeat = function (data, vmodels) {
         }
     }
 
+    data.handler = noop
+    avalon.injectBinding(data)
+
     var elem = data.element
     if (elem.nodeType === 1) {
         elem.removeAttribute(data.name)
@@ -97,7 +100,12 @@ bindingExecutors.repeat = function (method, pos, el) {
 
         if (data.xtype === "array") {
             if (old.length === neo.length) {
-                return
+                if (old != neo && old.length > 0) {
+                    arguments.callee.call(this, 'clear', pos, el)
+                }
+                else {
+                    return
+                }
             }
             method = "add"
             pos = 0
