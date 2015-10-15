@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.4.7 built in 2015.10.13
+ avalon.mobile.old.js 1.4.7 built in 2015.10.16
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1822,12 +1822,14 @@ avalon.injectBinding = function (data) {
             if(value === void 0){
                 delete data.evaluator
             }
-            data.handler(value, data.element, data)
+            if (data.handler) {
+                data.handler(value, data.element, data)
+            }
         } catch (e) {
             log("warning:exception throwed in [avalon.injectBinding] " , e)
             delete data.evaluator
             var node = data.element
-            if (node.nodeType === 3) {
+            if (node && node.nodeType === 3) {
                 var parent = node.parentNode
                 if (kernel.commentInterpolate) {
                     parent.replaceChild(DOC.createComment(data.value), node)
@@ -3410,6 +3412,10 @@ bindingExecutors.attr = function (val, elem, data) {
         var replace = data.includeReplace
         var target = replace ? elem.parentNode : elem
         var scanTemplate = function (text) {
+            if (data.vmodels === null) {
+                return
+            }
+
             if (loaded) {
                 var newText = loaded.apply(target, [text].concat(vmodels))
                 if (typeof newText === "string")
@@ -3429,7 +3435,7 @@ bindingExecutors.attr = function (val, elem, data) {
                 }
             }
             data.includeLastID = val
-            while (true) {
+            while (data.startInclude) {
                 var node = data.startInclude.nextSibling
                 if (node && node !== data.endInclude) {
                     target.removeChild(node)
@@ -3834,7 +3840,14 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")  //fix #673
         if (val !== element.oldValue) {
+            var fixCaret = element.selectionStart === element.selectionEnd && isFinite(element.selectionEnd)
+            if (fixCaret) {
+                var pos = element.selectionStart
+            }
             element.value = element.oldValue = val
+            if (fixCaret) {
+                element.selectionStart = element.selectionEnd = pos
+            }
         }
     }
     if (data.isChecked || $type === "radio") {
@@ -3944,7 +3957,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
                 }
             })
         }
-        
+
     }
 
     avalon.injectBinding(data)
@@ -4158,8 +4171,10 @@ bindingHandlers.repeat = function (data, vmodels) {
         }
     }
 
+    var oldHandler = data.handler
     data.handler = noop
     avalon.injectBinding(data)
+    data.handler = oldHandler
 
     var elem = data.element
     if (elem.nodeType === 1) {

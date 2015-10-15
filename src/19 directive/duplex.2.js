@@ -40,7 +40,14 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")  //fix #673
         if (val !== element.oldValue) {
+            var fixCaret = element.selectionStart === element.selectionEnd && isFinite(element.selectionEnd)
+            if (fixCaret) {
+                var pos = element.selectionStart
+            }
             element.value = element.oldValue = val
+            if (fixCaret) {
+                element.selectionStart = element.selectionEnd = pos
+            }
         }
     }
     if (data.isChecked || $type === "radio") {
@@ -150,7 +157,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
                 }
             })
         }
-        
+
     }
 
     avalon.injectBinding(data)
