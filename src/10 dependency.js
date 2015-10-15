@@ -37,12 +37,14 @@ avalon.injectBinding = function (data) {
             if(value === void 0){
                 delete data.evaluator
             }
-            data.handler(value, data.element, data)
+            if (data.handler) {
+                data.handler(value, data.element, data)
+            }
         } catch (e) {
             log("warning:exception throwed in [avalon.injectBinding] " , e)
             delete data.evaluator
             var node = data.element
-            if (node.nodeType === 3) {
+            if (node && node.nodeType === 3) {
                 var parent = node.parentNode
                 if (kernel.commentInterpolate) {
                     parent.replaceChild(DOC.createComment(data.value), node)
