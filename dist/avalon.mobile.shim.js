@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.5.4 built in 2015.10.13
+ avalon.mobile.shim.js 1.5.4 built in 2015.10.15
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -2707,7 +2707,7 @@ Buffer.prototype = {
     },
     flush: function () {
         for (var i = 0, sub; sub = this.queue[i++]; ) {
-            sub.update()
+            sub.update && sub.update()
         }
         this.locked = 0
         this.queue = []
