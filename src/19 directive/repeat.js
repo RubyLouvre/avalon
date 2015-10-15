@@ -29,8 +29,10 @@ bindingHandlers.repeat = function (data, vmodels) {
         }
     }
 
+    var oldHandler = data.handler
     data.handler = noop
     avalon.injectBinding(data)
+    data.handler = oldHandler
 
     var elem = data.element
     if (elem.nodeType === 1) {

@@ -98,6 +98,10 @@ bindingExecutors.attr = function (val, elem, data) {
         var replace = data.includeReplace
         var target = replace ? elem.parentNode : elem
         var scanTemplate = function (text) {
+            if (data.vmodels === null) {
+                return
+            }
+
             if (loaded) {
                 var newText = loaded.apply(target, [text].concat(vmodels))
                 if (typeof newText === "string")
@@ -117,7 +121,7 @@ bindingExecutors.attr = function (val, elem, data) {
                 }
             }
             data.includeLastID = val
-            while (true) {
+            while (data.startInclude) {
                 var node = data.startInclude.nextSibling
                 if (node && node !== data.endInclude) {
                     target.removeChild(node)
