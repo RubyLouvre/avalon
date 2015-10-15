@@ -138,6 +138,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
     a = Math.floor(a) || 0
     return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
 }
+
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
@@ -194,38 +195,35 @@ avalon.mix({
     },
     eventHooks: [],
     /*绑定事件*/
-    bind: function(el, type, fn, phase) {
+    bind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                 fn = hook.deel(el, type, fn, phase)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
+            fn = hook.fn ? hook.fn(el,fn): fn
         }
-        var callback = W3C ? fn : function(e) {
+        var callback = W3C ? fn : function (e) {
             fn.call(el, fixEvent(e));
         }
         if (W3C) {
-            el.addEventListener(type, callback, !!phase)
+            el.addEventListener(type, callback, phase)
         } else {
             el.attachEvent("on" + type, callback)
         }
         return callback
     },
     /*卸载事件*/
-    unbind: function(el, type, fn, phase) {
+    unbind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         var callback = fn || noop
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, false)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
         }
         if (W3C) {
-            el.removeEventListener(type, callback, !!phase)
+            el.removeEventListener(type, callback, phase)
         } else {
             el.detachEvent("on" + type, callback)
         }

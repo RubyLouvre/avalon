@@ -48,7 +48,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value, start))
+            tokens.push(getToken(value))
         }
         start = stop + closeTag.length
     } while (1)
@@ -63,11 +63,10 @@ function scanExpr(str) {
     return tokens
 }
 
-function scanText(textNode, vmodels, index) {
-    var bindings = []
-    tokens = scanExpr(textNode.data)
+function scanText(textNode, vmodels) {
+    var bindings = [], tokens = scanExpr(textNode.data)
     if (tokens.length) {
-        for (var i = 0; token = tokens[i++]; ) {
+        for (var i = 0, token; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
                 token.value = token.value.replace(roneTime, function () {
@@ -80,7 +79,6 @@ function scanText(textNode, vmodels, index) {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
-                token.pos = index * 1000 + i
                 bindings.push(token) //收集带有插值表达式的文本
             }
             avalonFragment.appendChild(node)

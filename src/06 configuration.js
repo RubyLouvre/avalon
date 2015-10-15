@@ -26,11 +26,7 @@ function escapeRegExp(target) {
 }
 
 var plugins = {
-    loader: function (builtin) {
-        var flag = innerRequire && builtin
-        window.require = flag ? innerRequire : otherRequire
-        window.define = flag ? innerRequire.define : otherDefine
-    },
+
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]

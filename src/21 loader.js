@@ -13,6 +13,16 @@ var modules = avalon.modules = {
         state: 4
     }
 }
+
+var otherRequire = window.require
+var otherDefine = window.define
+var innerRequire
+
+plugins.loader = function (builtin) {
+    var flag = innerRequire && builtin
+    window.require = flag ? innerRequire : otherRequire
+    window.define = flag ? innerRequire.define : otherDefine
+}
 //Object(modules[id]).state拥有如下值 
 // undefined  没有定义
 // 1(send)    已经发出请求

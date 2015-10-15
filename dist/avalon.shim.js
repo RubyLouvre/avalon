@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.46 built in 2015.9.8
+ avalon.shim.js(无加载器版本) 1.4.7 built in 2015.10.13
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -51,9 +51,6 @@ function log() {
 
 
 var subscribers = "$" + expose
-var otherRequire = window.require
-var otherDefine = window.define
-var innerRequire
 var stopRepeatAssign = false
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rcomplexType = /^(?:object|array)$/
@@ -301,10 +298,11 @@ function _number(a, len) { //用于模拟slice, splice的效果
     a = Math.floor(a) || 0
     return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
 }
+
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.46,
+    version: 1.47,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -357,38 +355,35 @@ avalon.mix({
     },
     eventHooks: [],
     /*绑定事件*/
-    bind: function(el, type, fn, phase) {
+    bind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                 fn = hook.deel(el, type, fn, phase)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
+            fn = hook.fn ? hook.fn(el,fn): fn
         }
-        var callback = W3C ? fn : function(e) {
+        var callback = W3C ? fn : function (e) {
             fn.call(el, fixEvent(e));
         }
         if (W3C) {
-            el.addEventListener(type, callback, !!phase)
+            el.addEventListener(type, callback, phase)
         } else {
             el.attachEvent("on" + type, callback)
         }
         return callback
     },
     /*卸载事件*/
-    unbind: function(el, type, fn, phase) {
+    unbind: function (el, type, fn, phase) {
         var hooks = avalon.eventHooks
         var hook = hooks[type]
         var callback = fn || noop
         if (typeof hook === "object") {
-            type = hook.type
-            if (hook.deel) {
-                fn = hook.deel(el, type, fn, false)
-            }
+            type = hook.type || type
+            phase = hook.phase || !!phase
         }
         if (W3C) {
-            el.removeEventListener(type, callback, !!phase)
+            el.removeEventListener(type, callback, phase)
         } else {
             el.detachEvent("on" + type, callback)
         }
@@ -830,7 +825,7 @@ if (!("onmouseenter" in root)) {
     }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            deel: function (elem, _, fn) {
+            fn: function (elem, fn) {
                 return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
@@ -858,7 +853,7 @@ avalon.each({
 if (!("oninput" in DOC.createElement("input"))) {
     eventHooks.input = {
         type: "propertychange",
-        deel: function (elem, _, fn) {
+        fn: function (elem, fn) {
             return function (e) {
                 if (e.propertyName === "value") {
                     e.type = "input"
@@ -878,7 +873,7 @@ if (DOC.onmousewheel === void 0) {
     var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
     eventHooks.mousewheel = {
         type: fixWheelType,
-        deel: function (elem, _, fn) {
+        fn: function (elem, fn) {
             return function (e) {
                 e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
                 e.wheelDeltaX = 0
@@ -923,11 +918,7 @@ function escapeRegExp(target) {
 }
 
 var plugins = {
-    loader: function (builtin) {
-        var flag = innerRequire && builtin
-        window.require = flag ? innerRequire : otherRequire
-        window.define = flag ? innerRequire.define : otherDefine
-    },
+
     interpolate: function (array) {
         openTag = array[0]
         closeTag = array[1]
@@ -1909,7 +1900,7 @@ function injectDisposeQueue(data, list) {
     var elem = data.element
     if (!data.uuid) {
         if (elem.nodeType !== 1) {
-            data.uuid = data.type + (data.pos || 0) + "-" + getUid(elem.parentNode)
+            data.uuid = data.type + getUid(elem.parentNode)+ "-"+ (++disposeCount)
         } else {
             data.uuid = data.name + "-" + getUid(elem)
         }
@@ -2567,7 +2558,8 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
             var node = this[0]
             if (arguments.length === 0) {
                 if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
-                    return node["inner" + name] || node.document.documentElement[clientProp]
+                    return node["inner" + name] || node.document.documentElement[clientProp] ||
+                           node.document.body[clientProp]//IE6下前两个分别为undefine,0
                 }
                 if (node.nodeType === 9) { //取得页面尺寸
                     var doc = node.documentElement
@@ -3277,7 +3269,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value, start))
+            tokens.push(getToken(value))
         }
         start = stop + closeTag.length
     } while (1)
@@ -3292,11 +3284,10 @@ function scanExpr(str) {
     return tokens
 }
 
-function scanText(textNode, vmodels, index) {
-    var bindings = []
-    tokens = scanExpr(textNode.data)
+function scanText(textNode, vmodels) {
+    var bindings = [], tokens = scanExpr(textNode.data)
     if (tokens.length) {
-        for (var i = 0; token = tokens[i++]; ) {
+        for (var i = 0, token; token = tokens[i++]; ) {
             var node = DOC.createTextNode(token.value) //将文本转换为文本节点，并替换原来的文本节点
             if (token.expr) {
                 token.value = token.value.replace(roneTime, function () {
@@ -3309,7 +3300,6 @@ function scanText(textNode, vmodels, index) {
                     token.type = "html"
                     return ""
                 })// jshint ignore:line
-                token.pos = index * 1000 + i
                 bindings.push(token) //收集带有插值表达式的文本
             }
             avalonFragment.appendChild(node)
@@ -3773,7 +3763,6 @@ var TimerID, ribbon = []
     }
 
 var watchValueInTimer = noop
-var rmsinput = /text|password|hidden/
 new function() { // jshint ignore:line
     try { //#272 IE9-IE11, firefox
         var setters = {}
@@ -3781,7 +3770,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (rmsinput.test(this.type) && !this.msFocus && this.avalonSetter) {
+                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
                     this.avalonSetter()
                 }
         }
@@ -3804,7 +3793,7 @@ new function() { // jshint ignore:line
     }
 } // jshint ignore:line
 if (IEVersion) {
-    avalon.bind(DOC, "selectionchange", function(e) {
+    avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement
         if (el && typeof el.avalonSetter === "function") {
             el.avalonSetter()
@@ -3813,25 +3802,25 @@ if (IEVersion) {
 }
 
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
-        bound = data.bound,
-        $elem = avalon(element),
-        composing = false
-
-        function callback(value) {
-            data.changed.call(this, value, data)
-        }
-
-        function compositionStart() {
-            composing = true
-        }
-
-        function compositionEnd() {
+            bound = data.bound,
+            $elem = avalon(element),
             composing = false
-        }
-        //当value变化时改变model的值
-    var updateVModel = function() {
+
+    function callback(value) {
+        data.changed.call(this, value, data)
+    }
+
+    function compositionStart() {
+        composing = true
+    }
+
+    function compositionEnd() {
+        composing = false
+    }
+    //当value变化时改变model的值
+    var updateVModel = function () {
         var val = element.value //防止递归调用形成死循环
         if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
@@ -3842,27 +3831,27 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set") +"" //fix #673
+    data.handler = function () {
+        var val = data.pipe(evaluator(), data, "set")  //fix #673
         if (val !== element.oldValue) {
-            element.value = element.oldValue = val 
+            element.value = element.oldValue = val
         }
     }
     if (data.isChecked || $type === "radio") {
         var IE6 = IEVersion === 6
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
-            var checked = data.isChecked ? !! val : val + "" === element.value
+            var checked = data.isChecked ? !!val : val + "" === element.value
             element.oldValue = checked
             if (IE6) {
-                setTimeout(function() {
+                setTimeout(function () {
                     //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                     //并且要先设置defaultChecked后设置checked
                     //并且必须设置延迟
@@ -3875,7 +3864,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3889,7 +3878,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
             }
         }
 
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             var val = data.pipe(element.value, data, "get")
             element.checked = array.indexOf(val) > -1
@@ -3902,11 +3891,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
 
         function delay(e) { // jshint ignore:line
-            setTimeout(function() {
+            setTimeout(function () {
                 updateVModel(e)
             })
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     if (!IEVersion) { // W3C
@@ -3920,7 +3909,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                         if (IEVersion > 8) {
                             bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
                         } else {
-                            bound("propertychange", function(e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            bound("propertychange", function (e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
                                 if (e.propertyName === "value") {
                                     updateVModel()
                                 }
@@ -3936,15 +3925,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-        bound("focus", function() {
+        bound("focus", function () {
             element.msFocus = true
         })
-        bound("blur", function() {
+        bound("blur", function () {
             element.msFocus = false
         })
 
-        if (rmsinput.test($type)) {
-            watchValueInTimer(function() {
+        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+            element.avalonSetter = updateVModel //#765
+            watchValueInTimer(function () {
                 if (root.contains(element)) {
                     if (!element.msFocus && element.oldValue !== element.value) {
                         updateVModel()
@@ -3954,11 +3944,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 }
             })
         }
-
-        element.avalonSetter = updateVModel //#765
+        
     }
 
-    element.oldValue = element.value
     avalon.injectBinding(data)
     callback.call(element, element.value)
 }
@@ -4170,6 +4158,9 @@ bindingHandlers.repeat = function (data, vmodels) {
         }
     }
 
+    data.handler = noop
+    avalon.injectBinding(data)
+
     var elem = data.element
     if (elem.nodeType === 1) {
         elem.removeAttribute(data.name)
@@ -4238,7 +4229,12 @@ bindingExecutors.repeat = function (method, pos, el) {
 
         if (data.xtype === "array") {
             if (old.length === neo.length) {
-                return
+                if (old !== neo && old.length > 0) {
+                    bindingExecutors.repeat.call(this, 'clear', pos, el)
+                }
+                else {
+                    return
+                }
             }
             method = "add"
             pos = 0
@@ -4750,9 +4746,9 @@ var filters = avalon.filters = {
     $filter: function(val) {
         for (var i = 1, n = arguments.length; i < n; i++) {
             var array = arguments[i]
-            var fn = avalon.filters[array.shift()]
+            var fn = avalon.filters[array[0]]
             if (typeof fn === "function") {
-                var arr = [val].concat(array)
+                var arr = [val].concat(array.slice(1))
                 val = fn.apply(null, arr)
             }
         }

@@ -30,7 +30,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set") + ""
+        var val = data.pipe(evaluator(), data, "set") 
         if (val !== element.oldValue) {
             element.value = element.oldValue = val
         }
@@ -93,10 +93,11 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         bound("blur", function() {
             element.msFocus = false
         })
-        if (rmsinput.test($type)) {
-            watchValueInTimer(function() {
+        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+            element.avalonSetter = updateVModel //#765
+            watchValueInTimer(function () {
                 if (root.contains(element)) {
-                    if (!element.msFocus && element.oldValue !== element.value) {
+                    if (!element.msFocus && data.oldValue !== element.value) {
                         updateVModel()
                     }
                 } else if (!element.msRetain) {
@@ -104,11 +105,9 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 }
             })
         }
-
-        element.avalonSetter = updateVModel
     }
 
-    element.oldValue = element.value
+
     avalon.injectBinding(data)
     callback.call(element, element.value)
 }

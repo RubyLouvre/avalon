@@ -92,7 +92,7 @@ function modelFactory(source, $special, $model) {
         return name in this.$model
     })
     /* jshint ignore:end */
-    for (var i in EventBus) {
+    for (i in EventBus) {
         hideProperty($vmodel, i, EventBus[i])
     }
 
