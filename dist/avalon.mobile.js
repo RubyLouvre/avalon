@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.4 built in 2015.10.15
+ avalon.mobile.js 1.5.4 built in 2015.10.16
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -2540,12 +2540,13 @@ function scanNodeArray(nodes, vmodels) {
         switch (node.nodeType) {
             case 1:
                 var elem = node, fn
-
-                scanTag(node, vmodels) //扫描元素节点
+                 console.log(elem.nodeName)
+               
 
                 if (!elem.msResolved && elem.parentNode && elem.parentNode.nodeType === 1) {
                     var library = isWidget(elem)
                     if (library) {
+                        console.log("library----")
                         var widget = elem.localName ? elem.localName.replace(library + ":", "") : elem.nodeName
                         var fullName = library + ":" + camelize(widget)
                         componentQueue.push({
@@ -2561,6 +2562,7 @@ function scanNodeArray(nodes, vmodels) {
                         }
                     }
                 }
+                 scanTag(node, vmodels) //扫描元素节点
                 if (node.msHasEvent) {
                     avalon.fireDom(node, "datasetchanged", {
                         bubble: node.msHasEvent
@@ -2780,13 +2782,13 @@ avalon.component = function (name, opts) {
                 delete componentDefinition.$slot
                 delete componentDefinition.$replace
                 delete componentDefinition.$container
-                delete componentDefinition.$template
                 delete componentDefinition.$construct
 
                 var vmodel = avalon.define(componentDefinition) || {}
                 elem.msResolved = 1
                 vmodel.$init(vmodel, elem)
                 global.$init(vmodel, elem)
+                console.log("init")
                 var nodes = elem.childNodes
                 //收集插入点
                 var slots = {}, snode
@@ -2846,12 +2848,13 @@ avalon.component = function (name, opts) {
                             e.stopPropagation()
                         }
                     }
-
+                    console.log("dependencies "+dependencies)
                     if (dependencies === 0) {
                         var id1 = setTimeout(function () {
                             clearTimeout(id1)
-                            vmodel.$ready(vmodel, elem)
-                            global.$ready(vmodel, elem)
+                            
+                            vmodel.$ready(vmodel, elem, host.vmodels)
+                            global.$ready(vmodel, elem, host.vmodels)
                         }, children ? Math.max(children * 17, 100) : 17)
                         avalon.unbind(elem, "datasetchanged", removeFn)
                         //==================
@@ -2872,9 +2875,10 @@ avalon.component = function (name, opts) {
 
                     }
                 })
-
                 scanTag(elem, [vmodel].concat(host.vmodels))
+
                 avalon.vmodels[vmodel.$id] = vmodel
+                avalon.log("添加组件VM: "+vmodel.$id)
                 if (!elem.childNodes.length) {
                     avalon.fireDom(elem, "datasetchanged", {library: library, vm: vmodel, childReady: -1})
                 } else {
@@ -3307,9 +3311,11 @@ var duplexBinding = avalon.directive("duplex", {
     },
     update: function (value) {
         var elem = this.element, binding = this, curValue
+        console.log("xxxxxxx")
         if (!this.init) {
             for (var i in avalon.vmodels) {
                 var v = avalon.vmodels[i]
+                console.log(i)
                 v.$fire("avalon-ms-duplex-init", binding)
             }
             var cpipe = binding.pipe || (binding.pipe = pipe)
