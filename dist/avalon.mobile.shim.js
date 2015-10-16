@@ -3161,26 +3161,26 @@ new function() { // jshint ignore:line
     }
 } // jshint ignore:line
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function(element, evaluator, data) {
+duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
-        bound = data.bound,
-        $elem = avalon(element),
-        composing = false
-
-        function callback(value) {
-            data.changed.call(this, value, data)
-        }
-
-        function compositionStart() {
-            composing = true
-        }
-
-        function compositionEnd() {
+            bound = data.bound,
+            $elem = avalon(element),
             composing = false
-        }
-        //当value变化时改变model的值
 
-    var updateVModel = function() {
+    function callback(value) {
+        data.changed.call(this, value, data)
+    }
+
+    function compositionStart() {
+        composing = true
+    }
+
+    function compositionEnd() {
+        composing = false
+    }
+    //当value变化时改变model的值
+
+    var updateVModel = function () {
         var val = element.value //防止递归调用形成死循环
         if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
@@ -3191,28 +3191,40 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         }
     }
     //当model变化时,它就会改变value的值
-    data.handler = function() {
-        var val = data.pipe(evaluator(), data, "set") 
+    data.handler = function () {
+        var val = data.pipe(evaluator(), data, "set")
         if (val !== element.oldValue) {
+            var fixCaret = false
+            if (element.msFocus) {
+                var start = element.selectionStart
+                var end = element.selectionEnd
+                if (start === end) {
+                    var pos = start
+                    fixCaret = true
+                }
+            }
             element.value = element.oldValue = val
+            if (fixCaret) {
+                element.selectionStart = element.selectionEnd = pos
+            }
         }
     }
     if (data.isChecked || $type === "radio") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var lastValue = data.pipe(element.value, data, "get")
                 evaluator(lastValue)
                 callback.call(element, lastValue)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var val = evaluator()
-            var checked = data.isChecked ? !! val : val + "" === element.value
+            var checked = data.isChecked ? !!val : val + "" === element.value
             element.checked = element.oldValue = checked
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
-        updateVModel = function() {
+        updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
                 var method = element.checked ? "ensure" : "remove"
                 var array = evaluator()
@@ -3224,7 +3236,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                 callback.call(element, array)
             }
         }
-        data.handler = function() {
+        data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
             element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
         }
@@ -3234,7 +3246,7 @@ duplexBinding.INPUT = function(element, evaluator, data) {
         if (element.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
-        events.replace(rword, function(name) {
+        events.replace(rword, function (name) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
@@ -3249,13 +3261,16 @@ duplexBinding.INPUT = function(element, evaluator, data) {
                     break
             }
         })
-        bound("focus", function() {
-            element.msFocus = true
-        })
-        bound("blur", function() {
-            element.msFocus = false
-        })
-        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+
+        if (!/^(file|button|reset|submit|checkbox|radio)$/.test($type)) {
+            if ($type !== "hidden") {
+                bound("focus", function () {
+                    element.msFocus = true
+                })
+                bound("blur", function () {
+                    element.msFocus = false
+                })
+            }
             element.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(element)) {

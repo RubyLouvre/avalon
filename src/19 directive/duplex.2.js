@@ -38,15 +38,19 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     }
     //当model变化时,它就会改变value的值
     data.handler = function () {
-        var val = data.pipe(evaluator(), data, "set")  //fix #673
+        var val = data.pipe(evaluator(), data, "set")  //fix #673 #1106
+        var fixCaret = false
         if (val !== element.oldValue) {
-            var fixCaret = element.selectionStart === element.selectionEnd && isFinite(element.selectionEnd)
-            if (fixCaret) {
-                var pos = element.selectionStart
+            if (element.msFocus) {
+                var pos = getCaret(element)
+                if (pos.start === pos.end) {
+                    pos = pos.start
+                    fixCaret = true
+                }
             }
             element.value = element.oldValue = val
             if (fixCaret) {
-                element.selectionStart = element.selectionEnd = pos
+                setCaret(element, pos, pos)
             }
         }
     }
@@ -138,14 +142,18 @@ duplexBinding.INPUT = function (element, evaluator, data) {
                     break
             }
         })
-        bound("focus", function () {
-            element.msFocus = true
-        })
-        bound("blur", function () {
-            element.msFocus = false
-        })
+
 
         if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+            if (element.type !== "hidden") {
+                bound("focus", function () {
+                    element.msFocus = true
+                })
+                bound("blur", function () {
+                    element.msFocus = false
+                })
+            }
+
             element.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(element)) {
@@ -164,3 +172,31 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     callback.call(element, element.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT
+function getCaret(ctrl, start, end) {
+    if (ctrl.setSelectionRange) {
+        start = ctrl.selectionStart
+        end = ctrl.selectionEnd
+    } else if (document.selection && document.selection.createRange) {
+        var range = document.selection.createRange()
+        start = 0 - range.duplicate().moveStart('character', -100000)
+        end = start + range.text.length
+    }
+    return {
+        start: start,
+        end: end
+    }
+}
+function setCaret(ctrl, begin, end) {
+    if (!ctrl.value || ctrl.readOnly)
+        return
+    if (ctrl.setSelectionRange) {
+        ctrl.selectionStart = begin
+        ctrl.selectionEnd = end
+    } else {
+        var range = ctrl.createTextRange()
+        range.collapse(true);
+        range.moveStart("character", begin)
+        range.moveEnd("character", end - begin)
+        range.select()
+    }
+}
