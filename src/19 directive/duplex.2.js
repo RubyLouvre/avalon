@@ -6,7 +6,7 @@ if (IEVersion) {
         }
     })
 }
-
+var rnoduplex = /^(file|button|reset|submit|checkbox|radio|range)$/
 //处理radio, checkbox, text, textarea, password
 duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
@@ -39,8 +39,8 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     //当model变化时,它就会改变value的值
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")  //fix #673 #1106
-        var fixCaret = false
         if (val !== element.oldValue) {
+            var fixCaret = false
             if (element.msFocus) {
                 var pos = getCaret(element)
                 if (pos.start === pos.end) {
@@ -144,7 +144,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         })
 
 
-        if (!/^(file|button|reset|submit|checkbox|radio)$/.test(element.type)) {
+        if (!rnoduplex.test(element.type)) {
             if (element.type !== "hidden") {
                 bound("focus", function () {
                     element.msFocus = true

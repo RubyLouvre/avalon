@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title></title>
-  <script src="dist/avalon.js"></script>
-</head>
-<body ms-controller="test">
-  <div><input ms-duplex-number="num">{{num}}</div>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="dist/avalon.js"></script>
+    </head>
+    <body ms-controller="test">
+        <div><input ms-duplex-number="num">{{num}}</div>
         <div>111111111</div>
-<script>
-  
-            var vm = avalon.define({
-                $id: "test",
-                num: 100
-            })
-            vm.$watch("num", function(a) {
-                avalon.log(a)
-                avalon.log(typeof a)
-            })
-</script>
-</body>
+        <script>
+
+//console.log(e)
+var vm = avalon.define({
+    $id: "test",
+    num: 100
+})
+vm.$watch("num", function (a) {
+    avalon.log(a)
+    avalon.log(typeof a)
+})
+        </script>
+    </body>
 </html>

@@ -1,3 +1,4 @@
+var rnoduplex = /^(file|button|reset|submit|checkbox|radio|range)$/
 //处理radio, checkbox, text, textarea, password
 duplexBinding.INPUT = function (element, evaluator, data) {
     var $type = element.type,
@@ -100,7 +101,7 @@ duplexBinding.INPUT = function (element, evaluator, data) {
             }
         })
 
-        if (!/^(file|button|reset|submit|checkbox|radio)$/.test($type)) {
+        if (!rnoduplex.test($type)) {
             if ($type !== "hidden") {
                 bound("focus", function () {
                     element.msFocus = true
