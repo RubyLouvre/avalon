@@ -4712,7 +4712,7 @@ bindingHandlers.widget = function(data, vmodels) {
                         options.onInit.call(elem, vmodel, options, vmodels)
                     }
                 })
-            } catch (e) {}
+            } catch (e) {log(e)}
             data.rollback = function() {
                 try {
                     vmodel.$remove()
