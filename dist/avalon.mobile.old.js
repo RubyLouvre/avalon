@@ -1321,6 +1321,7 @@ function makeComplexAccessor(name, initValue, valueType, list, parentModel) {
                 delete a.$lock
                 a._fire("set")
             } else if (valueType === "object") {
+                value = value.$model ? value.$model : value
                 var observes = this.$events[name] || []
                 var newObject = avalon.mix(true, {}, value)
                 for(i in son ){
