@@ -1,45 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Fvck avalon</title>
-  </head>
-  <body ms-controller="main">
-    <div>
-      current payment: <span ms-text="payment.name"></span>
-    </div>
 
-    <hr>
+    <head>
+        <meta charset="utf-8">
+        <title>Fvck avalon</title>
+    </head>
 
-    <div ms-controller="payments">
-      <p ms-repeat="items"><a href="javascript:;" ms-on-click="select(el)">{{el.name}}</a></p>
-    </div>
-    <script src="avalon.js"></script>
-    <script>
-      var main = avalon.define({
-        $id: 'main',
-        payment: {}
-      });
-      main.$watch('paymentSelected', function() {
-        main.payment = avalon.vmodels.payments.selectedItem;
-      });
+    <body ms-controller="main">
+        <p>
+            You selected:
+            <span ms-text="selected"></span>
+        </p>
+        <div>
+            <select ms-duplex-string="selected">
+                <option ms-repeat="products" ms-attr-value="$val.value" ms-text="$val.display+$val.value"></option>
+            </select>
+        </div>
 
-      var payments = avalon.define({
-        $id: 'payments',
-        items: [],
-        selectedItem: {},
-        select: function(item) {
-          payments.selectedItem = item//.$model;
-          payments.$fire('up!paymentSelected');
-        }
-      });
+        <script src="avalon.js"></script>
+        <script>
+            var main = avalon.define({
+                $id: 'main',
+                selected: null,
+                products: {}
+            });
+            setTimeout(function () {
+                main.products = {
+                    "161616": {
+                        "value": "161616",
+                        "display": "融通医疗保健"
+                    },
+                    "168203": {
+                        "value": "168203",
+                        "display": "中融国证钢铁行业"
+                    }
+                };
+            }, 0)
+        </script>
+    </body>
 
-      var items = [
-        {name: 'M1'},
-        {name: 'M2'}
-      ];
-      payments.items = items;
-      payments.select(payments.items[0]);
-    </script>
-  </body>
 </html>
