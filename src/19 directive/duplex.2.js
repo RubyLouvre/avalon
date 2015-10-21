@@ -189,14 +189,16 @@ function getCaret(ctrl, start, end) {
 function setCaret(ctrl, begin, end) {
     if (!ctrl.value || ctrl.readOnly)
         return
-    if (ctrl.setSelectionRange) {
+    if (ctrl.createTextRange) {//IE6-9
+        setTimeout(function () {
+            var range = ctrl.createTextRange()
+            range.collapse(true);
+            range.moveStart("character", begin)
+            range.moveEnd("character", end)
+            range.select()
+        }, 17)
+    } else {
         ctrl.selectionStart = begin
         ctrl.selectionEnd = end
-    } else {
-        var range = ctrl.createTextRange()
-        range.collapse(true);
-        range.moveStart("character", begin)
-        range.moveEnd("character", end - begin)
-        range.select()
     }
 }
