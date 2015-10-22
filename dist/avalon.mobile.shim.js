@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.5.4 built in 2015.10.18
+ avalon.mobile.shim.js 1.5.4 built in 2015.10.22
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -996,12 +996,13 @@ function observeObject(source, options) {
 
     //必须设置了$active,$events
     simple.forEach(function (name) {
+        var oldVal = old && old[name]
         var val = $vmodel[name] = source[name]
         if (val && typeof val === "object") {
             val.$up = $vmodel
             val.$pathname = name
         }
-        $emit.call($vmodel, name)
+        $emit.call($vmodel, name,[val,oldVal])
     })
     for (name in computed) {
         value = $vmodel[name]
@@ -1072,7 +1073,7 @@ function observe(obj, old, hasReturn, watch) {
     if (Array.isArray(obj)) {
         return observeArray(obj, old, watch)
     } else if (avalon.isPlainObject(obj)) {
-        if (old) {
+        if (old && typeof old === 'object') {
             var keys = Object.keys(obj)
             var keys2 = Object.keys(old)
             if (keys.join(";") === keys2.join(";")) {
@@ -2801,7 +2802,6 @@ avalon.component = function (name, opts) {
                 var nodes = elem.childNodes
                 //收集插入点
                 var slots = {}, snode
-
                 for (var s = 0, el; el = nodes[s++]; ) {
                     var type = el.nodeType === 1 && el.getAttribute("slot") || keepSolt
                     if (type) {
@@ -3300,7 +3300,7 @@ var duplexBinding = avalon.directive("duplex", {
                         var curValue = Array.isArray(value) ? value.map(String) : value + ""
                         avalon(elem).val(curValue)
                         elem.oldValue = curValue + ""
-                        binding.changed.call(elem, curValue)
+                        callback.call(elem, curValue)
                     }
                 })
                 break
@@ -3381,7 +3381,7 @@ var duplexBinding = avalon.directive("duplex", {
                 break
         }
         if (binding.xtype !== "select") {
-            binding.changed.call(elem, curValue)
+            binding.changed.call(elem, curValue, binding)
         }
     }
 })
