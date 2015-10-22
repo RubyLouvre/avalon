@@ -1331,7 +1331,7 @@ function observe(obj, old, hasReturn, watch) {
     if (Array.isArray(obj)) {
         return observeArray(obj, old, watch)
     } else if (avalon.isPlainObject(obj)) {
-        if (old) {
+        if (old && typeof(old) === 'object') {
             var keys = getKeys(obj)
             var keys2 = getKeys(old)
             if (keys.join(";") === keys2.join(";")) {
