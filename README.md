@@ -1,3 +1,15 @@
+#avalon1.5.4(新touch模块)
+
+1. 修正oldAccessors BUG https://github.com/RubyLouvre/avalon/issues/1091
+2. 修正当一个元素存在多个ms-if绑定时,由于注释节点不能提供pos,导致显示不正确 https://github.com/RubyLouvre/avalon/issues/1088
+3. 新的触屏模块
+4. 重构duplex指令 (包括添加msFocus属性,对validation指令的支持,data-duplex-changed回调的修复)
+5. loader模块分离得更干净
+6. 修正include指令在不与动画指令配合使用时,data-include-replace辅助指令失效的BUG
+7. fix avalon.modern下的ms-duplex-checked BUG
+8. fix ready模块对loader模块的innerRequire的依赖
+9. fix ms-visible的动画
+
 #avalon1.5.3(各种奇葩BUG修复及更快的parser)
 
 1. 全新的parser
