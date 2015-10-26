@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.old.js 1.4.7 built in 2015.10.21
+ avalon.mobile.old.js 1.4.7.1 built in 2015.10.26
  support IE8 and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -302,7 +302,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.47,
+    version: 1.471,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -3995,7 +3995,6 @@ function setCaret(ctrl, begin, end) {
             var range = ctrl.createTextRange()
             range.collapse(true);
             range.moveStart("character", begin)
-            range.moveEnd("character", end)
             range.select()
         }, 17)
     } else {

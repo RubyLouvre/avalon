@@ -194,7 +194,6 @@ function setCaret(ctrl, begin, end) {
             var range = ctrl.createTextRange()
             range.collapse(true);
             range.moveStart("character", begin)
-            range.moveEnd("character", end)
             range.select()
         }, 17)
     } else {
