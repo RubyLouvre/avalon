@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.4 built in 2015.10.22
+ avalon.modern.js 1.5.4 built in 2015.10.26
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -691,10 +691,7 @@ kernel.maxRepeatSize = 100
 avalon.config = kernel
 function $watch(expr, binding) {
     var $events = this.$events || (this.$events = {})
-//    if (this.$id.indexOf("$proxy$") === 0 && /^\w+\./.test(expr)) {
-//        expr = expr.replace(/^\w+\./, "*.") //处理代理VM
-//        this.$up && (this.$up.$ups[expr] = this)
-//    }
+
     var queue = $events[expr] || ($events[expr] = [])
     if (typeof binding === "function") {
         var backup = binding
@@ -3234,7 +3231,7 @@ var duplexBinding = avalon.directive("duplex", {
         }
         var updateVModel = function () {
             var val = elem.value //防止递归调用形成死循环
-            if (composing || val === binding.oldValue) //处理中文输入法在minlengh下引发的BUG
+            if (composing || val === binding.oldValue || binding.pipe === null) //处理中文输入法在minlengh下引发的BUG
                 return
             var lastValue = binding.pipe(val, binding, "get")
             binding.setter(lastValue)
