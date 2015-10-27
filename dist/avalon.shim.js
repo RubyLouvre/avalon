@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.4 built in 2015.10.26
+ avalon.shim.js 1.5.5 built in 2015.10.27
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -285,7 +285,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.54,
+    version: 1.55,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
@@ -2873,7 +2873,7 @@ function parseExpr(expr, vmodels, binding) {
 }
 //========
 
-function stringifyExpr(code) {
+function normalizeExpr(code) {
     var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
     if (hasExpr) {
         var array = scanExpr(code)
@@ -2888,6 +2888,7 @@ function stringifyExpr(code) {
     }
 }
 
+avalon.normalizeExpr = normalizeExpr
 avalon.parseExprProxy = parseExpr
 
 var rthimRightParentheses = /\)\s*$/
@@ -3420,7 +3421,7 @@ avalon.component = function (name, opts) {
                 componentDefinition.$id = $id
 
                 //==========构建VM=========
-                var keepSolt = componentDefinition.$slot
+                var keepSlot = componentDefinition.$slot
                 var keepReplace = componentDefinition.$replace
                 var keepContainer = componentDefinition.$container
                 var keepTemplate = componentDefinition.$template
@@ -3437,7 +3438,7 @@ avalon.component = function (name, opts) {
                 //收集插入点
                 var slots = {}, snode
                 for (var s = 0, el; el = nodes[s++]; ) {
-                    var type = el.nodeType === 1 && el.getAttribute("slot") || keepSolt
+                    var type = el.nodeType === 1 && el.getAttribute("slot") || keepSlot
                     if (type) {
                         if (slots[type]) {
                             slots[type].push(el)
@@ -3520,7 +3521,6 @@ avalon.component = function (name, opts) {
                 scanTag(elem, [vmodel].concat(host.vmodels))
 
                 avalon.vmodels[vmodel.$id] = vmodel
-                avalon.log("添加组件VM: "+vmodel.$id)
                 if (!elem.childNodes.length) {
                     avalon.fireDom(elem, "datasetchanged", {library: library, vm: vmodel, childReady: -1})
                 } else {
@@ -3635,7 +3635,7 @@ var attrDir = avalon.directive("attr", {
     init: function (binding) {
         //{{aaa}} --> aaa
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
-        binding.expr = stringifyExpr(binding.expr.trim())
+        binding.expr = normalizeExpr(binding.expr.trim())
         if (binding.type === "include") {
             var elem = binding.element
             effectBinding(elem, binding)
@@ -4008,10 +4008,13 @@ var duplexBinding = avalon.directive("duplex", {
                 if (curValue !== this.oldValue) {
                     var fixCaret = false
                     if (elem.msFocus) {
-                        var pos = getCaret(elem)
-                        if (pos.start === pos.end) {
-                            pos = pos.start
-                            fixCaret = true
+                        try {
+                            var pos = getCaret(elem)
+                            if (pos.start === pos.end) {
+                                pos = pos.start
+                                fixCaret = true
+                            }
+                        } catch (e) {
                         }
                     }
                     elem.value = this.oldValue = curValue
@@ -4042,10 +4045,10 @@ var duplexBinding = avalon.directive("duplex", {
             case "select":
                 //必须变成字符串后才能比较
                 binding._value = value
-                if(!elem.msHasEvent){
+                if (!elem.msHasEvent) {
                     elem.msHasEvent = "selectDuplex"
                     //必须等到其孩子准备好才触发
-                }else{
+                } else {
                     avalon.fireDom(elem, "datasetchanged", {
                         bubble: elem.msHasEvent
                     })
@@ -4053,7 +4056,7 @@ var duplexBinding = avalon.directive("duplex", {
                 break
         }
         if (binding.xtype !== "select") {
-            binding.changed.call(elem, curValue,binding)
+            binding.changed.call(elem, curValue, binding)
         }
     }
 })
@@ -4191,7 +4194,7 @@ function setCaret(ctrl, begin, end) {
             var range = ctrl.createTextRange()
             range.collapse(true);
             range.moveStart("character", begin)
-           // range.moveEnd("character", end) #1125
+            // range.moveEnd("character", end) #1125
             range.select()
         }, 17)
     } else {
@@ -4218,7 +4221,7 @@ avalon.directive("effect", {
         if (!rexpr.test(text)) {
             className = quote(className)
         } else {
-            className = stringifyExpr(className)
+            className = normalizeExpr(className)
         }
         binding.expr = "[" + className + "," + rightExpr + "]"
     },
