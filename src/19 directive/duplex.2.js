@@ -42,10 +42,13 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         if (val !== element.oldValue) {
             var fixCaret = false
             if (element.msFocus) {
-                var pos = getCaret(element)
-                if (pos.start === pos.end) {
-                    pos = pos.start
-                    fixCaret = true
+                try {
+                    var pos = getCaret(element)
+                    if (pos.start === pos.end) {
+                        pos = pos.start
+                        fixCaret = true
+                    }
+                } catch (e) {
                 }
             }
             element.value = element.oldValue = val

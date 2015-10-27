@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.4.7.1 built in 2015.10.26
+ avalon.shim.js(无加载器版本) 1.4.7.1 built in 2015.10.27
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3843,10 +3843,13 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         if (val !== element.oldValue) {
             var fixCaret = false
             if (element.msFocus) {
-                var pos = getCaret(element)
-                if (pos.start === pos.end) {
-                    pos = pos.start
-                    fixCaret = true
+                try {
+                    var pos = getCaret(element)
+                    if (pos.start === pos.end) {
+                        pos = pos.start
+                        fixCaret = true
+                    }
+                } catch (e) {
                 }
             }
             element.value = element.oldValue = val
