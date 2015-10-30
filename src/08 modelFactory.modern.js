@@ -39,7 +39,7 @@ function modelFactory(source, $special, $model) {
         return collection
     }
     //0 null undefined || Node || VModel(fix IE6-8 createWithProxy $val: val引发的BUG)
-    if (!source || source.nodeType > 0 || (source.$id && source.$events)) {
+    if (!source || (source.$id && source.$events) || (source.nodeName && source.nodeType > 0) ) {
         return source
     }
     var $skipArray = Array.isArray(source.$skipArray) ? source.$skipArray : []
@@ -306,7 +306,7 @@ var isEqual = Object.is || function (v1, v2) {
 }
 
 function isObservable(name, value, $skipArray) {
-    if (isFunction(value) || value && value.nodeType) {
+    if (isFunction(value) ||  value && value.nodeName && (value.nodeType > 0)) {
         return false
     }
     if ($skipArray.indexOf(name) !== -1) {
