@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.5.5 built in 2015.10.27
+ avalon.mobile.shim.js 1.5.5 built in 2015.10.30
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -866,7 +866,7 @@ function Component() {
 }
 
 function observeObject(source, options) {
-    if (!source || (source.$id && source.$accessors)) {
+    if (!source || (source.$id && source.$accessors) || (source.nodeName && source.nodeType > 0)) {
         return source
     }
     //source为原对象,不能是元素节点或null
@@ -919,7 +919,7 @@ function observeObject(source, options) {
         var value = source[name]
         if (!$$skipArray[name])
             hasOwn[name] = true
-        if (typeof value === "function" || (value && value.nodeType) ||
+        if (typeof value === "function" || (value && value.nodeName && value.nodeType > 0) ||
                 (!force[name] && (name.charAt(0) === "$" || $$skipArray[name] || $skipArray[name]))) {
             skip.push(name)
         } else if (isComputed(value)) {
@@ -3287,8 +3287,11 @@ var duplexBinding = avalon.directive("duplex", {
                         val = binding.pipe(val, binding, "get")
                     }
                     if (val + "" !== binding.oldValue) {
-                        binding.setter(val)
-                        callback.call(elem, val)
+                        try {
+                            binding.setter(val)
+                        } catch (ex) {
+                            log(ex)
+                        }
                     }
                 })
                 binding.bound("datasetchanged", function (e) {
