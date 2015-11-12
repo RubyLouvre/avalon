@@ -149,10 +149,16 @@ duplexBinding.INPUT = function (element, evaluator, data) {
 
         if (!rnoduplex.test(element.type)) {
             if (element.type !== "hidden") {
+                var beforeFocus
                 bound("focus", function () {
                     element.msFocus = true
+                    beforeFocus = element.value
                 })
                 bound("blur", function () {
+                    if (IEVersion && beforeFocus !== element.value) {
+                        beforeFocus = element.value
+                        avalon.fireDom(element, "change")
+                    }
                     element.msFocus = false
                 })
             }
@@ -189,18 +195,25 @@ function getCaret(ctrl, start, end) {
         end: end
     }
 }
-function setCaret(ctrl, begin, end) {
+function _setCaret(ctrl, pos) {
+    if (ctrl.setSelectionRange) {//IE6-9
+        ctrl.selectionStart = ctrl.selectionEnd = pos
+    } else {
+        var range = ctrl.createTextRange()
+        range.collapse(true);
+        range.moveStart("character", pos)
+        range.select()
+    }
+}
+
+function setCaret(ctrl, pos) {
     if (!ctrl.value || ctrl.readOnly)
         return
-    if (ctrl.createTextRange) {//IE6-9
+    if (IEVersion) {
         setTimeout(function () {
-            var range = ctrl.createTextRange()
-            range.collapse(true);
-            range.moveStart("character", begin)
-            range.select()
+            _setCaret(ctrl, pos)
         }, 17)
     } else {
-        ctrl.selectionStart = begin
-        ctrl.selectionEnd = end
+        _setCaret(ctrl, pos)
     }
 }

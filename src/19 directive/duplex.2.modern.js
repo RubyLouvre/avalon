@@ -106,10 +106,16 @@ duplexBinding.INPUT = function (element, evaluator, data) {
 
         if (!rnoduplex.test($type)) {
             if ($type !== "hidden") {
+                var beforeFocus
                 bound("focus", function () {
                     element.msFocus = true
+                    beforeFocus = element.value
                 })
                 bound("blur", function () {
+                   if(IEVersion && beforeFocus !== element.value){
+                        beforeFocus = element.value
+                        avalon.fireDom(element, "change")
+                    }
                     element.msFocus = false
                 })
             }
