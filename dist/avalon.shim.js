@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.5 built in 2015.11.9
+ avalon.shim.js 1.5.5 built in 2015.11.18
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -52,11 +52,9 @@ function log() {
 
 var subscribers = "$" + expose
 
-var stopRepeatAssign = false
 var nullObject = {} //作用类似于noop，只用于代码防御，千万不要在它上面添加属性
 var rword = /[^, ]+/g //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
 var rw20g = /\w+/g
-var rcomplexType = /^(?:object|array)$/
 var rsvg = /^\[object SVG\w*Element\]$/
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
 var oproto = Object.prototype
@@ -2321,6 +2319,20 @@ avalon.parseJSON = window.JSON ? JSON.parse : function (data) {
     return data
 }
 
+avalon.fireDom = function (elem, type, opts) {
+    if (DOC.createEvent) {
+        var hackEvent = DOC.createEvent("Events");
+        hackEvent.initEvent(type, true, true, opts)
+        avalon.mix(hackEvent, opts)
+
+        elem.dispatchEvent(hackEvent)
+    } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报"SCRIPT16389: 未指明的错误"
+        hackEvent = DOC.createEventObject()
+        avalon.mix(hackEvent, opts)
+        elem.fireEvent("on" + type, hackEvent)
+    }
+}
+
 //生成avalon.fn.scrollLeft, avalon.fn.scrollTop方法
 avalon.each({
     scrollLeft: "pageXOffset",
@@ -3409,13 +3421,22 @@ avalon.component = function (name, opts) {
             i--;
 
             (function (host, hooks, elem, widget) {
-
+                //如果elem已从Document里移除,直接返回
+                //issuse : https://github.com/RubyLouvre/avalon2/issues/40
+                if (!avalon.contains(DOC, elem)) {
+                    avalon.Array.remove(componentQueue, host)
+                    return
+                }
+                
                 var dependencies = 1
                 var library = host.library
                 var global = avalon.libraries[library] || componentHooks
 
                 //===========收集各种配置=======
-
+                if (elem.getAttribute("ms-attr-identifier")) {
+                    //如果还没有解析完,就延迟一下 #1155
+                    return
+                }
                 var elemOpts = getOptionsFromTag(elem, host.vmodels)
                 var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.widget)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
@@ -3491,8 +3512,8 @@ avalon.component = function (name, opts) {
                     var className = elem.className
                     elem = host.element = child
                     elem.style.cssText = cssText
-                    if(className){
-                       avalon(elem).addClass(className)
+                    if (className) {
+                        avalon(elem).addClass(className)
                     }
                 }
                 if (keepContainer) {
@@ -3516,7 +3537,7 @@ avalon.component = function (name, opts) {
                     if (dependencies === 0) {
                         var id1 = setTimeout(function () {
                             clearTimeout(id1)
-                            
+
                             vmodel.$ready(vmodel, elem, host.vmodels)
                             global.$ready(vmodel, elem, host.vmodels)
                         }, children ? Math.max(children * 17, 100) : 17)
@@ -3559,20 +3580,6 @@ avalon.component = function (name, opts) {
     }
 }
 
-avalon.fireDom = function (elem, type, opts) {
-    if (DOC.createEvent) {
-        var hackEvent = DOC.createEvent("Events");
-        hackEvent.initEvent(type, true, true, opts)
-        avalon.mix(hackEvent, opts)
-
-        elem.dispatchEvent(hackEvent)
-    } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报"SCRIPT16389: 未指明的错误"
-        hackEvent = DOC.createEventObject()
-        avalon.mix(hackEvent, opts)
-        elem.fireEvent("on" + type, hackEvent)
-    }
-}
-
 
 function getOptionsFromVM(vmodels, pre) {
     if (pre) {
@@ -3603,18 +3610,18 @@ avalon.library = function (name, opts) {
 
 avalon.library("ms")
 /*
-broswer  nodeName  scopeName  localName
-IE9     ONI:BUTTON oni        button
-IE10    ONI:BUTTON undefined  oni:button
-IE8     button     oni        undefined
-chrome  ONI:BUTTON undefined  oni:button
-
-*/
+ broswer  nodeName  scopeName  localName
+ IE9     ONI:BUTTON oni        button
+ IE10    ONI:BUTTON undefined  oni:button
+ IE8     button     oni        undefined
+ chrome  ONI:BUTTON undefined  oni:button
+ 
+ */
 function isWidget(el) { //如果为自定义标签,返回UI库的名字
-    if(el.scopeName && el.scopeName !== "HTML" ){
+    if (el.scopeName && el.scopeName !== "HTML") {
         return el.scopeName
     }
-    var fullName = el.nodeName.toLowerCase() 
+    var fullName = el.nodeName.toLowerCase()
     var index = fullName.indexOf(":")
     if (index > 0) {
         return fullName.slice(0, index)
@@ -3990,11 +3997,17 @@ var duplexBinding = avalon.directive("duplex", {
         }
         if (binding.xtype === "input" && !rnoduplexInput.test(elem.type)) {
             if (elem.type !== "hidden") {
+                var beforeFocus
                 binding.bound("focus", function () {
                     elem.msFocus = true
+                    beforeFocus = elem.value
                 })
                 binding.bound("blur", function () {
                     elem.msFocus = false
+                    if (IEVersion && beforeFocus !== elem.value) {
+                        beforeFocus = elem.value
+                        avalon.fireDom(elem, "change")
+                    }
                 })
             }
             elem.avalonSetter = updateVModel //#765
@@ -4080,8 +4093,8 @@ var duplexBinding = avalon.directive("duplex", {
 
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function (e) {
-        var el = DOC.activeElement
-        if (el && typeof el.avalonSetter === "function") {
+        var el = DOC.activeElement || {}
+        if (typeof el.avalonSetter === "function" && !el.msFocus ) {
             el.avalonSetter()
         }
     })
@@ -4189,7 +4202,8 @@ new function () { // jshint ignore:line
         watchValueInTimer = avalon.tick
     }
 } // jshint ignore:line
-function getCaret(ctrl, start, end) {
+function getCaret(ctrl) {
+    var start = NaN, end = NaN
     if (ctrl.setSelectionRange) {
         start = ctrl.selectionStart
         end = ctrl.selectionEnd
@@ -4207,13 +4221,10 @@ function setCaret(ctrl, begin, end) {
     if (!ctrl.value || ctrl.readOnly)
         return
     if (ctrl.createTextRange) {//IE6-9
-        setTimeout(function () {
-            var range = ctrl.createTextRange()
-            range.collapse(true);
-            range.moveStart("character", begin)
-            // range.moveEnd("character", end) #1125
-            range.select()
-        }, 17)
+        var range = ctrl.createTextRange()
+        range.collapse(true);
+        range.moveStart("character", begin)
+        range.select()
     } else {
         ctrl.selectionStart = begin
         ctrl.selectionEnd = end

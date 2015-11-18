@@ -1,3 +1,11 @@
+#avalon1.5.5
+1. 终于比较完美地解决光标问题
+2. fix data-duplex-changed执行两次的BUG
+3. 启动全新的UI库 [avalon.bootstrap](https://github.com/RubyLouvre/avalon.bootstrap) 欢迎大家踊跃参与
+4. fix IE下onchange与oninput无法共存的BUG
+5. 以 component组件进行增强,现在支持对on-xxx属性在vmodels查找回调的功能
+
+
 #avalon1.5.4(新touch模块)
 
 1. 修正oldAccessors BUG https://github.com/RubyLouvre/avalon/issues/1091
@@ -8,7 +16,7 @@
 6. 修正include指令在不与动画指令配合使用时,data-include-replace辅助指令失效的BUG
 7. fix avalon.modern下的ms-duplex-checked BUG
 8. fix ready模块对loader模块的innerRequire的依赖
-9. fix ms-visible的动画
+
 
 #avalon1.5.3(各种奇葩BUG修复及更快的parser)
 
@@ -20,9 +28,8 @@
 6. 将所有编译函数的地方抽象成一个方法cspCompile https://github.com/RubyLouvre/avalon2/commit/4169422645466d0f036aa7ad48e1b9dd6c874106
 7. fix toJson在IE6的BUG https://github.com/RubyLouvre/avalon/issues/1063
 8. fix avalon(window).width()在IE6下 取值不正确的BUG
-9. fix filter 只执行一次的BUG https://github.com/RubyLouvre/avalon/issues/1066
-10. 废掉ms-enabled与ms-attr-endabled
-11. 全新的touch模块
+
+
 
 #avalon1.5.2(主要在自定义标签上进行简化)
 
