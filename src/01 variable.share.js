@@ -10,7 +10,6 @@ var ohasOwn = oproto.hasOwnProperty
 var serialize = oproto.toString
 var ap = Array.prototype
 var aslice = ap.slice
-var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
 var W3C = window.dispatchEvent
 var root = DOC.documentElement
 var avalonFragment = DOC.createDocumentFragment()

@@ -1,9 +1,9 @@
 var rnoduplex = /^(file|button|reset|submit|checkbox|radio|range)$/
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function (element, evaluator, data) {
-    var $type = element.type,
+duplexBinding.INPUT = function (elem, evaluator, data) {
+    var $type = elem.type,
             bound = data.bound,
-            $elem = avalon(element),
+            $elem = avalon(elem),
             composing = false
 
     function callback(value) {
@@ -20,24 +20,24 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     //当value变化时改变model的值
 
     var updateVModel = function () {
-        var val = element.value //防止递归调用形成死循环
-        if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
+        var val = elem.value //防止递归调用形成死循环
+        if (composing || val === elem.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
         var lastValue = data.pipe(val, data, "get")
         if ($elem.data("duplexObserve") !== false) {
             evaluator(lastValue)
-            callback.call(element, lastValue)
+            callback.call(elem, lastValue)
         }
     }
     //当model变化时,它就会改变value的值
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")
-        if (val !== element.oldValue) {
+        if (val !== elem.oldValue) {
             var fixCaret = false
-            if (element.msFocus) {
+            if (elem.msFocus) {
                 try {
-                    var start = element.selectionStart
-                    var end = element.selectionEnd
+                    var start = elem.selectionStart
+                    var end = elem.selectionEnd
                     if (start === end) {
                         var pos = start
                         fixCaret = true
@@ -45,47 +45,47 @@ duplexBinding.INPUT = function (element, evaluator, data) {
                 } catch (e) {
                 }
             }
-            element.value = element.oldValue = val
-            if (fixCaret) {
-                element.selectionStart = element.selectionEnd = pos
+            elem.value = elem.oldValue = val
+            if (fixCaret && !elem.readyOnly) {
+                elem.selectionStart = elem.selectionEnd = pos
             }
         }
     }
     if (data.isChecked || $type === "radio") {
         updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
-                var lastValue = data.pipe(element.value, data, "get")
+                var lastValue = data.pipe(elem.value, data, "get")
                 evaluator(lastValue)
-                callback.call(element, lastValue)
+                callback.call(elem, lastValue)
             }
         }
         data.handler = function () {
             var val = evaluator()
-            var checked = data.isChecked ? !!val : val + "" === element.value
-            element.checked = element.oldValue = checked
+            var checked = data.isChecked ? !!val : val + "" === elem.value
+            elem.checked = elem.oldValue = checked
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
         updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
-                var method = element.checked ? "ensure" : "remove"
+                var method = elem.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
                     log("ms-duplex应用于checkbox上要对应一个数组")
                     array = [array]
                 }
-                avalon.Array[method](array, data.pipe(element.value, data, "get"))
-                callback.call(element, array)
+                avalon.Array[method](array, data.pipe(elem.value, data, "get"))
+                callback.call(elem, array)
             }
         }
         data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
-            element.checked = array.indexOf(data.pipe(element.value, data, "get")) > -1
+            elem.checked = array.indexOf(data.pipe(elem.value, data, "get")) > -1
         }
         bound("change", updateVModel)
     } else {
-        var events = element.getAttribute("data-duplex-event") || "input"
-        if (element.attributes["data-event"]) {
+        var events = elem.getAttribute("data-duplex-event") || "input"
+        if (elem.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
         events.replace(rword, function (name) {
@@ -108,24 +108,24 @@ duplexBinding.INPUT = function (element, evaluator, data) {
             if ($type !== "hidden") {
                 var beforeFocus
                 bound("focus", function () {
-                    element.msFocus = true
-                    beforeFocus = element.value
+                    elem.msFocus = true
+                    beforeFocus = elem.value
                 })
                 bound("blur", function () {
-                   if(IEVersion && beforeFocus !== element.value){
-                        beforeFocus = element.value
-                        avalon.fireDom(element, "change")
+                   if(IEVersion && beforeFocus !== elem.value){
+                        beforeFocus = elem.value
+                        avalon.fireDom(elem, "change")
                     }
-                    element.msFocus = false
+                    elem.msFocus = false
                 })
             }
-            element.avalonSetter = updateVModel //#765
+            elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
-                if (root.contains(element)) {
-                    if (!element.msFocus && data.oldValue !== element.value) {
+                if (root.contains(elem)) {
+                    if (!elem.msFocus && data.oldValue !== elem.value) {
                         updateVModel()
                     }
-                } else if (!element.msRetain) {
+                } else if (!elem.msRetain) {
                     return false
                 }
             })
@@ -134,6 +134,6 @@ duplexBinding.INPUT = function (element, evaluator, data) {
 
 
     avalon.injectBinding(data)
-    callback.call(element, element.value)
+    callback.call(elem, elem.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT

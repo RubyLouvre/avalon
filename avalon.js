@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.4.7.1 built in 2015.11.12
+ avalon.js 1.4.7.1 built in 2015.11.18
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -61,7 +61,6 @@ var ohasOwn = oproto.hasOwnProperty
 var serialize = oproto.toString
 var ap = Array.prototype
 var aslice = ap.slice
-var Registry = {} //将函数曝光到此对象上，方便访问器收集依赖
 var W3C = window.dispatchEvent
 var root = DOC.documentElement
 var avalonFragment = DOC.createDocumentFragment()
@@ -3818,18 +3817,18 @@ new function() { // jshint ignore:line
 } // jshint ignore:line
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function (e) {
-        var el = DOC.activeElement
-        if (el && typeof el.avalonSetter === "function") {
+        var el = DOC.activeElement || {}
+        if (!el.msFocus && el.avalonSetter) {
             el.avalonSetter()
         }
     })
 }
 var rnoduplex = /^(file|button|reset|submit|checkbox|radio|range)$/
 //处理radio, checkbox, text, textarea, password
-duplexBinding.INPUT = function (element, evaluator, data) {
-    var $type = element.type,
+duplexBinding.INPUT = function (elem, evaluator, data) {
+    var $type = elem.type,
             bound = data.bound,
-            $elem = avalon(element),
+            $elem = avalon(elem),
             composing = false
 
     function callback(value) {
@@ -3845,23 +3844,23 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     }
     //当value变化时改变model的值
     var updateVModel = function () {
-        var val = element.value //防止递归调用形成死循环
-        if (composing || val === element.oldValue) //处理中文输入法在minlengh下引发的BUG
+        var val = elem.value //防止递归调用形成死循环
+        if (composing || val === elem.oldValue) //处理中文输入法在minlengh下引发的BUG
             return
         var lastValue = data.pipe(val, data, "get")
         if ($elem.data("duplexObserve") !== false) {
             evaluator(lastValue)
-            callback.call(element, lastValue)
+            callback.call(elem, lastValue)
         }
     }
     //当model变化时,它就会改变value的值
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")  //fix #673 #1106
-        if (val !== element.oldValue) {
+        if (val !== elem.oldValue) {
             var fixCaret = false
-            if (element.msFocus) {
+            if (elem.msFocus) {
                 try {
-                    var pos = getCaret(element)
+                    var pos = getCaret(elem)
                     if (pos.start === pos.end) {
                         pos = pos.start
                         fixCaret = true
@@ -3869,9 +3868,9 @@ duplexBinding.INPUT = function (element, evaluator, data) {
                 } catch (e) {
                 }
             }
-            element.value = element.oldValue = val
-            if (fixCaret) {
-                setCaret(element, pos, pos)
+            elem.value = elem.oldValue = val
+            if (fixCaret && !elem.readyOnly) {
+                setCaret(elem, pos, pos)
             }
         }
     }
@@ -3879,52 +3878,52 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         var IE6 = IEVersion === 6
         updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
-                var lastValue = data.pipe(element.value, data, "get")
+                var lastValue = data.pipe(elem.value, data, "get")
                 evaluator(lastValue)
-                callback.call(element, lastValue)
+                callback.call(elem, lastValue)
             }
         }
         data.handler = function () {
             var val = evaluator()
-            var checked = data.isChecked ? !!val : val + "" === element.value
-            element.oldValue = checked
+            var checked = data.isChecked ? !!val : val + "" === elem.value
+            elem.oldValue = checked
             if (IE6) {
                 setTimeout(function () {
                     //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                     //并且要先设置defaultChecked后设置checked
                     //并且必须设置延迟
-                    element.defaultChecked = checked
-                    element.checked = checked
+                    elem.defaultChecked = checked
+                    elem.checked = checked
                 }, 31)
             } else {
-                element.checked = checked
+                elem.checked = checked
             }
         }
         bound("click", updateVModel)
     } else if ($type === "checkbox") {
         updateVModel = function () {
             if ($elem.data("duplexObserve") !== false) {
-                var method = element.checked ? "ensure" : "remove"
+                var method = elem.checked ? "ensure" : "remove"
                 var array = evaluator()
                 if (!Array.isArray(array)) {
                     log("ms-duplex应用于checkbox上要对应一个数组")
                     array = [array]
                 }
-                var val = data.pipe(element.value, data, "get")
+                var val = data.pipe(elem.value, data, "get")
                 avalon.Array[method](array, val)
-                callback.call(element, array)
+                callback.call(elem, array)
             }
         }
 
         data.handler = function () {
             var array = [].concat(evaluator()) //强制转换为数组
-            var val = data.pipe(element.value, data, "get")
-            element.checked = array.indexOf(val) > -1
+            var val = data.pipe(elem.value, data, "get")
+            elem.checked = array.indexOf(val) > -1
         }
         bound(W3C ? "change" : "click", updateVModel)
     } else {
-        var events = element.getAttribute("data-duplex-event") || "input"
-        if (element.attributes["data-event"]) {
+        var events = elem.getAttribute("data-duplex-event") || "input"
+        if (elem.attributes["data-event"]) {
             log("data-event指令已经废弃，请改用data-duplex-event")
         }
 
@@ -3965,29 +3964,29 @@ duplexBinding.INPUT = function (element, evaluator, data) {
         })
 
 
-        if (!rnoduplex.test(element.type)) {
-            if (element.type !== "hidden") {
+        if (!rnoduplex.test(elem.type)) {
+            if (elem.type !== "hidden") {
                 var beforeFocus
                 bound("focus", function () {
-                    element.msFocus = true
-                    beforeFocus = element.value
+                    elem.msFocus = true
+                    beforeFocus = elem.value
                 })
                 bound("blur", function () {
-                    if (IEVersion && beforeFocus !== element.value) {
-                        beforeFocus = element.value
-                        avalon.fireDom(element, "change")
+                    if (IEVersion && beforeFocus !== elem.value) {
+                        beforeFocus = elem.value
+                        avalon.fireDom(elem, "change")
                     }
-                    element.msFocus = false
+                    elem.msFocus = false
                 })
             }
 
-            element.avalonSetter = updateVModel //#765
+            elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
-                if (root.contains(element)) {
-                    if (!element.msFocus && element.oldValue !== element.value) {
+                if (root.contains(elem)) {
+                    if (!elem.msFocus && elem.oldValue !== elem.value) {
                         updateVModel()
                     }
-                } else if (!element.msRetain) {
+                } else if (!elem.msRetain) {
                     return false
                 }
             })
@@ -3996,14 +3995,15 @@ duplexBinding.INPUT = function (element, evaluator, data) {
     }
 
     avalon.injectBinding(data)
-    callback.call(element, element.value)
+    callback.call(elem, elem.value)
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT
-function getCaret(ctrl, start, end) {
+function getCaret(ctrl) {
+    var start = NaN, end = NaN
     if (ctrl.setSelectionRange) {
         start = ctrl.selectionStart
         end = ctrl.selectionEnd
-    } else if (document.selection && document.selection.createRange) {
+    } else {
         var range = document.selection.createRange()
         start = 0 - range.duplicate().moveStart('character', -100000)
         end = start + range.text.length
@@ -4013,26 +4013,17 @@ function getCaret(ctrl, start, end) {
         end: end
     }
 }
-function _setCaret(ctrl, pos) {
-    if (ctrl.setSelectionRange) {//IE6-9
-        ctrl.selectionStart = ctrl.selectionEnd = pos
-    } else {
-        var range = ctrl.createTextRange()
-        range.collapse(true);
-        range.moveStart("character", pos)
-        range.select()
-    }
-}
-
-function setCaret(ctrl, pos) {
+function setCaret(ctrl, begin, end) {
     if (!ctrl.value || ctrl.readOnly)
         return
-    if (IEVersion) {
-        setTimeout(function () {
-            _setCaret(ctrl, pos)
-        }, 17)
+    if (ctrl.createTextRange) {//IE6-8
+        var range = ctrl.createTextRange()
+        range.collapse(true);
+        range.moveStart("character", begin)
+        range.select()
     } else {
-        _setCaret(ctrl, pos)
+        ctrl.selectionStart = begin
+        ctrl.selectionEnd = end
     }
 }
 duplexBinding.SELECT = function(element, evaluator, data) {
