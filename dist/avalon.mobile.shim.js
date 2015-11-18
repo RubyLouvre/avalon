@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.4.7.1 built in 2015.11.18
+ avalon.mobile.shim.js 1.4.7.1 built in 2015.11.19
  ==================================================*/
 (function(global, factory) {
 
@@ -3263,11 +3263,11 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
-                    bound("DOMAutoComplete", updateVModel)
-                    bound("keydown", updateVModel)
+                    bound("keyup", updateVModel)
                     if (!IEVersion) {
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
+                        bound("DOMAutoComplete", updateVModel)
                     }
                     break
                 default:

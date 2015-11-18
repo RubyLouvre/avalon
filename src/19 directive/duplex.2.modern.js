@@ -93,11 +93,11 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
             switch (name) {
                 case "input":
                     bound("input", updateVModel)
-                    bound("DOMAutoComplete", updateVModel)
-                    bound("keydown", updateVModel)
+                    bound("keyup", updateVModel)
                     if (!IEVersion) {
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
+                        bound("DOMAutoComplete", updateVModel)
                     }
                     break
                 default:
