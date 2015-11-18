@@ -18,13 +18,14 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
         composing = false
     }
     //当value变化时改变model的值
-
+    var IE9Value
     var updateVModel = function () {
         var val = elem.value //防止递归调用形成死循环
-        if (composing || val === elem.oldValue) //处理中文输入法在minlengh下引发的BUG
+        if (composing || val === IE9Value) //处理中文输入法在minlengh下引发的BUG
             return
         var lastValue = data.pipe(val, data, "get")
         if ($elem.data("duplexObserve") !== false) {
+            IE9Value = val
             evaluator(lastValue)
             callback.call(elem, lastValue)
         }
@@ -32,7 +33,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
     //当model变化时,它就会改变value的值
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")
-        if (val !== elem.oldValue) {
+        if (val !== IE9Value) {
             var fixCaret = false
             if (elem.msFocus) {
                 try {
@@ -45,7 +46,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
                 } catch (e) {
                 }
             }
-            elem.value = elem.oldValue = val
+            elem.value = IE9Value = val
             if (fixCaret && !elem.readyOnly) {
                 elem.selectionStart = elem.selectionEnd = pos
             }
@@ -93,6 +94,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
                 case "input":
                     bound("input", updateVModel)
                     bound("DOMAutoComplete", updateVModel)
+                    bound("keydown", updateVModel)
                     if (!IEVersion) {
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
@@ -106,23 +108,17 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
 
         if (!rnoduplex.test($type)) {
             if ($type !== "hidden") {
-                var beforeFocus
                 bound("focus", function () {
                     elem.msFocus = true
-                    beforeFocus = elem.value
                 })
                 bound("blur", function () {
-                   if(IEVersion && beforeFocus !== elem.value){
-                        beforeFocus = elem.value
-                        avalon.fireDom(elem, "change")
-                    }
                     elem.msFocus = false
                 })
             }
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(elem)) {
-                    if (!elem.msFocus && data.oldValue !== elem.value) {
+                    if (!elem.msFocus) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -131,8 +127,6 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
             })
         }
     }
-
-
     avalon.injectBinding(data)
     callback.call(elem, elem.value)
 }

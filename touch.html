@@ -8,16 +8,19 @@
         <script>
             avalon.define({
                 $id: "test",
-                aaa: 111,
+                aaa: 12345,
                 onChange: function () {
                     console.log(new Date - 0)
+                },
+                onBlur: function(){
+                    console.log("onblur")
                 }
             })
         </script>
     </head>
     <body>
         <div ms-controller="test">
-            <input ms-duplex="aaa"  ms-on-change="onChange"/>{{aaa}}
+            <input ms-duplex="aaa"  ms-on-change="onChange" ms-on-blur="onBlur"/>{{aaa}}
         </div>
     </body>
 </html>

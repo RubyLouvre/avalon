@@ -3793,7 +3793,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
+                if (!this.msFocus && this.avalonSetter) {
                     this.avalonSetter()
                 }
         }
@@ -3842,13 +3842,15 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
     function compositionEnd() {
         composing = false
     }
+    var IE9Value
     //当value变化时改变model的值
     var updateVModel = function () {
         var val = elem.value //防止递归调用形成死循环
-        if (composing || val === elem.oldValue) //处理中文输入法在minlengh下引发的BUG
+        if (composing || val === IE9Value) //处理中文输入法在minlengh下引发的BUG
             return
         var lastValue = data.pipe(val, data, "get")
         if ($elem.data("duplexObserve") !== false) {
+            IE9Value = val
             evaluator(lastValue)
             callback.call(elem, lastValue)
         }
@@ -3856,7 +3858,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
     //当model变化时,它就会改变value的值
     data.handler = function () {
         var val = data.pipe(evaluator(), data, "set")  //fix #673 #1106
-        if (val !== elem.oldValue) {
+        if (val !== IE9Value) {
             var fixCaret = false
             if (elem.msFocus) {
                 try {
@@ -3868,7 +3870,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
                 } catch (e) {
                 }
             }
-            elem.value = elem.oldValue = val
+            elem.value = IE9Value = val
             if (fixCaret && !elem.readyOnly) {
                 setCaret(elem, pos, pos)
             }
@@ -3941,12 +3943,19 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
                         bound("compositionstart", compositionStart)
                         bound("compositionend", compositionEnd)
                         bound("DOMAutoComplete", updateVModel)
-                    } else { //onpropertychange事件无法区分是程序触发还是用户触发
+                    } else { 
                         // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (IEVersion > 8) {
-                            bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
+                            if(IEVersion === 9){
+                                //IE9删除字符后再失去焦点不会同步 #1167
+                                bound("keyup", updateVModel)
+                            }
+                            //IE9使用propertychange无法监听中文输入改动
+                            bound("input", updateVModel) 
                         } else {
-                            bound("propertychange", function (e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            //onpropertychange事件无法区分是程序触发还是用户触发
+                            //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                            bound("propertychange", function (e) { 
                                 if (e.propertyName === "value") {
                                     updateVModel()
                                 }
@@ -3966,16 +3975,10 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
 
         if (!rnoduplex.test(elem.type)) {
             if (elem.type !== "hidden") {
-                var beforeFocus
                 bound("focus", function () {
                     elem.msFocus = true
-                    beforeFocus = elem.value
                 })
                 bound("blur", function () {
-                    if (IEVersion && beforeFocus !== elem.value) {
-                        beforeFocus = elem.value
-                        avalon.fireDom(elem, "change")
-                    }
                     elem.msFocus = false
                 })
             }
@@ -3983,7 +3986,7 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
                 if (root.contains(elem)) {
-                    if (!elem.msFocus && elem.oldValue !== elem.value) {
+                    if (!elem.msFocus ) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -3999,7 +4002,8 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
 }
 duplexBinding.TEXTAREA = duplexBinding.INPUT
 function getCaret(ctrl) {
-    var start = NaN, end = NaN
+    var start = NaN, end = NaN   
+    //https://github.com/RobinHerbots/jquery.inputmask/blob/3.x/js/inputmask.js#L1736
     if (ctrl.setSelectionRange) {
         start = ctrl.selectionStart
         end = ctrl.selectionEnd
@@ -4018,7 +4022,7 @@ function setCaret(ctrl, begin, end) {
         return
     if (ctrl.createTextRange) {//IE6-8
         var range = ctrl.createTextRange()
-        range.collapse(true);
+        range.collapse(true)
         range.moveStart("character", begin)
         range.select()
     } else {
