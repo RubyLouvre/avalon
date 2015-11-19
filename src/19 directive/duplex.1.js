@@ -141,7 +141,7 @@ new function() { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
                 setters[this.tagName].call(this, value)
-                if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
+                if (!this.msFocus && this.avalonSetter) {
                     this.avalonSetter()
                 }
         }
