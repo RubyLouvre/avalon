@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.5 built in 2015.11.18
+ avalon.js 1.5.5 built in 2015.11.19
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3270,8 +3270,13 @@ function scanTag(elem, vmodels, node) {
         avalon(elem).removeClass(name)
         createSignalTower(elem, newVmodel)
     }
-   
+
     scanAttr(elem, vmodels) //扫描特性节点
+    if (newVmodel) {
+        setTimeout(function () {
+            newVmodel.$fire("ms-scan-end", elem)
+        })
+    }
 }
 
 
@@ -3876,7 +3881,7 @@ var duplexBinding = avalon.directive("duplex", {
                     "input"
         }
         //===================绑定事件======================
-        binding.bound = function (type, callback) {
+        var bound = binding.bound = function (type, callback) {
             if (elem.addEventListener) {
                 elem.addEventListener(type, callback, false)
             } else {
@@ -3901,10 +3906,11 @@ var duplexBinding = avalon.directive("duplex", {
         }
         var updateVModel = function (e) {
             var val = elem.value //防止递归调用形成死循环
-            if (composing || val === binding.oldValue || binding.pipe === null) //处理中文输入法在minlengh下引发的BUG
+            if (composing || val === binding.oldValue  || binding.pipe === null) //处理中文输入法在minlengh下引发的BUG
                 return
             var lastValue = binding.pipe(val, binding, "get")
             try {
+                binding.oldValue = val
                 binding.setter(lastValue)
                 callback.call(elem, lastValue)
             } catch (ex) {
@@ -3924,7 +3930,7 @@ var duplexBinding = avalon.directive("duplex", {
                 })
                 break
             case "checkbox":
-                binding.bound(W3C ? "change" : "click", function () {
+                bound(W3C ? "change" : "click", function () {
                     var method = elem.checked ? "ensure" : "remove"
                     var array = binding.getter.apply(0, binding.vmodels)
                     if (!Array.isArray(array)) {
@@ -3937,27 +3943,33 @@ var duplexBinding = avalon.directive("duplex", {
                 })
                 break
             case "change":
-                binding.bound("change", updateVModel)
+                bound("change", updateVModel)
                 break
             case "input":
                 if (!IEVersion) { // W3C
-                    binding.bound("input", updateVModel)
+                    bound("input", updateVModel)
                     //非IE浏览器才用这个
-                    binding.bound("compositionstart", compositionStart)
-                    binding.bound("compositionend", compositionEnd)
-                    binding.bound("DOMAutoComplete", updateVModel)
-                } else { //onpropertychange事件无法区分是程序触发还是用户触发
+                    bound("compositionstart", compositionStart)
+                    bound("compositionend", compositionEnd)
+                    bound("DOMAutoComplete", updateVModel)
+                } else { 
                     // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                     if (IEVersion > 8) {
-                        binding.bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
+                        if(IEVersion === 9){
+                           //IE9删除字符后再失去焦点不会同步 #1167
+                            bound("keyup", updateVModel)
+                         }
+                        bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
                     } else {
-                        binding.bound("propertychange", function (e) { //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                        //onpropertychange事件无法区分是程序触发还是用户触发
+                        //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+                        bound("propertychange", function (e) { 
                             if (e.propertyName === "value") {
                                 updateVModel()
                             }
                         })
                     }
-                    binding.bound("dragend", function () {
+                    bound("dragend", function () {
                         setTimeout(function () {
                             updateVModel()
                         }, 17)
@@ -3967,7 +3979,7 @@ var duplexBinding = avalon.directive("duplex", {
                 }
                 break
             case "select":
-                binding.bound("change", function () {
+                bound("change", function () {
                     var val = avalon(elem).val() //字符串或字符串数组
                     if (Array.isArray(val)) {
                         val = val.map(function (v) {
@@ -3984,7 +3996,7 @@ var duplexBinding = avalon.directive("duplex", {
                         }
                     }
                 })
-                binding.bound("datasetchanged", function (e) {
+                bound("datasetchanged", function (e) {
                     if (e.bubble === "selectDuplex") {
                         var value = binding._value
                         var curValue = Array.isArray(value) ? value.map(String) : value + ""
@@ -3997,23 +4009,17 @@ var duplexBinding = avalon.directive("duplex", {
         }
         if (binding.xtype === "input" && !rnoduplexInput.test(elem.type)) {
             if (elem.type !== "hidden") {
-                var beforeFocus
-                binding.bound("focus", function () {
+                bound("focus", function () {
                     elem.msFocus = true
-                    beforeFocus = elem.value
                 })
-                binding.bound("blur", function () {
+                bound("blur", function () {
                     elem.msFocus = false
-                    if (IEVersion && beforeFocus !== elem.value) {
-                        beforeFocus = elem.value
-                        avalon.fireDom(elem, "change")
-                    }
                 })
             }
             elem.avalonSetter = updateVModel //#765
             watchValueInTimer(function () {
-                if (elem.contains(elem)) {
-                    if (!this.msFocus && binding.oldValue !== elem.value) {
+                if (avalon.contains(root, elem)) {
+                    if (!this.msFocus) {
                         updateVModel()
                     }
                 } else if (!elem.msRetain) {
@@ -4050,7 +4056,7 @@ var duplexBinding = avalon.directive("duplex", {
                         } catch (e) {
                         }
                     }
-                    elem.value = this.oldValue = curValue
+                    elem.value = binding.oldValue = curValue
                     if (fixCaret) {
                         setCaret(elem, pos, pos)
                     }
@@ -4094,7 +4100,7 @@ var duplexBinding = avalon.directive("duplex", {
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement || {}
-        if (typeof el.avalonSetter === "function" && !el.msFocus ) {
+        if (!el.msFocus && el.avalonSetter ) {
             el.avalonSetter()
         }
     })
@@ -4180,7 +4186,7 @@ new function () { // jshint ignore:line
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
             setters[this.tagName].call(this, value)
-            if (!this.msFocus && this.avalonSetter && this.oldValue !== value) {
+            if (!this.msFocus && this.avalonSetter) {
                 this.avalonSetter()
             }
         }
@@ -4220,9 +4226,9 @@ function getCaret(ctrl) {
 function setCaret(ctrl, begin, end) {
     if (!ctrl.value || ctrl.readOnly)
         return
-    if (ctrl.createTextRange) {//IE6-9
+    if (ctrl.createTextRange) {//IE6-8
         var range = ctrl.createTextRange()
-        range.collapse(true);
+        range.collapse(true)
         range.moveStart("character", begin)
         range.select()
     } else {

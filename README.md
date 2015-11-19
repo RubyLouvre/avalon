@@ -1,3 +1,12 @@
+#avalon1.5.6
+1. 添加扫描后的回调
+   在目标DIV加上ms-controller="test", $id为test的VM监听一个"ms-scan-end"回调
+```
+vm.$watch("ms-scan-end", function(div){
+   //div为绑定的元素
+})
+```
+
 #avalon1.5.5
 1. 终于比较完美地解决光标问题
 2. fix data-duplex-changed执行两次的BUG
