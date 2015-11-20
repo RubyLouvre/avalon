@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.5 built in 2015.11.19
+ avalon.shim.js 1.5.5 built in 2015.11.20
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3443,7 +3443,7 @@ avalon.component = function (name, opts) {
                     return
                 }
                 var elemOpts = getOptionsFromTag(elem, host.vmodels)
-                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.widget)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.fullName)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
                 delete elemOpts.config
                 delete elemOpts.$id
@@ -3895,7 +3895,7 @@ var duplexBinding = avalon.directive("duplex", {
             }
         }
         var composing = false
-        function callback(value) {
+        function callback(value, type) {
             binding.changed.call(this, value, binding)
         }
         function compositionStart() {
@@ -3904,9 +3904,10 @@ var duplexBinding = avalon.directive("duplex", {
         function compositionEnd() {
             composing = false
         }
+
         var updateVModel = function (e) {
             var val = elem.value //防止递归调用形成死循环
-            if (composing || val === binding.oldValue  || binding.pipe === null) //处理中文输入法在minlengh下引发的BUG
+            if (composing || val === binding.oldValue || binding.pipe === null) //处理中文输入法在minlengh下引发的BUG
                 return
             var lastValue = binding.pipe(val, binding, "get")
             try {
@@ -3952,18 +3953,18 @@ var duplexBinding = avalon.directive("duplex", {
                     bound("compositionstart", compositionStart)
                     bound("compositionend", compositionEnd)
                     bound("DOMAutoComplete", updateVModel)
-                } else { 
+                } else {
                     // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                     if (IEVersion > 8) {
-                        if(IEVersion === 9){
-                           //IE9删除字符后再失去焦点不会同步 #1167
+                        if (IEVersion === 9) {
+                            //IE9删除字符后再失去焦点不会同步 #1167
                             bound("keyup", updateVModel)
-                         }
+                        }
                         bound("input", updateVModel) //IE9使用propertychange无法监听中文输入改动
                     } else {
                         //onpropertychange事件无法区分是程序触发还是用户触发
                         //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
-                        bound("propertychange", function (e) { 
+                        bound("propertychange", function (e) {
                             if (e.propertyName === "value") {
                                 updateVModel()
                             }
@@ -4100,7 +4101,7 @@ var duplexBinding = avalon.directive("duplex", {
 if (IEVersion) {
     avalon.bind(DOC, "selectionchange", function (e) {
         var el = DOC.activeElement || {}
-        if (!el.msFocus && el.avalonSetter ) {
+        if (!el.msFocus && el.avalonSetter) {
             el.avalonSetter()
         }
     })

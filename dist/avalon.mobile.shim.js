@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.5.5 built in 2015.11.19
+ avalon.mobile.shim.js 1.5.5 built in 2015.11.20
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -2802,7 +2802,7 @@ avalon.component = function (name, opts) {
                     return
                 }
                 var elemOpts = getOptionsFromTag(elem, host.vmodels)
-                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.widget)
+                var vmOpts = getOptionsFromVM(host.vmodels, elemOpts.config || host.fullName)
                 var $id = elemOpts.$id || elemOpts.identifier || generateID(widget)
                 delete elemOpts.config
                 delete elemOpts.$id
@@ -3248,10 +3248,11 @@ var duplexBinding = avalon.directive("duplex", {
                 old && old()
             }
         }
-        var composing = false
+
         function callback(value) {
             binding.changed.call(this, value, binding)
         }
+        var composing = false
         function compositionStart() {
             composing = true
         }
