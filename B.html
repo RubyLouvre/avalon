@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>first example</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <script>
+
+            var vm = avalon.define({
+                $id: "test",
+                name: "司徒正美"
+            })
+
+            function n() {
+                return  /**
+                 <xmp class="html">
+                 <!DOCTYPE html>
+                 <html>
+                 </html>
+                 
+                 </xmp>*/
+            }
+            var aa = n.toString().replace(/<xmp\s+class\=(['"])(\w+)\1\s*>([\s\S]+)<\/xmp>/mg, function (a, b, c, d) {
+                if (c === "html") {
+                    d = d.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                }
+                return "<pre class='brush:'" + c + ";gutter:false;toolbar:false'>" + d + "</pre>"
+            })
+
+            console.log(aa)
+        </script>
+    </head>
+    <body ms-controller="test">
+        <input ms-duplex="name" >
+        <p>Hello,{{name}}!</p>
+    </body>
+</html>
