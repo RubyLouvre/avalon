@@ -3,12 +3,11 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <link href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-        <script src="avalon.js"></script>
+        <script src="dist/avalon.modern.js"></script>
         <script>
             var vm = avalon.define({
-                $id: "ms-class",
-                toggle: true,
+                $id: "xxx",
+                aaa: 111,
                 click: function (e) {
                     vm.toggle = !vm.toggle
                 }
@@ -16,9 +15,10 @@
         </script>
     </head>
     <body>
-        <div class="well" ms-controller="ms-class">
-            <button type="button" class="btn" ms-click="click"
-                    ms-class="{{toggle?'btn-success':'btn-danger'}}">点我</button>
+        <div  ms-controller="xxx">
+            <textarea></textarea>
+            <div contenteditable="true"></div>
+            <input ms-attr-value="aaa">
         </div>
     </body>
 </html>
