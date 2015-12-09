@@ -240,14 +240,15 @@ function normalizeExpr(code) {
         if (array.length === 1) {
             return array[0].expr
         }
+        /* jshint ignore:start */
         return array.map(function (el) {
             return el.type ? "(" + el.expr + ")" : quote(el.expr)
         }).join(" + ")
+        /* jshint ignore:end */
     } else {
         return code
     }
 }
-
 avalon.normalizeExpr = normalizeExpr
 avalon.parseExprProxy = parseExpr
 

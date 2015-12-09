@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='avalon.js'></script>
+        <script>
+            var aaa = avalon.define({
+                $id: "test",
+                a: 11,
+                b: {
+                    c: 22
+                }
+            })
+            var bbb = avalon.define({
+                $id: "xxx",
+                d: 5,
+                e: {
+                    f: 333
+                }
+            })
+            //创建一个代理VM,它拥有aaa与bbb的所有访问器属性
+            //有了这东西,parseExpr就会大大简化
+            var ccc = avalon.createProxy(aaa, bbb)
+            console.log("开始更新属性")
+            ccc.e = {
+                h: 777
+            }
+            console.log(ccc.e === bbb.e)
+            console.log(ccc.e.h === bbb.e.h)
+            aaa.a = 8
+            console.log(ccc.a === 8)
+            var obj = {
+                p:1,dd:{}
+            }
+            var kkk
+            Object.defineProperty(obj, "aa", {
+                set: function (v) {
+                    kkk = v
+                },
+                get: function () {
+                    return kkk
+                },
+                enumerable: true,
+                configurable: true
+            })
+              Object.defineProperty(obj, "bb", {
+                set: function (v) {
+                    kkk = v
+                },
+                get: function () {
+                    return kkk
+                },
+                enumerable: true,
+                configurable: true
+            })
+            
+            for(var kk in obj){
+               var d =  Object.getOwnPropertyDescriptor(obj, kk)
+               console.log(d)
+            }
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <div>{{a}}</div>
+        </div>
+    </body>
+</html>

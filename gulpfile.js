@@ -35,7 +35,7 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = '1.5.1' //当前版本号
+        var version = '1.6' //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
         gulp.src(compatibleFiles)
@@ -47,12 +47,13 @@ gulp.task('combo', function () {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist/'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
-                .pipe(gulp.dest('./dist/'))
+                .pipe(gulp.dest('./dist'))
                 .on('error', function (err) {
                     console.log(err.toString());
                     this.emit("end");
@@ -127,10 +128,7 @@ gulp.task('combo', function () {
                 .pipe(gulp.dest('./dist/'))
                 .pipe(gulp.dest('../avalon.test/src/'))
                 
-
     })
-
-
 
 })
 gulp.task('default', ['combo'], function () {

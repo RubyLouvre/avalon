@@ -1,17 +1,8 @@
 //avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
-var VMODELS = avalon.vmodels = {} //所有vmodel都储存在这里
-avalon.define = function (source) {
-    var $id = source.$id
-    if (!$id) {
-        log("warning: vm必须指定$id")
-    }
-    var vmodel = modelFactory(source)
-    vmodel.$id = $id
-    return VMODELS[$id] = vmodel
-}
+avalon.vmodels = {} //所有vmodel都储存在这里
+var vtree = {}
+var dtree = {}
 
-//一些不需要被监听的属性
-var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$active,$pathname,$up,$track,$accessors,$ups")
 var defineProperty = Object.defineProperty
 var canHideOwn = true
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -25,173 +16,204 @@ try {
     canHideOwn = false
 }
 
-function modelFactory(source, options) {
-    options = options || {}
-    options.watch = true
-    return observeObject(source, options)
+avalon.define = function (definition) {
+    var $id = definition.$id
+    if (!$id) {
+        log("warning: vm必须指定$id")
+    }
+    var vmodel = observeObject(definition, {
+        timestamp: new Date() - 0
+    }, {
+        watch: true
+    })
+
+    avalon.vmodels[$id] = vmodel
+    vmodel.$id = $id
+    avalon.ready(function () {
+        if (!vtree[$id]) {
+            var all = document.getElementsByTagName("*")
+            for (var i = 0, node; node = all[i++]; ) {
+                if (node.nodeType !== 1)
+                    continue
+                if (node.getAttribute("ms-controller") === $id
+                        || node.getAttribute("ms-important") === $id) {
+                    dtree[$id] = node;
+                    vtree[$id] = buildVTree(node.outerHTML)
+                    break
+                }
+            }
+        }
+
+    })
+
+    return vmodel
 }
 
-//监听对象属性值的变化(注意,数组元素不是数组的属性),通过对劫持当前对象的访问器实现
-//监听对象或数组的结构变化, 对对象的键值对进行增删重排, 或对数组的进行增删重排,都属于这范畴
-//   通过比较前后代理VM顺序实现
+//observeArray及observeObject的包装函数
+function observe(definition, old, heirloom, options) {
+    if (Array.isArray(definition)) {
+        return observeArray(definition, old, heirloom, options)
+    } else if (avalon.isPlainObject(definition)) {
+        var vm = observeObject(definition, heirloom, options)
+        for (var i in old) {
+            if (vm.hasOwnProperty(i)) {
+                vm[i] = old[i]
+            }
+        }
+        return vm
+    } else {
+        return definition
+    }
+}
+
+function observeArray(array, old, heirloom, options) {
+    if (old && old.splice) {
+        var args = [0, old.length].concat(array)
+        old.splice.apply(old, args)
+        return old
+    } else {
+        for (var i in newProto) {
+            array[i] = newProto[i]
+        }
+
+        array._ = observeObject({
+            length: NaN
+        }, heirloom, {
+            pathname: options.pathname + ".length",
+            watch: true
+        })
+        array._.length = array.length
+        array._.$watch("length", function (a, b) {
+        })
+
+        if (W3C) {
+            hideProperty(array, "$model", $modelDescriptor)
+        } else {
+            array.$model = toJson(array)
+        }
+        var arrayOptions = {
+            pathname: options.pathname + "*",
+            watch: true
+        }
+        for (var j = 0, n = array.length; j < n; j++) {
+            array[j] = observe(array[j], 0, heirloom, arrayOptions)
+        }
+
+        return array
+    }
+}
 function Component() {
 }
 
-function observeObject(source, options) {
-    if (!source || (source.$id && source.$accessors) || (source.nodeName && source.nodeType > 0)) {
-        return source
-    }
-    //source为原对象,不能是元素节点或null
-    //options,可选,配置对象,里面有old, force, watch这三个属性
-    options = options || nullObject
-    var force = options.force || nullObject
-    var old = options.old
-    var oldAccessors = old && old.$accessors || nullObject
-    var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    var accessors = {} //监控属性
-    var hasOwn = {}
-    var skip = []
-    var simple = []
-    var $skipArray = {}
-    if (source.$skipArray) {
-        $skipArray = oneObject(source.$skipArray)
-        delete source.$skipArray
-    }
-    //处理计算属性
-    var computed = source.$computed
-    if (computed) {
-        delete source.$computed
-        for (var name in computed) {
-            hasOwn[name] = true;
-            (function (key, value) {
-                var old
-                accessors[key] = {
-                    get: function () {
-                        return old = value.get.call(this)
-                    },
-                    set: function (x) {
-                        if (typeof value.set === "function") {
-                            var older = old
-                            value.set.call(this, x)
-                            var newer = this[key]
-                            if (this.$fire && (newer !== older)) {
-                                this.$fire(key, newer, older)
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                }
-            })(name, computed[name])// jshint ignore:line
-        }
-    }
-
-    for (name in source) {
-        var value = source[name]
-        if (!$$skipArray[name])
-            hasOwn[name] = true
-        if (typeof value === "function" || (value && value.nodeName && value.nodeType > 0) ||
-                (!force[name] && (name.charAt(0) === "$" || $$skipArray[name] || $skipArray[name]))) {
-            skip.push(name)
-        } else if (isComputed(value)) {
-            log("warning:计算属性建议放在$computed对象中统一定义");
-            (function (key, value) {
-                var old
-                accessors[key] = {
-                    get: function () {
-                        return old = value.get.call(this)
-                    },
-                    set: function (x) {
-                        if (typeof value.set === "function") {
-                            var older = old
-                            value.set.call(this, x)
-                            var newer = this[key]
-                            if (this.$fire && (newer !== older)) {
-                                this.$fire(key, newer, older)
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                }
-            })(name, value)// jshint ignore:line
-        } else {
-            simple.push(name)
-            if (oldAccessors[name]) {
-                accessors[name] = oldAccessors[name]
-            } else {
-                accessors[name] = makeGetSet(name, value)
-            }
-        }
-    }
-
-    accessors["$model"] = $modelDescriptor
-    $vmodel = defineProperties($vmodel, accessors, source)
-    function trackBy(name) {
-        return hasOwn[name] === true
-    }
-    skip.forEach(function (name) {
-        $vmodel[name] = source[name]
-    })
-
-    /* jshint ignore:start */
-    hideProperty($vmodel, "$ups", null)
-    hideProperty($vmodel, "$id", "anonymous")
-    hideProperty($vmodel, "$up", old ? old.$up : null)
-    hideProperty($vmodel, "$track", Object.keys(hasOwn))
-    hideProperty($vmodel, "$active", false)
-    hideProperty($vmodel, "$pathname", old ? old.$pathname : "")
-    hideProperty($vmodel, "$accessors", accessors)
-    hideProperty($vmodel, "hasOwnProperty", trackBy)
-    if (options.watch) {
-        hideProperty($vmodel, "$watch", function () {
-            return $watch.apply($vmodel, arguments)
-        })
-        hideProperty($vmodel, "$fire", function (path, a) {
-            if(path.indexOf("all!") === 0 ){
-                var ee = path.slice(4)
-                for(var i in avalon.vmodels){
-                    var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.apply(v, [ee, a])
-                }
-            }else{
-               $emit.call($vmodel, path, [a])
-            }
-        })
-    }
-    /* jshint ignore:end */
-    //必须设置了$active,$events
-    simple.forEach(function (name) {
-        var oldVal = old && old[name]
-        var val = $vmodel[name] = source[name]
-        if (val && typeof val === "object") {
-            val.$up = $vmodel
-            val.$pathname = name
-        }
-        $emit.call($vmodel, name, [val,oldVal])
-    })
-    for (name in computed) {
-        value = $vmodel[name]
-    }
-    $vmodel.$active = true
-    return $vmodel
-}
-
 /*
- 新的VM拥有如下私有属性
+ 将一个对象转换为一个VM
+ 它拥有如下私有属性
  $id: vm.id
  $events: 放置$watch回调与绑定对象
  $watch: 增强版$watch
  $fire: 触发$watch回调
- $track:一个数组,里面包含用户定义的所有键名
  $active:boolean,false时防止依赖收集
  $model:返回一个纯净的JS对象
- $accessors:放置所有读写器的数据描述对象
- $up:返回其上级对象
- $pathname:返回此对象在上级对象的名字,注意,数组元素的$pathname为空字符串
+ $accessors:avalon.js独有的对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
+ 
+ $$skipArray与$skipArray都不能监控,
+ 不同点是
+ $$skipArray被hasOwnProperty后返回false
+ $skipArray被hasOwnProperty后返回true
  */
+
+
+
+var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
+        "$skipArray,$active,$accessors")
+
+
+function observeObject(definition, heirloom, options) {
+    options = options || {}
+    heirloom = heirloom || {}
+
+    var $skipArray = {}
+    if (definition.$skipArray) {//收集所有不可监听属性
+        $skipArray = oneObject(definition.$skipArray)
+        delete definition.$skipArray
+    }
+    var $computed = getComputed(definition) // 收集所有计算属性
+    var $pathname = options.pathname || ""
+    var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
+    var $accessors = {} //用于储放所有访问器属性的定义
+    var hasOwn = {}    //用于实现hasOwnProperty方法
+    var simple = []    //用于储放简单类型的访问器属性的名字
+    var skip = []
+
+    for (var key in definition) {
+        if ($$skipArray[key])
+            continue
+        var val = definition[key]
+        hasOwn[key] = true
+        if (!isObervable(key, val, $skipArray)) {
+            simple.push(key)
+            var path = $pathname ? $pathname + "." + key : key
+            $accessors[key] = makeObservable(path, heirloom)
+        } else {
+            skip.push(key)
+        }
+    }
+
+    for (var name in $computed) {
+        hasOwn[key] = true
+        path = $pathname ? $pathname + "." + key : key
+        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
+    }
+
+    $accessors["$model"] = $modelDescriptor
+
+    $vmodel = defineProperties($vmodel, $accessors, definition)
+
+    function trackBy(name) {
+        return hasOwn[name] === true
+    }
+
+    skip.forEach(function (name) {
+        $vmodel[name] = definition[name]
+    })
+    simple.forEach(function (name) {
+        $vmodel[name] = definition[name]
+    })
+
+    hideProperty($vmodel, "$id", "anonymous")
+    hideProperty($vmodel, "$active", false)
+    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "$accessors", $accessors)
+    if (options.watch) {
+        hideProperty($vmodel, "$events", {})
+        hideProperty($vmodel, "$watch", function () {
+            // return $watch.apply($vmodel, arguments)
+        })
+        hideProperty($vmodel, "$fire", function (path, a) {
+            if (path.indexOf("all!") === 0) {
+                var ee = path.slice(4)
+                for (var i in avalon.vmodels) {
+                    var v = avalon.vmodels[i]
+                    v.$fire && v.$fire.apply(v, [ee, a])
+                }
+            } else {
+                $emit.call($vmodel, path, [a])
+            }
+        })
+        heirloom.vm = heirloom.vm || $vmodel
+    }
+
+    for (name in $computed) {
+        val = $vmodel[name]
+    }
+
+    $vmodel.$active = true
+    return $vmodel
+}
+
+
 function isComputed(val) {//speed up!
     if (val && typeof val === "object") {
         for (var i in val) {
@@ -202,34 +224,42 @@ function isComputed(val) {//speed up!
         return  typeof val.get === "function"
     }
 }
-function makeGetSet(key, value) {
-    var childVm
-    value = NaN
+
+function getComputed(obj) {
+    if (obj.$computed) {
+        delete obj.$computed
+        return obj.$computed
+    }
+    var $computed = {}
+    for (var i in obj) {
+        if (isComputed(obj[i])) {
+            $computed[i] = obj[i]
+            delete obj[i]
+        }
+    }
+    return $computed
+}
+
+function makeComputed(pathname, heirloom, key, value) {
+    var old = NaN, _this = {}
     return {
         get: function () {
-            if (this.$active) {
-                collectDependency(this, key)
+            if (!this.configurable) {
+                _this = this
             }
-            return value
+            return old = value.get.call(_this)
         },
-        set: function (newVal) {
-            if (value === newVal)
-                return
-            var oldValue = value
-            childVm = observe(newVal, value)
-            if (childVm) {
-                value = childVm
-            } else {
-                childVm = void 0
-                value = newVal
-            }
-
-            if (Object(childVm) === childVm) {
-                childVm.$pathname = key
-                childVm.$up = this
-            }
-            if (this.$active) {
-                $emit.call(this, key, [value, oldValue])
+        set: function (x) {
+            if (typeof value.set === "function") {
+                if (!this.configurable) {
+                    _this = this
+                }
+                var older = old
+                value.set.call(_this, x)
+                var newer = _this[key]
+                if (_this.$active && (newer !== older)) {
+                    heirloom.vm.$fire(pathname, newer, older)
+                }
             }
         },
         enumerable: true,
@@ -237,99 +267,78 @@ function makeGetSet(key, value) {
     }
 }
 
-function observe(obj, old, hasReturn, watch) {
-    if (Array.isArray(obj)) {
-        return observeArray(obj, old, watch)
-    } else if (avalon.isPlainObject(obj)) {
-        if (old && typeof old === 'object') {
-            var keys = getKeys(obj)
-            var keys2 = getKeys(old)
-            if (keys.join(";") === keys2.join(";")) {
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        old[i] = obj[i]
-                    }
-                }
-                return old
+function isObervable(key, value, skipArray) {
+    return key.charAt(0) === "$" ||
+            skipArray[key] ||
+            (typeof value === "function") ||
+            (value && value.nodeName && value.nodeType > 0)
+}
+
+
+function makeObservable(pathname, heirloom) {
+    var old = NaN, _this = {}
+    return {
+        get: function () {
+            if (!this.configurable) {
+                _this = this // 保存当前子VM的引用
             }
-            old.$active = false
-        }
-        return observeObject(obj, {
-            old: old,
-            watch: watch
-        })
-    }
-    if (hasReturn) {
-        return obj
-    }
-}
-
-var getKeys = rnative.test(Object.key) ? Object.key : function (a) {
-    var ret = []
-    for (var i in a) {
-        if (a.hasOwnProperty(i) && !$$skipArray[i]) {
-            ret.push(i)
-        }
-    }
-    return ret
-}
-
-function observeArray(array, old, watch) {
-    if (old && old.splice) {
-        var args = [0, old.length].concat(array)
-        old.splice.apply(old, args)
-        return old
-    } else {
-        for (var i in newProto) {
-            array[i] = newProto[i]
-        }
-        hideProperty(array, "$up", null)
-        hideProperty(array, "$pathname", "")
-        hideProperty(array, "$track", createTrack(array.length))
-
-        array._ = observeObject({
-            length: NaN
-        }, {
-            watch: true
-        })
-        array._.length = array.length
-        array._.$watch("length", function (a, b) {
-            $emit.call(array.$up, array.$pathname + ".length", [a, b])
-        })
-        if (watch) {
-            hideProperty(array, "$watch", function () {
-                return $watch.apply(array, arguments)
+            if (_this.$active) {
+                collectDependency(pathname, heirloom)
+            }
+            return old
+        },
+        set: function (val) {
+            if (old === val)
+                return
+            val = observe(val, old, heirloom, {
+                pathname: pathname
             })
-        }
-
-        if (W3C) {
-            Object.defineProperty(array, "$model", $modelDescriptor)
-        } else {
-            array.$model = toJson(array)
-        }
-        for (var j = 0, n = array.length; j < n; j++) {
-            var el = array[j] = observe(array[j], 0, 1, 1)
-            if (Object(el) === el) {//#1077
-                el.$up = array
+            if (!this.configurable) {
+                _this = this // 保存当前子VM的引用
             }
+            if (_this.$active) {
+                // console.log(heirloom)
+                console.log("$fire ", pathname, _this, heirloom.vm)
+                heirloom.vm.$fire(pathname, val, old)
+            }
+            old = val
+        },
+        enumerable: true,
+        configurable: true
+    }
+}
+
+function createProxy(before, after) {
+    var accessors = {}
+    var keys = {}
+    var b = before.$accessors
+    var a = after.$accessors
+    //收集所有键值对及访问器属性
+    for (var k in before) {
+        keys[k] = before[k]
+        if (b[k]) {
+            accessors[k] = b[k]
         }
-
-        return array
     }
+    for (var k in after) {
+        keys[k] = after[k]
+        if (a[k]) {
+            accessors[k] = a[k]
+        }
+    }
+    var $vmodel = {}
+    $vmodel = defineProperties($vmodel, accessors, keys)
+    for (var k in keys) {
+        if (!accessors[k]) {//添加不可监控的属性
+            $vmodel[k] = keys[k]
+        }
+    }
+    $vmodel.$active = true
+    return $vmodel
 }
 
-function hideProperty(host, name, value) {
-    if (canHideOwn) {
-        Object.defineProperty(host, name, {
-            value: value,
-            writable: true,
-            enumerable: false,
-            configurable: true
-        })
-    } else {
-        host[name] = value
-    }
-}
+avalon.createProxy = createProxy
+
 
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -342,11 +351,11 @@ function toJson(val) {
     } else if (xtype === "object") {
         var obj = {}
         for (i in val) {
-            if(i === "__proxy__" || i === "__data__" || i === "__const__")
+            if (i === "__proxy__" || i === "__data__" || i === "__const__")
                 continue
             if (val.hasOwnProperty(i)) {
                 var value = val[i]
-                obj[i] = value && value.nodeType ? value :toJson(value)
+                obj[i] = value && value.nodeType ? value : toJson(value)
             }
         }
         return obj
@@ -361,4 +370,17 @@ var $modelDescriptor = {
     set: noop,
     enumerable: false,
     configurable: true
+}
+
+function hideProperty(host, name, value) {
+    if (canHideOwn) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else {
+        host[name] = value
+    }
 }

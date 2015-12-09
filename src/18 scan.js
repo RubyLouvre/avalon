@@ -3,9 +3,14 @@
  **********************************************************************/
 
 avalon.scan = function (elem, vmodel) {
-    elem = elem || root
-    var vmodels = vmodel ? [].concat(vmodel) : []
-    scanTag(elem, vmodels)
+    
+    var array = []
+    
+//    while(elem.getAttribute("ms-controller")){
+//        
+//    }
+  
+  
 }
 
 //http://www.w3.org/TR/html5/syntax.html#void-elements
