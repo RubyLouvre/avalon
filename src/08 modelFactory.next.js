@@ -3,19 +3,6 @@ avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
 
-var defineProperty = Object.defineProperty
-var canHideOwn = true
-//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
-//标准浏览器使用__defineGetter__, __defineSetter__实现
-try {
-    defineProperty({}, "_", {
-        value: "x"
-    })
-    var defineProperties = Object.defineProperties
-} catch (e) {
-    canHideOwn = false
-}
-
 avalon.define = function (definition) {
     var $id = definition.$id
     if (!$id) {
@@ -29,9 +16,25 @@ avalon.define = function (definition) {
 
     avalon.vmodels[$id] = vmodel
     vmodel.$id = $id
+    avalon.ready(function () {
+        if (!vtree[$id]) {
+            var all = document.getElementsByTagName("*")
+            for (var i = 0, node; node = all[i++]; ) {
+                if (node.nodeType !== 1)
+                    continue
+                if (node.getAttribute("ms-controller") === $id
+                        || node.getAttribute("ms-important") === $id) {
+                    dtree[$id] = node;
+                    vtree[$id] = buildVTree(node.outerHTML)
+                    break
+                }
+            }
+        }
+    })
 
     return vmodel
 }
+
 
 //observeArray及observeObject的包装函数
 function observe(definition, old, heirloom, options) {
@@ -50,6 +53,8 @@ function observe(definition, old, heirloom, options) {
     }
 }
 
+
+//将普通数组转换为监控数组
 function observeArray(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
@@ -59,7 +64,6 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-
         array._ = observeObject({
             length: NaN
         }, heirloom, {
@@ -70,11 +74,9 @@ function observeArray(array, old, heirloom, options) {
         array._.$watch("length", function (a, b) {
         })
 
-        if (W3C) {
-            hideProperty(array, "$model", $modelDescriptor)
-        } else {
-            array.$model = toJson(array)
-        }
+
+        hideProperty(array, "$model", $modelDescriptor)
+
         var arrayOptions = {
             pathname: options.pathname + "*",
             watch: true
@@ -86,8 +88,11 @@ function observeArray(array, old, heirloom, options) {
         return array
     }
 }
+
+
 function Component() {
 }
+
 
 /*
  将一个对象转换为一个VM
@@ -98,7 +103,6 @@ function Component() {
  $fire: 触发$watch回调
  $active:boolean,false时防止依赖收集
  $model:返回一个纯净的JS对象
- $accessors:avalon.js独有的对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
  
@@ -107,54 +111,63 @@ function Component() {
  $$skipArray被hasOwnProperty后返回false
  $skipArray被hasOwnProperty后返回true
  */
-
-
-
-var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
-        "$skipArray,$active,$accessors")
-
+var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$active")
 
 function observeObject(definition, heirloom, options) {
     options = options || {}
     heirloom = heirloom || {}
 
-    var $skipArray = {}
-    if (definition.$skipArray) {//收集所有不可监听属性
+    var $skipArray = {}//收集所有不可监听属性
+    if (definition.$skipArray) {
         $skipArray = oneObject(definition.$skipArray)
         delete definition.$skipArray
     }
     var $computed = getComputed(definition) // 收集所有计算属性
-    var $pathname = options.pathname || ""
-    var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    var $accessors = {} //用于储放所有访问器属性的定义
-    var hasOwn = {}    //用于实现hasOwnProperty方法
-    var simple = []    //用于储放简单类型的访问器属性的名字
-    var skip = []
 
-    for (var key in definition) {
-        if ($$skipArray[key])
-            continue
-        var val = definition[key]
-        hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray)) {
-            simple.push(key)
-            var path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path, heirloom)
-        } else {
-            skip.push(key)
+    for (var key in $computed) {
+        var val = $computed[key]
+        Object.defineProperty(definition, key, {
+            set: val.set || noop,
+            get: val.get,
+            enumerable: true,
+            configurable: true
+        })
+    }
+    var heirloom = {
+        set: function (target, property, value, receiver) {
+            if (!isObervable(property, value, $skipArray)) {
+                return target[property] = value
+            }
+            var oldValue = target[property]
+            var path = receiver.$pathname ?
+                    receiver.$pathname + "." + property : property
+            if ((typeof value === "object") && !("$pathname" in value)) {
+                value = new Proxy(value, heirloom)
+                value.$pathname = path
+            }
+            if (value !== oldValue) {
+                target[property] = value
+                console.log("emitChange", path, value, oldValue)
+            }
+        },
+        get: function (target, property) {
+            return target[property]
         }
     }
 
-    for (var name in $computed) {
-        hasOwn[key] = true
-        path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
-    }
+
+
+   
+
+//    for (var name in $computed) {
+//        hasOwn[key] = true
+//        path = $pathname ? $pathname + "." + key : key
+//        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
+//    }
 
     $accessors["$model"] = $modelDescriptor
 
-    $vmodel = defineProperties($vmodel, $accessors, definition)
-
+   
     function trackBy(name) {
         return hasOwn[name] === true
     }
@@ -169,29 +182,9 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "$id", "anonymous")
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", $accessors)
-    if (options.watch) {
-        hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", function () {
-            // return $watch.apply($vmodel, arguments)
-        })
-        hideProperty($vmodel, "$fire", function (path, a) {
-            if (path.indexOf("all!") === 0) {
-                var ee = path.slice(4)
-                for (var i in avalon.vmodels) {
-                    var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.apply(v, [ee, a])
-                }
-            } else {
-                $emit.call($vmodel, path, [a])
-            }
-        })
-        heirloom.vm = heirloom.vm || $vmodel
-    }
-
-    for (name in $computed) {
-        val = $vmodel[name]
-    }
+    //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
+    //直接用Object.getOwnPropertyDescriptor获取它们
+    
 
     $vmodel.$active = true
     return $vmodel
@@ -251,13 +244,12 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObervable(key, value, skipArray) {
+function isObservable(key, value, skipArray) {
     return key.charAt(0) === "$" ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
 }
-
 
 function makeObservable(pathname, heirloom) {
     var old = NaN, _this = {}
@@ -294,35 +286,34 @@ function makeObservable(pathname, heirloom) {
 
 function createProxy(before, after) {
     var accessors = {}
-    var keys = {}, k
-    var b = before.$accessors
-    var a = after.$accessors
+    var skip = {}
     //收集所有键值对及访问器属性
-    for (k in before) {
-        keys[k] = before[k]
-        if (b[k]) {
-            accessors[k] = b[k]
+    for (var k in before) {
+        var accessor = Object.getOwnPropertyDescriptor(before, k)
+        if (accessor.set) {
+            accessors[k] = accessor
+        } else {
+            skip[k] = before[k]
         }
     }
-    for (k in after) {
-        keys[k] = after[k]
-        if (a[k]) {
-            accessors[k] = a[k]
+    for (var k in after) {
+        var accessor = Object.getOwnPropertyDescriptor(after, k)
+        if (accessor.set) {
+            accessors[k] = accessor
+        } else {
+            skip[k] = after[k]
         }
     }
     var $vmodel = {}
-    $vmodel = defineProperties($vmodel, accessors, keys)
-    for (k in keys) {
-        if (!accessors[k]) {//添加不可监控的属性
-            $vmodel[k] = keys[k]
-        }
+    $vmodel = Object.defineProperties($vmodel, accessors)
+    for (var k in skip) {
+        $vmodel[k] = keys[k]
     }
     $vmodel.$active = true
     return $vmodel
 }
 
 avalon.createProxy = createProxy
-
 
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -335,8 +326,6 @@ function toJson(val) {
     } else if (xtype === "object") {
         var obj = {}
         for (i in val) {
-            if (i === "__proxy__" || i === "__data__" || i === "__const__")
-                continue
             if (val.hasOwnProperty(i)) {
                 var value = val[i]
                 obj[i] = value && value.nodeType ? value : toJson(value)
@@ -356,15 +345,71 @@ var $modelDescriptor = {
     configurable: true
 }
 
+
 function hideProperty(host, name, value) {
-    if (canHideOwn) {
-        Object.defineProperty(host, name, {
-            value: value,
-            writable: true,
-            enumerable: false,
-            configurable: true
-        })
-    } else {
-        host[name] = value
-    }
+    Object.defineProperty(host, name, {
+        value: value,
+        writable: true,
+        enumerable: false,
+        configurable: true
+    })
 }
+/*
+            var handler = {
+                vm: null,
+               
+                set: function (target, property, value, receiver) {
+                    
+        
+                    var oldValue = target[property]
+
+                    var p = receiver.pathname ? receiver.pathname + "." + property : property
+
+                    // console.log(value)
+                    if ((typeof value === "object") && !("pathname" in value)) {
+                        value = new Proxy(value, handler)
+                        value.pathname = p
+                    }
+
+
+                    if (value !== oldValue) {
+                        target[property] = value
+                        console.log("emitChange", p, value, oldValue)
+                    }
+
+
+                },
+                get: function (target, property) {
+
+                    return target[property]
+                }
+            }
+
+            var  obj = {
+                p: 1,
+                d: 88
+            }
+            Object.defineProperty(obj, "fullName", {
+                get: function () {
+                    return this.p
+                },
+                set: function (v) {
+                    this.p = v + 1
+                }
+            })
+            var proxy = new Proxy(obj, handler)
+            //console.log(Object.prototype.toString.call(proxy)+"")
+            proxy.pathname = ""
+            handler.vm = proxy
+
+            proxy.p = 9
+            proxy.fn = function(){}
+            proxy.d = {i: 0}
+            proxy.d.oo = 444
+            proxy.e = 4
+            proxy.fullName = 999
+            console.log(proxy.fullName)
+            proxy.fullName = 888
+            console.log(proxy.hasOwnProperty("p"))
+            
+            */

@@ -31,27 +31,6 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}} --> aaa
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
-        if (binding.type === "include") {
-            var elem = binding.element
-            effectBinding(elem, binding)
-            binding.includeRendered = getBindingCallback(elem, "data-include-rendered", binding.vmodels)
-            binding.includeLoaded = getBindingCallback(elem, "data-include-loaded", binding.vmodels)
-            var outer = binding.includeReplace = !!avalon(elem).data("includeReplace")
-            if (avalon(elem).data("includeCache")) {
-                binding.templateCache = {}
-            }
-            binding.start = DOC.createComment("ms-include")
-            binding.end = DOC.createComment("ms-include-end")
-            if (outer) {
-                binding.element = binding.end
-                binding._element = elem
-                elem.parentNode.insertBefore(binding.start, elem)
-                elem.parentNode.insertBefore(binding.end, elem.nextSibling)
-            } else {
-                elem.insertBefore(binding.start, elem.firstChild)
-                elem.appendChild(binding.end)
-            }
-        }
     },
     update: function (val) {
         var elem = this.element

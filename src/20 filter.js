@@ -59,17 +59,6 @@ var filters = avalon.filters = {
         truncation = typeof truncation === "string" ?  truncation : "..." 
         return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
-    $filter: function(val) {
-        for (var i = 1, n = arguments.length; i < n; i++) {
-            var array = arguments[i]
-            var fn = avalon.filters[array[0]]
-            if (typeof fn === "function") {
-                var arr = [val].concat(array.slice(1))
-                val = fn.apply(null, arr)
-            }
-        }
-        return val
-    },
     camelize: camelize,
     //https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
     //    <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 

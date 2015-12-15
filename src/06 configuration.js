@@ -19,12 +19,12 @@ function kernel(settings) {
 }
 avalon.config = kernel
 
-var openTag, closeTag, rexpr, rexprg, rbind, rregexp = /[-.*+?^${}()|[\]\/\\]/g
+var openTag, closeTag, rexpr, rexprg, rbind, rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 function escapeRegExp(target) {
     //http://stevenlevithan.com/regex/xregexp/
     //将字符串安全格式化为正则表达式的源码
-    return (target + "").replace(rregexp, "\\$&")
+    return (target + "").replace(rescape, "\\$&")
 }
 
 var plugins = {

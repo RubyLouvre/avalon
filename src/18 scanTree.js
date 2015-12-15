@@ -1,4 +1,4 @@
-function updateVTree(arr, vm) {
+function scanTree(arr, vm) {
     arr.forEach(function (node, index) {
         switch (node.type) {
             case "#comment":
@@ -19,7 +19,7 @@ function updateVTree(arr, vm) {
                 break
             default:
                 if (!node.skip) {
-                    arr[index] = updateVElement(node, vm)
+                    arr[index] = scanTag(node, vm)
                 }
                 break
         }

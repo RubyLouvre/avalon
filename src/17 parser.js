@@ -1,237 +1,185 @@
-var keyMap = {}
-var keys = ["break,case,catch,continue,debugger,default,delete,do,else,false",
+
+
+
+var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
+var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rmethod = /\b\d+(\.\w+\s*\()/g
+var keywords = [
+    "break,case,catch,continue,debugger,default,delete,do,else,false",
     "finally,for,function,if,in,instanceof,new,null,return,switch,this",
     "throw,true,try,typeof,var,void,while,with", /* 关键字*/
     "abstract,boolean,byte,char,class,const,double,enum,export,extends",
     "final,float,goto,implements,import,int,interface,long,native",
     "package,private,protected,public,short,static,super,synchronized",
     "throws,transient,volatile", /*保留字*/
-    "arguments,let,yield,undefined"].join(",")
-keys.replace(/\w+/g, function (a) {
-    keyMap[a] = true
+    "arguments,let,yield,undefined" /* ECMA 5 - use strict*/].join(",")
+var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
+var rpaths = /[$_a-z]\w*(\.[$_a-z]\w*)*/g
+var rfilter = /^[$_a-z]\w*/
+//当属性发生变化时, 执行update
+var rfill = /\?\?\d+/g
+var brackets = /\(([^)]*)\)/
+function K(a) {
+    return a
+}
+
+var pathPool = new Cache(256)
+//缓存求值函数，以便多次利用
+var evaluatorPool = new Cache(512)
+
+
+avalon.mix({
+    __read__: function () {
+        var fn = avalon.filter[name]
+        if (fn) {
+            return fn.get ? fn.get : fn
+        }
+        return K
+    },
+    __write__: function () {
+        var fn = avalon.filter[name]
+        if (fn) {
+            return fn.set ? fn.get : fn
+        }
+        return K
+    }
 })
 
-var ridentStart = /[a-z_$]/i
-var rwhiteSpace = /[\s\uFEFF\xA0]/
-function getIdent(input, lastIndex) {
-    var result = []
-    var subroutine = !!lastIndex
-    lastIndex = lastIndex || 0
-    //将表达式中的标识符抽取出来
-    var state = "unknown"
-    var variable = ""
-    for (var i = 0; i < input.length; i++) {
-        var c = input.charAt(i)
-        if (c === "'" || c === '"') {//字符串开始
-            if (state === "unknown") {
-                state = c
-            } else if (state === c) {//字符串结束
-                state = "unknown"
-            }
-        } else if (c === "\\") {
-            if (state === "'" || state === '"') {
-                i++
-            }
-        } else if (ridentStart.test(c)) {//碰到标识符
-            if (state === "unknown") {
-                state = "variable"
-                variable = c
-            } else if (state === "maybePath") {
-                variable = result.pop()
-                variable += "." + c
-                state = "variable"
-            } else if (state === "variable") {
-                variable += c
-            }
-        } else if (/\w/.test(c)) {
-            if (state === "variable") {
-                variable += c
-            }
-        } else if (c === ".") {
-            if (state === "variable") {
-                if (variable) {
-                    result.push(variable)
-                    variable = ""
-                    state = "maybePath"
-                }
-            }
-        } else if (c === "[") {
-            if (state === "variable" || state === "maybePath") {
-                if (variable) {//如果前面存在变量,收集它
-                    result.push(variable)
-                    variable = ""
-                }
-                var lastLength = result.length
-                var last = result[lastLength - 1]
-                var innerResult = getIdent(input.slice(i), i)
-                if (innerResult.length) {//如果括号中存在变量,那么这里添加通配符
-                    result[lastLength - 1] = last + ".*"
-                    result = innerResult.concat(result)
-                } else { //如果括号中的东西是确定的,直接转换为其子属性
-                    var content = input.slice(i + 1, innerResult.i)
-                    try {
-                        var text = (scpCompile(["return " + content]))()
-                        result[lastLength - 1] = last + "." + text
-                    } catch (e) {
-                    }
-                }
-                state = "maybePath"//]后面可能还接东西
-                i = innerResult.i
-            }
-        } else if (c === "]") {
-            if (subroutine) {
-                result.i = i + lastIndex
-                addVar(result, variable)
-                return result
-            }
-        } else if (rwhiteSpace.test(c) && c !== "\r" && c !== "\n") {
-            if (state === "variable") {
-                if (addVar(result, variable)) {
-                    state = "maybePath" // aaa . bbb 这样的情况
-                }
-                variable = ""
-            }
-        } else {
-            addVar(result, variable)
-            state = "unknown"
-            variable = ""
+function parseExpr(expr, vmodel, binding) {
+    //目标生成一个函数
+    binding = binding || {}
+    var category = (binding.type.match(/on|duplex/) || ["other"])[0]
+    var input = expr.trim()
+    var fn = evaluatorPool.get(category + ":" + input)
+    var canReturn = false
+    if (typeof fn === "function") {
+        binding.getter = fn
+        canReturn = true
+    }
+    if (category === "duplex") {
+        fn = evaluatorPool.get(category + ":" + input + ":setter")
+        if (typeof fn === "function") {
+            binding.setter = fn
         }
     }
-    addVar(result, variable)
-    return result
-}
-
-function addVar(array, element) {
-    if (element && !keyMap[element]) {
-        array.push(element)
-        return true
+    if (canReturn)
+        return
+    var number = 1
+    //相同的表达式生成相同的函数
+    var maps = {}
+    function dig(a) {
+        var key = "??" + number++
+        maps[key] = a
+        return key
     }
-}
+    function dig2(a, b) {
+        var key = "??" + number++
+        maps[key] = b
+        return key
+    }
+    function fill(a) {
+        return maps[a]
+    }
 
-function addAssign(vars, vmodel, name, binding) {
-    var ret = [],
-            prefix = " = " + name + "."
-    for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var arr = prop.split("."), a
-        var first = arr[0]
-        while (a = arr.shift()) {
-            if (vmodel.hasOwnProperty(a)) {
-                ret.push(first + prefix + first)
-
-                binding.observers.push({
-                    v: vmodel,
-                    p: prop
+    input = input.replace(rregexp, dig).//移除所有正则
+            replace(rstring, dig).//移除所有字符串
+            replace(rmethod, dig2).//移除所有正则或字符串方法
+            replace(/\|\|/g, dig).//移除所有短路与
+            replace(/\$event/g, dig).//去掉事件对象
+            replace(/\s*(\.|\1)\s*/g, "$1").//移除. |两端空白
+            split(/\|(?=\w)/) //分离过滤器
+    var paths = {}
+    //处理表达式的本体
+    var body = input.shift().
+            replace(rkeywords, dig).
+            replace(rpaths, function (a) {
+                paths[a] = true //抽取所有要$watch的东西
+                return a
+            })
+    //处理表达式的过滤器部分
+    var footers = input.map(function (str) {
+        return str.replace(/\w+/, dig).//去掉过滤名
+                replace(rkeywords, dig).//去掉关键字
+                replace(rpaths, function (a) {
+                    paths[a] = true //抽取所有要$watch的东西
+                    return a
                 })
-
-                vars.splice(i, 1)
-            }
-        }
-    }
-    return ret
-}
-
-var rproxy = /(\$proxy\$[a-z]+)\d+$/
-var variablePool = new Cache(218)
-//缓存求值函数，以便多次利用
-var evaluatorPool = new Cache(128)
-
-function getVars(expr) {
-    expr = expr.trim()
-    var ret = variablePool.get(expr)
-    if (ret) {
-        return ret.concat()
-    }
-    var array = getIdent(expr)
-    var uniq = {}
-    var result = []
-    for (var i = 0, el; el = array[i++]; ) {
-        if (!uniq[el]) {
-            uniq[el] = 1
-            result.push(el)
-        }
-    }
-    return variablePool.put(expr, result).concat()
-}
-
-function parseExpr(expr, vmodels, binding) {
-    var filters = binding.filters
-    if (typeof filters === "string" && filters.trim() && !binding._filters) {
-        binding._filters = parseFilter(filters.trim())
-    }
-
-    var vars = getVars(expr)
-
-    var expose = new Date() - 0
-    var assigns = []
-    var names = []
-    var args = []
-    binding.observers = []
-    for (var i = 0, sn = vmodels.length; i < sn; i++) {
-        if (vars.length) {
-            var name = "vm" + expose + "_" + i
-            names.push(name)
-            args.push(vmodels[i])
-            assigns.push.apply(assigns, addAssign(vars, vmodels[i], name, binding))
-        }
-    }
-    binding.args = args
-    var dataType = binding.type
-    var exprId = vmodels.map(function (el) {
-        return String(el.$id).replace(rproxy, "$1")
-    }) + expr + dataType
-    var getter = evaluatorPool.get(exprId) //直接从缓存，免得重复生成
-    if (getter) {
-        if (dataType === "duplex") {
-            var setter = evaluatorPool.get(exprId + "setter")
-            binding.setter = setter.apply(setter, binding.args)
-        }
-        return binding.getter = getter
-    }
-
-    if (!assigns.length) {
-        assigns.push("fix" + expose)
-    }
-
-    if (dataType === "duplex") {
-        var nameOne = {}
-        assigns.forEach(function (a) {
-            var arr = a.split("=")
-            nameOne[arr[0].trim()] = arr[1].trim()
+    }).map(function (str) {
+        str = str.replace(rfill, fill) //还原
+        var hasBracket = false
+        str = str.replace(brackets, function (a, b) {
+            hasBracket = true
+            return /\S/.test(b) ?
+                    "(__value__," + b + ");\n" :
+                    "(__value__);\n"
         })
-        expr = expr.replace(/[\$\w]+/, function (a) {
-            return nameOne[a] ? nameOne[a] : a
-        })
-        /* jshint ignore:start */
-        var fn2 = scpCompile(names.concat("'use strict';" +
-                "return function(vvv){" + expr + " = vvv\n}\n"))
-        /* jshint ignore:end */
-        evaluatorPool.put(exprId + "setter", fn2)
-        binding.setter = fn2.apply(fn2, binding.args)
-    }
+        if (!hasBracket) {
+            str += "(__value__);\n"
+        }
+        str = str.replace(/(\w+)/, "avalon.__read__('$1')")
+        return "__value__ = " + str
+    })
 
-    if (dataType === "on") { //事件绑定
-        if (expr.indexOf("(") === -1) {
-            expr += ".call(this, $event)"
+    var headers = []
+    var unique = {}
+    for (var i in paths) {
+        if (!unique[i]) {
+            var key = i.split(".").shift()
+            unique[key] = true
+            headers.push("var " + key + " =  __vm__." + key + ";\n")
+        }
+    }
+    body = body.replace(rfill, fill).trim()
+    var args = ["__vm__"]
+    if (category === "on") {
+        args.push("$event")
+        if (body.indexOf("(") === -1) {//如果不存在括号
+            body += ".call(this, $event)"
         } else {
-            expr = expr.replace("(", ".call(this,")
+            body = body.replace(brackets, function (a, b) {
+                var array = b.split(/\s*,\s*/).filter(function (e) {
+                    return /\S/.test(e)
+                })
+                array.unshift("this")
+                if (array.indexOf("$event") === -1) {
+                    array.push("$event")
+                }
+                return  ".call(" + array + ")"
+            })
         }
-        names.push("$event")
-        expr = "\nreturn " + expr + ";" //IE全家 Function("return ")出错，需要Function("return ;")
-        var lastIndex = expr.lastIndexOf("\nreturn")
-        var header = expr.slice(0, lastIndex)
-        var footer = expr.slice(lastIndex)
-        expr = header + "\n" + footer
-    } else {
-        expr = "\nreturn " + expr + ";" //IE全家 Function("return ")出错，需要Function("return ;")
+    } else if (category === "duplex") {
+        args.push("__value__", "__bind__")
+        //Setter
+        var setters = footers.map(function (str) {
+            str = str.replace("__read__", "__write__")
+            return str.replace(");", ",__bind__);")
+        })
+        //Getter
+        footers = footers.map(function (str) {
+            return str.replace(");", ",__bind__);")
+        })
+        fn = new Function(args.join(","),
+                setters.join("") +
+                "__vm__." + body + " = __value__;")
+        binding.setter = evaluatorPool.put(category +
+                ":" + input + ":setter", fn)
+        avalon.log(binding.setter + "***")
     }
-    /* jshint ignore:start */
-    getter = scpCompile(names.concat("'use strict';\nvar " +
-            assigns.join(",\n") + expr))
-    /* jshint ignore:end */
-
-    return  evaluatorPool.put(exprId, getter)
-
+    headers.push("var __value = " + body + ";\n")
+    headers.push.apply(headers, footers)
+    headers.push("return __value__;")
+    fn = new Function(args.join(","), headers.join(""))
+    binding.getter = evaluatorPool.put(category + ":" + input, fn)
+    avalon.log(binding.getter + "")
 }
+
+
+
+
+
+
+
+
 
 function normalizeExpr(code) {
     var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
@@ -252,28 +200,4 @@ function normalizeExpr(code) {
 avalon.normalizeExpr = normalizeExpr
 avalon.parseExprProxy = parseExpr
 
-var rthimRightParentheses = /\)\s*$/
-var rthimOtherParentheses = /\)\s*\|/g
-var rquoteFilterName = /\|\s*([$\w]+)/g
-var rpatchBracket = /"\s*\["/g
-var rthimLeftParentheses = /"\s*\(/g
-function parseFilter(filters) {
-    filters = filters
-            .replace(rthimRightParentheses, "")//处理最后的小括号
-            .replace(rthimOtherParentheses, function () {//处理其他小括号
-                return "],|"
-            })
-            .replace(rquoteFilterName, function (a, b) { //处理|及它后面的过滤器的名字
-                return "[" + quote(b)
-            })
-            .replace(rpatchBracket, function () {
-                return '"],["'
-            })
-            .replace(rthimLeftParentheses, function () {
-                return '",'
-            }) + "]"
-    /* jshint ignore:start */
-    return  scpCompile(["return [" + filters + "]"])()
-    /* jshint ignore:end */
-
-}
+v

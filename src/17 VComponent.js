@@ -52,7 +52,6 @@ avalon.components["if"] = {
     update: function (that, vm) {
         var render = parseExpr(that.props.expr, vm)
         if (render) {
-            console.log(that.props._children)
             that.children = updateVTree(that.props._children, vm)
         } else {
             that.children = [new VComment("ms-if")]

@@ -4,7 +4,7 @@ function VComment(text) {
     this.skip = true
 }
 VComment.prototype = {
-    constructor:VComment,
+    constructor: VComment,
     toDOM: function () {
         return document.createComment(this.nodeValue)
     },
