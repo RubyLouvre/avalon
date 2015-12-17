@@ -858,18 +858,18 @@ function observeObject(definition, heirloom, options) {
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.watch) {
         hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", function () {
-
-        })
-        hideProperty($vmodel, "$fire", function (path, a) {
+        hideProperty($vmodel, "$watch", $watch)
+        hideProperty($vmodel, "$fire", function (path, a, b) {
             if (path.indexOf("all!") === 0) {
-                var ee = path.slice(4)
+                var p = path.slice(4)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.apply(v, [ee, a])
+                    v.$fire && v.$fire(p, a, b)
                 }
             } else {
-                $emit.call($vmodel, path, [a])
+                if (heirloom.vm) {
+                    $emit(heirloom.vm, $vmodel, path, a, b)
+                }
             }
         })
         heirloom.vm = heirloom.vm || $vmodel
@@ -928,7 +928,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 value.set.call(_this, x)
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
-                    heirloom.vm.$fire(pathname, newer, older)
+                    $emit(heirloom.vm, _this, pathname, newer, older)
                 }
             }
         },
@@ -966,9 +966,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-                // console.log(heirloom)
-                console.log("$fire ", pathname, _this, heirloom.vm)
-                heirloom.vm.$fire(pathname, val, old)
+                $emit(heirloom.vm, _this, pathname, val, old)
             }
             old = val
         },
@@ -1052,6 +1050,33 @@ function hideProperty(host, name, value) {
 //监听对象属性值的变化(注意,数组元素不是数组的属性),通过对劫持当前对象的访问器实现
 //监听对象或数组的结构变化, 对对象的键值对进行增删重排, 或对数组的进行增删重排,都属于这范畴
 //   通过比较前后代理VM顺序实现
+function $watch(expr, funOrObj) {
+    var hive = (this.$events = this.$events || {})
+    var list = (hive[expr] = hive[expr] || [])
+    var data = typeof funOrObj === "function" ? {
+        update: funOrObj
+    } : funOrObj
+    avalon.Array.ensure(list, data)
+    return function () {
+        avalon.Array.remove(list, data)
+    }
+}
+
+function $emit(topVm, curVm, path, a, b) {
+    var hive = topVm.$events
+    if (hive && hive[path]) {
+        var list = hive[path]
+        for (var i = list.length - 1; i <= 0; i--) {
+            var data = list[i]
+            if (data.remove) {
+                list.splice(i, 1)
+            } else {
+                data.update.call(curVm, a, b)
+            }
+        }
+    }
+}
+
 /*********************************************************************
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
@@ -2865,7 +2890,6 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}} --> aaa
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
-        console.log(binding)
     },
     update: function (val, binding) {
         var elem = binding.element

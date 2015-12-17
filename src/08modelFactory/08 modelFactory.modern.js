@@ -178,7 +178,7 @@ function observeObject(definition, heirloom, options) {
                 var p = path.slice(4)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.call(v, p, a, b)
+                    v.$fire && v.$fire(p, a, b)
                 }
             } else {
                 if (heirloom.vm) {
@@ -242,7 +242,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 value.set.call(_this, x)
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
-                    heirloom.vm.$fire(pathname, newer, older)
+                    $emit(heirloom.vm, _this, pathname, newer, older)
                 }
             }
         },
@@ -280,9 +280,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-                // console.log(heirloom)
-                console.log("$fire ", pathname, _this, heirloom.vm)
-                heirloom.vm.$fire(pathname, val, old)
+                $emit(heirloom.vm, _this, pathname, val, old)
             }
             old = val
         },

@@ -1008,6 +1008,7 @@ function observeArray(array, old, heirloom, options) {
         })
         array._.length = array.length
         array._.$watch("length", function (a, b) {
+            
         })
 
         if (W3C) {
@@ -1112,18 +1113,20 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "$accessors", $accessors)
     if (options.watch) {
         hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", function () {
-            // return $watch.apply($vmodel, arguments)
+        hideProperty($vmodel, "$watch", function (expr, fn) {
+            return $watch.call($vmodel, expr, fn)
         })
-        hideProperty($vmodel, "$fire", function (path, a) {
-            if (path.indexOf("all!") === 0) {
-                var ee = path.slice(4)
+        hideProperty($vmodel, "$fire", function (expr, a, b) {
+            if (expr.indexOf("all!") === 0) {
+                var p = expr.slice(4)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.apply(v, [ee, a])
+                    v.$fire && v.$fire(p, a, b)
                 }
             } else {
-                $emit.call($vmodel, path, [a])
+                if (heirloom.vm) {
+                    $emit(heirloom.vm, $vmodel, expr, a, b)
+                }
             }
         })
         heirloom.vm = heirloom.vm || $vmodel
@@ -1182,7 +1185,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 value.set.call(_this, x)
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
-                    heirloom.vm.$fire(pathname, newer, older)
+                    $emit(heirloom.vm, _this, pathname, newer, older)
                 }
             }
         },
@@ -1207,7 +1210,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-              //以后再处理  collectDependency(pathname, heirloom)
+                //以后再处理  collectDependency(pathname, heirloom)
             }
             return old
         },
@@ -1221,9 +1224,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-                // console.log(heirloom)
-                console.log("$fire ", pathname, _this, heirloom.vm)
-                heirloom.vm.$fire(pathname, val, old)
+                $emit(heirloom.vm, _this, pathname, val, old)
             }
             old = val
         },
@@ -1411,6 +1412,33 @@ if (!canHideOwn) {
             }
             var ret = window[className + "Factory"](accessors, VBMediator) //得到其产品
             return ret //得到其产品
+        }
+    }
+}
+
+function $watch(expr, funOrObj) {
+    var hive = (this.$events = this.$events || {})
+    var list = (hive[expr] = hive[expr] || [])
+    var data = typeof funOrObj === "function" ? {
+        update: funOrObj
+    } : funOrObj
+    avalon.Array.ensure(list, data)
+    return function () {
+        avalon.Array.remove(list, data)
+    }
+}
+
+function $emit(topVm, curVm, path, a, b) {
+    var hive = topVm.$events
+    if (hive && hive[path]) {
+        var list = hive[path]
+        for (var i = list.length - 1; i <= 0; i--) {
+            var data = list[i]
+            if (data.remove) {
+                list.splice(i, 1)
+            } else {
+                data.update.call(curVm, a, b)
+            }
         }
     }
 }
@@ -3527,7 +3555,6 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}} --> aaa
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
-        console.log(binding)
     },
     update: function (val, binding) {
         var elem = binding.element
