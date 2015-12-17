@@ -46,7 +46,6 @@ function parseVProps(node, str) {
                     if (name === "with")
                         name = "each"
                     value = value + "★" + (param || "el")
-                    // change[name] = value
                     break
             }
         }

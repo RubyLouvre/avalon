@@ -22,7 +22,7 @@ avalon.cssName = function (name, host, camelCase) {
 }
 
 cssHooks["@:set"] = function (node, name, value) {
-    try { 
+    try {
         //node.style.width = NaN;node.style.width = "xxxxxxx";
         //node.style.width = undefine 在旧式IE下会抛异常
         node.style[name] = value
