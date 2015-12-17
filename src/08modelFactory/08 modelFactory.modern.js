@@ -172,18 +172,18 @@ function observeObject(definition, heirloom, options) {
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.watch) {
         hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", function () {
-
-        })
-        hideProperty($vmodel, "$fire", function (path, a) {
+        hideProperty($vmodel, "$watch", $watch)
+        hideProperty($vmodel, "$fire", function (path, a, b) {
             if (path.indexOf("all!") === 0) {
-                var ee = path.slice(4)
+                var p = path.slice(4)
                 for (var i in avalon.vmodels) {
                     var v = avalon.vmodels[i]
-                    v.$fire && v.$fire.apply(v, [ee, a])
+                    v.$fire && v.$fire.call(v, p, a, b)
                 }
             } else {
-                $emit.call($vmodel, path, [a])
+                if (heirloom.vm) {
+                    $emit(heirloom.vm, $vmodel, path, a, b)
+                }
             }
         })
         heirloom.vm = heirloom.vm || $vmodel
