@@ -11,10 +11,17 @@
 // 创建组件
 
 // 定义vm
-avalon.define({
-    $id: 'test',
-    data: '司徒正美'
-})
+        var vm = avalon.define({
+            $id: 'test',
+            data: '司徒正美',
+            a: {
+                b: 3
+            }
+        })
+//        vm.$watch("a.b", function (a, b, c) {
+//            console.log(a, b, c)
+//        })
+//        vm.a.b = 9
 //24分;每项3分合格;  
 
 

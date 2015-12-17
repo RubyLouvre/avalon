@@ -1,29 +1,3 @@
-var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
-    "declare,disabled,defer,defaultChecked,defaultSelected",
-    "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
-    "open,readOnly,selected"
-].join(",")
-var boolMap = {}
-bools.replace(rword, function (name) {
-    boolMap[name.toLowerCase()] = name
-})
-
-var propMap = {//属性名映射
-    "accept-charset": "acceptCharset",
-    "char": "ch",
-    "charoff": "chOff",
-    "class": "className",
-    "for": "htmlFor",
-    "http-equiv": "httpEquiv"
-}
-
-var anomaly = ["accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan",
-    "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight",
-    "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
-].join(",")
-anomaly.replace(rword, function (name) {
-    propMap[name.toLowerCase()] = name
-})
 
 
 var attrDir = avalon.directive("attr", {
@@ -32,62 +6,18 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
     },
-    update: function (val, binding) {
+    change: function (val, binding) {
         var elem = binding.element
-        var props = elem.props
-        elem.change = "update"
-        var name = binding.param
-        name = propMap[name] || name
-        var toRemove = (val === false) || (val === null) || (val === void 0)
-        if (toRemove) {
-            props[name] = false
-        } else {
-            props[name] = val
-        }
-
-    },
-    update2: function (val) {
-        var elem = this.element
-        var attrName = this.param
-        if (attrName === "href" || attrName === "src") {
-            if (typeof val === "string" && !root.hasAttribute) {
-                val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
-            }
-            elem[attrName] = val
-            if (window.chrome && elem.tagName === "EMBED") {
-                var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-                var comment = document.createComment("ms-src")
-                parent.replaceChild(comment, elem)
-                parent.replaceChild(elem, comment)
-            }
-        } else {
-
-            // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-            // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-            // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
+        if (elem) {
+            var change = addHooks(elem, "changeAttrs")
+            var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
-            if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
-                attrName = propMap[attrName]
-            }
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
-                if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
-                    toRemove = true
-                }
-            }
-            if (toRemove) {
-                return elem.removeAttribute(attrName)
-            }
-            //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
-            var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
-            if (isInnate) {
-                elem[attrName] = val + ""
-            } else {
-                elem.setAttribute(attrName, val)
-            }
+            change[name] = toRemove ? false : val
+            change = addHooks(elem, "changeHooks")
+            change.attr = directives.attr.update
         }
-    }
+    },
+    update: attrUpdate
 })
 
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"

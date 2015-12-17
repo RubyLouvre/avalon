@@ -38,10 +38,7 @@ avalon.mix({
     },
     __write__: function () {
         var fn = avalon.filter[name]
-        if (fn) {
-            return fn.set ? fn.get : fn
-        }
-        return K
+        return fn && fn.set || K
     }
 })
 
@@ -167,7 +164,7 @@ function parseExpr(expr, vmodel, binding) {
                 "__vm__." + body + " = __value__;")
         binding.setter = evaluatorPool.put(category +
                 ":" + input + ":setter", fn)
-       // avalon.log(binding.setter + "***")
+        // avalon.log(binding.setter + "***")
     }
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)

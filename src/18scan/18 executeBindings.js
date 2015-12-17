@@ -26,7 +26,9 @@ avalon.injectBinding = function (binding) {
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            directives[binding.type].update(value, binding)
+            
+            directives[binding.type].change(value, binding)
+       
             binding.oldValue = value
         }
     }

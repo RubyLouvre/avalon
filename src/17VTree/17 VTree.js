@@ -18,12 +18,12 @@ var avalonID = 1
 //依赖config
 function parseVProps(node, str) {
     var obj = {}
+    var change = addHooks(node, "changeAttrs")
     str.replace(rattr2, function (a, n, v) {
         if (v) {
             v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
         }
         var name = n.toLowerCase()
-
         var match = n.match(rmsAttr)
         if (match) {
             var type = match[1]
@@ -32,23 +32,29 @@ function parseVProps(node, str) {
             switch (type) {
                 case "controller":
                 case "important":
-                    obj[name] = false
+                    change[name] = false
                     name = "data-" + type
+                    change[name] = value
+                    addAttrHook(node)
+
                     break
                 case "each":
                 case "with":
                 case "repeat":
-                    obj[name] = false
+                    change[name] = false
+                    addAttrHook(node)
                     if (name === "with")
                         name = "each"
                     value = value + "★" + (param || "el")
+                    // change[name] = value
                     break
             }
         }
         obj[name] = v || ""
     })
     if (!obj["avalon-uuid"]) {
-        obj["avalon-uuid"] = avalonID++
+        change["avalon-uuid"] = obj["avalon-uuid"] = avalonID++
+        addAttrHook(node)
     }
     return obj
 }

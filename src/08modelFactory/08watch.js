@@ -10,17 +10,22 @@ function $watch(expr, funOrObj) {
     }
 }
 
-function $emit(topVm, curVm, path, a, b) {
+function $emit(topVm, curVm, path, a, b, i) {
     var hive = topVm.$events
     if (hive && hive[path]) {
         var list = hive[path]
-        for (var i = list.length - 1; i <= 0; i--) {
-            var data = list[i]
-            if (data.remove) {
-                list.splice(i, 1)
-            } else {
-                data.update.call(curVm, a, b)
+        try {
+            for (i = i || list.length - 1; i >= 0; i--) {
+                var data = list[i]
+                if (data.remove) {
+                    list.splice(i, 1)
+                } else {
+                    data.update.call(curVm, a, b, path)
+                }
             }
+        } catch (e) {
+            $emit(topVm, curVm, path, a, b, i - 1)
+            avalon.log(e, path)
         }
     }
 }
