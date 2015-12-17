@@ -1,3 +1,4 @@
+// executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
@@ -10,16 +11,18 @@ function bindingIs(a, b) {
     return a === b
 }
 
-avalon.injectBinding = function (binding, vmodel) {
+avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
+  
     binding.paths.split("★").forEach(function (path) {
-        vmodel.$watch(path, binding)
+        binding.vmodel.$watch(path, binding)
     })
     delete binding.paths
     binding.update = function () {
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
+            console.log(e)
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
@@ -27,7 +30,7 @@ avalon.injectBinding = function (binding, vmodel) {
             binding.oldValue = value
         }
     }
-
+    binding.update()
 }
 
 // attr css class data duplex

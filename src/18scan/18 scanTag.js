@@ -12,14 +12,19 @@ function scanTag(elem, vmodel) {
             if (vmodel) {
                 vm = avalon.createProxy(vmodel, vm)
             }
+            vmodel = vm
         }
     }
     if (v && !vm) {
         return avalon.log("[" + v + "] vmodel has not defined yet!")
     }
-    if (elem.type.indexOf(":") && !avalon.components[elem.type]) {
-        avalon.component(elem)
+    
+    if (elem.type.indexOf(":") > 0 && !avalon.components[elem.type]) {
+        //avalon.component(elem)
     } else {
         scanAttrs(elem, vmodel)
     }
+    return elem
 }
+
+

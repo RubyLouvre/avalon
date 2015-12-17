@@ -19,10 +19,10 @@ function bindingSorter(a, b) {
 }
 
 function scanAttrs(elem, vmodel) {
-    var props = elem.proos, bindings = []
+    var props = elem.props, bindings = []
     for (var i in props) {
         var value = props[i], match
-        if (value && (match = i.match(msAttr))) {
+        if (value && (match = i.match(rmsAttr))) {
             var type = match[1]
             var param = match[2] || ""
             var name = i

@@ -24,7 +24,7 @@ function parseVProps(node, str) {
         }
         var name = n.toLowerCase()
 
-        var match = n.match(rmsrepeatkey)
+        var match = n.match(rmsAttr)
         if (match) {
             var type = match[1]
             var param = match[2] || ""

@@ -51,6 +51,7 @@ function parseExpr(expr, vmodel, binding) {
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
+    binding.paths = pathPool.put(category + ":" + input)
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -122,13 +123,16 @@ function parseExpr(expr, vmodel, binding) {
 
     var headers = []
     var unique = {}
+    var pathArray = []
     for (var i in paths) {
+        pathArray.push(i)
         if (!unique[i]) {
             var key = i.split(".").shift()
             unique[key] = true
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
+    binding.paths = pathPool.put(category + ":" + input, pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
@@ -163,14 +167,14 @@ function parseExpr(expr, vmodel, binding) {
                 "__vm__." + body + " = __value__;")
         binding.setter = evaluatorPool.put(category +
                 ":" + input + ":setter", fn)
-        avalon.log(binding.setter + "***")
+       // avalon.log(binding.setter + "***")
     }
-    headers.push("var __value = " + body + ";\n")
+    headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
     fn = new Function(args.join(","), headers.join(""))
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
-    avalon.log(binding.getter + "")
+    //avalon.log(binding.getter + "")
 }
 
 
@@ -199,5 +203,3 @@ function normalizeExpr(code) {
 }
 avalon.normalizeExpr = normalizeExpr
 avalon.parseExprProxy = parseExpr
-
-v

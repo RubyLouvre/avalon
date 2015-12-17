@@ -32,7 +32,21 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
     },
-    update: function (val) {
+    update: function (val, binding) {
+        var elem = binding.element
+        var props = elem.props
+        elem.change = "update"
+        var name = binding.param
+        name = propMap[name] || name
+        var toRemove = (val === false) || (val === null) || (val === void 0)
+        if (toRemove) {
+            props[name] = false
+        } else {
+            props[name] = val
+        }
+
+    },
+    update2: function (val) {
         var elem = this.element
         var attrName = this.param
         if (attrName === "href" || attrName === "src") {

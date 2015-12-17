@@ -267,7 +267,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-                collectDependency(pathname, heirloom)
+              //以后再处理  collectDependency(pathname, heirloom)
             }
             return old
         },

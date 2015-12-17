@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2015.12.16
+ avalon.modern.js 1.6 built in 2015.12.17
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2022,6 +2022,7 @@ function parseExpr(expr, vmodel, binding) {
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
+    binding.paths = pathPool.put(category + ":" + input)
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -2093,13 +2094,16 @@ function parseExpr(expr, vmodel, binding) {
 
     var headers = []
     var unique = {}
+    var pathArray = []
     for (var i in paths) {
+        pathArray.push(i)
         if (!unique[i]) {
             var key = i.split(".").shift()
             unique[key] = true
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
+    binding.paths = pathPool.put(category + ":" + input, pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
@@ -2134,14 +2138,14 @@ function parseExpr(expr, vmodel, binding) {
                 "__vm__." + body + " = __value__;")
         binding.setter = evaluatorPool.put(category +
                 ":" + input + ":setter", fn)
-        avalon.log(binding.setter + "***")
+       // avalon.log(binding.setter + "***")
     }
-    headers.push("var __value = " + body + ";\n")
+    headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
     fn = new Function(args.join(","), headers.join(""))
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
-    avalon.log(binding.getter + "")
+    //avalon.log(binding.getter + "")
 }
 
 
@@ -2171,7 +2175,6 @@ function normalizeExpr(code) {
 avalon.normalizeExpr = normalizeExpr
 avalon.parseExprProxy = parseExpr
 
-v
 /*********************************************************************
  *                          编译系统                                  *
  **********************************************************************/
@@ -2425,7 +2428,7 @@ function parseVProps(node, str) {
         }
         var name = n.toLowerCase()
 
-        var match = n.match(rmsrepeatkey)
+        var match = n.match(rmsAttr)
         if (match) {
             var type = match[1]
             var param = match[2] || ""
@@ -2598,6 +2601,7 @@ function fixTag(node, str) {
 }
 
 
+// executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
@@ -2610,16 +2614,18 @@ function bindingIs(a, b) {
     return a === b
 }
 
-avalon.injectBinding = function (binding, vmodel) {
+avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
+  
     binding.paths.split("★").forEach(function (path) {
-        vmodel.$watch(path, binding)
+        binding.vmodel.$watch(path, binding)
     })
     delete binding.paths
     binding.update = function () {
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
+            console.log(e)
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
@@ -2627,7 +2633,7 @@ avalon.injectBinding = function (binding, vmodel) {
             binding.oldValue = value
         }
     }
-
+    binding.update()
 }
 
 // attr css class data duplex
@@ -2637,12 +2643,12 @@ avalon.injectBinding = function (binding, vmodel) {
 /*********************************************************************
  *                           扫描系统                                 *
  **********************************************************************/
-
 avalon.scan = function (elem, vmodel) {
     var text = elem.outerHTML
     if(rbind.test(text)){
-        var tree = scanTree(text, vmodel)
-        updateTree([elem], tree)
+        var tree = buildVTree(text, vmodel)
+        scanTree(tree, vmodel)
+        console.log(tree)
     }
 }
 
@@ -2692,79 +2698,84 @@ function getOptionsFromTag(elem, vmodels) {
     return ret
 }
 
-
-var roneTime = /^\s*::/
-var rmsAttr = /ms-(\w+)-?(.*)/
-var priorityMap = {
-    "if": 10,
-    "repeat": 90,
-    "data": 100,
-    "widget": 110,
-    "each": 1400,
-    "with": 1500,
-    "duplex": 2000,
-    "on": 3000
+function scanExpr(str) {
+    var tokens = [],
+            value, start = 0,
+            stop
+    do {
+        stop = str.indexOf(openTag, start)
+        if (stop === -1) {
+            break
+        }
+        value = str.slice(start, stop).trim()
+        if (value) { // {{ 左边的文本
+            tokens.push({
+               expr: value
+            })
+        }
+        start = stop + openTag.length
+        stop = str.indexOf(closeTag, start)
+        if (stop === -1) {
+            break
+        }
+        value = str.slice(start, stop)
+        if (value) { //处理{{ }}插值表达式
+            tokens.push({
+                expr: value,
+                type: "{{}}" 
+            })
+        }
+        start = stop + closeTag.length
+    } while (1)
+    value = str.slice(start).trim()
+    if (value) { //}} 右边的文本
+        tokens.push({
+            expr: value
+        })
+    }
+    return tokens
 }
 
-var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
-function bindingSorter(a, b) {
-    return a.priority - b.priority
-}
 
-function scanAttrs(elem, vmodel) {
-    var props = elem.proos, bindings = []
-    for (var i in props) {
-        var value = props[i], match
-        if (value && (match = i.match(msAttr))) {
-            var type = match[1]
-            var param = match[2] || ""
-            var name = i
-            if (events[type]) {
-                param = type
-                type = "on"
-            } else if (obsoleteAttrs[type]) {
-                param = type
-                type = "attr"
-                name = "ms-" + type + "-" + param
-                log("warning!请改用" + name + "代替" + i + "!")
-            }
-            if (directives[type]) {
-                var newValue = value.replace(roneTime, "")
-                var oneTime = value !== newValue
-                var binding = {
-                    type: type,
-                    param: param,
-                    element: elem,
-                    name: name,
-                    expr: newValue,
-                    oneTime: oneTime,
-                    priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
-                }
-                bindings.push(binding)
+function scanText(node, vmodel) {
+    var tokens = scanExpr(String(node.nodeValue))
+    var texts = []
+    for (var i = 0, token; token = tokens[i]; i++) {
+        if (token.type) {
+            token.expr = token.expr.replace(roneTime, function () {
+                token.oneTime = true
+                return ""
+            })
+            token.element = node
+            token.vmodel = vmodel
+            token.index = i
+            token.array = texts
+            avalon.injectBinding(token)
+        } else {
+            texts[i] = token.expr
+            var nodeValue = texts.join("")
+            if (nodeValue !== node.nodeValue) {
+                node.change = "update"
+                node.nodeValue = nodeValue
             }
         }
     }
-    if (bindings.length) {
-        bindings.sort(bindingSorter)
-        executeBindings(bindings, vmodel)
-    }
-    scanTree(elem.children, vmodel)
-
+    return [node]
 }
-
-
-function scanTree(arr, vm) {
-    arr.forEach(function (node, index) {
+function scanTree(nodes, vm) {
+    for (var i = 0, n = nodes.length; i < n; i++) {
+        var node = nodes[i]
         switch (node.type) {
             case "#comment":
                 break
             case "#text":
                 if (!node.skip) {
-                    var nodeValue = parseText(String(node.nodeValue), vm)
-                    if (nodeValue !== node.nodeValue) {
-                        node.change = "update"
-                        node.nodeValue = nodeValue
+                    if (rexpr.test(String(node.nodeValue))) {
+                        var arr = scanText(node, vm)
+                        if (arr.length > 1) {
+                            nodes.splice.apply(nodes, [i, 1].concat(arr))
+                            i = i + arr.length
+                        }
                     }
                 }
                 break
@@ -2775,12 +2786,26 @@ function scanTree(arr, vm) {
                 break
             default:
                 if (!node.skip) {
-                    arr[index] = scanTag(node, vm)
+                    nodes[i] = scanTag(node, vm)
                 }
                 break
         }
-    })
-    return arr
+    }
+    return nodes
+}
+
+directives["{{}}"] = {
+    init: function (text, vm) {
+    },
+    update: function (value, binding) {
+        binding.array[binding.index] = value
+        var nodeValue = binding.array.join("")
+        var node = binding.element
+        if (nodeValue !== node.nodeValue) {
+            node.change = "update"
+            node.nodeValue = nodeValue
+        }
+    }
 }
 //使用来自游戏界的双缓冲技术,减少对视图的冗余刷新
 var Buffer = function () {
@@ -2840,8 +2865,23 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}} --> aaa
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = normalizeExpr(binding.expr.trim())
+        console.log(binding)
     },
-    update: function (val) {
+    update: function (val, binding) {
+        var elem = binding.element
+        var props = elem.props
+        elem.change = "update"
+        var name = binding.param
+        name = propMap[name] || name
+        var toRemove = (val === false) || (val === null) || (val === void 0)
+        if (toRemove) {
+            props[name] = false
+        } else {
+            props[name] = val
+        }
+
+    },
+    update2: function (val) {
         var elem = this.element
         var attrName = this.param
         if (attrName === "href" || attrName === "src") {

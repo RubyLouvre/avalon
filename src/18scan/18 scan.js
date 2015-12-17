@@ -1,12 +1,12 @@
 /*********************************************************************
  *                           扫描系统                                 *
  **********************************************************************/
-
 avalon.scan = function (elem, vmodel) {
     var text = elem.outerHTML
     if(rbind.test(text)){
-        var tree = scanTree(text, vmodel)
-        updateTree([elem], tree)
+        var tree = buildVTree(text, vmodel)
+        scanTree(tree, vmodel)
+        console.log(tree)
     }
 }
 

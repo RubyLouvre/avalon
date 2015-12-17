@@ -1,190 +1,24 @@
 <!DOCTYPE html>
-
 <html>
     <head>
-        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!--        <script src='avalon.js'></script>-->
+        <script src="avalon.js"></script>
+    </head>
+    <body ms-controller="test">
+        <input type="text" ms-attr-value="data"/> {{data}}
+
         <script>
-//            var aaa = avalon.define({
-//                $id: "test",
-//                a: 11,
-//                b: {
-//                    c: 22
-//                }
-//            })
-//            var bbb = avalon.define({
-//                $id: "xxx",
-//                d: 5,
-//                e: {
-//                    f: 333
-//                }
-//            })
-//            //创建一个代理VM,它拥有aaa与bbb的所有访问器属性
-//            //有了这东西,parseExpr就会大大简化
-//            var ccc = avalon.createProxy(aaa, bbb)
-//
-//            ccc.e = {
-//                h: 777
-//            }
-//
-//            aaa.a = 8
+// 创建组件
+
+// 定义vm
+avalon.define({
+    $id: 'test',
+    data: '司徒正美'
+})
+//24分;每项3分合格;  
 
 
 
         </script>
-    </head>
-    <body>
-        <style>
-            tbody td{
-                padding:4px;
-
-                border-bottom:1px solid gray;
-            }
-            thead th{
-                padding:4px;
-                text-align: left;
-                border-bottom: 2px solid black;
-            }
-        </style>
-        <table>
-            <thead>
-                <tr>
-                    <th>Unicode 编码</th><th>说明</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>U+0020</td>
-                    <td>" ", "\x20", "\u0020".半角空格符，键盘空格键</td>
-                </tr>
-                <tr>
-
-                    <td>U+0009</td>
-                    <td>"\t", "\x09", "\u0009", 制表符，键盘 tab 键</td>
-                </tr>
-                <tr>
-                    <td>U+000B</td>
-                    <td>"\v", "\x0B", "\u000B", 垂直制表符,  可以用于判定老版本IE, !+"\v1"</td>
-                </tr>
-                <tr>
-                    <td>U+000C</td>
-                    <td>"\f", "\x0C", "\u000C",换页符</td>
-                </tr>
-                <tr>
-                    <td>U+000D</td>
-                    <td>"\r", "\x0D", "\u000D",回车符</td>
-                </tr>
-                <tr>
-                    <td>U+000A</td>
-                    <td>"\n", "\x0A", "\u000A",换行符</td>
-                </tr>
-
-
-                <tr>
-                    <td>U+0020</td>
-                    <td>SPACE，<code>&lt;SP&gt;</code></td>
-                </tr>
-                <tr>
-                    <td>U+00A0</td>
-                    <td>"\xA0", "\u00A0", 也就是著名的&amp;nbsp;No-Break Space
-                        <br>禁止自动换行空格符
-                    </td>
-                </tr>
-                <tr>
-                    <td>U+1680</td>
-                    <td>OGHAM SPACE MARK，欧甘空格</td>
-                </tr>
-                <tr>
-                    <td>U+180E</td>
-                    <td>Mongolian Vowel Separator，蒙古文元音分隔符</td>
-                </tr>
-                <tr>
-                    <td>U+2000</td>
-                    <td>EN QUAD</td>
-                </tr>
-                <tr>
-                    <td>U+2001</td>
-                    <td>EM QUAD</td>
-                </tr>
-                <tr>
-                    <td>U+2002</td>
-                    <td>EN SPACE，En 空格。与 en 同宽（em 的一半）</td>
-                </tr>
-                <tr>
-                    <td>U+2003</td>
-                    <td>EM SPACE，Em 空格。与 em 同宽</td>
-                </tr>
-                <tr>
-                    <td>U+2004</td>
-                    <td>THREE-PER-EM SPACE，Em 三分之一空格</td>
-                </tr>
-                <tr>
-                    <td>U+2005</td>
-                    <td>FOUR-PER-EM SPACE，Em 四分之一空格</td>
-                </tr>
-                <tr>
-                    <td>U+2006</td>
-                    <td>SIX-PER-EM SPACE，Em 六分之一空格</td>
-                </tr>
-                <tr>
-                    <td>U+2007</td>
-                    <td>FIGURE SPACE，数字空格。与单一数字同宽</td>
-                </tr>
-                <tr>
-                    <td>U+2008</td>
-                    <td>PUNCTUATION SPACE，标点空格。与同字体窄标点同宽</td>
-                </tr>
-                <tr>
-                    <td>U+2009</td>
-                    <td>THIN SPACE，窄空格。em 六分之一或五分之一宽</td>
-                </tr>
-                <tr>
-                    <td>U+200A</td>
-                    <td>HAIR SPACE，更窄空格。比窄空格更窄</td>
-                </tr>
-                <tr>
-                    <td>U+200B</td>
-                    <td>Zero Width Space，<code>&lt;ZWSP&gt;</code>，零宽空格</td>
-                </tr>
-                <tr>
-                    <td>U+200C</td>
-                    <td>Zero Width Non Joiner，<code>&lt;ZWNJ&gt;</code>，零宽不连字空格</td>
-                </tr>
-                <tr>
-                    <td>U+200D</td>
-                    <td>Zero Width Joiner，<code>&lt;ZWJ&gt;</code>，零宽连字空格</td>
-                </tr>
-                <tr>
-                    <td>U+202F</td>
-                    <td>NARROW NO-BREAK SPACE，窄式不换行空格</td>
-                </tr>
-                <tr>
-                    <td>U+2028</td>
-                    <td>&lt;LS&gt;	行分隔符</td>
-                </tr>
-                <tr>
-                    <td>U+2029</td>
-                    <td>&lt;PS&gt;	段落分隔符</td>
-                </tr>
-                <tr>
-                    <td>U+205F</td>
-                    <td>MEDIUM MATHEMATICAL SPACE，中数学空格。<br>用于数学方程式</td>
-                </tr>
-                <tr>
-                    <td>U+2060</td>
-                    <td>Word Joiner，同 U+200B，但该处不换行。<br>Unicode3.2 新增，代替 U+FEFF</td>
-                </tr>
-                <tr>
-                    <td>U+3000</td>
-                    <td>IDEOGRAPHIC SPACE，表意文字空格。即全角空格</td>
-                </tr>
-                <tr>
-                    <td>U+FEFF</td>
-                    <td>Byte Order Mark，<code>&lt;BOM&gt;</code>，字节次序标记字符。<br>不换行功能于 Unicode3.2 起废止</td>
-                </tr>
-
-        </table>
     </body>
 </html>
