@@ -44,9 +44,9 @@ avalon.components["ms-repeat"] = {
         var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
         var children = [new VComment("ms-repeat")]
         updateVLoop(repeatValue, repeatItem, function (proxy) {
-            var clone = buildVTree(template)
+            var clone = createVirtual(template)
 
-            var vnode = updateVTree(clone, proxy)
+            var vnode = updateEntity(clone, proxy)
 
             children.push.apply(children, vnode)
         }, vm)
@@ -58,7 +58,7 @@ avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
-        parent.children = buildVTree(parent.innerHTML, true)
+        parent.children = createVirtual(parent.innerHTML, true)
         self._children = [parent] //将父节点作为它的子节点
         return self
     },
@@ -83,8 +83,9 @@ avalon.directive("if", {
             var change = addHooks(elem, "changeHooks")
             change["if"] = this.update
             elem.state = !!value
+            disposeVirtual(elem.children)
             if (value) {
-                elem.children = scanTree(elem._children, binding.vmodel)
+                elem.children = updateVirtual(elem._children, binding.vmodel)
             } else {
                 elem.children = [new VComment("ms-if")]
             }
@@ -118,9 +119,9 @@ avalon.directive("html", {
         var elem = binding.element
         if (elem) {
             value = typeof value === "string" ? value : String(value)
-            var children = buildVTree(value, true)
-
-            elem.children = scanTree(children, binding.vmodel)
+            disposeVirtual(elem.children)
+            var children = createVirtual(value, true)
+            elem.children = updateVirtual(children, binding.vmodel)
             var change = addHooks(elem, "changeHooks")
             change.html = this.update
         }
@@ -148,8 +149,9 @@ avalon.directive("text", {
         var elem = binding.element
         if (elem) {
             value = typeof value === "string" ? value : String(value)
+            disposeVirtual(elem.children)
             var children = [new VText(value)]
-            elem.children = scanTree(children, binding.vmodel)
+            elem.children = updateVirtual(children, binding.vmodel)
             var change = addHooks(elem, "changeHooks")
             change.text = this.update
         }

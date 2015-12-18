@@ -2,7 +2,8 @@ function $watch(expr, funOrObj) {
     var hive = (this.$events = this.$events || {})
     var list = (hive[expr] = hive[expr] || [])
     var data = typeof funOrObj === "function" ? {
-        update: funOrObj
+        update: funOrObj,
+        element:{}
     } : funOrObj
     avalon.Array.ensure(list, data)
     return function () {
@@ -17,7 +18,7 @@ function $emit(topVm, curVm, path, a, b, i) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
-                if (data.remove) {
+                if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
                     data.update.call(curVm, a, b, path)

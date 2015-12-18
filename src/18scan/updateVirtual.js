@@ -1,5 +1,5 @@
-//带VM, 第一次更新VTree
-function scanTree(nodes, vm) {
+//更新整个虚拟DOM树
+function updateVirtual(nodes, vm) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var node = nodes[i]
         switch (node.type) {
@@ -28,4 +28,3 @@ function scanTree(nodes, vm) {
     }
     return nodes
 }
-

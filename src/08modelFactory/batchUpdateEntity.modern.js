@@ -1,5 +1,6 @@
-function batchUpdate(vm) {
-    if (vm && canUpdateDom) {
+var canUpdateEntity = true
+function batchUpdateEntity(vm) {
+    if (vm && canUpdateEntity) {
         var id = vm.$id
         var vnode = vtree[id]//虚拟DOM
         if (!vnode)
@@ -16,12 +17,11 @@ function batchUpdate(vm) {
             }
         }
         if (dom) {
-            canUpdateDom = false
+            canUpdateEntity = false
             setTimeout(function () {
-                updateTree([dom], [vnode])
-                canUpdateDom = true
+                updateEntity([dom], [vnode])
+                canUpdateEntity = true
             })
         }
     }
 }
-var canUpdateDom = true

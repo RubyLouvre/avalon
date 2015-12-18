@@ -1,17 +1,27 @@
-//不带VM,建立虚拟DOM树
 
+//匹配同时拥有开标签闭标签的元素节点
 var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
-var ropenTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
+//匹配只有开标签的元素节点
+var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
+//用于创建适配某一种标签的正则表达式
 var openStr = '(?:\\s+[^=\\s]+=?(?:"[^"]*"|\'[^\']*\'|[^\\s>]+)?)*>'
+//匹配文本节点
 var rtext = /^[^<]+/
+//匹配注释节点
+var rcomment = /^<\!--([\s\S]*)-->/
+//从大片标签中匹想第一个标签的所有属性
 var rattr1 = /(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/g
+//从元素的开标签中一个个分解属性值
 var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+//判定是否有引号开头，IE有些属性没有用引号括起来
 var rquote = /^['"]/
+
 var rgtlt = /></
 var ramp = /&amp;/g
-var rcomment = /^<\!--([\s\S]*)-->/
-var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
 
+var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
+var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]
+var tagCache = {}// 缓存所有匹配开标签闭标签的正则
 var avalonID = 1
 //=== === === === 创建虚拟DOM树 === === === === =
 //依赖config
@@ -57,8 +67,8 @@ function parseVProps(node, str) {
     return obj
 }
 
-var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-function buildVTree(text, force) {
+
+function createVirtual(text, force) {
     var nodes = []
     if (!force && !rbind.test(text)) {
         return nodes
@@ -67,10 +77,12 @@ function buildVTree(text, force) {
         var matchText = ""
         var match = text.match(rtext)
         var node = false
+
         if (match) {//尝试匹配文本
             matchText = match[0]
             node = new VText(matchText)
         }
+
         if (!node) {//尝试匹配注释
             match = text.match(rcomment)
             if (match) {
@@ -78,6 +90,7 @@ function buildVTree(text, force) {
                 node = new VComment(match[1])
             }
         }
+
         if (!node) {//尝试匹配拥有闭标签的元素节点
             match = text.match(rfullTag)
             if (match) {
@@ -121,8 +134,9 @@ function buildVTree(text, force) {
                 node = fixTag(node, props)
             }
         }
+
         if (!node) {
-            match = text.match(ropenTag)
+            match = text.match(rvoidTag)
             if (match) {//尝试匹配自闭合标签及注释节点
                 matchText = match[0]
 
@@ -154,7 +168,7 @@ function fixTag(node, str) {
     var outerHTML = node.outerHTML
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
-    var h = false
+    var isComponent = false
     for (var i = 0, dir; dir = builtinComponents[i++]; ) {
         if (props[dir]) {
             var expr = props[dir]
@@ -163,16 +177,15 @@ function fixTag(node, str) {
                 template: outerHTML,
                 expr: expr
             })
+            isComponent = true
             node.outerHTML = node.toHTML()
-            h = true
             node = component.construct(node)
         }
     }
 
-    if (!h) {
+    if (!isComponent) {
         if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-            node.children = buildVTree(node.innerHTML)
-
+            node.children = createVirtual(node.innerHTML)
         } else {
             node.skipContent = true
             node.__content = node.innerHTML
@@ -181,5 +194,3 @@ function fixTag(node, str) {
 
     return node
 }
-
-var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]

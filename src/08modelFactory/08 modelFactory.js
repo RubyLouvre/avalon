@@ -103,7 +103,7 @@ function Component() {
  $accessors:avalon.js独有的对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
- 
+
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -249,7 +249,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
-                    batchUpdate(heirloom.vm)
+                    batchUpdateEntity(heirloom.vm)
                 }
             }
         },
@@ -291,7 +291,7 @@ function makeObservable(pathname, heirloom) {
             old = val
             if (_this.$active) {
                 $emit(heirloom.vm, _this, pathname, val, older)
-                batchUpdate(heirloom.vm)
+                batchUpdateEntity(heirloom.vm)
             }
 
         },

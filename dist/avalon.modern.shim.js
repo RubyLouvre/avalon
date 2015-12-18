@@ -777,7 +777,7 @@ function Component() {
  $model:返回一个纯净的JS对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
- 
+
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -915,7 +915,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
-                    batchUpdate(heirloom.vm)
+                    batchUpdateEntity(heirloom.vm)
                 }
             }
         },
@@ -956,7 +956,7 @@ function makeObservable(pathname, heirloom) {
             old = val
             if (_this.$active) {
                 $emit(heirloom.vm, _this, pathname, val, older)
-                batchUpdate(heirloom.vm)
+                batchUpdateEntity(heirloom.vm)
             }
 
         },
@@ -1040,8 +1040,44 @@ function hideProperty(host, name, value) {
 //监听对象属性值的变化(注意,数组元素不是数组的属性),通过对劫持当前对象的访问器实现
 //监听对象或数组的结构变化, 对对象的键值对进行增删重排, 或对数组的进行增删重排,都属于这范畴
 //   通过比较前后代理VM顺序实现
-function batchUpdate(vm) {
-    if (vm && canUpdateDom) {
+
+function $watch(expr, funOrObj) {
+    var hive = (this.$events = this.$events || {})
+    var list = (hive[expr] = hive[expr] || [])
+    var data = typeof funOrObj === "function" ? {
+        update: funOrObj,
+        element:{},
+    } : funOrObj
+    avalon.Array.ensure(list, data)
+    return function () {
+        avalon.Array.remove(list, data)
+    }
+}
+
+function $emit(topVm, curVm, path, a, b, i) {
+    var hive = topVm.$events
+    if (hive && hive[path]) {
+        var list = hive[path]
+        try {
+            for (i = i || list.length - 1; i >= 0; i--) {
+                var data = list[i]
+                if (!data.element || data.element.disposed) {
+                    list.splice(i, 1)
+                } else if (data.update) {
+                    data.update.call(curVm, a, b, path)
+                }
+            }
+        } catch (e) {
+            if (i - 1 > 0)
+                $emit(topVm, curVm, path, a, b, i - 1)
+            avalon.log(e, path)
+        }
+    }
+}
+
+var canUpdateEntity = true
+function batchUpdateEntity(vm) {
+    if (vm && canUpdateEntity) {
         var id = vm.$id
         var vnode = vtree[id]//虚拟DOM
         if (!vnode)
@@ -1061,44 +1097,11 @@ function batchUpdate(vm) {
             }
         }
         if (dom) {
-            canUpdateDom = false
+            canUpdateEntity = false
             setTimeout(function () {
-                updateTree([dom], [vnode])
-                canUpdateDom = true
+                updateEntity([dom], [vnode])
+                canUpdateEntity = true
             })
-        }
-    }
-}
-var canUpdateDom = true
-function $watch(expr, funOrObj) {
-    var hive = (this.$events = this.$events || {})
-    var list = (hive[expr] = hive[expr] || [])
-    var data = typeof funOrObj === "function" ? {
-        update: funOrObj
-    } : funOrObj
-    avalon.Array.ensure(list, data)
-    return function () {
-        avalon.Array.remove(list, data)
-    }
-}
-
-function $emit(topVm, curVm, path, a, b, i) {
-    var hive = topVm.$events
-    if (hive && hive[path]) {
-        var list = hive[path]
-        try {
-            for (i = i || list.length - 1; i >= 0; i--) {
-                var data = list[i]
-                if (data.remove) {
-                    list.splice(i, 1)
-                } else if (data.update) {
-                    data.update.call(curVm, a, b, path)
-                }
-            }
-        } catch (e) {
-            if (i - 1 > 0)
-                $emit(topVm, curVm, path, a, b, i - 1)
-            avalon.log(e, path)
         }
     }
 }
@@ -2517,9 +2520,9 @@ avalon.components["ms-repeat"] = {
         var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
         var children = [new VComment("ms-repeat")]
         updateVLoop(repeatValue, repeatItem, function (proxy) {
-            var clone = buildVTree(template)
+            var clone = createVirtual(template)
 
-            var vnode = updateVTree(clone, proxy)
+            var vnode = updateEntity(clone, proxy)
 
             children.push.apply(children, vnode)
         }, vm)
@@ -2531,7 +2534,7 @@ avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
-        parent.children = buildVTree(parent.innerHTML, true)
+        parent.children = createVirtual(parent.innerHTML, true)
         self._children = [parent] //将父节点作为它的子节点
         return self
     },
@@ -2556,8 +2559,9 @@ avalon.directive("if", {
             var change = addHooks(elem, "changeHooks")
             change["if"] = this.update
             elem.state = !!value
+            disposeVirtual(elem.children)
             if (value) {
-                elem.children = scanTree(elem._children, binding.vmodel)
+                elem.children = updateVirtual(elem._children, binding.vmodel)
             } else {
                 elem.children = [new VComment("ms-if")]
             }
@@ -2591,9 +2595,9 @@ avalon.directive("html", {
         var elem = binding.element
         if (elem) {
             value = typeof value === "string" ? value : String(value)
-            var children = buildVTree(value, true)
-
-            elem.children = scanTree(children, binding.vmodel)
+            disposeVirtual(elem.children)
+            var children = createVirtual(value, true)
+            elem.children = updateVirtual(children, binding.vmodel)
             var change = addHooks(elem, "changeHooks")
             change.html = this.update
         }
@@ -2621,8 +2625,9 @@ avalon.directive("text", {
         var elem = binding.element
         if (elem) {
             value = typeof value === "string" ? value : String(value)
+            disposeVirtual(elem.children)
             var children = [new VText(value)]
-            elem.children = scanTree(children, binding.vmodel)
+            elem.children = updateVirtual(children, binding.vmodel)
             var change = addHooks(elem, "changeHooks")
             change.text = this.update
         }
@@ -2638,6 +2643,7 @@ avalon.directive("text", {
         }
     }
 })
+
 function VElement(type, innerHTML, outerHTML) {
     this.type = type
     this.props = {}
@@ -2769,191 +2775,6 @@ VText.prototype = {
         return this.nodeValue
     }
 }
-//不带VM,建立虚拟DOM树
-
-var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
-var ropenTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
-var openStr = '(?:\\s+[^=\\s]+=?(?:"[^"]*"|\'[^\']*\'|[^\\s>]+)?)*>'
-var rtext = /^[^<]+/
-var rattr1 = /(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/g
-var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
-var rquote = /^['"]/
-var rgtlt = /></
-var ramp = /&amp;/g
-var rcomment = /^<\!--([\s\S]*)-->/
-var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
-
-var avalonID = 1
-//=== === === === 创建虚拟DOM树 === === === === =
-//依赖config
-function parseVProps(node, str) {
-    var obj = {}
-    var change = addHooks(node, "changeAttrs")
-    str.replace(rattr2, function (a, n, v) {
-        if (v) {
-            v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
-        }
-        var name = n.toLowerCase()
-        var match = n.match(rmsAttr)
-        if (match) {
-            var type = match[1]
-            var param = match[2] || ""
-            var value = v
-            switch (type) {
-                case "controller":
-                case "important":
-                    change[name] = false
-                    name = "data-" + type
-                    change[name] = value
-                    addAttrHook(node)
-
-                    break
-                case "each":
-                case "with":
-                case "repeat":
-                    change[name] = false
-                    addAttrHook(node)
-                    if (name === "with")
-                        name = "each"
-                    value = value + "★" + (param || "el")
-                    break
-            }
-        }
-        obj[name] = v || ""
-    })
-    if (!obj["avalon-uuid"]) {
-        change["avalon-uuid"] = obj["avalon-uuid"] = avalonID++
-        addAttrHook(node)
-    }
-    return obj
-}
-
-var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-function buildVTree(text, force) {
-    var nodes = []
-    if (!force && !rbind.test(text)) {
-        return nodes
-    }
-    do {
-        var matchText = ""
-        var match = text.match(rtext)
-        var node = false
-        if (match) {//尝试匹配文本
-            matchText = match[0]
-            node = new VText(matchText)
-        }
-        if (!node) {//尝试匹配注释
-            match = text.match(rcomment)
-            if (match) {
-                matchText = match[0]
-                node = new VComment(match[1])
-            }
-        }
-        if (!node) {//尝试匹配拥有闭标签的元素节点
-            match = text.match(rfullTag)
-            if (match) {
-                matchText = match[0]
-                var tagName = match[1]
-                var opens = []
-                var closes = []
-
-                var ropen = tagCache[tagName + "open"] ||
-                        (tagCache[tagName + "open"] = new RegExp("<" + tagName + openStr, "g"))
-                var rclose = tagCache[tagName + "close"] ||
-                        (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
-                /* jshint ignore:start */
-                matchText.replace(ropen, function (_, b) {
-                    opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
-                    return new Array(_.length + 1).join("1")
-                }).replace(rclose, function (_, b) {
-                    closes.push(("0000" + b + ">").slice(-4))//取得所有闭标签的位置
-
-                })
-                /* jshint ignore:end */
-
-                var pos = opens.concat(closes).sort()
-                var gtlt = pos.join("").replace(/\d+/g, "")
-
-                //<<>><<>>
-                var gutter = gtlt.indexOf("><")
-
-                if (gutter !== -1) {
-                    var index = gutter //+ tagName.length+ 2
-                    var findex = parseFloat(pos[index]) + tagName.length + 3
-                    matchText = matchText.slice(0, findex)
-                }
-
-                var allAttrs = matchText.match(rattr1)[0]
-                var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
-                        (tagName.length + 3) * -1)
-                node = new VElement(tagName, innerHTML, matchText)
-
-                var props = allAttrs.slice(0, -1)
-                node = fixTag(node, props)
-            }
-        }
-        if (!node) {
-            match = text.match(ropenTag)
-            if (match) {//尝试匹配自闭合标签及注释节点
-                matchText = match[0]
-
-                node = new VElement(match[1], "", matchText)
-
-                props = matchText.slice(node.type.length + 1).replace(/\/>$/, "")
-                node = fixTag(node, props)
-            }
-        }
-        if (node) {
-            nodes.push(node)
-            text = text.slice(matchText.length)
-        } else {
-            break
-        }
-    } while (1);
-    return nodes
-}
-
-var rmsskip = /\bms\-skip/
-var rnocontent = /textarea|template|script|style/
-//如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
-function fixTag(node, str) {
-    if (rmsskip.test(str)) {
-        node.skip = true
-        return node
-    }
-    var props = node.props = parseVProps(node, str)
-    var outerHTML = node.outerHTML
-    //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
-    //并且它的后代还存在绑定属性
-    var h = false
-    for (var i = 0, dir; dir = builtinComponents[i++]; ) {
-        if (props[dir]) {
-            var expr = props[dir]
-            delete props[dir]
-            var component = new VComponent(dir, {
-                template: outerHTML,
-                expr: expr
-            })
-            node.outerHTML = node.toHTML()
-            h = true
-            node = component.construct(node)
-        }
-    }
-
-    if (!h) {
-        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-            node.children = buildVTree(node.innerHTML)
-
-        } else {
-            node.skipContent = true
-            node.__content = node.innerHTML
-        }
-    }
-
-    return node
-}
-
-var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]
 // executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
@@ -3002,62 +2823,12 @@ avalon.injectBinding = function (binding) {
 avalon.scan = function (elem, vmodel) {
     var text = elem.outerHTML
     if (rbind.test(text)) {
-        var tree = buildVTree(text, vmodel)
-        scanTree(tree, vmodel)
-        updateTree([elem], tree)
+        var tree = createVirtual(text, vmodel)
+        updateVirtual(tree, vmodel)
+        updateEntity([elem], tree)
     }
 }
 
-function updateTree(nodes, vnodes) {
-    for (var i = 0, n = nodes.length; i < n; i++) {
-        var vnode = vnodes[i]
-        if (!vnode)
-            break
-        var node = nodes[i]
-
-        switch (vnode.type) {
-            case "#text":
-                if (!vnode.skip) {
-                    if (vnode.change) {
-                        node.nodeValue = vnode.nodeValue
-                        delete vnode.change
-                    }
-                }
-                break
-            case "#component":
-                var hooks = vnode.changeHooks
-                if (hooks) {
-                    try {
-                        for (var hook in hooks) {
-                            hooks[hook](node, vnode)
-                        }
-                    } catch (e) {
-                        avalon.log(e, node, vnode)
-                    }
-                    delete vnode.changeHooks
-                }
-                updateTree(node.childNodes, vnode.children)
-                break
-            case "#comment":
-                break
-            default:
-                if (!vnode.skip) {
-                    hooks = vnode.changeHooks
-                    try {
-                        for (hook in hooks) {
-                            hooks[hook](node, vnode)
-                        }
-                    } catch (e) {
-                    }
-                    delete vnode.changeHooks
-                    if (!vnode.skipContent) {
-                        updateTree(node.childNodes, vnode.children)
-                    }
-                }
-                break
-        }
-    }
-}
 
 function addHooks(elem, name) {
     return elem[name] || (elem[name] = {})
@@ -3068,17 +2839,6 @@ function addAttrHook(node) {
     hook.attr = attrUpdate
 }
 
-
-var getBindingCallback = function (elem, name, vmodels) {
-    var callback = elem.getAttribute(name)
-    if (callback) {
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
-                return vm[callback]
-            }
-        }
-    }
-}
 
 
 
@@ -3102,6 +2862,17 @@ function getOptionsFromTag(elem, vmodels) {
 
     }
     return ret
+}
+
+var getBindingCallback = function (elem, name, vmodels) {
+    var callback = elem.getAttribute(name)
+    if (callback) {
+        for (var i = 0, vm; vm = vmodels[i++]; ) {
+            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
+                return vm[callback]
+            }
+        }
+    }
 }
 
 function scanExpr(str) {
@@ -3168,8 +2939,275 @@ function scanText(node, vmodel) {
     }
     return [node]
 }
-//带VM, 第一次更新VTree
-function scanTree(nodes, vm) {
+
+//匹配同时拥有开标签闭标签的元素节点
+var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
+//匹配只有开标签的元素节点
+var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
+//用于创建适配某一种标签的正则表达式
+var openStr = '(?:\\s+[^=\\s]+=?(?:"[^"]*"|\'[^\']*\'|[^\\s>]+)?)*>'
+//匹配文本节点
+var rtext = /^[^<]+/
+//匹配注释节点
+var rcomment = /^<\!--([\s\S]*)-->/
+//从大片标签中匹想第一个标签的所有属性
+var rattr1 = /(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/g
+//从元素的开标签中一个个分解属性值
+var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+//判定是否有引号开头，IE有些属性没有用引号括起来
+var rquote = /^['"]/
+
+var rgtlt = /></
+var ramp = /&amp;/g
+
+var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
+var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]
+var tagCache = {}// 缓存所有匹配开标签闭标签的正则
+var avalonID = 1
+//=== === === === 创建虚拟DOM树 === === === === =
+//依赖config
+function parseVProps(node, str) {
+    var obj = {}
+    var change = addHooks(node, "changeAttrs")
+    str.replace(rattr2, function (a, n, v) {
+        if (v) {
+            v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
+        }
+        var name = n.toLowerCase()
+        var match = n.match(rmsAttr)
+        if (match) {
+            var type = match[1]
+            var param = match[2] || ""
+            var value = v
+            switch (type) {
+                case "controller":
+                case "important":
+                    change[name] = false
+                    name = "data-" + type
+                    change[name] = value
+                    addAttrHook(node)
+
+                    break
+                case "each":
+                case "with":
+                case "repeat":
+                    change[name] = false
+                    addAttrHook(node)
+                    if (name === "with")
+                        name = "each"
+                    value = value + "★" + (param || "el")
+                    break
+            }
+        }
+        obj[name] = v || ""
+    })
+    if (!obj["avalon-uuid"]) {
+        change["avalon-uuid"] = obj["avalon-uuid"] = avalonID++
+        addAttrHook(node)
+    }
+    return obj
+}
+
+
+function createVirtual(text, force) {
+    var nodes = []
+    if (!force && !rbind.test(text)) {
+        return nodes
+    }
+    do {
+        var matchText = ""
+        var match = text.match(rtext)
+        var node = false
+
+        if (match) {//尝试匹配文本
+            matchText = match[0]
+            node = new VText(matchText)
+        }
+
+        if (!node) {//尝试匹配注释
+            match = text.match(rcomment)
+            if (match) {
+                matchText = match[0]
+                node = new VComment(match[1])
+            }
+        }
+
+        if (!node) {//尝试匹配拥有闭标签的元素节点
+            match = text.match(rfullTag)
+            if (match) {
+                matchText = match[0]
+                var tagName = match[1]
+                var opens = []
+                var closes = []
+
+                var ropen = tagCache[tagName + "open"] ||
+                        (tagCache[tagName + "open"] = new RegExp("<" + tagName + openStr, "g"))
+                var rclose = tagCache[tagName + "close"] ||
+                        (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
+                /* jshint ignore:start */
+                matchText.replace(ropen, function (_, b) {
+                    opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
+                    return new Array(_.length + 1).join("1")
+                }).replace(rclose, function (_, b) {
+                    closes.push(("0000" + b + ">").slice(-4))//取得所有闭标签的位置
+
+                })
+                /* jshint ignore:end */
+
+                var pos = opens.concat(closes).sort()
+                var gtlt = pos.join("").replace(/\d+/g, "")
+
+                //<<>><<>>
+                var gutter = gtlt.indexOf("><")
+
+                if (gutter !== -1) {
+                    var index = gutter //+ tagName.length+ 2
+                    var findex = parseFloat(pos[index]) + tagName.length + 3
+                    matchText = matchText.slice(0, findex)
+                }
+
+                var allAttrs = matchText.match(rattr1)[0]
+                var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
+                        (tagName.length + 3) * -1)
+                node = new VElement(tagName, innerHTML, matchText)
+
+                var props = allAttrs.slice(0, -1)
+                node = fixTag(node, props)
+            }
+        }
+
+        if (!node) {
+            match = text.match(rvoidTag)
+            if (match) {//尝试匹配自闭合标签及注释节点
+                matchText = match[0]
+
+                node = new VElement(match[1], "", matchText)
+
+                props = matchText.slice(node.type.length + 1).replace(/\/>$/, "")
+                node = fixTag(node, props)
+            }
+        }
+        if (node) {
+            nodes.push(node)
+            text = text.slice(matchText.length)
+        } else {
+            break
+        }
+    } while (1);
+    return nodes
+}
+
+var rmsskip = /\bms\-skip/
+var rnocontent = /textarea|template|script|style/
+//如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
+function fixTag(node, str) {
+    if (rmsskip.test(str)) {
+        node.skip = true
+        return node
+    }
+    var props = node.props = parseVProps(node, str)
+    var outerHTML = node.outerHTML
+    //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
+    //并且它的后代还存在绑定属性
+    var isComponent = false
+    for (var i = 0, dir; dir = builtinComponents[i++]; ) {
+        if (props[dir]) {
+            var expr = props[dir]
+            delete props[dir]
+            var component = new VComponent(dir, {
+                template: outerHTML,
+                expr: expr
+            })
+            isComponent = true
+            node.outerHTML = node.toHTML()
+            node = component.construct(node)
+        }
+    }
+
+    if (!isComponent) {
+        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
+            node.children = createVirtual(node.innerHTML)
+        } else {
+            node.skipContent = true
+            node.__content = node.innerHTML
+        }
+    }
+
+    return node
+}
+
+//销毁虚拟DOM树，方便avalon在$emit方法中回收它们
+function disposeVirtual(nodes) {
+    for (var i = 0, node; node = nodes[i++]; ) {
+        switch (node.type) {
+            case "#text":
+            case "#comment":
+                node.disposed = true
+                break
+            default:
+                node.disposed = true
+                if (node.children)
+                    disposeNodes(node.children)
+                if (node._children)
+                    disposeNodes(node._children)
+                break
+        }
+    }
+}
+
+//更新真实DOM树
+function updateEntity(nodes, vnodes) {
+    for (var i = 0, n = nodes.length; i < n; i++) {
+        var vnode = vnodes[i]
+        if (!vnode)
+            break
+        var node = nodes[i]
+        switch (vnode.type) {
+            case "#text":
+                if (!vnode.skip) {
+                    if (vnode.change) {
+                        node.nodeValue = vnode.nodeValue
+                        delete vnode.change
+                    }
+                }
+                break
+            case "#component":
+                var hooks = vnode.changeHooks
+                if (hooks) {
+                    try {
+                        for (var hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
+                        avalon.log(e, node, vnode)
+                    }
+                    delete vnode.changeHooks
+                }
+                updateEntity(node.childNodes, vnode.children)
+                break
+            case "#comment":
+                break
+            default:
+                if (!vnode.skip) {
+                    hooks = vnode.changeHooks
+                    try {
+                        for (hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
+                    }
+                    delete vnode.changeHooks
+                    if (!vnode.skipContent) {
+                        updateEntity(node.childNodes, vnode.children)
+                    }
+                }
+                break
+        }
+    }
+}
+
+//更新整个虚拟DOM树
+function updateVirtual(nodes, vm) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var node = nodes[i]
         switch (node.type) {
@@ -3198,7 +3236,6 @@ function scanTree(nodes, vm) {
     }
     return nodes
 }
-
 
 //使用来自游戏界的双缓冲技术,减少对视图的冗余刷新
 var Buffer = function () {

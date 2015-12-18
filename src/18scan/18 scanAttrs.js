@@ -55,7 +55,6 @@ function scanAttrs(elem, vmodel) {
         bindings.sort(bindingSorter)
         executeBindings(bindings, vmodel)
     }
-    scanTree(elem.children, vmodel)
+    updateVirtual(elem.children, vmodel)
 
 }
-
