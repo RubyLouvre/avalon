@@ -39,6 +39,9 @@ VElement.prototype = {
             this.children.forEach(function (c) {
                 dom.appendChild(c.toDOM())
             })
+            if(!this.children.length){
+                dom.innerHTML = this.innerHTML
+            }
         }
         return dom
     },

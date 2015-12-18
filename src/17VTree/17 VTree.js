@@ -60,7 +60,7 @@ function parseVProps(node, str) {
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
 function buildVTree(text, force) {
     var nodes = []
-    if (!force && !rbind.test(text) ){
+    if (!force && !rbind.test(text)) {
         return nodes
     }
     do {
@@ -154,7 +154,7 @@ function fixTag(node, str) {
     var outerHTML = node.outerHTML
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
-   
+    var h = false
     for (var i = 0, dir; dir = builtinComponents[i++]; ) {
         if (props[dir]) {
             var expr = props[dir]
@@ -164,15 +164,15 @@ function fixTag(node, str) {
                 expr: expr
             })
             node.outerHTML = node.toHTML()
+            h = true
             node = component.construct(node)
         }
     }
-    // node.children = buildVTree(node.innerHTML)
-    // node.outerHTML = node.toHTML()
-    if (node.type !== "#component") {
+
+    if (!h) {
         if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
             node.children = buildVTree(node.innerHTML)
-            
+
         } else {
             node.skipContent = true
             node.__content = node.innerHTML

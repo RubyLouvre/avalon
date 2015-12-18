@@ -1,3 +1,4 @@
+/*
 avalon.directive("html", {
     update: function (val) {
         var binding = this
@@ -46,3 +47,4 @@ avalon.directive("html", {
         scanNodeArray(nodes, binding.vmodels)
     }
 })
+*/

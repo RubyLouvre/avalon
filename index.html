@@ -5,7 +5,9 @@
         <script src="avalon.js"></script>
     </head>
     <body ms-controller="test">
-        <input type="text" ms-attr-value="data"/> {{data}}<b>{{aaa}}</b>
+        <input type="text" ms-attr-value="data"/> {{data}}
+        <p ms-text="aaa">这是ms-html</p>
+        <b ms-if="toggle">ms-if</b>
 
         <script>
 // 创建组件
@@ -14,7 +16,8 @@
         var vm = avalon.define({
             $id: 'test',
             data: '司徒正美',
-            aaa: "清风",
+            aaa: "<strong>{{a.b}}</strong><b>xxxx</b>",
+            toggle:false,
             a: {
                 b: 3
             }

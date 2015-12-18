@@ -56,7 +56,7 @@ avalon.components["ms-repeat"] = {
 }
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
-avalon.components["ms-if"] = {
+var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
         parent.children = buildVTree(parent.innerHTML, true)
         self._children = [parent] //将父节点作为它的子节点
@@ -64,7 +64,7 @@ avalon.components["ms-if"] = {
     },
     init: function (that, vm) {
         var binding = {
-            type: "if",
+            type: that.__type__.replace(/^ms-/, ""),
             expr: that.props.expr,
             vmodel: vm,
             element: that
@@ -74,7 +74,7 @@ avalon.components["ms-if"] = {
 }
 
 avalon.directive("if", {
-    is: function(a, b){
+    is: function (a, b) {
         return Boolean(a) === Boolean(b)
     },
     change: function (value, binding) {
@@ -110,23 +110,58 @@ avalon.components["ms-html"] = {
         parent.children = [self]
         return parent
     },
-    update: function (that, vm) {
-        var html = parseExpr(that.props.expr, vm)
-        var arr = buildVTree(html)
-        updateVTree(arr, vm)
-        that.children = [new VComment("ms-html")]
-                .concat(arr)
-                .concat(new VComment("ms-html-end"))
-    }
+    init: Ifcom.init
 }
+
+avalon.directive("html", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem) {
+            value = typeof value === "string" ? value : String(value)
+            var children = buildVTree(value, true)
+
+            elem.children = scanTree(children, binding.vmodel)
+            var change = addHooks(elem, "changeHooks")
+            change.html = this.update
+        }
+    },
+    update: function (elem, vnode) {
+        var parent = elem.parentNode
+        avalon.clearHTML(parent)
+        parent.appendChild(vnode.toDOM())
+    }
+})
+
+
 avalon.components["ms-text"] = {
     construct: function (self, parent) {
         //替换父节点的所有孩子
         parent.children = [self]
         return parent
     },
-    update: function (that, vm) {
-        var text = parseExpr(that.props.expr, vm)
-        that.children = [new VText(text)]
-    }
+    init: Ifcom.init
 }
+
+
+avalon.directive("text", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem) {
+            value = typeof value === "string" ? value : String(value)
+            var children = [new VText(value)]
+            elem.children = scanTree(children, binding.vmodel)
+            var change = addHooks(elem, "changeHooks")
+            change.text = this.update
+        }
+    },
+    update: function (elem, vnode) {
+        var parent = elem.parentNode
+        if (!parent)
+            return
+        if ("textContent" in parent) {
+            elem.textContent = vnode.toHTML()
+        } else {
+            elem.innerText = vnode.toHTML()
+        }
+    }
+})

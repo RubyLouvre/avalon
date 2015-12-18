@@ -1479,8 +1479,8 @@ function $emit(topVm, curVm, path, a, b, i) {
                 }
             }
         } catch (e) {
-           
-            // $emit(topVm, curVm, path, a, b, i - 1)
+            if (i - 1 > 0)
+                $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
     }
@@ -2931,10 +2931,18 @@ function VComponent(type, props) {
     this.children = []
 }
 VComponent.prototype = {
-    update: function (vm) {
+    construct: function (parent) {
         var a = avalon.components[this.__type__]
-        if (a && a.update) {
-            a.update(this, vm)
+        if (a && a.construct) {
+            return a && a.construct(this, parent)
+        } else {
+            return this
+        }
+    },
+    init: function (vm) {
+        var a = avalon.components[this.__type__]
+        if (a && a.init) {
+            a.init(this, vm)
         }
     },
     toDOM: function () {
@@ -2955,8 +2963,8 @@ VComponent.prototype = {
 
 avalon.components = {}
 
-avalon.components["repeat"] = {
-    update: function (that, vm) {
+avalon.components["ms-repeat"] = {
+    update: function (self, vm) {
         var template = that.props.template
         var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
         var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
@@ -2969,38 +2977,120 @@ avalon.components["repeat"] = {
             children.push.apply(children, vnode)
         }, vm)
 
-        that.children = children.concat(new VComment("ms-repeat-end"))
+        self.children = children.concat(new VComment("ms-repeat-end"))
     }
 }
-avalon.components["each"] = avalon.components["repeat"]
+avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
-avalon.components["if"] = {
-    update: function (that, vm) {
-        var render = parseExpr(that.props.expr, vm)
-        if (render) {
-            that.children = updateVTree(that.props._children, vm)
+var Ifcom = avalon.components["ms-if"] = {
+    construct: function (self, parent) {
+        parent.children = buildVTree(parent.innerHTML, true)
+        self._children = [parent] //将父节点作为它的子节点
+        return self
+    },
+    init: function (that, vm) {
+        var binding = {
+            type: that.__type__.replace(/^ms-/, ""),
+            expr: that.props.expr,
+            vmodel: vm,
+            element: that
+        }
+        avalon.injectBinding(binding)
+    }
+}
+
+avalon.directive("if", {
+    is: function (a, b) {
+        return Boolean(a) === Boolean(b)
+    },
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem) {
+            var change = addHooks(elem, "changeHooks")
+            change["if"] = this.update
+            elem.state = !!value
+            if (value) {
+                elem.children = scanTree(elem._children, binding.vmodel)
+            } else {
+                elem.children = [new VComment("ms-if")]
+            }
+        }
+    },
+    update: function (elem, vnode) {
+        var replace = false
+        if (vnode.state) {
+            replace = elem.nodeType === 8
         } else {
-            that.children = [new VComment("ms-if")]
+            replace = elem.nodeType === 1
+        }
+        if (replace) {
+            var dom = vnode.toDOM()
+            elem.parentNode.replaceChild(dom, elem)
         }
     }
+})
+
+avalon.components["ms-html"] = {
+    construct: function (self, parent) {
+        //替换父节点的所有孩子
+        parent.children = [self]
+        return parent
+    },
+    init: Ifcom.init
 }
 
-avalon.components["html"] = {
-    update: function (that, vm) {
-        var html = parseExpr(that.props.expr, vm)
-        var arr = buildVTree(html)
-        updateVTree(arr, vm)
-        that.children = [new VComment("ms-html")]
-                .concat(arr)
-                .concat(new VComment("ms-html-end"))
+avalon.directive("html", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem) {
+            value = typeof value === "string" ? value : String(value)
+            var children = buildVTree(value, true)
+
+            elem.children = scanTree(children, binding.vmodel)
+            var change = addHooks(elem, "changeHooks")
+            change.html = this.update
+        }
+    },
+    update: function (elem, vnode) {
+        var parent = elem.parentNode
+        avalon.clearHTML(parent)
+        parent.appendChild(vnode.toDOM())
     }
+})
+
+
+avalon.components["ms-text"] = {
+    construct: function (self, parent) {
+        //替换父节点的所有孩子
+        parent.children = [self]
+        return parent
+    },
+    init: Ifcom.init
 }
-avalon.components["text"] = {
-    update: function (that, vm) {
-        var text = parseExpr(that.props.expr, vm)
-        that.children = [new VText(text)]
+
+
+avalon.directive("text", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem) {
+            value = typeof value === "string" ? value : String(value)
+            var children = [new VText(value)]
+            elem.children = scanTree(children, binding.vmodel)
+            var change = addHooks(elem, "changeHooks")
+            change.text = this.update
+        }
+    },
+    update: function (elem, vnode) {
+        var parent = elem.parentNode
+        if (!parent)
+            return
+        if ("textContent" in parent) {
+            elem.textContent = vnode.toHTML()
+        } else {
+            elem.innerText = vnode.toHTML()
+        }
     }
-}
+})
 function VElement(type, innerHTML, outerHTML) {
     this.type = type
     this.props = {}
@@ -3020,7 +3110,7 @@ VElement.prototype = {
             if (this.props[i] === false) {
                 dom.removeAttribute(i)
             } else {
-                dom.setAttribute(i, this.props[i])
+                dom.setAttribute(i, String(this.props[i]))
             }
         }
         if (this.skipContent) {
@@ -3042,6 +3132,9 @@ VElement.prototype = {
             this.children.forEach(function (c) {
                 dom.appendChild(c.toDOM())
             })
+            if(!this.children.length){
+                dom.innerHTML = this.innerHTML
+            }
         }
         return dom
     },
@@ -3119,20 +3212,17 @@ function VText(text) {
     this.nodeValue = text
     this.skip = !rexpr.test(text)
 }
-function fixGtLt(str) {
-    return str.replace(/</g, "&lt;").replace(/>/g, "&gt;")
-}
+
 VText.prototype = {
     constructor: VText,
     toDOM: function () {
         return document.createTextNode(this.nodeValue)
     },
     toHTML: function () {
-        return fixGtLt(this.nodeValue)
+        return this.nodeValue
     }
 }
-//avalon.scan时扫描整个DOM树,建立对应的虚拟DOM树
-
+//不带VM,建立虚拟DOM树
 
 var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
 var ropenTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
@@ -3192,10 +3282,11 @@ function parseVProps(node, str) {
 }
 
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-function buildVTree(text) {
+function buildVTree(text, force) {
     var nodes = []
-    if (!rbind.test(text))
+    if (!force && !rbind.test(text)) {
         return nodes
+    }
     do {
         var matchText = ""
         var match = text.match(rtext)
@@ -3275,66 +3366,47 @@ function buildVTree(text) {
     return nodes
 }
 
-var rmsif = /\s+ms-if=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmsrepeat = /\s+ms-(?:repeat|each)=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmstext = /\s+ms-text=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmshtml = /\s+ms-html=("[^"]*"|'[^']*'|[^\s>]+)/
+var rmsskip = /\bms\-skip/
 var rnocontent = /textarea|template|script|style/
 //如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
 function fixTag(node, str) {
-    if (/\bms\-skip/.test(str)) {
+    if (rmsskip.test(str)) {
         node.skip = true
         return node
     }
     var props = node.props = parseVProps(node, str)
     var outerHTML = node.outerHTML
-    if (!rnocontent.test(node.type) && (props["ms-text"] || props["ms-html"] ||
-            rexpr.test(node.innerHTML))) {
-
-        if (props["ms-repeat"]) {
-            outerHTML = outerHTML.replace(rmsrepeat, "")
-            node = new VComponent("repeat", {
+    //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
+    //并且它的后代还存在绑定属性
+    var h = false
+    for (var i = 0, dir; dir = builtinComponents[i++]; ) {
+        if (props[dir]) {
+            var expr = props[dir]
+            delete props[dir]
+            var component = new VComponent(dir, {
                 template: outerHTML,
-                expr: props["ms-repeat"]
+                expr: expr
             })
-            delete props["ms-if"]
-        } else if (props["ms-html"]) {
-            outerHTML = outerHTML.replace(rmshtml, "")
-            node.children = [
-                new VComponent("html", {
-                    expr: props["ms-html"]
-                })
-            ]
-            delete props["ms-html"]
-        } else if (props["ms-text"]) {
-            outerHTML = outerHTML.replace(rmstext, "")
-            node.children = [
-                new VComponent("text", {
-                    expr: props["ms-text"]
-                })
-            ]
-            delete props["ms-text"]
+            node.outerHTML = node.toHTML()
+            h = true
+            node = component.construct(node)
         }
-        // 如果存在上面的组件,那么将上面的组件作<ms:if>的孩子
-        if (props["ms-if"]) {
-            var child = node
-            outerHTML = outerHTML.replace(rmsif, "")
-            node = new VComponent("if", {
-                template: outerHTML,
-                _children: [child],
-                expr: props["ms-if"]
-            })
-            delete props["ms-if"]
-        }
-        node.children = buildVTree(node.innerHTML)
-    } else {
-        node.skipContent = true
-        node.__content = node.innerHTML
     }
+
+    if (!h) {
+        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
+            node.children = buildVTree(node.innerHTML)
+
+        } else {
+            node.skipContent = true
+            node.__content = node.innerHTML
+        }
+    }
+
     return node
 }
 
-
+var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]
 // executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
@@ -3344,13 +3416,14 @@ function executeBindings(bindings, vmodel) {
     }
     bindings.length = 0
 }
+
 function bindingIs(a, b) {
     return a === b
 }
 
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
-  
+
     binding.paths.split("★").forEach(function (path) {
         binding.vmodel.$watch(path, binding)
     })
@@ -3361,9 +3434,10 @@ avalon.injectBinding = function (binding) {
         } catch (e) {
             avalon.log(e)
         }
-        var is = binding.is || bindingIs
+        var dir = directives[binding.type]
+        var is = dir.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            directives[binding.type].change(value, binding)
+            dir.change(value, binding)
             binding.oldValue = value
         }
     }
@@ -3377,6 +3451,7 @@ avalon.injectBinding = function (binding) {
 /*********************************************************************
  *                           扫描系统                                 *
  **********************************************************************/
+
 avalon.scan = function (elem, vmodel) {
     var text = elem.outerHTML
     if (rbind.test(text)) {
@@ -3386,11 +3461,13 @@ avalon.scan = function (elem, vmodel) {
     }
 }
 
-
 function updateTree(nodes, vnodes) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var vnode = vnodes[i]
+        if (!vnode)
+            break
         var node = nodes[i]
+
         switch (vnode.type) {
             case "#text":
                 if (!vnode.skip) {
@@ -3400,21 +3477,31 @@ function updateTree(nodes, vnodes) {
                     }
                 }
                 break
-            case "#comment":
-                if (!vnode.skip) {
-                    // 添加或删除
-                    // nodes[i].nodeValue = vnode.nodeValue
-                    // delete vnode.change
+            case "#component":
+                var hooks = vnode.changeHooks
+                if (hooks) {
+                    try {
+                        for (var hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
+                        avalon.log(e, node, vnode)
+                    }
+                    delete vnode.changeHooks
                 }
+                updateTree(node.childNodes, vnode.children)
+                break
+            case "#comment":
                 break
             default:
                 if (!vnode.skip) {
-                    var hooks = vnode.changeHooks
-
-                    for (var hook in hooks) {
-                        hooks[hook](node, vnode)
+                    hooks = vnode.changeHooks
+                    try {
+                        for (hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
                     }
-
                     delete vnode.changeHooks
                     if (!vnode.skipContent) {
                         updateTree(node.childNodes, vnode.children)
@@ -3433,8 +3520,6 @@ function addAttrHook(node) {
     var hook = addHooks(node, "changeHooks")
     hook.attr = attrUpdate
 }
-
-
 
 
 var getBindingCallback = function (elem, name, vmodels) {
@@ -3631,6 +3716,7 @@ function scanText(node, vmodel) {
     }
     return [node]
 }
+//带VM, 第一次更新VTree
 function scanTree(nodes, vm) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var node = nodes[i]
@@ -3649,9 +3735,7 @@ function scanTree(nodes, vm) {
                 }
                 break
             case "#component":
-                if (!node.skip) {
-                    node.update(vm)
-                }
+                node.init(vm)
                 break
             default:
                 if (!node.skip) {
@@ -4555,6 +4639,7 @@ directives["{{}}"] = {
         }
     }
 }
+/*
 avalon.directive("html", {
     update: function (val) {
         var binding = this
@@ -4603,100 +4688,100 @@ avalon.directive("html", {
         scanNodeArray(nodes, binding.vmodels)
     }
 })
-
-avalon.directive("if", {
-    priority: 10,
-    update: function (val) {
-        var binding = this
-        var elem = this.element
-        var stamp = binding.stamp = +new Date()
-        var par
-        var after = function () {
-            if (stamp !== binding.stamp)
-                return
-            binding.recoverNode = null
-        }
-        if (binding.recoverNode)
-            binding.recoverNode() // 还原现场，有移动节点的都需要还原现场
-        try {
-            if (!elem.parentNode)
-                return
-            par = elem.parentNode
-        } catch (e) {
-            return
-        }
-        if (val) { //插回DOM树
-            function alway() {// jshint ignore:line
-                if (elem.getAttribute(binding.name)) {
-                    elem.removeAttribute(binding.name)
-                    scanAttr(elem, binding.vmodels)
-                }
-                binding.rollback = null
-            }
-            if (elem.nodeType === 8) {
-                var keep = binding.keep
-                var hasEffect = avalon.effect.apply(keep, 1, function () {
-                    if (stamp !== binding.stamp)
-                        return
-                    elem.parentNode.replaceChild(keep, elem)
-                    elem = binding.element = keep //这时可能为null
-                    if (keep.getAttribute("_required")) {//#1044
-                        elem.required = true
-                        elem.removeAttribute("_required")
-                    }
-                    if (elem.querySelectorAll) {
-                        avalon.each(elem.querySelectorAll("[_required=true]"), function (el) {
-                            el.required = true
-                            el.removeAttribute("_required")
-                        })
-                    }
-                    alway()
-                }, after)
-                hasEffect = hasEffect === false
-            }
-            if (!hasEffect)
-                alway()
-        } else { //移出DOM树，并用注释节点占据原位置
-            if (elem.nodeType === 1) {
-                if (elem.required === true) {
-                    elem.required = false
-                    elem.setAttribute("_required", "true")
-                }
-                try {//如果不支持querySelectorAll或:required,可以直接无视
-                    avalon.each(elem.querySelectorAll(":required"), function (el) {
-                        elem.required = false
-                        el.setAttribute("_required", "true")
-                    })
-                } catch (e) {
-                }
-
-                var node = binding.element = DOC.createComment("ms-if"),
-                        pos = elem.nextSibling
-                binding.recoverNode = function () {
-                    binding.recoverNode = null
-                    if (node.parentNode !== par) {
-                        par.insertBefore(node, pos)
-                        binding.keep = elem
-                    }
-                }
-
-                avalon.effect.apply(elem, 0, function () {
-                    binding.recoverNode = null
-                    if (stamp !== binding.stamp)
-                        return
-                    elem.parentNode.replaceChild(node, elem)
-                    binding.keep = elem //元素节点
-                    ifGroup.appendChild(elem)
-                    binding.rollback = function () {
-                        if (elem.parentNode === ifGroup) {
-                            ifGroup.removeChild(elem)
-                        }
-                    }
-                }, after)
-            }
-        }
-    }
-})
+*/
+//avalon.directive("if", {
+//    priority: 10,
+//    update: function (val) {
+//        var binding = this
+//        var elem = this.element
+//        var stamp = binding.stamp = +new Date()
+//        var par
+//        var after = function () {
+//            if (stamp !== binding.stamp)
+//                return
+//            binding.recoverNode = null
+//        }
+//        if (binding.recoverNode)
+//            binding.recoverNode() // 还原现场，有移动节点的都需要还原现场
+//        try {
+//            if (!elem.parentNode)
+//                return
+//            par = elem.parentNode
+//        } catch (e) {
+//            return
+//        }
+//        if (val) { //插回DOM树
+//            function alway() {// jshint ignore:line
+//                if (elem.getAttribute(binding.name)) {
+//                    elem.removeAttribute(binding.name)
+//                    scanAttr(elem, binding.vmodels)
+//                }
+//                binding.rollback = null
+//            }
+//            if (elem.nodeType === 8) {
+//                var keep = binding.keep
+//                var hasEffect = avalon.effect.apply(keep, 1, function () {
+//                    if (stamp !== binding.stamp)
+//                        return
+//                    elem.parentNode.replaceChild(keep, elem)
+//                    elem = binding.element = keep //这时可能为null
+//                    if (keep.getAttribute("_required")) {//#1044
+//                        elem.required = true
+//                        elem.removeAttribute("_required")
+//                    }
+//                    if (elem.querySelectorAll) {
+//                        avalon.each(elem.querySelectorAll("[_required=true]"), function (el) {
+//                            el.required = true
+//                            el.removeAttribute("_required")
+//                        })
+//                    }
+//                    alway()
+//                }, after)
+//                hasEffect = hasEffect === false
+//            }
+//            if (!hasEffect)
+//                alway()
+//        } else { //移出DOM树，并用注释节点占据原位置
+//            if (elem.nodeType === 1) {
+//                if (elem.required === true) {
+//                    elem.required = false
+//                    elem.setAttribute("_required", "true")
+//                }
+//                try {//如果不支持querySelectorAll或:required,可以直接无视
+//                    avalon.each(elem.querySelectorAll(":required"), function (el) {
+//                        elem.required = false
+//                        el.setAttribute("_required", "true")
+//                    })
+//                } catch (e) {
+//                }
+//
+//                var node = binding.element = DOC.createComment("ms-if"),
+//                        pos = elem.nextSibling
+//                binding.recoverNode = function () {
+//                    binding.recoverNode = null
+//                    if (node.parentNode !== par) {
+//                        par.insertBefore(node, pos)
+//                        binding.keep = elem
+//                    }
+//                }
+//
+//                avalon.effect.apply(elem, 0, function () {
+//                    binding.recoverNode = null
+//                    if (stamp !== binding.stamp)
+//                        return
+//                    elem.parentNode.replaceChild(node, elem)
+//                    binding.keep = elem //元素节点
+//                    ifGroup.appendChild(elem)
+//                    binding.rollback = function () {
+//                        if (elem.parentNode === ifGroup) {
+//                            ifGroup.removeChild(elem)
+//                        }
+//                    }
+//                }, after)
+//            }
+//        }
+//    }
+//})
 
 //ms-important绑定已经在scanTag 方法中实现
 var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
@@ -5359,24 +5444,24 @@ function proxyRecycler(cache, key, param) {
  **********************************************************************/
 
 //ms-skip绑定已经在scanTag 方法中实现
-avalon.directive("text", {
-    update: function (value) {
-        var elem = this.element
-        value = value == null ? "" : value //不在页面上显示undefined null
-        if (elem.nodeType === 3) { //绑定在文本节点上
-            try { //IE对游离于DOM树外的节点赋值会报错
-                elem.data = value
-            } catch (e) {
-            }
-        } else { //绑定在特性节点上
-            if ("textContent" in elem) {
-                elem.textContent = value
-            } else {
-                elem.innerText = value
-            }
-        }
-    }
-})
+//avalon.directive("text", {
+//    update: function (value) {
+//        var elem = this.element
+//        value = value == null ? "" : value //不在页面上显示undefined null
+//        if (elem.nodeType === 3) { //绑定在文本节点上
+//            try { //IE对游离于DOM树外的节点赋值会报错
+//                elem.data = value
+//            } catch (e) {
+//            }
+//        } else { //绑定在特性节点上
+//            if ("textContent" in elem) {
+//                elem.textContent = value
+//            } else {
+//                elem.innerText = value
+//            }
+//        }
+//    }
+//})
 function parseDisplay(nodeName, val) {
     //用于取得此类标签的默认display值
     var key = "_" + nodeName
@@ -5444,6 +5529,9 @@ avalon.parseDisplay = parseDisplay
  */
 avalon.directive("visible", {
     init: noop,
+    is: function (a, b) {
+        return Boolean(a) === Boolean(b)
+    },
     change: function (val, binding) {
         var elem = binding.element
         if (elem) {
@@ -5455,7 +5543,7 @@ avalon.directive("visible", {
     },
     update: function (elem, vnode) {
         var change = vnode.changeStyles
-        
+
     }
 })
 /*********************************************************************
