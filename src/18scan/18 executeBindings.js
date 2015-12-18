@@ -22,13 +22,11 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
-            console.log(e)
+            avalon.log(e)
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            
             directives[binding.type].change(value, binding)
-       
             binding.oldValue = value
         }
     }

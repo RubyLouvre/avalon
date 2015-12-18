@@ -702,21 +702,7 @@ avalon.define = function (definition) {
 
     avalon.vmodels[$id] = vmodel
     vmodel.$id = $id
-    avalon.ready(function () {
-        if (!vtree[$id]) {
-            var all = document.getElementsByTagName("*")
-            for (var i = 0, node; node = all[i++]; ) {
-                if (node.nodeType !== 1)
-                    continue
-                if (node.getAttribute("ms-controller") === $id
-                        || node.getAttribute("ms-important") === $id) {
-                    dtree[$id] = node;
-                    vtree[$id] = buildVTree(node.outerHTML)
-                    break
-                }
-            }
-        }
-    })
+
 
     return vmodel
 }
@@ -929,6 +915,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
+                    batchUpdate(heirloom.vm)
                 }
             }
         },
@@ -965,10 +952,13 @@ function makeObservable(pathname, heirloom) {
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
             }
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, old)
-            }
+            var older = old
             old = val
+            if (_this.$active) {
+                $emit(heirloom.vm, _this, pathname, val, older)
+                batchUpdate(heirloom.vm)
+            }
+
         },
         enumerable: true,
         configurable: true
@@ -1050,6 +1040,36 @@ function hideProperty(host, name, value) {
 //监听对象属性值的变化(注意,数组元素不是数组的属性),通过对劫持当前对象的访问器实现
 //监听对象或数组的结构变化, 对对象的键值对进行增删重排, 或对数组的进行增删重排,都属于这范畴
 //   通过比较前后代理VM顺序实现
+function batchUpdate(vm) {
+    if (vm && canUpdateDom) {
+        var id = vm.$id
+        var vnode = vtree[id]//虚拟DOM
+        if (!vnode)
+            return
+        var dom = dtree[id]//虚拟DOM
+        if (dom) {
+            if (!root.contains(dom))
+                return
+        } else {
+            for (var i = 0, node, all = document.getElementsByTagName("*");
+                    node = all[i++]; ) {
+                if (node.getAttribute("data-controller") === id ||
+                        node.getAttribute("data-important") === id) {
+                    dom = dtree[id] = node
+                    break
+                }
+            }
+        }
+        if (dom) {
+            canUpdateDom = false
+            setTimeout(function () {
+                updateTree([dom], [vnode])
+                canUpdateDom = true
+            })
+        }
+    }
+}
+var canUpdateDom = true
 function $watch(expr, funOrObj) {
     var hive = (this.$events = this.$events || {})
     var list = (hive[expr] = hive[expr] || [])
@@ -1071,12 +1091,13 @@ function $emit(topVm, curVm, path, a, b, i) {
                 var data = list[i]
                 if (data.remove) {
                     list.splice(i, 1)
-                } else {
+                } else if (data.update) {
                     data.update.call(curVm, a, b, path)
                 }
             }
         } catch (e) {
-            $emit(topVm, curVm, path, a, b, i - 1)
+           
+            // $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
     }
@@ -2885,13 +2906,11 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
-            console.log(e)
+            avalon.log(e)
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            
             directives[binding.type].change(value, binding)
-       
             binding.oldValue = value
         }
     }
@@ -2910,9 +2929,7 @@ avalon.scan = function (elem, vmodel) {
     if (rbind.test(text)) {
         var tree = buildVTree(text, vmodel)
         scanTree(tree, vmodel)
-        console.log(tree)
         updateTree([elem], tree)
-        //console.log(tree)
     }
 }
 

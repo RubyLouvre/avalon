@@ -942,6 +942,7 @@ kernel.maxRepeatSize = 100
 avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
+avalon.vtree = vtree
 
 var defineProperty = Object.defineProperty
 var canHideOwn = true
@@ -1008,7 +1009,7 @@ function observeArray(array, old, heirloom, options) {
         })
         array._.length = array.length
         array._.$watch("length", function (a, b) {
-            
+
         })
 
         if (W3C) {
@@ -1167,6 +1168,8 @@ function getComputed(obj) {
     return $computed
 }
 
+
+
 function makeComputed(pathname, heirloom, key, value) {
     var old = NaN, _this = {}
     return {
@@ -1186,6 +1189,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
+                    batchUpdate(heirloom.vm)
                 }
             }
         },
@@ -1223,10 +1227,13 @@ function makeObservable(pathname, heirloom) {
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
             }
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, old)
-            }
+            var older = old
             old = val
+            if (_this.$active) {
+                $emit(heirloom.vm, _this, pathname, val, older)
+                batchUpdate(heirloom.vm)
+            }
+
         },
         enumerable: true,
         configurable: true
@@ -1416,6 +1423,36 @@ if (!canHideOwn) {
     }
 }
 
+function batchUpdate(vm) {
+    if (vm && canUpdateDom) {
+        var id = vm.$id
+        var vnode = vtree[id]//虚拟DOM
+        if (!vnode)
+            return
+        var dom = dtree[id]//虚拟DOM
+        if (dom) {
+            if (!root.contains(dom))
+                return
+        } else {
+            for (var i = 0, node, all = document.getElementsByTagName("*");
+                    node = all[i++]; ) {
+                if (node.getAttribute("data-controller") === id ||
+                        node.getAttribute("data-important") === id) {
+                    dom = dtree[id] = node
+                    break
+                }
+            }
+        }
+        if (dom) {
+            canUpdateDom = false
+            setTimeout(function () {
+                updateTree([dom], [vnode])
+                canUpdateDom = true
+            })
+        }
+    }
+}
+var canUpdateDom = true
 function $watch(expr, funOrObj) {
     var hive = (this.$events = this.$events || {})
     var list = (hive[expr] = hive[expr] || [])
@@ -1437,12 +1474,13 @@ function $emit(topVm, curVm, path, a, b, i) {
                 var data = list[i]
                 if (data.remove) {
                     list.splice(i, 1)
-                } else {
+                } else if (data.update) {
                     data.update.call(curVm, a, b, path)
                 }
             }
         } catch (e) {
-            $emit(topVm, curVm, path, a, b, i - 1)
+           
+            // $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
     }
@@ -3321,13 +3359,11 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
-            console.log(e)
+            avalon.log(e)
         }
         var is = binding.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            
             directives[binding.type].change(value, binding)
-       
             binding.oldValue = value
         }
     }
@@ -3346,9 +3382,7 @@ avalon.scan = function (elem, vmodel) {
     if (rbind.test(text)) {
         var tree = buildVTree(text, vmodel)
         scanTree(tree, vmodel)
-        console.log(tree)
         updateTree([elem], tree)
-        //console.log(tree)
     }
 }
 
@@ -3546,10 +3580,12 @@ function scanTag(elem, vmodel) {
     var vm = avalon.vmodels[v]
     if (vm) {
         vmodel = vm
+        vtree[v] = elem
     } else {
         v = props["data-controller"]
         vm = avalon.vmodels[v]
         if (vm) {
+            vtree[v] = elem
             if (vmodel) {
                 vm = avalon.createProxy(vmodel, vm)
             }
@@ -3559,7 +3595,7 @@ function scanTag(elem, vmodel) {
     if (v && !vm) {
         return avalon.log("[" + v + "] vmodel has not defined yet!")
     }
-    
+
     if (elem.type.indexOf(":") > 0 && !avalon.components[elem.type]) {
         //avalon.component(elem)
     } else {

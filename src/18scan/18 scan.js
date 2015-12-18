@@ -6,9 +6,7 @@ avalon.scan = function (elem, vmodel) {
     if (rbind.test(text)) {
         var tree = buildVTree(text, vmodel)
         scanTree(tree, vmodel)
-        console.log(tree)
         updateTree([elem], tree)
-        //console.log(tree)
     }
 }
 

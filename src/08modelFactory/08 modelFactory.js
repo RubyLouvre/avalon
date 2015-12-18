@@ -2,6 +2,7 @@
 avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
+avalon.vtree = vtree
 
 var defineProperty = Object.defineProperty
 var canHideOwn = true
@@ -68,7 +69,7 @@ function observeArray(array, old, heirloom, options) {
         })
         array._.length = array.length
         array._.$watch("length", function (a, b) {
-            
+
         })
 
         if (W3C) {
@@ -227,6 +228,8 @@ function getComputed(obj) {
     return $computed
 }
 
+
+
 function makeComputed(pathname, heirloom, key, value) {
     var old = NaN, _this = {}
     return {
@@ -246,6 +249,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
+                    batchUpdate(heirloom.vm)
                 }
             }
         },
@@ -283,10 +287,13 @@ function makeObservable(pathname, heirloom) {
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
             }
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, old)
-            }
+            var older = old
             old = val
+            if (_this.$active) {
+                $emit(heirloom.vm, _this, pathname, val, older)
+                batchUpdate(heirloom.vm)
+            }
+
         },
         enumerable: true,
         configurable: true

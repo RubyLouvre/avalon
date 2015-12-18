@@ -16,21 +16,7 @@ avalon.define = function (definition) {
 
     avalon.vmodels[$id] = vmodel
     vmodel.$id = $id
-    avalon.ready(function () {
-        if (!vtree[$id]) {
-            var all = document.getElementsByTagName("*")
-            for (var i = 0, node; node = all[i++]; ) {
-                if (node.nodeType !== 1)
-                    continue
-                if (node.getAttribute("ms-controller") === $id
-                        || node.getAttribute("ms-important") === $id) {
-                    dtree[$id] = node;
-                    vtree[$id] = buildVTree(node.outerHTML)
-                    break
-                }
-            }
-        }
-    })
+
 
     return vmodel
 }
@@ -243,6 +229,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
+                    batchUpdate(heirloom.vm)
                 }
             }
         },
@@ -279,10 +266,13 @@ function makeObservable(pathname, heirloom) {
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
             }
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, old)
-            }
+            var older = old
             old = val
+            if (_this.$active) {
+                $emit(heirloom.vm, _this, pathname, val, older)
+                batchUpdate(heirloom.vm)
+            }
+
         },
         enumerable: true,
         configurable: true

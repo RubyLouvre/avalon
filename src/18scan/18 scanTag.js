@@ -5,10 +5,12 @@ function scanTag(elem, vmodel) {
     var vm = avalon.vmodels[v]
     if (vm) {
         vmodel = vm
+        vtree[v] = elem
     } else {
         v = props["data-controller"]
         vm = avalon.vmodels[v]
         if (vm) {
+            vtree[v] = elem
             if (vmodel) {
                 vm = avalon.createProxy(vmodel, vm)
             }
@@ -18,7 +20,7 @@ function scanTag(elem, vmodel) {
     if (v && !vm) {
         return avalon.log("[" + v + "] vmodel has not defined yet!")
     }
-    
+
     if (elem.type.indexOf(":") > 0 && !avalon.components[elem.type]) {
         //avalon.component(elem)
     } else {

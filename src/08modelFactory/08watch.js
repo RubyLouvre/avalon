@@ -19,12 +19,13 @@ function $emit(topVm, curVm, path, a, b, i) {
                 var data = list[i]
                 if (data.remove) {
                     list.splice(i, 1)
-                } else {
+                } else if (data.update) {
                     data.update.call(curVm, a, b, path)
                 }
             }
         } catch (e) {
-            $emit(topVm, curVm, path, a, b, i - 1)
+           
+            // $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
     }
