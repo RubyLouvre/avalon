@@ -247,7 +247,6 @@ function mayStaggerAnimate(staggerTime, callback, index) {
     return index
 }
 
-
 function removeItem(node, binding) {
     var fragment = avalonFragment.cloneNode(false)
     var last = node
@@ -260,7 +259,6 @@ function removeItem(node, binding) {
         if (!pre || String(pre.nodeValue).indexOf(breakText) === 0) {
             break
         }
-
         if (binding && (pre.className === binding.effectClass)) {
             node = pre;
             (function (cur) {
@@ -277,7 +275,6 @@ function removeItem(node, binding) {
     fragment.appendChild(last)
     return fragment
 }
-
 
 function shimController(data, transation, proxy, fragments, init) {
     var content = data.template.cloneNode(true)
@@ -304,6 +301,24 @@ function getProxyVM(binding) {
     proxy.$outer = binding.$outer
     return proxy
 }
+
+function decorateProxy(proxy, binding, type) {
+    if (type === "array") {
+        proxy.$remove = function () {
+            binding.$repeat.removeAt(proxy.$index)
+        }
+        var param = binding.param
+        proxy.$watch(param, function (a) {
+            var index = proxy.$index
+            binding.$repeat[index] = a
+        })
+    } else {
+        proxy.$watch("$val", function fn(a) {
+            binding.$repeat[proxy.$key] = a
+        })
+    }
+}
+
 
 var eachProxyPool = []
 
@@ -335,7 +350,6 @@ function eachProxyFactory(itemName) {
         $remove: avalon.noop
     }
     source[itemName] = NaN
-
     var force = {
         $last: 1,
         $first: 1,
@@ -347,26 +361,6 @@ function eachProxyFactory(itemName) {
     })
     proxy.$id = generateID("$proxy$each")
     return proxy
-}
-
-function decorateProxy(proxy, binding, type) {
-    if (type === "array") {
-        proxy.$remove = function () {
-
-            binding.$repeat.removeAt(proxy.$index)
-        }
-        var param = binding.param
-
-
-        proxy.$watch(param, function (a) {
-            var index = proxy.$index
-            binding.$repeat[index] = a
-        })
-    } else {
-        proxy.$watch("$val", function fn(a) {
-            binding.$repeat[proxy.$key] = a
-        })
-    }
 }
 
 var withProxyPool = []
@@ -407,7 +401,6 @@ function proxyRecycler(cache, key, param) {
                 a.length = 0
                 if (i === param) {
                     proxy[param] = NaN
-
                 } else if (i === "$val") {
                     proxy.$val = NaN
                 }

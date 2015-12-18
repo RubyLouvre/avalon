@@ -37,15 +37,15 @@ var fakeClassListMethods = {
         this._set((" " + this + " ").replace(" " + cls + " ", " "))
     },
     __set: function (cls) {
-            cls = cls.trim()
-            var node = this.node
-            if (rsvg.test(node)) {
-                //SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
-                node.setAttribute("class", cls)
-            } else {
-                node.className = cls
-            }
-        } //toggle存在版本差异，因此不使用它
+        cls = cls.trim()
+        var node = this.node
+        if (rsvg.test(node)) {
+            //SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
+            node.setAttribute("class", cls)
+        } else {
+            node.className = cls
+        }
+    } //toggle存在版本差异，因此不使用它
 }
 
 function fakeClassList(node) {
@@ -73,6 +73,7 @@ function fakeClassList(node) {
         return this
     }
 })
+
 avalon.fn.mix({
     hasClass: function (cls) {
         var el = this[0] || {}
@@ -210,6 +211,7 @@ function parseData(data) {
     } catch (e) {}
     return data
 }
+
 var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
     rvalidchars = /^[\],:{}\s]*$/,
     rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
@@ -268,12 +270,15 @@ avalon.each({
 function getWindow(node) {
     return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
 }
+
 //=============================css相关=======================
+
 var cssHooks = avalon.cssHooks = {}
 var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"]
 var cssMap = {
     "float": W3C ? "cssFloat" : "styleFloat"
 }
+
 avalon.cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function (name, host, camelCase) {
@@ -289,11 +294,13 @@ avalon.cssName = function (name, host, camelCase) {
     }
     return null
 }
+
 cssHooks["@:set"] = function (node, name, value) {
     try { //node.style.width = NaN;node.style.width = "xxxxxxx";node.style.width = undefine 在旧式IE下会抛异常
         node.style[name] = value
     } catch (e) {}
 }
+
 if (window.getComputedStyle) {
     cssHooks["@:get"] = function (node, name) {
         if (!node || !node.style) {
@@ -410,6 +417,7 @@ function showHidden(node, array) {
         }
     }
 }
+
 "Width,Height".replace(rword, function (name) { //fix 481
     var method = name.toLowerCase(),
         clientProp = "client" + name,
@@ -474,6 +482,7 @@ function showHidden(node, array) {
         return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? 2 : 0)
     }
 })
+
 avalon.fn.offset = function () { //取得距离页面左右角的坐标
     var node = this[0],
         box = {
@@ -516,7 +525,9 @@ function getValType(elem) {
     var ret = elem.tagName.toLowerCase()
     return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
 }
+
 var roption = /^<option(?:\s+\w+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*\s+value[\s=]/i
+
 var valHooks = {
     "option:get": IEVersion ? function (node) {
         //在IE11及W3C，如果没有指定value，那么node.value默认为node.text（存在trim作），但IE9-10则是取innerHTML(没trim操作)

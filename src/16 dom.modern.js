@@ -176,9 +176,10 @@ if (root.dataset) {
         }
     }
 }
-var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
+
 avalon.parseJSON = JSON.parse
 
+var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 function parseData(data) {
     try {
         if (typeof data === "object")
@@ -223,11 +224,13 @@ function getWindow(node) {
 }
 
 //=============================css相关==================================
+
 var cssHooks = avalon.cssHooks = createMap()
 var prefixes = ["", "-webkit-", "-moz-", "-ms-"] //去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
 }
+
 avalon.cssNumber = oneObject("animationIterationCount,animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function (name, host, camelCase) {
@@ -243,6 +246,7 @@ avalon.cssName = function (name, host, camelCase) {
     }
     return null
 }
+
 cssHooks["@:set"] = function (node, name, value) {
     node.style[name] = value
 }
@@ -272,13 +276,13 @@ cssHooks["opacity:get"] = function (node) {
                 avalon(node).position()[name] + "px"
     }
 })
+
 var cssShow = {
     position: "absolute",
     visibility: "hidden",
     display: "block"
 }
 var rdisplayswap = /^(none|table(?!-c[ea]).+)/
-
 function showHidden(node, array) {
     //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
     if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
@@ -362,6 +366,7 @@ function showHidden(node, array) {
         return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? 2 : 0)
     }
 })
+
 avalon.fn.offset = function () { //取得距离页面左右角的坐标
     var node = this[0]
     try {
@@ -384,12 +389,14 @@ avalon.fn.offset = function () { //取得距离页面左右角的坐标
         }
     }
 }
+
 //=============================val相关=======================
 
 function getValType(elem) {
     var ret = elem.tagName.toLowerCase()
     return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
 }
+
 var valHooks = {
     "select:get": function (node, value) {
         var option, options = node.options,

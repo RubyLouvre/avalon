@@ -199,7 +199,7 @@ function isComputed(val) {//speed up!
                 return false
             }
         }
-        return  typeof val.get === "function"
+        return typeof val.get === "function"
     }
 }
 function makeGetSet(key, value) {

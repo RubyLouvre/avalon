@@ -436,7 +436,7 @@ new function () {// jshint ignore:line
 
     function isAbsUrl(path) {
         //http://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
-        return  /^(?:[a-z]+:)?\/\//i.test(String(path))
+        return /^(?:[a-z]+:)?\/\//i.test(String(path))
     }
 
 
@@ -548,7 +548,7 @@ new function () {// jshint ignore:line
             url += (url.indexOf("?") === -1 ? "?" : "&") + value;
         })
         this.url = url
-        return  this.urlNoQuery = urlNoQuery
+        return this.urlNoQuery = urlNoQuery
     }
 
     function makeIndexArray(hash, useStar, part) {

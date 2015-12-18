@@ -2,7 +2,7 @@
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 0
+var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
@@ -18,7 +18,7 @@ function getUid(data) { //IE9+,标准浏览器
                 data.uniqueNumber = data.name + "-" + getUid(elem)
             }
         } else {
-            data.uniqueNumber = ++disposeCount
+            data.uniqueNumber = "_"+(++disposeCount)
         }
     }
     return data.uniqueNumber
@@ -29,7 +29,7 @@ function injectDisposeQueue(data, list) {
     var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
     avalon.Array.ensure(lists, list)
-    list.$uuid = list.$uuid || generateID()
+    //list.$uuid = list.$uuid || generateID()
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = 1
         disposeQueue.push(data)
@@ -37,7 +37,6 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
-
     var i = disposeQueue.length
     var n = i
     var allTypes = []

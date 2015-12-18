@@ -40,9 +40,9 @@ avalon.parseHTML = function(html) {
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
-            //取得其标签名
-            wrapper = tagHooks[tag] || tagHooks._default,
-            firstChild
+        //取得其标签名
+        wrapper = tagHooks[tag] || tagHooks._default,
+        firstChild
     wrapper.innerHTML = html
     var els = wrapper.getElementsByTagName("script")
     if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性

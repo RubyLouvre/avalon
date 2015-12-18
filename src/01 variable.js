@@ -11,6 +11,7 @@ ifGroup.innerHTML = "X<style id='avalonStyle'>.avalonHide{ display: none!importa
 ifGroup.setAttribute("ms-skip", "1")
 ifGroup.className = "avalonHide"
 var rnative = /\[native code\]/ //判定是否原生函数
+
 function log() {
     if (window.console && kernel.debug) {
         // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log

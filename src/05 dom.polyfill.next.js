@@ -12,6 +12,7 @@ avalon.contains = function(root, el) {
         return false
     }
 }
+
 if (window.SVGElement) {
     var svgns = "http://www.w3.org/2000/svg"
     var svg = DOC.createElementNS(svgns, "svg")
@@ -66,7 +67,7 @@ if (window.SVGElement) {
                     var s = this.outerHTML
                     var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
                     var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                    return  s.replace(ropen, "").replace(rclose, "")
+                    return s.replace(ropen, "").replace(rclose, "")
                 },
                 set: function(html) {
                     if (avalon.clearHTML) {
@@ -79,8 +80,11 @@ if (window.SVGElement) {
         })
     }
 }
+
 //========================= event binding ====================
+
 var eventHooks = avalon.eventHooks 
+
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 //针对IE9+, w3c修正animationend
 avalon.each({

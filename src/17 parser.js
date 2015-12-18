@@ -117,12 +117,10 @@ function addAssign(vars, vmodel, name, binding) {
         while (a = arr.shift()) {
             if (vmodel.hasOwnProperty(a)) {
                 ret.push(first + prefix + first)
-
                 binding.observers.push({
                     v: vmodel,
                     p: prop
                 })
-
                 vars.splice(i, 1)
             }
         }
@@ -160,7 +158,6 @@ function parseExpr(expr, vmodels, binding) {
     }
 
     var vars = getVars(expr)
-
     var expose = new Date() - 0
     var assigns = []
     var names = []
@@ -229,8 +226,7 @@ function parseExpr(expr, vmodels, binding) {
             assigns.join(",\n") + expr))
     /* jshint ignore:end */
 
-    return  evaluatorPool.put(exprId, getter)
-
+    return evaluatorPool.put(exprId, getter)
 }
 
 function normalizeExpr(code) {
@@ -272,7 +268,6 @@ function parseFilter(filters) {
                 return '",'
             }) + "]"
     /* jshint ignore:start */
-    return  scpCompile(["return [" + filters + "]"])()
+    return scpCompile(["return [" + filters + "]"])()
     /* jshint ignore:end */
-
 }

@@ -1,4 +1,5 @@
 //===================修复浏览器对Object.defineProperties的支持=================
+
 if (!canHideOwn) {
     if ("__defineGetter__" in avalon) {
         defineProperty = function (obj, prop, desc) {
@@ -48,7 +49,6 @@ if (!canHideOwn) {
                     "\tEnd Function")
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
             var uniq = {}
-
             //添加访问器属性 
             for (name in accessors) {
                 uniq[name] = true

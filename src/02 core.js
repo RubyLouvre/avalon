@@ -320,6 +320,7 @@ avalon.directive = function (name, obj) {
 
     return directives[name] = obj
 }
+
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 function isArrayLike(obj) {
     if (!obj)

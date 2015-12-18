@@ -57,11 +57,11 @@ avalon.parseHTML = function (html) {
                 //以偷龙转凤方式恢复执行脚本功能
                 neo = script.cloneNode(false) //FF不能省略参数
                 ap.forEach.call(el.attributes, function (attr) {
-                        if (attr && attr.specified) {
-                            neo[attr.name] = attr.value //复制其属性
-                            neo.setAttribute(attr.name, attr.value)
-                        }
-                    }) // jshint ignore:line
+                    if (attr && attr.specified) {
+                        neo[attr.name] = attr.value //复制其属性
+                        neo.setAttribute(attr.name, attr.value)
+                    }
+                }) // jshint ignore:line
                 neo.text = el.text
                 el.parentNode.replaceChild(neo, el) //替换节点
             }

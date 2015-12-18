@@ -46,7 +46,7 @@ var Cache = new function() {// jshint ignore:line
         if (entry === void 0)
             return
         if (entry === this.tail) {
-            return  entry.value
+            return entry.value
         }
         // HEAD--------------TAIL
         //   <.older   .newer>

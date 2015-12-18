@@ -52,7 +52,7 @@ var plugins = {
 kernel.plugins = plugins
 kernel.plugins['interpolate'](["{{", "}}"])
 
-kernel.async =true
+kernel.async = true
 kernel.debug = true
 kernel.paths = {}
 kernel.shim = {}

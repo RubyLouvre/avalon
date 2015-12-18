@@ -31,7 +31,7 @@ function createSignalTower(elem, vmodel) {
     }
 }
 
-var getBindingCallback = function (elem, name, vmodels) {
+function getBindingCallback(elem, name, vmodels) {
     var callback = elem.getAttribute(name)
     if (callback) {
         for (var i = 0, vm; vm = vmodels[i++]; ) {

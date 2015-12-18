@@ -2,7 +2,7 @@
  *                           DOM 底层补丁                             *
  **********************************************************************/
 
-function fixContains(root, el) {
+avalon.contains = function(root, el) {
     try { //IE6-8,游离于DOM树外的文本节点，访问parentNode有时会抛错
         while ((el = el.parentNode))
             if (el === root)
@@ -12,11 +12,10 @@ function fixContains(root, el) {
         return false
     }
 }
-avalon.contains = fixContains
 //IE6-11的文档对象没有contains
 if (!DOC.contains) {
     DOC.contains = function (b) {
-        return fixContains(DOC, b)
+        return avalon.contains(DOC, b)
     }
 }
 
@@ -93,12 +92,13 @@ if (window.SVGElement) {
         })
     }
 }
+
 if (!root.outerHTML && window.HTMLElement) { //firefox 到11时才有outerHTML
     HTMLElement.prototype.__defineGetter__("outerHTML", outerHTML);
 }
 
-
 //============================= event binding =======================
+
 var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
 function fixEvent(event) {
     var ret = {}
@@ -128,6 +128,7 @@ function fixEvent(event) {
 }
 
 var eventHooks = avalon.eventHooks
+
 //针对firefox, chrome修正mouseenter, mouseleave
 if (!("onmouseenter" in root)) {
     avalon.each({
@@ -149,6 +150,7 @@ if (!("onmouseenter" in root)) {
         }
     })
 }
+
 //针对IE9+, w3c修正animationend
 avalon.each({
     AnimationEvent: "animationend",
@@ -160,6 +162,7 @@ avalon.each({
         }
     }
 })
+
 //针对IE6-8修正input
 if (!("oninput" in DOC.createElement("input"))) {
     eventHooks.input = {

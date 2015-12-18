@@ -1,7 +1,6 @@
 function $watch(expr, binding) {
-    var $events = this.$events || (this.$events = {})
-
-    var queue = $events[expr] || ($events[expr] = [])
+    var $events = this.$events || (this.$events = {}),
+        queue = $events[expr] || ($events[expr] = [])
 
     if (typeof binding === "function") {
         var backup = binding
@@ -38,11 +37,13 @@ function $watch(expr, binding) {
     } else if (!binding.oneTime) {
         avalon.Array.ensure(queue, binding)
     }
+
     return function () {
         binding.update = binding.getter = binding.handler = noop
         binding.element = DOC.createElement("a")
     }
 }
+
 function $emit(key, args) {
     var event = this.$events
     if (event && event[key]) {
@@ -64,12 +65,10 @@ function $emit(key, args) {
             if (this.$pathname) {
                 $emit.call(parent, this.$pathname + "." + key, args)//以确切的值往上冒泡
             }
-
             $emit.call(parent, "*." + key, args)//以模糊的值往上冒泡
         }
     } else {
         parent = this.$up
-
         if (this.$ups) {
             for (var i in this.$ups) {
                 $emit.call(this.$ups[i], i + "." + key, args)//以确切的值往上冒泡
@@ -107,7 +106,6 @@ function collectDependency(el, key) {
         } else {
             break
         }
-
     } while (true)
 }
 
@@ -124,7 +122,6 @@ function notifySubscribers(subs, args) {
         } else {
             renders.push(sub)
         }
-
     }
     if (kernel.async) {
         buffer.render()//1

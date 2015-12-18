@@ -40,10 +40,8 @@ function scanAttr(elem, vmodels, match) {
                             priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
-
                             var filters = getToken(value).filters
                             binding.expr = binding.expr.replace(filters, "")
-
                             binding.filters = filters.replace(rhasHtml, function () {
                                 binding.type = "html"
                                 binding.group = 1
@@ -76,16 +74,15 @@ function scanAttr(elem, vmodels, match) {
                     scanNode = !rnoscanNodeBinding.test(type)
                 }
             }
-
             executeBindings(bindings, vmodels)
         }
     }
     if (scanNode && !stopScan[elem.tagName] && (isWidget(elem) ? elem.msResolved : 1)) {
         mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
-
     }
 }
+
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
 //IE67下，在循环绑定中，一个节点如果是通过cloneNode得到，自定义属性的specified为false，无法进入里面的分支，

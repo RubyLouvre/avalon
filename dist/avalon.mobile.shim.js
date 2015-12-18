@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.shim.js 1.5.6 built in 2015.12.1
+ avalon.mobile.shim.js 1.5.6 built in 2015.12.19
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -453,7 +453,7 @@ var Cache = new function() {// jshint ignore:line
         if (entry === void 0)
             return
         if (entry === this.tail) {
-            return  entry.value
+            return entry.value
         }
         // HEAD--------------TAIL
         //   <.older   .newer>
@@ -489,7 +489,7 @@ if (!DOC.contains) {
         return !!(this.compareDocumentPosition(arg) & 16)
     }
 }
-avalon.contains = function (root, el) {
+avalon.contains = function(root, el) {
     try {
         while ((el = el.parentNode))
             if (el === root)
@@ -555,7 +555,7 @@ if (window.SVGElement) {
                     var s = this.outerHTML
                     var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
                     var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                    return  s.replace(ropen, "").replace(rclose, "")
+                    return s.replace(ropen, "").replace(rclose, "")
                 },
                 set: function (html) {
                     if (avalon.clearHTML) {
@@ -568,8 +568,11 @@ if (window.SVGElement) {
         })
     }
 }
+
 //========================= event binding ====================
+
 var eventHooks = avalon.eventHooks
+
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!("onmouseenter" in root)) {
     avalon.each({
@@ -591,6 +594,7 @@ if (!("onmouseenter" in root)) {
         }
     })
 }
+
 //针对IE9+, w3c修正animationend
 avalon.each({
     AnimationEvent: "animationend",
@@ -678,16 +682,15 @@ var plugins = {
 kernel.plugins = plugins
 kernel.plugins['interpolate'](["{{", "}}"])
 
-kernel.async =true
+kernel.async = true
 kernel.debug = true
 kernel.paths = {}
 kernel.shim = {}
 kernel.maxRepeatSize = 100
 
 function $watch(expr, binding) {
-    var $events = this.$events || (this.$events = {})
-
-    var queue = $events[expr] || ($events[expr] = [])
+    var $events = this.$events || (this.$events = {}),
+        queue = $events[expr] || ($events[expr] = [])
 
     if (typeof binding === "function") {
         var backup = binding
@@ -724,11 +727,13 @@ function $watch(expr, binding) {
     } else if (!binding.oneTime) {
         avalon.Array.ensure(queue, binding)
     }
+
     return function () {
         binding.update = binding.getter = binding.handler = noop
         binding.element = DOC.createElement("a")
     }
 }
+
 function $emit(key, args) {
     var event = this.$events
     if (event && event[key]) {
@@ -750,12 +755,10 @@ function $emit(key, args) {
             if (this.$pathname) {
                 $emit.call(parent, this.$pathname + "." + key, args)//以确切的值往上冒泡
             }
-
             $emit.call(parent, "*." + key, args)//以模糊的值往上冒泡
         }
     } else {
         parent = this.$up
-
         if (this.$ups) {
             for (var i in this.$ups) {
                 $emit.call(this.$ups[i], i + "." + key, args)//以确切的值往上冒泡
@@ -793,7 +796,6 @@ function collectDependency(el, key) {
         } else {
             break
         }
-
     } while (true)
 }
 
@@ -810,7 +812,6 @@ function notifySubscribers(subs, args) {
         } else {
             renders.push(sub)
         }
-
     }
     if (kernel.async) {
         buffer.render()//1
@@ -1031,7 +1032,7 @@ function isComputed(val) {//speed up!
                 return false
             }
         }
-        return  typeof val.get === "function"
+        return typeof val.get === "function"
     }
 }
 function makeGetSet(key, value) {
@@ -1405,16 +1406,11 @@ avalon.injectBinding = function (binding) {
                 if (binding.type === "on") {
                     a = binding.getter + ""
                 } else {
-                    try {
-                        a = binding.getter.apply(0, binding.args)
-                    } catch (ex) {
-                        a = null
-                    }
+                    a = binding.getter.apply(0, binding.args)
                 }
             } else {
                 a = args[0]
                 b = args[1]
-
             }
             b = typeof b === "undefined" ? binding.oldValue : b
             if (binding._filters) {
@@ -1480,7 +1476,7 @@ function getProxyIds(a, isArray) {
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 0
+var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
@@ -1496,7 +1492,7 @@ function getUid(data) { //IE9+,标准浏览器
                 data.uniqueNumber = data.name + "-" + getUid(elem)
             }
         } else {
-            data.uniqueNumber = ++disposeCount
+            data.uniqueNumber = "_"+(++disposeCount)
         }
     }
     return data.uniqueNumber
@@ -1507,7 +1503,7 @@ function injectDisposeQueue(data, list) {
     var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
     avalon.Array.ensure(lists, list)
-    list.$uuid = list.$uuid || generateID()
+    //list.$uuid = list.$uuid || generateID()
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = 1
         disposeQueue.push(data)
@@ -1515,7 +1511,6 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
-
     var i = disposeQueue.length
     var n = i
     var allTypes = []
@@ -1628,9 +1623,9 @@ avalon.parseHTML = function(html) {
     }
     html = html.replace(rxhtml, "<$1></$2>").trim()
     var tag = (rtagName.exec(html) || ["", ""])[1].toLowerCase(),
-            //取得其标签名
-            wrapper = tagHooks[tag] || tagHooks._default,
-            firstChild
+        //取得其标签名
+        wrapper = tagHooks[tag] || tagHooks._default,
+        firstChild
     wrapper.innerHTML = html
     var els = wrapper.getElementsByTagName("script")
     if (els.length) { //使用innerHTML生成的script节点不会发出请求与执行text属性
@@ -1843,9 +1838,10 @@ if (root.dataset) {
         }
     }
 }
-var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
+
 avalon.parseJSON = JSON.parse
 
+var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 function parseData(data) {
     try {
         if (typeof data === "object")
@@ -1890,11 +1886,13 @@ function getWindow(node) {
 }
 
 //=============================css相关==================================
+
 var cssHooks = avalon.cssHooks = createMap()
 var prefixes = ["", "-webkit-", "-moz-", "-ms-"] //去掉opera-15的支持
 var cssMap = {
     "float": "cssFloat"
 }
+
 avalon.cssNumber = oneObject("animationIterationCount,animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom")
 
 avalon.cssName = function (name, host, camelCase) {
@@ -1910,6 +1908,7 @@ avalon.cssName = function (name, host, camelCase) {
     }
     return null
 }
+
 cssHooks["@:set"] = function (node, name, value) {
     node.style[name] = value
 }
@@ -1939,13 +1938,13 @@ cssHooks["opacity:get"] = function (node) {
                 avalon(node).position()[name] + "px"
     }
 })
+
 var cssShow = {
     position: "absolute",
     visibility: "hidden",
     display: "block"
 }
 var rdisplayswap = /^(none|table(?!-c[ea]).+)/
-
 function showHidden(node, array) {
     //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
     if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
@@ -2029,6 +2028,7 @@ function showHidden(node, array) {
         return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? 2 : 0)
     }
 })
+
 avalon.fn.offset = function () { //取得距离页面左右角的坐标
     var node = this[0]
     try {
@@ -2051,12 +2051,14 @@ avalon.fn.offset = function () { //取得距离页面左右角的坐标
         }
     }
 }
+
 //=============================val相关=======================
 
 function getValType(elem) {
     var ret = elem.tagName.toLowerCase()
     return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
 }
+
 var valHooks = {
     "select:get": function (node, value) {
         var option, options = node.options,
@@ -2213,12 +2215,10 @@ function addAssign(vars, vmodel, name, binding) {
         while (a = arr.shift()) {
             if (vmodel.hasOwnProperty(a)) {
                 ret.push(first + prefix + first)
-
                 binding.observers.push({
                     v: vmodel,
                     p: prop
                 })
-
                 vars.splice(i, 1)
             }
         }
@@ -2256,7 +2256,6 @@ function parseExpr(expr, vmodels, binding) {
     }
 
     var vars = getVars(expr)
-
     var expose = new Date() - 0
     var assigns = []
     var names = []
@@ -2325,8 +2324,7 @@ function parseExpr(expr, vmodels, binding) {
             assigns.join(",\n") + expr))
     /* jshint ignore:end */
 
-    return  evaluatorPool.put(exprId, getter)
-
+    return evaluatorPool.put(exprId, getter)
 }
 
 function normalizeExpr(code) {
@@ -2368,9 +2366,8 @@ function parseFilter(filters) {
                 return '",'
             }) + "]"
     /* jshint ignore:start */
-    return  scpCompile(["return [" + filters + "]"])()
+    return scpCompile(["return [" + filters + "]"])()
     /* jshint ignore:end */
-
 }
 
 /*********************************************************************
@@ -2412,7 +2409,7 @@ function createSignalTower(elem, vmodel) {
     }
 }
 
-var getBindingCallback = function (elem, name, vmodels) {
+function getBindingCallback(elem, name, vmodels) {
     var callback = elem.getAttribute(name)
     if (callback) {
         for (var i = 0, vm; vm = vmodels[i++]; ) {
@@ -4448,7 +4445,6 @@ function mayStaggerAnimate(staggerTime, callback, index) {
     return index
 }
 
-
 function removeItem(node, binding) {
     var fragment = avalonFragment.cloneNode(false)
     var last = node
@@ -4461,7 +4457,6 @@ function removeItem(node, binding) {
         if (!pre || String(pre.nodeValue).indexOf(breakText) === 0) {
             break
         }
-
         if (binding && (pre.className === binding.effectClass)) {
             node = pre;
             (function (cur) {
@@ -4478,7 +4473,6 @@ function removeItem(node, binding) {
     fragment.appendChild(last)
     return fragment
 }
-
 
 function shimController(data, transation, proxy, fragments, init) {
     var content = data.template.cloneNode(true)
@@ -4505,6 +4499,24 @@ function getProxyVM(binding) {
     proxy.$outer = binding.$outer
     return proxy
 }
+
+function decorateProxy(proxy, binding, type) {
+    if (type === "array") {
+        proxy.$remove = function () {
+            binding.$repeat.removeAt(proxy.$index)
+        }
+        var param = binding.param
+        proxy.$watch(param, function (a) {
+            var index = proxy.$index
+            binding.$repeat[index] = a
+        })
+    } else {
+        proxy.$watch("$val", function fn(a) {
+            binding.$repeat[proxy.$key] = a
+        })
+    }
+}
+
 
 var eachProxyPool = []
 
@@ -4536,7 +4548,6 @@ function eachProxyFactory(itemName) {
         $remove: avalon.noop
     }
     source[itemName] = NaN
-
     var force = {
         $last: 1,
         $first: 1,
@@ -4548,26 +4559,6 @@ function eachProxyFactory(itemName) {
     })
     proxy.$id = generateID("$proxy$each")
     return proxy
-}
-
-function decorateProxy(proxy, binding, type) {
-    if (type === "array") {
-        proxy.$remove = function () {
-
-            binding.$repeat.removeAt(proxy.$index)
-        }
-        var param = binding.param
-
-
-        proxy.$watch(param, function (a) {
-            var index = proxy.$index
-            binding.$repeat[index] = a
-        })
-    } else {
-        proxy.$watch("$val", function fn(a) {
-            binding.$repeat[proxy.$key] = a
-        })
-    }
 }
 
 var withProxyPool = []
@@ -4608,7 +4599,6 @@ function proxyRecycler(cache, key, param) {
                 a.length = 0
                 if (i === param) {
                     proxy[param] = NaN
-
                 } else if (i === "$val") {
                     proxy.$val = NaN
                 }

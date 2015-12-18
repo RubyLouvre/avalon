@@ -56,16 +56,11 @@ avalon.injectBinding = function (binding) {
                 if (binding.type === "on") {
                     a = binding.getter + ""
                 } else {
-                    try {
-                        a = binding.getter.apply(0, binding.args)
-                    } catch (ex) {
-                        a = null
-                    }
+                    a = binding.getter.apply(0, binding.args)
                 }
             } else {
                 a = args[0]
                 b = args[1]
-
             }
             b = typeof b === "undefined" ? binding.oldValue : b
             if (binding._filters) {

@@ -8,7 +8,7 @@ if (!DOC.contains) {
         return !!(this.compareDocumentPosition(arg) & 16)
     }
 }
-avalon.contains = function (root, el) {
+avalon.contains = function(root, el) {
     try {
         while ((el = el.parentNode))
             if (el === root)
@@ -74,7 +74,7 @@ if (window.SVGElement) {
                     var s = this.outerHTML
                     var ropen = new RegExp("<" + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', "i")
                     var rclose = new RegExp("<\/" + this.nodeName + ">$", "i")
-                    return  s.replace(ropen, "").replace(rclose, "")
+                    return s.replace(ropen, "").replace(rclose, "")
                 },
                 set: function (html) {
                     if (avalon.clearHTML) {
@@ -87,8 +87,11 @@ if (window.SVGElement) {
         })
     }
 }
+
 //========================= event binding ====================
+
 var eventHooks = avalon.eventHooks
+
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!("onmouseenter" in root)) {
     avalon.each({
@@ -110,6 +113,7 @@ if (!("onmouseenter" in root)) {
         }
     })
 }
+
 //针对IE9+, w3c修正animationend
 avalon.each({
     AnimationEvent: "animationend",
