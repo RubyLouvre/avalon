@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.6 built in 2015.12.18
+ avalon.shim.js 1.6 built in 2015.12.19
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1428,15 +1428,18 @@ function $watch(expr, funOrObj) {
     var list = (hive[expr] = hive[expr] || [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
-        element:{},
+        element: {}
     } : funOrObj
-    avalon.Array.ensure(list, data)
+    if (avalon.Array.ensure(list, data)) {
+        injectDisposeQueue(data, list)
+    }
     return function () {
         avalon.Array.remove(list, data)
     }
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
+
     var hive = topVm.$events
     if (hive && hive[path]) {
         var list = hive[path]
@@ -1454,6 +1457,12 @@ function $emit(topVm, curVm, path, a, b, i) {
                 $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
+    }
+    if (new Date() - beginTime > 444) {
+        setTimeout(function () {
+            rejectDisposeQueue()
+        })
+
     }
 }
 
@@ -1791,26 +1800,16 @@ function getProxyIds(a, isArray) {
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 0
+var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 
 function getUid(data) { //IE9+,标准浏览器
-    if (!data.uniqueNumber) {
-        var elem = data.element
-        if (elem) {
-            if (elem.nodeType !== 1) {
-                //如果是注释节点,则data.pos不存在,当一个元素下有两个注释节点就会出问题
-                data.uniqueNumber = data.type + "-" + getUid(elem.parentNode) + "-" + (++disposeCount)
-            } else {
-                data.uniqueNumber = data.name + "-" + getUid(elem)
-            }
-        } else {
-            data.uniqueNumber = ++disposeCount
-        }
+    if (!data.uuid) {
+        data.uuid = "_"+(disposeCount++)
     }
-    return data.uniqueNumber
+    return data.uuid
 }
 
 //添加到回收列队中
@@ -1818,9 +1817,8 @@ function injectDisposeQueue(data, list) {
     var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
     avalon.Array.ensure(lists, list)
-    list.$uuid = list.$uuid || generateID()
     if (!disposeQueue[uuid]) {
-        disposeQueue[uuid] = 1
+        disposeQueue[uuid] = "ok"
         disposeQueue.push(data)
     }
 }
@@ -1858,11 +1856,13 @@ function rejectDisposeQueue(data) {
             }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
-                delete disposeQueue[data.uniqueNumber]
+                delete disposeQueue[data.uuid]
                 var lists = data.lists
-                for (var k = 0, list; list = lists[k++]; ) {
-                    avalon.Array.remove(lists, list)
-                    avalon.Array.remove(list, data)
+                if (lists) {
+                    for (var k = 0, list; list = lists[k++]; ) {
+                        avalon.Array.remove(lists, list)
+                        avalon.Array.remove(list, data)
+                    }
                 }
                 disposeData(data)
             }
@@ -1873,7 +1873,7 @@ function rejectDisposeQueue(data) {
 }
 
 function disposeData(data) {
-    delete disposeQueue[data.uniqueNumber] // 先清除，不然无法回收了
+    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
     data.rollback && data.rollback()
     for (var key in data) {
@@ -1882,19 +1882,7 @@ function disposeData(data) {
 }
 
 function shouldDispose(el) {
-    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
-        var fireError = el.parentNode.nodeType
-    } catch (e) {
-        return true
-    }
-    if (el.ifRemove) {
-        // 如果节点被放到ifGroup，才移除
-        if (!root.contains(el.ifRemove) && (ifGroup === el.parentNode)) {
-            el.parentNode && el.parentNode.removeChild(el)
-            return true
-        }
-    }
-    return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
+    return !el || el.disposed
 }
 
 /************************************************************************
@@ -3003,6 +2991,8 @@ var Ifcom = avalon.components["ms-if"] = {
 
 avalon.directive("if", {
     is: function (a, b) {
+        if(b === void 0)
+            return false
         return Boolean(a) === Boolean(b)
     },
     change: function (value, binding) {
@@ -3462,6 +3452,7 @@ function scanTag(elem, vmodel) {
 
 function scanText(node, vmodel) {
     var tokens = scanExpr(String(node.nodeValue))
+    node.tokens = tokens
     var texts = []
     for (var i = 0, token; token = tokens[i]; i++) {
         if (token.type) {
@@ -3689,13 +3680,18 @@ function disposeVirtual(nodes) {
             case "#text":
             case "#comment":
                 node.disposed = true
+                if(node.tokens){
+                    node.tokens.forEach(function(token){
+                        delete token.element
+                    })
+                }
                 break
             default:
                 node.disposed = true
                 if (node.children)
-                    disposeNodes(node.children)
+                    disposeVirtual(node.children)
                 if (node._children)
-                    disposeNodes(node._children)
+                    disposeVirtual(node._children)
                 break
         }
     }

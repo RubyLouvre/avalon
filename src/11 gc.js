@@ -2,26 +2,16 @@
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 0
+var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 
 function getUid(data) { //IE9+,标准浏览器
-    if (!data.uniqueNumber) {
-        var elem = data.element
-        if (elem) {
-            if (elem.nodeType !== 1) {
-                //如果是注释节点,则data.pos不存在,当一个元素下有两个注释节点就会出问题
-                data.uniqueNumber = data.type + "-" + getUid(elem.parentNode) + "-" + (++disposeCount)
-            } else {
-                data.uniqueNumber = data.name + "-" + getUid(elem)
-            }
-        } else {
-            data.uniqueNumber = ++disposeCount
-        }
+    if (!data.uuid) {
+        data.uuid = "_"+(disposeCount++)
     }
-    return data.uniqueNumber
+    return data.uuid
 }
 
 //添加到回收列队中
@@ -29,9 +19,8 @@ function injectDisposeQueue(data, list) {
     var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
     avalon.Array.ensure(lists, list)
-    list.$uuid = list.$uuid || generateID()
     if (!disposeQueue[uuid]) {
-        disposeQueue[uuid] = 1
+        disposeQueue[uuid] = "ok"
         disposeQueue.push(data)
     }
 }
@@ -69,11 +58,13 @@ function rejectDisposeQueue(data) {
             }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
-                delete disposeQueue[data.uniqueNumber]
+                delete disposeQueue[data.uuid]
                 var lists = data.lists
-                for (var k = 0, list; list = lists[k++]; ) {
-                    avalon.Array.remove(lists, list)
-                    avalon.Array.remove(list, data)
+                if (lists) {
+                    for (var k = 0, list; list = lists[k++]; ) {
+                        avalon.Array.remove(lists, list)
+                        avalon.Array.remove(list, data)
+                    }
                 }
                 disposeData(data)
             }
@@ -84,7 +75,7 @@ function rejectDisposeQueue(data) {
 }
 
 function disposeData(data) {
-    delete disposeQueue[data.uniqueNumber] // 先清除，不然无法回收了
+    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
     data.rollback && data.rollback()
     for (var key in data) {
@@ -93,17 +84,5 @@ function disposeData(data) {
 }
 
 function shouldDispose(el) {
-    try {//IE下，如果文本节点脱离DOM树，访问parentNode会报错
-        var fireError = el.parentNode.nodeType
-    } catch (e) {
-        return true
-    }
-    if (el.ifRemove) {
-        // 如果节点被放到ifGroup，才移除
-        if (!root.contains(el.ifRemove) && (ifGroup === el.parentNode)) {
-            el.parentNode && el.parentNode.removeChild(el)
-            return true
-        }
-    }
-    return el.msRetain ? 0 : (el.nodeType === 1 ? !root.contains(el) : !avalon.contains(root, el))
+    return !el || el.disposed
 }

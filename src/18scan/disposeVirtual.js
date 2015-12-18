@@ -5,13 +5,18 @@ function disposeVirtual(nodes) {
             case "#text":
             case "#comment":
                 node.disposed = true
+                if(node.tokens){
+                    node.tokens.forEach(function(token){
+                        delete token.element
+                    })
+                }
                 break
             default:
                 node.disposed = true
                 if (node.children)
-                    disposeNodes(node.children)
+                    disposeVirtual(node.children)
                 if (node._children)
-                    disposeNodes(node._children)
+                    disposeVirtual(node._children)
                 break
         }
     }

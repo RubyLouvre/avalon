@@ -1,5 +1,6 @@
 function scanText(node, vmodel) {
     var tokens = scanExpr(String(node.nodeValue))
+    node.tokens = tokens
     var texts = []
     for (var i = 0, token; token = tokens[i]; i++) {
         if (token.type) {

@@ -75,6 +75,8 @@ var Ifcom = avalon.components["ms-if"] = {
 
 avalon.directive("if", {
     is: function (a, b) {
+        if(b === void 0)
+            return false
         return Boolean(a) === Boolean(b)
     },
     change: function (value, binding) {

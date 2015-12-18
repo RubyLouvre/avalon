@@ -13,20 +13,24 @@
 // 创建组件
 
 // 定义vm
-        var vm = avalon.define({
-            $id: 'test',
-            data: '司徒正美',
-            aaa: "<strong>{{a.b}}</strong><b>xxxx</b>",
-            toggle:false,
-            a: {
-                b: 3
-            }
-        })
+var vm = avalon.define({
+    $id: 'test',
+    data: '司徒正美',
+    aaa: "<strong>{{a.b}}</strong><b>{{a.b}}</b>",
+    toggle: false,
+    a: {
+        b: 3
+    }
+})
+
+setTimeout(function () {
+    vm.aaa = "<s>{{a.b}}</s>"
+}, 2000)
 //        vm.$watch("a.b", function (a, b, c) {
 //            console.log(a, b, c)
 //        })
 //        vm.a.b = 9
-//24分;每项3分合格;  
+//24分;每项3分合格;
 
 
 

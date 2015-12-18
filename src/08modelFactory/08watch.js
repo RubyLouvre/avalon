@@ -3,15 +3,18 @@ function $watch(expr, funOrObj) {
     var list = (hive[expr] = hive[expr] || [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
-        element:{}
+        element: {}
     } : funOrObj
-    avalon.Array.ensure(list, data)
+    if (avalon.Array.ensure(list, data)) {
+        injectDisposeQueue(data, list)
+    }
     return function () {
         avalon.Array.remove(list, data)
     }
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
+
     var hive = topVm.$events
     if (hive && hive[path]) {
         var list = hive[path]
@@ -29,5 +32,11 @@ function $emit(topVm, curVm, path, a, b, i) {
                 $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
+    }
+    if (new Date() - beginTime > 444) {
+        setTimeout(function () {
+            rejectDisposeQueue()
+        })
+
     }
 }
