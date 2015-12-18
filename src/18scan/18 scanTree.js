@@ -1,3 +1,4 @@
+//带VM, 第一次更新VTree
 function scanTree(nodes, vm) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var node = nodes[i]
@@ -16,9 +17,7 @@ function scanTree(nodes, vm) {
                 }
                 break
             case "#component":
-                if (!node.skip) {
-                    node.update(vm)
-                }
+                node.init(vm)
                 break
             default:
                 if (!node.skip) {

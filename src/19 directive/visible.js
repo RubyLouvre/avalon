@@ -65,6 +65,9 @@ avalon.parseDisplay = parseDisplay
  */
 avalon.directive("visible", {
     init: noop,
+    is: function (a, b) {
+        return Boolean(a) === Boolean(b)
+    },
     change: function (val, binding) {
         var elem = binding.element
         if (elem) {
@@ -76,6 +79,6 @@ avalon.directive("visible", {
     },
     update: function (elem, vnode) {
         var change = vnode.changeStyles
-        
+
     }
 })

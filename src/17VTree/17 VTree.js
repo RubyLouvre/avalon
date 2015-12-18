@@ -1,5 +1,4 @@
-//avalon.scan时扫描整个DOM树,建立对应的虚拟DOM树
-
+//不带VM,建立虚拟DOM树
 
 var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
 var ropenTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
@@ -59,10 +58,11 @@ function parseVProps(node, str) {
 }
 
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-function buildVTree(text) {
+function buildVTree(text, force) {
     var nodes = []
-    if (!rbind.test(text))
+    if (!force && !rbind.test(text) ){
         return nodes
+    }
     do {
         var matchText = ""
         var match = text.match(rtext)
@@ -142,62 +142,44 @@ function buildVTree(text) {
     return nodes
 }
 
-var rmsif = /\s+ms-if=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmsrepeat = /\s+ms-(?:repeat|each)=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmstext = /\s+ms-text=("[^"]*"|'[^']*'|[^\s>]+)/
-var rmshtml = /\s+ms-html=("[^"]*"|'[^']*'|[^\s>]+)/
+var rmsskip = /\bms\-skip/
 var rnocontent = /textarea|template|script|style/
 //如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
 function fixTag(node, str) {
-    if (/\bms\-skip/.test(str)) {
+    if (rmsskip.test(str)) {
         node.skip = true
         return node
     }
     var props = node.props = parseVProps(node, str)
     var outerHTML = node.outerHTML
-    if (!rnocontent.test(node.type) && (props["ms-text"] || props["ms-html"] ||
-            rexpr.test(node.innerHTML))) {
-
-        if (props["ms-repeat"]) {
-            outerHTML = outerHTML.replace(rmsrepeat, "")
-            node = new VComponent("repeat", {
+    //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
+    //并且它的后代还存在绑定属性
+   
+    for (var i = 0, dir; dir = builtinComponents[i++]; ) {
+        if (props[dir]) {
+            var expr = props[dir]
+            delete props[dir]
+            var component = new VComponent(dir, {
                 template: outerHTML,
-                expr: props["ms-repeat"]
+                expr: expr
             })
-            delete props["ms-if"]
-        } else if (props["ms-html"]) {
-            outerHTML = outerHTML.replace(rmshtml, "")
-            node.children = [
-                new VComponent("html", {
-                    expr: props["ms-html"]
-                })
-            ]
-            delete props["ms-html"]
-        } else if (props["ms-text"]) {
-            outerHTML = outerHTML.replace(rmstext, "")
-            node.children = [
-                new VComponent("text", {
-                    expr: props["ms-text"]
-                })
-            ]
-            delete props["ms-text"]
+            node.outerHTML = node.toHTML()
+            node = component.construct(node)
         }
-        // 如果存在上面的组件,那么将上面的组件作<ms:if>的孩子
-        if (props["ms-if"]) {
-            var child = node
-            outerHTML = outerHTML.replace(rmsif, "")
-            node = new VComponent("if", {
-                template: outerHTML,
-                _children: [child],
-                expr: props["ms-if"]
-            })
-            delete props["ms-if"]
-        }
-        node.children = buildVTree(node.innerHTML)
-    } else {
-        node.skipContent = true
-        node.__content = node.innerHTML
     }
+    // node.children = buildVTree(node.innerHTML)
+    // node.outerHTML = node.toHTML()
+    if (node.type !== "#component") {
+        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
+            node.children = buildVTree(node.innerHTML)
+            
+        } else {
+            node.skipContent = true
+            node.__content = node.innerHTML
+        }
+    }
+
     return node
 }
 
+var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]

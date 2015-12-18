@@ -24,8 +24,8 @@ function $emit(topVm, curVm, path, a, b, i) {
                 }
             }
         } catch (e) {
-           
-            // $emit(topVm, curVm, path, a, b, i - 1)
+            if (i - 1 > 0)
+                $emit(topVm, curVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
     }

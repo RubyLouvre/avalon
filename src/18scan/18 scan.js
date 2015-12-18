@@ -1,6 +1,7 @@
 /*********************************************************************
  *                           扫描系统                                 *
  **********************************************************************/
+
 avalon.scan = function (elem, vmodel) {
     var text = elem.outerHTML
     if (rbind.test(text)) {
@@ -10,11 +11,13 @@ avalon.scan = function (elem, vmodel) {
     }
 }
 
-
 function updateTree(nodes, vnodes) {
     for (var i = 0, n = nodes.length; i < n; i++) {
         var vnode = vnodes[i]
+        if (!vnode)
+            break
         var node = nodes[i]
+
         switch (vnode.type) {
             case "#text":
                 if (!vnode.skip) {
@@ -24,21 +27,31 @@ function updateTree(nodes, vnodes) {
                     }
                 }
                 break
-            case "#comment":
-                if (!vnode.skip) {
-                    // 添加或删除
-                    // nodes[i].nodeValue = vnode.nodeValue
-                    // delete vnode.change
+            case "#component":
+                var hooks = vnode.changeHooks
+                if (hooks) {
+                    try {
+                        for (var hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
+                        avalon.log(e, node, vnode)
+                    }
+                    delete vnode.changeHooks
                 }
+                updateTree(node.childNodes, vnode.children)
+                break
+            case "#comment":
                 break
             default:
                 if (!vnode.skip) {
-                    var hooks = vnode.changeHooks
-
-                    for (var hook in hooks) {
-                        hooks[hook](node, vnode)
+                    hooks = vnode.changeHooks
+                    try {
+                        for (hook in hooks) {
+                            hooks[hook](node, vnode)
+                        }
+                    } catch (e) {
                     }
-
                     delete vnode.changeHooks
                     if (!vnode.skipContent) {
                         updateTree(node.childNodes, vnode.children)
@@ -57,8 +70,6 @@ function addAttrHook(node) {
     var hook = addHooks(node, "changeHooks")
     hook.attr = attrUpdate
 }
-
-
 
 
 var getBindingCallback = function (elem, name, vmodels) {

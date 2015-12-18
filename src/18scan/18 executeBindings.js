@@ -7,13 +7,14 @@ function executeBindings(bindings, vmodel) {
     }
     bindings.length = 0
 }
+
 function bindingIs(a, b) {
     return a === b
 }
 
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
-  
+
     binding.paths.split("★").forEach(function (path) {
         binding.vmodel.$watch(path, binding)
     })
@@ -24,9 +25,10 @@ avalon.injectBinding = function (binding) {
         } catch (e) {
             avalon.log(e)
         }
-        var is = binding.is || bindingIs
+        var dir = directives[binding.type]
+        var is = dir.is || bindingIs
         if (!is(value, binding.oldValue)) {
-            directives[binding.type].change(value, binding)
+            dir.change(value, binding)
             binding.oldValue = value
         }
     }

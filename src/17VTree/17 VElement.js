@@ -17,7 +17,7 @@ VElement.prototype = {
             if (this.props[i] === false) {
                 dom.removeAttribute(i)
             } else {
-                dom.setAttribute(i, this.props[i])
+                dom.setAttribute(i, String(this.props[i]))
             }
         }
         if (this.skipContent) {
