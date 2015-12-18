@@ -1318,81 +1318,7 @@ function returnRandom() {
     return new Date() - 0
 }
 
-avalon.injectBinding = function (binding) {
 
-    binding.handler = binding.handler || directives[binding.type].update || noop
-    binding.update = function () {
-        var begin = false
-        if (!binding.getter) {
-            begin = true
-            dependencyDetection.begin({
-                callback: function (array) {
-                    injectDependency(array, binding)
-                }
-            })
-            binding.getter = parseExpr(binding.expr, binding.vmodels, binding)
-            binding.observers.forEach(function (a) {
-                a.v.$watch(a.p, binding)
-            })
-            delete binding.observers
-        }
-        try {
-            var args = binding.fireArgs, a, b
-            delete binding.fireArgs
-            if (!args) {
-                if (binding.type === "on") {
-                    a = binding.getter + ""
-                } else {
-                    try {
-                        a = binding.getter.apply(0, binding.args)
-                    } catch (ex) {
-                        a = null
-                    }
-                }
-            } else {
-                a = args[0]
-                b = args[1]
-
-            }
-            b = typeof b === "undefined" ? binding.oldValue : b
-            if (binding._filters) {
-                a = filters.$filter.apply(0, [a].concat(binding._filters))
-            }
-            if (binding.signature) {
-                var xtype = avalon.type(a)
-                if (xtype !== "array" && xtype !== "object") {
-                    throw Error("warning:" + binding.expr + "只能是对象或数组")
-                }
-                binding.xtype = xtype
-                var vtrack = getProxyIds(binding.proxies || [], xtype)
-                var mtrack = a.$track || (xtype === "array" ? createTrack(a.length) :
-                        Object.keys(a))
-                binding.track = mtrack
-                if (vtrack !== mtrack.join(";")) {
-                    binding.handler(a, b)
-                    binding.oldValue = 1
-                }
-            } else if (Array.isArray(a) ? a.length !== (b && b.length) : false) {
-                binding.handler(a, b)
-                binding.oldValue = a.concat()
-            } else if (!("oldValue" in binding) || a !== b) {
-                binding.handler(a, b)
-                binding.oldValue = a
-            }
-        } catch (e) {
-            delete binding.getter
-            log("warning:exception throwed in [avalon.injectBinding] ", e)
-            var node = binding.element
-            if (node && node.nodeType === 3) {
-                node.nodeValue = openTag + (binding.oneTime ? "::" : "") + binding.expr + closeTag
-            }
-        } finally {
-            begin && dependencyDetection.end()
-
-        }
-    }
-    binding.update()
-}
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组
 function injectDependency(list, binding) {
@@ -2787,15 +2713,23 @@ avalon.injectBinding = function (binding) {
     })
     delete binding.paths
     binding.update = function () {
+        var hasError
         try {
             var value = binding.getter(binding.vmodel)
         } catch (e) {
+            hasError = true
             avalon.log(e)
         }
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
+            if (binding.oneTime && !hasError) {
+                dir.change = noop
+                setTimeout(function () {
+                    delete binding.element
+                })
+            }
             binding.oldValue = value
         }
     }
