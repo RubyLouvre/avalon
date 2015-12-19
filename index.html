@@ -3,11 +3,17 @@
     <head>
         <meta charset="UTF-8">
         <script src="avalon.js"></script>
-    </head>
-    <body ms-controller="test">
-        <input type="text" ms-attr-value="data"/> {{data}}
+        <script type="xx">
+       <input type="text" ms-attr-value="data"/> {{data}}
         <p ms-text="aaa">这是ms-html</p>
         <b ms-if="toggle">ms-if</b>
+        </script>
+    </head>
+    <body ms-controller="test">
+
+        <ul>
+            <li ms-repeat="array"><b>{{el.name}}</b></li>
+        </ul>
 
         <script>
 // 创建组件
@@ -18,14 +24,43 @@ var vm = avalon.define({
     data: '司徒正美',
     aaa: "<strong>{{a.b}}</strong><b>{{a.b}}</b>",
     toggle: false,
+    array: [{name: 1}, {name: 2}, {name: 3}],
     a: {
         b: 3
     }
 })
+var heirloom = {}
+var after = {
+    $accessors: {
+        $first: avalon._makeObservable("1", heirloom),
+        $last: avalon._makeObservable("1", heirloom),
+        $index: avalon._makeObservable("1", heirloom),
+        el: avalon._makeObservable("1", heirloom)
+    },
+    $first: 1,
+    $last: 1,
+    $index: 1,
+    el: 1,
+    $events: {},
+    $fire: {},
+    $watch: {},
+    $remove: function () {
+        console.log("$remove")
+    }
+}
 
-setTimeout(function () {
-    vm.aaa = "<s>{{a.b}}</s>"
-}, 2000)
+//var before = vm.array[0]
+//var proxy = avalon.createProxy(before, after)
+//heirloom.vm = proxy
+//console.log(proxy.name === before.name)
+//proxy.name = 3
+//
+//console.log(before.name)
+
+
+
+
+
 //        vm.$watch("a.b", function (a, b, c) {
 //            console.log(a, b, c)
 //        })

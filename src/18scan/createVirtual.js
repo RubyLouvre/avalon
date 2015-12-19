@@ -1,16 +1,16 @@
 
 //匹配同时拥有开标签闭标签的元素节点
-var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
+var rfullTag = /^<(\S+)(\s+[^=\s]+(?:=(?:"[^"]*"|'[^']*'|[^>\s]+))?)*\s*>([\s\S]*)<\/\1>/
 //匹配只有开标签的元素节点
-var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
+var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*\s*>/
 //用于创建适配某一种标签的正则表达式
-var openStr = '(?:\\s+[^=\\s]+=?(?:"[^"]*"|\'[^\']*\'|[^\\s>]+)?)*>'
+var openStr = '(?:\\s+([^=\s]+)(?:=("[^"]*"|\'[^\']*\'|[^\\s>]+))?)*\\s*>'
 //匹配文本节点
 var rtext = /^[^<]+/
 //匹配注释节点
 var rcomment = /^<\!--([\s\S]*)-->/
 //从大片标签中匹想第一个标签的所有属性
-var rattr1 = /(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/g
+var rattr1 = /(\s+[^\s>\/\/=]+(?:=(?:("|')(?:\\\2|\\?(?!\2)[\w\W])*\2|[^\s'">=]+))?)*\s*\/?>/g
 //从元素的开标签中一个个分解属性值
 var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 //判定是否有引号开头，IE有些属性没有用引号括起来
@@ -104,6 +104,7 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
+               
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -126,10 +127,10 @@ function createVirtual(text, force) {
                 }
 
                 var allAttrs = matchText.match(rattr1)[0]
+               
                 var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
                         (tagName.length + 3) * -1)
                 node = new VElement(tagName, innerHTML, matchText)
-
                 var props = allAttrs.slice(0, -1)
                 node = fixTag(node, props)
             }
@@ -155,7 +156,7 @@ function createVirtual(text, force) {
     } while (1);
     return nodes
 }
-
+avalon.createVirtual = createVirtual
 var rmsskip = /\bms\-skip/
 var rnocontent = /textarea|template|script|style/
 //如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
@@ -166,31 +167,36 @@ function fixTag(node, str) {
     }
     var props = node.props = parseVProps(node, str)
     var outerHTML = node.outerHTML
+    if (!rnocontent.test(node.type) && rbind.test(node.outerHTML)) {
+        node.children = createVirtual(node.innerHTML)
+    } else {
+        node.skipContent = true
+        node.__content = node.innerHTML
+    }
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
-    var isComponent = false
     for (var i = 0, dir; dir = builtinComponents[i++]; ) {
         if (props[dir]) {
             var expr = props[dir]
             delete props[dir]
+            //  node.outerHTML = node.toHTML()
             var component = new VComponent(dir, {
                 template: outerHTML,
                 expr: expr
             })
-            isComponent = true
-            node.outerHTML = node.toHTML()
+         
             node = component.construct(node)
         }
     }
 
-    if (!isComponent) {
-        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-            node.children = createVirtual(node.innerHTML)
-        } else {
-            node.skipContent = true
-            node.__content = node.innerHTML
-        }
-    }
+//    if (!isComponent) {
+//        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
+//            node.children = createVirtual(node.innerHTML)
+//        } else {
+//            node.skipContent = true
+//            node.__content = node.innerHTML
+//        }
+//    }
 
     return node
 }

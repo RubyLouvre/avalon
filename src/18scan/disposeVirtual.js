@@ -7,7 +7,7 @@ function disposeVirtual(nodes) {
                 node.disposed = true
                 if(node.tokens){
                     node.tokens.forEach(function(token){
-                        delete token.element
+                        token.element = null
                     })
                 }
                 break

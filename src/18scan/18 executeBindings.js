@@ -28,6 +28,7 @@ avalon.injectBinding = function (binding) {
             avalon.log(e)
         }
         var dir = directives[binding.type]
+
         var is = dir.is || bindingIs
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
@@ -37,11 +38,23 @@ avalon.injectBinding = function (binding) {
                     delete binding.element
                 })
             }
-            binding.oldValue = value
+            if (dir.old) {
+                dir.old(binding, value)
+            } else {
+                binding.oldValue = value
+            }
         }
     }
     binding.update()
 }
+
+//一个指令包含以下东西
+//init(binding) 用于处理expr
+//change(val, binding) 用于更新虚拟DOM树及添加更新真实DOM树的钩子
+//update(dom, vnode)   更新真实DOM的具体操作 
+//is(newValue, oldValue)? 比较新旧值的方法
+//old(binding, oldValue)? 如何保持旧值 
+
 
 // attr css class data duplex
 

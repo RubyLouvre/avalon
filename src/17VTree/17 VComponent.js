@@ -37,24 +37,7 @@ VComponent.prototype = {
 
 avalon.components = {}
 
-avalon.components["ms-repeat"] = {
-    update: function (self, vm) {
-        var template = that.props.template
-        var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
-        var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
-        var children = [new VComment("ms-repeat")]
-        updateVLoop(repeatValue, repeatItem, function (proxy) {
-            var clone = createVirtual(template)
 
-            var vnode = updateEntity(clone, proxy)
-
-            children.push.apply(children, vnode)
-        }, vm)
-
-        self.children = children.concat(new VComment("ms-repeat-end"))
-    }
-}
-avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
@@ -73,9 +56,99 @@ var Ifcom = avalon.components["ms-if"] = {
     }
 }
 
+avalon.components["ms-repeat"] = {
+    construct: function (self, parent) {
+        disposeVirtual(parent.children)
+        var type = self.__type__
+        self["data-" + type + "-rendered"] = parent["data-" + type + "-rendered"]
+        self.children = [new VComment("ms-" + type), new VComment("ms-" + type + "-end")] //将父节点作为它的子节点
+        if (type === "each") {
+            self.props.template = parent.innerHTML
+            parent.children = [self]
+            return parent
+        }
+        delete parent.props["avalon-uuid"]
+        self.props.template = parent.toHTML()
+        return self
+    },
+    init: Ifcom.init
+//    update: function (self, vm) {
+//        var template = that.props.template
+//        var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
+//        var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
+//        var children = [new VComment("ms-repeat")]
+//        updateVLoop(repeatValue, repeatItem, function (proxy) {
+//            var clone = createVirtual(template)
+//
+//            var vnode = updateEntity(clone, proxy)
+//
+//            children.push.apply(children, vnode)
+//        }, vm)
+//
+//        self.children = children.concat(new VComment("ms-repeat-end"))
+//    }
+}
+
+avalon.directive("repeat", {
+    change: function (value, binding) {
+        var last = value.length - 1
+        var proxies = []
+        for (var i = 0; i < value.length; i++) {
+            var heirloom = {}
+            var curVm = value[i]
+            var after = {
+                $accessors: {
+                    $first: makeObservable(0, heirloom),
+                    $last: makeObservable(0, heirloom),
+                    $index: makeObservable(0, heirloom),
+                    el: makeObservable(0, heirloom)
+                },
+                $first: 1,
+                $last: 1,
+                $index: 1,
+                el: 1,
+                $remove: function () {
+
+                }
+            }
+            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
+            proxy.$first = i === 0
+            proxy.$last = i === last
+            proxy.$index = i
+            proxy.el = value[i]
+            proxies.push(proxy)
+            var node = createVirtual(binding.element.props.template, true)
+            updateVirtual(node, proxy)
+            binding.element.children[i] = node[0]
+        }
+        var change = addHooks(binding.element, "changeHooks")
+        change.repeat = this.update
+    },
+    update: function (elem, aaa) {
+        if (elem.parentNode) {
+            elem.parentNode.replaceChild(aaa.toDOM(), elem)
+        }
+    },
+    old: function (binding, oldValue) {
+        if (Array.isArray(oldValue)) {
+            binding.oldValue = oldValue.concat()
+        } else {
+            var o = binding.oldValue = {}
+            for (var i in oldValue) {
+                if (oldValue.hasOwnProperty(i)) {
+                    o[i] = oldValue[i]
+                }
+            }
+        }
+    }
+})
+
+
+avalon.components["ms-each"] = avalon.components["ms-repeat"]
+
 avalon.directive("if", {
     is: function (a, b) {
-        if(b === void 0)
+        if (b === void 0)
             return false
         return Boolean(a) === Boolean(b)
     },

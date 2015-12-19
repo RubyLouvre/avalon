@@ -91,7 +91,7 @@ function Component() {
  $model:返回一个纯净的JS对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
-
+ 
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -110,6 +110,7 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
+    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var hasOwn = {}    //用于实现hasOwnProperty方法
@@ -121,7 +122,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray)) {
+        if (!isObervable(key, val, $skipArray, skipDollar)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)

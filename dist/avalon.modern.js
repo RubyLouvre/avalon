@@ -777,7 +777,7 @@ function Component() {
  $model:返回一个纯净的JS对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
-
+ 
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -796,6 +796,7 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
+    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var hasOwn = {}    //用于实现hasOwnProperty方法
@@ -807,7 +808,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray)) {
+        if (!isObervable(key, val, $skipArray, skipDollar)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -1058,7 +1059,7 @@ function $watch(expr, funOrObj) {
 
 function $emit(topVm, curVm, path, a, b, i) {
 
-    var hive = topVm.$events
+    var hive = topVm && topVm.$events
     if (hive && hive[path]) {
         var list = hive[path]
         try {
@@ -2427,24 +2428,7 @@ VComponent.prototype = {
 
 avalon.components = {}
 
-avalon.components["ms-repeat"] = {
-    update: function (self, vm) {
-        var template = that.props.template
-        var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
-        var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
-        var children = [new VComment("ms-repeat")]
-        updateVLoop(repeatValue, repeatItem, function (proxy) {
-            var clone = createVirtual(template)
 
-            var vnode = updateEntity(clone, proxy)
-
-            children.push.apply(children, vnode)
-        }, vm)
-
-        self.children = children.concat(new VComment("ms-repeat-end"))
-    }
-}
-avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
@@ -2463,9 +2447,99 @@ var Ifcom = avalon.components["ms-if"] = {
     }
 }
 
+avalon.components["ms-repeat"] = {
+    construct: function (self, parent) {
+        disposeVirtual(parent.children)
+        var type = self.__type__
+        self["data-" + type + "-rendered"] = parent["data-" + type + "-rendered"]
+        self.children = [new VComment("ms-" + type), new VComment("ms-" + type + "-end")] //将父节点作为它的子节点
+        if (type === "each") {
+            self.props.template = parent.innerHTML
+            parent.children = [self]
+            return parent
+        }
+        delete parent.props["avalon-uuid"]
+        self.props.template = parent.toHTML()
+        return self
+    },
+    init: Ifcom.init
+//    update: function (self, vm) {
+//        var template = that.props.template
+//        var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
+//        var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
+//        var children = [new VComment("ms-repeat")]
+//        updateVLoop(repeatValue, repeatItem, function (proxy) {
+//            var clone = createVirtual(template)
+//
+//            var vnode = updateEntity(clone, proxy)
+//
+//            children.push.apply(children, vnode)
+//        }, vm)
+//
+//        self.children = children.concat(new VComment("ms-repeat-end"))
+//    }
+}
+
+avalon.directive("repeat", {
+    change: function (value, binding) {
+        var last = value.length - 1
+        var proxies = []
+        for (var i = 0; i < value.length; i++) {
+            var heirloom = {}
+            var curVm = value[i]
+            var after = {
+                $accessors: {
+                    $first: makeObservable(0, heirloom),
+                    $last: makeObservable(0, heirloom),
+                    $index: makeObservable(0, heirloom),
+                    el: makeObservable(0, heirloom)
+                },
+                $first: 1,
+                $last: 1,
+                $index: 1,
+                el: 1,
+                $remove: function () {
+
+                }
+            }
+            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
+            proxy.$first = i === 0
+            proxy.$last = i === last
+            proxy.$index = i
+            proxy.el = value[i]
+            proxies.push(proxy)
+            var node = createVirtual(binding.element.props.template, true)
+            updateVirtual(node, proxy)
+            binding.element.children[i] = node[0]
+        }
+        var change = addHooks(binding.element, "changeHooks")
+        change.repeat = this.update
+    },
+    update: function (elem, aaa) {
+        if (elem.parentNode) {
+            elem.parentNode.replaceChild(aaa.toDOM(), elem)
+        }
+    },
+    old: function (binding, oldValue) {
+        if (Array.isArray(oldValue)) {
+            binding.oldValue = oldValue.concat()
+        } else {
+            var o = binding.oldValue = {}
+            for (var i in oldValue) {
+                if (oldValue.hasOwnProperty(i)) {
+                    o[i] = oldValue[i]
+                }
+            }
+        }
+    }
+})
+
+
+avalon.components["ms-each"] = avalon.components["ms-repeat"]
+
 avalon.directive("if", {
     is: function (a, b) {
-        if(b === void 0)
+        if (b === void 0)
             return false
         return Boolean(a) === Boolean(b)
     },
@@ -2721,6 +2795,7 @@ avalon.injectBinding = function (binding) {
             avalon.log(e)
         }
         var dir = directives[binding.type]
+
         var is = dir.is || bindingIs
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
@@ -2730,11 +2805,23 @@ avalon.injectBinding = function (binding) {
                     delete binding.element
                 })
             }
-            binding.oldValue = value
+            if (dir.old) {
+                dir.old(binding, value)
+            } else {
+                binding.oldValue = value
+            }
         }
     }
     binding.update()
 }
+
+//一个指令包含以下东西
+//init(binding) 用于处理expr
+//change(val, binding) 用于更新虚拟DOM树及添加更新真实DOM树的钩子
+//update(dom, vnode)   更新真实DOM的具体操作 
+//is(newValue, oldValue)? 比较新旧值的方法
+//old(binding, oldValue)? 如何保持旧值 
+
 
 // attr css class data duplex
 
@@ -2866,17 +2953,17 @@ function scanText(node, vmodel) {
 }
 
 //匹配同时拥有开标签闭标签的元素节点
-var rfullTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>([\s\S]*)<\/\1>/
+var rfullTag = /^<(\S+)(\s+[^=\s]+(?:=(?:"[^"]*"|'[^']*'|[^>\s]+))?)*\s*>([\s\S]*)<\/\1>/
 //匹配只有开标签的元素节点
-var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/
+var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*\s*>/
 //用于创建适配某一种标签的正则表达式
-var openStr = '(?:\\s+[^=\\s]+=?(?:"[^"]*"|\'[^\']*\'|[^\\s>]+)?)*>'
+var openStr = '(?:\\s+([^=\s]+)(?:=("[^"]*"|\'[^\']*\'|[^\\s>]+))?)*\\s*>'
 //匹配文本节点
 var rtext = /^[^<]+/
 //匹配注释节点
 var rcomment = /^<\!--([\s\S]*)-->/
 //从大片标签中匹想第一个标签的所有属性
-var rattr1 = /(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*>/g
+var rattr1 = /(\s+[^\s>\/\/=]+(?:=(?:("|')(?:\\\2|\\?(?!\2)[\w\W])*\2|[^\s'">=]+))?)*\s*\/?>/g
 //从元素的开标签中一个个分解属性值
 var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 //判定是否有引号开头，IE有些属性没有用引号括起来
@@ -2970,6 +3057,7 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
+               
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -2992,10 +3080,10 @@ function createVirtual(text, force) {
                 }
 
                 var allAttrs = matchText.match(rattr1)[0]
+               
                 var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
                         (tagName.length + 3) * -1)
                 node = new VElement(tagName, innerHTML, matchText)
-
                 var props = allAttrs.slice(0, -1)
                 node = fixTag(node, props)
             }
@@ -3021,7 +3109,7 @@ function createVirtual(text, force) {
     } while (1);
     return nodes
 }
-
+avalon.createVirtual = createVirtual
 var rmsskip = /\bms\-skip/
 var rnocontent = /textarea|template|script|style/
 //如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
@@ -3032,31 +3120,36 @@ function fixTag(node, str) {
     }
     var props = node.props = parseVProps(node, str)
     var outerHTML = node.outerHTML
+    if (!rnocontent.test(node.type) && rbind.test(node.outerHTML)) {
+        node.children = createVirtual(node.innerHTML)
+    } else {
+        node.skipContent = true
+        node.__content = node.innerHTML
+    }
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
-    var isComponent = false
     for (var i = 0, dir; dir = builtinComponents[i++]; ) {
         if (props[dir]) {
             var expr = props[dir]
             delete props[dir]
+            //  node.outerHTML = node.toHTML()
             var component = new VComponent(dir, {
                 template: outerHTML,
                 expr: expr
             })
-            isComponent = true
-            node.outerHTML = node.toHTML()
+         
             node = component.construct(node)
         }
     }
 
-    if (!isComponent) {
-        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-            node.children = createVirtual(node.innerHTML)
-        } else {
-            node.skipContent = true
-            node.__content = node.innerHTML
-        }
-    }
+//    if (!isComponent) {
+//        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
+//            node.children = createVirtual(node.innerHTML)
+//        } else {
+//            node.skipContent = true
+//            node.__content = node.innerHTML
+//        }
+//    }
 
     return node
 }
@@ -3070,7 +3163,7 @@ function disposeVirtual(nodes) {
                 node.disposed = true
                 if(node.tokens){
                     node.tokens.forEach(function(token){
-                        delete token.element
+                        token.element = null
                     })
                 }
                 break
@@ -4337,6 +4430,7 @@ var onDir = avalon.directive("on", {
         }
     }
 })
+/*
 avalon.directive("repeat", {
     priority: 90,
     init: function (binding) {
@@ -4759,7 +4853,7 @@ function proxyRecycler(cache, key, param) {
         delete cache[key]
     }
 }
-
+*/
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/

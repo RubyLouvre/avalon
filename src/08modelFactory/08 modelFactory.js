@@ -103,7 +103,7 @@ function Component() {
  $accessors:avalon.js独有的对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
-
+ 
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -127,6 +127,7 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
+    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var hasOwn = {}    //用于实现hasOwnProperty方法
@@ -138,7 +139,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray)) {
+        if (!isObervable(key, val, $skipArray, skipDollar)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -173,34 +174,38 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
     if (options.watch) {
-        hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", function (expr, fn) {
-            return $watch.call($vmodel, expr, fn)
-        })
-        hideProperty($vmodel, "$fire", function (expr, a, b) {
-            if (expr.indexOf("all!") === 0) {
-                var p = expr.slice(4)
-                for (var i in avalon.vmodels) {
-                    var v = avalon.vmodels[i]
-                    v.$fire && v.$fire(p, a, b)
-                }
-            } else {
-                if (heirloom.vm) {
-                    $emit(heirloom.vm, $vmodel, expr, a, b)
-                }
-            }
-        })
-        heirloom.vm = heirloom.vm || $vmodel
+        makeFire($vmodel, heirloom)
     }
 
     for (name in $computed) {
         val = $vmodel[name]
     }
 
+
     $vmodel.$active = true
     return $vmodel
 }
 
+function makeFire($vmodel, heirloom) {
+    hideProperty($vmodel, "$events", {})
+    hideProperty($vmodel, "$watch", function (expr, fn) {
+        return $watch.call($vmodel, expr, fn)
+    })
+    hideProperty($vmodel, "$fire", function (expr, a, b) {
+        if (expr.indexOf("all!") === 0) {
+            var p = expr.slice(4)
+            for (var i in avalon.vmodels) {
+                var v = avalon.vmodels[i]
+                v.$fire && v.$fire(p, a, b)
+            }
+        } else {
+            if (heirloom.vm) {
+                $emit(heirloom.vm, $vmodel, expr, a, b)
+            }
+        }
+    })
+    heirloom.vm = heirloom.vm || $vmodel
+}
 
 function isComputed(val) {//speed up!
     if (val && typeof val === "object") {
@@ -258,8 +263,8 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObervable(key, value, skipArray) {
-    return key.charAt(0) === "$" ||
+function isObervable(key, value, skipArray, skipDollar) {
+    return (key.charAt(0) === "$" && !skipDollar[key]) ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
@@ -300,24 +305,29 @@ function makeObservable(pathname, heirloom) {
     }
 }
 
-function createProxy(before, after) {
+function createProxy(before, after, h) {
     var accessors = {}
     var keys = {}, k
     var b = before.$accessors
     var a = after.$accessors
+    var hasOwn = {}
     //收集所有键值对及访问器属性
     for (k in before) {
         keys[k] = before[k]
+        hasOwn[k] = true
         if (b[k]) {
             accessors[k] = b[k]
         }
     }
     for (k in after) {
         keys[k] = after[k]
+        hasOwn[k] = true
         if (a[k]) {
             accessors[k] = a[k]
         }
     }
+
+
     var $vmodel = {}
     $vmodel = defineProperties($vmodel, accessors, keys)
     for (k in keys) {
@@ -325,10 +335,22 @@ function createProxy(before, after) {
             $vmodel[k] = keys[k]
         }
     }
+    for (k in $$skipArray) {
+        delete hasOwn[k]
+    }
+
+    function trackBy(name) {
+        return hasOwn[name] === true
+    }
+    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "$accessors", accessors)
+    hideProperty($vmodel, "$events", {})
+    makeFire($vmodel, h || {})
+
     $vmodel.$active = true
     return $vmodel
 }
-
+avalon._makeObservable = makeObservable
 avalon.createProxy = createProxy
 
 

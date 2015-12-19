@@ -1,3 +1,4 @@
+/*
 avalon.directive("repeat", {
     priority: 90,
     init: function (binding) {
@@ -420,3 +421,4 @@ function proxyRecycler(cache, key, param) {
         delete cache[key]
     }
 }
+*/
