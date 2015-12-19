@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.6 built in 2015.12.19
+ avalon.shim.js 1.6 built in 2015.12.20
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1003,10 +1003,16 @@ function observeArray(array, old, heirloom, options) {
 
         array._ = observeObject({
             length: NaN
-        }, heirloom, {
+        }, {}, {
             pathname: options.pathname + ".length",
             watch: true
         })
+
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+  
         array._.length = array.length
         array._.$watch("length", function (a, b) {
 
@@ -1022,7 +1028,7 @@ function observeArray(array, old, heirloom, options) {
             watch: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observe(array[j], 0, heirloom, arrayOptions)
+            array[j] = observe(array[j], 0, {}, arrayOptions)
         }
 
         return array
@@ -1120,7 +1126,6 @@ function observeObject(definition, heirloom, options) {
     for (name in $computed) {
         val = $vmodel[name]
     }
-
 
     $vmodel.$active = true
     return $vmodel
@@ -1246,32 +1251,31 @@ function makeObservable(pathname, heirloom) {
 }
 
 function createProxy(before, after, h) {
-    var accessors = {}
-    var keys = {}, k
     var b = before.$accessors
     var a = after.$accessors
+    var $accessors = {}
+    var keys = {}, k
     var hasOwn = {}
     //收集所有键值对及访问器属性
     for (k in before) {
         keys[k] = before[k]
         hasOwn[k] = true
         if (b[k]) {
-            accessors[k] = b[k]
+            $accessors[k] = b[k]
         }
     }
     for (k in after) {
         keys[k] = after[k]
         hasOwn[k] = true
         if (a[k]) {
-            accessors[k] = a[k]
+            $accessors[k] = a[k]
         }
     }
 
-
-    var $vmodel = {}
-    $vmodel = defineProperties($vmodel, accessors, keys)
+    var $vmodel = new Component()
+    $vmodel = defineProperties($vmodel, $accessors, keys)
     for (k in keys) {
-        if (!accessors[k]) {//添加不可监控的属性
+        if (!$accessors[k]) {//添加不可监控的属性
             $vmodel[k] = keys[k]
         }
     }
@@ -1283,7 +1287,7 @@ function createProxy(before, after, h) {
         return hasOwn[name] === true
     }
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", accessors)
+    hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
     makeFire($vmodel, h || {})
 
@@ -1526,15 +1530,11 @@ function batchUpdateEntity(vm) {
 var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 var arrayProto = Array.prototype
 var newProto = {
-    notify: function () {
-        $emit.call(this.$up, this.$pathname)
-    },
     set: function (index, val) {
         if (((index >>> 0) === index) && this[index] !== val) {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-            $emit.call(this.$up, this.$pathname + ".*", [val, this[index]])
             this.splice(index, 1, val)
         }
     },
@@ -1566,22 +1566,17 @@ var newProto = {
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                    
                 }
             }
         } else if (typeof all === "function") {
             for (i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                   
                 }
             }
         } else {
-            _splice.call(this.$track, 0, this.length)
             _splice.call(this, 0, this.length)
 
         }
@@ -1606,7 +1601,6 @@ arrayMethods.forEach(function (method) {
             args[i] = observe(arguments[i], 0, 1, 1)
         }
         var result = original.apply(this, args)
-        addTrack(this.$track, method, args)
         if (!W3C) {
             this.$model = toJson(this)
         }
@@ -1669,25 +1663,7 @@ function createTrack(n) {
     return ret
 }
 
-function addTrack(track, method, args) {
-    switch (method) {
-        case 'push':
-        case 'unshift':
-            args = createTrack(args.length)
-            break
-        case 'splice':
-            if (args.length > 2) {
-                // 0, 5, a, b, c --> 0, 2, 0
-                // 0, 5, a, b, c, d, e, f, g--> 0, 0, 3
-                var del = args[1]
-                var add = args.length - 2
-                // args = [args[0], Math.max(del - add, 0)].concat(createTrack(Math.max(add - del, 0)))
-                args = [args[0], args[1]].concat(createTrack(args.length - 2))
-            }
-            break
-    }
-    Array.prototype[method].apply(track, args)
-}
+
 
 /*********************************************************************
  *                           依赖调度系统                              *
@@ -2862,28 +2838,32 @@ VComment.prototype = {
         return "<!--" + this.nodeValue + "-->"
     }
 }
-function VComponent(type, props) {
+function VComponent(type, props, children) {
     this.type = "#component"
     this.props = props
     this.__type__ = type
-    this.children = []
+    this.children = children || []
 }
 VComponent.prototype = {
     construct: function (parent) {
-        var a = avalon.components[this.__type__]
-        if (a && a.construct) {
-            return a && a.construct(this, parent)
+        var me = avalon.components[this.__type__]
+        if (me && me.construct) {
+            return me.construct(this, parent)
         } else {
             return this
         }
     },
     init: function (vm) {
-        var a = avalon.components[this.__type__]
-        if (a && a.init) {
-            a.init(this, vm)
+        var me = avalon.components[this.__type__]
+        if (me && me.init) {
+            me.init(this, vm)
         }
     },
     toDOM: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toDOM) {
+            return me.toDOM(this)
+        }
         var fragment = document.createDocumentFragment()
         for (var i = 0; i < this.children.length; i++) {
             fragment.appendChild(this.children[i].toDOM())
@@ -2891,6 +2871,10 @@ VComponent.prototype = {
         return fragment
     },
     toHTML: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toHTML) {
+            return me.toHTML(this)
+        }
         var ret = ""
         for (var i = 0; i < this.children.length; i++) {
             ret += this.children[i].toHTML()
@@ -2901,59 +2885,121 @@ VComponent.prototype = {
 
 avalon.components = {}
 
-
-
 var Ifcom = avalon.components["ms-if"] = {
     construct: function (self, parent) {
         parent.children = createVirtual(parent.innerHTML, true)
         self._children = [parent] //将父节点作为它的子节点
         return self
     },
-    init: function (that, vm) {
+    init: function (me, vm) {
         var binding = {
-            type: that.__type__.replace(/^ms-/, ""),
-            expr: that.props.expr,
+            type: me.__type__.replace(/^ms-/, ""),
+            expr: me.props.expr,
             vmodel: vm,
-            element: that
+            element: me
         }
         avalon.injectBinding(binding)
     }
 }
 
+
+
 avalon.components["ms-repeat"] = {
     construct: function (self, parent) {
         disposeVirtual(parent.children)
-        var type = self.__type__
+        var type = self.__type__.replace("ms-", "")
+        var signature = generateID(type)
+        self.signature = signature
         self["data-" + type + "-rendered"] = parent["data-" + type + "-rendered"]
-        self.children = [new VComment("ms-" + type), new VComment("ms-" + type + "-end")] //将父节点作为它的子节点
+        self.children = [] //将父节点作为它的子节点
         if (type === "each") {
-            self.props.template = parent.innerHTML
+            self.props.template = parent.innerHTML.trim() + "<!--" + signature + "-->"
             parent.children = [self]
             return parent
         }
         delete parent.props["avalon-uuid"]
-        self.props.template = parent.toHTML()
+        self.props.template = parent.toHTML() + "<!--" + signature + "-->"
         return self
     },
+    toDOM: function (virtual) {
+        var type = virtual.__type__
+        virtual.__type__ = new Date - 0
+        var dom = virtual.toDOM()
+        virtual.__type__ = type
+
+        var start = document.createComment(virtual.signature + "-start")
+        var end = document.createComment(virtual.signature + "-end")
+
+        dom.insertBefore(start, dom.firstChild)
+        dom.appendChild(end)
+        return dom
+    },
+    toHTML: function (virtual) {
+        var type = virtual.__type__
+        virtual.__type__ = new Date - 0
+        var html = virtual.toHTML()
+        virtual.__type__ = type
+        var start = "<!--" + virtual.signature + "-start-->"
+        var end = "<!--" + virtual.signature + "-end-->"
+        return start + html + end
+    },
     init: Ifcom.init
-//    update: function (self, vm) {
-//        var template = that.props.template
-//        var arr = that.props.expr.match(/([^:]+)\:?(\w*)/)
-//        var repeatValue = parseExpr(arr[1], vm), repeatItem = arr[2] || "el"
-//        var children = [new VComment("ms-repeat")]
-//        updateVLoop(repeatValue, repeatItem, function (proxy) {
-//            var clone = createVirtual(template)
-//
-//            var vnode = updateEntity(clone, proxy)
-//
-//            children.push.apply(children, vnode)
-//        }, vm)
-//
-//        self.children = children.concat(new VComment("ms-repeat-end"))
-//    }
+}
+function compareObject(a, b) {
+
+    var atype = avalon.type(a)
+    var btype = avalon.type(a)
+    if (atype === btype) {
+        var aisVM = atype === "object" && a.$id
+        var bisVM = btype === "object"
+        var hasDetect = {}
+        if (aisVM && bisVM) {
+            for (var i in a) {
+                hasDetect[i] = true
+                if ($$skipArray[i])
+                    continue
+                if (a.hasOwnProperty(i)) {
+                    if (!b.hasOwnProperty(i))
+                        return false //如果a有b没有
+                    if (!compareObject(a[i], b[i]))
+                        return false
+                }
+            }
+            for (i in b) {
+                if (hasDetect[i]) {
+                    continue
+                }//如果b有a没有
+                return false
+            }
+            return true
+        } else {
+            if (btype === "date")
+                return a + 0 === b + 0
+            return a === b
+        }
+    } else {
+        return false
+    }
 }
 
+
 avalon.directive("repeat", {
+    is: function (a, b) {
+        if (Array.isArray(a)) {
+
+            if (!Array.isArray(b))
+                return false
+            if (a.length !== b.length) {
+                return false
+            }
+
+            return !a.some(function (el, i) {
+                return el !== b[i]
+            })
+        } else {
+            return compareObject(a, b)
+        }
+    },
     change: function (value, binding) {
         var last = value.length - 1
         var proxies = []
@@ -2983,14 +3029,29 @@ avalon.directive("repeat", {
             proxies.push(proxy)
             var node = createVirtual(binding.element.props.template, true)
             updateVirtual(node, proxy)
-            binding.element.children[i] = node[0]
+            binding.element.children[i] = new VComponent("repeatItem", {}, node)
         }
         var change = addHooks(binding.element, "changeHooks")
         change.repeat = this.update
     },
-    update: function (elem, aaa) {
-        if (elem.parentNode) {
-            elem.parentNode.replaceChild(aaa.toDOM(), elem)
+    update: function (elem, vnode) {
+        var parent = elem.parentNode, next
+        if (parent) {
+            var dom = vnode.toDOM()
+            if (elem.nodeType !== 8) {
+                parent.replaceChild(dom, elem)
+            } else {
+                while (next = elem.nextSibling) {
+                    if (next.nodeValue === dom.lastChild.nodeValue) {
+                        parent.removeChild(next)
+                        break
+                    } else {
+                        parent.removeChild(next)
+                    }
+                }
+                parent.replaceChild(dom, elem)
+            }
+
         }
     },
     old: function (binding, oldValue) {
@@ -3046,7 +3107,7 @@ avalon.directive("if", {
 
 avalon.components["ms-html"] = {
     construct: function (self, parent) {
-        //替换父节点的所有孩子
+//替换父节点的所有孩子
         parent.children = [self]
         return parent
     },
@@ -3075,7 +3136,7 @@ avalon.directive("html", {
 
 avalon.components["ms-text"] = {
     construct: function (self, parent) {
-        //替换父节点的所有孩子
+//替换父节点的所有孩子
         parent.children = [self]
         return parent
     },
@@ -3259,7 +3320,7 @@ avalon.injectBinding = function (binding) {
         binding.vmodel.$watch(path, binding)
     })
     delete binding.paths
-    binding.update = function () {
+    binding.update = function (a, b, path) {
         var hasError
         try {
             var value = binding.getter(binding.vmodel)
@@ -3268,8 +3329,8 @@ avalon.injectBinding = function (binding) {
             avalon.log(e)
         }
         var dir = directives[binding.type]
-
         var is = dir.is || bindingIs
+       
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
             if (binding.oneTime && !hasError) {
@@ -3708,16 +3769,6 @@ function fixTag(node, str) {
             node = component.construct(node)
         }
     }
-
-//    if (!isComponent) {
-//        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-//            node.children = createVirtual(node.innerHTML)
-//        } else {
-//            node.skipContent = true
-//            node.__content = node.innerHTML
-//        }
-//    }
-
     return node
 }
 

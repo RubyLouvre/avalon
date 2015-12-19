@@ -63,10 +63,16 @@ function observeArray(array, old, heirloom, options) {
 
         array._ = observeObject({
             length: NaN
-        }, heirloom, {
+        }, {}, {
             pathname: options.pathname + ".length",
             watch: true
         })
+
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+  
         array._.length = array.length
         array._.$watch("length", function (a, b) {
 
@@ -82,7 +88,7 @@ function observeArray(array, old, heirloom, options) {
             watch: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observe(array[j], 0, heirloom, arrayOptions)
+            array[j] = observe(array[j], 0, {}, arrayOptions)
         }
 
         return array
@@ -180,7 +186,6 @@ function observeObject(definition, heirloom, options) {
     for (name in $computed) {
         val = $vmodel[name]
     }
-
 
     $vmodel.$active = true
     return $vmodel
@@ -306,32 +311,31 @@ function makeObservable(pathname, heirloom) {
 }
 
 function createProxy(before, after, h) {
-    var accessors = {}
-    var keys = {}, k
     var b = before.$accessors
     var a = after.$accessors
+    var $accessors = {}
+    var keys = {}, k
     var hasOwn = {}
     //收集所有键值对及访问器属性
     for (k in before) {
         keys[k] = before[k]
         hasOwn[k] = true
         if (b[k]) {
-            accessors[k] = b[k]
+            $accessors[k] = b[k]
         }
     }
     for (k in after) {
         keys[k] = after[k]
         hasOwn[k] = true
         if (a[k]) {
-            accessors[k] = a[k]
+            $accessors[k] = a[k]
         }
     }
 
-
-    var $vmodel = {}
-    $vmodel = defineProperties($vmodel, accessors, keys)
+    var $vmodel = new Component()
+    $vmodel = defineProperties($vmodel, $accessors, keys)
     for (k in keys) {
-        if (!accessors[k]) {//添加不可监控的属性
+        if (!$accessors[k]) {//添加不可监控的属性
             $vmodel[k] = keys[k]
         }
     }
@@ -343,7 +347,7 @@ function createProxy(before, after, h) {
         return hasOwn[name] === true
     }
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", accessors)
+    hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
     makeFire($vmodel, h || {})
 

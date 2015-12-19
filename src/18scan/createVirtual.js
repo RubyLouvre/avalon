@@ -188,15 +188,5 @@ function fixTag(node, str) {
             node = component.construct(node)
         }
     }
-
-//    if (!isComponent) {
-//        if (!rnocontent.test(node.type) || rexpr.test(node.innerHTML)) {
-//            node.children = createVirtual(node.innerHTML)
-//        } else {
-//            node.skipContent = true
-//            node.__content = node.innerHTML
-//        }
-//    }
-
     return node
 }

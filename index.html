@@ -12,7 +12,7 @@
     <body ms-controller="test">
 
         <ul>
-            <li ms-repeat="array"><b>{{el.name}}</b></li>
+            <li ms-repeat="array"><b>{{el.name}}+{{$index}}</b></li>
         </ul>
 
         <script>
@@ -29,25 +29,7 @@ var vm = avalon.define({
         b: 3
     }
 })
-var heirloom = {}
-var after = {
-    $accessors: {
-        $first: avalon._makeObservable("1", heirloom),
-        $last: avalon._makeObservable("1", heirloom),
-        $index: avalon._makeObservable("1", heirloom),
-        el: avalon._makeObservable("1", heirloom)
-    },
-    $first: 1,
-    $last: 1,
-    $index: 1,
-    el: 1,
-    $events: {},
-    $fire: {},
-    $watch: {},
-    $remove: function () {
-        console.log("$remove")
-    }
-}
+
 
 //var before = vm.array[0]
 //var proxy = avalon.createProxy(before, after)

@@ -5,15 +5,11 @@
 var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 var arrayProto = Array.prototype
 var newProto = {
-    notify: function () {
-        $emit.call(this.$up, this.$pathname)
-    },
     set: function (index, val) {
         if (((index >>> 0) === index) && this[index] !== val) {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-            $emit.call(this.$up, this.$pathname + ".*", [val, this[index]])
             this.splice(index, 1, val)
         }
     },
@@ -45,22 +41,17 @@ var newProto = {
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                    
                 }
             }
         } else if (typeof all === "function") {
             for (i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                   
                 }
             }
         } else {
-            _splice.call(this.$track, 0, this.length)
             _splice.call(this, 0, this.length)
 
         }
@@ -85,7 +76,6 @@ arrayMethods.forEach(function (method) {
             args[i] = observe(arguments[i], 0, 1, 1)
         }
         var result = original.apply(this, args)
-        addTrack(this.$track, method, args)
         if (!W3C) {
             this.$model = toJson(this)
         }
@@ -148,22 +138,4 @@ function createTrack(n) {
     return ret
 }
 
-function addTrack(track, method, args) {
-    switch (method) {
-        case 'push':
-        case 'unshift':
-            args = createTrack(args.length)
-            break
-        case 'splice':
-            if (args.length > 2) {
-                // 0, 5, a, b, c --> 0, 2, 0
-                // 0, 5, a, b, c, d, e, f, g--> 0, 0, 3
-                var del = args[1]
-                var add = args.length - 2
-                // args = [args[0], Math.max(del - add, 0)].concat(createTrack(Math.max(add - del, 0)))
-                args = [args[0], args[1]].concat(createTrack(args.length - 2))
-            }
-            break
-    }
-    Array.prototype[method].apply(track, args)
-}
+
