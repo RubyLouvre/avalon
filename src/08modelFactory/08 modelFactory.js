@@ -331,7 +331,6 @@ function createProxy(before, after, h) {
             $accessors[k] = a[k]
         }
     }
-
     var $vmodel = new Component()
     $vmodel = defineProperties($vmodel, $accessors, keys)
     for (k in keys) {

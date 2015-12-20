@@ -24,12 +24,15 @@ var vm = avalon.define({
     data: '司徒正美',
     aaa: "<strong>{{a.b}}</strong><b>{{a.b}}</b>",
     toggle: false,
-    array: [{name: 1}, {name: 2}, {name: 3}],
+    array: [{name: 11}, {name: 22}, {name: 33}],
     a: {
         b: 3
     }
 })
-
+setTimeout(function(){
+    vm.array.unshift({name: 444})
+   // vm.array = [{name: 3}, {name: 2}, {name: 1},{name:88}] //.unshift({name: "first"})
+},2000)
 
 //var before = vm.array[0]
 //var proxy = avalon.createProxy(before, after)

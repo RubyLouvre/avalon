@@ -87,55 +87,11 @@ arrayMethods.forEach(function (method) {
 
 "sort,reverse".replace(rword, function (method) {
     newProto[method] = function () {
-        var oldArray = this.concat() //保持原来状态的旧数组
-        var newArray = this
-        var mask = Math.random()
-        var indexes = []
-        var hasSort = false
-        arrayProto[method].apply(newArray, arguments) //排序
-        for (var i = 0, n = oldArray.length; i < n; i++) {
-            var neo = newArray[i]
-            var old = oldArray[i]
-            if (neo === old) {
-                indexes.push(i)
-            } else {
-                var index = oldArray.indexOf(neo)
-                indexes.push(index)//得到新数组的每个元素在旧数组对应的位置
-                oldArray[index] = mask    //屏蔽已经找过的元素
-                hasSort = true
-            }
+        arrayProto[method].apply(this, arguments)
+        if (!W3C) {
+            this.$model = toJson(this)
         }
-        if (hasSort) {
-            sortByIndex(this.$track, indexes)
-            if (!W3C) {
-                this.$model = toJson(this)
-            }
-            this.notify()
-        }
+        this.notify()
         return this
     }
 })
-
-function sortByIndex(array, indexes) {
-    var map = {};
-    for (var i = 0, n = indexes.length; i < n; i++) {
-        map[i] = array[i]
-        var j = indexes[i]
-        if (j in map) {
-            array[i] = map[j]
-            delete map[j]
-        } else {
-            array[i] = array[j]
-        }
-    }
-}
-
-function createTrack(n) {
-    var ret = []
-    for (var i = 0; i < n; i++) {
-        ret[i] = generateID("$proxy$each")
-    }
-    return ret
-}
-
-

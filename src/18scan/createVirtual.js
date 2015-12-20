@@ -37,13 +37,13 @@ function parseVProps(node, str) {
         if (match) {
             var type = match[1]
             var param = match[2] || ""
-            var value = v
+           // var value = v
             switch (type) {
                 case "controller":
                 case "important":
                     change[name] = false
                     name = "data-" + type
-                    change[name] = value
+                    change[name] = v
                     addAttrHook(node)
 
                     break
@@ -54,7 +54,8 @@ function parseVProps(node, str) {
                     addAttrHook(node)
                     if (name === "with")
                         name = "each"
-                    value = value + "★" + (param || "el")
+                    v = v + "★" + (param || "el")
+                    //console.log(value)
                     break
             }
         }
@@ -179,7 +180,8 @@ function fixTag(node, str) {
         if (props[dir]) {
             var expr = props[dir]
             delete props[dir]
-            //  node.outerHTML = node.toHTML()
+          
+          
             var component = new VComponent(dir, {
                 template: outerHTML,
                 expr: expr

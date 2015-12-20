@@ -1205,58 +1205,14 @@ arrayMethods.forEach(function (method) {
 
 "sort,reverse".replace(rword, function (method) {
     newProto[method] = function () {
-        var oldArray = this.concat() //保持原来状态的旧数组
-        var newArray = this
-        var mask = Math.random()
-        var indexes = []
-        var hasSort = false
-        arrayProto[method].apply(newArray, arguments) //排序
-        for (var i = 0, n = oldArray.length; i < n; i++) {
-            var neo = newArray[i]
-            var old = oldArray[i]
-            if (neo === old) {
-                indexes.push(i)
-            } else {
-                var index = oldArray.indexOf(neo)
-                indexes.push(index)//得到新数组的每个元素在旧数组对应的位置
-                oldArray[index] = mask    //屏蔽已经找过的元素
-                hasSort = true
-            }
+        arrayProto[method].apply(this, arguments)
+        if (!W3C) {
+            this.$model = toJson(this)
         }
-        if (hasSort) {
-            sortByIndex(this.$track, indexes)
-            if (!W3C) {
-                this.$model = toJson(this)
-            }
-            this.notify()
-        }
+        this.notify()
         return this
     }
 })
-
-function sortByIndex(array, indexes) {
-    var map = {};
-    for (var i = 0, n = indexes.length; i < n; i++) {
-        map[i] = array[i]
-        var j = indexes[i]
-        if (j in map) {
-            array[i] = map[j]
-            delete map[j]
-        } else {
-            array[i] = array[j]
-        }
-    }
-}
-
-function createTrack(n) {
-    var ret = []
-    for (var i = 0; i < n; i++) {
-        ret[i] = generateID("$proxy$each")
-    }
-    return ret
-}
-
-
 
 /*********************************************************************
  *                           依赖调度系统                              *
@@ -2368,10 +2324,10 @@ function VComponent(type, props, children) {
     this.children = children || []
 }
 VComponent.prototype = {
-    construct: function (parent) {
+    construct: function () {
         var me = avalon.components[this.__type__]
         if (me && me.construct) {
-            return me.construct(this, parent)
+            return me.construct.apply(this, arguments)
         } else {
             return this
         }
@@ -2409,10 +2365,10 @@ VComponent.prototype = {
 avalon.components = {}
 
 var Ifcom = avalon.components["ms-if"] = {
-    construct: function (self, parent) {
+    construct: function (parent) {
         parent.children = createVirtual(parent.innerHTML, true)
-        self._children = [parent] //将父节点作为它的子节点
-        return self
+        this._children = [parent] //将父节点作为它的子节点
+        return this
     },
     init: function (me, vm) {
         var binding = {
@@ -2421,178 +2377,19 @@ var Ifcom = avalon.components["ms-if"] = {
             vmodel: vm,
             element: me
         }
+        if (binding.expr.indexOf("★") > 0) {
+            var arr = binding.expr.split("★")
+            binding.expr = arr[0]
+            binding.itemName = arr[1]
+        }
+
         avalon.injectBinding(binding)
     }
 }
 
 
 
-avalon.components["ms-repeat"] = {
-    construct: function (self, parent) {
-        disposeVirtual(parent.children)
-        var type = self.__type__.replace("ms-", "")
-        var signature = generateID(type)
-        self.signature = signature
-        self["data-" + type + "-rendered"] = parent["data-" + type + "-rendered"]
-        self.children = [] //将父节点作为它的子节点
-        if (type === "each") {
-            self.props.template = parent.innerHTML.trim() + "<!--" + signature + "-->"
-            parent.children = [self]
-            return parent
-        }
-        delete parent.props["avalon-uuid"]
-        self.props.template = parent.toHTML() + "<!--" + signature + "-->"
-        return self
-    },
-    toDOM: function (virtual) {
-        var type = virtual.__type__
-        virtual.__type__ = new Date - 0
-        var dom = virtual.toDOM()
-        virtual.__type__ = type
 
-        var start = document.createComment(virtual.signature + "-start")
-        var end = document.createComment(virtual.signature + "-end")
-
-        dom.insertBefore(start, dom.firstChild)
-        dom.appendChild(end)
-        return dom
-    },
-    toHTML: function (virtual) {
-        var type = virtual.__type__
-        virtual.__type__ = new Date - 0
-        var html = virtual.toHTML()
-        virtual.__type__ = type
-        var start = "<!--" + virtual.signature + "-start-->"
-        var end = "<!--" + virtual.signature + "-end-->"
-        return start + html + end
-    },
-    init: Ifcom.init
-}
-function compareObject(a, b) {
-
-    var atype = avalon.type(a)
-    var btype = avalon.type(a)
-    if (atype === btype) {
-        var aisVM = atype === "object" && a.$id
-        var bisVM = btype === "object"
-        var hasDetect = {}
-        if (aisVM && bisVM) {
-            for (var i in a) {
-                hasDetect[i] = true
-                if ($$skipArray[i])
-                    continue
-                if (a.hasOwnProperty(i)) {
-                    if (!b.hasOwnProperty(i))
-                        return false //如果a有b没有
-                    if (!compareObject(a[i], b[i]))
-                        return false
-                }
-            }
-            for (i in b) {
-                if (hasDetect[i]) {
-                    continue
-                }//如果b有a没有
-                return false
-            }
-            return true
-        } else {
-            if (btype === "date")
-                return a + 0 === b + 0
-            return a === b
-        }
-    } else {
-        return false
-    }
-}
-
-
-avalon.directive("repeat", {
-    is: function (a, b) {
-        if (Array.isArray(a)) {
-
-            if (!Array.isArray(b))
-                return false
-            if (a.length !== b.length) {
-                return false
-            }
-
-            return !a.some(function (el, i) {
-                return el !== b[i]
-            })
-        } else {
-            return compareObject(a, b)
-        }
-    },
-    change: function (value, binding) {
-        var last = value.length - 1
-        var proxies = []
-        for (var i = 0; i < value.length; i++) {
-            var heirloom = {}
-            var curVm = value[i]
-            var after = {
-                $accessors: {
-                    $first: makeObservable(0, heirloom),
-                    $last: makeObservable(0, heirloom),
-                    $index: makeObservable(0, heirloom),
-                    el: makeObservable(0, heirloom)
-                },
-                $first: 1,
-                $last: 1,
-                $index: 1,
-                el: 1,
-                $remove: function () {
-
-                }
-            }
-            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
-            proxy.$first = i === 0
-            proxy.$last = i === last
-            proxy.$index = i
-            proxy.el = value[i]
-            proxies.push(proxy)
-            var node = createVirtual(binding.element.props.template, true)
-            updateVirtual(node, proxy)
-            binding.element.children[i] = new VComponent("repeatItem", {}, node)
-        }
-        var change = addHooks(binding.element, "changeHooks")
-        change.repeat = this.update
-    },
-    update: function (elem, vnode) {
-        var parent = elem.parentNode, next
-        if (parent) {
-            var dom = vnode.toDOM()
-            if (elem.nodeType !== 8) {
-                parent.replaceChild(dom, elem)
-            } else {
-                while (next = elem.nextSibling) {
-                    if (next.nodeValue === dom.lastChild.nodeValue) {
-                        parent.removeChild(next)
-                        break
-                    } else {
-                        parent.removeChild(next)
-                    }
-                }
-                parent.replaceChild(dom, elem)
-            }
-
-        }
-    },
-    old: function (binding, oldValue) {
-        if (Array.isArray(oldValue)) {
-            binding.oldValue = oldValue.concat()
-        } else {
-            var o = binding.oldValue = {}
-            for (var i in oldValue) {
-                if (oldValue.hasOwnProperty(i)) {
-                    o[i] = oldValue[i]
-                }
-            }
-        }
-    }
-})
-
-
-avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 avalon.directive("if", {
     is: function (a, b) {
@@ -2658,9 +2455,9 @@ avalon.directive("html", {
 
 
 avalon.components["ms-text"] = {
-    construct: function (self, parent) {
+    construct: function (parent) {
 //替换父节点的所有孩子
-        parent.children = [self]
+        parent.children = [this]
         return parent
     },
     init: Ifcom.init
@@ -2822,6 +2619,452 @@ VText.prototype = {
         return this.nodeValue
     }
 }
+function newSplice(index, removed, addedCount) {
+    return {
+        index: index,
+        removed: removed,
+        addedCount: addedCount
+    }
+}
+var EDIT_LEAVE = 0
+var EDIT_UPDATE = 1
+var EDIT_ADD = 2
+var EDIT_DELETE = 3
+function ArraySplice() {
+}
+ArraySplice.prototype = {
+    calcEditDistances: function (current, currentStart, currentEnd, old, oldStart, oldEnd) {
+        var rowCount = oldEnd - oldStart + 1
+        var columnCount = currentEnd - currentStart + 1
+        var distances = new Array(rowCount)
+        for (var i = 0; i < rowCount; i++) {
+            distances[i] = new Array(columnCount)
+            distances[i][0] = i
+        }
+        for (var j = 0; j < columnCount; j++)
+            distances[0][j] = j
+        for ( i = 1; i < rowCount; i++) {
+            for (j = 1; j < columnCount; j++) {
+                if (this.equals(current[currentStart + j - 1], old[oldStart + i - 1]))
+                    distances[i][j] = distances[i - 1][j - 1]
+                else {
+                    var north = distances[i - 1][j] + 1
+                    var west = distances[i][j - 1] + 1
+                    distances[i][j] = north < west ? north : west
+                }
+            }
+        }
+        return distances
+    },
+    spliceOperationsFromEditDistances: function (distances) {
+        var i = distances.length - 1
+        var j = distances[0].length - 1
+        var current = distances[i][j]
+        var edits = [];
+        while (i > 0 || j > 0) {
+            if (i === 0) {
+                edits.push(EDIT_ADD)
+                j--
+                continue;
+            }
+            if (j === 0) {
+                edits.push(EDIT_DELETE);
+                i--
+                continue
+            }
+            var northWest = distances[i - 1][j - 1];
+            var west = distances[i - 1][j];
+            var north = distances[i][j - 1];
+            var min;
+            if (west < north)
+                min = west < northWest ? west : northWest;
+            else
+                min = north < northWest ? north : northWest;
+            if (min === northWest) {
+                if (northWest === current) {
+                    edits.push(EDIT_LEAVE);
+                } else {
+                    edits.push(EDIT_UPDATE);
+                    current = northWest;
+                }
+                i--;
+                j--;
+            } else if (min === west) {
+                edits.push(EDIT_DELETE);
+                i--;
+                current = west;
+            } else {
+                edits.push(EDIT_ADD);
+                j--;
+                current = north;
+            }
+        }
+        edits.reverse();
+        return edits;
+    },
+    calcSplices: function (current, currentStart, currentEnd, old, oldStart, oldEnd) {
+        var prefixCount = 0;
+        var suffixCount = 0;
+        var minLength = Math.min(currentEnd - currentStart, oldEnd - oldStart);
+        if (currentStart === 0 && oldStart === 0)
+            prefixCount = this.sharedPrefix(current, old, minLength);
+        if (currentEnd === current.length && oldEnd === old.length)
+            suffixCount = this.sharedSuffix(current, old, minLength - prefixCount);
+        currentStart += prefixCount;
+        oldStart += prefixCount;
+        currentEnd -= suffixCount;
+        oldEnd -= suffixCount;
+        if (currentEnd - currentStart === 0 && oldEnd - oldStart === 0)
+            return [];
+        if (currentStart === currentEnd) {
+            var splice = newSplice(currentStart, [], 0);
+            while (oldStart < oldEnd)
+                splice.removed.push(old[oldStart++]);
+            return [splice];
+        } else if (oldStart === oldEnd)
+            return [newSplice(currentStart, [], currentEnd - currentStart)];
+        var ops = this.spliceOperationsFromEditDistances(this.calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd));
+        splice = undefined;
+        var splices = [];
+        var index = currentStart;
+        var oldIndex = oldStart;
+        for (var i = 0; i < ops.length; i++) {
+            switch (ops[i]) {
+                case EDIT_LEAVE:
+                    if (splice) {
+                        splices.push(splice);
+                        splice = undefined;
+                    }
+                    index++;
+                    oldIndex++;
+                    break;
+
+                case EDIT_UPDATE:
+                    if (!splice)
+                        splice = newSplice(index, [], 0);
+                    splice.addedCount++;
+                    index++;
+                    splice.removed.push(old[oldIndex]);
+                    oldIndex++;
+                    break;
+
+                case EDIT_ADD:
+                    if (!splice)
+                        splice = newSplice(index, [], 0);
+                    splice.addedCount++;
+                    index++;
+                    break;
+
+                case EDIT_DELETE:
+                    if (!splice)
+                        splice = newSplice(index, [], 0);
+                    splice.removed.push(old[oldIndex]);
+                    oldIndex++;
+                    break;
+            }
+        }
+        if (splice) {
+            splices.push(splice);
+        }
+        return splices;
+    },
+    sharedPrefix: function (current, old, searchLength) {
+        for (var i = 0; i < searchLength; i++)
+            if (!this.equals(current[i], old[i]))
+                return i;
+        return searchLength;
+    },
+    sharedSuffix: function (current, old, searchLength) {
+        var index1 = current.length;
+        var index2 = old.length;
+        var count = 0;
+        while (count < searchLength && this.equals(current[--index1], old[--index2]))
+            count++;
+        return count;
+    },
+    calculateSplices: function (current, previous) {
+        return this.calcSplices(current, 0, current.length, previous, 0, previous.length);
+    },
+    equals: function (currentValue, previousValue) {
+        return currentValue === previousValue;
+    }
+};
+avalon.components["ms-repeat"] = {
+    construct: function (parent) {
+
+        var self = this
+
+        disposeVirtual(parent.children)
+
+        var type = self.__type__.replace("ms-", "")
+        var signature = generateID(type)
+        self.signature = signature
+        self["data-" + type + "-rendered"] = parent["data-" + type + "-rendered"]
+        self.children = [] //将父节点作为它的子节点
+        if (type === "each") {
+            self.props.template = parent.innerHTML.trim() + "<!--" + signature + "-->"
+            parent.children = [self]
+            return parent
+        }
+        delete parent.props["avalon-uuid"]
+        self.props.template = parent.toHTML() + "<!--" + signature + "-->"
+        return self
+    },
+    toDOM: function (virtual) {
+        var type = virtual.__type__
+        virtual.__type__ = new Date - 0
+        var dom = virtual.toDOM()
+        virtual.__type__ = type
+
+        var start = document.createComment(virtual.signature + "-start")
+        var end = document.createComment(virtual.signature + "-end")
+
+        dom.insertBefore(start, dom.firstChild)
+        dom.appendChild(end)
+        return dom
+    },
+    toHTML: function (virtual) {
+        var type = virtual.__type__
+        virtual.__type__ = new Date - 0
+        var html = virtual.toHTML()
+        virtual.__type__ = type
+        var start = "<!--" + virtual.signature + "-start-->"
+        var end = "<!--" + virtual.signature + "-end-->"
+        return start + html + end
+    },
+    init: Ifcom.init
+}
+//   A, B, C
+// ---> A C
+
+function compareObject(a, b) {
+
+    var atype = avalon.type(a)
+    var btype = avalon.type(a)
+    if (atype === btype) {
+        var aisVM = atype === "object" && a.$id
+        var bisVM = btype === "object"
+        var hasDetect = {}
+        if (aisVM && bisVM) {
+            for (var i in a) {
+                hasDetect[i] = true
+                if ($$skipArray[i])
+                    continue
+                if (a.hasOwnProperty(i)) {
+                    if (!b.hasOwnProperty(i))
+                        return false //如果a有b没有
+                    if (!compareObject(a[i], b[i]))
+                        return false
+                }
+            }
+            for (i in b) {
+                if (hasDetect[i]) {
+                    continue
+                }//如果b有a没有
+                return false
+            }
+            return true
+        } else {
+            if (btype === "date")
+                return a + 0 === b + 0
+            return a === b
+        }
+    } else {
+        return false
+    }
+}
+
+
+avalon.directive("repeat", {
+    is: function (a, b) {
+        if (Array.isArray(a)) {
+
+            if (!Array.isArray(b))
+                return false
+            if (a.length !== b.length) {
+                return false
+            }
+
+            return !a.some(function (el, i) {
+                return el !== b[i]
+            })
+        } else {
+            return compareObject(a, b)
+        }
+    },
+    change: function (value, binding) {
+        var last = value.length - 1
+        var parent = binding.element
+
+        if (Array.isArray(value)) {
+            var oldValue = binding.oldValue || []
+            var diff = new ArraySplice()
+            var children = parent.children
+            var splices = diff.calculateSplices(value, oldValue)
+            var reuseComponents = []
+
+            for (var i = 0, el; el = splices[i++]; ) {
+                var index = el.index
+                reuseComponents = children.splice(index, el.removed.length)
+
+                var args = value.slice(index, index + el.addedCount)
+
+                args = args.map(function (el, ii) {
+                    var component = reuseComponents.shift()
+                    if (component) {
+                        component.updateProxy({
+                            vm: el,
+                            $index: index + ii,
+                            $last: last
+                        })
+                        return component
+                    }
+                    component = new VComponent("repeatItem")
+                    component.outerHTML = parent.props.template
+                    component.itemName = binding.itemName
+                    component.construct({
+                        vm: el,
+                        $index: index + ii,
+                        $last: last
+                    })
+                    return component
+                })
+                args.unshift(index, 0)
+                children.splice.apply(children, args)
+            }
+        }
+
+        binding.oldValue = value.concat()
+        console.log(binding.oldValue)
+        console.log(parent.toHTML())
+        //console.log(children)
+//        for (var i = 0; i < value.length; i++) {
+//            var heirloom = {}
+//            var curVm = value[i]
+//            var after = {
+//                $accessors: {
+//                    $first: makeObservable(0, heirloom),
+//                    $last: makeObservable(0, heirloom),
+//                    $index: makeObservable(0, heirloom),
+//                    el: makeObservable(0, heirloom)
+//                },
+//                $first: 1,
+//                $last: 1,
+//                $index: 1,
+//                el: 1,
+//                $remove: function () {
+//
+//                }
+//            }
+//            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
+//            proxy.$first = i === 0
+//            proxy.$last = i === last
+//            proxy.$index = i
+//            proxy.el = value[i]
+//            proxies.push(proxy)
+//            var node = createVirtual(binding.element.props.template, true)
+//            updateVirtual(node, proxy)
+//            binding.element.children[i] = new VComponent("repeatItem", {}, node)
+//        }
+//        var change = addHooks(binding.element, "changeHooks")
+//        change.repeat = this.update
+    },
+    update: function (elem, vnode) {
+        var parent = elem.parentNode, next
+        if (parent) {
+            var dom = vnode.toDOM()
+            if (elem.nodeType !== 8) {
+                parent.replaceChild(dom, elem)
+            } else {
+                while (next = elem.nextSibling) {
+                    if (next.nodeValue === dom.lastChild.nodeValue) {
+                        parent.removeChild(next)
+                        break
+                    } else {
+                        parent.removeChild(next)
+                    }
+                }
+                parent.replaceChild(dom, elem)
+            }
+
+        }
+    },
+    old: function (binding, oldValue) {
+        if (Array.isArray(oldValue)) {
+            // binding.oldValue = oldValue.concat()
+        } else {
+            var o = binding.oldValue = {}
+            for (var i in oldValue) {
+                if (oldValue.hasOwnProperty(i)) {
+                    o[i] = oldValue[i]
+                }
+            }
+        }
+    }
+})
+
+var repeatItem = avalon.components["repeatItem"] = {
+    construct: function (options) {
+        var index = options.$index
+
+        var vm = createItem(options.vm, this.itemName)
+        this.$first = vm.$first = index === 0
+        this.$last = vm.$last = index === options.last
+        this.$index = vm.$index = index
+        vm[this.itemName] = options.vm
+        this.vmodel = vm
+        this.children = createVirtual(this.outerHTML, true)
+        updateVirtual(this.children, vm)
+        this.updateProxy = repeatItem.updateProxy
+        return this
+    },
+    updateProxy: function (options) {
+        var vm = this.vmodel
+        vm[this.itemName] = options.vm
+        for (var i in options.vm) {
+            vm[i] = options.vm[i]
+        }
+
+        var index = options.$index
+        //  var vm = createItem(options.vm, this.itemName)
+        this.$first = vm.$first = index === 0
+        this.$last = vm.$last = index === options.last
+        this.$index = vm.$index = index
+
+        //  updateVirtual(this.children, vm)
+    }
+}
+
+function createItem(curVm, itemName) {
+    var heirloom = {}
+    var after = {
+        $accessors: {
+            $first: makeObservable(0, heirloom),
+            $last: makeObservable(0, heirloom),
+            $index: makeObservable(0, heirloom)
+        },
+        $first: 1,
+        $last: 1,
+        $index: 1,
+        $remove: function () {
+
+        }
+    }
+    after[itemName] = 1
+    after.$accessors[itemName] = makeObservable(0, heirloom)
+    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
+    heirloom.vm = proxy
+    return proxy
+}
+
+avalon.components["ms-each"] = avalon.components["ms-repeat"]
+
+function removeItems(array) {
+    array.forEach(function (el) {
+        el.$active = false
+    })
+}
+
 // executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
@@ -3047,13 +3290,13 @@ function parseVProps(node, str) {
         if (match) {
             var type = match[1]
             var param = match[2] || ""
-            var value = v
+           // var value = v
             switch (type) {
                 case "controller":
                 case "important":
                     change[name] = false
                     name = "data-" + type
-                    change[name] = value
+                    change[name] = v
                     addAttrHook(node)
 
                     break
@@ -3064,7 +3307,8 @@ function parseVProps(node, str) {
                     addAttrHook(node)
                     if (name === "with")
                         name = "each"
-                    value = value + "★" + (param || "el")
+                    v = v + "★" + (param || "el")
+                    //console.log(value)
                     break
             }
         }
@@ -3189,7 +3433,8 @@ function fixTag(node, str) {
         if (props[dir]) {
             var expr = props[dir]
             delete props[dir]
-            //  node.outerHTML = node.toHTML()
+          
+          
             var component = new VComponent(dir, {
                 template: outerHTML,
                 expr: expr
