@@ -1,6 +1,6 @@
 function $watch(expr, funOrObj) {
-    var hive = (this.$events = this.$events || {})
-    var list = (hive[expr] = hive[expr] || [])
+    var hive = this.$events || (this.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {}

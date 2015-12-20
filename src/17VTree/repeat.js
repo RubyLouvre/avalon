@@ -21,7 +21,7 @@ avalon.components["ms-repeat"] = {
     },
     toDOM: function (virtual) {
         var type = virtual.__type__
-        virtual.__type__ = new Date - 0
+        virtual.__type__ = "1"
         var dom = virtual.toDOM()
         virtual.__type__ = type
 
@@ -34,7 +34,7 @@ avalon.components["ms-repeat"] = {
     },
     toHTML: function (virtual) {
         var type = virtual.__type__
-        virtual.__type__ = new Date - 0
+        virtual.__type__ = "1"
         var html = virtual.toHTML()
         virtual.__type__ = type
         var start = "<!--" + virtual.signature + "-start-->"
@@ -107,74 +107,70 @@ avalon.directive("repeat", {
 
         if (Array.isArray(value)) {
             var oldValue = binding.oldValue || []
-            var diff = new ArraySplice()
+            // var diff = new ArraySplice()
             var children = parent.children
-            var splices = diff.calculateSplices(value, oldValue)
-            var reuseComponents = []
+            var cache = {}
+            for (var i = 0; i <= last; i++) {
+                var vm = value[i]
+                if (Object(vm) === vm) {
+                    cache[vm.$id] = vm
+                } else {
+                    var id = avalon.type(vm) + "_" + vm
+                    if (cache[id]) {
+                        cache[id + "_"] = vm
+                    } else {
+                        cache[id] = vm
+                    }
 
+                }
+            }
+
+
+
+            // var splices = diff.calculateSplices(value, oldValue)
+            // var reuseComponents = []
+            console.log(splices)
             for (var i = 0, el; el = splices[i++]; ) {
                 var index = el.index
                 reuseComponents = children.splice(index, el.removed.length)
 
                 var args = value.slice(index, index + el.addedCount)
 
-                args = args.map(function (el, ii) {
+                args = args.map(function (el) {
+                  
+
                     var component = reuseComponents.shift()
                     if (component) {
                         component.updateProxy({
-                            vm: el,
-                            $index: index + ii,
-                            $last: last
+                            vm: el
                         })
                         return component
                     }
-                    component = new VComponent("repeatItem")
+                    component = new VComponent("repeatItem", {})
                     component.outerHTML = parent.props.template
                     component.itemName = binding.itemName
-                    component.construct({
-                        vm: el,
-                        $index: index + ii,
-                        $last: last
-                    })
+                    component.construct({vm: el})
                     return component
                 })
                 args.unshift(index, 0)
                 children.splice.apply(children, args)
             }
         }
+        children.forEach(function (el, index) {
+            var vm = el.props.vm
+            vm.$index = index
+            vm.$first = index === 0
+            vm.$last = index === last
+            if (el["new"]) {
+                updateVirtual(el.children, vm)
+                delete el["new"]
+            }
 
+        })
         binding.oldValue = value.concat()
         console.log(binding.oldValue)
         console.log(parent.toHTML())
-        //console.log(children)
-//        for (var i = 0; i < value.length; i++) {
-//            var heirloom = {}
-//            var curVm = value[i]
-//            var after = {
-//                $accessors: {
-//                    $first: makeObservable(0, heirloom),
-//                    $last: makeObservable(0, heirloom),
-//                    $index: makeObservable(0, heirloom),
-//                    el: makeObservable(0, heirloom)
-//                },
-//                $first: 1,
-//                $last: 1,
-//                $index: 1,
-//                el: 1,
-//                $remove: function () {
-//
-//                }
-//            }
-//            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
-//            proxy.$first = i === 0
-//            proxy.$last = i === last
-//            proxy.$index = i
-//            proxy.el = value[i]
-//            proxies.push(proxy)
-//            var node = createVirtual(binding.element.props.template, true)
-//            updateVirtual(node, proxy)
-//            binding.element.children[i] = new VComponent("repeatItem", {}, node)
-//        }
+
 //        var change = addHooks(binding.element, "changeHooks")
 //        change.repeat = this.update
     },
@@ -214,43 +210,33 @@ avalon.directive("repeat", {
 
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (options) {
-        var index = options.$index
-
-        var vm = createItem(options.vm, this.itemName)
-        this.$first = vm.$first = index === 0
-        this.$last = vm.$last = index === options.last
-        this.$index = vm.$index = index
+        var vm = createRepeatItem(options.vm, this.itemName)
         vm[this.itemName] = options.vm
-        this.vmodel = vm
+        this.props.vm = vm
         this.children = createVirtual(this.outerHTML, true)
-        updateVirtual(this.children, vm)
+        this["new"] = true
+        //  updateVirtual(this.children, vm)
         this.updateProxy = repeatItem.updateProxy
         return this
     },
     updateProxy: function (options) {
-        var vm = this.vmodel
+        var vm = this.props.vm
         vm[this.itemName] = options.vm
         for (var i in options.vm) {
             vm[i] = options.vm[i]
         }
 
-        var index = options.$index
-        //  var vm = createItem(options.vm, this.itemName)
-        this.$first = vm.$first = index === 0
-        this.$last = vm.$last = index === options.last
-        this.$index = vm.$index = index
 
-        //  updateVirtual(this.children, vm)
     }
 }
 
-function createItem(curVm, itemName) {
+function createRepeatItem(curVm, itemName) {
     var heirloom = {}
     var after = {
         $accessors: {
-            $first: makeObservable(0, heirloom),
-            $last: makeObservable(0, heirloom),
-            $index: makeObservable(0, heirloom)
+            $first: makeObservable("first", heirloom),
+            $last: makeObservable("$last", heirloom),
+            $index: makeObservable("$index", heirloom)
         },
         $first: 1,
         $last: 1,
@@ -260,11 +246,12 @@ function createItem(curVm, itemName) {
         }
     }
     after[itemName] = 1
-    after.$accessors[itemName] = makeObservable(0, heirloom)
-    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
-    heirloom.vm = proxy
+    after.$accessors[itemName] = makeObservable(itemName, heirloom)
+    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after, heirloom)
     return proxy
 }
+
+avalon.test.createRepeatItem = createRepeatItem
 
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 

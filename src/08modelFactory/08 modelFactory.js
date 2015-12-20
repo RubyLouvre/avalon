@@ -72,7 +72,7 @@ function observeArray(array, old, heirloom, options) {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
         }
-  
+
         array._.length = array.length
         array._.$watch("length", function (a, b) {
 
@@ -84,7 +84,7 @@ function observeArray(array, old, heirloom, options) {
             array.$model = toJson(array)
         }
         var arrayOptions = {
-            pathname: options.pathname + "*",
+            pathname:"", //options.pathname + ".*",
             watch: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -194,7 +194,11 @@ function observeObject(definition, heirloom, options) {
 function makeFire($vmodel, heirloom) {
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
-        return $watch.call($vmodel, expr, fn)
+        if (expr && fn) {
+            return $watch.call($vmodel, expr, fn)
+        } else {
+            throw "$watch方法参数不对"
+        }
     })
     hideProperty($vmodel, "$fire", function (expr, a, b) {
         if (expr.indexOf("all!") === 0) {
@@ -310,7 +314,7 @@ function makeObservable(pathname, heirloom) {
     }
 }
 
-function createProxy(before, after, h) {
+function createProxy(before, after, heirloom) {
     var b = before.$accessors
     var a = after.$accessors
     var $accessors = {}
@@ -348,13 +352,14 @@ function createProxy(before, after, h) {
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
-    makeFire($vmodel, h || {})
+    makeFire($vmodel, heirloom || {})
 
     $vmodel.$active = true
     return $vmodel
 }
-avalon._makeObservable = makeObservable
-avalon.createProxy = createProxy
+
+avalon.test.makeObservable = makeObservable
+avalon.test.createProxy = createProxy
 
 
 function toJson(val) {
