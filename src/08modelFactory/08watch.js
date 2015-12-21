@@ -14,8 +14,9 @@ function $watch(expr, funOrObj) {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-
+    
     var hive = topVm && topVm.$events
+    //console.log(path, hive,topVm)
     if (hive && hive[path]) {
         var list = hive[path]
         try {

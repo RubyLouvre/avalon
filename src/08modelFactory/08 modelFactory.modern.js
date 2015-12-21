@@ -11,7 +11,7 @@ avalon.define = function (definition) {
     var vmodel = observeObject(definition, {
         timestamp: new Date() - 0
     }, {
-        watch: true
+        top: true
     })
 
     avalon.vmodels[$id] = vmodel
@@ -54,7 +54,7 @@ function observeArray(array, old, heirloom, options) {
             length: NaN
         }, heirloom, {
             pathname: options.pathname + ".length",
-            watch: true
+            top: true
         })
         array._.length = array.length
         array._.$watch("length", function (a, b) {
@@ -65,7 +65,7 @@ function observeArray(array, old, heirloom, options) {
 
         var arrayOptions = {
             pathname: options.pathname + "*",
-            watch: true
+            top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
             array[j] = observe(array[j], 0, heirloom, arrayOptions)
@@ -157,23 +157,8 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
     //直接用Object.getOwnPropertyDescriptor获取它们
-    if (options.watch) {
-        hideProperty($vmodel, "$events", {})
-        hideProperty($vmodel, "$watch", $watch)
-        hideProperty($vmodel, "$fire", function (path, a, b) {
-            if (path.indexOf("all!") === 0) {
-                var p = path.slice(4)
-                for (var i in avalon.vmodels) {
-                    var v = avalon.vmodels[i]
-                    v.$fire && v.$fire(p, a, b)
-                }
-            } else {
-                if (heirloom.vm) {
-                    $emit(heirloom.vm, $vmodel, path, a, b)
-                }
-            }
-        })
-        heirloom.vm = heirloom.vm || $vmodel
+    if (options.top === true) {
+        makeFire($vmodel, heirloom)
     }
 
     for (name in $computed) {
@@ -280,9 +265,29 @@ function makeObservable(pathname, heirloom) {
     }
 }
 
-function createProxy(before, after) {
+function makeFire($vmodel, heirloom) {
+    hideProperty($vmodel, "$events", {})
+    hideProperty($vmodel, "$watch", $watch)
+    hideProperty($vmodel, "$fire", function (expr, a, b) {
+        if (expr.indexOf("all!") === 0) {
+            var p = expr.slice(4)
+            for (var i in avalon.vmodels) {
+                var v = avalon.vmodels[i]
+                v.$fire && v.$fire(p, a, b)
+            }
+        } else {
+            if (heirloom.vm) {
+                $emit(heirloom.vm, $vmodel, expr, a, b)
+            }
+        }
+    })
+    heirloom.vm = heirloom.vm || $vmodel
+}
+
+function createProxy(before, after, heirloom) {
     var accessors = {}
     var skip = {}
+    var hasOwn = {}
     //收集所有键值对及访问器属性
     for (var k in before) {
         var accessor = Object.getOwnPropertyDescriptor(before, k)
@@ -291,6 +296,7 @@ function createProxy(before, after) {
         } else {
             skip[k] = before[k]
         }
+        hasOwn = true
     }
     for (var k in after) {
         var accessor = Object.getOwnPropertyDescriptor(after, k)
@@ -299,12 +305,25 @@ function createProxy(before, after) {
         } else {
             skip[k] = after[k]
         }
+        hasOwn = true
     }
     var $vmodel = {}
     $vmodel = Object.defineProperties($vmodel, accessors)
     for (var k in skip) {
         $vmodel[k] = keys[k]
     }
+    for (k in $$skipArray) {
+        delete hasOwn[k]
+    }
+
+    function trackBy(name) {
+        return hasOwn[name] === true
+    }
+    hideProperty($vmodel, "$id", before.$id + "_")
+    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "$events", {})
+
+    makeFire($vmodel, heirloom || {})
     $vmodel.$active = true
     return $vmodel
 }

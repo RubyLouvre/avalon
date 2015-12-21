@@ -23,9 +23,9 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {
-        timestamp: new Date() - 0
+        __: "avalon.define"
     }, {
-        watch: true
+        top: true
     })
 
     avalon.vmodels[$id] = vmodel
@@ -60,14 +60,13 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-
         array._ = observeObject({
             length: NaN
         }, {}, {
             pathname: options.pathname + ".length",
-            watch: true
+            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-
+        
         array.notify = function () {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
@@ -85,7 +84,7 @@ function observeArray(array, old, heirloom, options) {
         }
         var arrayOptions = {
             pathname:"", //options.pathname + ".*",
-            watch: true
+            top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
             array[j] = observe(array[j], 0, {}, arrayOptions)
@@ -133,7 +132,6 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
-    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var hasOwn = {}    //用于实现hasOwnProperty方法
@@ -145,7 +143,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray, skipDollar)) {
+        if (!isObervable(key, val, $skipArray)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -175,12 +173,12 @@ function observeObject(definition, heirloom, options) {
         $vmodel[name] = definition[name]
     })
 
-    hideProperty($vmodel, "$id", "anonymous")
+    hideProperty($vmodel, "$id",  generateID("$"))
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
-    if (options.watch) {
-        makeFire($vmodel, heirloom)
+    if (options.top === true) {
+        makeFire($vmodel, heirloom, options)
     }
 
     for (name in $computed) {
@@ -272,8 +270,8 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObervable(key, value, skipArray, skipDollar) {
-    return (key.charAt(0) === "$" && !skipDollar[key]) ||
+function isObervable(key, value, skipArray) {
+    return key.charAt(0) === "$"  ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
@@ -349,10 +347,12 @@ function createProxy(before, after, heirloom) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
+    hideProperty($vmodel, "$id", before.$id+"_")
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
-    makeFire($vmodel, heirloom || {})
+  
+    makeFire($vmodel, heirloom || {}, {proxy: "proxy"})
 
     $vmodel.$active = true
     return $vmodel

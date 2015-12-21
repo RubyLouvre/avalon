@@ -82,8 +82,50 @@ function compareObject(a, b) {
         return false
     }
 }
+function isInCache(cache, vm) {
+    var isObject = Object(vm) === vm, a
+    if (isObject) {
+        a = cache[vm.$id]
+        if (a) {
+            delete cache[vm.$id]
+        }
+        return a
+    } else {
+        var id = avalon.type(vm) + "_" + vm
+        a = cache[id]
+        if (a !== void 0) {
+            while (1) {
+                id += "_"
+                if (cache[id] !== void 0) {
+                    cache[id.slice(0, -1)] = cache[id]
+                    delete cache[id]
+                } else {
+                    break
+                }
+            }
+        }
+        return a
+    }
+}
 
+function saveInCache(cache, vm, component) {
+    if (Object(vm) === vm) {
+        cache[vm.$id] = component
+    } else {
+        var type = avalon.type(vm)
 
+        var trackId = type + "_" + vm
+
+        while (1) {
+            if (cache[trackId] && !Object.is(cache[trackId], component)) {
+                trackId += "_"
+            } else {
+                cache[trackId] = component
+                break
+            }
+        }
+    }
+}
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
@@ -101,78 +143,66 @@ avalon.directive("repeat", {
             return compareObject(a, b)
         }
     },
+    /*
+     var cache = {
+     string_abc:  "abc",
+     string_abc_: "abc",
+     string_abc__:"abc"
+     }
+     */
     change: function (value, binding) {
-        var last = value.length - 1
+
         var parent = binding.element
-
-        if (Array.isArray(value)) {
-            var oldValue = binding.oldValue || []
-            // var diff = new ArraySplice()
-            var children = parent.children
-            var cache = {}
-            for (var i = 0; i <= last; i++) {
-                var vm = value[i]
-                if (Object(vm) === vm) {
-                    cache[vm.$id] = vm
-                } else {
-                    var id = avalon.type(vm) + "_" + vm
-                    if (cache[id]) {
-                        cache[id + "_"] = vm
-                    } else {
-                        cache[id] = vm
-                    }
-
+        var cache = binding.cache || {}
+        var newCache = {}
+        var children = []
+        var last = value.length - 1
+        //遍历监控数组的VM或简单数据类型
+        var needCombine = [], needMove = [], proxy
+        for (var i = 0; i <= last; i++) {
+            var vm = value[i]
+            var component = isInCache(cache, vm)
+           
+            if (component) {
+                proxy = component.props.vm
+                if (proxy.$index !== i) {
+                    needMove.push({
+                        form: proxy.$index,
+                        to: i
+                    })
                 }
+            } else {
+                component = new VComponent("repeatItem", {})
+                component.outerHTML = parent.props.template
+                component.itemName = binding.itemName
+                component.construct({vm: vm, top: binding.vmodel})
+                proxy = component.props.vm
             }
-
-
-
-            // var splices = diff.calculateSplices(value, oldValue)
-            // var reuseComponents = []
-            console.log(splices)
-            for (var i = 0, el; el = splices[i++]; ) {
-                var index = el.index
-                reuseComponents = children.splice(index, el.removed.length)
-
-                var args = value.slice(index, index + el.addedCount)
-
-                args = args.map(function (el) {
-                  
-
-                    var component = reuseComponents.shift()
-                    if (component) {
-                        component.updateProxy({
-                            vm: el
-                        })
-                        return component
-                    }
-                    component = new VComponent("repeatItem", {})
-                    component.outerHTML = parent.props.template
-                    component.itemName = binding.itemName
-                    component.construct({vm: el})
-                    return component
-                })
-                args.unshift(index, 0)
-                children.splice.apply(children, args)
+            proxy.$index = i
+            proxy.$first = i === 0
+            proxy.$last = i === last
+            if (component._new) {
+                updateVirtual(component.children, proxy)
+                delete component._new
+            }
+            saveInCache(newCache, vm, component)
+            children.push(component)
+        }
+        for (i in cache) {//剩下的都是要删除重复利用的
+            if (cache[i]) {
+                needCombine.push(cache[i])
+                delete cache[i]
             }
         }
-        children.forEach(function (el, index) {
-            var vm = el.props.vm
-            vm.$index = index
-            vm.$first = index === 0
-            vm.$last = index === last
-            if (el["new"]) {
-                updateVirtual(el.children, vm)
-                delete el["new"]
-            }
+        parent.children = children
+        binding.cache = newCache
 
-        })
         binding.oldValue = value.concat()
-        console.log(binding.oldValue)
+        console.log(binding)
         console.log(parent.toHTML())
 
-//        var change = addHooks(binding.element, "changeHooks")
-//        change.repeat = this.update
+        var change = addHooks(binding.element, "changeHooks")
+        change.repeat = this.update
     },
     update: function (elem, vnode) {
         var parent = elem.parentNode, next
@@ -210,12 +240,16 @@ avalon.directive("repeat", {
 
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (options) {
-        var vm = createRepeatItem(options.vm, this.itemName)
+        var top = options.top
+        if (options.vm && options.vm.$id) {
+            top = createProxy(top, options.vm)
+        }
+
+        var vm = createRepeatItem(top, this.itemName)
         vm[this.itemName] = options.vm
         this.props.vm = vm
         this.children = createVirtual(this.outerHTML, true)
-        this["new"] = true
-        //  updateVirtual(this.children, vm)
+        this._new = true
         this.updateProxy = repeatItem.updateProxy
         return this
     },

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.6 built in 2015.12.20
+ avalon.shim.js 1.6 built in 2015.12.21
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -144,6 +144,7 @@ avalon.nextTick = new function () {// jshint ignore:line
 avalon.init = function (el) {
     this[0] = this.element = el
 }
+avalon.test = {} //用于测试
 avalon.fn = avalon.prototype = avalon.init.prototype
 
 avalon.type = function (obj) { //取得目标的类型
@@ -432,7 +433,7 @@ avalon.mix({
         /*只有当前数组不存在此元素时只添加它*/
         ensure: function (target, item) {
             if (target.indexOf(item) === -1) {
-                return target.push(item)
+               return target.push(item)
             }
         },
         /*移除数组中指定位置的元素，返回布尔表示成功与否*/
@@ -963,9 +964,9 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {
-        timestamp: new Date() - 0
+        __: "avalon.define"
     }, {
-        watch: true
+        top: true
     })
 
     avalon.vmodels[$id] = vmodel
@@ -1000,19 +1001,18 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-
         array._ = observeObject({
             length: NaN
         }, {}, {
             pathname: options.pathname + ".length",
-            watch: true
+            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-
+        
         array.notify = function () {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
         }
-  
+
         array._.length = array.length
         array._.$watch("length", function (a, b) {
 
@@ -1024,8 +1024,8 @@ function observeArray(array, old, heirloom, options) {
             array.$model = toJson(array)
         }
         var arrayOptions = {
-            pathname: options.pathname + "*",
-            watch: true
+            pathname:"", //options.pathname + ".*",
+            top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
             array[j] = observe(array[j], 0, {}, arrayOptions)
@@ -1073,7 +1073,6 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
-    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var hasOwn = {}    //用于实现hasOwnProperty方法
@@ -1085,7 +1084,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray, skipDollar)) {
+        if (!isObervable(key, val, $skipArray)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -1115,12 +1114,12 @@ function observeObject(definition, heirloom, options) {
         $vmodel[name] = definition[name]
     })
 
-    hideProperty($vmodel, "$id", "anonymous")
+    hideProperty($vmodel, "$id",  generateID("$"))
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
-    if (options.watch) {
-        makeFire($vmodel, heirloom)
+    if (options.top === true) {
+        makeFire($vmodel, heirloom, options)
     }
 
     for (name in $computed) {
@@ -1134,7 +1133,11 @@ function observeObject(definition, heirloom, options) {
 function makeFire($vmodel, heirloom) {
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
-        return $watch.call($vmodel, expr, fn)
+        if (expr && fn) {
+            return $watch.call($vmodel, expr, fn)
+        } else {
+            throw "$watch方法参数不对"
+        }
     })
     hideProperty($vmodel, "$fire", function (expr, a, b) {
         if (expr.indexOf("all!") === 0) {
@@ -1208,8 +1211,8 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObervable(key, value, skipArray, skipDollar) {
-    return (key.charAt(0) === "$" && !skipDollar[key]) ||
+function isObervable(key, value, skipArray) {
+    return key.charAt(0) === "$"  ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
@@ -1250,7 +1253,7 @@ function makeObservable(pathname, heirloom) {
     }
 }
 
-function createProxy(before, after, h) {
+function createProxy(before, after, heirloom) {
     var b = before.$accessors
     var a = after.$accessors
     var $accessors = {}
@@ -1285,16 +1288,19 @@ function createProxy(before, after, h) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
+    hideProperty($vmodel, "$id", before.$id+"_")
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
-    makeFire($vmodel, h || {})
+  
+    makeFire($vmodel, heirloom || {}, {proxy: "proxy"})
 
     $vmodel.$active = true
     return $vmodel
 }
-avalon._makeObservable = makeObservable
-avalon.createProxy = createProxy
+
+avalon.test.makeObservable = makeObservable
+avalon.test.createProxy = createProxy
 
 
 function toJson(val) {
@@ -1449,8 +1455,8 @@ if (!canHideOwn) {
 }
 
 function $watch(expr, funOrObj) {
-    var hive = (this.$events = this.$events || {})
-    var list = (hive[expr] = hive[expr] || [])
+    var hive = this.$events || (this.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {}
@@ -1464,8 +1470,9 @@ function $watch(expr, funOrObj) {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-
+    
     var hive = topVm && topVm.$events
+    //console.log(path, hive,topVm)
     if (hive && hive[path]) {
         var list = hive[path]
         try {
@@ -3095,176 +3102,29 @@ VText.prototype = {
         return this.nodeValue
     }
 }
-function newSplice(index, removed, addedCount) {
-    return {
-        index: index,
-        removed: removed,
-        addedCount: addedCount
+if (!Object.is) {
+
+    function SameValue(a, b) {
+        if (a === b) {
+            // 0 === -0, but they are not identical.
+            if (a === 0) {
+                return 1 / a === 1 / b
+            }
+            return true
+        }
+        return numberIsNaN(a) && numberIsNaN(b)
     }
-}
-var EDIT_LEAVE = 0
-var EDIT_UPDATE = 1
-var EDIT_ADD = 2
-var EDIT_DELETE = 3
-function ArraySplice() {
-}
-ArraySplice.prototype = {
-    calcEditDistances: function (current, currentStart, currentEnd, old, oldStart, oldEnd) {
-        var rowCount = oldEnd - oldStart + 1
-        var columnCount = currentEnd - currentStart + 1
-        var distances = new Array(rowCount)
-        for (var i = 0; i < rowCount; i++) {
-            distances[i] = new Array(columnCount)
-            distances[i][0] = i
-        }
-        for (var j = 0; j < columnCount; j++)
-            distances[0][j] = j
-        for ( i = 1; i < rowCount; i++) {
-            for (j = 1; j < columnCount; j++) {
-                if (this.equals(current[currentStart + j - 1], old[oldStart + i - 1]))
-                    distances[i][j] = distances[i - 1][j - 1]
-                else {
-                    var north = distances[i - 1][j] + 1
-                    var west = distances[i][j - 1] + 1
-                    distances[i][j] = north < west ? north : west
-                }
-            }
-        }
-        return distances
-    },
-    spliceOperationsFromEditDistances: function (distances) {
-        var i = distances.length - 1
-        var j = distances[0].length - 1
-        var current = distances[i][j]
-        var edits = [];
-        while (i > 0 || j > 0) {
-            if (i === 0) {
-                edits.push(EDIT_ADD)
-                j--
-                continue;
-            }
-            if (j === 0) {
-                edits.push(EDIT_DELETE);
-                i--
-                continue
-            }
-            var northWest = distances[i - 1][j - 1];
-            var west = distances[i - 1][j];
-            var north = distances[i][j - 1];
-            var min;
-            if (west < north)
-                min = west < northWest ? west : northWest;
-            else
-                min = north < northWest ? north : northWest;
-            if (min === northWest) {
-                if (northWest === current) {
-                    edits.push(EDIT_LEAVE);
-                } else {
-                    edits.push(EDIT_UPDATE);
-                    current = northWest;
-                }
-                i--;
-                j--;
-            } else if (min === west) {
-                edits.push(EDIT_DELETE);
-                i--;
-                current = west;
-            } else {
-                edits.push(EDIT_ADD);
-                j--;
-                current = north;
-            }
-        }
-        edits.reverse();
-        return edits;
-    },
-    calcSplices: function (current, currentStart, currentEnd, old, oldStart, oldEnd) {
-        var prefixCount = 0;
-        var suffixCount = 0;
-        var minLength = Math.min(currentEnd - currentStart, oldEnd - oldStart);
-        if (currentStart === 0 && oldStart === 0)
-            prefixCount = this.sharedPrefix(current, old, minLength);
-        if (currentEnd === current.length && oldEnd === old.length)
-            suffixCount = this.sharedSuffix(current, old, minLength - prefixCount);
-        currentStart += prefixCount;
-        oldStart += prefixCount;
-        currentEnd -= suffixCount;
-        oldEnd -= suffixCount;
-        if (currentEnd - currentStart === 0 && oldEnd - oldStart === 0)
-            return [];
-        if (currentStart === currentEnd) {
-            var splice = newSplice(currentStart, [], 0);
-            while (oldStart < oldEnd)
-                splice.removed.push(old[oldStart++]);
-            return [splice];
-        } else if (oldStart === oldEnd)
-            return [newSplice(currentStart, [], currentEnd - currentStart)];
-        var ops = this.spliceOperationsFromEditDistances(this.calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd));
-        splice = undefined;
-        var splices = [];
-        var index = currentStart;
-        var oldIndex = oldStart;
-        for (var i = 0; i < ops.length; i++) {
-            switch (ops[i]) {
-                case EDIT_LEAVE:
-                    if (splice) {
-                        splices.push(splice);
-                        splice = undefined;
-                    }
-                    index++;
-                    oldIndex++;
-                    break;
 
-                case EDIT_UPDATE:
-                    if (!splice)
-                        splice = newSplice(index, [], 0);
-                    splice.addedCount++;
-                    index++;
-                    splice.removed.push(old[oldIndex]);
-                    oldIndex++;
-                    break;
-
-                case EDIT_ADD:
-                    if (!splice)
-                        splice = newSplice(index, [], 0);
-                    splice.addedCount++;
-                    index++;
-                    break;
-
-                case EDIT_DELETE:
-                    if (!splice)
-                        splice = newSplice(index, [], 0);
-                    splice.removed.push(old[oldIndex]);
-                    oldIndex++;
-                    break;
-            }
-        }
-        if (splice) {
-            splices.push(splice);
-        }
-        return splices;
-    },
-    sharedPrefix: function (current, old, searchLength) {
-        for (var i = 0; i < searchLength; i++)
-            if (!this.equals(current[i], old[i]))
-                return i;
-        return searchLength;
-    },
-    sharedSuffix: function (current, old, searchLength) {
-        var index1 = current.length;
-        var index2 = old.length;
-        var count = 0;
-        while (count < searchLength && this.equals(current[--index1], old[--index2]))
-            count++;
-        return count;
-    },
-    calculateSplices: function (current, previous) {
-        return this.calcSplices(current, 0, current.length, previous, 0, previous.length);
-    },
-    equals: function (currentValue, previousValue) {
-        return currentValue === previousValue;
+    var numberIsNaN = Number.isNaN || function isNaN(value) {
+        // NaN !== NaN, but they are identical.
+        // NaNs are the only non-reflexive value, i.e., if x !== x,
+        // then x is NaN.
+        // isNaN is broken: it converts its argument to number, so
+        // isNaN('foo') => true
+        return value !== value;
     }
-};
+    Object.is = SameValue
+}
 avalon.components["ms-repeat"] = {
     construct: function (parent) {
 
@@ -3288,7 +3148,7 @@ avalon.components["ms-repeat"] = {
     },
     toDOM: function (virtual) {
         var type = virtual.__type__
-        virtual.__type__ = new Date - 0
+        virtual.__type__ = "1"
         var dom = virtual.toDOM()
         virtual.__type__ = type
 
@@ -3301,7 +3161,7 @@ avalon.components["ms-repeat"] = {
     },
     toHTML: function (virtual) {
         var type = virtual.__type__
-        virtual.__type__ = new Date - 0
+        virtual.__type__ = "1"
         var html = virtual.toHTML()
         virtual.__type__ = type
         var start = "<!--" + virtual.signature + "-start-->"
@@ -3349,8 +3209,50 @@ function compareObject(a, b) {
         return false
     }
 }
+function isInCache(cache, vm) {
+    var isObject = Object(vm) === vm, a
+    if (isObject) {
+        a = cache[vm.$id]
+        if (a) {
+            delete cache[vm.$id]
+        }
+        return a
+    } else {
+        var id = avalon.type(vm) + "_" + vm
+        a = cache[id]
+        if (a !== void 0) {
+            while (1) {
+                id += "_"
+                if (cache[id] !== void 0) {
+                    cache[id.slice(0, -1)] = cache[id]
+                    delete cache[id]
+                } else {
+                    break
+                }
+            }
+        }
+        return a
+    }
+}
 
+function saveInCache(cache, vm, component) {
+    if (Object(vm) === vm) {
+        cache[vm.$id] = component
+    } else {
+        var type = avalon.type(vm)
 
+        var trackId = type + "_" + vm
+
+        while (1) {
+            if (cache[trackId] && !Object.is(cache[trackId], component)) {
+                trackId += "_"
+            } else {
+                cache[trackId] = component
+                break
+            }
+        }
+    }
+}
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
@@ -3368,82 +3270,66 @@ avalon.directive("repeat", {
             return compareObject(a, b)
         }
     },
+    /*
+     var cache = {
+     string_abc:  "abc",
+     string_abc_: "abc",
+     string_abc__:"abc"
+     }
+     */
     change: function (value, binding) {
-        var last = value.length - 1
+
         var parent = binding.element
-
-        if (Array.isArray(value)) {
-            var oldValue = binding.oldValue || []
-            var diff = new ArraySplice()
-            var children = parent.children
-            var splices = diff.calculateSplices(value, oldValue)
-            var reuseComponents = []
-
-            for (var i = 0, el; el = splices[i++]; ) {
-                var index = el.index
-                reuseComponents = children.splice(index, el.removed.length)
-
-                var args = value.slice(index, index + el.addedCount)
-
-                args = args.map(function (el, ii) {
-                    var component = reuseComponents.shift()
-                    if (component) {
-                        component.updateProxy({
-                            vm: el,
-                            $index: index + ii,
-                            $last: last
-                        })
-                        return component
-                    }
-                    component = new VComponent("repeatItem")
-                    component.outerHTML = parent.props.template
-                    component.itemName = binding.itemName
-                    component.construct({
-                        vm: el,
-                        $index: index + ii,
-                        $last: last
+        var cache = binding.cache || {}
+        var newCache = {}
+        var children = []
+        var last = value.length - 1
+        //遍历监控数组的VM或简单数据类型
+        var needCombine = [], needMove = [], proxy
+        for (var i = 0; i <= last; i++) {
+            var vm = value[i]
+            var component = isInCache(cache, vm)
+           
+            if (component) {
+                proxy = component.props.vm
+                if (proxy.$index !== i) {
+                    needMove.push({
+                        form: proxy.$index,
+                        to: i
                     })
-                    return component
-                })
-                args.unshift(index, 0)
-                children.splice.apply(children, args)
+                }
+            } else {
+                component = new VComponent("repeatItem", {})
+                component.outerHTML = parent.props.template
+                component.itemName = binding.itemName
+                component.construct({vm: vm, top: binding.vmodel})
+                proxy = component.props.vm
+            }
+            proxy.$index = i
+            proxy.$first = i === 0
+            proxy.$last = i === last
+            if (component._new) {
+                updateVirtual(component.children, proxy)
+                delete component._new
+            }
+            saveInCache(newCache, vm, component)
+            children.push(component)
+        }
+        for (i in cache) {//剩下的都是要删除重复利用的
+            if (cache[i]) {
+                needCombine.push(cache[i])
+                delete cache[i]
             }
         }
+        parent.children = children
+        binding.cache = newCache
 
         binding.oldValue = value.concat()
-        console.log(binding.oldValue)
+        console.log(binding)
         console.log(parent.toHTML())
-        //console.log(children)
-//        for (var i = 0; i < value.length; i++) {
-//            var heirloom = {}
-//            var curVm = value[i]
-//            var after = {
-//                $accessors: {
-//                    $first: makeObservable(0, heirloom),
-//                    $last: makeObservable(0, heirloom),
-//                    $index: makeObservable(0, heirloom),
-//                    el: makeObservable(0, heirloom)
-//                },
-//                $first: 1,
-//                $last: 1,
-//                $index: 1,
-//                el: 1,
-//                $remove: function () {
-//
-//                }
-//            }
-//            var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
-//            proxy.$first = i === 0
-//            proxy.$last = i === last
-//            proxy.$index = i
-//            proxy.el = value[i]
-//            proxies.push(proxy)
-//            var node = createVirtual(binding.element.props.template, true)
-//            updateVirtual(node, proxy)
-//            binding.element.children[i] = new VComponent("repeatItem", {}, node)
-//        }
-//        var change = addHooks(binding.element, "changeHooks")
-//        change.repeat = this.update
+
+        var change = addHooks(binding.element, "changeHooks")
+        change.repeat = this.update
     },
     update: function (elem, vnode) {
         var parent = elem.parentNode, next
@@ -3481,43 +3367,37 @@ avalon.directive("repeat", {
 
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (options) {
-        var index = options.$index
+        var top = options.top
+        if (options.vm && options.vm.$id) {
+            top = createProxy(top, options.vm)
+        }
 
-        var vm = createItem(options.vm, this.itemName)
-        this.$first = vm.$first = index === 0
-        this.$last = vm.$last = index === options.last
-        this.$index = vm.$index = index
+        var vm = createRepeatItem(top, this.itemName)
         vm[this.itemName] = options.vm
-        this.vmodel = vm
+        this.props.vm = vm
         this.children = createVirtual(this.outerHTML, true)
-        updateVirtual(this.children, vm)
+        this._new = true
         this.updateProxy = repeatItem.updateProxy
         return this
     },
     updateProxy: function (options) {
-        var vm = this.vmodel
+        var vm = this.props.vm
         vm[this.itemName] = options.vm
         for (var i in options.vm) {
             vm[i] = options.vm[i]
         }
 
-        var index = options.$index
-        //  var vm = createItem(options.vm, this.itemName)
-        this.$first = vm.$first = index === 0
-        this.$last = vm.$last = index === options.last
-        this.$index = vm.$index = index
 
-        //  updateVirtual(this.children, vm)
     }
 }
 
-function createItem(curVm, itemName) {
+function createRepeatItem(curVm, itemName) {
     var heirloom = {}
     var after = {
         $accessors: {
-            $first: makeObservable(0, heirloom),
-            $last: makeObservable(0, heirloom),
-            $index: makeObservable(0, heirloom)
+            $first: makeObservable("first", heirloom),
+            $last: makeObservable("$last", heirloom),
+            $index: makeObservable("$index", heirloom)
         },
         $first: 1,
         $last: 1,
@@ -3527,11 +3407,12 @@ function createItem(curVm, itemName) {
         }
     }
     after[itemName] = 1
-    after.$accessors[itemName] = makeObservable(0, heirloom)
-    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after)
-    heirloom.vm = proxy
+    after.$accessors[itemName] = makeObservable(itemName, heirloom)
+    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after, heirloom)
     return proxy
 }
+
+avalon.test.createRepeatItem = createRepeatItem
 
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
@@ -3570,11 +3451,14 @@ avalon.injectBinding = function (binding) {
             hasError = true
             avalon.log(e)
         }
+
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
        
         if (!is(value, binding.oldValue)) {
+
             dir.change(value, binding)
+
             if (binding.oneTime && !hasError) {
                 dir.change = noop
                 setTimeout(function () {
@@ -5390,430 +5274,6 @@ var onDir = avalon.directive("on", {
         }
     }
 })
-/*
-avalon.directive("repeat", {
-    priority: 90,
-    init: function (binding) {
-        var type = binding.type
-        binding.cache = {} //用于存放代理VM
-        binding.enterCount = 0
-
-        var elem = binding.element
-        if (elem.nodeType === 1) {
-            elem.removeAttribute(binding.name)
-            effectBinding(elem, binding)
-            binding.param = binding.param || "el"
-            binding.sortedCallback = getBindingCallback(elem, "data-with-sorted", binding.vmodels)
-            var rendered = getBindingCallback(elem, "data-" + type + "-rendered", binding.vmodels)
-
-            var signature = generateID(type)
-            var start = DOC.createComment(signature + ":start")
-            var end = binding.element = DOC.createComment(signature + ":end")
-            binding.signature = signature
-            binding.start = start
-            binding.template = avalonFragment.cloneNode(false)
-            if (type === "repeat") {
-                var parent = elem.parentNode
-                parent.replaceChild(end, elem)
-                parent.insertBefore(start, end)
-                binding.template.appendChild(elem)
-            } else {
-                while (elem.firstChild) {
-                    binding.template.appendChild(elem.firstChild)
-                }
-                elem.appendChild(start)
-                elem.appendChild(end)
-                parent = elem
-            }
-            binding.element = end
-
-            if (rendered) {
-                var removeFn = avalon.bind(parent, "datasetchanged", function () {
-                    rendered.apply(parent, parent.args)
-                    avalon.unbind(parent, "datasetchanged", removeFn)
-                    parent.msRendered = rendered
-                })
-            }
-        }
-    },
-    update: function (value, oldValue) {
-        var binding = this
-        var xtype = this.xtype
-
-        this.enterCount += 1
-        var init = !oldValue
-        if (init) {
-            binding.$outer = {}
-            var check0 = "$key"
-            var check1 = "$val"
-            if (xtype === "array") {
-                check0 = "$first"
-                check1 = "$last"
-            }
-            for (var i = 0, v; v = binding.vmodels[i++]; ) {
-                if (v.hasOwnProperty(check0) && v.hasOwnProperty(check1)) {
-                    binding.$outer = v
-                    break
-                }
-            }
-        }
-        var track = this.track
-        if (binding.sortedCallback) { //如果有回调，则让它们排序
-            var keys2 = binding.sortedCallback.call(parent, track)
-            if (keys2 && Array.isArray(keys2)) {
-                track = keys2
-            }
-        }
-
-        var action = "move"
-        binding.$repeat = value
-        var fragments = []
-        var transation = init && avalonFragment.cloneNode(false)
-        var proxies = []
-        var param = this.param
-        var retain = avalon.mix({}, this.cache)
-        var elem = this.element
-        var length = track.length
-
-        var parent = elem.parentNode
-        for (i = 0; i < length; i++) {
-
-            var keyOrId = track[i] //array为随机数, object 为keyName
-            var proxy = retain[keyOrId]
-            if (!proxy) {
-                
-                proxy = getProxyVM(this)
-                proxy.$up = null
-                if (xtype === "array") {
-                    action = "add"
-                    proxy.$id = keyOrId
-                    var valueItem = value[i]
-                    proxy[param] = valueItem //index
-                    if(Object(valueItem) === valueItem){
-                        valueItem.$ups = valueItem.$ups || {}
-                        valueItem.$ups[param] = proxy
-                    }
-
-                } else {
-                    action = "append"
-                    proxy.$key = keyOrId
-                    proxy.$val = value[keyOrId] //key
-                }
-                this.cache[keyOrId] = proxy
-                var node = proxy.$anchor || (proxy.$anchor = elem.cloneNode(false))
-                node.nodeValue = this.signature
-                shimController(binding, transation, proxy, fragments, init && !binding.effectDriver)
-                decorateProxy(proxy, binding, xtype)
-            } else {
-//                if (xtype === "array") {
-//                    proxy[param] = value[i]
-//                }
-                fragments.push({})
-                retain[keyOrId] = true
-            }
-
-            //重写proxy
-            if (this.enterCount === 1) {//防止多次进入,导致位置不对
-                proxy.$active = false
-                proxy.$oldIndex = proxy.$index
-                proxy.$active = true
-                proxy.$index = i
-
-            }
-
-            if (xtype === "array") {
-                proxy.$first = i === 0
-                proxy.$last = i === length - 1
-                // proxy[param] = value[i]
-            } else {
-                proxy.$val = toJson(value[keyOrId]) //这里是处理vm.object = newObject的情况 
-            }
-            proxies.push(proxy)
-        }
-        this.proxies = proxies
-        if (init && !binding.effectDriver) {
-            parent.insertBefore(transation, elem)
-            fragments.forEach(function (fragment) {
-                scanNodeArray(fragment.nodes || [], fragment.vmodels)
-                //if(fragment.vmodels.length > 2)
-                fragment.nodes = fragment.vmodels = null
-            })// jshint ignore:line
-        } else {
-
-            var staggerIndex = binding.staggerIndex = 0
-            for (keyOrId in retain) {
-                if (retain[keyOrId] !== true) {
-
-                    action = "del"
-                    removeItem(retain[keyOrId].$anchor, binding)
-                    // avalon.log("删除", keyOrId)
-                    // 相当于delete binding.cache[key]
-                    proxyRecycler(this.cache, keyOrId, param)
-                    retain[keyOrId] = null
-                }
-            }
-
-            //  console.log(effectEnterStagger)
-            for (i = 0; i < length; i++) {
-                proxy = proxies[i]
-                keyOrId = xtype === "array" ? proxy.$id : proxy.$key
-                var pre = proxies[i - 1]
-                var preEl = pre ? pre.$anchor : binding.start
-                if (!retain[keyOrId]) {//如果还没有插入到DOM树
-                    (function (fragment, preElement) {
-                        var nodes = fragment.nodes
-                        var vmodels = fragment.vmodels
-                        if (nodes) {
-                            staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
-                                parent.insertBefore(fragment.content, preElement.nextSibling)
-                                scanNodeArray(nodes, vmodels)
-                                animateRepeat(nodes, 1, binding)
-                            }, staggerIndex)
-                        }
-                        fragment.nodes = fragment.vmodels = null
-                    })(fragments[i], preEl)// jshint ignore:line
-                    // avalon.log("插入")
-
-                } else if (proxy.$index !== proxy.$oldIndex) {
-                    (function (proxy2, preElement) {
-                        staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
-                            var curNode = removeItem(proxy2.$anchor)//如果位置被挪动了
-                            var inserted = avalon.slice(curNode.childNodes)
-                            parent.insertBefore(curNode, preElement.nextSibling)
-                            animateRepeat(inserted, 1, binding)
-                        }, staggerIndex)
-                    })(proxy, preEl)// jshint ignore:line
-
-                    // avalon.log("移动", proxy.$oldIndex, "-->", proxy.$index)
-                }
-            }
-
-        }
-        if (!value.$track) {//如果是非监控对象,那么就将其$events清空,阻止其持续监听
-            for (keyOrId in this.cache) {
-                proxyRecycler(this.cache, keyOrId, param)
-            }
-
-        }
-
-        //repeat --> duplex
-        (function (args) {
-            parent.args = args
-            if (parent.msRendered) {//第一次事件触发,以后直接调用
-                parent.msRendered.apply(parent, args)
-            }
-        })(kernel.newWatch ? arguments : [action]);
-        var id = setTimeout(function () {
-            clearTimeout(id)
-            //触发上层的select回调及自己的rendered回调
-            avalon.fireDom(parent, "datasetchanged", {
-                bubble: parent.msHasEvent
-            })
-        })
-        this.enterCount -= 1
-
-    }
-
-})
-
-"with,each".replace(rword, function (name) {
-    directives[name] = avalon.mix({}, directives.repeat, {
-        priority: 1400
-    })
-})
-
-
-function animateRepeat(nodes, isEnter, binding) {
-    for (var i = 0, node; node = nodes[i++]; ) {
-        if (node.className === binding.effectClass) {
-            avalon.effect.apply(node, isEnter, noop, noop, binding)
-        }
-    }
-}
-
-function mayStaggerAnimate(staggerTime, callback, index) {
-    if (staggerTime) {
-        setTimeout(callback, (++index) * staggerTime)
-    } else {
-        callback()
-    }
-    return index
-}
-
-
-function removeItem(node, binding) {
-    var fragment = avalonFragment.cloneNode(false)
-    var last = node
-    var breakText = last.nodeValue
-    var staggerIndex = binding && Math.max(+binding.staggerIndex, 0)
-    var nodes = avalon.slice(last.parentNode.childNodes)
-    var index = nodes.indexOf(last)
-    while (true) {
-        var pre = nodes[--index] //node.previousSibling
-        if (!pre || String(pre.nodeValue).indexOf(breakText) === 0) {
-            break
-        }
-
-        if (binding && (pre.className === binding.effectClass)) {
-            node = pre;
-            (function (cur) {
-                binding.staggerIndex = mayStaggerAnimate(binding.effectLeaveStagger, function () {
-                    avalon.effect.apply(cur, 0, noop, function () {
-                        fragment.appendChild(cur)
-                    }, binding)
-                }, staggerIndex)
-            })(pre);// jshint ignore:line
-        } else {
-            fragment.insertBefore(pre, fragment.firstChild)
-        }
-    }
-    fragment.appendChild(last)
-    return fragment
-}
-
-
-function shimController(data, transation, proxy, fragments, init) {
-    var content = data.template.cloneNode(true)
-    var nodes = avalon.slice(content.childNodes)
-    content.appendChild(proxy.$anchor)
-    init && transation.appendChild(content)
-    var nv = [proxy].concat(data.vmodels)
-    var fragment = {
-        nodes: nodes,
-        vmodels: nv,
-        content: content
-    }
-    fragments.push(fragment)
-}
-// {}  -->  {xx: 0, yy: 1, zz: 2} add
-// {xx: 0, yy: 1, zz: 2}  -->  {xx: 0, yy: 1, zz: 2, uu: 3}
-// [xx: 0, yy: 1, zz: 2}  -->  {xx: 0, zz: 1, yy: 2}
-
-function getProxyVM(binding) {
-    var agent = binding.xtype === "object" ? withProxyAgent : eachProxyAgent
-    var proxy = agent(binding)
-    var node = proxy.$anchor || (proxy.$anchor = binding.element.cloneNode(false))
-    node.nodeValue = binding.signature
-    proxy.$outer = binding.$outer
-    return proxy
-}
-
-var eachProxyPool = []
-
-function eachProxyAgent(data, proxy) {
-    var itemName = data.param || "el"
-    for (var i = 0, n = eachProxyPool.length; i < n; i++) {
-        var candidate = eachProxyPool[i]
-        if (candidate && candidate.hasOwnProperty(itemName)) {
-            eachProxyPool.splice(i, 1)
-            proxy = candidate
-            break
-        }
-    }
-    if (!proxy) {
-        proxy = eachProxyFactory(itemName)
-    }
-    return proxy
-}
-
-function eachProxyFactory(itemName) {
-    var source = {
-        $outer: {},
-        $index: 0,
-        $oldIndex: 0,
-        $anchor: null,
-        //-----
-        $first: false,
-        $last: false,
-        $remove: avalon.noop
-    }
-    source[itemName] = NaN
-
-    var force = {
-        $last: 1,
-        $first: 1,
-        $index: 1
-    }
-    force[itemName] = 1
-    var proxy = modelFactory(source, {
-        force: force
-    })
-    proxy.$id = generateID("$proxy$each")
-    return proxy
-}
-
-function decorateProxy(proxy, binding, type) {
-    if (type === "array") {
-        proxy.$remove = function () {
-
-            binding.$repeat.removeAt(proxy.$index)
-        }
-        var param = binding.param
-
-
-        proxy.$watch(param, function (a) {
-            var index = proxy.$index
-            binding.$repeat[index] = a
-        })
-    } else {
-        proxy.$watch("$val", function fn(a) {
-            binding.$repeat[proxy.$key] = a
-        })
-    }
-}
-
-var withProxyPool = []
-
-function withProxyAgent() {
-    return withProxyPool.pop() || withProxyFactory()
-}
-
-function withProxyFactory() {
-    var proxy = modelFactory({
-        $key: "",
-        $val: NaN,
-        $index: 0,
-        $oldIndex: 0,
-        $outer: {},
-        $anchor: null
-    }, {
-        force: {
-            $key: 1,
-            $val: 1,
-            $index: 1
-        }
-    })
-    proxy.$id = generateID("$proxy$with")
-    return proxy
-}
-
-
-function proxyRecycler(cache, key, param) {
-    var proxy = cache[key]
-    if (proxy) {
-        var proxyPool = proxy.$id.indexOf("$proxy$each") === 0 ? eachProxyPool : withProxyPool
-        proxy.$outer = {}
-
-        for (var i in proxy.$events) {
-            var a = proxy.$events[i]
-            if (Array.isArray(a)) {
-                a.length = 0
-                if (i === param) {
-                    proxy[param] = NaN
-
-                } else if (i === "$val") {
-                    proxy.$val = NaN
-                }
-            }
-        }
-
-        if (proxyPool.unshift(proxy) > kernel.maxRepeatSize) {
-            proxyPool.pop()
-        }
-        delete cache[key]
-    }
-}
-*/
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
