@@ -1263,12 +1263,6 @@ var dependencyDetection = (function () {
 //将绑定对象注入到其依赖项的订阅数组中
 var roneval = /^on$/
 
-function returnRandom() {
-    return new Date() - 0
-}
-
-
-
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组
 function injectDependency(list, binding) {
     if (binding.oneTime)
@@ -1279,14 +1273,6 @@ function injectDependency(list, binding) {
             rejectDisposeQueue()
         }
     }
-}
-
-function getProxyIds(a, isArray) {
-    var ret = []
-    for (var i = 0, el; el = a[i++]; ) {
-        ret.push(isArray ? el.$id : el.$key)
-    }
-    return ret.join(";")
 }
 
 /*********************************************************************
