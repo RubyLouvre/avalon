@@ -16,6 +16,7 @@ function updateEntity(nodes, vnodes) {
                 break
             case "#component":
                 var hooks = vnode.changeHooks
+                //一个LI元素 遇上repeat组件
                 if (hooks) {
                     try {
                         for (var hook in hooks) {

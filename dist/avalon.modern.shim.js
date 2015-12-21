@@ -2426,8 +2426,8 @@ avalon.components["ms-repeat"] = {
         var dom = virtual.toDOM()
         virtual.__type__ = type
 
-        var start = document.createComment(virtual.signature + "-start")
-        var end = document.createComment(virtual.signature + "-end")
+        var start = document.createComment(virtual.signature + ":start")
+        var end = document.createComment(virtual.signature + ":end")
 
         dom.insertBefore(start, dom.firstChild)
         dom.appendChild(end)
@@ -2438,8 +2438,8 @@ avalon.components["ms-repeat"] = {
         virtual.__type__ = "1"
         var html = virtual.toHTML()
         virtual.__type__ = type
-        var start = "<!--" + virtual.signature + "-start-->"
-        var end = "<!--" + virtual.signature + "-end-->"
+        var start = "<!--" + virtual.signature + ":start-->"
+        var end = "<!--" + virtual.signature + ":end-->"
         return start + html + end
     },
     init: Ifcom.init
@@ -2484,28 +2484,34 @@ function compareObject(a, b) {
     }
 }
 function isInCache(cache, vm) {
-    var isObject = Object(vm) === vm, a
+    var isObject = Object(vm) === vm, c
     if (isObject) {
-        a = cache[vm.$id]
-        if (a) {
+        c = cache[vm.$id]
+        if (c) {
             delete cache[vm.$id]
         }
-        return a
+        return c
     } else {
         var id = avalon.type(vm) + "_" + vm
-        a = cache[id]
-        if (a !== void 0) {
+        c = cache[id]
+        if (c) {
+            var stack = [{id: id, c: c}]
             while (1) {
                 id += "_"
-                if (cache[id] !== void 0) {
-                    cache[id.slice(0, -1)] = cache[id]
-                    delete cache[id]
+                if (cache[id]) {
+                    stack.push({
+                        id: id,
+                        c: cache[id]
+                    })
                 } else {
                     break
                 }
             }
+            var a = stack.pop()
+            delete cache[a.id]
+            return a.c
         }
-        return a
+        return c
     }
 }
 
@@ -2514,15 +2520,16 @@ function saveInCache(cache, vm, component) {
         cache[vm.$id] = component
     } else {
         var type = avalon.type(vm)
-
         var trackId = type + "_" + vm
-
-        while (1) {
-            if (cache[trackId] && !Object.is(cache[trackId], component)) {
+        if (!cache[trackId]) {
+            cache[trackId] = component
+        } else {
+            while (1) {
                 trackId += "_"
-            } else {
-                cache[trackId] = component
-                break
+                if (!cache[trackId]) {
+                    cache[trackId] = component
+                    break
+                }
             }
         }
     }
@@ -2559,19 +2566,30 @@ avalon.directive("repeat", {
         var children = []
         var last = value.length - 1
         //遍历监控数组的VM或简单数据类型
-        var needCombine = [], needMove = [], proxy
+        var needDispose = [], proxy
+        var command = {}
+        //键名为它过去的位置
+        //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
         for (var i = 0; i <= last; i++) {
             var vm = value[i]
             var component = isInCache(cache, vm)
 
             if (component) {
+                console.log(component.index, vm)
                 proxy = component.props.vm
+                if (proxy.$index !== i) {
+                    command[proxy.$index] = i
+                } else {
+                    command[proxy.$index] = -3
+                }
             } else {
                 component = new VComponent("repeatItem", {})
                 component.outerHTML = parent.props.template
                 component.itemName = binding.itemName
                 component.construct({vm: vm, top: binding.vmodel})
+                component.index = i
                 proxy = component.props.vm
+                command[i] = -2
             }
             proxy.$index = i
             proxy.$first = i === 0
@@ -2583,12 +2601,16 @@ avalon.directive("repeat", {
             saveInCache(newCache, vm, component)
             children.push(component)
         }
+
+
         for (i in cache) {//剩下的都是要删除重复利用的
             if (cache[i]) {
-                needCombine.push(cache[i])
+                command[cache[i].props.vm.$index] = -1
+                needDispose.push(cache[i])
                 delete cache[i]
             }
         }
+        disposeVirtual(needDispose)
         parent.children = children
         binding.cache = newCache
 
@@ -2596,7 +2618,8 @@ avalon.directive("repeat", {
         console.log(binding)
         console.log(parent.toHTML())
 
-        var change = addHooks(binding.element, "changeHooks")
+        var change = addHooks(parent, "changeHooks")
+        parent.repeatCommand = command
         change.repeat = this.update
     },
     update: function (elem, vnode) {
@@ -2606,17 +2629,43 @@ avalon.directive("repeat", {
             if (elem.nodeType !== 8) {
                 parent.replaceChild(dom, elem)
             } else {
+                return
+                var groupText = elem.nodeValue.replace(":start", "")
+                var breakText = groupText + ":end"
+                //  [1, 2, 3, 4]
+                //  [4, 3, 2, 1]
+                var fragment = document.createDocumentFragment()
+
+                var froms = {}
+                var index = 0
                 while (next = elem.nextSibling) {
-                    if (next.nodeValue === dom.lastChild.nodeValue) {
-                        parent.removeChild(next)
+                    if (next.nodeValue === breakText) {
                         break
+                    } else if (next.nodeValue === groupText) {
+                        fragment.appendChild(next)
+                        froms[index] = fragment
+                        index++
+                        fragment = document.createDocumentFragment()
                     } else {
-                        parent.removeChild(next)
+                        fragment.appendChild(next)
                     }
                 }
-                parent.replaceChild(dom, elem)
-            }
+                var children = []
+                for (var from in vnode.repeatCommand) {
+                    var to = vnode.repeatCommand[from]
+                    if (to >= 0) {
+                        children[to] = froms[from]
+                    } else if (to === -3) {
+                        children[from] = froms[from]
+                    }
+                }
+                fragment = document.createDocumentFragment()
+                for (var i = 0, el; el = children[i++]; ) {
+                    fragment.appendChild(el)
+                }
+                elem.parentNode.insertBefore(fragment, elem.nextSibling)
 
+            }
         }
     },
     old: function (binding, oldValue) {
@@ -3291,6 +3340,7 @@ function updateEntity(nodes, vnodes) {
                 break
             case "#component":
                 var hooks = vnode.changeHooks
+                //一个LI元素 遇上repeat组件
                 if (hooks) {
                     try {
                         for (var hook in hooks) {
