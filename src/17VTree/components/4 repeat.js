@@ -162,15 +162,9 @@ avalon.directive("repeat", {
         for (var i = 0; i <= last; i++) {
             var vm = value[i]
             var component = isInCache(cache, vm)
-           
+
             if (component) {
                 proxy = component.props.vm
-                if (proxy.$index !== i) {
-                    needMove.push({
-                        form: proxy.$index,
-                        to: i
-                    })
-                }
             } else {
                 component = new VComponent("repeatItem", {})
                 component.outerHTML = parent.props.template
@@ -259,13 +253,12 @@ var repeatItem = avalon.components["repeatItem"] = {
         for (var i in options.vm) {
             vm[i] = options.vm[i]
         }
-
-
     }
 }
 
 function createRepeatItem(curVm, itemName) {
     var heirloom = {}
+    var before = Object(curVm) === curVm ? curVm : {}
     var after = {
         $accessors: {
             $first: makeObservable("first", heirloom),
@@ -281,11 +274,11 @@ function createRepeatItem(curVm, itemName) {
     }
     after[itemName] = 1
     after.$accessors[itemName] = makeObservable(itemName, heirloom)
-    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after, heirloom)
+    var proxy = createProxy(before, after, heirloom)
     return proxy
 }
 
-avalon.test.createRepeatItem = createRepeatItem
+//avalon.test.createRepeatItem = createRepeatItem
 
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 

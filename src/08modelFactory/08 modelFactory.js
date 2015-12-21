@@ -66,7 +66,7 @@ function observeArray(array, old, heirloom, options) {
             pathname: options.pathname + ".length",
             top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-        
+
         array.notify = function () {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
@@ -83,7 +83,7 @@ function observeArray(array, old, heirloom, options) {
             array.$model = toJson(array)
         }
         var arrayOptions = {
-            pathname:"", //options.pathname + ".*",
+            pathname: "", //options.pathname + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -173,12 +173,11 @@ function observeObject(definition, heirloom, options) {
         $vmodel[name] = definition[name]
     })
 
-    hideProperty($vmodel, "$id",  generateID("$"))
+    hideProperty($vmodel, "$id", generateID("$"))
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", $accessors)
     if (options.top === true) {
-        makeFire($vmodel, heirloom, options)
+        makeFire($vmodel, heirloom, $accessors)
     }
 
     for (name in $computed) {
@@ -189,7 +188,8 @@ function observeObject(definition, heirloom, options) {
     return $vmodel
 }
 
-function makeFire($vmodel, heirloom) {
+function makeFire($vmodel, heirloom, $accessors) {
+    hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
@@ -271,7 +271,7 @@ function makeComputed(pathname, heirloom, key, value) {
 }
 
 function isObervable(key, value, skipArray) {
-    return key.charAt(0) === "$"  ||
+    return key.charAt(0) === "$" ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
@@ -347,12 +347,10 @@ function createProxy(before, after, heirloom) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
-    hideProperty($vmodel, "$id", before.$id+"_")
+    hideProperty($vmodel, "$id", before.$id + "_")
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "$events", {})
-  
-    makeFire($vmodel, heirloom || {}, {proxy: "proxy"})
+
+    makeFire($vmodel, heirloom || {}, $accessors)
 
     $vmodel.$active = true
     return $vmodel

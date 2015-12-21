@@ -1007,7 +1007,7 @@ function observeArray(array, old, heirloom, options) {
             pathname: options.pathname + ".length",
             top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-        
+
         array.notify = function () {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
@@ -1024,7 +1024,7 @@ function observeArray(array, old, heirloom, options) {
             array.$model = toJson(array)
         }
         var arrayOptions = {
-            pathname:"", //options.pathname + ".*",
+            pathname: "", //options.pathname + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -1114,12 +1114,11 @@ function observeObject(definition, heirloom, options) {
         $vmodel[name] = definition[name]
     })
 
-    hideProperty($vmodel, "$id",  generateID("$"))
+    hideProperty($vmodel, "$id", generateID("$"))
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", $accessors)
     if (options.top === true) {
-        makeFire($vmodel, heirloom, options)
+        makeFire($vmodel, heirloom, $accessors)
     }
 
     for (name in $computed) {
@@ -1130,7 +1129,8 @@ function observeObject(definition, heirloom, options) {
     return $vmodel
 }
 
-function makeFire($vmodel, heirloom) {
+function makeFire($vmodel, heirloom, $accessors) {
+    hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
@@ -1212,7 +1212,7 @@ function makeComputed(pathname, heirloom, key, value) {
 }
 
 function isObervable(key, value, skipArray) {
-    return key.charAt(0) === "$"  ||
+    return key.charAt(0) === "$" ||
             skipArray[key] ||
             (typeof value === "function") ||
             (value && value.nodeName && value.nodeType > 0)
@@ -1288,12 +1288,10 @@ function createProxy(before, after, heirloom) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
-    hideProperty($vmodel, "$id", before.$id+"_")
+    hideProperty($vmodel, "$id", before.$id + "_")
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "$events", {})
-  
-    makeFire($vmodel, heirloom || {}, {proxy: "proxy"})
+
+    makeFire($vmodel, heirloom || {}, $accessors)
 
     $vmodel.$active = true
     return $vmodel
@@ -2786,65 +2784,6 @@ var quote = window.JSON && JSON.stringify || function(str) {
                 '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
     }) + '"'
 }
-function VComment(text) {
-    this.type = "#comment"
-    this.nodeValue = text
-    this.skip = true
-}
-VComment.prototype = {
-    constructor: VComment,
-    toDOM: function () {
-        return document.createComment(this.nodeValue)
-    },
-    toHTML: function () {
-        return "<!--" + this.nodeValue + "-->"
-    }
-}
-function VComponent(type, props, children) {
-    this.type = "#component"
-    this.props = props
-    this.__type__ = type
-    this.children = children || []
-}
-VComponent.prototype = {
-    construct: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.construct) {
-            return me.construct.apply(this, arguments)
-        } else {
-            return this
-        }
-    },
-    init: function (vm) {
-        var me = avalon.components[this.__type__]
-        if (me && me.init) {
-            me.init(this, vm)
-        }
-    },
-    toDOM: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.toDOM) {
-            return me.toDOM(this)
-        }
-        var fragment = document.createDocumentFragment()
-        for (var i = 0; i < this.children.length; i++) {
-            fragment.appendChild(this.children[i].toDOM())
-        }
-        return fragment
-    },
-    toHTML: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.toHTML) {
-            return me.toHTML(this)
-        }
-        var ret = ""
-        for (var i = 0; i < this.children.length; i++) {
-            ret += this.children[i].toHTML()
-        }
-        return ret
-    }
-}
-
 avalon.components = {}
 
 var Ifcom = avalon.components["ms-if"] = {
@@ -2869,8 +2808,6 @@ var Ifcom = avalon.components["ms-if"] = {
         avalon.injectBinding(binding)
     }
 }
-
-
 
 
 
@@ -2907,7 +2844,6 @@ avalon.directive("if", {
         }
     }
 })
-
 avalon.components["ms-html"] = {
     construct: function (self, parent) {
 //替换父节点的所有孩子
@@ -2916,6 +2852,8 @@ avalon.components["ms-html"] = {
     },
     init: Ifcom.init
 }
+
+
 
 avalon.directive("html", {
     change: function (value, binding) {
@@ -2971,160 +2909,6 @@ avalon.directive("text", {
     }
 })
 
-function VElement(type, innerHTML, outerHTML) {
-    this.type = type
-    this.props = {}
-    this.innerHTML = innerHTML
-    this.outerHTML = outerHTML
-    this.children = []
-}
-VElement.prototype = {
-    constructor: VElement,
-    toDOM: function () {
-        if (this.skip) {
-            return avalon.parseHTML(this.outerHTML)
-        }
-        var dom = document.createElement(this.type)
-
-        for (var i in this.props) {
-            if (this.props[i] === false) {
-                dom.removeAttribute(i)
-            } else {
-                dom.setAttribute(i, String(this.props[i]))
-            }
-        }
-        if (this.skipContent) {
-            switch (this.type) {
-                case "script":
-                    this.text = this.__content
-                    break;
-                case "style":
-                case "noscript":
-                case "template":
-                    this.innerHTML = this.__content
-                    break
-                default:
-                    var a = avalon.parseHTML(this.__content)
-                    dom.appendChild(a)
-                    break
-            }
-        } else {
-            this.children.forEach(function (c) {
-                dom.appendChild(c.toDOM())
-            })
-            if(!this.children.length){
-                dom.innerHTML = this.innerHTML
-            }
-        }
-        return dom
-    },
-    toHTML: function () {
-        if (this.skip) {
-            return this.outerHTML
-        }
-        if (this.closeSelf) {
-            return "<" + this.type + "/>"
-        }
-        var p = ""
-        for (var i in this.props) {
-            p += (i + "=" + quote(String(this.props[i]))) + " "
-        }
-        p = p ? " " + p : p
-        var str = "<" + this.type + p + ">"
-        if (this.skipContent) {
-            str += this.__content
-        } else {
-            str += this.children.map(function (el) {
-                return el.toHTML()
-            }).join("")
-        }
-        return str + "</" + this.type + ">"
-    }
-}
-
-
-
-
-function updateVLoop(array, key, callback, old) {
-    if (array) {
-        if (Array.isArray(array)) {
-            var n = array.length - 1
-            for (var i = 0; i <= n; i++) {
-                var vm = simpleCopy(old)
-                vm[key] = array[i]
-                vm["$index"] = i
-                vm["$first"] = i === 0
-                vm["$last"] = i === n
-                /* jshint ignore:start */
-                vm["$remove"] = (function (k) {
-                    return function () {
-                        avalon.Array.removeAt(array, k)
-                    }
-                })(i)
-                /* jshint ignore:end */
-                callback(vm)
-            }
-        } else {
-            var keys = Object.keys(array)
-            n = keys.length - 1
-            for (i = 0; i <= n; i++) {
-                vm = clone(old)
-                vm["$key"] = keys[i]
-                vm["$val"] = array[keys[i]]
-                vm["$index"] = i
-                vm["$first"] = i === 0
-                vm["$last"] = i === n
-                callback(vm)
-            }
-        }
-    }
-}
-function simpleCopy(a) {
-    var b = {}
-    for (var i in a) {
-        b[i] = a[i]
-    }
-    return b
-}
-
-function VText(text) {
-    this.type = "#text"
-    this.nodeValue = text
-    this.skip = !rexpr.test(text)
-}
-
-VText.prototype = {
-    constructor: VText,
-    toDOM: function () {
-        return document.createTextNode(this.nodeValue)
-    },
-    toHTML: function () {
-        return this.nodeValue
-    }
-}
-if (!Object.is) {
-
-    function SameValue(a, b) {
-        if (a === b) {
-            // 0 === -0, but they are not identical.
-            if (a === 0) {
-                return 1 / a === 1 / b
-            }
-            return true
-        }
-        return numberIsNaN(a) && numberIsNaN(b)
-    }
-
-    var numberIsNaN = Number.isNaN || function isNaN(value) {
-        // NaN !== NaN, but they are identical.
-        // NaNs are the only non-reflexive value, i.e., if x !== x,
-        // then x is NaN.
-        // isNaN is broken: it converts its argument to number, so
-        // isNaN('foo') => true
-        return value !== value;
-    }
-    Object.is = SameValue
-}
 avalon.components["ms-repeat"] = {
     construct: function (parent) {
 
@@ -3289,15 +3073,9 @@ avalon.directive("repeat", {
         for (var i = 0; i <= last; i++) {
             var vm = value[i]
             var component = isInCache(cache, vm)
-           
+
             if (component) {
                 proxy = component.props.vm
-                if (proxy.$index !== i) {
-                    needMove.push({
-                        form: proxy.$index,
-                        to: i
-                    })
-                }
             } else {
                 component = new VComponent("repeatItem", {})
                 component.outerHTML = parent.props.template
@@ -3386,13 +3164,12 @@ var repeatItem = avalon.components["repeatItem"] = {
         for (var i in options.vm) {
             vm[i] = options.vm[i]
         }
-
-
     }
 }
 
 function createRepeatItem(curVm, itemName) {
     var heirloom = {}
+    var before = Object(curVm) === curVm ? curVm : {}
     var after = {
         $accessors: {
             $first: makeObservable("first", heirloom),
@@ -3408,11 +3185,11 @@ function createRepeatItem(curVm, itemName) {
     }
     after[itemName] = 1
     after.$accessors[itemName] = makeObservable(itemName, heirloom)
-    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after, heirloom)
+    var proxy = createProxy(before, after, heirloom)
     return proxy
 }
 
-avalon.test.createRepeatItem = createRepeatItem
+//avalon.test.createRepeatItem = createRepeatItem
 
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
@@ -3422,6 +3199,182 @@ function removeItems(array) {
     })
 }
 
+if (!Object.is) {
+
+    function SameValue(a, b) {
+        if (a === b) {
+            // 0 === -0, but they are not identical.
+            if (a === 0) {
+                return 1 / a === 1 / b
+            }
+            return true
+        }
+        return numberIsNaN(a) && numberIsNaN(b)
+    }
+
+    var numberIsNaN = Number.isNaN || function isNaN(value) {
+        // NaN !== NaN, but they are identical.
+        // NaNs are the only non-reflexive value, i.e., if x !== x,
+        // then x is NaN.
+        // isNaN is broken: it converts its argument to number, so
+        // isNaN('foo') => true
+        return value !== value;
+    }
+    Object.is = SameValue
+}
+function VComment(text) {
+    this.type = "#comment"
+    this.nodeValue = text
+    this.skip = true
+}
+VComment.prototype = {
+    constructor: VComment,
+    toDOM: function () {
+        return document.createComment(this.nodeValue)
+    },
+    toHTML: function () {
+        return "<!--" + this.nodeValue + "-->"
+    }
+}
+function VComponent(type, props, children) {
+    this.type = "#component"
+    this.props = props
+    this.__type__ = type
+    this.children = children || []
+}
+VComponent.prototype = {
+    construct: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.construct) {
+            return me.construct.apply(this, arguments)
+        } else {
+            return this
+        }
+    },
+    init: function (vm) {
+        var me = avalon.components[this.__type__]
+        if (me && me.init) {
+            me.init(this, vm)
+        }
+    },
+    toDOM: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toDOM) {
+            return me.toDOM(this)
+        }
+        var fragment = document.createDocumentFragment()
+        for (var i = 0; i < this.children.length; i++) {
+            fragment.appendChild(this.children[i].toDOM())
+        }
+        return fragment
+    },
+    toHTML: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toHTML) {
+            return me.toHTML(this)
+        }
+        var ret = ""
+        for (var i = 0; i < this.children.length; i++) {
+            ret += this.children[i].toHTML()
+        }
+        return ret
+    }
+}
+
+
+
+
+
+
+function VElement(type, innerHTML, outerHTML) {
+    this.type = type
+    this.props = {}
+    this.innerHTML = innerHTML
+    this.outerHTML = outerHTML
+    this.children = []
+}
+VElement.prototype = {
+    constructor: VElement,
+    toDOM: function () {
+        if (this.skip) {
+            return avalon.parseHTML(this.outerHTML)
+        }
+        var dom = document.createElement(this.type)
+
+        for (var i in this.props) {
+            if (this.props[i] === false) {
+                dom.removeAttribute(i)
+            } else {
+                dom.setAttribute(i, String(this.props[i]))
+            }
+        }
+        if (this.skipContent) {
+            switch (this.type) {
+                case "script":
+                    this.text = this.__content
+                    break;
+                case "style":
+                case "noscript":
+                case "template":
+                    this.innerHTML = this.__content
+                    break
+                default:
+                    var a = avalon.parseHTML(this.__content)
+                    dom.appendChild(a)
+                    break
+            }
+        } else {
+            this.children.forEach(function (c) {
+                dom.appendChild(c.toDOM())
+            })
+            if(!this.children.length){
+                dom.innerHTML = this.innerHTML
+            }
+        }
+        return dom
+    },
+    toHTML: function () {
+        if (this.skip) {
+            return this.outerHTML
+        }
+        if (this.closeSelf) {
+            return "<" + this.type + "/>"
+        }
+        var p = ""
+        for (var i in this.props) {
+            p += (i + "=" + quote(String(this.props[i]))) + " "
+        }
+        p = p ? " " + p : p
+        var str = "<" + this.type + p + ">"
+        if (this.skipContent) {
+            str += this.__content
+        } else {
+            str += this.children.map(function (el) {
+                return el.toHTML()
+            }).join("")
+        }
+        return str + "</" + this.type + ">"
+    }
+}
+
+
+
+
+function VText(text) {
+    this.type = "#text"
+    this.nodeValue = text
+    this.skip = !rexpr.test(text)
+}
+
+VText.prototype = {
+    constructor: VText,
+    toDOM: function () {
+        return document.createTextNode(this.nodeValue)
+    },
+    toHTML: function () {
+        return this.nodeValue
+    }
+}
 // executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {

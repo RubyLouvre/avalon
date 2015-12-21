@@ -2323,65 +2323,6 @@ avalon.parseExprProxy = parseExpr
 
 var quote = JSON.stringify
 
-function VComment(text) {
-    this.type = "#comment"
-    this.nodeValue = text
-    this.skip = true
-}
-VComment.prototype = {
-    constructor: VComment,
-    toDOM: function () {
-        return document.createComment(this.nodeValue)
-    },
-    toHTML: function () {
-        return "<!--" + this.nodeValue + "-->"
-    }
-}
-function VComponent(type, props, children) {
-    this.type = "#component"
-    this.props = props
-    this.__type__ = type
-    this.children = children || []
-}
-VComponent.prototype = {
-    construct: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.construct) {
-            return me.construct.apply(this, arguments)
-        } else {
-            return this
-        }
-    },
-    init: function (vm) {
-        var me = avalon.components[this.__type__]
-        if (me && me.init) {
-            me.init(this, vm)
-        }
-    },
-    toDOM: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.toDOM) {
-            return me.toDOM(this)
-        }
-        var fragment = document.createDocumentFragment()
-        for (var i = 0; i < this.children.length; i++) {
-            fragment.appendChild(this.children[i].toDOM())
-        }
-        return fragment
-    },
-    toHTML: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.toHTML) {
-            return me.toHTML(this)
-        }
-        var ret = ""
-        for (var i = 0; i < this.children.length; i++) {
-            ret += this.children[i].toHTML()
-        }
-        return ret
-    }
-}
-
 avalon.components = {}
 
 var Ifcom = avalon.components["ms-if"] = {
@@ -2406,8 +2347,6 @@ var Ifcom = avalon.components["ms-if"] = {
         avalon.injectBinding(binding)
     }
 }
-
-
 
 
 
@@ -2444,7 +2383,6 @@ avalon.directive("if", {
         }
     }
 })
-
 avalon.components["ms-html"] = {
     construct: function (self, parent) {
 //替换父节点的所有孩子
@@ -2453,6 +2391,8 @@ avalon.components["ms-html"] = {
     },
     init: Ifcom.init
 }
+
+
 
 avalon.directive("html", {
     change: function (value, binding) {
@@ -2473,195 +2413,6 @@ avalon.directive("html", {
     }
 })
 
-
-avalon.components["ms-text"] = {
-    construct: function (parent) {
-//替换父节点的所有孩子
-        parent.children = [this]
-        return parent
-    },
-    init: Ifcom.init
-}
-
-
-avalon.directive("text", {
-    change: function (value, binding) {
-        var elem = binding.element
-        if (elem) {
-            value = typeof value === "string" ? value : String(value)
-            disposeVirtual(elem.children)
-            var children = [new VText(value)]
-            elem.children = updateVirtual(children, binding.vmodel)
-            var change = addHooks(elem, "changeHooks")
-            change.text = this.update
-        }
-    },
-    update: function (elem, vnode) {
-        var parent = elem.parentNode
-        if (!parent)
-            return
-        if ("textContent" in parent) {
-            elem.textContent = vnode.toHTML()
-        } else {
-            elem.innerText = vnode.toHTML()
-        }
-    }
-})
-
-function VElement(type, innerHTML, outerHTML) {
-    this.type = type
-    this.props = {}
-    this.innerHTML = innerHTML
-    this.outerHTML = outerHTML
-    this.children = []
-}
-VElement.prototype = {
-    constructor: VElement,
-    toDOM: function () {
-        if (this.skip) {
-            return avalon.parseHTML(this.outerHTML)
-        }
-        var dom = document.createElement(this.type)
-
-        for (var i in this.props) {
-            if (this.props[i] === false) {
-                dom.removeAttribute(i)
-            } else {
-                dom.setAttribute(i, String(this.props[i]))
-            }
-        }
-        if (this.skipContent) {
-            switch (this.type) {
-                case "script":
-                    this.text = this.__content
-                    break;
-                case "style":
-                case "noscript":
-                case "template":
-                    this.innerHTML = this.__content
-                    break
-                default:
-                    var a = avalon.parseHTML(this.__content)
-                    dom.appendChild(a)
-                    break
-            }
-        } else {
-            this.children.forEach(function (c) {
-                dom.appendChild(c.toDOM())
-            })
-            if(!this.children.length){
-                dom.innerHTML = this.innerHTML
-            }
-        }
-        return dom
-    },
-    toHTML: function () {
-        if (this.skip) {
-            return this.outerHTML
-        }
-        if (this.closeSelf) {
-            return "<" + this.type + "/>"
-        }
-        var p = ""
-        for (var i in this.props) {
-            p += (i + "=" + quote(String(this.props[i]))) + " "
-        }
-        p = p ? " " + p : p
-        var str = "<" + this.type + p + ">"
-        if (this.skipContent) {
-            str += this.__content
-        } else {
-            str += this.children.map(function (el) {
-                return el.toHTML()
-            }).join("")
-        }
-        return str + "</" + this.type + ">"
-    }
-}
-
-
-
-
-function updateVLoop(array, key, callback, old) {
-    if (array) {
-        if (Array.isArray(array)) {
-            var n = array.length - 1
-            for (var i = 0; i <= n; i++) {
-                var vm = simpleCopy(old)
-                vm[key] = array[i]
-                vm["$index"] = i
-                vm["$first"] = i === 0
-                vm["$last"] = i === n
-                /* jshint ignore:start */
-                vm["$remove"] = (function (k) {
-                    return function () {
-                        avalon.Array.removeAt(array, k)
-                    }
-                })(i)
-                /* jshint ignore:end */
-                callback(vm)
-            }
-        } else {
-            var keys = Object.keys(array)
-            n = keys.length - 1
-            for (i = 0; i <= n; i++) {
-                vm = clone(old)
-                vm["$key"] = keys[i]
-                vm["$val"] = array[keys[i]]
-                vm["$index"] = i
-                vm["$first"] = i === 0
-                vm["$last"] = i === n
-                callback(vm)
-            }
-        }
-    }
-}
-function simpleCopy(a) {
-    var b = {}
-    for (var i in a) {
-        b[i] = a[i]
-    }
-    return b
-}
-
-function VText(text) {
-    this.type = "#text"
-    this.nodeValue = text
-    this.skip = !rexpr.test(text)
-}
-
-VText.prototype = {
-    constructor: VText,
-    toDOM: function () {
-        return document.createTextNode(this.nodeValue)
-    },
-    toHTML: function () {
-        return this.nodeValue
-    }
-}
-if (!Object.is) {
-
-    function SameValue(a, b) {
-        if (a === b) {
-            // 0 === -0, but they are not identical.
-            if (a === 0) {
-                return 1 / a === 1 / b
-            }
-            return true
-        }
-        return numberIsNaN(a) && numberIsNaN(b)
-    }
-
-    var numberIsNaN = Number.isNaN || function isNaN(value) {
-        // NaN !== NaN, but they are identical.
-        // NaNs are the only non-reflexive value, i.e., if x !== x,
-        // then x is NaN.
-        // isNaN is broken: it converts its argument to number, so
-        // isNaN('foo') => true
-        return value !== value;
-    }
-    Object.is = SameValue
-}
 avalon.components["ms-repeat"] = {
     construct: function (parent) {
 
@@ -2826,15 +2577,9 @@ avalon.directive("repeat", {
         for (var i = 0; i <= last; i++) {
             var vm = value[i]
             var component = isInCache(cache, vm)
-           
+
             if (component) {
                 proxy = component.props.vm
-                if (proxy.$index !== i) {
-                    needMove.push({
-                        form: proxy.$index,
-                        to: i
-                    })
-                }
             } else {
                 component = new VComponent("repeatItem", {})
                 component.outerHTML = parent.props.template
@@ -2923,13 +2668,12 @@ var repeatItem = avalon.components["repeatItem"] = {
         for (var i in options.vm) {
             vm[i] = options.vm[i]
         }
-
-
     }
 }
 
 function createRepeatItem(curVm, itemName) {
     var heirloom = {}
+    var before = Object(curVm) === curVm ? curVm : {}
     var after = {
         $accessors: {
             $first: makeObservable("first", heirloom),
@@ -2945,11 +2689,11 @@ function createRepeatItem(curVm, itemName) {
     }
     after[itemName] = 1
     after.$accessors[itemName] = makeObservable(itemName, heirloom)
-    var proxy = createProxy(Object(curVm) === curVm ? curVm : {}, after, heirloom)
+    var proxy = createProxy(before, after, heirloom)
     return proxy
 }
 
-avalon.test.createRepeatItem = createRepeatItem
+//avalon.test.createRepeatItem = createRepeatItem
 
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
@@ -2959,6 +2703,182 @@ function removeItems(array) {
     })
 }
 
+if (!Object.is) {
+
+    function SameValue(a, b) {
+        if (a === b) {
+            // 0 === -0, but they are not identical.
+            if (a === 0) {
+                return 1 / a === 1 / b
+            }
+            return true
+        }
+        return numberIsNaN(a) && numberIsNaN(b)
+    }
+
+    var numberIsNaN = Number.isNaN || function isNaN(value) {
+        // NaN !== NaN, but they are identical.
+        // NaNs are the only non-reflexive value, i.e., if x !== x,
+        // then x is NaN.
+        // isNaN is broken: it converts its argument to number, so
+        // isNaN('foo') => true
+        return value !== value;
+    }
+    Object.is = SameValue
+}
+function VComment(text) {
+    this.type = "#comment"
+    this.nodeValue = text
+    this.skip = true
+}
+VComment.prototype = {
+    constructor: VComment,
+    toDOM: function () {
+        return document.createComment(this.nodeValue)
+    },
+    toHTML: function () {
+        return "<!--" + this.nodeValue + "-->"
+    }
+}
+function VComponent(type, props, children) {
+    this.type = "#component"
+    this.props = props
+    this.__type__ = type
+    this.children = children || []
+}
+VComponent.prototype = {
+    construct: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.construct) {
+            return me.construct.apply(this, arguments)
+        } else {
+            return this
+        }
+    },
+    init: function (vm) {
+        var me = avalon.components[this.__type__]
+        if (me && me.init) {
+            me.init(this, vm)
+        }
+    },
+    toDOM: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toDOM) {
+            return me.toDOM(this)
+        }
+        var fragment = document.createDocumentFragment()
+        for (var i = 0; i < this.children.length; i++) {
+            fragment.appendChild(this.children[i].toDOM())
+        }
+        return fragment
+    },
+    toHTML: function () {
+        var me = avalon.components[this.__type__]
+        if (me && me.toHTML) {
+            return me.toHTML(this)
+        }
+        var ret = ""
+        for (var i = 0; i < this.children.length; i++) {
+            ret += this.children[i].toHTML()
+        }
+        return ret
+    }
+}
+
+
+
+
+
+
+function VElement(type, innerHTML, outerHTML) {
+    this.type = type
+    this.props = {}
+    this.innerHTML = innerHTML
+    this.outerHTML = outerHTML
+    this.children = []
+}
+VElement.prototype = {
+    constructor: VElement,
+    toDOM: function () {
+        if (this.skip) {
+            return avalon.parseHTML(this.outerHTML)
+        }
+        var dom = document.createElement(this.type)
+
+        for (var i in this.props) {
+            if (this.props[i] === false) {
+                dom.removeAttribute(i)
+            } else {
+                dom.setAttribute(i, String(this.props[i]))
+            }
+        }
+        if (this.skipContent) {
+            switch (this.type) {
+                case "script":
+                    this.text = this.__content
+                    break;
+                case "style":
+                case "noscript":
+                case "template":
+                    this.innerHTML = this.__content
+                    break
+                default:
+                    var a = avalon.parseHTML(this.__content)
+                    dom.appendChild(a)
+                    break
+            }
+        } else {
+            this.children.forEach(function (c) {
+                dom.appendChild(c.toDOM())
+            })
+            if(!this.children.length){
+                dom.innerHTML = this.innerHTML
+            }
+        }
+        return dom
+    },
+    toHTML: function () {
+        if (this.skip) {
+            return this.outerHTML
+        }
+        if (this.closeSelf) {
+            return "<" + this.type + "/>"
+        }
+        var p = ""
+        for (var i in this.props) {
+            p += (i + "=" + quote(String(this.props[i]))) + " "
+        }
+        p = p ? " " + p : p
+        var str = "<" + this.type + p + ">"
+        if (this.skipContent) {
+            str += this.__content
+        } else {
+            str += this.children.map(function (el) {
+                return el.toHTML()
+            }).join("")
+        }
+        return str + "</" + this.type + ">"
+    }
+}
+
+
+
+
+function VText(text) {
+    this.type = "#text"
+    this.nodeValue = text
+    this.skip = !rexpr.test(text)
+}
+
+VText.prototype = {
+    constructor: VText,
+    toDOM: function () {
+        return document.createTextNode(this.nodeValue)
+    },
+    toHTML: function () {
+        return this.nodeValue
+    }
+}
 // executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
@@ -4624,20 +4544,24 @@ var onDir = avalon.directive("on", {
  **********************************************************************/
 
 //ms-skip绑定已经在scanTag 方法中实现
-avalon.directive("text", {
-    update: function (val) {
-        var elem = this.element
-        val = val == null ? "" : val //不在页面上显示undefined null
-        if (elem.nodeType === 3) { //绑定在文本节点上
-            try { //IE对游离于DOM树外的节点赋值会报错
-                elem.data = val
-            } catch (e) {
-            }
-        } else { //绑定在特性节点上
-            elem.textContent = val
-        }
-    }
-})
+//avalon.directive("text", {
+//    update: function (value) {
+//        var elem = this.element
+//        value = value == null ? "" : value //不在页面上显示undefined null
+//        if (elem.nodeType === 3) { //绑定在文本节点上
+//            try { //IE对游离于DOM树外的节点赋值会报错
+//                elem.data = value
+//            } catch (e) {
+//            }
+//        } else { //绑定在特性节点上
+//            if ("textContent" in elem) {
+//                elem.textContent = value
+//            } else {
+//                elem.innerText = value
+//            }
+//        }
+//    }
+//})
 function parseDisplay(nodeName, val) {
     //用于取得此类标签的默认display值
     var key = "_" + nodeName
