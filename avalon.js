@@ -3111,8 +3111,8 @@ avalon.directive("repeat", {
         binding.cache = newCache
 
         binding.oldValue = value.concat()
-        console.log(binding)
-        console.log(parent.toHTML())
+        // console.log(binding)
+        //  console.log(parent.toHTML())
 
         var change = addHooks(parent, "changeHooks")
         parent.repeatCommand = command
@@ -3125,7 +3125,7 @@ avalon.directive("repeat", {
             if (elem.nodeType !== 8) {
                 parent.replaceChild(dom, elem)
             } else {
-                return
+
                 var groupText = elem.nodeValue.replace(":start", "")
                 var breakText = groupText + ":end"
                 //  [1, 2, 3, 4]
@@ -3159,7 +3159,14 @@ avalon.directive("repeat", {
                 for (var i = 0, el; el = children[i++]; ) {
                     fragment.appendChild(el)
                 }
+                var entity = avalon.slice(fragment.childNodes)
                 elem.parentNode.insertBefore(fragment, elem.nextSibling)
+                var virtual = []
+                vnode.children.forEach(function (el) {
+                    virtual = virtual.concat(el.children)
+                })
+                updateEntity(entity, virtual)
+                //console.log(vnodes)
 
             }
         }
