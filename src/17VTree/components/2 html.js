@@ -3,8 +3,8 @@ avalon.components["ms-html"] = {
 //替换父节点的所有孩子
         parent.children = [self]
         return parent
-    },
-    init: Ifcom.init
+    }
+    //init: Ifcom.init
 }
 
 

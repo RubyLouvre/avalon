@@ -4,8 +4,8 @@ avalon.components["ms-text"] = {
 //替换父节点的所有孩子
         parent.children = [this]
         return parent
-    },
-    init: Ifcom.init
+    }
+    //  init: Ifcom.init
 }
 
 
@@ -17,8 +17,7 @@ avalon.directive("text", {
             disposeVirtual(elem.children)
             var children = [new VText(value)]
             elem.children = updateVirtual(children, binding.vmodel)
-            var change = addHooks(elem, "changeHooks")
-            change.text = this.update
+            addHooks(this, binding)
         }
     },
     update: function (elem, vnode) {

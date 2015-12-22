@@ -230,7 +230,9 @@ avalon.mix({
         }
     }
 })
-
+function pushArray(target, other) {
+    target.push.apply(target, other)
+}
 var bindingHandlers = avalon.bindingHandlers = {}
 var bindingExecutors = avalon.bindingExecutors = {}
 

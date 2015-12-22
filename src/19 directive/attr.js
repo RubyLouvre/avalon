@@ -9,12 +9,11 @@ var attrDir = avalon.directive("attr", {
     change: function (val, binding) {
         var elem = binding.element
         if (elem) {
-            var change = addHooks(elem, "changeAttrs")
+            var change = addData(elem, "changeAttrs")
             var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
             change[name] = toRemove ? false : val
-            change = addHooks(elem, "changeHooks")
-            change.attr = directives.attr.update
+            addHooks(this, binding)
         }
     },
     update: attrUpdate

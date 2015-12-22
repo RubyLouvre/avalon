@@ -20,4 +20,5 @@ function disposeVirtual(nodes) {
                 break
         }
     }
+    nodes.length = 0
 }

@@ -12,19 +12,6 @@ avalon.scan = function (elem, vmodel) {
 }
 
 
-function addHooks(elem, name) {
-    return elem[name] || (elem[name] = {})
-}
-
-function addAttrHook(node) {
-    var hook = addHooks(node, "changeHooks")
-    hook.attr = attrUpdate
-}
-
-
-
-
-
 
 var rnoCollect = /^(ms-\S+|data-\S+|on[a-z]+|id|style|class)$/
 var ronattr = /^on\-[\w-]+$/

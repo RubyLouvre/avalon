@@ -1,31 +1,28 @@
 avalon.components = {}
 
-var Ifcom = avalon.components["ms-if"] = {
-    construct: function (parent) {
-        parent.children = createVirtual(parent.innerHTML, true)
-        this._children = [parent] //将父节点作为它的子节点
-        return this
-    },
-    init: function (me, vm) {
-        var binding = {
-            type: me.__type__.replace(/^ms-/, ""),
-            expr: me.props.expr,
-            vmodel: vm,
-            element: me
-        }
-        if (binding.expr.indexOf("★") > 0) {
-            var arr = binding.expr.split("★")
-            binding.expr = arr[0]
-            binding.itemName = arr[1]
-        }
-
-        avalon.injectBinding(binding)
-    }
-}
-
-
 
 avalon.directive("if", {
+    init: function (binding) {
+        var element = binding.element
+        var templale = toString(element, {
+            "ms-if": true,
+            "avalon-uuid": true
+        })
+
+        var component = new VComponent("ms-if")
+        component.template = templale
+        var arr = binding.siblings
+        for (var i = 0, el; el = arr[i]; i++) {
+            if (el === element) {
+                arr[i] = component
+                break
+            }
+        }
+
+        delete binding.siblings
+        binding.element = component
+        return false
+    },
     is: function (a, b) {
         if (b === void 0)
             return false
@@ -34,27 +31,57 @@ avalon.directive("if", {
     change: function (value, binding) {
         var elem = binding.element
         if (elem) {
-            var change = addHooks(elem, "changeHooks")
-            change["if"] = this.update
-            elem.state = !!value
             disposeVirtual(elem.children)
             if (value) {
-                elem.children = updateVirtual(elem._children, binding.vmodel)
+                var vnodes = createVirtual(elem.template, true)
+                updateVirtual(vnodes, binding.vmodel)
+                pushArray(elem.children, vnodes)
             } else {
-                elem.children = [new VComment("ms-if")]
+                pushArray(elem.children, [new VComment("ms-if")])
             }
+            
+            addHooks(this, binding)
         }
     },
-    update: function (elem, vnode) {
-        var replace = false
-        if (vnode.state) {
-            replace = elem.nodeType === 8
-        } else {
-            replace = elem.nodeType === 1
-        }
-        if (replace) {
-            var dom = vnode.toDOM()
-            elem.parentNode.replaceChild(dom, elem)
-        }
+    update: function (node, vnode, parent) {
+        updateEntity([node], [vnode.children[0]], parent)
     }
 })
+
+function toString(element, map) {
+    var p = []
+    for (var i in element.props) {
+        if (map[i])
+            continue
+        p.push(i + "=" + quote(String(element.props[i])))
+    }
+    p = p.length ? " " + p.join(" ") : ""
+
+    var str = "<" + element.type + p
+    if (element.selfClose) {
+        return str + "/>"
+    }
+    str += ">"
+
+    str += element.template
+
+    return str + "</" + element.type + ">"
+}
+
+//            if (first.type === "#comment" && first.nodeValue.indexOf(":start") > 0) {
+//                //抽取需要处理的节点
+//                if (node.nodeType === 8 && node.nodeValue === first.nodeValue) {
+//                    var breakText = first.nodeValue.replace(":start", ":end")
+//                    var insertPoint = null, next = node
+//                    
+//                    while (next = next.sibling) {
+//                        nodes.push(next)
+//                        if (next.nodeValue === breakText) {
+//                            insertPoint = next.sibling
+//                            break
+//                        }
+//                    }
+//                  //  f.insertBefore(node, f.firstChild)
+//                    flag = true
+//                }
+//            }

@@ -1,8 +1,8 @@
 function VComponent(type, props, children) {
     this.type = "#component"
-    this.props = props
-    this.__type__ = type
+    this.props = props || {}
     this.children = children || []
+    this.__type__ = type
 }
 VComponent.prototype = {
     construct: function () {

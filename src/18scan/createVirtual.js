@@ -20,14 +20,14 @@ var rgtlt = /></
 var ramp = /&amp;/g
 
 var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
-var builtinComponents = ["ms-repeat", "ms-html", "ms-text", "ms-if"]
+var builtinComponents = ["ms-if", "ms-repeat", "ms-html", "ms-text"]
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
 var avalonID = 1
 //=== === === === 创建虚拟DOM树 === === === === =
 //依赖config
 function parseVProps(node, str) {
-    var obj = {}
-    var change = addHooks(node, "changeAttrs")
+    var props = node.props
+    var change = addData(node, "changeAttrs")
     str.replace(rattr2, function (a, n, v) {
         if (v) {
             v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
@@ -37,38 +37,35 @@ function parseVProps(node, str) {
         if (match) {
             var type = match[1]
             var param = match[2] || ""
-           // var value = v
             switch (type) {
                 case "controller":
                 case "important":
+                    //移除ms-controller, ms-important
+                    //好让[ms-controller]样式生效,处理{{}}问题
                     change[name] = false
                     name = "data-" + type
+                    //添加data-controller, data-controller
+                    //方便收集vmodel
                     change[name] = v
                     addAttrHook(node)
-
                     break
-                case "each":
                 case "with":
-                case "repeat":
                     change[name] = false
                     addAttrHook(node)
-                    if (name === "with")
-                        name = "each"
-                    v = v + "★" + (param || "el")
-                    //console.log(value)
+                    name = "each"
                     break
             }
         }
-        obj[name] = v || ""
+        props[name] = v || ""
     })
-    if (!obj["avalon-uuid"]) {
-        change["avalon-uuid"] = obj["avalon-uuid"] = avalonID++
+    if (!props["avalon-uuid"]) {
+        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
         addAttrHook(node)
     }
-    return obj
+    return props
 }
 
-
+//此阶段只会生成VElement,VText,VComment
 function createVirtual(text, force) {
     var nodes = []
     if (!force && !rbind.test(text)) {
@@ -76,6 +73,7 @@ function createVirtual(text, force) {
     }
     do {
         var matchText = ""
+
         var match = text.match(rtext)
         var node = false
 
@@ -105,7 +103,6 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
-               
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -128,12 +125,14 @@ function createVirtual(text, force) {
                 }
 
                 var allAttrs = matchText.match(rattr1)[0]
-               
+
                 var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
                         (tagName.length + 3) * -1)
-                node = new VElement(tagName, innerHTML, matchText)
+                node = new VElement(tagName)
+                node.template = innerHTML
                 var props = allAttrs.slice(0, -1)
-                node = fixTag(node, props)
+                //这里可能由VElement变成VComponent
+                node = fixTag(node, props, matchText)
             }
         }
 
@@ -141,11 +140,13 @@ function createVirtual(text, force) {
             match = text.match(rvoidTag)
             if (match) {//尝试匹配自闭合标签及注释节点
                 matchText = match[0]
+                //不打算序列化的属性不要放在props中
+                node = new VElement(match[1])
+                node.template = ""
 
-                node = new VElement(match[1], "", matchText)
-
-                props = matchText.slice(node.type.length + 1).replace(/\/>$/, "")
-                node = fixTag(node, props)
+                props = matchText.slice(node.type.length + 1).replace(/\/?>$/, "")
+                //这里可能由VElement变成VComponent
+                node = fixTag(node, props, matchText)
             }
         }
         if (node) {
@@ -160,35 +161,25 @@ function createVirtual(text, force) {
 avalon.createVirtual = createVirtual
 var rmsskip = /\bms\-skip/
 var rnocontent = /textarea|template|script|style/
+
 //如果存在ms-if, ms-repeat, ms-html, ms-text指令,可能会生成<ms:repeat> 等自定义标签
-function fixTag(node, str) {
-    if (rmsskip.test(str)) {
+function fixTag(node, attrs, outerHTML) {
+    if (rmsskip.test(attrs)) {
         node.skip = true
+        node.outerHTML = outerHTML
         return node
     }
-    var props = node.props = parseVProps(node, str)
-    var outerHTML = node.outerHTML
-    if (!rnocontent.test(node.type) && rbind.test(node.outerHTML)) {
-        node.children = createVirtual(node.innerHTML)
-    } else {
-        node.skipContent = true
-        node.__content = node.innerHTML
-    }
+    parseVProps(node, attrs)
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
-    for (var i = 0, dir; dir = builtinComponents[i++]; ) {
-        if (props[dir]) {
-            var expr = props[dir]
-            delete props[dir]
-          
-          
-            var component = new VComponent(dir, {
-                template: outerHTML,
-                expr: expr
-            })
-         
-            node = component.construct(node)
-        }
+    var innerHTML = node.template
+    if (!rnocontent.test(node.type) && rbind.test(outerHTML)) {
+        pushArray(node.children, createVirtual(innerHTML))
+
+    } else {
+        node.skipContent = true
+        node.__content = innerHTML
     }
     return node
 }
+

@@ -3,10 +3,9 @@ avalon.directive("css", {
     change: function (val, binding) {
         var elem = binding.element
         if (elem) {
-            var change = addHooks(elem, "changeStyles")
+            var change = addData(elem, "changeStyles")
             change[this.param] = val
-            change = addHooks(elem, "changeHooks")
-            change.css = directives.css.update
+            addHooks(this, binding)
         }
     },
     update: function (elem, vnode) {

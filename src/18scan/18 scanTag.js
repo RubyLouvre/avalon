@@ -1,4 +1,4 @@
-function scanTag(elem, vmodel) {
+function scanTag(elem, vmodel, siblings) {
     var props = elem.props
     //更新数据
     var v = props["data-important"]
@@ -24,9 +24,9 @@ function scanTag(elem, vmodel) {
     if (elem.type.indexOf(":") > 0 && !avalon.components[elem.type]) {
         //avalon.component(elem)
     } else {
-        scanAttrs(elem, vmodel)
+        scanAttrs(elem, vmodel, siblings)
     }
     return elem
 }
 
-
+// 

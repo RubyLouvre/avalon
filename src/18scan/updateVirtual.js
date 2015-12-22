@@ -21,7 +21,7 @@ function updateVirtual(nodes, vm) {
                 break
             default:
                 if (!node.skip) {
-                    nodes[i] = scanTag(node, vm)
+                    scanTag(node, vm, nodes)
                 }
                 break
         }

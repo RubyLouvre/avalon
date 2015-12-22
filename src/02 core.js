@@ -294,7 +294,7 @@ avalon.mix({
         /*只有当前数组不存在此元素时只添加它*/
         ensure: function (target, item) {
             if (target.indexOf(item) === -1) {
-               return target.push(item)
+                return target.push(item)
             }
         },
         /*移除数组中指定位置的元素，返回布尔表示成功与否*/
@@ -311,6 +311,9 @@ avalon.mix({
     }
 })
 
+function pushArray(target, other) {
+    target.push.apply(target, other)
+}
 var bindingHandlers = avalon.bindingHandlers = {}
 var bindingExecutors = avalon.bindingExecutors = {}
 
@@ -343,3 +346,4 @@ function isArrayLike(obj) {
     }
     return false
 }
+

@@ -1,18 +1,13 @@
-function VElement(type, innerHTML, outerHTML) {
+function VElement(type, props, children) {
     this.type = type
-    this.props = {}
-    this.innerHTML = innerHTML
-    this.outerHTML = outerHTML
-    this.children = []
+    this.props = props || {}
+    this.children = children || []
+    this.template = "" //这里相当于innerHTML,保存最原始的模板
 }
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {
-        if (this.skip) {
-            return avalon.parseHTML(this.outerHTML)
-        }
         var dom = document.createElement(this.type)
-
         for (var i in this.props) {
             if (this.props[i] === false) {
                 dom.removeAttribute(i)
@@ -39,25 +34,29 @@ VElement.prototype = {
             this.children.forEach(function (c) {
                 dom.appendChild(c.toDOM())
             })
-            if(!this.children.length){
-                dom.innerHTML = this.innerHTML
+            if (!this.children.length) {
+                a = avalon.parseHTML(this.template)
+                dom.appendChild(a)
             }
         }
         return dom
     },
-    toHTML: function () {
+    toHTML: function (skipProps) {
         if (this.skip) {
             return this.outerHTML
         }
-        if (this.closeSelf) {
-            return "<" + this.type + "/>"
-        }
-        var p = ""
+        var arr = []
         for (var i in this.props) {
-            p += (i + "=" + quote(String(this.props[i]))) + " "
+            if (skipProps && skipProps[i])
+                continue
+            arr.push(i + "=" + quote(String(this.props[i])))
         }
-        p = p ? " " + p : p
-        var str = "<" + this.type + p + ">"
+        arr = arr.length ? " " + arr.join(" ") : ""
+        var str = "<" + this.type + arr
+        if (this.closeSelf) {
+            return str + "/>"
+        }
+        str += ">"
         if (this.skipContent) {
             str += this.__content
         } else {

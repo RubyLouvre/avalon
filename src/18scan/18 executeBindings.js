@@ -2,8 +2,10 @@
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
-        directives[binding.type].init(binding)
+        var isBreak = directives[binding.type].init(binding)
         avalon.injectBinding(binding)
+        if (isBreak === false)
+            break
     }
     bindings.length = 0
 }
@@ -30,7 +32,7 @@ avalon.injectBinding = function (binding) {
 
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
-       
+
         if (!is(value, binding.oldValue)) {
 
             dir.change(value, binding)
