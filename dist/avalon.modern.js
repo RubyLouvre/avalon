@@ -1131,7 +1131,6 @@ function batchUpdateEntity(vm) {
         if (dom) {
             canUpdateEntity = false
             setTimeout(function () {
-                console.log([dom], [vnode])
                 updateEntity([dom], [vnode])
                 canUpdateEntity = true
             })

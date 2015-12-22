@@ -3,56 +3,15 @@
     <head>
         <meta charset="UTF-8">
         <script src="avalon.js"></script>
-        <script type="xx">
-            <input type="text" ms-attr-value="data"/> {{data}}
-            <p ms-text="aaa">这是ms-html</p>
-            <b ms-if="toggle">ms-if</b>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: '司徒正美'
+
+            })
         </script>
     </head>
     <body ms-controller="test">
-
-        <ul>
-            <li ms-repeat="array"><b>{{el}}+{{$index}}+{{data}}</b></li>
-        </ul>
-
-        <script>
-
-
-// 创建组件
-
-// 定义vm
-var vm = avalon.define({
-    $id: 'test',
-    data: '司徒正美',
-    aaa: "<strong>{{a.b}}</strong><b>{{a.b}}</b>",
-    toggle: false,
-    array: [111, 111,111,444, 222, 333],
-    //  array: [{name: 11}, {name: 22}, {name: 33}],
-    a: {
-        b: 3
-    }
-})
-
-setTimeout(function () {
-  
-    vm.array.reverse()
-    //  vm.array.unshift({name: 444})
-    // vm.array.push({name:88})
-    // vm.array = [{name: 3}, {name: 2}, {name: 1},{name:88}] //.unshift({name: "first"})
-}, 2000)
-
-//var before = vm.array[0]
-//var proxy = avalon.createProxy(before, after)
-//heirloom.vm = proxy
-//console.log(proxy.name === before.name)
-//proxy.name = 3
-//
-//console.log(before.name)
-
-
-
-
-
-        </script>
+        {{aaa}}
     </body>
 </html>
