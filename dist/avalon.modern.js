@@ -81,7 +81,7 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
-
+var bindingID = 1024
 var IEVersion = NaN
 if (window.VBArray) {
     IEVersion = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
@@ -694,14 +694,14 @@ function $watch(expr, binding) {
 
     if (typeof binding === "function") {
         var backup = binding
-        backup.uniqueNumber = Math.random()
+        backup.uuid = "_"+ (++bindingID)
         binding = {
             element: root,
             type: "user-watcher",
             handler: noop,
             vmodels: [this],
             expr: expr,
-            uniqueNumber: backup.uniqueNumber
+            uuid: backup.uuid
         }
         binding.wildcard = /\*/.test(expr)
     }
@@ -817,9 +817,10 @@ function notifySubscribers(subs, args) {
         buffer.render()//1
         for (i = 0; sub = renders[i++]; ) {
             if (sub.update) {
-                var uuid = getUid(sub)
+                sub.uuid = sub.uuid || "_"+(++bindingID)
+                var uuid = sub.uuid
                 if (!buffer.queue[uuid]) {
-                    buffer.queue[uuid] = 1
+                    buffer.queue[uuid] = "__"
                     buffer.queue.push(sub)
                 }
             }
@@ -1476,36 +1477,19 @@ function getProxyIds(a, isArray) {
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 
-function getUid(data) { //IE9+,标准浏览器
-    if (!data.uniqueNumber) {
-        var elem = data.element
-        if (elem) {
-            if (elem.nodeType !== 1) {
-                //如果是注释节点,则data.pos不存在,当一个元素下有两个注释节点就会出问题
-                data.uniqueNumber = data.type + "-" + getUid(elem.parentNode) + "-" + (++disposeCount)
-            } else {
-                data.uniqueNumber = data.name + "-" + getUid(elem)
-            }
-        } else {
-            data.uniqueNumber = "_"+(++disposeCount)
-        }
-    }
-    return data.uniqueNumber
-}
-
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var lists = data.lists || (data.lists = [])
-    var uuid = getUid(data)
+    if(!data.uuid){
+       data.uuid =  "_"+(++bindingID)
+    }
     avalon.Array.ensure(lists, list)
-    //list.$uuid = list.$uuid || generateID()
-    if (!disposeQueue[uuid]) {
-        disposeQueue[uuid] = 1
+    if (!disposeQueue[data.uuid]) {
+        disposeQueue[data.uuid] = "__"
         disposeQueue.push(data)
     }
 }
@@ -1542,7 +1526,7 @@ function rejectDisposeQueue(data) {
             }
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
-                delete disposeQueue[data.uniqueNumber]
+                delete disposeQueue[data.uuid]
                 var lists = data.lists
                 for (var k = 0, list; list = lists[k++]; ) {
                     avalon.Array.remove(lists, list)
@@ -1557,7 +1541,7 @@ function rejectDisposeQueue(data) {
 }
 
 function disposeData(data) {
-    delete disposeQueue[data.uniqueNumber] // 先清除，不然无法回收了
+    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
     data.rollback && data.rollback()
     for (var key in data) {
@@ -2518,6 +2502,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             expr: newValue,
                             oneTime: oneTime,
+                            uuid: "_" + (++bindingID),
                             priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {

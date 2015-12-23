@@ -113,7 +113,7 @@ if (!rnative.test([].map)) {
         //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Prototype.js的对应名字为all。
         every: iterator("", 'if(!_)return false', 'return true')
     })
-    function iterator(vars, body, ret) {
+    var iterator = function(vars, body, ret) {
         var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
         /* jshint ignore:start */
         return Function("fn,scope", fun)

@@ -35,6 +35,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             expr: newValue,
                             oneTime: oneTime,
+                            uuid: "_" + (++bindingID),
                             priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {

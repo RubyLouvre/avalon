@@ -4,14 +4,14 @@ function $watch(expr, binding) {
 
     if (typeof binding === "function") {
         var backup = binding
-        backup.uniqueNumber = Math.random()
+        backup.uuid = "_"+ (++bindingID)
         binding = {
             element: root,
             type: "user-watcher",
             handler: noop,
             vmodels: [this],
             expr: expr,
-            uniqueNumber: backup.uniqueNumber
+            uuid: backup.uuid
         }
         binding.wildcard = /\*/.test(expr)
     }
@@ -127,9 +127,10 @@ function notifySubscribers(subs, args) {
         buffer.render()//1
         for (i = 0; sub = renders[i++]; ) {
             if (sub.update) {
-                var uuid = getUid(sub)
+                sub.uuid = sub.uuid || "_"+(++bindingID)
+                var uuid = sub.uuid
                 if (!buffer.queue[uuid]) {
-                    buffer.queue[uuid] = 1
+                    buffer.queue[uuid] = "__"
                     buffer.queue.push(sub)
                 }
             }
