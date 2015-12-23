@@ -2807,6 +2807,7 @@ avalon.directive("if", {
         var elem = binding.element
         if (elem) {
             disposeVirtual(elem.children)
+            elem.state = !!value
             if (value) {
                 var vnodes = createVirtual(elem.template, true)
                 updateVirtual(vnodes, binding.vmodel)
@@ -2814,12 +2815,25 @@ avalon.directive("if", {
             } else {
                 pushArray(elem.children, [new VComment("ms-if")])
             }
-            
+
             addHooks(this, binding)
         }
     },
     update: function (node, vnode, parent) {
-        updateEntity([node], [vnode.children[0]], parent)
+        var child = vnode.children[0]
+
+
+        if (node.nodeType !== getVType(child)) {
+            console.log(node.keep, "~")
+            node.keep = node.keep || child.toDOM()
+            parent.replaceChild(node.keep, node)
+            node = node.keep
+            //console.log(node)
+        }
+        if (node.nodeType === 1) {
+            updateEntity([node], [child], parent)
+        }
+        return false
     }
 })
 
@@ -3525,9 +3539,6 @@ avalon.injectBinding = function (binding) {
 //old(binding, oldValue)? 如何保持旧值 
 
 
-// attr css class data duplex
-
-// aaa.bb.ccc
 
 /*********************************************************************
  *                           扫描系统                                 *
@@ -3733,6 +3744,7 @@ function scanText(node, vmodel) {
             var nodeValue = texts.join("")
             if (nodeValue !== node.nodeValue) {
                 node.change = "update"
+                console.log("!!!!")
                 node.nodeValue = nodeValue
             }
         }
@@ -3807,7 +3819,7 @@ var rfullTag = /^<(\S+)(\s+[^=\s]+(?:=(?:"[^"]*"|'[^']*'|[^>\s]+))?)*\s*>([\s\S]
 //匹配只有开标签的元素节点
 var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*\s*>/
 //用于创建适配某一种标签的正则表达式
-var openStr = '(?:\\s+([^=\s]+)(?:=("[^"]*"|\'[^\']*\'|[^\\s>]+))?)*\\s*>'
+var openStr = "(?:\\s+[^=\\s]+(?:=(?:\"[^\"]*\"|'[^']*'|[^>\s]+))?)*\\s*>"
 //匹配文本节点
 var rtext = /^[^<]+/
 //匹配注释节点
@@ -3906,6 +3918,7 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
+               
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -3917,8 +3930,7 @@ function createVirtual(text, force) {
 
                 var pos = opens.concat(closes).sort()
                 var gtlt = pos.join("").replace(/\d+/g, "")
-
-                //<<>><<>>
+                    //<<>><<>>
                 var gutter = gtlt.indexOf("><")
 
                 if (gutter !== -1) {
@@ -3926,7 +3938,6 @@ function createVirtual(text, force) {
                     var findex = parseFloat(pos[index]) + tagName.length + 3
                     matchText = matchText.slice(0, findex)
                 }
-
                 var allAttrs = matchText.match(rattr1)[0]
 
                 var innerHTML = matchText.slice((tagName + allAttrs).length + 1,
@@ -4014,57 +4025,21 @@ function disposeVirtual(nodes) {
 
 //更新真实DOM树
 
-function updateEntity(nodes, vnodes, parent) {
-    var node = nodes[0], vnode
-    parent = parent || node.parentNode
-    label:
-            for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
-        vnode = vnodes[vi]
 
-        if (!node) {
-            node = vnode.toDOM() //  如果对应的真实DOM还不存在
-            parent.appendChild(node)
-        } else if (node.type !== getVType(vnode) && vnode.type !== "#component") {
-            var tmp = vnode.toDOM()
-            parent.replaceChild(tmp, node)
-            node = tmp
-        }
-        var hooks = vnode.updateHooks
-        if (hooks) {//这里存在优化级
-            for (var k = 0, hook; hook = hooks[k++]; ) {
-                var isContinue = hook(node, vnode, parent)
-                if (isContinue === false) {
-                    node = getNextNode(node, vnode)
-                    delete vnode.updateHooks
-                    continue label
-                }
-            }
-            delete vnode.updateHooks
-        }
-        if (!vnode.skipContent && !vnode.skip && vnode.children && node.nodeType === 1) {
-            updateEntity(node.childNodes, vnode.children, node)
-        }
-        node = getNextNode(node, vnode)
-    }
-    if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
-        while (node.nextSibling) {
-            parent.removeChild(node.nextSibling)
-        }
-    }
-}
-
-function getNextNode(node, vnode) {
+function getNextNode(node, vnode, a) {
     if (vnode.type === "#component" && vnode.signature) {
         // 如果存在路标
-        var end = vnode.signature + ":end", next
-        while (next = node.nextSibling) {
+        var end = vnode.signature + ":end"
+        var next = node.nextSibling
+        while (next) {
             if (next.nodeValue === end) {
                 return next.nextSibling
             }
+            next = next.nextSibling
         }
         return next
     } else {
-        return node.nextSibling
+        return a
     }
 }
 
@@ -4098,6 +4073,58 @@ function getVType(node) {
 }
 
 
+
+function updateEntity(nodes, vnodes, parent) {
+    var node = nodes[0], vnode
+
+    parent = parent || node.parentNode
+    label:
+            for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
+        var vnode = vnodes[vi]
+        var nextNode = nodes[vi+1]
+        if (!node) {
+            var a = vnode.toDOM()
+            if (a.nodeType === 11) {
+                var as = avalon.slice(a.childNodes)
+                parent.appendChild(a)
+                updateEntity(as, vnode.children, parent)
+                node = null
+                continue label
+            } else {
+                node = a
+            }
+        } else if (node.nodeType !== getVType(vnode)) {
+            //如果它碰到的是组件,交由组件的updateHooks处理
+            if (vnode.type !== "#component") {
+                var b = vnode.toDOM()
+                parent.replaceChild(b, node)
+                node = b
+            }
+        }
+        var hooks = vnode.updateHooks
+        if (hooks) {//这里存在优化级
+            for (var k = 0, hook; hook = hooks[k++]; ) {
+
+                var isContinue = hook(node, vnode, parent)
+                if (isContinue === false) {
+                    node = getNextNode(node, vnode, nextNode)
+                    delete vnode.updateHooks
+                    continue label
+                }
+            }
+            delete vnode.updateHooks
+        }
+        if (!vnode.skipContent && !vnode.skip && vnode.children && node.nodeType === 1) {
+            updateEntity(node.childNodes, vnode.children, node)
+        }
+        node = getNextNode(node, vnode, nextNode)
+    }
+    if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
+        while (node.nextSibling) {
+            parent.removeChild(node.nextSibling)
+        }
+    }
+}
 //更新整个虚拟DOM树
 function updateVirtual(nodes, vm) {
     for (var i = 0, n = nodes.length; i < n; i++) {
@@ -5030,6 +5057,7 @@ directives["{{}}"] = {
         binding.array[binding.index] = value
         var nodeValue = binding.array.join("")
         var node = binding.element
+        //console.log(nodeValue !== node.nodeValue)
         if (nodeValue !== node.nodeValue) {
             node.nodeValue = nodeValue
             addHooks(this, binding)

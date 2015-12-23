@@ -4,7 +4,7 @@ var rfullTag = /^<(\S+)(\s+[^=\s]+(?:=(?:"[^"]*"|'[^']*'|[^>\s]+))?)*\s*>([\s\S]
 //匹配只有开标签的元素节点
 var rvoidTag = /^<(\S+)(\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?)*\s*>/
 //用于创建适配某一种标签的正则表达式
-var openStr = '(?:\\s+([^=\s]+)(?:=("[^"]*"|\'[^\']*\'|[^\\s>]+))?)*\\s*>'
+var openStr = "(?:\\s+[^=\\s]+(?:=(?:\"[^\"]*\"|'[^']*'|[^>\s]+))?)*\\s*>"
 //匹配文本节点
 var rtext = /^[^<]+/
 //匹配注释节点
@@ -103,6 +103,7 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
+               
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -114,8 +115,7 @@ function createVirtual(text, force) {
 
                 var pos = opens.concat(closes).sort()
                 var gtlt = pos.join("").replace(/\d+/g, "")
-
-                //<<>><<>>
+                    //<<>><<>>
                 var gutter = gtlt.indexOf("><")
 
                 if (gutter !== -1) {
@@ -123,7 +123,6 @@ function createVirtual(text, force) {
                     var findex = parseFloat(pos[index]) + tagName.length + 3
                     matchText = matchText.slice(0, findex)
                 }
-
                 var allAttrs = matchText.match(rattr1)[0]
 
                 var innerHTML = matchText.slice((tagName + allAttrs).length + 1,

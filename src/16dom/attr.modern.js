@@ -69,5 +69,4 @@ function attrUpdate(elem, vnode) {
         }
     }
     delete vnode.changeAttrs
-    delete vnode.changeHooks.attr
 }

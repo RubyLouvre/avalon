@@ -18,6 +18,7 @@ function scanText(node, vmodel) {
             var nodeValue = texts.join("")
             if (nodeValue !== node.nodeValue) {
                 node.change = "update"
+                console.log("!!!!")
                 node.nodeValue = nodeValue
             }
         }

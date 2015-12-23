@@ -61,6 +61,3 @@ avalon.injectBinding = function (binding) {
 //old(binding, oldValue)? 如何保持旧值 
 
 
-// attr css class data duplex
-
-// aaa.bb.ccc
