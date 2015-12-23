@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.6 built in 2015.12.19
+ avalon.mobile.js 1.5.6 built in 2015.12.23
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -6043,8 +6043,8 @@ var tapRecognizer = {
     //判定是否发生移动,其阀值是10px
     var touch = event.changedTouches[0],
       boundary = tapRecognizer.touchBoundary
-    return Math.abs(touch.pageX - tapRecognizer.touchStartX) > boundary ||
-      Math.abs(touch.pageY - tapRecognizer.touchStartY) > boundary
+    return Math.abs(touch.pageX - tapRecognizer.pageX) > boundary ||
+      Math.abs(touch.pageY - tapRecognizer.pageY) > boundary
 
   },
 

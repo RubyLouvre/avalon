@@ -115,8 +115,8 @@ var tapRecognizer = {
     //判定是否发生移动,其阀值是10px
     var touch = event.changedTouches[0],
       boundary = tapRecognizer.touchBoundary
-    return Math.abs(touch.pageX - tapRecognizer.touchStartX) > boundary ||
-      Math.abs(touch.pageY - tapRecognizer.touchStartY) > boundary
+    return Math.abs(touch.pageX - tapRecognizer.pageX) > boundary ||
+      Math.abs(touch.pageY - tapRecognizer.pageY) > boundary
 
   },
 
