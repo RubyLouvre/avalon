@@ -18,6 +18,11 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
+var bindingID = 1024
+function getUid(el){
+  return el.uuid || (el.uuid = "_"+(++bindingID))
+}
+
 
 var IEVersion = NaN
 if (window.VBArray) {

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2015.12.23
+ avalon.modern.js 1.6 built in 2015.12.24
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -81,6 +81,11 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
+var bindingID = 1024
+function getUid(el){
+  return el.uuid || (el.uuid = "_"+(++bindingID))
+}
+
 
 var IEVersion = NaN
 if (window.VBArray) {
@@ -1068,7 +1073,8 @@ function $watch(expr, funOrObj) {
     var list = hive[expr] || (hive[expr] = [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
-        element: {}
+        element: {},
+        uuid: getUid(funOrObj)
     } : funOrObj
     if (avalon.Array.ensure(list, data)) {
         injectDisposeQueue(data, list)
@@ -1079,7 +1085,7 @@ function $watch(expr, funOrObj) {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-    
+
     var hive = topVm && topVm.$events
     //console.log(path, hive,topVm)
     if (hive && hive[path]) {
@@ -1281,17 +1287,10 @@ function injectDependency(list, binding) {
  *                          定时GC回收机制                             *
  **********************************************************************/
 
-var disposeCount = 1
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
 
-function getUid(data) { //IE9+,标准浏览器
-    if (!data.uuid) {
-        data.uuid = "_"+(disposeCount++)
-    }
-    return data.uuid
-}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
@@ -1299,7 +1298,7 @@ function injectDisposeQueue(data, list) {
     var uuid = getUid(data)
     avalon.Array.ensure(lists, list)
     if (!disposeQueue[uuid]) {
-        disposeQueue[uuid] = "ok"
+        disposeQueue[uuid] = "__"
         disposeQueue.push(data)
     }
 }
@@ -2360,7 +2359,7 @@ avalon.directive("if", {
         var dom = node, vdom = vnode.children[0]
         if (node.nodeType !== getVType(vdom)) {
             if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
-                avalon.log(new Date - 0)
+                avalon.log(new Date() - 0)
                 var c = vdom.toDOM()
                 c.keep = node
                 node.keep = c
@@ -2400,7 +2399,7 @@ function toString(element, map) {
 //                if (node.nodeType === 8 && node.nodeValue === first.nodeValue) {
 //                    var breakText = first.nodeValue.replace(":start", ":end")
 //                    var insertPoint = null, next = node
-//                    
+//
 //                    while (next = next.sibling) {
 //                        nodes.push(next)
 //                        if (next.nodeValue === breakText) {
@@ -2412,6 +2411,7 @@ function toString(element, map) {
 //                    flag = true
 //                }
 //            }
+
 avalon.components["ms-html"] = {
     construct: function (self, parent) {
 //替换父节点的所有孩子
@@ -2807,7 +2807,7 @@ function saveInCache(cache, vm, component) {
 
 if (!Object.is) {
 
-    function SameValue(a, b) {
+    var SameValue = function (a, b) {
         if (a === b) {
             // 0 === -0, but they are not identical.
             if (a === 0) {
@@ -2828,6 +2828,7 @@ if (!Object.is) {
     }
     Object.is = SameValue
 }
+
 function VComment(text) {
     this.type = "#comment"
     this.nodeValue = text
@@ -3135,10 +3136,12 @@ function scanText(node, vmodel) {
     var texts = []
     for (var i = 0, token; token = tokens[i]; i++) {
         if (token.type) {
+            /* jshint ignore:start */
             token.expr = token.expr.replace(roneTime, function () {
                 token.oneTime = true
                 return ""
             })
+            /* jshint ignore:end */
             token.element = node
             token.vmodel = vmodel
             token.index = i
@@ -3148,14 +3151,17 @@ function scanText(node, vmodel) {
             texts[i] = token.expr
             var nodeValue = texts.join("")
             if (nodeValue !== node.nodeValue) {
-                node.change = "update"
-                console.log("!!!!")
                 node.nodeValue = nodeValue
+                addHooks(directives["{{}}"], {
+                   element: node,
+                   priority:1160
+                })
             }
         }
     }
     return [node]
 }
+
 //添加更新真实DOM的钩子,钩子为指令的update方法,它们与绑定对象一样存在优化级
 function addData(elem, name) {
     return elem[name] || (elem[name] = {})

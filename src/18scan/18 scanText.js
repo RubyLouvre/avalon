@@ -4,10 +4,12 @@ function scanText(node, vmodel) {
     var texts = []
     for (var i = 0, token; token = tokens[i]; i++) {
         if (token.type) {
+            /* jshint ignore:start */
             token.expr = token.expr.replace(roneTime, function () {
                 token.oneTime = true
                 return ""
             })
+            /* jshint ignore:end */
             token.element = node
             token.vmodel = vmodel
             token.index = i
@@ -17,9 +19,11 @@ function scanText(node, vmodel) {
             texts[i] = token.expr
             var nodeValue = texts.join("")
             if (nodeValue !== node.nodeValue) {
-                node.change = "update"
-                console.log("!!!!")
                 node.nodeValue = nodeValue
+                addHooks(directives["{{}}"], {
+                   element: node,
+                   priority:1160
+                })
             }
         }
     }

@@ -3,7 +3,8 @@ function $watch(expr, funOrObj) {
     var list = hive[expr] || (hive[expr] = [])
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
-        element: {}
+        element: {},
+        uuid: getUid(funOrObj)
     } : funOrObj
     if (avalon.Array.ensure(list, data)) {
         injectDisposeQueue(data, list)
@@ -14,7 +15,7 @@ function $watch(expr, funOrObj) {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-    
+
     var hive = topVm && topVm.$events
     //console.log(path, hive,topVm)
     if (hive && hive[path]) {

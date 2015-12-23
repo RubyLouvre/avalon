@@ -60,7 +60,7 @@ avalon.ready(function () {
 })
 */
 
-new function () {
+;(function () {
     avalon.config({
         loader: false
     })
@@ -89,4 +89,4 @@ new function () {
     avalon.ready(function () {
         avalon.scan(DOC.body)
     })
-}
+})()

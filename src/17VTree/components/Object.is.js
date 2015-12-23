@@ -1,6 +1,6 @@
 if (!Object.is) {
 
-    function SameValue(a, b) {
+    var SameValue = function (a, b) {
         if (a === b) {
             // 0 === -0, but they are not identical.
             if (a === 0) {

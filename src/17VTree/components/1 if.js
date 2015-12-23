@@ -48,7 +48,7 @@ avalon.directive("if", {
         var dom = node, vdom = vnode.children[0]
         if (node.nodeType !== getVType(vdom)) {
             if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
-                avalon.log(new Date - 0)
+                avalon.log(new Date() - 0)
                 var c = vdom.toDOM()
                 c.keep = node
                 node.keep = c
@@ -88,7 +88,7 @@ function toString(element, map) {
 //                if (node.nodeType === 8 && node.nodeValue === first.nodeValue) {
 //                    var breakText = first.nodeValue.replace(":start", ":end")
 //                    var insertPoint = null, next = node
-//                    
+//
 //                    while (next = next.sibling) {
 //                        nodes.push(next)
 //                        if (next.nodeValue === breakText) {
