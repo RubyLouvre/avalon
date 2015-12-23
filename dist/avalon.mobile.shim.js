@@ -77,7 +77,7 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
-
+var bindingId = 1024 //绑定对象的UUID，不断递增
 
 function noop() {
 }
@@ -165,6 +165,7 @@ avalon.nextTick = new function () {// jshint ignore:line
         setTimeout(fn, 4)
     }
 }// jshint ignore:line
+
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
  **********************************************************************/
@@ -1501,31 +1502,20 @@ function fireDependencies(list) {
 /*********************************************************************
  *                          定时GC回收机制                             *
  **********************************************************************/
-var disposeCount = 0
+
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
 var oldInfo = {}
-//var uuid2Node = {}
-function getUid(elem, makeID) { //IE9+,标准浏览器
-    if (!elem.uuid && !makeID) {
-        elem.uuid = ++disposeCount
-    }
-    return elem.uuid
-}
+
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var elem = data.element
     if (!data.uuid) {
-        if (elem.nodeType !== 1) {
-            data.uuid = data.type + getUid(elem.parentNode)+ "-"+ (++disposeCount)
-        } else {
-            data.uuid = data.name + "-" + getUid(elem)
-        }
+        data.uuid =  "_" + (++bindingId)
     }
     var lists = data.lists || (data.lists = [])
     avalon.Array.ensure(lists, list)
-    list.$uuid = list.$uuid || generateID()
     if (!disposeQueue[data.uuid]) {
         disposeQueue[data.uuid] = 1
         disposeQueue.push(data)
@@ -1567,7 +1557,6 @@ function rejectDisposeQueue(data) {
             if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
-                //delete uuid2Node[data.element.uuid]
                 var lists = data.lists
                 for (var k = 0, list; list = lists[k++]; ) {
                     avalon.Array.remove(lists, list)
@@ -2489,6 +2478,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
+                            uuid: "_" + (++bindingId), 
                             priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
@@ -2545,6 +2535,7 @@ function scanAttr(elem, vmodels, match) {
 
 var rnoscanAttrBinding = /^if|widget|repeat$/
 var rnoscanNodeBinding = /^each|with|html|include$/
+
 function scanNodeList(parent, vmodels) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodels)

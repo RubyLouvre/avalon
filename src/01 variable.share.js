@@ -18,7 +18,7 @@ var class2type = {}
 "Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
-
+var bindingId = 1024 //绑定对象的UUID，不断递增
 
 function noop() {
 }
