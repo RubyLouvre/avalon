@@ -4,6 +4,7 @@ directives["{{}}"] = {
         binding.array[binding.index] = value
         var nodeValue = binding.array.join("")
         var node = binding.element
+        //console.log(nodeValue !== node.nodeValue)
         if (nodeValue !== node.nodeValue) {
             node.nodeValue = nodeValue
             addHooks(this, binding)

@@ -51,11 +51,10 @@ function getVType(node) {
 
 function updateEntity(nodes, vnodes, parent) {
     var node = nodes[0], vnode
-
     parent = parent || node.parentNode
     label:
             for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
-        var vnode = vnodes[vi]
+         vnode = vnodes[vi]
         var nextNode = nodes[vi+1]
         if (!node) {
             var a = vnode.toDOM()
@@ -95,6 +94,7 @@ function updateEntity(nodes, vnodes, parent) {
         node = getNextNode(node, vnode, nextNode)
     }
     if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
+        console.log("___")
         while (node.nextSibling) {
             parent.removeChild(node.nextSibling)
         }

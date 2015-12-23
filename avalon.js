@@ -2820,18 +2820,19 @@ avalon.directive("if", {
         }
     },
     update: function (node, vnode, parent) {
-        var child = vnode.children[0]
-
-
-        if (node.nodeType !== getVType(child)) {
-            console.log(node.keep, "~")
-            node.keep = node.keep || child.toDOM()
+        var dom = node, vdom = vnode.children[0]
+        if (node.nodeType !== getVType(vdom)) {
+            if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
+                avalon.log(new Date - 0)
+                var c = vdom.toDOM()
+                c.keep = node
+                node.keep = c
+            }
             parent.replaceChild(node.keep, node)
-            node = node.keep
-            //console.log(node)
+            dom = node.keep
         }
-        if (node.nodeType === 1) {
-            updateEntity([node], [child], parent)
+        if (dom.nodeType === 1) {
+            updateEntity([dom], [vdom], parent)
         }
         return false
     }
@@ -4076,11 +4077,10 @@ function getVType(node) {
 
 function updateEntity(nodes, vnodes, parent) {
     var node = nodes[0], vnode
-
     parent = parent || node.parentNode
     label:
             for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
-        var vnode = vnodes[vi]
+         vnode = vnodes[vi]
         var nextNode = nodes[vi+1]
         if (!node) {
             var a = vnode.toDOM()
@@ -4120,6 +4120,7 @@ function updateEntity(nodes, vnodes, parent) {
         node = getNextNode(node, vnode, nextNode)
     }
     if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
+        console.log("___")
         while (node.nextSibling) {
             parent.removeChild(node.nextSibling)
         }

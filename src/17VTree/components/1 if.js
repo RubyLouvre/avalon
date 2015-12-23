@@ -32,6 +32,7 @@ avalon.directive("if", {
         var elem = binding.element
         if (elem) {
             disposeVirtual(elem.children)
+            elem.state = !!value
             if (value) {
                 var vnodes = createVirtual(elem.template, true)
                 updateVirtual(vnodes, binding.vmodel)
@@ -39,12 +40,26 @@ avalon.directive("if", {
             } else {
                 pushArray(elem.children, [new VComment("ms-if")])
             }
-            
+
             addHooks(this, binding)
         }
     },
     update: function (node, vnode, parent) {
-        updateEntity([node], [vnode.children[0]], parent)
+        var dom = node, vdom = vnode.children[0]
+        if (node.nodeType !== getVType(vdom)) {
+            if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
+                avalon.log(new Date - 0)
+                var c = vdom.toDOM()
+                c.keep = node
+                node.keep = c
+            }
+            parent.replaceChild(node.keep, node)
+            dom = node.keep
+        }
+        if (dom.nodeType === 1) {
+            updateEntity([dom], [vdom], parent)
+        }
+        return false
     }
 })
 
