@@ -2875,16 +2875,6 @@ function toString(element, map) {
 //                }
 //            }
 
-avalon.components["ms-html"] = {
-    construct: function (self, parent) {
-//替换父节点的所有孩子
-        parent.children = [self]
-        return parent
-    }
-    //init: Ifcom.init
-}
-
-
 
 avalon.directive("html", {
     change: function (value, binding) {
@@ -2893,49 +2883,46 @@ avalon.directive("html", {
             value = typeof value === "string" ? value : String(value)
             disposeVirtual(elem.children)
             var children = createVirtual(value, true)
-            elem.children = updateVirtual(children, binding.vmodel)
-            var change = addHooks(elem, "changeHooks")
-            change.html = this.update
+            pushArray(elem.children, updateVirtual(children, binding.vmodel))
+            addHooks(this, binding)
         }
+        return false
     },
     update: function (elem, vnode) {
-        var parent = elem.parentNode
-        avalon.clearHTML(parent)
-        parent.appendChild(vnode.toDOM())
+        var child = vnode.children[0]
+        if (vnode.disposed || !child)
+            return
+        avalon.clearHTML(elem)
+        elem.appendChild(child.toDOM())
+        updateEntity(elem.childNodes, vnode.children, elem)
     }
 })
 
 
-avalon.components["ms-text"] = {
-    construct: function (parent) {
-//替换父节点的所有孩子
-        parent.children = [this]
-        return parent
-    }
-    //  init: Ifcom.init
-}
 
 
 avalon.directive("text", {
     change: function (value, binding) {
         var elem = binding.element
-        if (elem) {
+        if (elem && !elem.disposed) {
             value = typeof value === "string" ? value : String(value)
             disposeVirtual(elem.children)
             var children = [new VText(value)]
-            elem.children = updateVirtual(children, binding.vmodel)
+            pushArray(elem.children, updateVirtual(children, binding.vmodel))
             addHooks(this, binding)
         }
+        return false
     },
     update: function (elem, vnode) {
-        var parent = elem.parentNode
-        if (!parent)
+        var child = vnode.children[0]
+        if (vnode.disposed || !child)
             return
-        if ("textContent" in parent) {
-            elem.textContent = vnode.toHTML()
+        if ("textContent" in elem) {
+            elem.textContent = child.toHTML()
         } else {
-            elem.innerText = vnode.toHTML()
+            elem.innerText = child.toHTML()
         }
+        updateEntity(elem.childNodes, vnode.children, elem)
     }
 })
 
