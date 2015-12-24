@@ -18,7 +18,6 @@ avalon.directive("if", {
                 break
             }
         }
-
         delete binding.siblings
         binding.element = component
         return false

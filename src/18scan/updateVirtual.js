@@ -4,6 +4,7 @@ function updateVirtual(nodes, vm) {
         var node = nodes[i]
         switch (node.type) {
             case "#comment":
+            case "#component":
                 break
             case "#text":
                 if (!node.skip) {
@@ -15,9 +16,6 @@ function updateVirtual(nodes, vm) {
                         }
                     }
                 }
-                break
-            case "#component":
-                node.init(vm)
                 break
             default:
                 if (!node.skip) {

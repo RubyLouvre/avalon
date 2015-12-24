@@ -57,9 +57,12 @@ function updateEntity(nodes, vnodes, parent) {
          vnode = vnodes[vi]
         var nextNode = nodes[vi+1]
         if (!node) {
+            
             var a = vnode.toDOM()
+            
             if (a.nodeType === 11) {
                 var as = avalon.slice(a.childNodes)
+                console.log(node, vnode)
                 parent.appendChild(a)
                 updateEntity(as, vnode.children, parent)
                 node = null
