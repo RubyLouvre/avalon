@@ -12,56 +12,45 @@ avalon.directive("class", {
             binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
             binding.oldStyle = oldStyle
         }
-        if (method === "hover" || method === "active") { //确保只绑定一次
-            if (!binding.hasBindEvent) {
-                var elem = binding.element
-                var $elem = avalon(elem)
-                var activate = "mouseenter" //在移出移入时切换类名
-                var abandon = "mouseleave"
-                if (method === "active") { //在聚焦失焦中切换类名
-                    elem.tabIndex = elem.tabIndex || -1
-                    activate = "mousedown"
-                    abandon = "mouseup"
-                    var fn0 = $elem.bind("mouseleave", function () {
-                        binding.toggleClass && $elem.removeClass(binding.newClass)
-                    })
+    },
+    is: function (a, b) {
+        if (!Array.isArray(b)) {
+            return false
+        } else {
+            return a[0] === b[0] && a[1] === b[1]
+        }
+    },
+    change: function (arr, binding) {
+        var obj = binding.element.changeClass = {}
+        if (binding.oldStyle) {
+            obj[arr[0]] = arr[1]
+        } else {
+            var toggle = arr[1]
+            var keep = binding.keep || {}
+            for (var i in keep) {
+                if (keep[i] === true && toggle) {
+                    obj[i] = true
+                    delete obj[i]
                 }
             }
-
-            var fn1 = $elem.bind(activate, function () {
-                binding.toggleClass && $elem.addClass(binding.newClass)
+            var str = arr[0]
+            str.replace(rword, function (name) {
+                keep[name] = obj[name] = toggle
             })
-            var fn2 = $elem.bind(abandon, function () {
-                binding.toggleClass && $elem.removeClass(binding.newClass)
-            })
-            binding.rollback = function () {
-                $elem.unbind("mouseleave", fn0)
-                $elem.unbind(activate, fn1)
-                $elem.unbind(abandon, fn2)
-            }
-            binding.hasBindEvent = true
+            binding.keep = keep
         }
-
+        addHooks(this, binding)
     },
-    update: function (arr) {
-        var binding = this
-        var $elem = avalon(this.element)
-        binding.newClass = arr[0]
-        binding.toggleClass = !!arr[1]
-        if (binding.oldClass && binding.newClass !== binding.oldClass) {
-            $elem.removeClass(binding.oldClass)
-        }
-        binding.oldClass = binding.newClass
-        if (binding.type === "class") {
-            if (binding.oldStyle) {
-                $elem.toggleClass(binding.oldStyle, !!arr[1])
-            } else {
-                $elem.toggleClass(binding.newClass, binding.toggleClass)
-            }
+    update: function (elem, vnode) {
+        var $elem = avalon(elem)
+        var changeClass = vnode.changeClass
+        for (var i in changeClass) {
+            $elem.toggleClass(i, changeClass[i])
         }
     }
 })
 
-"hover,active".replace(rword, function (name) {
-    directives[name] = directives["class"]
-})
+//"hover,active".replace(rword, function (name) {
+//    directives[name] = directives["class"]
+//})
+

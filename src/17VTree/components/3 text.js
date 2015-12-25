@@ -13,8 +13,9 @@ avalon.directive("text", {
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
-        if (vnode.disposed || !child)
+        if (vnode.disposed || !child){
             return
+        }
         if ("textContent" in elem) {
             elem.textContent = child.toHTML()
         } else {

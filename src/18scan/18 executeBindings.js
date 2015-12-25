@@ -16,9 +16,11 @@ function bindingIs(a, b) {
 
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
-
     binding.paths.split("★").forEach(function (path) {
-        binding.vmodel.$watch(path, binding)
+        var trim = path.trim()
+        if (trim) {
+            binding.vmodel.$watch(path, binding)
+        }
     })
     delete binding.paths
     binding.update = function (a, b, path) {

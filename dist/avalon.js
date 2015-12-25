@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.6 built in 2015.12.24
+ avalon.js 1.6 built in 2015.12.25
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1355,6 +1355,7 @@ function hideProperty(host, name, value) {
     }
 }
 
+
 //===================修复浏览器对Object.defineProperties的支持=================
 if (!canHideOwn) {
     if ("__defineGetter__" in avalon) {
@@ -1480,7 +1481,7 @@ function $watch(expr, funOrObj) {
 function $emit(topVm, curVm, path, a, b, i) {
 
     var hive = topVm && topVm.$events
-    //console.log(path, hive,topVm)
+
     if (hive && hive[path]) {
         var list = hive[path]
         try {
@@ -2720,7 +2721,9 @@ function parseExpr(expr, vmodel, binding) {
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
+ 
     fn = new Function(args.join(","), headers.join(""))
+   
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
     //avalon.log(binding.getter + "")
 }
@@ -2912,8 +2915,9 @@ avalon.directive("text", {
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
-        if (vnode.disposed || !child)
+        if (vnode.disposed || !child){
             return
+        }
         if ("textContent" in elem) {
             elem.textContent = child.toHTML()
         } else {
@@ -2948,41 +2952,52 @@ avalon.directive("repeat", {
             "ms-repeat": true,
             "avalon-uuid": true
         })
-        var arr = binding.siblings
-        for (var i = 0, el; el = arr[i]; i++) {
-            if (el === parent) {
-                arr[i] = component
-                break
-            }
-        }
-
-        delete binding.siblings
-        binding.element = component //偷龙转风
-
         var type = binding.type
         component.itemName = binding.param || "el"
         var signature = generateID(type)
         component.signature = signature
+
         component["data-" + type + "-rendered"] = parent.props["data-" + type + "-rendered"]
         component.children.length = 0 //将父节点作为它的子节点
-        if (type === "each") {
-            component.template = parent.template.trim() + "<!--" + signature + "-->"
+        if (type === "repeat") {
+            // repeat组件会替换旧原来的VElement
+            var arr = binding.siblings
+            for (var i = 0, el; el = arr[i]; i++) {
+                if (el === parent) {
+                    arr[i] = component
+                    break
+                }
+            }
+            component.template = template + "<!--" + signature + "-->"
+
+        } else {
+
+            //each组件会替换掉原VComponent组件的所有孩子
+            disposeVirtual(parent.children)
             pushArray(parent.children, [component])
-            return false
+            component.template = parent.template.trim() + "<!--" + signature + "-->"
         }
-        component.template = template + "<!--" + signature + "-->"
+        binding.element = component //偷龙转风
+
+        delete binding.siblings
+
         return false
     },
     change: function (value, binding) {
-
+        //console.log(binding.expr, value)
         var parent = binding.element
         var cache = binding.cache || {}
         var newCache = {}
         var children = []
         var last = value.length - 1
         //遍历监控数组的VM或简单数据类型
-        var needDispose = [], proxy
+        var top = binding.vmodel, proxy
         var command = {}
+        var $outer = {}
+        if (top.hasOwnProperty("$outer") && typeof top.$outer === "object") {
+            $outer = top.$outer
+        }
+
         //键名为它过去的位置
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
         for (var i = 0; i <= last; i++) {
@@ -2999,11 +3014,17 @@ avalon.directive("repeat", {
                 component = new VComponent("repeatItem")
                 component.template = parent.template
                 component.itemName = binding.param || "el"
-                component.construct({vmodel: vm, top: binding.vmodel, array: value})
+                component.construct({vmodel: vm,
+                    top: top,
+                    array: value
+
+                })
                 component.index = i
                 proxy = component.vmodel
+
                 command[i] = -2
             }
+            proxy.$outer
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -3018,12 +3039,11 @@ avalon.directive("repeat", {
         for (i in cache) {//剩下的都是要删除重复利用的
             if (cache[i]) {
                 command[cache[i].vmodel.$index] = -1
-                needDispose.push(cache[i])
+                cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
 
-        disposeVirtual(needDispose) //销毁没有用的组件
         parent.children.length = 0
         pushArray(parent.children, children)
         parent.children.unshift(new VComment(parent.signature + ":start"))
@@ -3037,11 +3057,17 @@ avalon.directive("repeat", {
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
-            if (elem.nodeType !== 8 && elem.nodeValue !== groupText + ":start") {
+            if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
                 var keepChild = avalon.slice(dom.childNodes)
-                parent.replaceChild(dom, elem)
-                updateEntity(keepChild, getRepeatChild(vnode.children))
+                if (groupText.indexOf("each") === 0) {
+                    avalon.clearHTML(parent)
+                    parent.appendChild(dom)
+                } else {
+
+                    parent.replaceChild(dom, elem)
+                }
+                updateEntity(keepChild, getRepeatChild(vnode.children), parent)
             } else {
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
@@ -3082,7 +3108,7 @@ avalon.directive("repeat", {
                 vnode.children.forEach(function (el) {
                     pushArray(virtual, el.children)
                 })
-                updateEntity(entity, virtual)
+                updateEntity(entity, virtual, parent)
             }
         }
         return false
@@ -3103,25 +3129,30 @@ avalon.directive("repeat", {
 
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (options) {
-        var top = options.top
-        if (options.vmodel && options.vmodel.$id) {
-            top = createProxy(top, options.vmodel)
+        var top = options.top, item = options.vmodel
+        if (item && item.$id) {
+            top = createProxy(top, item)
         }
         var itemName = this.itemName
         var proxy = createRepeatItem(top, itemName, options.array)
-        proxy[itemName] = options.vmodel
-
+        console.log("----")
+        console.log(proxy, item, top, itemName)
+        proxy[itemName] = item
+ 
+        // proxy.$outer = options.$outer
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
         this._new = true
-        this.updateProxy = repeatItem.updateProxy
+        this.dispose = repeatItem.dispose
         return this
     },
-    updateProxy: function (options) {
-        var vm = this.vmodel
-        vm[this.itemName] = vm
-        for (var i in options.vm) {
-            vm[i] = options.vm[i]
+    dispose: function () {
+        this.disposed = true
+        var proxy = this.vmodel
+        var item = proxy[this.itemName]
+        proxy.$active = false
+        if (item) {
+            item.$active = alse
         }
     }
 }
@@ -3131,13 +3162,14 @@ function createRepeatItem(curVm, itemName, array) {
     var before = Object(curVm) === curVm ? curVm : {}
     var after = {
         $accessors: {
-            $first: makeObservable("first", heirloom),
+            $first: makeObservable("$first", heirloom),
             $last: makeObservable("$last", heirloom),
             $index: makeObservable("$index", heirloom)
         },
         $first: 1,
         $last: 1,
-        $index: 1
+        $index: 1,
+        $outer: 1
     }
     if (array) {
         after.$remove = function () {
@@ -3145,7 +3177,7 @@ function createRepeatItem(curVm, itemName, array) {
         }
     }
     after[itemName] = 1
-    after.$accessors[itemName] = makeObservable(itemName, heirloom)
+   // after.$accessors[itemName] = makeObservable(itemName, heirloom)
     var proxy = createProxy(before, after, heirloom)
     return proxy
 }
@@ -3160,15 +3192,9 @@ function getRepeatChild(children) {
     }
     return ret
 }
-//avalon.test.createRepeatItem = createRepeatItem
 
+avalon.directives.each = avalon.directives.repeat
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
-
-function removeItems(array) {
-    array.forEach(function (el) {
-        el.$active = false
-    })
-}
 
 
 function compareObject(a, b) {
@@ -3453,9 +3479,11 @@ function bindingIs(a, b) {
 
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
-
     binding.paths.split("★").forEach(function (path) {
-        binding.vmodel.$watch(path, binding)
+        var trim = path.trim()
+        if (trim) {
+            binding.vmodel.$watch(path, binding)
+        }
     })
     delete binding.paths
     binding.update = function (a, b, path) {
@@ -3837,10 +3865,10 @@ function parseVProps(node, str) {
         }
         props[name] = v || ""
     })
-    if (!props["avalon-uuid"]) {
-        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
-        addAttrHook(node)
-    }
+//    if (!props["avalon-uuid"]) {
+//        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
+//        addAttrHook(node)
+//    }
     return props
 }
 
@@ -4040,6 +4068,8 @@ function getVType(node) {
 
 function updateEntity(nodes, vnodes, parent) {
     var node = nodes[0], vnode
+    if(!node && !parent)
+        return
     parent = parent || node.parentNode
     label:
             for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
@@ -4051,12 +4081,12 @@ function updateEntity(nodes, vnodes, parent) {
             
             if (a.nodeType === 11) {
                 var as = avalon.slice(a.childNodes)
-                console.log(node, vnode)
                 parent.appendChild(a)
                 updateEntity(as, vnode.children, parent)
                 node = null
                 continue label
             } else {
+                parent.appendChild(a)
                 node = a
             }
         } else if (node.nodeType !== getVType(vnode)) {
@@ -4086,7 +4116,6 @@ function updateEntity(nodes, vnodes, parent) {
         node = getNextNode(node, vnode, nextNode)
     }
     if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
-        console.log("___")
         while (node.nextSibling) {
             parent.removeChild(node.nextSibling)
         }
@@ -4186,59 +4215,48 @@ avalon.directive("class", {
             binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
             binding.oldStyle = oldStyle
         }
-        if (method === "hover" || method === "active") { //确保只绑定一次
-            if (!binding.hasBindEvent) {
-                var elem = binding.element
-                var $elem = avalon(elem)
-                var activate = "mouseenter" //在移出移入时切换类名
-                var abandon = "mouseleave"
-                if (method === "active") { //在聚焦失焦中切换类名
-                    elem.tabIndex = elem.tabIndex || -1
-                    activate = "mousedown"
-                    abandon = "mouseup"
-                    var fn0 = $elem.bind("mouseleave", function () {
-                        binding.toggleClass && $elem.removeClass(binding.newClass)
-                    })
+    },
+    is: function (a, b) {
+        if (!Array.isArray(b)) {
+            return false
+        } else {
+            return a[0] === b[0] && a[1] === b[1]
+        }
+    },
+    change: function (arr, binding) {
+        var obj = binding.element.changeClass = {}
+        if (binding.oldStyle) {
+            obj[arr[0]] = arr[1]
+        } else {
+            var toggle = arr[1]
+            var keep = binding.keep || {}
+            for (var i in keep) {
+                if (keep[i] === true && toggle) {
+                    obj[i] = true
+                    delete obj[i]
                 }
             }
-
-            var fn1 = $elem.bind(activate, function () {
-                binding.toggleClass && $elem.addClass(binding.newClass)
+            var str = arr[0]
+            str.replace(rword, function (name) {
+                keep[name] = obj[name] = toggle
             })
-            var fn2 = $elem.bind(abandon, function () {
-                binding.toggleClass && $elem.removeClass(binding.newClass)
-            })
-            binding.rollback = function () {
-                $elem.unbind("mouseleave", fn0)
-                $elem.unbind(activate, fn1)
-                $elem.unbind(abandon, fn2)
-            }
-            binding.hasBindEvent = true
+            binding.keep = keep
         }
-
+        addHooks(this, binding)
     },
-    update: function (arr) {
-        var binding = this
-        var $elem = avalon(this.element)
-        binding.newClass = arr[0]
-        binding.toggleClass = !!arr[1]
-        if (binding.oldClass && binding.newClass !== binding.oldClass) {
-            $elem.removeClass(binding.oldClass)
-        }
-        binding.oldClass = binding.newClass
-        if (binding.type === "class") {
-            if (binding.oldStyle) {
-                $elem.toggleClass(binding.oldStyle, !!arr[1])
-            } else {
-                $elem.toggleClass(binding.newClass, binding.toggleClass)
-            }
+    update: function (elem, vnode) {
+        var $elem = avalon(elem)
+        var changeClass = vnode.changeClass
+        for (var i in changeClass) {
+            $elem.toggleClass(i, changeClass[i])
         }
     }
 })
 
-"hover,active".replace(rword, function (name) {
-    directives[name] = directives["class"]
-})
+//"hover,active".replace(rword, function (name) {
+//    directives[name] = directives["class"]
+//})
+
 
 //ms-controller绑定已经在scanTag 方法中实现
 avalon.directive("css", {

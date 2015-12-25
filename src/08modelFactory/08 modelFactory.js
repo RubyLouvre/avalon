@@ -404,3 +404,4 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
+

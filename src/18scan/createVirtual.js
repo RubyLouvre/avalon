@@ -58,10 +58,10 @@ function parseVProps(node, str) {
         }
         props[name] = v || ""
     })
-    if (!props["avalon-uuid"]) {
-        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
-        addAttrHook(node)
-    }
+//    if (!props["avalon-uuid"]) {
+//        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
+//        addAttrHook(node)
+//    }
     return props
 }
 

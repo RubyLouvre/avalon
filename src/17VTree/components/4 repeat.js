@@ -23,41 +23,52 @@ avalon.directive("repeat", {
             "ms-repeat": true,
             "avalon-uuid": true
         })
-        var arr = binding.siblings
-        for (var i = 0, el; el = arr[i]; i++) {
-            if (el === parent) {
-                arr[i] = component
-                break
-            }
-        }
-
-        delete binding.siblings
-        binding.element = component //偷龙转风
-
         var type = binding.type
         component.itemName = binding.param || "el"
         var signature = generateID(type)
         component.signature = signature
+
         component["data-" + type + "-rendered"] = parent.props["data-" + type + "-rendered"]
         component.children.length = 0 //将父节点作为它的子节点
-        if (type === "each") {
-            component.template = parent.template.trim() + "<!--" + signature + "-->"
+        if (type === "repeat") {
+            // repeat组件会替换旧原来的VElement
+            var arr = binding.siblings
+            for (var i = 0, el; el = arr[i]; i++) {
+                if (el === parent) {
+                    arr[i] = component
+                    break
+                }
+            }
+            component.template = template + "<!--" + signature + "-->"
+
+        } else {
+
+            //each组件会替换掉原VComponent组件的所有孩子
+            disposeVirtual(parent.children)
             pushArray(parent.children, [component])
-            return false
+            component.template = parent.template.trim() + "<!--" + signature + "-->"
         }
-        component.template = template + "<!--" + signature + "-->"
+        binding.element = component //偷龙转风
+
+        delete binding.siblings
+
         return false
     },
     change: function (value, binding) {
-
+        //console.log(binding.expr, value)
         var parent = binding.element
         var cache = binding.cache || {}
         var newCache = {}
         var children = []
         var last = value.length - 1
         //遍历监控数组的VM或简单数据类型
-        var needDispose = [], proxy
+        var top = binding.vmodel, proxy
         var command = {}
+        var $outer = {}
+        if (top.hasOwnProperty("$outer") && typeof top.$outer === "object") {
+            $outer = top.$outer
+        }
+
         //键名为它过去的位置
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
         for (var i = 0; i <= last; i++) {
@@ -74,11 +85,17 @@ avalon.directive("repeat", {
                 component = new VComponent("repeatItem")
                 component.template = parent.template
                 component.itemName = binding.param || "el"
-                component.construct({vmodel: vm, top: binding.vmodel, array: value})
+                component.construct({vmodel: vm,
+                    top: top,
+                    array: value
+
+                })
                 component.index = i
                 proxy = component.vmodel
+
                 command[i] = -2
             }
+            proxy.$outer
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -93,12 +110,11 @@ avalon.directive("repeat", {
         for (i in cache) {//剩下的都是要删除重复利用的
             if (cache[i]) {
                 command[cache[i].vmodel.$index] = -1
-                needDispose.push(cache[i])
+                cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
 
-        disposeVirtual(needDispose) //销毁没有用的组件
         parent.children.length = 0
         pushArray(parent.children, children)
         parent.children.unshift(new VComment(parent.signature + ":start"))
@@ -112,11 +128,17 @@ avalon.directive("repeat", {
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
-            if (elem.nodeType !== 8 && elem.nodeValue !== groupText + ":start") {
+            if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
                 var keepChild = avalon.slice(dom.childNodes)
-                parent.replaceChild(dom, elem)
-                updateEntity(keepChild, getRepeatChild(vnode.children))
+                if (groupText.indexOf("each") === 0) {
+                    avalon.clearHTML(parent)
+                    parent.appendChild(dom)
+                } else {
+
+                    parent.replaceChild(dom, elem)
+                }
+                updateEntity(keepChild, getRepeatChild(vnode.children), parent)
             } else {
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
@@ -157,7 +179,7 @@ avalon.directive("repeat", {
                 vnode.children.forEach(function (el) {
                     pushArray(virtual, el.children)
                 })
-                updateEntity(entity, virtual)
+                updateEntity(entity, virtual, parent)
             }
         }
         return false
@@ -178,25 +200,30 @@ avalon.directive("repeat", {
 
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (options) {
-        var top = options.top
-        if (options.vmodel && options.vmodel.$id) {
-            top = createProxy(top, options.vmodel)
+        var top = options.top, item = options.vmodel
+        if (item && item.$id) {
+            top = createProxy(top, item)
         }
         var itemName = this.itemName
         var proxy = createRepeatItem(top, itemName, options.array)
-        proxy[itemName] = options.vmodel
-
+        console.log("----")
+        console.log(proxy, item, top, itemName)
+        proxy[itemName] = item
+ 
+        // proxy.$outer = options.$outer
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
         this._new = true
-        this.updateProxy = repeatItem.updateProxy
+        this.dispose = repeatItem.dispose
         return this
     },
-    updateProxy: function (options) {
-        var vm = this.vmodel
-        vm[this.itemName] = vm
-        for (var i in options.vm) {
-            vm[i] = options.vm[i]
+    dispose: function () {
+        this.disposed = true
+        var proxy = this.vmodel
+        var item = proxy[this.itemName]
+        proxy.$active = false
+        if (item) {
+            item.$active = alse
         }
     }
 }
@@ -206,13 +233,14 @@ function createRepeatItem(curVm, itemName, array) {
     var before = Object(curVm) === curVm ? curVm : {}
     var after = {
         $accessors: {
-            $first: makeObservable("first", heirloom),
+            $first: makeObservable("$first", heirloom),
             $last: makeObservable("$last", heirloom),
             $index: makeObservable("$index", heirloom)
         },
         $first: 1,
         $last: 1,
-        $index: 1
+        $index: 1,
+        $outer: 1
     }
     if (array) {
         after.$remove = function () {
@@ -220,7 +248,7 @@ function createRepeatItem(curVm, itemName, array) {
         }
     }
     after[itemName] = 1
-    after.$accessors[itemName] = makeObservable(itemName, heirloom)
+   // after.$accessors[itemName] = makeObservable(itemName, heirloom)
     var proxy = createProxy(before, after, heirloom)
     return proxy
 }
@@ -235,15 +263,9 @@ function getRepeatChild(children) {
     }
     return ret
 }
-//avalon.test.createRepeatItem = createRepeatItem
 
+avalon.directives.each = avalon.directives.repeat
 avalon.components["ms-each"] = avalon.components["ms-repeat"]
-
-function removeItems(array) {
-    array.forEach(function (el) {
-        el.$active = false
-    })
-}
 
 
 function compareObject(a, b) {
