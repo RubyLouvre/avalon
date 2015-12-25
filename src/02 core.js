@@ -197,40 +197,7 @@ avalon.mix({
         return result
     },
     eventHooks: {},
-    /*绑定事件*/
-    bind: function (el, type, fn, phase) {
-        var hooks = avalon.eventHooks
-        var hook = hooks[type]
-        if (typeof hook === "object") {
-            type = hook.type || type
-            phase = hook.phase || !!phase
-            fn = hook.fn ? hook.fn(el, fn) : fn
-        }
-        var callback = W3C ? fn : function (e) {
-            fn.call(el, fixEvent(e));
-        }
-        if (W3C) {
-            el.addEventListener(type, callback, phase)
-        } else {
-            el.attachEvent("on" + type, callback)
-        }
-        return callback
-    },
-    /*卸载事件*/
-    unbind: function (el, type, fn, phase) {
-        var hooks = avalon.eventHooks
-        var hook = hooks[type]
-        var callback = fn || noop
-        if (typeof hook === "object") {
-            type = hook.type || type
-            phase = hook.phase || !!phase
-        }
-        if (W3C) {
-            el.removeEventListener(type, callback, phase)
-        } else {
-            el.detachEvent("on" + type, callback)
-        }
-    },
+
     /*读写删除元素节点的样式*/
     css: function (node, name, value) {
         if (node instanceof avalon) {
