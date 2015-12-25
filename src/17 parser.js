@@ -171,7 +171,12 @@ function parseExpr(expr, vmodel, binding) {
     headers.push("return __value__;")
  
     fn = new Function(args.join(","), headers.join(""))
-   
+    if(category === "on"){
+        var old = fn
+        fn = function(){
+            return old
+        }
+    }
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
     //avalon.log(binding.getter + "")
 }

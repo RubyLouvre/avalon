@@ -24,6 +24,7 @@ avalon.injectBinding = function (binding) {
     })
     delete binding.paths
     binding.update = function (a, b, path) {
+        
         var hasError
         try {
             var value = binding.getter(binding.vmodel)
@@ -31,7 +32,6 @@ avalon.injectBinding = function (binding) {
             hasError = true
             avalon.log(e)
         }
-
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
 
