@@ -3,7 +3,7 @@
 //ms-repeat都是共用同一个点击事件
 var rdash = /\(([^)]*)\)/
 avalon.eventPool = {}
-
+avalon.eventVM = {}
 avalon.directive("on", {
     priority: 3000,
     init: function (binding) {
@@ -21,80 +21,32 @@ avalon.directive("on", {
         binding.expr = value
     },
     change: function (listener, binding) {
-        var id = binding.param + ":" + binding.expr + "??"
-        if (!avalon.eventPool[id]) {//注册事件回调
-            avalon.eventPool[id] = listener
+        var type = binding.param
+        var uuid = listener.uuid || (listener.uuid = generateID("e"))
+
+        var key = type + ":" + uuid + "??"
+        if (!avalon.eventVM[key]) {//注册事件回调
+            avalon.eventVM[key] = binding.vmodel
         }
         var elem = binding.element
-        var change = addData(elem, "addEvents")// 创建一个更新包
-        change[binding.param] = id
-        change = addData(elem, "addEventContext")
-        change[id] = binding.vmodel
+        var change = addData(elem, "eventListeners")// 创建一个更新包
+        change[key] = listener
         addHooks(this, binding)
     },
     update: function (elem, vnode) {
         if (!vnode.disposed) {
-            var list = elem.getAttribute("avalon-events") || ""
-            var vm = elem.__vm__ || (elem.__vm__ = {})
-            for (var i in vnode.addEventContext) {
-                vm[i] = vnode.addEventContext[i]
+            for (var key in vnode.eventListeners) {
+                var type = key.split(":").shift()
+                var fn = vnode.eventListeners[key]
+                avalon.bind(elem, type, fn)
             }
-            delete vnode.addEventContext
-            for (var eventName in vnode.addEvents) {
-                var id = vnode.addEvents[eventName]
-                if (list.indexOf(eventName) === -1) {//同一种事件只绑定一次
-                    if (canBubbleUp[eventName]) {
-                        delegateEvent(eventName)
-                    } else {
-                        avalon.bind(elem, eventName, avalon.__dispatch__,true)
-                    }
-                }
-                if (list.indexOf(id) === -1) {
-                    list += id //将令牌放进avalon-events属性中
-                }
-            }
-            delete vnode.addEvents
-            elem.setAttribute("avalon-events", list)
+            delete vnode.eventListeners
         }
     },
     dispose: function (elem) {
-        var list = elem.getAttribute("avalon-events")
-        if (list) {
-            list.split("??").forEach(function (str) {
-                var match = str.match(/([^:]+)\:/)
-                if (match) {//清空事件
-                    avalon.unbind(elem, match[0], avalon.__dispatch__)
-                }
-            })
-            elem.removeAttribute("avalon-events")
-        }
+        avalon.unbind(elem)
     }
 })
-
-var last = +new Date()
-function dispatch(event) {
-    var type = event.type
-    var elem = event.target
-    var list = elem.getAttribute("avalon-events") || ""
-    list.split("??").forEach(function (str) {
-        var match = str.match(/([^:]+)\:/)
-        if (match && match[1] === type) {
-            var key = str + "??"
-            var fn = avalon.eventPool[key]
-            if (fn) {
-                if (/move|scroll/.test(key)) {
-                    var curr = +new Date()
-                    if (curr - last > 16) {
-                        fn.call(elem, elem.__vm__[key], event)
-                        last = curr
-                    }
-                } else {
-                    fn.call(elem, elem.__vm__[key], event)
-                }
-            }
-        }
-    })
-}
 
 
 var canBubbleUp = {
@@ -121,3 +73,106 @@ function delegateEvent(eventName) {
     }
 }
 avalon.__dispatch__ = dispatch
+
+var nativeBind = W3C ? function (el, type, fn) {
+    el.addEventListener(type, fn)
+} : function (el, type, fn) {
+    el.attachEvent("on" + type, fn)
+}
+var nativeUnBind = W3C ? function (el, type, fn) {
+    el.removeEventListener(type, fn)
+} : function (el, type, fn) {
+    el.detachEvent("on" + type, fn)
+}
+
+avalon.bind = function (elem, type, fn) {
+    if (elem.nodeType === 1) {
+        var list = elem.getAttribute("avalon-events") || ""
+        var uuid = getUid(fn)
+        avalon.eventPool[uuid] = fn
+        var key = type + ":" + uuid + "??"
+        if (list.indexOf(type) === -1) {//同一种事件只绑定一次
+            if (canBubbleUp[type] && elem !== root) {
+                delegateEvent(type)
+            } else {
+                nativeBind(elem, type, avalon.__dispatch__)
+            }
+        }
+        if (list.indexOf(key) === -1) {
+            list += key //将令牌放进avalon-events属性中
+        }
+        elem.setAttribute("avalon-events", list)
+    } else {
+        nativeBind(elem, type, fn)
+    }
+}
+
+avalon.unbind = function (elem, type, fn) {
+    if (elem.nodeType === 1) {
+        var list = elem.getAttribute("avalon-events") || ""
+        var removeAll = arguments.length === 1
+        var newList = []
+        list.split("??").forEach(function (str) {
+            var arr = str.split(":")
+            var curType = arr[0]
+            var uuid = arr[1]
+            var keep = false
+            if (removeAll) {
+                nativeUnBind(elem, type, avalon.__dispatch__)
+            } else if (type) {
+                if (curType === type) {
+                    if (fn) {
+                        keep = uuid !== fn.uuid
+                    } else {
+                        nativeUnBind(elem, type, avalon.__dispatch__)
+                    }
+                } else {
+                    keep = true
+                }
+            }
+            if (keep) {
+                newList.push(str + "??")
+            } else {
+                if (uuid.length > 10) {
+                    delete avalon.eventPool[uuid]
+                }
+            }
+        })
+        elem.setAttribute("avalon-events", newList.join(""))
+    } else {
+        nativeUnBind(elem, type, fn)
+    }
+}
+
+
+var last = +new Date()
+function dispatch(event) {
+    var type = event.type
+    var elem = event.target
+    var list = elem.getAttribute("avalon-events") || ""
+    list.split("??").forEach(function (str) {
+        var arr = str.split(":")
+        var curType = arr[0]
+        var uuid = arr[1]
+        if (curType === type) {
+            var fn = avalon.eventPool[uuid]
+            var vm = avalon.eventVM[str + "??"]
+            if (vm && vm.$active === false) {
+                return avalon.unbind(elem, type, fn)
+            }
+            if (fn) {
+                if (/move|scroll/.test(curType)) {
+                    var curr = +new Date()
+                    if (curr - last > 16) {
+                        fn.call(elem, event, vm)
+                        last = curr
+                    }
+                } else {
+                    fn.call(elem, event, vm)
+                }
+            }
+        }
+    })
+}
+
+

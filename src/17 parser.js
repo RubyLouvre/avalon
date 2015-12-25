@@ -133,7 +133,8 @@ function parseExpr(expr, vmodel, binding) {
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
-        args.push("$event")
+        args = ["$event", "__vm__"]
+        // args.push("$event")
         if (body.indexOf("(") === -1) {//如果不存在括号
             body += ".call(this, $event)"
         } else {
@@ -169,11 +170,11 @@ function parseExpr(expr, vmodel, binding) {
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
- 
+
     fn = new Function(args.join(","), headers.join(""))
-    if(category === "on"){
+    if (category === "on") {
         var old = fn
-        fn = function(){
+        fn = function () {
             return old
         }
     }
