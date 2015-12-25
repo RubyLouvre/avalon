@@ -46,7 +46,7 @@ avalon.directive("on", {
                     if (canBubbleUp[eventName]) {
                         delegateEvent(eventName)
                     } else {
-                        avalon.bind(elem, eventName, avalon.__dispatch__)
+                        avalon.bind(elem, eventName, avalon.__dispatch__,true)
                     }
                 }
                 if (list.indexOf(id) === -1) {
@@ -71,20 +71,32 @@ avalon.directive("on", {
     }
 })
 
+var last = +new Date()
 function dispatch(event) {
     var type = event.type
     var elem = event.target
-    var list = elem.getAttribute("avalon-events")
+    var list = elem.getAttribute("avalon-events") || ""
     list.split("??").forEach(function (str) {
         var match = str.match(/([^:]+)\:/)
         if (match && match[1] === type) {
-            var key = str +"??"
+            var key = str + "??"
             var fn = avalon.eventPool[key]
-            fn.call(elem, elem.__vm__[key], event)
+            if (fn) {
+                if (/move|scroll/.test(key)) {
+                    var curr = +new Date()
+                    if (curr - last > 16) {
+                        fn.call(elem, elem.__vm__[key], event)
+                        last = curr
+                    }
+                } else {
+                    fn.call(elem, elem.__vm__[key], event)
+                }
+            }
         }
     })
-
 }
+
+
 var canBubbleUp = {
     click: true,
     dblclick: true,
@@ -103,7 +115,7 @@ if (!W3C) {
 function delegateEvent(eventName) {
     var list = root.getAttribute("avalon-events") || ""
     if (list.indexOf(eventName + ":") === -1) {
-        list += (eventName + ":" + (new Date - 0) + "??")
+        list += (eventName + ":1984??")
         avalon.bind(root, eventName, avalon.__dispatch__)
         root.setAttribute("avalon-events", list)
     }
