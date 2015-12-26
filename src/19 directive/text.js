@@ -1,18 +1,24 @@
-//avalon.directive("text", {
-//    update: function (value) {
-//        var elem = this.element
-//        value = value == null ? "" : value //不在页面上显示undefined null
-//        if (elem.nodeType === 3) { //绑定在文本节点上
-//            try { //IE对游离于DOM树外的节点赋值会报错
-//                elem.data = value
-//            } catch (e) {
-//            }
-//        } else { //绑定在特性节点上
-//            if ("textContent" in elem) {
-//                elem.textContent = value
-//            } else {
-//                elem.innerText = value
-//            }
-//        }
-//    }
-//})
+
+avalon.directive("text", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (elem && !elem.disposed) {
+            value = typeof value === "string" ? value : String(value)
+            disposeVirtual(elem.children)
+            var children = [new VText(value)]
+            pushArray(elem.children, updateVirtual(children, binding.vmodel))
+            addHooks(this, binding)
+        }
+        return false
+    },
+    update: function (elem, vnode) {
+        var child = vnode.children[0]
+        if (vnode.disposed || !child) {
+            return
+        }
+
+        elem.textContent = child.toHTML()
+
+        updateEntity(elem.childNodes, vnode.children, elem)
+    }
+})
