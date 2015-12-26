@@ -89,8 +89,9 @@ function abandonClass(e) {
     }
 }
 
-activateClass.uuid = generateID("e")
-abandonClass.uuid  = generateID("e")
+
+markID(activateClass)
+markID(abandonClass)
 
 "hover,active".replace(rword, function (name) {
     directives[name] = directives["class"]

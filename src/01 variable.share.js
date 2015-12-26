@@ -19,20 +19,28 @@ var class2type = {}
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
 var bindingID = 1024
-function getUid(el){
-  return el.uuid || (el.uuid = "_"+(++bindingID))
+function getUid(el) {
+    return el.uuid || (el.uuid = "_" + (++bindingID))
 }
 
+//生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+var generateID = function (prefix) {
+    prefix = prefix || "avalon"
+    return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
+}
+
+function markID(fn) {
+    return fn.uuid || (fn.uuid = generateID("e"))
+}
 
 var IEVersion = NaN
 if (window.VBArray) {
     IEVersion = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
 }
 
-function noop(){}
-function scpCompile(array){
-    return Function.apply(noop, array)
+function noop() {
 }
+
 
 function oneObject(array, val) {
     if (typeof array === "string") {
@@ -46,11 +54,7 @@ function oneObject(array, val) {
     return result
 }
 
-//生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = function (prefix) {
-    prefix = prefix || "avalon"
-    return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
-}
+
 
 avalon = function (el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)

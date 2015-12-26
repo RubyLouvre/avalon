@@ -18,7 +18,7 @@ avalon.directive("on", {
     },
     change: function (listener, binding) {
         var type = binding.param
-        var uuid = listener.uuid || (listener.uuid = generateID("e"))
+        var uuid = markID(listener)
         var key = type + ":" + uuid + "??"
         if (!avalon.__eventVM__[key]) {//注册事件回调
             avalon.__eventVM__[key] = binding.vmodel
