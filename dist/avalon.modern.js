@@ -3798,14 +3798,14 @@ avalon.directive("class", {
     change: function (arr, binding) {
         var type = binding.type
         var data = addData(binding.element, type + "Data")
-        var newClass = arr[0]
+        var target = arr[0]
         var toggle = arr[1]
-        if (binding.oldClass && newClass !== binding.oldClass) {
+        if (binding.oldClass && target !== binding.oldClass) {
             data.toRemove = binding.oldClass
         }
-        data.className = newClass
-        data.toggle = toggle
-        binding.oldClass = newClass
+        data.targetClass = target
+        data.toggleClass = toggle
+        binding.oldClass = target
         addHooks(this, binding)
     },
     update: function (elem, vnode) {
@@ -3823,14 +3823,16 @@ avalon.directive("class", {
         var wrap = avalon(elem)
         Array("class", "hover", "active").forEach(function (type) {
             var data = vnode[type + "Data"]
+            if(!data)
+               return
             if (data.toRemove) {
                 wrap.removeClass(data.toRemvoe)
             }
             if (type === "class") {
-                wrap.removeClass(data.className, data.toggle)
+                wrap.toggleClass(data.targetClass, data.toggleClass)
             } else {
-                elem.newClass = data.className
-                elem.toggleClass = data.toggle
+                elem.targetClass = data.targetClass
+                elem.toggleClass = data.toggleClass
             }
         })
     }
@@ -3839,14 +3841,14 @@ avalon.directive("class", {
 function activateClass(e) {
     var elem = e.target
     if (elem.toggleClass) {
-        avalon(elem).addClass(elem.newClass)
+        avalon(elem).addClass(elem.targetClass)
     }
 }
 
 function abandonClass(e) {
     var elem = e.target
     if (elem.toggleClass) {
-        avalon(elem).removeClass(elem.newClass)
+        avalon(elem).removeClass(elem.targetClass)
     }
 }
 
@@ -3856,7 +3858,6 @@ abandonClass.uuid  = generateID("e")
 "hover,active".replace(rword, function (name) {
     directives[name] = directives["class"]
 })
-
 
 //ms-controller绑定已经在scanTag 方法中实现
 avalon.directive("css", {
