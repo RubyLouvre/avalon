@@ -92,6 +92,7 @@ avalon.unbind = function (elem, type, fn) {
 
 var last = +new Date()
 function dispatch(event) {
+    event = event.target ? event : fixEvent(event)
     var type = event.type
     var elem = event.target
     var list = elem.getAttribute("avalon-events") || ""
