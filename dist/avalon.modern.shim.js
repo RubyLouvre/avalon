@@ -357,18 +357,7 @@ avalon.mix({
         }
     },
     //收集元素的data-{{prefix}}-*属性，并转换为对象
-    getWidgetData: function (elem, prefix) {
-        var raw = avalon(elem).data()
-        var result = {}
-        for (var i in raw) {
-            if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function (a) {
-                    return a.toLowerCase()
-                })] = raw[i]
-            }
-        }
-        return result
-    },
+    getWidgetData: noop,
     Array: {
         /*只有当前数组不存在此元素时只添加它*/
         ensure: function (target, item) {
@@ -1503,7 +1492,7 @@ function rejectDisposeQueue(data) {
 function disposeData(data) {
     delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
-    data.rollback && data.rollback()
+    data.dispose && data.dispose()
     for (var key in data) {
         data[key] = null
     }
@@ -3202,14 +3191,15 @@ function getOptionsFromTag(elem, vmodels) {
     return ret
 }
 
-var getBindingCallback = function (elem, name, vmodels) {
+var getBindingCallback = function (elem, name, vmodel) {
     var callback = elem.getAttribute(name)
     if (callback) {
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
-                return vm[callback]
-            }
+
+        if (vmodel.hasOwnProperty(callback) && 
+                typeof vmodel[callback] === "function") {
+            return vmodel[callback]
         }
+
     }
 }
 
@@ -3406,10 +3396,7 @@ function parseVProps(node, str) {
         }
         props[name] = v || ""
     })
-//    if (!props["avalon-uuid"]) {
-//        change["avalon-uuid"] = props["avalon-uuid"] = avalonID++
-//        addAttrHook(node)
-//    }
+
     return props
 }
 
@@ -3690,31 +3677,6 @@ function updateVirtual(nodes, vm) {
     }
     return nodes
 }
-
-//使用来自游戏界的双缓冲技术,减少对视图的冗余刷新
-var Buffer = function () {
-    this.queue = []
-}
-Buffer.prototype = {
-    render: function (isAnimate) {
-        if (!this.locked) {
-            this.locked = isAnimate ? root.offsetHeight + 10 : 1
-            var me = this
-            avalon.nextTick(function () {
-                me.flush()
-            })
-        }
-    },
-    flush: function () {
-        for (var i = 0, sub; sub = this.queue[i++]; ) {
-            sub.update && sub.update()
-        }
-        this.locked = 0
-        this.queue = []
-    }
-}
-
-var buffer = new Buffer()
 
 
 

@@ -70,7 +70,7 @@ function rejectDisposeQueue(data) {
 function disposeData(data) {
     delete disposeQueue[data.uuid] // 先清除，不然无法回收了
     data.element = null
-    data.rollback && data.rollback()
+    data.dispose && data.dispose()
     for (var key in data) {
         data[key] = null
     }

@@ -29,4 +29,3 @@ function scanTag(elem, vmodel, siblings) {
     return elem
 }
 
-// 

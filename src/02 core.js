@@ -245,18 +245,7 @@ avalon.mix({
         }
     },
     //收集元素的data-{{prefix}}-*属性，并转换为对象
-    getWidgetData: function (elem, prefix) {
-        var raw = avalon(elem).data()
-        var result = {}
-        for (var i in raw) {
-            if (i.indexOf(prefix) === 0) {
-                result[i.replace(prefix, "").replace(/\w/, function (a) {
-                    return a.toLowerCase()
-                })] = raw[i]
-            }
-        }
-        return result
-    },
+    getWidgetData: noop,
     Array: {
         /*只有当前数组不存在此元素时只添加它*/
         ensure: function (target, item) {

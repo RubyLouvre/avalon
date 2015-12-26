@@ -33,13 +33,14 @@ function getOptionsFromTag(elem, vmodels) {
     return ret
 }
 
-var getBindingCallback = function (elem, name, vmodels) {
+var getBindingCallback = function (elem, name, vmodel) {
     var callback = elem.getAttribute(name)
     if (callback) {
-        for (var i = 0, vm; vm = vmodels[i++]; ) {
-            if (vm.hasOwnProperty(callback) && typeof vm[callback] === "function") {
-                return vm[callback]
-            }
+
+        if (vmodel.hasOwnProperty(callback) && 
+                typeof vmodel[callback] === "function") {
+            return vmodel[callback]
         }
+
     }
 }
