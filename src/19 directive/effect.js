@@ -178,7 +178,7 @@ function upperFirstChar(str) {
         return m.toUpperCase()
     })
 }
-var effectBuffer = new Buffer()
+//var effectBuffer = new Buffer()
 function Effect() {
 }//动画实例,做成类的形式,是为了共用所有原型方法
 

@@ -1,11 +1,11 @@
 //双工绑定
-;(function () {
-
+;
+(function () {
 
     var rduplexType = /^(?:checkbox|radio)$/
     var rduplexParam = /^(?:radio|checked)$/
     var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
-    var duplexBinding = avalon.directive("duplex", {
+    avalon.directive("duplex", {
         priority: 2000,
         init: function (binding, hasCast) {
             var elem = binding.element
@@ -114,10 +114,13 @@
         },
         change: function (value, binding) {
             var vnode = binding.element
-            vnode.pipe = binding.param
-            vnode.setter = binding.setter
+            vnode["data-pipe"] = binding.param
+            vnode.setter = function (a,b,c) {
+                binding.setter(binding.vmodel, a, b, c)
+            }
             vnode.getterValue = value
             vnode.changed = binding.changed
+            addHooks(this, binding)
         },
         update: function (elem, vnode) {
             elem.setter = vnode.setter
@@ -220,6 +223,7 @@
     function inputListener() { //原来的updateVModel
         var elem = this
         var val = elem.value //防止递归调用形成死循环
+        console.log(val)
         if (elem.composing || val === elem.oldValue)
             return
         var lastValue = pipe(val, elem, "get")
@@ -236,6 +240,7 @@
             inputListener.call(this, e)
         }
     }
+
     function dragendListener(e) {
         var elem = this
         setTimeout(function () {

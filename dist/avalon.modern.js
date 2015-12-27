@@ -624,7 +624,8 @@ if (DOC.onmousewheel === void 0) {
     }
 }
 
-
+//http://www.feiesoft.com/html/events.html
+//http://segmentfault.com/q/1010000000687977/a-1020000000688757
 var canBubbleUp = {
     click: true,
     dblclick: true,
@@ -634,11 +635,29 @@ var canBubbleUp = {
     mousedown: true,
     mousemove: true,
     mouseup: true,
+    mouseover: true,
+    mouseout: true,
+    wheel: true,
+    mousewheel: true,
     input: true,
-    change: true
+    change: true,
+    beforeinput: true,
+    compositionstart: true,
+    compositionupdate: true,
+    compositionend: true,
+    select: true,
+    cut: true,
+    paste:true,
+    focusin: true,
+    focusout: true,
+    DOMFocusIn: true,
+    DOMFocusOut: true,
+    DOMActivate: true,
+    dragend:true
 }
 if (!W3C) {
     delete canBubbleUp.change
+    delete canBubbleUp.select
 }
 
 avalon.__eventPool__ = {}
@@ -4418,7 +4437,7 @@ function upperFirstChar(str) {
         return m.toUpperCase()
     })
 }
-var effectBuffer = new Buffer()
+//var effectBuffer = new Buffer()
 function Effect() {
 }//动画实例,做成类的形式,是为了共用所有原型方法
 

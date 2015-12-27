@@ -848,7 +848,8 @@ if (DOC.onmousewheel === void 0) {
     }
 }
 
-
+//http://www.feiesoft.com/html/events.html
+//http://segmentfault.com/q/1010000000687977/a-1020000000688757
 var canBubbleUp = {
     click: true,
     dblclick: true,
@@ -858,11 +859,29 @@ var canBubbleUp = {
     mousedown: true,
     mousemove: true,
     mouseup: true,
+    mouseover: true,
+    mouseout: true,
+    wheel: true,
+    mousewheel: true,
     input: true,
-    change: true
+    change: true,
+    beforeinput: true,
+    compositionstart: true,
+    compositionupdate: true,
+    compositionend: true,
+    select: true,
+    cut: true,
+    paste:true,
+    focusin: true,
+    focusout: true,
+    DOMFocusIn: true,
+    DOMFocusOut: true,
+    DOMActivate: true,
+    dragend:true
 }
 if (!W3C) {
     delete canBubbleUp.change
+    delete canBubbleUp.select
 }
 
 avalon.__eventPool__ = {}
@@ -4380,13 +4399,13 @@ avalon.directive("data", {
 })
 
 //双工绑定
-;(function () {
-
+;
+(function () {
 
     var rduplexType = /^(?:checkbox|radio)$/
     var rduplexParam = /^(?:radio|checked)$/
     var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
-    var duplexBinding = avalon.directive("duplex", {
+    avalon.directive("duplex", {
         priority: 2000,
         init: function (binding, hasCast) {
             var elem = binding.element
@@ -4495,10 +4514,13 @@ avalon.directive("data", {
         },
         change: function (value, binding) {
             var vnode = binding.element
-            vnode.pipe = binding.param
-            vnode.setter = binding.setter
+            vnode["data-pipe"] = binding.param
+            vnode.setter = function (a,b,c) {
+                binding.setter(binding.vmodel, a, b, c)
+            }
             vnode.getterValue = value
             vnode.changed = binding.changed
+            addHooks(this, binding)
         },
         update: function (elem, vnode) {
             elem.setter = vnode.setter
@@ -4601,6 +4623,7 @@ avalon.directive("data", {
     function inputListener() { //原来的updateVModel
         var elem = this
         var val = elem.value //防止递归调用形成死循环
+        console.log(val)
         if (elem.composing || val === elem.oldValue)
             return
         var lastValue = pipe(val, elem, "get")
@@ -4617,6 +4640,7 @@ avalon.directive("data", {
             inputListener.call(this, e)
         }
     }
+
     function dragendListener(e) {
         var elem = this
         setTimeout(function () {
@@ -5003,7 +5027,7 @@ function upperFirstChar(str) {
         return m.toUpperCase()
     })
 }
-var effectBuffer = new Buffer()
+//var effectBuffer = new Buffer()
 function Effect() {
 }//动画实例,做成类的形式,是为了共用所有原型方法
 
