@@ -192,15 +192,7 @@
                     elem.checked = array.indexOf(curValue) > -1
                     break
                 case "select":
-                    //必须变成字符串后才能比较
-                    if (!elem.msHasEvent) {
-                        elem.msHasEvent = "selectDuplex"
-                        //必须等到其孩子准备好才触发
-                    } else {
-                        avalon.fireDom(elem, "datasetchanged", {
-                            bubble: elem.msHasEvent
-                        })
-                    }
+                    //移动updateEntity中实现
                     break
             }
         }
@@ -223,7 +215,6 @@
     function inputListener() { //原来的updateVModel
         var elem = this
         var val = elem.value //防止递归调用形成死循环
-        console.log(val)
         if (elem.composing || val === elem.oldValue)
             return
         var lastValue = pipe(val, elem, "get")

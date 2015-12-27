@@ -61,5 +61,6 @@ function scanAttrs(elem, vmodel, siblings) {
         executeBindings(bindings, vmodel)
     }
     updateVirtual(elem.children, vmodel)
+    
 
 }

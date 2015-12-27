@@ -5,6 +5,7 @@
 avalon.init = function (el) {
     this[0] = this.element = el
 }
+
 avalon.test = {} //用于测试
 avalon.fn = avalon.prototype = avalon.init.prototype
 

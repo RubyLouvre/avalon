@@ -27,7 +27,8 @@ var canBubbleUp = {
     DOMFocusIn: true,
     DOMFocusOut: true,
     DOMActivate: true,
-    dragend:true
+    dragend:true,
+    datasetchanged:true
 }
 if (!W3C) {
     delete canBubbleUp.change

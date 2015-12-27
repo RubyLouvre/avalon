@@ -65,9 +65,9 @@ function parseVProps(node, str) {
 //此阶段只会生成VElement,VText,VComment
 function createVirtual(text, force) {
     var nodes = []
-    if (!force && !rbind.test(text)) {
-        return nodes
-    }
+//    if (!force && !rbind.test(text)) {
+//        return nodes
+//    }
     do {
         var matchText = ""
 
@@ -169,7 +169,7 @@ function fixTag(node, attrs, outerHTML) {
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
     var innerHTML = node.template
-    if (!rnocontent.test(node.type) && rbind.test(outerHTML)) {
+    if (!rnocontent.test(node.type)) {// && rbind.test(outerHTML)
         pushArray(node.children, createVirtual(innerHTML))
 
     } else {

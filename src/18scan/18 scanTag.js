@@ -26,6 +26,7 @@ function scanTag(elem, vmodel, siblings) {
     } else {
         scanAttrs(elem, vmodel, siblings)
     }
+    
     return elem
 }
 

@@ -1,6 +1,4 @@
 //更新真实DOM树
-
-
 function getNextNode(node, vnode, a) {
     if (vnode.type === "#component" && vnode.signature) {
         // 如果存在路标
@@ -18,21 +16,7 @@ function getNextNode(node, vnode, a) {
     }
 }
 
-function flattenChildren(target, arr) {
-    arr = arr || []
-    if (target.type === "#component") {
-        for (var i = 0, el; el = target.children[i++]; ) {
-            if (el.type !== "#component") {
-                pushArray(arr, [el])
-            } else {
-                flattenChildren(el, arr)
-            }
-        }
-        return arr
-    } else {
-        return pushArray(arr, [target])
-    }
-}
+
 
 function getVType(node) {
     switch (node.type) {
@@ -47,21 +31,17 @@ function getVType(node) {
     }
 }
 
-
-
 function updateEntity(nodes, vnodes, parent) {
     var node = nodes[0], vnode
-    if(!node && !parent)
+    if (!node && !parent)
         return
     parent = parent || node.parentNode
     label:
             for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
-         vnode = vnodes[vi]
-        var nextNode = nodes[vi+1]
+        vnode = vnodes[vi]
+        var nextNode = nodes[vi + 1]
         if (!node) {
-            
             var a = vnode.toDOM()
-            
             if (a.nodeType === 11) {
                 var as = avalon.slice(a.childNodes)
                 parent.appendChild(a)
@@ -93,8 +73,15 @@ function updateEntity(nodes, vnodes, parent) {
             }
             delete vnode.updateHooks
         }
+
         if (!vnode.skipContent && !vnode.skip && vnode.children && node.nodeType === 1) {
             updateEntity(node.childNodes, vnode.children, node)
+        }
+        if (vnode.setter) {
+            avalon.fireDom(node, "datasetchanged", {
+                bubble: "selectDuplex"
+            })
+            delete vnode.setter
         }
         node = getNextNode(node, vnode, nextNode)
     }

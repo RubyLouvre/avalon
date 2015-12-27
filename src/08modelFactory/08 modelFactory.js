@@ -63,18 +63,18 @@ function observeArray(array, old, heirloom, options) {
         array._ = observeObject({
             length: NaN
         }, {}, {
-            pathname: options.pathname + ".length",
+            pathname: "",
             top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-
         array.notify = function () {
             $emit(heirloom.vm, heirloom.vm, options.pathname)
             batchUpdateEntity(heirloom.vm)
         }
-
         array._.length = array.length
         array._.$watch("length", function (a, b) {
-
+            if (heirloom.vm) {
+                heirloom.vm.$fire(options.pathname + ".length", a, b)
+            }
         })
 
         if (W3C) {
