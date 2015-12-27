@@ -136,7 +136,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type || type
             phase = hook.phase || !!phase
-            fn = hook.fn ? hook.fn(el, fn) : fn
+            fn = hook.fix ? hook.fix(el, fn) : fn
         }
         el.addEventListener(type, fn, phase)
         return fn

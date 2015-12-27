@@ -203,7 +203,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type || type
             phase = hook.phase || !!phase
-            fn = hook.fn ? hook.fn(el, fn) : fn
+            fn = hook.fix ? hook.fix(el, fn) : fn
         }
         var callback = W3C ? fn : function (e) {
             fn.call(el, fixEvent(e));

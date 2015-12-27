@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.6 built in 2015.12.23
+ avalon.mobile.js 1.5.6 built in 2015.12.27
  mobile
  ==================================================*/
 (function(global, factory) {
@@ -286,7 +286,7 @@ avalon.mix({
         if (typeof hook === "object") {
             type = hook.type || type
             phase = hook.phase || !!phase
-            fn = hook.fn ? hook.fn(el, fn) : fn
+            fn = hook.fix ? hook.fix(el, fn) : fn
         }
         el.addEventListener(type, fn, phase)
         return fn
@@ -581,7 +581,7 @@ if (!("onmouseenter" in root)) {
     }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            fn: function (elem, fn) {
+            fix: function (elem, fn) {
                 return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
@@ -615,7 +615,7 @@ if (DOC.onmousewheel === void 0) {
      chrome wheel deltaY 下100 上-100 */
     eventHooks.mousewheel = {
         type: "wheel",
-        fn: function (elem, fn) {
+        fix: function (elem, fn) {
             return function (e) {
                 e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0
@@ -5878,7 +5878,7 @@ var Recognizer = avalon.gestureHooks = {
 
         recognizer.events.forEach(function (eventName) {
             avalon.eventHooks[eventName] = {
-                fn: function (el, fn) {
+                fix: function (el, fn) {
                     if (!el['touch-' + name]) {
                         el['touch-' + name] = '1'
                         el.addEventListener('touchstart', function (event) {

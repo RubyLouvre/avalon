@@ -106,7 +106,7 @@ if (DOC.onmousewheel === void 0) {
      chrome wheel deltaY 下100 上-100 */
     eventHooks.mousewheel = {
         type: "wheel",
-        deel: function(elem, fn) {
+        fix: function(elem, fn) {
             return function(e) {
                 e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0

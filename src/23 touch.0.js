@@ -146,7 +146,7 @@ var Recognizer = avalon.gestureHooks = {
 
         recognizer.events.forEach(function (eventName) {
             avalon.eventHooks[eventName] = {
-                fn: function (el, fn) {
+                fix: function (el, fn) {
                     if (!el['touch-' + name]) {
                         el['touch-' + name] = '1'
                         el.addEventListener('touchstart', function (event) {
