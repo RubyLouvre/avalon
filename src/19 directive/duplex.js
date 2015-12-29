@@ -198,8 +198,6 @@
         }
     })
 
-
-
     function compositionStart() {
         this.composing = true
     }
@@ -398,7 +396,9 @@
             // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
             watchValueInTimer = avalon.tick
         }
-    } // jshint ignore:line
+    } 
+    
+    // jshint ignore:line
     function getCaret(ctrl) {
         var start = NaN, end = NaN
         if (ctrl.setSelectionRange) {

@@ -3875,7 +3875,7 @@ avalon.directive("data", {
     var rduplexType = /^(?:checkbox|radio)$/
     var rduplexParam = /^(?:radio|checked)$/
     var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
-    var duplexBinding = avalon.directive("duplex", {
+    avalon.directive("duplex", {
         priority: 2000,
         init: function (binding, hasCast) {
             var elem = binding.element
@@ -4053,8 +4053,6 @@ avalon.directive("data", {
             }
         }
     })
-
-
 
     function compositionStart() {
         this.composing = true
@@ -4710,7 +4708,6 @@ avalon.directive("include", {
         var rendered = getBindingValue(elem, "data-include-rendered", vmodel)
         binding.rendered = typeof rendered === "function" ? rendered : noop
 
-
         binding.expr = normalizeExpr(binding.expr.trim())
         disposeVirtual(elem.children)
     },
@@ -4758,7 +4755,7 @@ avalon.directive("include", {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
-                !first.getAttribute("includeID")) {
+                 !first.getAttribute("data-include-id")) {
             avalon.clearHTML(elem)
         }
     }
@@ -4768,16 +4765,16 @@ function scanTemplate(binding, template, id) {
     template = template.trim()
     var cache = binding.cache || (binding.cache = {})
     if (!cache[id]) {
-        var nodes = createVirtual(template, true), flagError
+        var nodes = createVirtual(template, true), throwError
         if (nodes.length !== 1) {
-            flagError = true
+            throwError = true
         } else {
             updateVirtual(nodes, binding.vmodel)
             if (nodes.length !== 1 || getVType(nodes[0]) !== 1) {
-                flagError = true
+                throwError = true
             }
         }
-        if (flagError) {
+        if (throwError) {
             throw "ms-include加载的内容必须用一个元素包元素"
         }
         binding.cache[id] = nodes[0]

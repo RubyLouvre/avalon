@@ -4593,8 +4593,6 @@ avalon.directive("data", {
         }
     })
 
-
-
     function compositionStart() {
         this.composing = true
     }
@@ -4793,7 +4791,9 @@ avalon.directive("data", {
             // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
             watchValueInTimer = avalon.tick
         }
-    } // jshint ignore:line
+    } 
+    
+    // jshint ignore:line
     function getCaret(ctrl) {
         var start = NaN, end = NaN
         if (ctrl.setSelectionRange) {
@@ -5350,27 +5350,27 @@ avalon.directive("include", {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
-                !first.getAttribute("includeID")) {
+                !first.getAttribute("data-include-id")) {
             avalon.clearHTML(elem)
         }
     }
 })
 
-avalon.components["ms-include"] = {}
+
 function scanTemplate(binding, template, id) {
     template = template.trim()
     var cache = binding.cache || (binding.cache = {})
     if (!cache[id]) {
-        var nodes = createVirtual(template, true), flagError
+        var nodes = createVirtual(template, true), throwError
         if (nodes.length !== 1) {
-            flagError = true
+            throwError = true
         } else {
             updateVirtual(nodes, binding.vmodel)
             if (nodes.length !== 1 || getVType(nodes[0]) !== 1) {
-                flagError = true
+                throwError = true
             }
         }
-        if (flagError) {
+        if (throwError) {
             throw "ms-include加载的内容必须用一个元素包元素"
         }
         binding.cache[id] = nodes[0]
