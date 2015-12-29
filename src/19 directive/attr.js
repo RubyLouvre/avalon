@@ -20,6 +20,6 @@ var attrDir = avalon.directive("attr", {
 })
 
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
-"title,alt,src,value,css,include,href".replace(rword, function (name) {
+"title,alt,src,value,css,href".replace(rword, function (name) {
     directives[name] = attrDir
 })

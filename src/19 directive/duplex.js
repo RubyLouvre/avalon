@@ -10,14 +10,11 @@
         init: function (binding, hasCast) {
             var elem = binding.element
             var vmodel = binding.vmodel
-            binding.changed = noop
-            var fnStr = elem.props["data-duplex-changed"]
-            if (fnStr && vmodel.hasOwnProperty(fnStr)) {
-                var fn = vmodel[fnStr]
-                if (typeof fn === "function") {
-                    binding.changed = fn
-                }
+            var fn = getBindingValue(elem, "data-duplex-changed", vmodel)
+            if (typeof fn !== "function") {
+                fn = noop
             }
+            binding.changed = fn
             var nodeName = elem.type
             if (nodeName === "input" && !elem.props.type) {
                 elem.props.type = "text"
@@ -115,7 +112,7 @@
         change: function (value, binding) {
             var vnode = binding.element
             vnode["data-pipe"] = binding.param
-            vnode.setter = function (a,b,c) {
+            vnode.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
             vnode.getterValue = value

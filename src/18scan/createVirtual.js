@@ -26,8 +26,8 @@ var avalonID = 1
 //=== === === === 创建虚拟DOM树 === === === === =
 //依赖config
 function parseVProps(node, str) {
-    var props = node.props
-    var change = addData(node, "changeAttrs")
+    var props = node.props, change
+
     str.replace(rattr2, function (a, n, v) {
         if (v) {
             v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
@@ -36,10 +36,10 @@ function parseVProps(node, str) {
         var match = n.match(rmsAttr)
         if (match) {
             var type = match[1]
-            var param = match[2] || ""
             switch (type) {
                 case "controller":
                 case "important":
+                    change = addData(node, "changeAttrs")
                     //移除ms-controller, ms-important
                     //好让[ms-controller]样式生效,处理{{}}问题
                     change[name] = false
@@ -50,6 +50,7 @@ function parseVProps(node, str) {
                     addAttrHook(node)
                     break
                 case "with":
+                    change = addData(node, "changeAttrs")
                     change[name] = false
                     addAttrHook(node)
                     name = "each"
@@ -65,9 +66,9 @@ function parseVProps(node, str) {
 //此阶段只会生成VElement,VText,VComment
 function createVirtual(text, force) {
     var nodes = []
-//    if (!force && !rbind.test(text)) {
-//        return nodes
-//    }
+    if (!force && !rbind.test(text)) {
+        return nodes
+    }
     do {
         var matchText = ""
 
@@ -100,7 +101,7 @@ function createVirtual(text, force) {
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
                 /* jshint ignore:start */
-               
+
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -112,7 +113,7 @@ function createVirtual(text, force) {
 
                 var pos = opens.concat(closes).sort()
                 var gtlt = pos.join("").replace(/\d+/g, "")
-                    //<<>><<>>
+                //<<>><<>>
                 var gutter = gtlt.indexOf("><")
 
                 if (gutter !== -1) {

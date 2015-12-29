@@ -9,7 +9,6 @@ avalon.directive("text", {
             pushArray(elem.children, updateVirtual(children, binding.vmodel))
             addHooks(this, binding)
         }
-        return false
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
@@ -21,6 +20,5 @@ avalon.directive("text", {
         } else {
             elem.innerText = child.toHTML()
         }
-        updateEntity(elem.childNodes, vnode.children, elem)
     }
 })

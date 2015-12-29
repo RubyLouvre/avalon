@@ -5,8 +5,8 @@ function disposeVirtual(nodes) {
             case "#text":
             case "#comment":
                 node.disposed = true
-                if(node.tokens){
-                    node.tokens.forEach(function(token){
+                if (node.tokens) {
+                    node.tokens.forEach(function (token) {
                         token.element = null
                     })
                 }
@@ -21,4 +21,16 @@ function disposeVirtual(nodes) {
         }
     }
     nodes.length = 0
+}
+
+function willDestroy(nodes) {
+    for (var i = 0, node; node = nodes[i++]; ) {
+        node.disposed = true
+    }
+}
+
+function willCreate(nodes) {
+    for (var i = 0, node; node = nodes[i++]; ) {
+        node.create = true
+    }
 }

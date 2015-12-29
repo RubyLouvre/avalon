@@ -224,7 +224,7 @@ function pushArray(target, other) {
 }
 var bindingHandlers = avalon.bindingHandlers = {}
 var bindingExecutors = avalon.bindingExecutors = {}
-
+avalon.components = {}
 var directives = avalon.directives = {}
 avalon.directive = function (name, obj) {
     bindingHandlers[name] = obj.init = (obj.init || noop)

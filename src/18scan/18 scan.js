@@ -23,7 +23,7 @@ function getOptionsFromTag(elem, vmodels) {
         if (attr.specified && !rnoCollect.test(name)) {
             var camelizeName = camelize(attr.name)
             if (/^on\-[\w-]+$/.test(name)) {
-                ret[camelizeName] = getBindingCallback(elem, name, vmodels)
+                ret[camelizeName] = getBindingValue(elem, name, vmodels)
             } else {
                 ret[camelizeName] = parseData(attr.value)
             }
@@ -33,14 +33,13 @@ function getOptionsFromTag(elem, vmodels) {
     return ret
 }
 
-var getBindingCallback = function (elem, name, vmodel) {
-    var callback = elem.getAttribute(name)
+var getBindingValue = function (elem, name, vmodel) {
+    var callback = elem.props ? elem.props[name] : elem.getAttribute(name)
     if (callback) {
-
-        if (vmodel.hasOwnProperty(callback) && 
+        if (vmodel.hasOwnProperty(callback) &&
                 typeof vmodel[callback] === "function") {
             return vmodel[callback]
         }
-
     }
 }
+

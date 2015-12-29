@@ -4,11 +4,12 @@ function addData(elem, name) {
 }
 
 function addHook(node, hook) {
-    var hooks = node.updateHooks || (node.updateHooks = [])
+    var hooks = node.change || (node.change = [])
     if (avalon.Array.ensure(hooks, hook)) {
         hooks.sort(bindingSorter)
     }
 }
+
 function addHooks(dir, binding) {
     var hook = dir.update
     hook.priority = binding.priority
@@ -38,9 +39,9 @@ function addAttrHook(node) {
  
  批量更新真实DOM树的步骤如下:
  从上到下, 一个个真实DOM节点与虚拟DOM节点进行比较
- 在上面的change方法会为虚拟DOM节点添加了一个updateHooks的钩子函数数组,
+ 在上面的change方法会为虚拟DOM节点添加了一个change的钩子函数数组,
  里面拥有各种更新DOM的策略,这些钩子的优先级也排好了
- 如果这个虚拟DOM没有updateHooks数组会直接跳过
+ 如果这个虚拟DOM没有change数组会直接跳过
  如果这个虚拟DOM打上skip或skipContent,也会跳过
  否则先判定其类型是否 VElement或VComponent,继续更新其孩子
  
@@ -48,7 +49,7 @@ function addAttrHook(node) {
  
  此更新策略有如下特点
  从上到下更新, 如果上级节点要被删掉,即真实DOM没有对应的虚拟DOM, 那么
- 下方的updateHooks数组会直接跳过
+ 下方的change数组会直接跳过
  
  用户对同一个属性进行操作, 会在change方法中被合并
  

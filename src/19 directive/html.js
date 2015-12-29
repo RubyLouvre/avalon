@@ -9,14 +9,13 @@ avalon.directive("html", {
             pushArray(elem.children, updateVirtual(children, binding.vmodel))
             addHooks(this, binding)
         }
-        return false
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
         if (vnode.disposed || !child)
             return
+        //这里就不用劳烦用created, disposed
         avalon.clearHTML(elem)
         elem.appendChild(child.toDOM())
-        updateEntity(elem.childNodes, vnode.children, elem)
     }
 })
