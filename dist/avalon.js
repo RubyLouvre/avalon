@@ -4461,7 +4461,6 @@ avalon.directive("data", {
                     break
                 case "select":
                     duplexEvents.change = selectListener
-                    duplexEvents.datasetchanged = datasetchangedListener
                     break
                 case "input":
                     if (!IEVersion) { // W3C
@@ -4505,6 +4504,11 @@ avalon.directive("data", {
             vnode["data-pipe"] = binding.param
             vnode.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
+            }
+            
+            if(vnode.type === "select"){
+               var change = vnode.afterChange || (vnode.afterChange = [])
+               change.push(selectUpdate)
             }
             vnode.getterValue = value
             vnode.changed = binding.changed
@@ -4659,18 +4663,10 @@ avalon.directive("data", {
             }
         }
     }
-
-    function datasetchangedListener(e) {
-        if (e.bubble === "selectDuplex") {
-            var elem = this
-            var value = elem.getterValue
-            var curValue = Array.isArray(value) ? value.map(String) : value + ""
-            avalon(elem).val(curValue)
-            elem.oldValue = curValue + ""
-            elem.changed(curValue)
-        }
+    function selectUpdate(elem, vnode){
+        avalon(elem).val(vnode.getterValue)
     }
-
+    selectUpdate.priority = 2000
     markID(compositionStart)
     markID(compositionEnd)
     markID(duplexFocus)
@@ -4680,7 +4676,6 @@ avalon.directive("data", {
     markID(dragendListener)
     markID(checkboxListener)
     markID(selectListener)
-    markID(datasetchangedListener)
 
     if (IEVersion) {
         avalon.bind(DOC, "selectionchange", function (e) {
@@ -4810,6 +4805,7 @@ avalon.directive("data", {
             end: end
         }
     }
+   
     function setCaret(ctrl, begin, end) {
         if (!ctrl.value || ctrl.readOnly)
             return
@@ -5162,7 +5158,6 @@ directives["{{}}"] = {
         }
     },
     update: function (elem, vnode, parent) {
-        console.log(vnode)
         if (elem.nodeType !== 3) {
             parent.replaceChild(vnode.toDOM(), elem)
         } else {

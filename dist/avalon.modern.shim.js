@@ -4588,7 +4588,6 @@ directives["{{}}"] = {
         }
     },
     update: function (elem, vnode, parent) {
-        console.log(vnode)
         if (elem.nodeType !== 3) {
             parent.replaceChild(vnode.toDOM(), elem)
         } else {
