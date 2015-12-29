@@ -3,15 +3,30 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="dist/avalon.modern.js"></script>
+        <script src="dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: "xxx",
-                aaa: 111,
-                click: function (e) {
-                    vm.toggle = !vm.toggle
+            var model = avalon.define({
+                $id: "computed4",
+                test1: "test1",
+                test2: {
+                    get: function () {
+                        return this.test1;
+                    }
                 }
-            })
+            });
+            function expect(a) {
+                return {
+                    to: {
+                        be: function (b) {
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
+            expect(model.test2).to.be("test1")
+            model.test1 = "test@@@"
+            expect(model.$model.test2).to.be("test@@@")
+            // delete avalon.vmodels.computed4
         </script>
     </head>
     <body>

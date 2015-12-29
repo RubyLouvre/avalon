@@ -103,6 +103,7 @@ function modelFactory(source, $special, $model) {
             accessor.digest = function () {
                 accessor.call($vmodel)
             }
+            getUid(accessor.digest)
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name

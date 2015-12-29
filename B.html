@@ -1,38 +1,192 @@
+
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>first example</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="avalon.js"></script>
-        <script>
 
-            var vm = avalon.define({
-                $id: "test",
-                name: "司徒正美"
-            })
+<head>
+    <title>avalon入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="avalon.js" type="text/javascript"></script>
+    <script>
+        var MOCK_DATA = {
+            domain: 'a.qunar.com',
+            logs: ['xxx', 'yyy', 'zzz'],
+            cnames: [{
+                name: 'cname1',
+                is_enabled: true
+            }, {
+                name: 'cname2',
+                is_enabled: false
+            }, {
+                name: 'cname3',
+                is_enabled: false
+            }, ],
+            server_rooms: [{
+                name: 'cn1',
+                is_enabled: false
+            }, {
+                name: 'cn2',
+                is_enabled: true
+            }, {
+                name: 'cn5',
+                is_enabled: true
+            }, {
+                name: 'cn6',
+                is_enabled: false
+            }, {
+                name: 'cn8',
+                is_enabled: true
+            }, {
+                name: 'zh',
+                is_enabled: true
+            }],
+            isps: [{
+                name: '电信',
+                cdn: {
+                    active: {
+                        name: '',
+                        cname: 'cname1'
+                    },
+                    list: [{
+                        name: '蓝汛1',
+                        cname: 'cname1'
+                    }, {
+                        name: '蓝汛2',
+                        cname: 'cname2'
+                    }, {
+                        name: '蓝汛3',
+                        cname: 'cname3'
+                    }]
+                },
+                rooms: [{
+                    name: 'cn1',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: true
+                }, {
+                    name: 'cn2',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'cn5',
+                    ips: ['127.0.0.1', '192.168.0.1', '127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'cn6',
+                    ips: [],
+                    is_enabled: false
+                }, {
+                    name: 'cn8',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: true
+                }, {
+                    name: 'zh',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: true
+                }]
+            }, {
+                name: '联通',
+                cdn: {
+                    active: {
+                        name: '蓝汛1',
+                        cname: 'cname1'
+                    },
+                    list: [{
+                        name: '蓝汛1',
+                        cname: 'cname1'
+                    }, {
+                        name: '蓝汛2',
+                        cname: 'cname2'
+                    }, {
+                        name: '蓝汛3',
+                        cname: 'cname3'
+                    }]
+                },
+                rooms: [{
+                    name: 'cn1',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'cn2',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: true
+                }, {
+                    name: 'cn5',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'cn6',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'cn8',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: false
+                }, {
+                    name: 'zh',
+                    ips: ['127.0.0.1', '192.168.0.1'],
+                    is_enabled: true
+                }]
+            }]
+        };
 
-            function n() {
-                return  /**
-                 <xmp class="html">
-                 <!DOCTYPE html>
-                 <html>
-                 </html>
-                 
-                 </xmp>*/
+        var model = avalon.define({
+            $id: 'test',
+            data: {},
+            testAssign: function() {
+                var now = new Date().getTime();
+                model.data = MOCK_DATA;
+                console.log(new Date().getTime() - now);
             }
-            var aa = n.toString().replace(/<xmp\s+class\=(['"])(\w+)\1\s*>([\s\S]+)<\/xmp>/mg, function (a, b, c, d) {
-                if (c === "html") {
-                    d = d.replace(/</g, "&lt;").replace(/>/g, "&gt;")
-                }
-                return "<pre class='brush:'" + c + ";gutter:false;toolbar:false'>" + d + "</pre>"
-            })
+        });
+    </script>
+</head>
 
-            console.log(aa)
-        </script>
-    </head>
-    <body ms-controller="test">
-        <input ms-duplex="name" >
-        <p>Hello,{{name}}!</p>
-    </body>
+<body>
+    <div ms-controller="test">
+        <button ms-on-click="testAssign()">assign</button>
+        <table border="1px">
+            <thead>
+                <tr>
+                    <td>ISP</td>
+                    <td ms-repeat-item="data.server_rooms">
+                        <p>{{item.name}}</p>
+                        <label>
+                            <input type="checkbox" ms-duplex-checked="item.is_enabled" />
+                            <div>
+                                <span></span>
+                            </div>
+                        </label>
+                    </td>
+                    <td>
+                        test
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ms-repeat-el="data.isps">
+                    <td>{{el.name}}</td>
+                    <td ms-repeat-item="el.rooms" valign="top" ms-data-room="item.name">
+                        <label class="yo-switch" style="" ms-if="item.ips">
+                            <input type="checkbox" ms-data-room="item.name" ms-data-isp="el.name" ms-duplex-checked="item.is_enabled" />
+                            <div class="track">
+                                <span class="handle"></span>
+                            </div>
+                        </label>
+                        <p style="word-wrap: break-word;" ms-repeat-ip="item.ips">
+                            {{ip}}
+                        </p>
+                    </td>
+                    <td>
+                        <select ms-duplex-value="el.cdn.active.name" ms-data-cursel="el.cdn.active.name">
+                            <option ms-repeat-item="el.cdn.list">{{item.name}}</option>
+                        </select>
+                        <span>
+                            <!-- {{el.cdn.active.name}} -->
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
 </html>

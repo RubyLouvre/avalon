@@ -9,14 +9,10 @@ var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
-    var elem = data.element
-    if (!data.uuid) {
-        data.uuid =  "_" + (++bindingId)
-    }
     var lists = data.lists || (data.lists = [])
     avalon.Array.ensure(lists, list)
     if (!disposeQueue[data.uuid]) {
-        disposeQueue[data.uuid] = 1
+        disposeQueue[data.uuid] = "__"
         disposeQueue.push(data)
     }
 }
@@ -53,7 +49,7 @@ function rejectDisposeQueue(data) {
                 disposeQueue.splice(i, 1)
                 continue
             }
-            if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
+            if (iffishTypes[data.type] && typeof data === "object" && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
                 var lists = data.lists

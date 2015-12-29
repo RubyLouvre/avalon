@@ -23,7 +23,7 @@ bindingHandlers.repeat = function (data, vmodels) {
             if (v && v.hasOwnProperty(n)) {
                 var events = v[n].$events || {}
                 events[subscribers] = events[subscribers] || []
-                events[subscribers].push(data)
+                injectDependency(events[subscribers], data)
                 break
             }
         }

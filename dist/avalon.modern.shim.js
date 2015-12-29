@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js(无加载器版本) 1.4.7.1 built in 2015.12.23
+ avalon.modern.shim.js(无加载器版本) 1.4.7.1 built in 2015.12.29
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -83,6 +83,9 @@ var bindingId = 1024 //绑定对象的UUID，不断递增
 function noop() {
 }
 
+function getUid(el){
+    return el.uuid || (el.uuid = "_"+(++bindingId))
+}
 
 function oneObject(array, val) {
     if (typeof array === "string") {
@@ -920,6 +923,7 @@ function modelFactory(source, $special, $model) {
             accessor.digest = function () {
                 accessor.call($vmodel)
             }
+            getUid(accessor.digest)
             dependencyDetection.begin({
                 callback: function (vm, dependency) {//dependency为一个accessor
                     var name = dependency._name
@@ -1462,21 +1466,30 @@ avalon.injectBinding = function (data) {
 }
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
-function injectDependency(list, data) {
-    if (data.oneTime)
-        return
-    if (list && avalon.Array.ensure(list, data) && data.element) {
+ function injectDependency(list, data) {
+        if (data.oneTime || !list)
+            return
+        var uuid = data.uuid
+        if(!uuid){
+            uuid = data.uuid = getUid(data.element)+data.name+data.value
+        }
+        for (var i = 0, el; el = list[i++]; ) {
+            if (el.uuid && el.uuid === uuid) {
+                return
+            }
+        }
+        list.push(data)
         injectDisposeQueue(data, list)
-        if (new Date() - beginTime > 444 ) {
+        if (new Date() - beginTime > 333) {
             rejectDisposeQueue()
         }
+
     }
-}
 
 //通知依赖于这个访问器的订阅者更新自身
 function fireDependencies(list) {
     if (list && list.length) {
-        if (new Date() - beginTime > 444 && typeof list[0] === "object") {
+        if (new Date() - beginTime > 333 && typeof list[0] === "object") {
             rejectDisposeQueue()
         }
         var args = aslice.call(arguments, 1)
@@ -1511,14 +1524,10 @@ var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
-    var elem = data.element
-    if (!data.uuid) {
-        data.uuid =  "_" + (++bindingId)
-    }
     var lists = data.lists || (data.lists = [])
     avalon.Array.ensure(lists, list)
     if (!disposeQueue[data.uuid]) {
-        disposeQueue[data.uuid] = 1
+        disposeQueue[data.uuid] = "__"
         disposeQueue.push(data)
     }
 }
@@ -1555,7 +1564,7 @@ function rejectDisposeQueue(data) {
                 disposeQueue.splice(i, 1)
                 continue
             }
-            if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
+            if (iffishTypes[data.type] && typeof data === "object" && shouldDispose(data.element)) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
                 var lists = data.lists
@@ -2479,7 +2488,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            uuid: "_" + (++bindingId), 
+                            uuid: getUid(elem) + name + value,
                             priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
                         if (type === "html" || type === "text") {
@@ -3494,7 +3503,7 @@ bindingHandlers.repeat = function (data, vmodels) {
             if (v && v.hasOwnProperty(n)) {
                 var events = v[n].$events || {}
                 events[subscribers] = events[subscribers] || []
-                events[subscribers].push(data)
+                injectDependency(events[subscribers], data)
                 break
             }
         }

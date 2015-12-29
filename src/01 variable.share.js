@@ -23,6 +23,9 @@ var bindingId = 1024 //绑定对象的UUID，不断递增
 function noop() {
 }
 
+function getUid(el){
+    return el.uuid || (el.uuid = "_"+(++bindingId))
+}
 
 function oneObject(array, val) {
     if (typeof array === "string") {
