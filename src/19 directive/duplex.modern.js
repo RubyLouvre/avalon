@@ -73,7 +73,6 @@
                     break
                 case "select":
                     duplexEvents.change = selectListener
-                    duplexEvents.datasetchanged = datasetchangedListener
                     break
                 case "input":
                     if (!IEVersion) { // W3C
@@ -106,10 +105,17 @@
         },
         change: function (value, binding) {
             var vnode = binding.element
-            vnode.pipe = binding.param
-            vnode.setter = binding.setter
+            vnode["data-pipe"] = binding.param
+            vnode.setter = function (a, b, c) {
+                binding.setter(binding.vmodel, a, b, c)
+            }
+
+            if (vnode.type === "select") {
+                addHooks(vnode, "afterchange", selectUpdate)
+            }
             vnode.getterValue = value
             vnode.changed = binding.changed
+            addHooks(this, binding)
         },
         update: function (elem, vnode) {
             elem.setter = vnode.setter
@@ -164,9 +170,7 @@
                     break
                 case "radio":
                     curValue = vnode.props.isChecked ? !!getterValue : getterValue + "" === elem.value
-
                     elem.checked = curValue
-
                     break
                 case "checkbox":
                     var array = [].concat(getterValue) //强制转换为数组
@@ -174,15 +178,7 @@
                     elem.checked = array.indexOf(curValue) > -1
                     break
                 case "select":
-                    //必须变成字符串后才能比较
-                    if (!elem.msHasEvent) {
-                        elem.msHasEvent = "selectDuplex"
-                        //必须等到其孩子准备好才触发
-                    } else {
-                        avalon.fireDom(elem, "datasetchanged", {
-                            bubble: elem.msHasEvent
-                        })
-                    }
+                    //在afterChange中处理
                     break
             }
         }
@@ -257,16 +253,10 @@
         }
     }
 
-    function datasetchangedListener(e) {
-        if (e.bubble === "selectDuplex") {
-            var elem = this
-            var value = elem.getterValue
-            var curValue = Array.isArray(value) ? value.map(String) : value + ""
-            avalon(elem).val(curValue)
-            elem.oldValue = curValue + ""
-            elem.changed(curValue)
-        }
+    function selectUpdate(elem, vnode) {
+        avalon(elem).val(vnode.getterValue)
     }
+    selectUpdate.priority = 2001
 
     markID(compositionStart)
     markID(compositionEnd)
@@ -276,8 +266,6 @@
     markID(dragendListener)
     markID(checkboxListener)
     markID(selectListener)
-    markID(datasetchangedListener)
-
 
     function fixNull(val) {
         return val == null ? "" : val
@@ -383,6 +371,6 @@
             watchValueInTimer = avalon.tick
         }
     } // jshint ignore:line
-    
+
 
 })();

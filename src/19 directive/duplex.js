@@ -114,10 +114,9 @@
             vnode.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
-            
-            if(vnode.type === "select"){
-               var change = vnode.afterChange || (vnode.afterChange = [])
-               change.push(selectUpdate)
+
+            if (vnode.type === "select") {
+                addHooks(vnode, "afterchange", selectUpdate)
             }
             vnode.getterValue = value
             vnode.changed = binding.changed
@@ -193,7 +192,7 @@
                     elem.checked = array.indexOf(curValue) > -1
                     break
                 case "select":
-                    //移动updateEntity中实现
+                    //在afterChange中处理
                     break
             }
         }
@@ -272,10 +271,11 @@
             }
         }
     }
-    function selectUpdate(elem, vnode){
+    function selectUpdate(elem, vnode) {
         avalon(elem).val(vnode.getterValue)
     }
-    selectUpdate.priority = 2000
+    selectUpdate.priority = 2001
+    
     markID(compositionStart)
     markID(compositionEnd)
     markID(duplexFocus)
@@ -414,7 +414,7 @@
             end: end
         }
     }
-   
+
     function setCaret(ctrl, begin, end) {
         if (!ctrl.value || ctrl.readOnly)
             return

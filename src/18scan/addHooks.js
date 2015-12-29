@@ -3,9 +3,13 @@ function addData(elem, name) {
     return elem[name] || (elem[name] = {})
 }
 
-function addHook(node, hook) {
-    var hooks = node.change || (node.change = [])
+function addHook(node, hook, name, priority) {
+    name = name || "change"
+    var hooks = node[name] || (node[name] = [])
     if (avalon.Array.ensure(hooks, hook)) {
+        if (priority) {
+            hook.priority = priority
+        }
         hooks.sort(bindingSorter)
     }
 }
