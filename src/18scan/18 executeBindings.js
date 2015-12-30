@@ -36,9 +36,7 @@ avalon.injectBinding = function (binding) {
         var is = dir.is || bindingIs
 
         if (!is(value, binding.oldValue)) {
-
             dir.change(value, binding)
-
             if (binding.oneTime && !hasError) {
                 dir.change = noop
                 setTimeout(function () {

@@ -28,6 +28,9 @@ anomaly.replace(rword, function (name) {
 
 function attrUpdate(elem, vnode) {
     var attrs = vnode.changeAttrs
+    if (!elem || elem.nodeType !== 1 || vnode.disposed) {
+        return
+    }
     if (attrs) {
         for (var attrName in attrs) {
             var val = attrs[attrName]

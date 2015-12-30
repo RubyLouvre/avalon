@@ -1,7 +1,6 @@
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
-
             if (!Array.isArray(b))
                 return false
             if (a.length !== b.length) {
@@ -42,7 +41,6 @@ avalon.directive("repeat", {
             component.template = template + "<!--" + signature + "-->"
 
         } else {
-
             //each组件会替换掉原VComponent组件的所有孩子
             disposeVirtual(parent.children)
             pushArray(parent.children, [component])
@@ -52,11 +50,13 @@ avalon.directive("repeat", {
 
         delete binding.siblings
 
-        return false
+
     },
     change: function (value, binding) {
-        //console.log(binding.expr, value)
         var parent = binding.element
+        if (!parent || parent.disposed) {
+            return
+        }
         var cache = binding.cache || {}
         var newCache = {}
         var children = []
@@ -81,7 +81,7 @@ avalon.directive("repeat", {
                 } else {
                     command[proxy.$index] = -3
                 }
-            } else {
+            } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
                 component.template = parent.template
                 component.itemName = binding.param || "el"
@@ -123,8 +123,10 @@ avalon.directive("repeat", {
         binding.oldValue = value.concat()
         parent.repeatCommand = command
         addHooks(this, binding)
+
     },
     update: function (elem, vnode, parent) {
+        console.log("开始 更新ms-repeat")
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
@@ -135,10 +137,10 @@ avalon.directive("repeat", {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
-
                     parent.replaceChild(dom, elem)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
+                return false
             } else {
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
@@ -180,6 +182,7 @@ avalon.directive("repeat", {
                     pushArray(virtual, el.children)
                 })
                 updateEntity(entity, virtual, parent)
+                return false
             }
         }
         return false
@@ -206,10 +209,8 @@ var repeatItem = avalon.components["repeatItem"] = {
         }
         var itemName = this.itemName
         var proxy = createRepeatItem(top, itemName, options.array)
-        console.log("----")
-        console.log(proxy, item, top, itemName)
         proxy[itemName] = item
- 
+
         // proxy.$outer = options.$outer
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
@@ -223,7 +224,7 @@ var repeatItem = avalon.components["repeatItem"] = {
         var item = proxy[this.itemName]
         proxy.$active = false
         if (item) {
-            item.$active = alse
+            item.$active = false
         }
     }
 }
@@ -248,7 +249,7 @@ function createRepeatItem(curVm, itemName, array) {
         }
     }
     after[itemName] = 1
-   // after.$accessors[itemName] = makeObservable(itemName, heirloom)
+    // after.$accessors[itemName] = makeObservable(itemName, heirloom)
     var proxy = createProxy(before, after, heirloom)
     return proxy
 }

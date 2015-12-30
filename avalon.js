@@ -2050,6 +2050,9 @@ anomaly.replace(rword, function (name) {
 
 function attrUpdate(elem, vnode) {
     var attrs = vnode.changeAttrs
+    if (!elem || elem.nodeType !== 1 || vnode.disposed) {
+        return
+    }
     if (attrs) {
         for (var attrName in attrs) {
             var val = attrs[attrName]
@@ -2910,7 +2913,6 @@ var quote = window.JSON && JSON.stringify || function(str) {
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
-
             if (!Array.isArray(b))
                 return false
             if (a.length !== b.length) {
@@ -2951,7 +2953,6 @@ avalon.directive("repeat", {
             component.template = template + "<!--" + signature + "-->"
 
         } else {
-
             //each组件会替换掉原VComponent组件的所有孩子
             disposeVirtual(parent.children)
             pushArray(parent.children, [component])
@@ -2961,11 +2962,13 @@ avalon.directive("repeat", {
 
         delete binding.siblings
 
-        return false
+
     },
     change: function (value, binding) {
-        //console.log(binding.expr, value)
         var parent = binding.element
+        if (!parent || parent.disposed) {
+            return
+        }
         var cache = binding.cache || {}
         var newCache = {}
         var children = []
@@ -2990,7 +2993,7 @@ avalon.directive("repeat", {
                 } else {
                     command[proxy.$index] = -3
                 }
-            } else {
+            } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
                 component.template = parent.template
                 component.itemName = binding.param || "el"
@@ -3032,8 +3035,10 @@ avalon.directive("repeat", {
         binding.oldValue = value.concat()
         parent.repeatCommand = command
         addHooks(this, binding)
+
     },
     update: function (elem, vnode, parent) {
+        console.log("开始 更新ms-repeat")
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
@@ -3044,10 +3049,10 @@ avalon.directive("repeat", {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
-
                     parent.replaceChild(dom, elem)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
+                return false
             } else {
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
@@ -3089,6 +3094,7 @@ avalon.directive("repeat", {
                     pushArray(virtual, el.children)
                 })
                 updateEntity(entity, virtual, parent)
+                return false
             }
         }
         return false
@@ -3115,10 +3121,8 @@ var repeatItem = avalon.components["repeatItem"] = {
         }
         var itemName = this.itemName
         var proxy = createRepeatItem(top, itemName, options.array)
-        console.log("----")
-        console.log(proxy, item, top, itemName)
         proxy[itemName] = item
- 
+
         // proxy.$outer = options.$outer
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
@@ -3132,7 +3136,7 @@ var repeatItem = avalon.components["repeatItem"] = {
         var item = proxy[this.itemName]
         proxy.$active = false
         if (item) {
-            item.$active = alse
+            item.$active = false
         }
     }
 }
@@ -3157,7 +3161,7 @@ function createRepeatItem(curVm, itemName, array) {
         }
     }
     after[itemName] = 1
-   // after.$accessors[itemName] = makeObservable(itemName, heirloom)
+    // after.$accessors[itemName] = makeObservable(itemName, heirloom)
     var proxy = createProxy(before, after, heirloom)
     return proxy
 }
@@ -3479,9 +3483,7 @@ avalon.injectBinding = function (binding) {
         var is = dir.is || bindingIs
 
         if (!is(value, binding.oldValue)) {
-
             dir.change(value, binding)
-
             if (binding.oneTime && !hasError) {
                 dir.change = noop
                 setTimeout(function () {
@@ -4018,40 +4020,6 @@ function willCreate(nodes) {
     }
 }
 //更新真实DOM树
-
-
-function getNextEntity(node, vnode, nextSibling) {
-    if (vnode.signature && vnode.signature.indexOf(":start") > 0) {
-        var end = vnode.signature.replace(":start", ":end")
-        var next = node.nextSibling
-        while (next) {
-            if (next.nodeValue === end) {
-                return next.nextSibling
-            }
-            next = next.nextSibling
-        }
-        return next
-    } else {
-        return nextSibling
-    }
-}
-
-function getNextVirtual(node, vnode, nextSibling) {
-    if (vnode.signature && vnode.signature.indexOf(":start") > 0) {
-        var end = vnode.signature.replace(":start", ":end")
-        var next = node.nextSibling
-        while (next) {
-            if (next.nodeValue === end) {
-                return next.nextSibling
-            }
-            next = next.nextSibling
-        }
-        return next
-    } else {
-        return nextSibling
-    }
-}
-
 function getVType(node) {
     switch (node.type) {
         case "#text":
@@ -4064,17 +4032,28 @@ function getVType(node) {
             return 1
     }
 }
+function getNextEntity(prev, prevVirtual, parent) {
+    if (prevVirtual && prevVirtual.signature) {
+        var end = prevVirtual.signature + ":end"
+        for (var i = 0, el; el = parent.childNodes[i++]; ) {
+            if (el.nodeValue === end) {
+                return el.nextSibling
+            }
+        }
+    }
+    return prev ? prev.nextSibling : null
+}
+
 
 
 function updateEntity(nodes, vnodes, parent) {
-    var cur = nodes[0]
-
+    var cur = nodes[0], next
     if (!cur && !parent)
         return
     parent = parent || cur.parentNode
-
     for (var i = 0, vn = vnodes.length; i < vn; i++) {
         var mirror = vnodes[i]
+        cur = i === 0 ? cur : getNextEntity(cur, vnodes[i - 1], parent)
         if (!mirror)
             break
         if (mirror.disposed) {//如果虚拟节点标识为移除
@@ -4082,10 +4061,8 @@ function updateEntity(nodes, vnodes, parent) {
             i--
             if (cur) {
                 cur && parent.removeChild(cur)
-                //  cur = nodes[i]
                 mirror.dispose && mirror.dispose(cur)
             }
-            cur = nodes[i + 1]
             continue
         } else if (mirror.created) {
             delete mirror.created
@@ -4100,22 +4077,21 @@ function updateEntity(nodes, vnodes, parent) {
                 parent.insertBefore(dom, cur)//在同级位置插入
                 updateEntity(inserted, mirror.children, parent)
             }
-            cur = nodes[i + 1]
-            //处理它的孩子
         } else {
             // 如果某一个指令会替换当前元素(比如ms-if,让当元素变成<!--ms-if-->
-            // ms-include,让当前元素变成<!--ms-include-start-->)
             // ms-repeat,让当前元素变成<!--ms-repeat-start-->)
             // 那么它们应该做成一个组件
+            //  next = cur.nextSibling
             if (false === execHooks(cur, mirror, parent, "change")) {
-                cur = getNextEntity(cur, mirror, nodes[i + 1])
+//                cur = {
+//                    nextSibling: next
+//                }
                 continue
             }
             if (!mirror.skipContent && !mirror.skip && mirror.children && cur && cur.nodeType === 1) {
                 updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
             }
             execHooks(cur, mirror, parent, "afterChange")
-            cur = nodes[i + 1]
         }
     }
 }
@@ -4123,22 +4099,22 @@ function updateEntity(nodes, vnodes, parent) {
 function execHooks(node, vnode, parent, hookName) {
     var hooks = vnode[hookName]
     if (hooks) {
-        for (var i = 0, hook; hook = hooks[i++]; ) {
-            hook(node, vnode, parent)
+        for (var hook; hook = hooks.shift(); ) {
+            if (false === hook(node, vnode, parent)) {
+                return false
+            }
         }
         delete vnode[hookName]
     }
 }
 
 
-// a a ms-if a a ==> a a c a a
-// a a ms-repeat a a ==> a a c a a
-// ms-if 必须创建组件吗?
-// ms-include 一开始添加路标
-// ms-repeat 一开始添加路标
-// ms-each 一开始添加路标
-// ms-html 没有路标
-// ms-text 没有路标
+// ms-if 没有路标, 组件
+// ms-include 没有路标, 非组件
+// ms-repeat 一开始添加路标,组件
+// ms-each 一开始添加路标, 组件
+// ms-html 没有路标,非组件
+// ms-text 没有路标,非组件
 
 //更新整个虚拟DOM树
 function updateVirtual(nodes, vm) {
