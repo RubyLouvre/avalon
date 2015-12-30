@@ -18,6 +18,9 @@ avalon.directive("include", {
         disposeVirtual(elem.children)
     },
     change: function (id, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         addHooks(this, binding)
         if (binding.param === "src") {
             if (typeof templatePool[id] === "string") {
@@ -47,18 +50,18 @@ avalon.directive("include", {
                 xhr.send(null)
             }
         } else {
-            var el = document.getElementById(id)
-            if (el) {
-                var text = el.tagName === "TEXTAREA" ? el.value :
-                        el.tagName === "SCRIPT" ? el.text :
-                        el.tagName === "NOSCRIPT" ? el.textContent :
-                        el.innerHTML
+            var node = document.getElementById(id)
+            if (node) {
+                var text = node.tagName === "TEXTAREA" ? node.value :
+                        node.tagName === "SCRIPT" ? node.text :
+                        node.tagName === "NOSCRIPT" ? node.textContent :
+                        node.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
         }
 
     },
-    update: function (elem, vnode, parent) {
+    update: function (elem) {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
@@ -101,6 +104,9 @@ function scanTemplate(binding, template, id) {
 }
 
 function updateTemplate(elem, vnode) {
+    if (!vnode.disposed) {
+        return
+    }
     var vdom = vnode.children[0]
     var id = vdom.props["data-include-id"]
     var cache = elem.cache || (elem.cache = {})

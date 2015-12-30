@@ -17,25 +17,27 @@ avalon.directive("on", {
         binding.expr = value
     },
     change: function (listener, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         var type = binding.param
         var uuid = markID(listener)
         var key = type + ":" + uuid + "??"
         if (!avalon.__eventVM__[key]) {//注册事件回调
             avalon.__eventVM__[key] = binding.vmodel
         }
-        var elem = binding.element
-        var change = addData(elem, "eventListeners")// 创建一个更新包
+        var change = addData(elem, "changeEvents")// 创建一个更新包
         change[key] = listener
         addHooks(this, binding)
     },
     update: function (elem, vnode) {
         if (!vnode.disposed) {
-            for (var key in vnode.eventListeners) {
+            for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
-                var listener = vnode.eventListeners[key]
+                var listener = vnode.changeEvents[key]
                 avalon.bind(elem, type, listener)
             }
-            delete vnode.eventListeners
+            delete vnode.changeEvents
         }
     },
     dispose: function (elem) {

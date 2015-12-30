@@ -24,17 +24,20 @@ avalon.directive("class", {
             classEvent.mouseenter = activateClass
             classEvent.mouseleave = abandonClass
         } else if (method === "active") {//在获得焦点时切换类名
-            elem.props.tabindex   = elem.props.tabindex || -1
-            classEvent.tabIndex   = elem.props.tabindex
-            classEvent.mousedown  = activateClass
-            classEvent.mouseup    = abandonClass
+            elem.props.tabindex = elem.props.tabindex || -1
+            classEvent.tabIndex = elem.props.tabindex
+            classEvent.mousedown = activateClass
+            classEvent.mouseup = abandonClass
             classEvent.mouseleave = abandonClass
         }
         elem.classEvent = classEvent
     },
     change: function (arr, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         var type = binding.type
-        var data = addData(binding.element, type + "Data")
+        var data = addData(elem, type + "Data")
         var target = arr[0]
         var toggle = arr[1]
         if (binding.oldClass && target !== binding.oldClass) {
@@ -58,10 +61,10 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var wrap = avalon(elem)
-        Array("class", "hover", "active").forEach(function (type) {
+        ;["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
-            if(!data)
-               return
+            if (!data)
+                return
             if (data.toRemove) {
                 wrap.removeClass(data.toRemvoe)
             }

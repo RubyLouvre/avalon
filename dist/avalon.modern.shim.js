@@ -788,6 +788,7 @@ function delegateEvent(eventName) {
     }
 }
 
+
 /*********************************************************************
  *                           配置系统                                 *
  **********************************************************************/
@@ -3855,17 +3856,20 @@ avalon.directive("class", {
             classEvent.mouseenter = activateClass
             classEvent.mouseleave = abandonClass
         } else if (method === "active") {//在获得焦点时切换类名
-            elem.props.tabindex   = elem.props.tabindex || -1
-            classEvent.tabIndex   = elem.props.tabindex
-            classEvent.mousedown  = activateClass
-            classEvent.mouseup    = abandonClass
+            elem.props.tabindex = elem.props.tabindex || -1
+            classEvent.tabIndex = elem.props.tabindex
+            classEvent.mousedown = activateClass
+            classEvent.mouseup = abandonClass
             classEvent.mouseleave = abandonClass
         }
         elem.classEvent = classEvent
     },
     change: function (arr, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         var type = binding.type
-        var data = addData(binding.element, type + "Data")
+        var data = addData(elem, type + "Data")
         var target = arr[0]
         var toggle = arr[1]
         if (binding.oldClass && target !== binding.oldClass) {
@@ -3889,10 +3893,10 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var wrap = avalon(elem)
-        Array("class", "hover", "active").forEach(function (type) {
+        ;["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
-            if(!data)
-               return
+            if (!data)
+                return
             if (data.toRemove) {
                 wrap.removeClass(data.toRemvoe)
             }
@@ -3934,19 +3938,20 @@ avalon.directive("css", {
     change: function (val, binding) {
         var elem = binding.element
         if (elem) {
-            var change = addData(elem, "changeStyles")
+            var change = addData(elem, "changeCss")
             change[this.param] = val
             addHooks(this, binding)
         }
     },
     update: function (elem, vnode) {
-        var change = vnode.changeStyles
+        var change = vnode.changeCss
         var wrap = avalon(elem)
         for (var name in change) {
             if (name !== "display") {
                 wrap.css(name, change[name])
             }
         }
+        delete vnode.changeCss
     }
 })
 
@@ -3955,28 +3960,30 @@ avalon.directive("data", {
     init: noop,
     change: function (val, binding) {
         var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         var change = addData(elem, "changeData")
         val = (val && typeof val === "object") ? val : String(val)
         change["data-" + binding.param] = val
         addHooks(this, binding)
     },
     update: function (node, vnode) {
-        if (!vnode.disposed) {
-            var change = vnode.changeData
-            for (var key in change) {
-                var val = change[key]
-                if (typeof val === "string") {
-                    node.setAttribute(key, val)
-                } else {
-                    node[key] = val
-                }
+        var change = vnode.changeData
+        for (var key in change) {
+            var val = change[key]
+            if (typeof val === "string") {
+                node.setAttribute(key, val)
+            } else {
+                node[key] = val
             }
         }
+        delete vnode.changeData
     }
 })
 
 //双工绑定
-;(function () {
+;
+(function () {
 
 
     var rduplexType = /^(?:checkbox|radio)$/
@@ -4082,11 +4089,12 @@ avalon.directive("data", {
         },
         change: function (value, binding) {
             var vnode = binding.element
+            if (!vnode || vnode.disposed)
+                return
             vnode["data-pipe"] = binding.param
             vnode.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
-
             if (vnode.type === "select") {
                 addHook(vnode, selectUpdate, "afterChange")
             }
@@ -4676,11 +4684,14 @@ avalon.mix(avalon.effect, {
 directives["{{}}"] = {
     init: noop,
     change: function (value, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         binding.array[binding.index] = value
         var nodeValue = binding.array.join("")
-        var node = binding.element
-        if (nodeValue !== node.nodeValue) {
-            node.nodeValue = nodeValue
+
+        if (nodeValue !== elem.nodeValue) {
+            elem.nodeValue = nodeValue
             addHooks(this, binding)
         }
     },
@@ -4696,17 +4707,17 @@ directives["{{}}"] = {
 avalon.directive("html", {
     change: function (value, binding) {
         var elem = binding.element
-        if (elem) {
-            value = typeof value === "string" ? value : String(value)
-            disposeVirtual(elem.children)
-            var children = createVirtual(value, true)
-            pushArray(elem.children, updateVirtual(children, binding.vmodel))
-            addHooks(this, binding)
-        }
+        if (!elem || elem.disposed)
+            return
+        value = typeof value === "string" ? value : String(value)
+        disposeVirtual(elem.children)
+        var children = createVirtual(value, true)
+        pushArray(elem.children, updateVirtual(children, binding.vmodel))
+        addHooks(this, binding)
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
-        if (vnode.disposed || !child)
+        if (!child)
             return
         //这里就不用劳烦用created, disposed
         avalon.clearHTML(elem)
@@ -4744,17 +4755,17 @@ avalon.directive("if", {
     },
     change: function (value, binding) {
         var elem = binding.element
-        if (elem) {
-            elem.state = !!value
-
-            if (value) {
-                elem.children[0] = elem.props.ok
-                updateVirtual([elem.props.ok], binding.vmodel)
-            } else {
-                elem.children[0] = elem.props.ng
-            }
-            addHooks(this, binding)
+        if (!elem || elem.disposed)
+            return
+        elem.ifValue = !!value
+        if (value) {
+            elem.children[0] = elem.props.ok
+            updateVirtual([elem.props.ok], binding.vmodel)
+        } else {
+            elem.children[0] = elem.props.ng
         }
+        addHooks(this, binding)
+
     },
     update: function (node, vnode, parent) {
         var dom = node, vdom = vnode.children[0]
@@ -4763,7 +4774,6 @@ avalon.directive("if", {
             c.keep = node
             node.keep = c
         }
-
         parent.replaceChild(node.keep, node)
         dom = node.keep
         if (dom.nodeType === 1) {
@@ -4819,6 +4829,9 @@ avalon.directive("include", {
         disposeVirtual(elem.children)
     },
     change: function (id, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         addHooks(this, binding)
         if (binding.param === "src") {
             if (typeof templatePool[id] === "string") {
@@ -4848,18 +4861,18 @@ avalon.directive("include", {
                 xhr.send(null)
             }
         } else {
-            var el = document.getElementById(id)
-            if (el) {
-                var text = el.tagName === "TEXTAREA" ? el.value :
-                        el.tagName === "SCRIPT" ? el.text :
-                        el.tagName === "NOSCRIPT" ? el.textContent :
-                        el.innerHTML
+            var node = document.getElementById(id)
+            if (node) {
+                var text = node.tagName === "TEXTAREA" ? node.value :
+                        node.tagName === "SCRIPT" ? node.text :
+                        node.tagName === "NOSCRIPT" ? node.textContent :
+                        node.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
         }
 
     },
-    update: function (elem, vnode, parent) {
+    update: function (elem) {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
@@ -4902,6 +4915,9 @@ function scanTemplate(binding, template, id) {
 }
 
 function updateTemplate(elem, vnode) {
+    if (!vnode.disposed) {
+        return
+    }
     var vdom = vnode.children[0]
     var id = vdom.props["data-include-id"]
     var cache = elem.cache || (elem.cache = {})
@@ -4934,25 +4950,27 @@ avalon.directive("on", {
         binding.expr = value
     },
     change: function (listener, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         var type = binding.param
         var uuid = markID(listener)
         var key = type + ":" + uuid + "??"
         if (!avalon.__eventVM__[key]) {//注册事件回调
             avalon.__eventVM__[key] = binding.vmodel
         }
-        var elem = binding.element
-        var change = addData(elem, "eventListeners")// 创建一个更新包
+        var change = addData(elem, "changeEvents")// 创建一个更新包
         change[key] = listener
         addHooks(this, binding)
     },
     update: function (elem, vnode) {
         if (!vnode.disposed) {
-            for (var key in vnode.eventListeners) {
+            for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
-                var listener = vnode.eventListeners[key]
+                var listener = vnode.changeEvents[key]
                 avalon.bind(elem, type, listener)
             }
-            delete vnode.eventListeners
+            delete vnode.changeEvents
         }
     },
     dispose: function (elem) {
@@ -4971,23 +4989,21 @@ avalon.directive("on", {
 avalon.directive("text", {
     change: function (value, binding) {
         var elem = binding.element
-        if (elem && !elem.disposed) {
-            value = typeof value === "string" ? value : String(value)
-            disposeVirtual(elem.children)
-            var children = [new VText(value)]
-            pushArray(elem.children, updateVirtual(children, binding.vmodel))
-            addHooks(this, binding)
-        }
+        if (!elem || !elem.disposed)
+            return
+        value = typeof value === "string" ? value : String(value)
+        disposeVirtual(elem.children)
+        var children = [new VText(value)]
+        pushArray(elem.children, updateVirtual(children, binding.vmodel))
+        addHooks(this, binding)
         return false
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
-        if (vnode.disposed || !child) {
+        if (!child) {
             return
         }
-
         elem.textContent = child.toHTML()
-
         updateEntity(elem.childNodes, vnode.children, elem)
     }
 })
@@ -5064,15 +5080,20 @@ avalon.directive("visible", {
     },
     change: function (val, binding) {
         var elem = binding.element
-        if (elem) {
-            var change = addHooks(elem, "changeStyles")
-            change[this.param] = val
-            change = addHooks(elem, this.update, "change")
-        }
+        if (!elem || !elem.disposed)
+            return
+        elem.isShow = val
+        addHooks(this, binding)
     },
     update: function (elem, vnode) {
-        var change = vnode.changeStyles
-
+        if (vnode.isShow) {
+            elem.style.display = vnode.displayValue || ""
+            if (avalon(elem).css("display") === "none") {
+                elem.style.display = vnode.displayValue = parseDisplay(elem.nodeName)
+            }
+        } else {
+            elem.style.display = "none"
+        }
     }
 })
 /*********************************************************************

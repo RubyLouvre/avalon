@@ -28,17 +28,17 @@ avalon.directive("if", {
     },
     change: function (value, binding) {
         var elem = binding.element
-        if (elem) {
-            elem.state = !!value
-
-            if (value) {
-                elem.children[0] = elem.props.ok
-                updateVirtual([elem.props.ok], binding.vmodel)
-            } else {
-                elem.children[0] = elem.props.ng
-            }
-            addHooks(this, binding)
+        if (!elem || elem.disposed)
+            return
+        elem.ifValue = !!value
+        if (value) {
+            elem.children[0] = elem.props.ok
+            updateVirtual([elem.props.ok], binding.vmodel)
+        } else {
+            elem.children[0] = elem.props.ng
         }
+        addHooks(this, binding)
+
     },
     update: function (node, vnode, parent) {
         var dom = node, vdom = vnode.children[0]
@@ -47,7 +47,6 @@ avalon.directive("if", {
             c.keep = node
             node.keep = c
         }
-
         parent.replaceChild(node.keep, node)
         dom = node.keep
         if (dom.nodeType === 1) {

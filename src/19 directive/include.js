@@ -22,7 +22,9 @@ avalon.directive("include", {
         disposeVirtual(elem.children)
     },
     change: function (id, binding) {
-        // var elem = binding.element
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
         addHooks(this, binding)
         if (binding.param === "src") {
             if (typeof templatePool[id] === "string") {
@@ -56,20 +58,20 @@ avalon.directive("include", {
                 xhr.send(null)
             }
         } else {
-            var el = document.getElementById(id)
+            var node = document.getElementById(id)
             //IE系列与够新的标准浏览器支持通过ID取得元素（firefox14+）
             //http://tjvantoll.com/2012/07/19/dom-element-references-as-global-variables/
-            if (el) {
-                var text = el.tagName === "TEXTAREA" ? el.value :
-                        el.tagName === "SCRIPT" ? el.text :
-                        el.tagName === "NOSCRIPT" ? getNoscriptText(el) :
-                        el.innerHTML
+            if (node) {
+                var text = node.tagName === "TEXTAREA" ? node.value :
+                        node.tagName === "SCRIPT" ? node.text :
+                        node.tagName === "NOSCRIPT" ? getNoscriptText(node) :
+                        node.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
         }
 
     },
-    update: function (elem, vnode, parent) {
+    update: function (elem) {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
@@ -113,6 +115,9 @@ function scanTemplate(binding, template, id) {
 }
 
 function updateTemplate(elem, vnode) {
+    if (!vnode.disposed) {
+        return
+    }
     var vdom = vnode.children[0]
     var id = vdom.props["data-include-id"]
     var cache = elem.cache || (elem.cache = {})

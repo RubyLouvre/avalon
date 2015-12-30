@@ -70,14 +70,19 @@ avalon.directive("visible", {
     },
     change: function (val, binding) {
         var elem = binding.element
-        if (elem) {
-            var change = addHooks(elem, "changeStyles")
-            change[this.param] = val
-            change = addHooks(elem, this.update, "change")
-        }
+        if (!elem || !elem.disposed)
+            return
+        elem.isShow = val
+        addHooks(this, binding)
     },
     update: function (elem, vnode) {
-        var change = vnode.changeStyles
-
+        if (vnode.isShow) {
+            elem.style.display = vnode.displayValue || ""
+            if (avalon(elem).css("display") === "none") {
+                elem.style.display = vnode.displayValue = parseDisplay(elem.nodeName)
+            }
+        } else {
+            elem.style.display = "none"
+        }
     }
 })

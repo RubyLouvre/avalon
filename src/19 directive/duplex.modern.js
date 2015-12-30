@@ -1,5 +1,6 @@
 //双工绑定
-;(function () {
+;
+(function () {
 
 
     var rduplexType = /^(?:checkbox|radio)$/
@@ -105,11 +106,12 @@
         },
         change: function (value, binding) {
             var vnode = binding.element
+            if (!vnode || vnode.disposed)
+                return
             vnode["data-pipe"] = binding.param
             vnode.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
-
             if (vnode.type === "select") {
                 addHook(vnode, selectUpdate, "afterChange")
             }
