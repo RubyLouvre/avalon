@@ -116,7 +116,7 @@
             }
 
             if (vnode.type === "select") {
-                addHooks(vnode, "afterchange", selectUpdate)
+                addHook(vnode, selectUpdate, "afterChange")
             }
             vnode.getterValue = value
             vnode.changed = binding.changed
@@ -273,7 +273,7 @@
         avalon(elem).val(vnode.getterValue)
     }
     selectUpdate.priority = 2001
-    
+
     markID(compositionStart)
     markID(compositionEnd)
     markID(duplexFocus)
@@ -396,8 +396,8 @@
             // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
             watchValueInTimer = avalon.tick
         }
-    } 
-    
+    }
+
     // jshint ignore:line
     function getCaret(ctrl) {
         var start = NaN, end = NaN

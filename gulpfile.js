@@ -87,8 +87,6 @@ gulp.task('combo', function () {
             "15 HTML": "15 HTML.modern",
             "16 dom": "16 dom.modern",
             "17 quote": "17 quote.modern",
-            "18 scanAttr": "18 scanAttr.modern",
-            "18 scanTag": "18 scanTag.modern",
             "21 loader": "21 loader.modern",
             "text": "text.modern",
             "duplex": "duplex.modern",

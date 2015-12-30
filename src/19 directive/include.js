@@ -62,6 +62,7 @@ avalon.directive("include", {
             if (el) {
                 var text = el.tagName === "TEXTAREA" ? el.value :
                         el.tagName === "SCRIPT" ? el.text :
+                        el.tagName === "NOSCRIPT" ? getNoscriptText(el) :
                         el.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
@@ -78,9 +79,35 @@ avalon.directive("include", {
     }
 })
 
+function getNoscriptText(el) {
+    //IE7-8 innerText,innerHTML都无法取得其内容，IE6能取得其innerHTML
+    if (IEVersion === 6 || IEVersion > 8 || window.netscape)
+        return el.innerHTML
+    //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+    if (/apple|google/i.test(navigator.vendor)) {
 
+        return el.textContent
+    }
+    var xhr = getXHR() //IE9-11与chrome的innerHTML会得到转义的内容，它们的innerText可以
+    xhr.open("GET", location, false)
+    xhr.send(null)
+    //http://bbs.csdn.net/topics/390349046?page=1#post-393492653
+    var noscripts = DOC.getElementsByTagName("noscript")
+    var array = (xhr.responseText || "").match(rnoscripts) || []
+    var n = array.length
+    for (var i = 0; i < n; i++) {
+        var tag = noscripts[i]
+        if (tag) { //IE6-8中noscript标签的innerHTML,innerText是只读的
+            tag.style.display = "none" //http://haslayout.net/css/noscript-Ghost-Bug
+            tag.textContext = (array[i].match(rnoscriptText) || ["", "&nbsp;"])[1]
+        }
+    }
+    return el.textContent
+
+}
 function scanTemplate(binding, template, id) {
     template = template.trim()
+    console.log(template)
     var cache = binding.cache || (binding.cache = {})
     if (!cache[id]) {
         var nodes = createVirtual(template, true), throwError
@@ -101,13 +128,13 @@ function scanTemplate(binding, template, id) {
     var vnode = binding.element
     vnode.children.pop()
     vnode.children.push(binding.cache[id])
-    addHooks(vnode, "change", function (elem) {
+    addHook(vnode, function (elem) {
         binding.loaded(elem.firstChild)
-    }, 1051)
-    addHooks(vnode, "change", updateTemplate, 1052)
-    addHooks(vnode, "afterchange", function (elem) {
+    }, "change", 1051)
+    addHook(vnode, updateTemplate, "change", 1052)
+    addHook(vnode, function (elem) {
         binding.rendered(elem.firstChild)
-    }, 1053)
+    }, "afterChange", 1053)
     batchUpdateEntity(binding.vmodel)
 }
 

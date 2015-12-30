@@ -175,6 +175,13 @@ function fixTag(node, attrs, outerHTML) {
 
     } else {
         node.skipContent = true
+        if (node.type === "noscript") {
+            innerHTML = node.template = node.template.
+                    trim().
+                    replace(/&gt;/g, ">").
+                    replace(/&lt;/g, "<").
+                    replace(/&amp;/, "&")
+        }
         node.__content = innerHTML
     }
     return node

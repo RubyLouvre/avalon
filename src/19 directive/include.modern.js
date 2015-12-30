@@ -51,6 +51,7 @@ avalon.directive("include", {
             if (el) {
                 var text = el.tagName === "TEXTAREA" ? el.value :
                         el.tagName === "SCRIPT" ? el.text :
+                        el.tagName === "NOSCRIPT" ? el.textContent :
                         el.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
@@ -61,7 +62,7 @@ avalon.directive("include", {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
-                 !first.getAttribute("data-include-id")) {
+                !first.getAttribute("data-include-id")) {
             avalon.clearHTML(elem)
         }
     }
@@ -89,13 +90,13 @@ function scanTemplate(binding, template, id) {
     var vnode = binding.element
     vnode.children.pop()
     vnode.children.push(binding.cache[id])
-    addHooks(vnode, "change", function (elem) {
+    addHook(vnode, function (elem) {
         binding.loaded(elem.firstChild)
-    }, 1051)
-    addHooks(vnode, "change", updateTemplate, 1052)
-    addHooks(vnode, "afterchange", function (elem) {
+    }, "change", 1051)
+    addHook(vnode, updateTemplate, "change", 1052)
+    addHook(vnode, function (elem) {
         binding.rendered(elem.firstChild)
-    }, 1053)
+    }, "afterChange", 1053)
     batchUpdateEntity(binding.vmodel)
 }
 

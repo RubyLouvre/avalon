@@ -1,5 +1,5 @@
 //双工绑定
-(function () {
+;(function () {
 
 
     var rduplexType = /^(?:checkbox|radio)$/
@@ -111,7 +111,7 @@
             }
 
             if (vnode.type === "select") {
-                addHooks(vnode, "afterchange", selectUpdate)
+                addHook(vnode, selectUpdate, "afterChange")
             }
             vnode.getterValue = value
             vnode.changed = binding.changed

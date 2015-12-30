@@ -73,8 +73,7 @@ avalon.directive("visible", {
         if (elem) {
             var change = addHooks(elem, "changeStyles")
             change[this.param] = val
-            change = addHooks(elem, "changeHooks")
-            change.visible = directives.visible.update
+            change = addHooks(elem, this.update, "change")
         }
     },
     update: function (elem, vnode) {

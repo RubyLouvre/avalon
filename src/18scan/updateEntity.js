@@ -152,7 +152,7 @@ function updateEntity(nodes, vnodes, parent) {
                 cur = getNextEntity(cur, mirror, nodes[i + 1])
                 continue
             }
-            if (!mirror.skipContent && !mirror.skip && mirror.children && cur.nodeType === 1) {
+            if (!mirror.skipContent && !mirror.skip && mirror.children && cur && cur.nodeType === 1) {
                 updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
             }
             execHooks(cur, mirror, parent, "afterChange")

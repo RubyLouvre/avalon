@@ -3127,6 +3127,73 @@ var getBindingValue = function (elem, name, vmodel) {
 }
 
 
+
+var roneTime = /^\s*::/
+var rmsAttr = /ms-(\w+)-?(.*)/
+var priorityMap = {
+    "if": 10,
+    "repeat": 90,
+    "data": 100,
+    "each": 1400,
+    "with": 1500,
+    "duplex": 2000,
+    "on": 3000
+}
+//ms-repeat,ms-if会创建一个组件,作为原元素的父节点,没有孩子,
+//将原元素的outerHTML作为其props.template
+//ms-html,ms-text会创建一个组件,作为原元素的唯一子节点
+//优化级ms-if  >  ms-repeat  >  ms-html  >  ms-text
+var events = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
+var obsoleteAttrs = oneObject("value,title,alt,checked,selected,disabled,readonly,enabled")
+function bindingSorter(a, b) {
+    return a.priority - b.priority
+}
+
+function scanAttrs(elem, vmodel, siblings) {
+    var props = elem.props, bindings = []
+    for (var i in props) {
+        var value = props[i], match
+        if (value && (match = i.match(rmsAttr))) {
+            var type = match[1]
+            var param = match[2] || ""
+            var name = i
+            if (events[type]) {
+                param = type
+                type = "on"
+            } else if (obsoleteAttrs[type]) {
+                param = type
+                type = "attr"
+                name = "ms-" + type + "-" + param
+                log("warning!请改用" + name + "代替" + i + "!")
+            }
+            if (directives[type]) {
+                var newValue = value.replace(roneTime, "")
+                var oneTime = value !== newValue
+                var binding = {
+                    type: type,
+                    param: param,
+                    element: elem,
+                    name: name,
+                    expr: newValue,
+                    oneTime: oneTime,
+                    priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
+                }
+                if (/each|repeat|if|text|html/.test(type)) {
+                    binding.siblings = siblings
+                }
+                bindings.push(binding)
+            }
+        }
+    }
+    if (bindings.length) {
+        bindings.sort(bindingSorter)
+        executeBindings(bindings, vmodel)
+    }
+    updateVirtual(elem.children, vmodel)
+    
+
+}
+
 function scanExpr(str) {
     var tokens = [],
             value, start = 0,
@@ -3163,6 +3230,39 @@ function scanExpr(str) {
         })
     }
     return tokens
+}
+
+
+function scanTag(elem, vmodel, siblings) {
+    var props = elem.props
+    //更新数据
+    var v = props["data-important"]
+    var vm = avalon.vmodels[v]
+    if (vm) {
+        vmodel = vm
+        vtree[v] = elem
+    } else {
+        v = props["data-controller"]
+        vm = avalon.vmodels[v]
+        if (vm) {
+            vtree[v] = elem
+            if (vmodel) {
+                vm = avalon.createProxy(vmodel, vm)
+            }
+            vmodel = vm
+        }
+    }
+    if (v && !vm) {
+        return avalon.log("[" + v + "] vmodel has not defined yet!")
+    }
+
+    if (elem.type.indexOf(":") > 0 && !avalon.components[elem.type]) {
+        //avalon.component(elem)
+    } else {
+        scanAttrs(elem, vmodel, siblings)
+    }
+    
+    return elem
 }
 
 
@@ -3442,6 +3542,13 @@ function fixTag(node, attrs, outerHTML) {
 
     } else {
         node.skipContent = true
+        if (node.type === "noscript") {
+            innerHTML = node.template = node.template.
+                    trim().
+                    replace(/&gt;/g, ">").
+                    replace(/&lt;/g, "<").
+                    replace(/&amp;/, "&")
+        }
         node.__content = innerHTML
     }
     return node
@@ -3638,7 +3745,7 @@ function updateEntity(nodes, vnodes, parent) {
                 cur = getNextEntity(cur, mirror, nodes[i + 1])
                 continue
             }
-            if (!mirror.skipContent && !mirror.skip && mirror.children && cur.nodeType === 1) {
+            if (!mirror.skipContent && !mirror.skip && mirror.children && cur && cur.nodeType === 1) {
                 updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
             }
             execHooks(cur, mirror, parent, "afterChange")
@@ -3869,7 +3976,7 @@ avalon.directive("data", {
 })
 
 //双工绑定
-(function () {
+;(function () {
 
 
     var rduplexType = /^(?:checkbox|radio)$/
@@ -3981,7 +4088,7 @@ avalon.directive("data", {
             }
 
             if (vnode.type === "select") {
-                addHooks(vnode, "afterchange", selectUpdate)
+                addHook(vnode, selectUpdate, "afterChange")
             }
             vnode.getterValue = value
             vnode.changed = binding.changed
@@ -4745,6 +4852,7 @@ avalon.directive("include", {
             if (el) {
                 var text = el.tagName === "TEXTAREA" ? el.value :
                         el.tagName === "SCRIPT" ? el.text :
+                        el.tagName === "NOSCRIPT" ? el.textContent :
                         el.innerHTML
                 scanTemplate(binding, text.trim(), "id:" + id)
             }
@@ -4755,7 +4863,7 @@ avalon.directive("include", {
         var first = elem.firstChild
         if (elem.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
-                 !first.getAttribute("data-include-id")) {
+                !first.getAttribute("data-include-id")) {
             avalon.clearHTML(elem)
         }
     }
@@ -4783,13 +4891,13 @@ function scanTemplate(binding, template, id) {
     var vnode = binding.element
     vnode.children.pop()
     vnode.children.push(binding.cache[id])
-    addHooks(vnode, "change", function (elem) {
+    addHook(vnode, function (elem) {
         binding.loaded(elem.firstChild)
-    }, 1051)
-    addHooks(vnode, "change", updateTemplate, 1052)
-    addHooks(vnode, "afterchange", function (elem) {
+    }, "change", 1051)
+    addHook(vnode, updateTemplate, "change", 1052)
+    addHook(vnode, function (elem) {
         binding.rendered(elem.firstChild)
-    }, 1053)
+    }, "afterChange", 1053)
     batchUpdateEntity(binding.vmodel)
 }
 
@@ -4959,8 +5067,7 @@ avalon.directive("visible", {
         if (elem) {
             var change = addHooks(elem, "changeStyles")
             change[this.param] = val
-            change = addHooks(elem, "changeHooks")
-            change.visible = directives.visible.update
+            change = addHooks(elem, this.update, "change")
         }
     },
     update: function (elem, vnode) {
