@@ -16,53 +16,7 @@ function parseDisplay(nodeName, val) {
 }
 
 avalon.parseDisplay = parseDisplay
-/*
- avalon.directive("visible", {
- init: function (binding) {
- effectBinding(binding.element, binding)
- },
- update: function (val) {
- var binding = this, elem = this.element, stamp
- var noEffect = !this.effectName
- if (!this.stamp) {
- stamp = this.stamp = +new Date()
- if (val) {
- elem.style.display = binding.display || ""
- if (avalon(elem).css("display") === "none") {
- elem.style.display = binding.display = parseDisplay(elem.nodeName)
- }
- } else {
- elem.style.display = "none"
- }
- return
- }
- stamp = this.stamp = +new Date()
- if (val) {
- avalon.effect.apply(elem, 1, function () {
- if (stamp !== binding.stamp)
- return
- var driver = elem.getAttribute("data-effect-driver") || "a"
- 
- if (noEffect) {//不用动画时走这里
- elem.style.display = binding.display || ""
- }
- // "a", "t"
- if (driver === "a" || driver === "t") {
- if (avalon(elem).css("display") === "none") {
- elem.style.display = binding.display || parseDisplay(elem.nodeName)
- }
- }
- })
- } else {
- avalon.effect.apply(elem, 0, function () {
- if (stamp !== binding.stamp)
- return
- elem.style.display = "none"
- })
- }
- }
- })
- */
+
 avalon.directive("visible", {
     init: noop,
     is: function (a, b) {
@@ -70,7 +24,7 @@ avalon.directive("visible", {
     },
     change: function (val, binding) {
         var elem = binding.element
-        if (!elem || !elem.disposed)
+        if (!elem || elem.disposed)
             return
         elem.isShow = val
         addHooks(this, binding)

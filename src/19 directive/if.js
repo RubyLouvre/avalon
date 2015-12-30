@@ -1,4 +1,9 @@
 avalon.directive("if", {
+    is: function (a, b) {
+        if (b === void 0)
+            return false
+        return Boolean(a) === Boolean(b)
+    },
     init: function (binding) {
         var element = binding.element
         var templale = toString(element, {
@@ -20,11 +25,6 @@ avalon.directive("if", {
         delete binding.siblings
         binding.element = component
         return false
-    },
-    is: function (a, b) {
-        if (b === void 0)
-            return false
-        return Boolean(a) === Boolean(b)
     },
     change: function (value, binding) {
         var elem = binding.element

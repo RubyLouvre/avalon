@@ -3640,66 +3640,6 @@ function getVType(node) {
     }
 }
 
-//function updateEntity(nodes, vnodes, parent) {
-//    var node = nodes[0], vnode
-//    if (!node && !parent)
-//        return
-//    parent = parent || node.parentNode
-//    label:
-//            for (var vi = 0, vn = vnodes.length; vi < vn; vi++) {
-//        vnode = vnodes[vi]
-//        var nextNode = nodes[vi + 1]
-//        if (!node) {
-//            var a = vnode.toDOM()
-//            if (a.nodeType === 11) {
-//                var as = avalon.slice(a.childNodes)
-//                parent.appendChild(a)
-//                updateEntity(as, vnode.children, parent)
-//                node = null
-//                continue label
-//            } else {
-//                parent.appendChild(a)
-//                node = a
-//            }
-//        } else if (node.nodeType !== getVType(vnode)) {
-//            //如果它碰到的是组件,交由组件的change处理
-//            if (vnode.type !== "#component") {
-//                var b = vnode.toDOM()
-//                parent.replaceChild(b, node)
-//                node = b
-//            }
-//        }
-//        var hooks = vnode.change
-//        if (hooks) {//这里存在优化级
-//            for (var k = 0, hook; hook = hooks[k++]; ) {
-//
-//                var isContinue = hook(node, vnode, parent)
-//                if (isContinue === false) {
-//                    node = getNextNode(node, vnode, nextNode)
-//                    delete vnode.change
-//                    continue label
-//                }
-//            }
-//            delete vnode.change
-//        }
-//
-//        if (!vnode.skipContent && !vnode.skip && vnode.children && node.nodeType === 1) {
-//            updateEntity(node.childNodes, vnode.children, node)
-//        }
-//        if (vnode.setter) {
-//            avalon.fireDom(node, "datasetchanged", {
-//                bubble: "selectDuplex"
-//            })
-//            delete vnode.setter
-//        }
-//        node = getNextNode(node, vnode, nextNode)
-//    }
-//    if (node && !vnode) {//如果虚拟节点很少,那么删除后面的
-//        while (node.nextSibling) {
-//            parent.removeChild(node.nextSibling)
-//        }
-//    }
-//}
 
 function updateEntity(nodes, vnodes, parent) {
     var cur = nodes[0]
@@ -4325,7 +4265,7 @@ avalon.directive("data", {
     }
 
     var watchValueInTimer = noop
-    new function () { // jshint ignore:line
+    ;(function () { // jshint ignore:line
         try { //#272 IE9-IE11, firefox
             var setters = {}
             var aproto = HTMLInputElement.prototype
@@ -4353,7 +4293,7 @@ avalon.directive("data", {
             // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
             watchValueInTimer = avalon.tick
         }
-    } // jshint ignore:line
+    })() // jshint ignore:line
 
 
 })();
@@ -4726,6 +4666,11 @@ avalon.directive("html", {
 })
 
 avalon.directive("if", {
+    is: function (a, b) {
+        if (b === void 0)
+            return false
+        return Boolean(a) === Boolean(b)
+    },
     init: function (binding) {
         var element = binding.element
         var templale = toString(element, {
@@ -4747,11 +4692,6 @@ avalon.directive("if", {
         delete binding.siblings
         binding.element = component
         return false
-    },
-    is: function (a, b) {
-        if (b === void 0)
-            return false
-        return Boolean(a) === Boolean(b)
     },
     change: function (value, binding) {
         var elem = binding.element
@@ -4989,14 +4929,13 @@ avalon.directive("on", {
 avalon.directive("text", {
     change: function (value, binding) {
         var elem = binding.element
-        if (!elem || !elem.disposed)
+        if (!elem || elem.disposed)
             return
         value = typeof value === "string" ? value : String(value)
         disposeVirtual(elem.children)
         var children = [new VText(value)]
         pushArray(elem.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
-        return false
     },
     update: function (elem, vnode) {
         var child = vnode.children[0]
@@ -5026,53 +4965,7 @@ function parseDisplay(nodeName, val) {
 }
 
 avalon.parseDisplay = parseDisplay
-/*
- avalon.directive("visible", {
- init: function (binding) {
- effectBinding(binding.element, binding)
- },
- update: function (val) {
- var binding = this, elem = this.element, stamp
- var noEffect = !this.effectName
- if (!this.stamp) {
- stamp = this.stamp = +new Date()
- if (val) {
- elem.style.display = binding.display || ""
- if (avalon(elem).css("display") === "none") {
- elem.style.display = binding.display = parseDisplay(elem.nodeName)
- }
- } else {
- elem.style.display = "none"
- }
- return
- }
- stamp = this.stamp = +new Date()
- if (val) {
- avalon.effect.apply(elem, 1, function () {
- if (stamp !== binding.stamp)
- return
- var driver = elem.getAttribute("data-effect-driver") || "a"
- 
- if (noEffect) {//不用动画时走这里
- elem.style.display = binding.display || ""
- }
- // "a", "t"
- if (driver === "a" || driver === "t") {
- if (avalon(elem).css("display") === "none") {
- elem.style.display = binding.display || parseDisplay(elem.nodeName)
- }
- }
- })
- } else {
- avalon.effect.apply(elem, 0, function () {
- if (stamp !== binding.stamp)
- return
- elem.style.display = "none"
- })
- }
- }
- })
- */
+
 avalon.directive("visible", {
     init: noop,
     is: function (a, b) {
@@ -5080,7 +4973,7 @@ avalon.directive("visible", {
     },
     change: function (val, binding) {
         var elem = binding.element
-        if (!elem || !elem.disposed)
+        if (!elem || elem.disposed)
             return
         elem.isShow = val
         addHooks(this, binding)

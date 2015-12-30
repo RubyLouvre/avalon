@@ -342,7 +342,7 @@
     }
 
     var watchValueInTimer = noop
-    new function () { // jshint ignore:line
+    ;(function () { // jshint ignore:line
         try { //#272 IE9-IE11, firefox
             var setters = {}
             var aproto = HTMLInputElement.prototype
@@ -370,7 +370,7 @@
             // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
             watchValueInTimer = avalon.tick
         }
-    } // jshint ignore:line
+    })() // jshint ignore:line
 
 
 })();

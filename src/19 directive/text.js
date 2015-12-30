@@ -2,7 +2,7 @@
 avalon.directive("text", {
     change: function (value, binding) {
         var elem = binding.element
-        if (!elem || !elem.disposed)
+        if (!elem || elem.disposed)
             return
         value = typeof value === "string" ? value : String(value)
         disposeVirtual(elem.children)

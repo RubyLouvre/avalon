@@ -17,7 +17,6 @@ avalon.directive("include", {
         var rendered = getBindingValue(elem, "data-include-rendered", vmodel)
         binding.rendered = typeof rendered === "function" ? rendered : noop
 
-
         binding.expr = normalizeExpr(binding.expr.trim())
         disposeVirtual(elem.children)
     },
