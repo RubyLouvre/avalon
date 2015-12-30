@@ -28,10 +28,11 @@ function observe(definition, old, heirloom, options) {
         return observeArray(definition, old, heirloom, options)
     } else if (avalon.isPlainObject(definition)) {
         var vm = observeObject(definition, heirloom, options)
-        for (var i in old) {
-            if (vm.hasOwnProperty(i)) {
-                vm[i] = old[i]
-            }
+        if (Object(old) === old) {
+            vm = createProxy(vm, old, heirloom)
+        }
+        for (var i in definition) {
+            vm[i] = definition[i]
         }
         return vm
     } else {
@@ -129,7 +130,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray, skipDollar)) {
+        if (!isObservable(key, val, $skipArray, skipDollar)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -184,7 +185,7 @@ function isComputed(val) {//speed up!
                 return false
             }
         }
-        return  typeof val.get === "function"
+        return typeof val.get === "function"
     }
 }
 
@@ -246,7 +247,7 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-                collectDependency(pathname, heirloom)
+               // collectDependency(pathname, heirloom)
             }
             return old
         },
@@ -326,7 +327,7 @@ function createProxy(before, after, heirloom) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
-    hideProperty($vmodel, "$id", before.$id + "_")
+    hideProperty($vmodel, "$id", before.$id + "??" + after.$id.slice(0, 4))
     hideProperty($vmodel, "hasOwnProperty", trackBy)
     hideProperty($vmodel, "$events", {})
 

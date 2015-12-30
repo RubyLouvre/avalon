@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.6 built in 2015.12.30
+ avalon.js 1.6 built in 2015.12.31
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1116,10 +1116,11 @@ function observe(definition, old, heirloom, options) {
         return observeArray(definition, old, heirloom, options)
     } else if (avalon.isPlainObject(definition)) {
         var vm = observeObject(definition, heirloom, options)
-        for (var i in old) {
-            if (vm.hasOwnProperty(i)) {
-                vm[i] = old[i]
-            }
+        if (Object(old) === old) {
+            vm = createProxy(vm, old, heirloom)
+        }
+        for (var i in definition) {
+            vm[i] = definition[i]
         }
         return vm
     } else {
@@ -1184,7 +1185,7 @@ function Component() {
  $accessors:avalon.js独有的对象
  =============================
  $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
- 
+
  $$skipArray与$skipArray都不能监控,
  不同点是
  $$skipArray被hasOwnProperty后返回false
@@ -1219,7 +1220,7 @@ function observeObject(definition, heirloom, options) {
             continue
         var val = definition[key]
         hasOwn[key] = true
-        if (!isObervable(key, val, $skipArray)) {
+        if (!isObservable(key, val, $skipArray)) {
             simple.push(key)
             var path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
@@ -1252,6 +1253,7 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "$id", generateID("$"))
     hideProperty($vmodel, "$active", false)
     hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "$accessors", $accessors)
     if (options.top === true) {
         makeFire($vmodel, heirloom, $accessors)
     }
@@ -1265,7 +1267,7 @@ function observeObject(definition, heirloom, options) {
 }
 
 function makeFire($vmodel, heirloom, $accessors) {
-    hideProperty($vmodel, "$accessors", $accessors)
+
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
@@ -1346,7 +1348,7 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObervable(key, value, skipArray) {
+function isObservable(key, value, skipArray) {
     return key.charAt(0) === "$" ||
             skipArray[key] ||
             (typeof value === "function") ||
@@ -1369,6 +1371,7 @@ function makeObservable(pathname, heirloom) {
         set: function (val) {
             if (old === val)
                 return
+
             val = observe(val, old, heirloom, {
                 pathname: pathname
             })
@@ -1377,6 +1380,7 @@ function makeObservable(pathname, heirloom) {
             }
             var older = old
             old = val
+
             if (_this.$active) {
                 $emit(heirloom.vm, _this, pathname, val, older)
                 batchUpdateEntity(heirloom.vm)
@@ -1423,7 +1427,8 @@ function createProxy(before, after, heirloom) {
     function trackBy(name) {
         return hasOwn[name] === true
     }
-    hideProperty($vmodel, "$id", before.$id + "_")
+
+    hideProperty($vmodel, "$id", before.$id + "??" + after.$id.slice(0, 4))
     hideProperty($vmodel, "hasOwnProperty", trackBy)
 
     makeFire($vmodel, heirloom || {}, $accessors)
@@ -1480,7 +1485,6 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
-
 
 //===================修复浏览器对Object.defineProperties的支持=================
 if (!canHideOwn) {
@@ -2851,7 +2855,6 @@ function parseExpr(expr, vmodel, binding) {
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
-
     fn = new Function(args.join(","), headers.join(""))
     if (category === "on") {
         var old = fn
@@ -4431,19 +4434,19 @@ avalon.directive("data", {
             elem.duplexEvents = duplexEvents
         },
         change: function (value, binding) {
-            var vnode = binding.element
-            if (!vnode || vnode.disposed)
+            var elem = binding.element
+            if (!elem || elem.disposed)
                 return
-            vnode["data-pipe"] = binding.param
-            vnode.setter = function (a, b, c) {
+            elem["data-pipe"] = binding.param
+            elem.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
 
-            if (vnode.type === "select") {
-                addHook(vnode, selectUpdate, "afterChange")
+            if (elem.type === "select") {
+                addHook(elem, selectUpdate, "afterChange")
             }
-            vnode.getterValue = value
-            vnode.changed = binding.changed
+            elem.getterValue = value
+            elem.changed = binding.changed
             addHooks(this, binding)
         },
         update: function (elem, vnode) {

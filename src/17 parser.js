@@ -170,7 +170,6 @@ function parseExpr(expr, vmodel, binding) {
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
-
     fn = new Function(args.join(","), headers.join(""))
     if (category === "on") {
         var old = fn

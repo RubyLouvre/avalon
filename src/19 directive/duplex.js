@@ -109,19 +109,19 @@
             elem.duplexEvents = duplexEvents
         },
         change: function (value, binding) {
-            var vnode = binding.element
-            if (!vnode || vnode.disposed)
+            var elem = binding.element
+            if (!elem || elem.disposed)
                 return
-            vnode["data-pipe"] = binding.param
-            vnode.setter = function (a, b, c) {
+            elem["data-pipe"] = binding.param
+            elem.setter = function (a, b, c) {
                 binding.setter(binding.vmodel, a, b, c)
             }
 
-            if (vnode.type === "select") {
-                addHook(vnode, selectUpdate, "afterChange")
+            if (elem.type === "select") {
+                addHook(elem, selectUpdate, "afterChange")
             }
-            vnode.getterValue = value
-            vnode.changed = binding.changed
+            elem.getterValue = value
+            elem.changed = binding.changed
             addHooks(this, binding)
         },
         update: function (elem, vnode) {
