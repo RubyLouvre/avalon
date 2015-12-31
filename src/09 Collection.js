@@ -1,6 +1,56 @@
 /*********************************************************************
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
+function observeArray(array, old, heirloom, options) {
+    if (old && old.splice) {
+        var args = [0, old.length].concat(array)
+        old.splice.apply(old, args)
+        return old
+    } else {
+        for (var i in newProto) {
+            array[i] = newProto[i]
+        }
+        array._ = observeObject({
+            length: NaN
+        }, {}, {
+            pathname: "",
+            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
+        })
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+        array._.length = array.length
+        array._.$watch("length", function (a, b) {
+            if (heirloom.vm) {
+                heirloom.vm.$fire(options.pathname + ".length", a, b)
+            }
+        })
+
+        if (W3C) {
+            hideProperty(array, "$model", $modelDescriptor)
+        } else {
+            array.$model = toJson(array)
+        }
+        var arrayOptions = {
+            pathname: "", //options.pathname + ".*",
+            top: true
+        }
+        for (var j = 0, n = array.length; j < n; j++) {
+            array[j] = observeItem(array[j], {}, arrayOptions)
+        }
+
+        return array
+    }
+}
+
+function observeItem(item, a, b) {
+    if (item && typeof item === "object") {
+        return observe(item, a, b)
+    } else {
+        return item
+    }
+}
 
 var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 var arrayProto = Array.prototype

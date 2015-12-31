@@ -868,7 +868,6 @@ avalon.define = function (definition) {
     avalon.vmodels[$id] = vmodel
     vmodel.$id = $id
 
-
     return vmodel
 }
 
@@ -892,52 +891,8 @@ function observe(definition, old, heirloom, options) {
 }
 
 
-//将普通数组转换为监控数组
-function observeArray(array, old, heirloom, options) {
-    if (old && old.splice) {
-        var args = [0, old.length].concat(array)
-        old.splice.apply(old, args)
-        return old
-    } else {
-        for (var i in newProto) {
-            array[i] = newProto[i]
-        }
-        array._ = observeObject({
-            length: NaN
-        }, {}, {
-            pathname: "",
-            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
-        })
-        array.notify = function () {
-            $emit(heirloom.vm, heirloom.vm, options.pathname)
-            batchUpdateEntity(heirloom.vm)
-        }
-        array._.length = array.length
-        array._.$watch("length", function (a, b) {
-            if (heirloom.vm) {
-                heirloom.vm.$fire(options.pathname + ".length", a, b)
-            }
-        })
-
-
-        hideProperty(array, "$model", $modelDescriptor)
-
-        var arrayOptions = {
-            pathname: options.pathname + "*",
-            top: true
-        }
-        for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observe(array[j], 0, heirloom, arrayOptions)
-        }
-
-        return array
-    }
-}
-
-
 function Component() {
 }
-
 
 /*
  将一个对象转换为一个VM
@@ -1006,24 +961,23 @@ function observeObject(definition, heirloom, options) {
         }
     }
 
-    function trackBy(key) {
+    function hasOwnKey(key) {
         return keys[key] === true
     }
 
     hideProperty($vmodel, "$id", "anonymous")
-    hideProperty($vmodel, "$active", false)
-    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.top === true) {
         makeFire($vmodel, heirloom)
     }
 
-    for (name in $computed) {
-        val = $vmodel[name]
+    for (key in $computed) {
+        val = $vmodel[key]
     }
 
-    $vmodel.$active = true
+    hideProperty($vmodel, "$active", true)
     return $vmodel
 }
 
@@ -1082,7 +1036,7 @@ function makeComputed(pathname, heirloom, key, value) {
     }
 }
 
-function isObservable(key, value, skipArray) {
+function isSkip(key, value, skipArray) {
     return key.charAt(0) === "$" ||
             skipArray[key] ||
             (typeof value === "function") ||
@@ -1175,13 +1129,13 @@ function reuseVmodel(before, after, heirloom, pathname) {
         keys[key] = true
     }
 
-    function trackBy(key) {
+    function hasOwnKey(key) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
 
-    $vmodel.$active = true
+    hideProperty($vmodel, "$active", true)
     return $vmodel
 }
 
@@ -1215,17 +1169,17 @@ function createProxy(before, after, heirloom) {
         keys[key] = true
     }
 
-    function trackBy(key) {
+    function hasOwnKey(key) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$id", before.$id + "??" +
             String(after.$id).slice(0, 4))
 
     makeFire($vmodel, heirloom || {})
 
-    $vmodel.$active = true
+    hideProperty($vmodel, "$active", true)
     return $vmodel
 }
 
@@ -1355,6 +1309,56 @@ function batchUpdateEntity(vm) {
 /*********************************************************************
  *          监控数组（与ms-each, ms-repeat配合使用）                     *
  **********************************************************************/
+function observeArray(array, old, heirloom, options) {
+    if (old && old.splice) {
+        var args = [0, old.length].concat(array)
+        old.splice.apply(old, args)
+        return old
+    } else {
+        for (var i in newProto) {
+            array[i] = newProto[i]
+        }
+        array._ = observeObject({
+            length: NaN
+        }, {}, {
+            pathname: "",
+            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
+        })
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+        array._.length = array.length
+        array._.$watch("length", function (a, b) {
+            if (heirloom.vm) {
+                heirloom.vm.$fire(options.pathname + ".length", a, b)
+            }
+        })
+
+        if (W3C) {
+            hideProperty(array, "$model", $modelDescriptor)
+        } else {
+            array.$model = toJson(array)
+        }
+        var arrayOptions = {
+            pathname: "", //options.pathname + ".*",
+            top: true
+        }
+        for (var j = 0, n = array.length; j < n; j++) {
+            array[j] = observeItem(array[j], {}, arrayOptions)
+        }
+
+        return array
+    }
+}
+
+function observeItem(item, a, b) {
+    if (item && typeof item === "object") {
+        return observe(item, a, b)
+    } else {
+        return item
+    }
+}
 
 var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 var arrayProto = Array.prototype
@@ -2767,11 +2771,14 @@ function createRepeatItem(curVm, itemName, array) {
             $last: makeObservable("$last", heirloom),
             $index: makeObservable("$index", heirloom)
         },
-        $first: 1,
-        $last: 1,
-        $index: 1,
+//        $first: 1,
+//        $last: 1,
+//        $index: 1,
         $outer: 1
         
+    }
+    if(Object.defineProperties){
+        Object.defineProperties(after,after.$accessors)
     }
     if (array) {
         after.$remove = function () {
