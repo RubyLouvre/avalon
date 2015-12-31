@@ -238,11 +238,14 @@ function createRepeatItem(curVm, itemName, array) {
             $last: makeObservable("$last", heirloom),
             $index: makeObservable("$index", heirloom)
         },
-        $first: 1,
-        $last: 1,
-        $index: 1,
+//        $first: 1,
+//        $last: 1,
+//        $index: 1,
         $outer: 1
         
+    }
+    if(Object.defineProperties){
+        Object.defineProperties(after,after.$accessors)
     }
     if (array) {
         after.$remove = function () {
