@@ -242,6 +242,7 @@ function createRepeatItem(curVm, itemName, array) {
         $last: 1,
         $index: 1,
         $outer: 1
+        
     }
     if (array) {
         after.$remove = function () {

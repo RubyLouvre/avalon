@@ -118,47 +118,46 @@ function observeObject(definition, heirloom, options) {
     }
     var $computed = getComputed(definition) // 收集所有计算属性
     var $pathname = options.pathname || ""
-    var skipDollar = options.skipDollar || {}
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
-    var hasOwn = {}    //用于实现hasOwnProperty方法
-    var simple = []    //用于储放简单类型的访问器属性的名字
-    var skip = []
+    var keys = {}, key, path
 
-    for (var key in definition) {
+    for (key in definition) {
         if ($$skipArray[key])
             continue
-        var val = definition[key]
-        hasOwn[key] = true
-        if (!isObservable(key, val, $skipArray, skipDollar)) {
-            simple.push(key)
-            var path = $pathname ? $pathname + "." + key : key
+        var val = keys[key] = definition[key]
+        if (!isSkip(key, val, $skipArray)) {
+            path = $pathname ? $pathname + "." + key : key
             $accessors[key] = makeObservable(path, heirloom)
-        } else {
-            skip.push(key)
         }
     }
 
-    for (var name in $computed) {
-        hasOwn[key] = true
+    for (key in $computed) {
+        keys[key] = definition[key]
         path = $pathname ? $pathname + "." + key : key
         $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
     }
 
-    $accessors["$model"] = $modelDescriptor
+    $accessors.$model = $modelDescriptor
 
     Object.defineProperties($vmodel, $accessors)
 
-    function trackBy(name) {
-        return hasOwn[name] === true
+    for (key in keys) {
+        //对普通监控属性或访问器属性进行赋值 
+        if (!(key in $computed)) {
+            $vmodel[key] = keys[key]
+        }
+        //删除系统属性
+        if (key in $skipArray) {
+            delete keys[key]
+        } else {
+            keys[key] = true
+        }
     }
 
-    skip.forEach(function (name) {
-        $vmodel[name] = definition[name]
-    })
-    simple.forEach(function (name) {
-        $vmodel[name] = definition[name]
-    })
+    function trackBy(key) {
+        return keys[key] === true
+    }
 
     hideProperty($vmodel, "$id", "anonymous")
     hideProperty($vmodel, "$active", false)
@@ -247,16 +246,18 @@ function makeObservable(pathname, heirloom) {
                 _this = this // 保存当前子VM的引用
             }
             if (_this.$active) {
-               // collectDependency(pathname, heirloom)
+                // collectDependency(pathname, heirloom)
             }
             return old
         },
         set: function (val) {
             if (old === val)
                 return
-            val = observe(val, old, heirloom, {
-                pathname: pathname
-            })
+            if (val && typeof val === "object") {
+                val = observe(val, old, heirloom, {
+                    pathname: pathname
+                })
+            }
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
             }
@@ -292,46 +293,87 @@ function makeFire($vmodel, heirloom) {
     heirloom.vm = heirloom.vm || $vmodel
 }
 
-function createProxy(before, after, heirloom) {
-    var accessors = {}
-    var skip = {}
-    var hasOwn = {}
-    //收集所有键值对及访问器属性
-    for (var k in before) {
-        var accessor = Object.getOwnPropertyDescriptor(before, k)
-        if (accessor.set) {
-            accessors[k] = accessor
-        } else {
-            skip[k] = before[k]
+function SubComponent() {
+}
+
+function reuseVmodel(before, after, heirloom, pathname) {
+    var $accessors = {}
+    var keys = {}, key, path
+    for (key in after) {
+        if ($$skipArray[key])
+            continue
+        keys[key] = after[key]
+        if (!isSkip(key, after[key], {})) {
+            var accessor = Object.getOwnPropertyDescriptor(before, key)
+            if (accessor && accessor.get) {
+                $accessors[key] = accessor
+            } else {
+                path = pathname ? pathname + "." + key : key
+                $accessors[key] = makeObservable(path, heirloom)
+            }
         }
-        hasOwn = true
-    }
-    for (var k in after) {
-        var accessor = Object.getOwnPropertyDescriptor(after, k)
-        if (accessor.set) {
-            accessors[k] = accessor
-        } else {
-            skip[k] = after[k]
-        }
-        hasOwn = true
-    }
-    var $vmodel = {}
-    $vmodel = Object.defineProperties($vmodel, accessors)
-    for (var k in skip) {
-        $vmodel[k] = keys[k]
-    }
-    for (k in $$skipArray) {
-        delete hasOwn[k]
     }
 
-    function trackBy(name) {
-        return hasOwn[name] === true
+    var $vmodel = new SubComponent()
+    $vmodel = defineProperties($vmodel, $accessors, keys)
+
+    for (key in keys) {
+        if (!$accessors[key]) {//添加不可监控的属性
+            $vmodel[key] = keys[key]
+        }
+        keys[key] = true
     }
-    hideProperty($vmodel, "$id", before.$id + "??" + after.$id.slice(0, 4))
+
+    function trackBy(key) {
+        return keys[key] === true
+    }
+
     hideProperty($vmodel, "hasOwnProperty", trackBy)
-    hideProperty($vmodel, "$events", {})
+
+    $vmodel.$active = true
+    return $vmodel
+}
+
+
+function createProxy(before, after, heirloom) {
+    var $accessors = {}
+    var keys = {}
+    //收集所有键值对及访问器属性
+    for (var key in before) {
+        keys[key] = before[key]
+        var accessor = Object.getOwnPropertyDescriptor(before, key)
+        if (accessor.set) {
+            $accessors[key] = accessor
+        }
+    }
+    for (var key in after) {
+        keys[key] = after[key]
+        var accessor = Object.getOwnPropertyDescriptor(after, key)
+        if (accessor.set) {
+            $accessors[key] = accessor
+        }
+    }
+
+    var $vmodel = new SubComponent()
+    $vmodel = Object.defineProperties($vmodel, $accessors)
+
+    for (key in keys) {
+        if (!$accessors[key]) {//添加不可监控的属性
+            $vmodel[key] = keys[key]
+        }
+        keys[key] = true
+    }
+
+    function trackBy(key) {
+        return keys[key] === true
+    }
+
+    hideProperty($vmodel, "hasOwnProperty", trackBy)
+    hideProperty($vmodel, "$id", before.$id + "??" +
+            String(after.$id).slice(0, 4))
 
     makeFire($vmodel, heirloom || {})
+
     $vmodel.$active = true
     return $vmodel
 }

@@ -73,7 +73,7 @@ arrayMethods.forEach(function (method) {
         // 继续尝试劫持数组元素的属性
         var args = []
         for (var i = 0, n = arguments.length; i < n; i++) {
-            args[i] = observe(arguments[i], 0, 1, 1)
+            args[i] = observeItem(arguments[i])
         }
         var result = original.apply(this, args)
         if (!W3C) {
