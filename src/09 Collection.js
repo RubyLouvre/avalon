@@ -47,16 +47,16 @@ var newProto = {
                 if (all.indexOf(this[i]) !== -1) {
                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                    
+
                 }
             }
         } else if (typeof all === "function") {
             for (i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                     _splice.call(this.$track, i, 1)
+                    _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                   
+
                 }
             }
         } else {
@@ -71,7 +71,8 @@ var newProto = {
         this._.length = this.length
     },
     clear: function () {
-        return this.removeAll()
+        this.removeAll()
+        return this
     }
 }
 

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.shim.js 1.5.6 built in 2015.12.27
+ avalon.modern.js 1.5.1 built in 2016.1.2
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -240,7 +240,7 @@ avalon.mix = avalon.fn.mix = function () {
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.56,
+    version: 1.51,
     ui: {},
     log: log,
     slice: function (nodes, start, end) {
@@ -674,9 +674,9 @@ var plugins = {
             kernel.closeTag = closeTag
         var o = escapeRegExp(openTag),
                 c = escapeRegExp(closeTag)
-        rexpr = new RegExp(o + "(.*?)" + c)
-        rexprg = new RegExp(o + "(.*?)" + c, "g")
-        rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+        rexpr = new RegExp(o + "([\\s\\S]*)" + c)
+        rexprg = new RegExp(o + "([\\s\\S]*)" + c, "g")
+        rbind = new RegExp(o + "[\\s\\S]*" + c + "|\\sms-")
     }
 }
 kernel.plugins = plugins
@@ -1228,16 +1228,16 @@ var newProto = {
                 if (all.indexOf(this[i]) !== -1) {
                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                    
+
                 }
             }
         } else if (typeof all === "function") {
             for (i = this.length - 1; i >= 0; i--) {
                 var el = this[i]
                 if (all(el, i)) {
-                     _splice.call(this.$track, i, 1)
+                    _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-                   
+
                 }
             }
         } else {
@@ -1252,7 +1252,8 @@ var newProto = {
         this._.length = this.length
     },
     clear: function () {
-        return this.removeAll()
+        this.removeAll()
+        return this
     }
 }
 
@@ -2639,7 +2640,7 @@ var rhasHtml = /\|\s*html(?:\b|$)/,
     rlt = /&lt;/g,
     rgt = /&gt;/g,
     rstringLiteral = /(['"])(\\\1|.)+?\1/g
-
+    rline = /\r?\n/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
         var scapegoat = value.replace(rstringLiteral, function (_) {
@@ -2683,7 +2684,7 @@ function scanExpr(str) {
         }
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
-            tokens.push(getToken(value, start))
+            tokens.push(getToken(value.replace(rline,"")))
         }
         start = stop + closeTag.length
     } while (1)
