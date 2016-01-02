@@ -3291,7 +3291,7 @@ var rhasHtml = /\|\s*html(?:\b|$)/,
     r11a = /\|\|/g,
     rlt = /&lt;/g,
     rgt = /&gt;/g,
-    rstringLiteral = /(['"])(\\\1|.)+?\1/g
+    rstringLiteral = /(['"])(\\\1|.)+?\1/g,
     rline = /\r?\n/g
 function getToken(value) {
     if (value.indexOf("|") > 0) {
