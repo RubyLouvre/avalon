@@ -48,7 +48,7 @@ function parseExpr(expr, vmodel, binding) {
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
-    binding.paths = pathPool.put(category + ":" + input)
+    binding.paths = pathPool.get(category + ":" + input)
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -129,7 +129,8 @@ function parseExpr(expr, vmodel, binding) {
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
-    binding.paths = pathPool.put(category + ":" + input, pathArray.join("★"))
+    binding.paths = pathPool.put(category + ":" + input, 
+                                 pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
@@ -180,13 +181,6 @@ function parseExpr(expr, vmodel, binding) {
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
     //avalon.log(binding.getter + "")
 }
-
-
-
-
-
-
-
 
 
 function normalizeExpr(code) {

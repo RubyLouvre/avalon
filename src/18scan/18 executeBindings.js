@@ -19,12 +19,16 @@ avalon.injectBinding = function (binding) {
     binding.paths.split("★").forEach(function (path) {
         var trim = path.trim()
         if (trim) {
-            binding.vmodel.$watch(path, binding)
+            try {
+                binding.vmodel.$watch(path, binding)
+            } catch (e) {
+                avalon.log(binding, path)
+            }
         }
     })
     delete binding.paths
     binding.update = function (a, b, path) {
-        
+
         var hasError
         try {
             var value = binding.getter(binding.vmodel)

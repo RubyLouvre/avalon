@@ -21,9 +21,11 @@ VElement.prototype = {
                     this.text = this.__content
                     break;
                 case "style":
-                case "noscript":
                 case "template":
                     this.innerHTML = this.__content
+                    break
+                case "noscript":
+                    this.textContent = this.__content
                     break
                 default:
                     var a = avalon.parseHTML(this.__content)
@@ -68,5 +70,24 @@ VElement.prototype = {
     }
 }
 
+function toString(element, skip) {
+    var p = []
+    for (var i in element.props) {
+        if (skip && skip.test(i))
+            continue
+        p.push(i + "=" + quote(String(element.props[i])))
+    }
+    p = p.length ? " " + p.join(" ") : ""
+
+    var str = "<" + element.type + p
+    if (element.selfClose) {
+        return str + "/>"
+    }
+    str += ">"
+
+    str += element.template
+
+    return str + "</" + element.type + ">"
+}
 
 

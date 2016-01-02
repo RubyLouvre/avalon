@@ -18,10 +18,7 @@ avalon.directive("repeat", {
         var parent = binding.element
         disposeVirtual(parent.children)
         var component = new VComponent("ms-repeat")
-        var template = toString(parent, {
-            "ms-repeat": true,
-            "avalon-uuid": true
-        })
+        var template = toString(parent,/^ms-(repeat|each)/)
         var type = binding.type
         component.itemName = binding.param || "el"
         var signature = generateID(type)
@@ -66,9 +63,9 @@ avalon.directive("repeat", {
         var command = {}
         var $outer = {}
         if (top.hasOwnProperty("$outer") && typeof top.$outer === "object") {
-            $outer = top.$outer
+           // $outer = top.$outer
         }
-
+console.log(value)
         //键名为它过去的位置
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
         for (var i = 0; i <= last; i++) {
@@ -106,7 +103,6 @@ avalon.directive("repeat", {
             saveInCache(newCache, vm, component)
             children.push(component)
         }
-
         for (i in cache) {//剩下的都是要删除重复利用的
             if (cache[i]) {
                 command[cache[i].vmodel.$index] = -1
@@ -126,13 +122,14 @@ avalon.directive("repeat", {
 
     },
     update: function (elem, vnode, parent) {
-        console.log("开始 更新ms-repeat")
+        console.log("开始 更新ms-repeat", elem, vnode,parent)
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
             if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
                 var keepChild = avalon.slice(dom.childNodes)
+                console.log(keepChild,getRepeatChild(vnode.children))
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
@@ -167,9 +164,11 @@ avalon.directive("repeat", {
                         children[to] = froms[from]
                     } else if (to === -3) {
                         children[from] = froms[from]
+                    } else if (to === -2) {
+                        children[from] = froms[from]
                     }
                 }
-
+console.log(children, "---",vnode.repeatCommand)
                 fragment = document.createDocumentFragment()
                 for (var i = 0, el; el = children[i++]; ) {
                     fragment.appendChild(el)

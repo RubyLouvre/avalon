@@ -6,10 +6,7 @@ avalon.directive("if", {
     },
     init: function (binding) {
         var element = binding.element
-        var templale = toString(element, {
-            "ms-if": true,
-            "avalon-uuid": true
-        })
+        var templale = toString(element, /^ms-if$/)
 
         var component = new VComponent("ms-if")
         component.template = templale
@@ -56,25 +53,6 @@ avalon.directive("if", {
     }
 })
 
-function toString(element, map) {
-    var p = []
-    for (var i in element.props) {
-        if (map[i])
-            continue
-        p.push(i + "=" + quote(String(element.props[i])))
-    }
-    p = p.length ? " " + p.join(" ") : ""
-
-    var str = "<" + element.type + p
-    if (element.selfClose) {
-        return str + "/>"
-    }
-    str += ">"
-
-    str += element.template
-
-    return str + "</" + element.type + ">"
-}
 
 avalon.components["ms-if"] = {
     toDOM: function (self) {

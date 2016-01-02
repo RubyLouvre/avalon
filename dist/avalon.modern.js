@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2015.12.31
+ avalon.modern.js 1.6 built in 2016.1.2
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2365,7 +2365,7 @@ function parseExpr(expr, vmodel, binding) {
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
-    binding.paths = pathPool.put(category + ":" + input)
+    binding.paths = pathPool.get(category + ":" + input)
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -2446,7 +2446,8 @@ function parseExpr(expr, vmodel, binding) {
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
-    binding.paths = pathPool.put(category + ":" + input, pathArray.join("★"))
+    binding.paths = pathPool.put(category + ":" + input, 
+                                 pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
@@ -2499,13 +2500,6 @@ function parseExpr(expr, vmodel, binding) {
 }
 
 
-
-
-
-
-
-
-
 function normalizeExpr(code) {
     var hasExpr = rexpr.test(code) //比如ms-class="width{{w}}"的情况
     if (hasExpr) {
@@ -2551,10 +2545,7 @@ avalon.directive("repeat", {
         var parent = binding.element
         disposeVirtual(parent.children)
         var component = new VComponent("ms-repeat")
-        var template = toString(parent, {
-            "ms-repeat": true,
-            "avalon-uuid": true
-        })
+        var template = toString(parent,/^ms-(repeat|each)/)
         var type = binding.type
         component.itemName = binding.param || "el"
         var signature = generateID(type)
@@ -2599,9 +2590,9 @@ avalon.directive("repeat", {
         var command = {}
         var $outer = {}
         if (top.hasOwnProperty("$outer") && typeof top.$outer === "object") {
-            $outer = top.$outer
+           // $outer = top.$outer
         }
-
+console.log(value)
         //键名为它过去的位置
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
         for (var i = 0; i <= last; i++) {
@@ -2639,7 +2630,6 @@ avalon.directive("repeat", {
             saveInCache(newCache, vm, component)
             children.push(component)
         }
-
         for (i in cache) {//剩下的都是要删除重复利用的
             if (cache[i]) {
                 command[cache[i].vmodel.$index] = -1
@@ -2659,13 +2649,14 @@ avalon.directive("repeat", {
 
     },
     update: function (elem, vnode, parent) {
-        console.log("开始 更新ms-repeat")
+        console.log("开始 更新ms-repeat", elem, vnode,parent)
         var next
         if (!vnode.disposed) {
             var groupText = vnode.signature
             if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
                 var keepChild = avalon.slice(dom.childNodes)
+                console.log(keepChild,getRepeatChild(vnode.children))
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
@@ -2700,9 +2691,11 @@ avalon.directive("repeat", {
                         children[to] = froms[from]
                     } else if (to === -3) {
                         children[from] = froms[from]
+                    } else if (to === -2) {
+                        children[from] = froms[from]
                     }
                 }
-
+console.log(children, "---",vnode.repeatCommand)
                 fragment = document.createDocumentFragment()
                 for (var i = 0, el; el = children[i++]; ) {
                     fragment.appendChild(el)
@@ -3005,9 +2998,11 @@ VElement.prototype = {
                     this.text = this.__content
                     break;
                 case "style":
-                case "noscript":
                 case "template":
                     this.innerHTML = this.__content
+                    break
+                case "noscript":
+                    this.textContent = this.__content
                     break
                 default:
                     var a = avalon.parseHTML(this.__content)
@@ -3052,6 +3047,25 @@ VElement.prototype = {
     }
 }
 
+function toString(element, skip) {
+    var p = []
+    for (var i in element.props) {
+        if (skip && skip.test(i))
+            continue
+        p.push(i + "=" + quote(String(element.props[i])))
+    }
+    p = p.length ? " " + p.join(" ") : ""
+
+    var str = "<" + element.type + p
+    if (element.selfClose) {
+        return str + "/>"
+    }
+    str += ">"
+
+    str += element.template
+
+    return str + "</" + element.type + ">"
+}
 
 
 
@@ -3091,12 +3105,16 @@ avalon.injectBinding = function (binding) {
     binding.paths.split("★").forEach(function (path) {
         var trim = path.trim()
         if (trim) {
-            binding.vmodel.$watch(path, binding)
+            try {
+                binding.vmodel.$watch(path, binding)
+            } catch (e) {
+                avalon.log(binding, path)
+            }
         }
     })
     delete binding.paths
     binding.update = function (a, b, path) {
-        
+
         var hasError
         try {
             var value = binding.getter(binding.vmodel)
@@ -4697,10 +4715,7 @@ avalon.directive("if", {
     },
     init: function (binding) {
         var element = binding.element
-        var templale = toString(element, {
-            "ms-if": true,
-            "avalon-uuid": true
-        })
+        var templale = toString(element, /^ms-if$/)
 
         var component = new VComponent("ms-if")
         component.template = templale
@@ -4747,25 +4762,6 @@ avalon.directive("if", {
     }
 })
 
-function toString(element, map) {
-    var p = []
-    for (var i in element.props) {
-        if (map[i])
-            continue
-        p.push(i + "=" + quote(String(element.props[i])))
-    }
-    p = p.length ? " " + p.join(" ") : ""
-
-    var str = "<" + element.type + p
-    if (element.selfClose) {
-        return str + "/>"
-    }
-    str += ">"
-
-    str += element.template
-
-    return str + "</" + element.type + ">"
-}
 
 avalon.components["ms-if"] = {
     toDOM: function (self) {
