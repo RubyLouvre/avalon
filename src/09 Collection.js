@@ -112,7 +112,8 @@ var newProto = {
         this._.length = this.length
     },
     clear: function () {
-        return this.removeAll()
+        this.removeAll()
+        return this
     }
 }
 

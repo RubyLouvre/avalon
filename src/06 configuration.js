@@ -44,9 +44,9 @@ var plugins = {
             kernel.closeTag = closeTag
         var o = escapeRegExp(openTag),
                 c = escapeRegExp(closeTag)
-        rexpr = new RegExp(o + "(.*?)" + c)
-        rexprg = new RegExp(o + "(.*?)" + c, "g")
-        rbind = new RegExp(o + ".*?" + c + "|\\sms-")
+        rexpr = new RegExp(o + "([\\ss\\S]*)" + c)
+        rexprg = new RegExp(o + "([\\ss\\S]*)" + c, "g")
+        rbind = new RegExp(o + "[\\ss\\S]*" + c + "|\\sms-")
     }
 }
 kernel.plugins = plugins

@@ -9,11 +9,7 @@ function updateVirtual(nodes, vm) {
             case "#text":
                 if (!node.skip) {
                     if (rexpr.test(String(node.nodeValue))) {
-                        var arr = scanText(node, vm)
-                        if (arr.length > 1) {
-                            nodes.splice.apply(nodes, [i, 1].concat(arr))
-                            i = i + arr.length
-                        }
+                        scanText(node, vm)
                     }
                 }
                 break

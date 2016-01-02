@@ -1,3 +1,4 @@
+var rline = /\r?\n/g
 function scanExpr(str) {
     var tokens = [],
             value, start = 0,
@@ -21,7 +22,7 @@ function scanExpr(str) {
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
             tokens.push({
-                expr: value,
+                expr: value.replace(rline,""),
                 type: "{{}}" 
             })
         }
