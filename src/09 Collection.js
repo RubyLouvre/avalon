@@ -10,6 +10,7 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
+        hideProperty(array, "$id", generateID("$"))
         array._ = observeObject({
             length: NaN
         }, {}, {

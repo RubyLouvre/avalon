@@ -1684,6 +1684,7 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
+        hideProperty(array, "$id", generateID("$"))
         array._ = observeObject({
             length: NaN
         }, {}, {
@@ -4988,7 +4989,10 @@ avalon.directive("repeat", {
         }
         for (i in cache) {
             if (cache[i]) {
-                command[cache[i].vmodel.$index] = -1
+                var ii = cache[i].vmodel.$index
+                if (command[ii] !== -2) {
+                    command[ii] = -1
+                }
                 cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
@@ -5046,7 +5050,12 @@ avalon.directive("repeat", {
                     if (to >= 0) {
                         children[to] = froms[from]
                     } else if (to < -1) {//-2.-3
-                        children[from] = froms[from]
+                        
+                        if (froms[from]) {
+                            children[from] = froms[from]
+                        } else {
+                            children[from] = vnode.children[from].toDOM()
+                        }
                     }
                 }
                 fragment = document.createDocumentFragment()
