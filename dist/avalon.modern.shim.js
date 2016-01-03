@@ -4321,261 +4321,6 @@ directives["{{}}"] = {
         }
     }
 }
-
-avalon.directive("html", {
-    change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
-            return
-        value = typeof value === "string" ? value : String(value)
-        disposeVirtual(elem.children)
-        var children = createVirtual(value, true)
-        pushArray(elem.children, updateVirtual(children, binding.vmodel))
-        addHooks(this, binding)
-    },
-    update: function (elem, vnode) {
-        var child = vnode.children[0]
-        if (!child)
-            return
-        //这里就不用劳烦用created, disposed
-        avalon.clearHTML(elem)
-        elem.appendChild(child.toDOM())
-    }
-})
-
-avalon.directive("if", {
-    is: function (a, b) {
-        if (b === void 0)
-            return false
-        return Boolean(a) === Boolean(b)
-    },
-    init: function (binding) {
-        var element = binding.element
-        var templale = toString(element, /^ms-if$/)
-
-        var component = new VComponent("ms-if")
-        component.template = templale
-        component.props.ok = createVirtual(templale, true)[0]
-        component.props.ng = new VComment("ms-if")
-        var arr = binding.siblings
-        for (var i = 0, el; el = arr[i]; i++) {
-            if (el === element) {
-                arr[i] = component
-                break
-            }
-        }
-        delete binding.siblings
-        binding.element = component
-        return false
-    },
-    change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
-            return
-        elem.ifValue = !!value
-        if (value) {
-            elem.children[0] = elem.props.ok
-            updateVirtual([elem.props.ok], binding.vmodel)
-        } else {
-            elem.children[0] = elem.props.ng
-        }
-        addHooks(this, binding)
-
-    },
-    update: function (node, vnode, parent) {
-        var dom = node, vdom = vnode.children[0]
-        if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
-            var c = vdom.toDOM()
-            c.keep = node
-            node.keep = c
-        }
-        parent.replaceChild(node.keep, node)
-        dom = node.keep
-        if (dom.nodeType === 1) {
-            updateEntity([dom], [vdom], parent)
-        }
-        return false
-    }
-})
-
-
-avalon.components["ms-if"] = {
-    toDOM: function (self) {
-        return self.children[0].toDOM()
-    }
-}
-//ms-important绑定已经在scanTag 方法中实现
-
-var getXHR = function () {
-    return new window.XMLHttpRequest() // jshint ignore:line
-}
-//将所有远程加载的模板,以字符串形式存放到这里
-var templatePool = avalon.templateCache = {}
-
-avalon.directive("include", {
-    init: function (binding) {
-        var elem = binding.element
-        var vmodel = binding.vmodel
-        var loaded = getBindingValue(elem, "data-include-loaded", vmodel)
-        binding.loaded = typeof loaded === "function" ? loaded : noop
-        var rendered = getBindingValue(elem, "data-include-rendered", vmodel)
-        binding.rendered = typeof rendered === "function" ? rendered : noop
-
-        binding.expr = normalizeExpr(binding.expr.trim())
-        disposeVirtual(elem.children)
-    },
-    change: function (id, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
-            return
-        addHooks(this, binding)
-        if (binding.param === "src") {
-            if (typeof templatePool[id] === "string") {
-                scanTemplate(binding, templatePool[id], id)
-            } else if (Array.isArray(templatePool[id])) { //#805 防止在循环绑定中发出许多相同的请求
-                templatePool[id].push(binding)
-            } else {
-                var xhr = getXHR()
-                xhr.onload = function () {
-                    var text = xhr.responseText
-                    var arr = templatePool[id]
-                    templatePool[id] = text
-                    for (var f = 0, data; data = arr[f++]; ) {
-                        scanTemplate(data, text, id)
-                    }
-
-                }
-                templatePool[id] = [binding]
-                xhr.onerror = function () {
-                    log("ms-include load [" + id + "] error")
-                }
-                xhr.open("GET", id, true)
-                if ("withCredentials" in xhr) {
-                    xhr.withCredentials = true
-                }
-                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
-                xhr.send(null)
-            }
-        } else {
-            var node = document.getElementById(id)
-            if (node) {
-                var text = node.tagName === "TEXTAREA" ? node.value :
-                        node.tagName === "SCRIPT" ? node.text :
-                        node.tagName === "NOSCRIPT" ? node.textContent :
-                        node.innerHTML
-                scanTemplate(binding, text.trim(), "id:" + id)
-            }
-        }
-
-    },
-    update: function (elem) {
-        var first = elem.firstChild
-        if (elem.childNodes.length !== 1 ||
-                first.nodeType !== 1 ||
-                !first.getAttribute("data-include-id")) {
-            avalon.clearHTML(elem)
-        }
-    }
-})
-
-function scanTemplate(binding, template, id) {
-    template = template.trim()
-    var cache = binding.cache || (binding.cache = {})
-    if (!cache[id]) {
-        var nodes = createVirtual(template, true), throwError
-        if (nodes.length !== 1) {
-            throwError = true
-        } else {
-            updateVirtual(nodes, binding.vmodel)
-            if (nodes.length !== 1 || getVType(nodes[0]) !== 1) {
-                throwError = true
-            }
-        }
-        if (throwError) {
-            throw "ms-include加载的内容必须用一个元素包元素"
-        }
-        binding.cache[id] = nodes[0]
-        nodes[0].props["data-include-id"] = id
-    }
-    var vnode = binding.element
-    vnode.children.pop()
-    vnode.children.push(binding.cache[id])
-    addHook(vnode, function (elem) {
-        binding.loaded(elem.firstChild)
-    }, "change", 1051)
-    addHook(vnode, updateTemplate, "change", 1052)
-    addHook(vnode, function (elem) {
-        binding.rendered(elem.firstChild)
-    }, "afterChange", 1053)
-    batchUpdateEntity(binding.vmodel)
-}
-
-function updateTemplate(elem, vnode) {
-    if (!vnode.disposed) {
-        return
-    }
-    var vdom = vnode.children[0]
-    var id = vdom.props["data-include-id"]
-    var cache = elem.cache || (elem.cache = {})
-    if (!cache[id]) {
-        cache[id] = vdom.toDOM()
-    }
-    var target = elem.firstChild
-    if (!target) {
-        elem.appendChild(cache[id])
-    } else if (target.getAttribute("data-include-id") !== id) {
-        elem.replaceChild(cache[id], target)
-    }
-}
-//基于事件代理的高性能事件绑定
-var rdash = /\(([^)]*)\)/
-avalon.directive("on", {
-    priority: 3000,
-    init: function (binding) {
-        var value = binding.expr
-        binding.type = "on"
-        // ms-on-mousemove-10
-        binding.param = binding.param.replace(/-\d+$/, "")
-        if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
-            // aaa() aaa($event)当成aaa处理
-            var matched = (value.match(rdash) || ["", ""])[1].trim()
-            if (matched === "" || matched === "$event") {
-                value = value.replace(rdash, "")
-            }
-        }
-        binding.expr = value
-    },
-    change: function (listener, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
-            return
-        var type = binding.param
-        var uuid = markID(listener)
-        var key = type + ":" + uuid + "??"
-        if (!avalon.__eventVM__[key]) {//注册事件回调
-            avalon.__eventVM__[key] = binding.vmodel
-        }
-        var change = addData(elem, "changeEvents")// 创建一个更新包
-        change[key] = listener
-        addHooks(this, binding)
-    },
-    update: function (elem, vnode) {
-        if (!vnode.disposed) {
-            for (var key in vnode.changeEvents) {
-                var type = key.split(":").shift()
-                var listener = vnode.changeEvents[key]
-                avalon.bind(elem, type, listener)
-            }
-            delete vnode.changeEvents
-        }
-    },
-    dispose: function (elem) {
-        avalon.unbind(elem)
-    }
-})
-
-
-
 var rinexpr = /^\s*([\s\S]+) in (\w+)/
 var rkeyvalue = /\(\s*(\w+)\s*,\s*(\w+)\s*\)/
 avalon.directive("repeat", {
@@ -4833,7 +4578,7 @@ var repeatItem = avalon.components["repeatItem"] = {
             top = createProxy(top, item)
         }
         var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
-        
+
         var proxy = createRepeatItem(top, keys, isArray)
         proxy.$outer = binding.outer
         this.vmodel = proxy
@@ -4975,6 +4720,261 @@ function saveInCache(cache, vm, component) {
         }
     }
 }
+
+avalon.directive("html", {
+    change: function (value, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
+        value = typeof value === "string" ? value : String(value)
+        disposeVirtual(elem.children)
+        var children = createVirtual(value, true)
+        pushArray(elem.children, updateVirtual(children, binding.vmodel))
+        addHooks(this, binding)
+    },
+    update: function (elem, vnode) {
+        var child = vnode.children[0]
+        if (!child)
+            return
+        //这里就不用劳烦用created, disposed
+        avalon.clearHTML(elem)
+        elem.appendChild(child.toDOM())
+    }
+})
+
+avalon.directive("if", {
+    is: function (a, b) {
+        if (b === void 0)
+            return false
+        return Boolean(a) === Boolean(b)
+    },
+    init: function (binding) {
+        var element = binding.element
+        var templale = toString(element, /^ms-if$/)
+
+        var component = new VComponent("ms-if")
+        component.template = templale
+        component.props.ok = createVirtual(templale, true)[0]
+        component.props.ng = new VComment("ms-if")
+        var arr = binding.siblings
+        for (var i = 0, el; el = arr[i]; i++) {
+            if (el === element) {
+                arr[i] = component
+                break
+            }
+        }
+        delete binding.siblings
+        binding.element = component
+        return false
+    },
+    change: function (value, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
+        elem.ifValue = !!value
+        if (value) {
+            elem.children[0] = elem.props.ok
+            updateVirtual([elem.props.ok], binding.vmodel)
+        } else {
+            elem.children[0] = elem.props.ng
+        }
+        addHooks(this, binding)
+
+    },
+    update: function (node, vnode, parent) {
+        var dom = node, vdom = vnode.children[0]
+        if (!node.keep) {//保存之前节点的引用,减少反复创建真实DOM
+            var c = vdom.toDOM()
+            c.keep = node
+            node.keep = c
+        }
+        parent.replaceChild(node.keep, node)
+        dom = node.keep
+        if (dom.nodeType === 1) {
+            updateEntity([dom], [vdom], parent)
+        }
+        return false
+    }
+})
+
+
+avalon.components["ms-if"] = {
+    toDOM: function (self) {
+        return self.children[0].toDOM()
+    }
+}
+//ms-important绑定已经在scanTag 方法中实现
+
+var getXHR = function () {
+    return new window.XMLHttpRequest() // jshint ignore:line
+}
+//将所有远程加载的模板,以字符串形式存放到这里
+var templatePool = avalon.templateCache = {}
+
+avalon.directive("include", {
+    init: function (binding) {
+        var elem = binding.element
+        var vmodel = binding.vmodel
+        var loaded = getBindingValue(elem, "data-include-loaded", vmodel)
+        binding.loaded = typeof loaded === "function" ? loaded : noop
+        var rendered = getBindingValue(elem, "data-include-rendered", vmodel)
+        binding.rendered = typeof rendered === "function" ? rendered : noop
+
+        binding.expr = normalizeExpr(binding.expr.trim())
+        disposeVirtual(elem.children)
+    },
+    change: function (id, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
+        addHooks(this, binding)
+        if (binding.param === "src") {
+            if (typeof templatePool[id] === "string") {
+                scanTemplate(binding, templatePool[id], id)
+            } else if (Array.isArray(templatePool[id])) { //#805 防止在循环绑定中发出许多相同的请求
+                templatePool[id].push(binding)
+            } else {
+                var xhr = getXHR()
+                xhr.onload = function () {
+                    var text = xhr.responseText
+                    var arr = templatePool[id]
+                    templatePool[id] = text
+                    for (var f = 0, data; data = arr[f++]; ) {
+                        scanTemplate(data, text, id)
+                    }
+
+                }
+                templatePool[id] = [binding]
+                xhr.onerror = function () {
+                    log("ms-include load [" + id + "] error")
+                }
+                xhr.open("GET", id, true)
+                if ("withCredentials" in xhr) {
+                    xhr.withCredentials = true
+                }
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+                xhr.send(null)
+            }
+        } else {
+            var node = document.getElementById(id)
+            if (node) {
+                var text = node.tagName === "TEXTAREA" ? node.value :
+                        node.tagName === "SCRIPT" ? node.text :
+                        node.tagName === "NOSCRIPT" ? node.textContent :
+                        node.innerHTML
+                scanTemplate(binding, text.trim(), "id:" + id)
+            }
+        }
+
+    },
+    update: function (elem) {
+        var first = elem.firstChild
+        if (elem.childNodes.length !== 1 ||
+                first.nodeType !== 1 ||
+                !first.getAttribute("data-include-id")) {
+            avalon.clearHTML(elem)
+        }
+    }
+})
+
+function scanTemplate(binding, template, id) {
+    template = template.trim()
+    var cache = binding.cache || (binding.cache = {})
+    if (!cache[id]) {
+        var nodes = createVirtual(template, true), throwError
+        if (nodes.length !== 1) {
+            throwError = true
+        } else {
+            updateVirtual(nodes, binding.vmodel)
+            if (nodes.length !== 1 || getVType(nodes[0]) !== 1) {
+                throwError = true
+            }
+        }
+        if (throwError) {
+            throw "ms-include加载的内容必须用一个元素包元素"
+        }
+        binding.cache[id] = nodes[0]
+        nodes[0].props["data-include-id"] = id
+    }
+    var vnode = binding.element
+    vnode.children.pop()
+    vnode.children.push(binding.cache[id])
+    addHook(vnode, function (elem) {
+        binding.loaded(elem.firstChild)
+    }, "change", 1051)
+    addHook(vnode, updateTemplate, "change", 1052)
+    addHook(vnode, function (elem) {
+        binding.rendered(elem.firstChild)
+    }, "afterChange", 1053)
+    batchUpdateEntity(binding.vmodel)
+}
+
+function updateTemplate(elem, vnode) {
+    if (!vnode.disposed) {
+        return
+    }
+    var vdom = vnode.children[0]
+    var id = vdom.props["data-include-id"]
+    var cache = elem.cache || (elem.cache = {})
+    if (!cache[id]) {
+        cache[id] = vdom.toDOM()
+    }
+    var target = elem.firstChild
+    if (!target) {
+        elem.appendChild(cache[id])
+    } else if (target.getAttribute("data-include-id") !== id) {
+        elem.replaceChild(cache[id], target)
+    }
+}
+//基于事件代理的高性能事件绑定
+var rdash = /\(([^)]*)\)/
+avalon.directive("on", {
+    priority: 3000,
+    init: function (binding) {
+        var value = binding.expr
+        binding.type = "on"
+        // ms-on-mousemove-10
+        binding.param = binding.param.replace(/-\d+$/, "")
+        if (value.indexOf("(") > 0 && value.indexOf(")") > -1) {
+            // aaa() aaa($event)当成aaa处理
+            var matched = (value.match(rdash) || ["", ""])[1].trim()
+            if (matched === "" || matched === "$event") {
+                value = value.replace(rdash, "")
+            }
+        }
+        binding.expr = value
+    },
+    change: function (listener, binding) {
+        var elem = binding.element
+        if (!elem || elem.disposed)
+            return
+        var type = binding.param
+        var uuid = markID(listener)
+        var key = type + ":" + uuid + "??"
+        if (!avalon.__eventVM__[key]) {//注册事件回调
+            avalon.__eventVM__[key] = binding.vmodel
+        }
+        var change = addData(elem, "changeEvents")// 创建一个更新包
+        change[key] = listener
+        addHooks(this, binding)
+    },
+    update: function (elem, vnode) {
+        if (!vnode.disposed) {
+            for (var key in vnode.changeEvents) {
+                var type = key.split(":").shift()
+                var listener = vnode.changeEvents[key]
+                avalon.bind(elem, type, listener)
+            }
+            delete vnode.changeEvents
+        }
+    },
+    dispose: function (elem) {
+        avalon.unbind(elem)
+    }
+})
+
+
+
 /*********************************************************************
  *                         各种指令                                  *
  **********************************************************************/
