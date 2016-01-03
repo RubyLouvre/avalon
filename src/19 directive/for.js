@@ -37,8 +37,13 @@ avalon.directive("repeat", {
         var signature = generateID(type)
         component.signature = signature
         var rendered = getBindingValue(parent, "data-" + type + "-rendered", top)
-
-        binding.rendered = typeof rendered === "function" ? rendered : noop
+        if (typeof rendered === "function") {
+            binding.rendered = function (a, b, c) {
+                rendered(type === "repeat" ? c : a)
+            }
+        } else {
+            binding.rendered = noop
+        }
         component.children.length = 0 //将父节点作为它的子节点
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement

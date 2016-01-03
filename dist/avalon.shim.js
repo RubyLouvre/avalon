@@ -3331,13 +3331,12 @@ function scanAttrs(elem, vmodel, siblings) {
             }
         }
     }
-    if (bindings.length) {
+    if (bindings.length && vmodel) {
         bindings.sort(bindingSorter)
         executeBindings(bindings, vmodel)
     }
     updateVirtual(elem.children, vmodel)
-    
-
+   
 }
 
 var rline = /\r?\n/g
@@ -3802,6 +3801,7 @@ function updateEntity(nodes, vnodes, parent) {
             // 那么它们应该做成一个组件
             //  next = cur.nextSibling
             if (false === execHooks(cur, mirror, parent, "change")) {
+                execHooks(cur, mirror, parent, "afterChange")
 //                cur = {
 //                    nextSibling: next
 //                }
@@ -4855,8 +4855,13 @@ avalon.directive("repeat", {
         var signature = generateID(type)
         component.signature = signature
         var rendered = getBindingValue(parent, "data-" + type + "-rendered", top)
-
-        binding.rendered = typeof rendered === "function" ? rendered : noop
+        if (typeof rendered === "function") {
+            binding.rendered = function (a, b, c) {
+                rendered(type === "repeat" ? c : a)
+            }
+        } else {
+            binding.rendered = noop
+        }
         component.children.length = 0 //将父节点作为它的子节点
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement

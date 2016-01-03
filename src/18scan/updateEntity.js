@@ -62,6 +62,7 @@ function updateEntity(nodes, vnodes, parent) {
             // 那么它们应该做成一个组件
             //  next = cur.nextSibling
             if (false === execHooks(cur, mirror, parent, "change")) {
+                execHooks(cur, mirror, parent, "afterChange")
 //                cur = {
 //                    nextSibling: next
 //                }

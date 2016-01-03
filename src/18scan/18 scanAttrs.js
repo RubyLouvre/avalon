@@ -56,11 +56,10 @@ function scanAttrs(elem, vmodel, siblings) {
             }
         }
     }
-    if (bindings.length) {
+    if (bindings.length && vmodel) {
         bindings.sort(bindingSorter)
         executeBindings(bindings, vmodel)
     }
     updateVirtual(elem.children, vmodel)
-    
-
+   
 }
