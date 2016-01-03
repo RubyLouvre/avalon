@@ -4356,11 +4356,12 @@ avalon.directive("repeat", {
         var component = new VComponent("ms-repeat")
         var template = toString(parent, /^ms-(repeat|each)/)
         var type = binding.type
-
+        var top = binding.vmodel, $outer = {}
         var signature = generateID(type)
         component.signature = signature
+        var rendered = getBindingValue(parent, "data-" + type + "-rendered", top)
 
-        component["data-" + type + "-rendered"] = parent.props["data-" + type + "-rendered"]
+        binding.rendered = typeof rendered === "function" ? rendered : noop
         component.children.length = 0 //将父节点作为它的子节点
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement
@@ -4381,16 +4382,14 @@ avalon.directive("repeat", {
         binding.element = component //偷龙转风
         //计算上级循环的$outer
         //外层存在的vmodel不存在$outer,那么$outer为一个空对象
-        var top = binding.vmodel, $outer = {}, hasOuter
+
         if (top.hasOwnProperty("$outer") && typeof top.$outer === "object" && top.$outer.names) {
             top.$outer.names.replace(rword, function (name) {
                 if (top.hasOwnProperty(name)) {
                     $outer[name] = top[name]
                 }
             })
-
         }
-
         binding.$outer = $outer
         delete binding.siblings
     },
@@ -4400,7 +4399,6 @@ avalon.directive("repeat", {
             return
         }
         var cache = binding.cache || {}
-        var names = binding.names
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         var repeatArray = Array.isArray(value)
         if (repeatArray) {
@@ -4426,7 +4424,15 @@ avalon.directive("repeat", {
             }
             last = keys.length - 1
         }
-
+        if (!binding.$outer.names) {
+            var names = ["$first", "$last", "$index", "$outer"]
+            if (repeatArray) {
+                names.push("$remove")
+            }
+            avalon.Array.ensure(names, binding.valueName)
+            avalon.Array.ensure(names, binding.keyName)
+            binding.$outer.names = names.join(",")
+        }
 
         //键名为它过去的位置
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
@@ -4452,6 +4458,7 @@ avalon.directive("repeat", {
                 component.template = parent.template
                 component.construct(item, binding, repeatArray)
                 proxy = component.vmodel
+                proxy.$outer = binding.$outer
                 proxy[binding.keyName] = key || i
                 proxy[binding.valueName] = item
                 if (repeatArray) {
@@ -4479,7 +4486,7 @@ avalon.directive("repeat", {
             }
             children.push(component)
         }
-        for (i in cache) {//剩下的都是要删除重复利用的
+        for (i in cache) {
             if (cache[i]) {
                 command[cache[i].vmodel.$index] = -1
                 cache[i].dispose()//销毁没有用的组件
@@ -4498,7 +4505,7 @@ avalon.directive("repeat", {
             binding.oldValue = newCache
         }
         parent.repeatCommand = command
-
+        addHook(parent, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
     update: function (elem, vnode, parent) {
@@ -4580,7 +4587,6 @@ var repeatItem = avalon.components["repeatItem"] = {
         var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
 
         var proxy = createRepeatItem(top, keys, isArray)
-        proxy.$outer = binding.outer
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
         this._new = true
@@ -4613,9 +4619,8 @@ function createRepeatItem(before, keys, isArray) {
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-    var proxy = createProxy(before, after, heirloom)
 
-    return proxy
+    return createProxy(before, after, heirloom)
 }
 function getRepeatChild(children) {
     var ret = []
