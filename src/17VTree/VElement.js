@@ -43,14 +43,12 @@ VElement.prototype = {
         }
         return dom
     },
-    toHTML: function (skipProps) {
+    toHTML: function () {
         if (this.skip) {
             return this.outerHTML
         }
         var arr = []
         for (var i in this.props) {
-            if (skipProps && skipProps[i])
-                continue
             arr.push(i + "=" + quote(String(this.props[i])))
         }
         arr = arr.length ? " " + arr.join(" ") : ""

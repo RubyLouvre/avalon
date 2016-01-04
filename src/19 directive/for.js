@@ -28,6 +28,7 @@ avalon.directive("repeat", {
                 binding.valueName = keyvalue
             }
         }
+     
         var parent = binding.element
         disposeVirtual(parent.children)
         var component = new VComponent("ms-repeat")
@@ -117,7 +118,7 @@ avalon.directive("repeat", {
         }
 
 
-        //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
+        //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建
         //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
         for (var i = 0; i <= last; i++) {
             if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
@@ -131,11 +132,7 @@ avalon.directive("repeat", {
             }
             if (component) {
                 proxy = component.vmodel
-                if (proxy.$index !== i) {
-                    command[proxy.$index] = i//发生移动
-                } else {
-                    command[proxy.$index] = i //-3
-                }
+                command[proxy.$index] = i//标识其从什么位置移动什么位置
             } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
                 component.template = parent.template
@@ -172,17 +169,15 @@ avalon.directive("repeat", {
         for (i in cache) {
             if (cache[i]) {
                 var ii = cache[i].vmodel.$index
-                if (command[ii] === -2) {
-                    command[ii] = -3
-                } else {
+                if (command[ii] !== -2) {
+                    //如果这个位置被新虚拟节点占领了，那么我们就不用移除其对应的真实节点
+                    //但对应的旧虚拟节点还是要销毁的
                     command[ii] = -1
                 }
                 cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
-
-
         parent.children.length = 0
         pushArray(parent.children, children)
         parent.children.unshift(new VComment(parent.signature + ":start"))
@@ -197,21 +192,19 @@ avalon.directive("repeat", {
         addHook(parent, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
-    update: function (elem, vnode, parent) {
+    update: function (node, vnode, parent) {
         if (!vnode.disposed) {
-            vnode.entity = elem
-            console.log(avalon.$$subscribers.length)
+            vnode.entity = node
             var groupText = vnode.signature
-            var nodeValue = elem.nodeValue
-            if (elem.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+            var nodeValue = node.nodeValue
+            if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
                     nodeValue !== groupText + ":start"
                     ) {
-                console.log(vnode)
-                updateSignature(elem, nodeValue, groupText)
+                updateSignature(node, nodeValue, groupText)
             }
 
-            if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
-                // console.log("全新创建 ",elem,groupText, parent.nodeName)
+            if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
+                // console.log("全新创建 ",node,groupText, parent.nodeName)
                 var dom = vnode.toDOM()
 
                 var keepChild = avalon.slice(dom.childNodes)
@@ -219,8 +212,8 @@ avalon.directive("repeat", {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
-                    parent.removeChild(elem.nextSibling)
-                    parent.replaceChild(dom, elem)
+                    parent.removeChild(node.nextSibling)
+                    parent.replaceChild(dom, node)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
@@ -230,7 +223,7 @@ avalon.directive("repeat", {
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
                 var froms = {}, index = 0, next
-                while (next = elem.nextSibling) {
+                while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
@@ -245,16 +238,15 @@ avalon.directive("repeat", {
 
                 //根据repeatCommand指令进行删增重排
                 var children = []
+                console.log(vnode.repeatCommand)
                 for (var from in vnode.repeatCommand) {
                     var to = vnode.repeatCommand[from]
                     if (to >= 0) {
                         children[to] = froms[from]
-                    } else if (to < -1) {//-2.-3
-
-                        if (froms[from]) {
+                    } else if (to < -1) {//-2 
+                        if (froms[from]) { //循环利用要被销毁的真实节点
                             children[from] = froms[from]
-                        } else {
-                            // console.log("创建")
+                        } else {//如果真实节点数量不足
                             children[from] = vnode.children[from].toDOM()
                         }
                     }
@@ -265,7 +257,7 @@ avalon.directive("repeat", {
                 }
 
                 var entity = avalon.slice(fragment.childNodes)
-                elem.parentNode.insertBefore(fragment, elem.nextSibling)
+                parent.insertBefore(fragment, node.nextSibling)
                 var virtual = []
                 vnode.children.forEach(function (el) {
                     pushArray(virtual, el.children)

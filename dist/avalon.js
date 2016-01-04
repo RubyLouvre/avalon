@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.6 built in 2016.1.4
+ avalon.js 1.6 built in 2016.1.5
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2151,9 +2151,9 @@ anomaly.replace(rword, function (name) {
     propMap[name.toLowerCase()] = name
 })
 
-function attrUpdate(elem, vnode) {
+function attrUpdate(node, vnode) {
     var attrs = vnode.changeAttrs
-    if (!elem || elem.nodeType !== 1 || vnode.disposed) {
+    if (!node || node.nodeType !== 1 || vnode.disposed) {
         return
     }
     if (attrs) {
@@ -2164,20 +2164,20 @@ function attrUpdate(elem, vnode) {
                 if (!root.hasAttribute) {
                     val = String(val).replace(/&amp;/g, "&") //处理IE67自动转义的问题
                 }
-                elem[attrName] = val
-                if (window.chrome && elem.tagName === "EMBED") {
-                    var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+                node[attrName] = val
+                if (window.chrome && node.tagName === "EMBED") {
+                    var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
                     var comment = document.createComment("ms-src")
-                    parent.replaceChild(comment, elem)
-                    parent.replaceChild(elem, comment)
+                    parent.replaceChild(comment, node)
+                    parent.replaceChild(node, comment)
                 }
             } else if (attrName.indexOf("data-") === 0) {
-                elem.setAttribute(attrName, val)
+                node.setAttribute(attrName, val)
 
             } else {
                 var bool = boolMap[attrName]
-                if (typeof elem[bool] === "boolean") {
-                    elem[bool] = !!val
+                if (typeof node[bool] === "boolean") {
+                    node[bool] = !!val
                     //布尔属性必须使用el.xxx = true|false方式设值
                     //如果为false, IE全系列下相当于setAttribute(xxx,''),
                     //会影响到样式,需要进一步处理
@@ -2186,18 +2186,18 @@ function attrUpdate(elem, vnode) {
                     attrName = propMap[attrName]
                 }
                 if (val === false) {
-                    elem.removeAttribute(attrName)
+                    node.removeAttribute(attrName)
                     continue
                 }
-                //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,
-                //HTML的固有属性必须elem.xxx = yyy
-                var isInnate = rsvg.test(elem) ? false :
-                        (DOC.namespaces && isVML(elem)) ? true :
-                        attrName in elem.cloneNode(false)
+                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+                //HTML的固有属性必须node.xxx = yyy
+                var isInnate = rsvg.test(node) ? false :
+                        (DOC.namespaces && isVML(node)) ? true :
+                        attrName in node.cloneNode(false)
                 if (isInnate) {
-                    elem[attrName] = val + ""
+                    node[attrName] = val + ""
                 } else {
-                    elem.setAttribute(attrName, val)
+                    node.setAttribute(attrName, val)
                 }
 
             }
@@ -3139,14 +3139,12 @@ VElement.prototype = {
         }
         return dom
     },
-    toHTML: function (skipProps) {
+    toHTML: function () {
         if (this.skip) {
             return this.outerHTML
         }
         var arr = []
         for (var i in this.props) {
-            if (skipProps && skipProps[i])
-                continue
             arr.push(i + "=" + quote(String(this.props[i])))
         }
         arr = arr.length ? " " + arr.join(" ") : ""
@@ -3574,12 +3572,10 @@ var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 var rquote = /^['"]/
 
 var rgtlt = /></
+
 var ramp = /&amp;/g
 
-var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
-var builtinComponents = ["ms-if", "ms-repeat", "ms-html", "ms-text"]
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-var avalonID = 1
 //=== === === === 创建虚拟DOM树 === === === === =
 //依赖config
 function parseVProps(node, str) {
@@ -3657,8 +3653,8 @@ function createVirtual(text, force) {
                         (tagCache[tagName + "open"] = new RegExp("<" + tagName + openStr, "g"))
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
+                
                 /* jshint ignore:start */
-
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -3674,7 +3670,7 @@ function createVirtual(text, force) {
                 var gutter = gtlt.indexOf("><")
 
                 if (gutter !== -1) {
-                    var index = gutter //+ tagName.length+ 2
+                    var index = gutter
                     var findex = parseFloat(pos[index]) + tagName.length + 3
                     matchText = matchText.slice(0, findex)
                 }
@@ -3727,18 +3723,16 @@ function fixTag(node, attrs, outerHTML) {
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
     var innerHTML = node.template
-    if (!rnocontent.test(node.type)) {// && rbind.test(outerHTML)
+    if (node.type === "option" || node.type === "xmp") {
+        node.children.push(new VText(innerHTML))
+    }else if (!rnocontent.test(node.type)) {// && rbind.test(outerHTML)
         pushArray(node.children, createVirtual(innerHTML))
 
     } else {
-        node.skipContent = true
         if (node.type === "noscript") {
-            innerHTML = node.template = node.template.
-                    trim().
-                    replace(/&gt;/g, ">").
-                    replace(/&lt;/g, "<").
-                    replace(/&amp;/, "&")
+            innerHTML = escape(innerHTML)//这两个元素不能
         }
+        node.skipContent = true
         node.__content = innerHTML
     }
     return node
@@ -3983,19 +3977,19 @@ avalon.directive("class", {
         binding.oldClass = target
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var classEvent = vnode.classEvent
         if (classEvent) {
             for (var i in classEvent) {
                 if (i === "tabIndex") {
-                    elem[i] = classEvent[i]
+                    node[i] = classEvent[i]
                 } else {
-                    avalon.bind(elem, i, classEvent[i])
+                    avalon.bind(node, i, classEvent[i])
                 }
             }
             delete vnode.classEvent
         }
-        var wrap = avalon(elem)
+        var wrap = avalon(node)
         ;["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
             if (!data)
@@ -4006,8 +4000,8 @@ avalon.directive("class", {
             if (type === "class") {
                 wrap.toggleClass(data.targetClass, data.toggleClass)
             } else {
-                elem.targetClass = data.targetClass
-                elem.toggleClass = data.toggleClass
+                node.targetClass = data.targetClass
+                node.toggleClass = data.toggleClass
             }
         })
     }
@@ -4046,9 +4040,9 @@ avalon.directive("css", {
         change[this.param] = val
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var change = vnode.changeCss
-        var wrap = avalon(elem)
+        var wrap = avalon(node)
         for (var name in change) {
             wrap.css(name, change[name])
         }
@@ -4209,30 +4203,30 @@ avalon.directive("data", {
             elem.changed = binding.changed
             addHooks(this, binding)
         },
-        update: function (elem, vnode) {
-            vnode._ = elem
+        update: function (node, vnode) {
+            vnode._ = node
             
-            elem.setter = vnode.setter
-            var getterValue = elem.getterValue = vnode.getterValue
+            node.setter = vnode.setter
+            var getterValue = node.getterValue = vnode.getterValue
             var events = vnode.duplexEvents
             if (events) {
-                elem.setAttribute("data-pipe", vnode['data-pipe'])
+                node.setAttribute("data-pipe", vnode['data-pipe'])
                 delete vnode['data-pipe']
-                elem.changed = vnode.changed
+                node.changed = vnode.changed
                 delete vnode.changed
                 for (var eventName in events) {
-                    avalon.bind(elem, eventName, events[eventName])
+                    avalon.bind(node, eventName, events[eventName])
                 }
                 delete vnode.duplexEvents
             }
             if (vnode.watchValueInTimer) {
-                elem.avalonSetter = inputListener //#765
+                node.avalonSetter = inputListener //#765
                 watchValueInTimer(function () {
                     if (!vnode.disposed) {
-                        if (!elem.msFocus) {
-                            elem.avalonSetter()
+                        if (!node.msFocus) {
+                            node.avalonSetter()
                         }
-                    } else if (!elem.msRetain) {
+                    } else if (!node.msRetain) {
                         return false
                     }
                 })
@@ -4242,12 +4236,12 @@ avalon.directive("data", {
             switch (vnode.props.xtype) {
                 case "input":
                 case "change":
-                    curValue = pipe(getterValue, elem, "set")  //fix #673
-                    if (curValue !== elem.oldValue) {
+                    curValue = pipe(getterValue, node, "set")  //fix #673
+                    if (curValue !== node.oldValue) {
                         var fixCaret = false
-                        if (elem.msFocus) {
+                        if (node.msFocus) {
                             try {
-                                var pos = getCaret(elem)
+                                var pos = getCaret(node)
                                 if (pos.start === pos.end) {
                                     pos = pos.start
                                     fixCaret = true
@@ -4255,30 +4249,30 @@ avalon.directive("data", {
                             } catch (e) {
                             }
                         }
-                        elem.value = elem.oldValue = curValue
+                        node.value = node.oldValue = curValue
                         if (fixCaret) {
-                            setCaret(elem, pos, pos)
+                            setCaret(node, pos, pos)
                         }
                     }
                     break
                 case "radio":
-                    curValue = vnode.props.isChecked ? !!getterValue : getterValue + "" === elem.value
+                    curValue = vnode.props.isChecked ? !!getterValue : getterValue + "" === node.value
                     if (IEVersion === 6) {
                         setTimeout(function () {
                             //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                             //并且要先设置defaultChecked后设置checked
                             //并且必须设置延迟
-                            elem.defaultChecked = curValue
-                            elem.checked = curValue
+                            node.defaultChecked = curValue
+                            node.checked = curValue
                         }, 31)
                     } else {
-                        elem.checked = curValue
+                        node.checked = curValue
                     }
                     break
                 case "checkbox":
                     var array = [].concat(getterValue) //强制转换为数组
-                    curValue = pipe(elem.value, elem, "get")
-                    elem.checked = array.indexOf(curValue) > -1
+                    curValue = pipe(node.value, node, "get")
+                    node.checked = array.indexOf(curValue) > -1
                     break
                 case "select":
                     //在afterChange中处理
@@ -4868,11 +4862,11 @@ directives["{{}}"] = {
             addHooks(this, binding)
         }
     },
-    update: function (elem, vnode, parent) {
-        if (elem.nodeType !== 3) {
-            parent.replaceChild(vnode.toDOM(), elem)
+    update: function (node, vnode, parent) {
+        if (node.nodeType !== 3) {
+            parent.replaceChild(vnode.toDOM(), node)
         } else {
-            elem.nodeValue = vnode.nodeValue
+            node.nodeValue = vnode.nodeValue
         }
     }
 }
@@ -4906,6 +4900,7 @@ avalon.directive("repeat", {
                 binding.valueName = keyvalue
             }
         }
+     
         var parent = binding.element
         disposeVirtual(parent.children)
         var component = new VComponent("ms-repeat")
@@ -4994,8 +4989,8 @@ avalon.directive("repeat", {
             binding.$outer.names = names.join(",")
         }
 
-    
-        //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
+
+        //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建
         //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
         for (var i = 0; i <= last; i++) {
             if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
@@ -5009,11 +5004,7 @@ avalon.directive("repeat", {
             }
             if (component) {
                 proxy = component.vmodel
-                if (proxy.$index !== i) {
-                    command[proxy.$index] = i//发生移动
-                } else {
-                    command[proxy.$index] = i //-3
-                }
+                command[proxy.$index] = i//标识其从什么位置移动什么位置
             } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
                 component.template = parent.template
@@ -5050,17 +5041,15 @@ avalon.directive("repeat", {
         for (i in cache) {
             if (cache[i]) {
                 var ii = cache[i].vmodel.$index
-                if (command[ii] === -2) {
-                    command[ii] = -3
-                } else {
+                if (command[ii] !== -2) {
+                    //如果这个位置被新虚拟节点占领了，那么我们就不用移除其对应的真实节点
+                    //但对应的旧虚拟节点还是要销毁的
                     command[ii] = -1
                 }
                 cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
-      
-     
         parent.children.length = 0
         pushArray(parent.children, children)
         parent.children.unshift(new VComment(parent.signature + ":start"))
@@ -5075,20 +5064,19 @@ avalon.directive("repeat", {
         addHook(parent, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
-    update: function (elem, vnode, parent) {
+    update: function (node, vnode, parent) {
         if (!vnode.disposed) {
-           console.log(avalon.$$subscribers.length)
+            vnode.entity = node
             var groupText = vnode.signature
-            var nodeValue = elem.nodeValue
-            if(elem.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
-                  nodeValue !== groupText + ":start"
-                    ){
-                console.log(vnode)
-                updateSignature(elem, nodeValue, groupText)
+            var nodeValue = node.nodeValue
+            if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+                    nodeValue !== groupText + ":start"
+                    ) {
+                updateSignature(node, nodeValue, groupText)
             }
-            
-            if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
-               // console.log("全新创建 ",elem,groupText, parent.nodeName)
+
+            if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
+                // console.log("全新创建 ",node,groupText, parent.nodeName)
                 var dom = vnode.toDOM()
 
                 var keepChild = avalon.slice(dom.childNodes)
@@ -5096,18 +5084,18 @@ avalon.directive("repeat", {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
-                    parent.removeChild(elem.nextSibling)
-                    parent.replaceChild(dom, elem)
+                    parent.removeChild(node.nextSibling)
+                    parent.replaceChild(dom, node)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
-               // console.log("最小化更新 ",parent.nodeName)
+                // console.log("最小化更新 ",parent.nodeName)
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
                 var froms = {}, index = 0, next
-                while (next = elem.nextSibling) {
+                while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
@@ -5122,16 +5110,15 @@ avalon.directive("repeat", {
 
                 //根据repeatCommand指令进行删增重排
                 var children = []
+                console.log(vnode.repeatCommand)
                 for (var from in vnode.repeatCommand) {
                     var to = vnode.repeatCommand[from]
                     if (to >= 0) {
                         children[to] = froms[from]
-                    } else if (to < -1) {//-2.-3
-                      
-                        if (froms[from]) {
+                    } else if (to < -1) {//-2 
+                        if (froms[from]) { //循环利用要被销毁的真实节点
                             children[from] = froms[from]
-                        } else {
-                           // console.log("创建")
+                        } else {//如果真实节点数量不足
                             children[from] = vnode.children[from].toDOM()
                         }
                     }
@@ -5142,7 +5129,7 @@ avalon.directive("repeat", {
                 }
 
                 var entity = avalon.slice(fragment.childNodes)
-                elem.parentNode.insertBefore(fragment, elem.nextSibling)
+                parent.insertBefore(fragment, node.nextSibling)
                 var virtual = []
                 vnode.children.forEach(function (el) {
                     pushArray(virtual, el.children)
@@ -5165,17 +5152,17 @@ avalon.directive("repeat", {
     }
 })
 
-function updateSignature(elem, value, text){
+function updateSignature(elem, value, text) {
     var group = value.split(":")[0]
-    do{
+    do {
         var nodeValue = elem.nodeValue
-        if(elem.nodeType === 8 && nodeValue.indexOf(group) === 0){
+        if (elem.nodeType === 8 && nodeValue.indexOf(group) === 0) {
             elem.nodeValue = nodeValue.replace(group, text)
-            if(nodeValue.indexOf(":last") > 0){
+            if (nodeValue.indexOf(":last") > 0) {
                 break
             }
         }
-    }while(elem = elem.nextSibling)
+    } while (elem = elem.nextSibling)
 }
 
 var repeatItem = avalon.components["repeatItem"] = {
@@ -5198,7 +5185,7 @@ var repeatItem = avalon.components["repeatItem"] = {
         var proxy = this.vmodel
         var item = proxy[this.valueName]
         proxy && (proxy.$active = false)
-        if(item && item.$id){
+        if (item && item.$id) {
             item.$active = false
         }
     }
@@ -5339,13 +5326,13 @@ avalon.directive("html", {
         pushArray(elem.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var child = vnode.children[0]
         if (!child)
             return
         //这里就不用劳烦用created, disposed
-        avalon.clearHTML(elem)
-        elem.appendChild(child.toDOM())
+        avalon.clearHTML(node)
+        node.appendChild(child.toDOM())
     }
 })
 
@@ -5483,12 +5470,12 @@ avalon.directive("include", {
         }
 
     },
-    update: function (elem) {
-        var first = elem.firstChild
-        if (elem.childNodes.length !== 1 ||
+    update: function (node) {
+        var first = node.firstChild
+        if (node.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
                 !first.getAttribute("data-include-id")) {
-            avalon.clearHTML(elem)
+            avalon.clearHTML(node)
         }
     }
 })
@@ -5605,13 +5592,13 @@ avalon.directive("on", {
         change[key] = listener
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         if (!vnode.disposed) {
-            vnode._ = elem
+            vnode._ = node
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
-                avalon.bind(elem, type, listener)
+                avalon.bind(node, type, listener)
             }
             delete vnode.changeEvents
         }
@@ -5644,15 +5631,15 @@ avalon.directive("text", {
         pushArray(elem.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var child = vnode.children[0]
         if (!child) {
             return
         }
-        if ("textContent" in elem) {
-            elem.textContent = child.toHTML()
+        if ("textContent" in node) {
+            node.textContent = child.toHTML()
         } else {
-            elem.innerText = child.toHTML()
+            node.innerText = child.toHTML()
         }
     }
 })
@@ -5688,14 +5675,14 @@ avalon.directive("visible", {
         elem.isShow = val
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         if (vnode.isShow) {
-            elem.style.display = vnode.displayValue || ""
-            if (avalon(elem).css("display") === "none") {
-                elem.style.display = vnode.displayValue = parseDisplay(elem.nodeName)
+            node.style.display = vnode.displayValue || ""
+            if (avalon(node).css("display") === "none") {
+                node.style.display = vnode.displayValue = parseDisplay(node.nodeName)
             }
         } else {
-            elem.style.display = "none"
+            node.style.display = "none"
         }
     }
 })
@@ -5727,7 +5714,7 @@ function numberFormat(number, decimals, point, thousands) {
             sep = thousands || ",",
             dec = point || ".",
             s = '',
-            toFixedFix = function(n, prec) {
+            toFixedFix = function (n, prec) {
                 var k = Math.pow(10, prec)
                 return '' + (Math.round(n * k) / k)
                         .toFixed(prec)
@@ -5747,17 +5734,32 @@ function numberFormat(number, decimals, point, thousands) {
     return s.join(dec)
 }
 
+function escape(str) {
+    //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
+    return String(str).
+            replace(/&/g, '&amp;').
+            replace(rsurrogate, function (value) {
+                var hi = value.charCodeAt(0)
+                var low = value.charCodeAt(1)
+                return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
+            }).
+            replace(rnoalphanumeric, function (value) {
+                return '&#' + value.charCodeAt(0) + ';'
+            }).
+            replace(/</g, '&lt;').
+            replace(/>/g, '&gt;')
+}
 var filters = avalon.filters = {
-    uppercase: function(str) {
+    uppercase: function (str) {
         return str.toUpperCase()
     },
-    lowercase: function(str) {
+    lowercase: function (str) {
         return str.toLowerCase()
     },
-    truncate: function(str, length, truncation) {
+    truncate: function (str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         length = length || 30
-        truncation = typeof truncation === "string" ?  truncation : "..." 
+        truncation = typeof truncation === "string" ? truncation : "..."
         return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
     camelize: camelize,
@@ -5767,13 +5769,13 @@ var filters = avalon.filters = {
     //    <a href="jav	ascript:alert('XSS');">IE67chrome</a>
     //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
     //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
-    sanitize: function(str) {
-        return str.replace(rscripts, "").replace(ropen, function(a, b) {
+    sanitize: function (str) {
+        return str.replace(rscripts, "").replace(ropen, function (a, b) {
             var match = a.toLowerCase().match(/<(\w+)\s/)
             if (match) { //处理a标签的href属性，img标签的src属性，form标签的action属性
                 var reg = rsanitize[match[1]]
                 if (reg) {
-                    a = a.replace(reg, function(s, name, value) {
+                    a = a.replace(reg, function (s, name, value) {
                         var quote = value.charAt(0)
                         return name + "=" + quote + "javascript:void(0)" + quote// jshint ignore:line
                     })
@@ -5782,22 +5784,8 @@ var filters = avalon.filters = {
             return a.replace(ron, " ").replace(/\s+/g, " ") //移除onXXX事件
         })
     },
-    escape: function(str) {
-        //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
-        return String(str).
-                replace(/&/g, '&amp;').
-                replace(rsurrogate, function(value) {
-                    var hi = value.charCodeAt(0)
-                    var low = value.charCodeAt(1)
-                    return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
-                }).
-                replace(rnoalphanumeric, function(value) {
-                    return '&#' + value.charCodeAt(0) + ';'
-                }).
-                replace(/</g, '&lt;').
-                replace(/>/g, '&gt;')
-    },
-    currency: function(amount, symbol, fractionSize) {
+    escape: escape,
+    currency: function (amount, symbol, fractionSize) {
         return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: numberFormat
@@ -5836,7 +5824,7 @@ var filters = avalon.filters = {
  'mediumTime': equivalent to 'h:mm:ss a' for en_US locale (e.g. 12:05:08 pm)
  'shortTime': equivalent to 'h:mm a' for en_US locale (e.g. 12:05 pm)
  */
-new function() {// jshint ignore:line
+new function () {// jshint ignore:line
     function toInt(str) {
         return parseInt(str, 10) || 0
     }
@@ -5856,7 +5844,7 @@ new function() {// jshint ignore:line
     }
 
     function dateGetter(name, size, offset, trim) {
-        return function(date) {
+        return function (date) {
             var value = date["get" + name]()
             if (offset > 0 || value > -offset)
                 value += offset
@@ -5868,7 +5856,7 @@ new function() {// jshint ignore:line
     }
 
     function dateStrGetter(name, shortForm) {
-        return function(date, formats) {
+        return function (date, formats) {
             var value = date["get" + name]()
             var get = (shortForm ? ("SHORT" + name) : name).toUpperCase()
             return formats[get][value]
@@ -5912,7 +5900,7 @@ new function() {// jshint ignore:line
     }
     var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
     var raspnetjson = /^\/Date\((\d+)\)\/$/
-    filters.date = function(date, format) {
+    filters.date = function (date, format) {
         var locate = filters.date.locate,
                 text = "",
                 parts = [],
@@ -5929,7 +5917,7 @@ new function() {// jshint ignore:line
                 var dateArray = [0, 0, 0, 0, 0, 0, 0]
                 var oDate = new Date(0)
                 //取得年月日
-                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function (_, a, b, c) {
                     var array = c.length === 4 ? [c, a, b] : [a, b, c]
                     dateArray[0] = toInt(array[0])     //年
                     dateArray[1] = toInt(array[1]) - 1 //月
@@ -5938,7 +5926,7 @@ new function() {// jshint ignore:line
                 })
                 var dateSetter = oDate.setFullYear
                 var timeSetter = oDate.setHours
-                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function (_, a, b, c, d) {
                     dateArray[3] = toInt(a) //小时
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
@@ -5949,7 +5937,7 @@ new function() {// jshint ignore:line
                 })
                 var tzHour = 0
                 var tzMin = 0
-                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function (z, symbol, c, d) {
                     dateSetter = oDate.setUTCFullYear
                     timeSetter = oDate.setUTCHours
                     if (symbol) {
@@ -5982,7 +5970,7 @@ new function() {// jshint ignore:line
                 format = null
             }
         }
-        parts.forEach(function(value) {
+        parts.forEach(function (value) {
             fn = DATE_FORMATS[value]
             text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/''/g, "'")
         })

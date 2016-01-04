@@ -31,13 +31,13 @@ avalon.directive("on", {
         change[key] = listener
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         if (!vnode.disposed) {
-            vnode._ = elem
+            vnode._ = node
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
-                avalon.bind(elem, type, listener)
+                avalon.bind(node, type, listener)
             }
             delete vnode.changeEvents
         }

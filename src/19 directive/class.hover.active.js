@@ -48,19 +48,19 @@ avalon.directive("class", {
         binding.oldClass = target
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var classEvent = vnode.classEvent
         if (classEvent) {
             for (var i in classEvent) {
                 if (i === "tabIndex") {
-                    elem[i] = classEvent[i]
+                    node[i] = classEvent[i]
                 } else {
-                    avalon.bind(elem, i, classEvent[i])
+                    avalon.bind(node, i, classEvent[i])
                 }
             }
             delete vnode.classEvent
         }
-        var wrap = avalon(elem)
+        var wrap = avalon(node)
         ;["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
             if (!data)
@@ -71,8 +71,8 @@ avalon.directive("class", {
             if (type === "class") {
                 wrap.toggleClass(data.targetClass, data.toggleClass)
             } else {
-                elem.targetClass = data.targetClass
-                elem.toggleClass = data.toggleClass
+                node.targetClass = data.targetClass
+                node.toggleClass = data.toggleClass
             }
         })
     }

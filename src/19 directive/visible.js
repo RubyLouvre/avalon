@@ -29,14 +29,14 @@ avalon.directive("visible", {
         elem.isShow = val
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         if (vnode.isShow) {
-            elem.style.display = vnode.displayValue || ""
-            if (avalon(elem).css("display") === "none") {
-                elem.style.display = vnode.displayValue = parseDisplay(elem.nodeName)
+            node.style.display = vnode.displayValue || ""
+            if (avalon(node).css("display") === "none") {
+                node.style.display = vnode.displayValue = parseDisplay(node.nodeName)
             }
         } else {
-            elem.style.display = "none"
+            node.style.display = "none"
         }
     }
 })

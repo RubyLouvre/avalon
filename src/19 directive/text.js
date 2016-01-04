@@ -10,15 +10,15 @@ avalon.directive("text", {
         pushArray(elem.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var child = vnode.children[0]
         if (!child) {
             return
         }
-        if ("textContent" in elem) {
-            elem.textContent = child.toHTML()
+        if ("textContent" in node) {
+            node.textContent = child.toHTML()
         } else {
-            elem.innerText = child.toHTML()
+            node.innerText = child.toHTML()
         }
     }
 })

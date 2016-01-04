@@ -17,12 +17,10 @@ var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 var rquote = /^['"]/
 
 var rgtlt = /></
+
 var ramp = /&amp;/g
 
-var rmsrepeatkey = /^ms-(repeat|each)-?(.*)/
-var builtinComponents = ["ms-if", "ms-repeat", "ms-html", "ms-text"]
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-var avalonID = 1
 //=== === === === 创建虚拟DOM树 === === === === =
 //依赖config
 function parseVProps(node, str) {
@@ -100,8 +98,8 @@ function createVirtual(text, force) {
                         (tagCache[tagName + "open"] = new RegExp("<" + tagName + openStr, "g"))
                 var rclose = tagCache[tagName + "close"] ||
                         (tagCache[tagName + "close"] = new RegExp("<\/" + tagName + ">", "g"))
+                
                 /* jshint ignore:start */
-
                 matchText.replace(ropen, function (_, b) {
                     opens.push(("0000" + b + "<").slice(-4))//取得所有开标签的位置
                     return new Array(_.length + 1).join("1")
@@ -117,7 +115,7 @@ function createVirtual(text, force) {
                 var gutter = gtlt.indexOf("><")
 
                 if (gutter !== -1) {
-                    var index = gutter //+ tagName.length+ 2
+                    var index = gutter
                     var findex = parseFloat(pos[index]) + tagName.length + 3
                     matchText = matchText.slice(0, findex)
                 }
@@ -170,18 +168,16 @@ function fixTag(node, attrs, outerHTML) {
     //如果不是那些装载模板的容器元素(script, noscript, template, textarea)
     //并且它的后代还存在绑定属性
     var innerHTML = node.template
-    if (!rnocontent.test(node.type)) {// && rbind.test(outerHTML)
+    if (node.type === "option" || node.type === "xmp") {
+        node.children.push(new VText(innerHTML))
+    }else if (!rnocontent.test(node.type)) {// && rbind.test(outerHTML)
         pushArray(node.children, createVirtual(innerHTML))
 
     } else {
-        node.skipContent = true
         if (node.type === "noscript") {
-            innerHTML = node.template = node.template.
-                    trim().
-                    replace(/&gt;/g, ">").
-                    replace(/&lt;/g, "<").
-                    replace(/&amp;/, "&")
+            innerHTML = escape(innerHTML)//这两个元素不能
         }
+        node.skipContent = true
         node.__content = innerHTML
     }
     return node

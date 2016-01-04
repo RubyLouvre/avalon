@@ -12,11 +12,11 @@ directives["{{}}"] = {
             addHooks(this, binding)
         }
     },
-    update: function (elem, vnode, parent) {
-        if (elem.nodeType !== 3) {
-            parent.replaceChild(vnode.toDOM(), elem)
+    update: function (node, vnode, parent) {
+        if (node.nodeType !== 3) {
+            parent.replaceChild(vnode.toDOM(), node)
         } else {
-            elem.nodeValue = vnode.nodeValue
+            node.nodeValue = vnode.nodeValue
         }
     }
 }

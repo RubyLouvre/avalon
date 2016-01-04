@@ -26,7 +26,7 @@ function numberFormat(number, decimals, point, thousands) {
             sep = thousands || ",",
             dec = point || ".",
             s = '',
-            toFixedFix = function(n, prec) {
+            toFixedFix = function (n, prec) {
                 var k = Math.pow(10, prec)
                 return '' + (Math.round(n * k) / k)
                         .toFixed(prec)
@@ -46,17 +46,32 @@ function numberFormat(number, decimals, point, thousands) {
     return s.join(dec)
 }
 
+function escape(str) {
+    //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
+    return String(str).
+            replace(/&/g, '&amp;').
+            replace(rsurrogate, function (value) {
+                var hi = value.charCodeAt(0)
+                var low = value.charCodeAt(1)
+                return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
+            }).
+            replace(rnoalphanumeric, function (value) {
+                return '&#' + value.charCodeAt(0) + ';'
+            }).
+            replace(/</g, '&lt;').
+            replace(/>/g, '&gt;')
+}
 var filters = avalon.filters = {
-    uppercase: function(str) {
+    uppercase: function (str) {
         return str.toUpperCase()
     },
-    lowercase: function(str) {
+    lowercase: function (str) {
         return str.toLowerCase()
     },
-    truncate: function(str, length, truncation) {
+    truncate: function (str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         length = length || 30
-        truncation = typeof truncation === "string" ?  truncation : "..." 
+        truncation = typeof truncation === "string" ? truncation : "..."
         return str.length > length ? str.slice(0, length - truncation.length) + truncation : String(str)
     },
     camelize: camelize,
@@ -66,13 +81,13 @@ var filters = avalon.filters = {
     //    <a href="jav	ascript:alert('XSS');">IE67chrome</a>
     //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
     //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
-    sanitize: function(str) {
-        return str.replace(rscripts, "").replace(ropen, function(a, b) {
+    sanitize: function (str) {
+        return str.replace(rscripts, "").replace(ropen, function (a, b) {
             var match = a.toLowerCase().match(/<(\w+)\s/)
             if (match) { //处理a标签的href属性，img标签的src属性，form标签的action属性
                 var reg = rsanitize[match[1]]
                 if (reg) {
-                    a = a.replace(reg, function(s, name, value) {
+                    a = a.replace(reg, function (s, name, value) {
                         var quote = value.charAt(0)
                         return name + "=" + quote + "javascript:void(0)" + quote// jshint ignore:line
                     })
@@ -81,22 +96,8 @@ var filters = avalon.filters = {
             return a.replace(ron, " ").replace(/\s+/g, " ") //移除onXXX事件
         })
     },
-    escape: function(str) {
-        //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
-        return String(str).
-                replace(/&/g, '&amp;').
-                replace(rsurrogate, function(value) {
-                    var hi = value.charCodeAt(0)
-                    var low = value.charCodeAt(1)
-                    return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
-                }).
-                replace(rnoalphanumeric, function(value) {
-                    return '&#' + value.charCodeAt(0) + ';'
-                }).
-                replace(/</g, '&lt;').
-                replace(/>/g, '&gt;')
-    },
-    currency: function(amount, symbol, fractionSize) {
+    escape: escape,
+    currency: function (amount, symbol, fractionSize) {
         return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: numberFormat
@@ -135,7 +136,7 @@ var filters = avalon.filters = {
  'mediumTime': equivalent to 'h:mm:ss a' for en_US locale (e.g. 12:05:08 pm)
  'shortTime': equivalent to 'h:mm a' for en_US locale (e.g. 12:05 pm)
  */
-new function() {// jshint ignore:line
+new function () {// jshint ignore:line
     function toInt(str) {
         return parseInt(str, 10) || 0
     }
@@ -155,7 +156,7 @@ new function() {// jshint ignore:line
     }
 
     function dateGetter(name, size, offset, trim) {
-        return function(date) {
+        return function (date) {
             var value = date["get" + name]()
             if (offset > 0 || value > -offset)
                 value += offset
@@ -167,7 +168,7 @@ new function() {// jshint ignore:line
     }
 
     function dateStrGetter(name, shortForm) {
-        return function(date, formats) {
+        return function (date, formats) {
             var value = date["get" + name]()
             var get = (shortForm ? ("SHORT" + name) : name).toUpperCase()
             return formats[get][value]
@@ -211,7 +212,7 @@ new function() {// jshint ignore:line
     }
     var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
     var raspnetjson = /^\/Date\((\d+)\)\/$/
-    filters.date = function(date, format) {
+    filters.date = function (date, format) {
         var locate = filters.date.locate,
                 text = "",
                 parts = [],
@@ -228,7 +229,7 @@ new function() {// jshint ignore:line
                 var dateArray = [0, 0, 0, 0, 0, 0, 0]
                 var oDate = new Date(0)
                 //取得年月日
-                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function (_, a, b, c) {
                     var array = c.length === 4 ? [c, a, b] : [a, b, c]
                     dateArray[0] = toInt(array[0])     //年
                     dateArray[1] = toInt(array[1]) - 1 //月
@@ -237,7 +238,7 @@ new function() {// jshint ignore:line
                 })
                 var dateSetter = oDate.setFullYear
                 var timeSetter = oDate.setHours
-                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function (_, a, b, c, d) {
                     dateArray[3] = toInt(a) //小时
                     dateArray[4] = toInt(b) //分钟
                     dateArray[5] = toInt(c) //秒
@@ -248,7 +249,7 @@ new function() {// jshint ignore:line
                 })
                 var tzHour = 0
                 var tzMin = 0
-                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function (z, symbol, c, d) {
                     dateSetter = oDate.setUTCFullYear
                     timeSetter = oDate.setUTCHours
                     if (symbol) {
@@ -281,7 +282,7 @@ new function() {// jshint ignore:line
                 format = null
             }
         }
-        parts.forEach(function(value) {
+        parts.forEach(function (value) {
             fn = DATE_FORMATS[value]
             text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/''/g, "'")
         })

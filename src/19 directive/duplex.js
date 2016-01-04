@@ -125,30 +125,30 @@
             elem.changed = binding.changed
             addHooks(this, binding)
         },
-        update: function (elem, vnode) {
-            vnode._ = elem
+        update: function (node, vnode) {
+            vnode._ = node
             
-            elem.setter = vnode.setter
-            var getterValue = elem.getterValue = vnode.getterValue
+            node.setter = vnode.setter
+            var getterValue = node.getterValue = vnode.getterValue
             var events = vnode.duplexEvents
             if (events) {
-                elem.setAttribute("data-pipe", vnode['data-pipe'])
+                node.setAttribute("data-pipe", vnode['data-pipe'])
                 delete vnode['data-pipe']
-                elem.changed = vnode.changed
+                node.changed = vnode.changed
                 delete vnode.changed
                 for (var eventName in events) {
-                    avalon.bind(elem, eventName, events[eventName])
+                    avalon.bind(node, eventName, events[eventName])
                 }
                 delete vnode.duplexEvents
             }
             if (vnode.watchValueInTimer) {
-                elem.avalonSetter = inputListener //#765
+                node.avalonSetter = inputListener //#765
                 watchValueInTimer(function () {
                     if (!vnode.disposed) {
-                        if (!elem.msFocus) {
-                            elem.avalonSetter()
+                        if (!node.msFocus) {
+                            node.avalonSetter()
                         }
-                    } else if (!elem.msRetain) {
+                    } else if (!node.msRetain) {
                         return false
                     }
                 })
@@ -158,12 +158,12 @@
             switch (vnode.props.xtype) {
                 case "input":
                 case "change":
-                    curValue = pipe(getterValue, elem, "set")  //fix #673
-                    if (curValue !== elem.oldValue) {
+                    curValue = pipe(getterValue, node, "set")  //fix #673
+                    if (curValue !== node.oldValue) {
                         var fixCaret = false
-                        if (elem.msFocus) {
+                        if (node.msFocus) {
                             try {
-                                var pos = getCaret(elem)
+                                var pos = getCaret(node)
                                 if (pos.start === pos.end) {
                                     pos = pos.start
                                     fixCaret = true
@@ -171,30 +171,30 @@
                             } catch (e) {
                             }
                         }
-                        elem.value = elem.oldValue = curValue
+                        node.value = node.oldValue = curValue
                         if (fixCaret) {
-                            setCaret(elem, pos, pos)
+                            setCaret(node, pos, pos)
                         }
                     }
                     break
                 case "radio":
-                    curValue = vnode.props.isChecked ? !!getterValue : getterValue + "" === elem.value
+                    curValue = vnode.props.isChecked ? !!getterValue : getterValue + "" === node.value
                     if (IEVersion === 6) {
                         setTimeout(function () {
                             //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                             //并且要先设置defaultChecked后设置checked
                             //并且必须设置延迟
-                            elem.defaultChecked = curValue
-                            elem.checked = curValue
+                            node.defaultChecked = curValue
+                            node.checked = curValue
                         }, 31)
                     } else {
-                        elem.checked = curValue
+                        node.checked = curValue
                     }
                     break
                 case "checkbox":
                     var array = [].concat(getterValue) //强制转换为数组
-                    curValue = pipe(elem.value, elem, "get")
-                    elem.checked = array.indexOf(curValue) > -1
+                    curValue = pipe(node.value, node, "get")
+                    node.checked = array.indexOf(curValue) > -1
                     break
                 case "select":
                     //在afterChange中处理

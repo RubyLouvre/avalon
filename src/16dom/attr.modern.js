@@ -28,42 +28,42 @@ anomaly.replace(rword, function (name) {
 
 
 
-function attrUpdate(elem, vnode) {
+function attrUpdate(node, vnode) {
     var attrs = vnode.changeAttrs
     if (attrs) {
         for (var attrName in attrs) {
             var val = attrs[attrName]
             // switch
-            if (attrName === "src" && window.chrome && elem.tagName === "EMBED") {
-                elem[attrName] = val
-                var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+            if (attrName === "src" && window.chrome && node.tagName === "EMBED") {
+                node[attrName] = val
+                var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
                 var comment = document.createComment("ms-src")
-                parent.replaceChild(comment, elem)
-                parent.replaceChild(elem, comment)
+                parent.replaceChild(comment, node)
+                parent.replaceChild(node, comment)
             } else if (attrName.indexOf("data-") == 0) {
-                elem.setAttribute(attrName, val)
+                node.setAttribute(attrName, val)
             } else {
                 var bool = boolMap[attrName]
-                if (typeof elem[bool] === "boolean") {
+                if (typeof node[bool] === "boolean") {
                     //布尔属性必须使用el.xxx = true|false方式设值
                     //如果为false, IE全系列下相当于setAttribute(xxx,''),
                     //会影响到样式,需要进一步处理
-                    elem[bool] = !!val
+                    node[bool] = !!val
                 }
                 if (val === false) {
-                    elem.removeAttribute(attrName)
+                    node.removeAttribute(attrName)
                     continue
                 }
                 if (propMap[attrName]) { //旧式IE下需要进行名字映射
                     attrName = propMap[attrName]
                 }
-                //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,
-                //HTML的固有属性必须elem.xxx = yyy
-                var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
+                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+                //HTML的固有属性必须node.xxx = yyy
+                var isInnate = rsvg.test(node) ? false : attrName in node.cloneNode(false)
                 if (isInnate) {
-                    elem[attrName] = val + ""
+                    node[attrName] = val + ""
                 } else {
-                    elem.setAttribute(attrName, val)
+                    node.setAttribute(attrName, val)
                 }
             }
         }

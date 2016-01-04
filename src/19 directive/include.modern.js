@@ -61,12 +61,12 @@ avalon.directive("include", {
         }
 
     },
-    update: function (elem) {
-        var first = elem.firstChild
-        if (elem.childNodes.length !== 1 ||
+    update: function (node) {
+        var first = node.firstChild
+        if (node.childNodes.length !== 1 ||
                 first.nodeType !== 1 ||
                 !first.getAttribute("data-include-id")) {
-            avalon.clearHTML(elem)
+            avalon.clearHTML(node)
         }
     }
 })

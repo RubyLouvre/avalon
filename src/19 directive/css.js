@@ -8,9 +8,9 @@ avalon.directive("css", {
         change[this.param] = val
         addHooks(this, binding)
     },
-    update: function (elem, vnode) {
+    update: function (node, vnode) {
         var change = vnode.changeCss
-        var wrap = avalon(elem)
+        var wrap = avalon(node)
         for (var name in change) {
             wrap.css(name, change[name])
         }
