@@ -116,13 +116,14 @@ avalon.directive("repeat", {
             binding.$outer.names = names.join(",")
         }
 
-        //键名为它过去的位置
+
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
+        //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
         for (var i = 0; i <= last; i++) {
-            if (repeatArray) {
+            if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
                 var item = value[i]
-                var component = isInCache(cache, item)
-            } else {
+                var component = isInCache(cache, item)//从缓存取出立即删掉
+            } else {//如果是对象,直接用key为键名
                 var key = keys[i]
                 item = value[key]
                 component = cache[key]
@@ -131,9 +132,9 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 if (proxy.$index !== i) {
-                    command[proxy.$index] = i
+                    command[proxy.$index] = i//发生移动
                 } else {
-                    command[proxy.$index] = -3
+                    command[proxy.$index] = i //-3
                 }
             } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
@@ -171,13 +172,16 @@ avalon.directive("repeat", {
         for (i in cache) {
             if (cache[i]) {
                 var ii = cache[i].vmodel.$index
-                if (command[ii] !== -2) {
+                if (command[ii] === -2) {
+                    command[ii] = -3
+                } else {
                     command[ii] = -1
                 }
                 cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
+
 
         parent.children.length = 0
         pushArray(parent.children, children)
@@ -195,19 +199,33 @@ avalon.directive("repeat", {
     },
     update: function (elem, vnode, parent) {
         if (!vnode.disposed) {
+            vnode.entity = elem
+            console.log(avalon.$$subscribers.length)
             var groupText = vnode.signature
+            var nodeValue = elem.nodeValue
+            if (elem.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+                    nodeValue !== groupText + ":start"
+                    ) {
+                console.log(vnode)
+                updateSignature(elem, nodeValue, groupText)
+            }
+
             if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
+                // console.log("全新创建 ",elem,groupText, parent.nodeName)
                 var dom = vnode.toDOM()
+
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
+                    parent.removeChild(elem.nextSibling)
                     parent.replaceChild(dom, elem)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
+                // console.log("最小化更新 ",parent.nodeName)
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -224,6 +242,7 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
+
                 //根据repeatCommand指令进行删增重排
                 var children = []
                 for (var from in vnode.repeatCommand) {
@@ -231,10 +250,11 @@ avalon.directive("repeat", {
                     if (to >= 0) {
                         children[to] = froms[from]
                     } else if (to < -1) {//-2.-3
-                        
+
                         if (froms[from]) {
                             children[from] = froms[from]
                         } else {
+                            // console.log("创建")
                             children[from] = vnode.children[from].toDOM()
                         }
                     }
@@ -268,6 +288,19 @@ avalon.directive("repeat", {
     }
 })
 
+function updateSignature(elem, value, text) {
+    var group = value.split(":")[0]
+    do {
+        var nodeValue = elem.nodeValue
+        if (elem.nodeType === 8 && nodeValue.indexOf(group) === 0) {
+            elem.nodeValue = nodeValue.replace(group, text)
+            if (nodeValue.indexOf(":last") > 0) {
+                break
+            }
+        }
+    } while (elem = elem.nextSibling)
+}
+
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (item, binding, isArray) {
         var top = binding.vmodel
@@ -275,7 +308,7 @@ var repeatItem = avalon.components["repeatItem"] = {
             top = createProxy(top, item)
         }
         var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
-
+        this.valueName = binding.valueName
         var proxy = createRepeatItem(top, keys, isArray)
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
@@ -284,15 +317,17 @@ var repeatItem = avalon.components["repeatItem"] = {
         return this
     },
     dispose: function () {
-        this.disposed = true
+        disposeVirtual([this])
         var proxy = this.vmodel
-        var item = proxy[this.itemName]
-        proxy.$active = false
-        if (item) {
+        var item = proxy[this.valueName]
+        proxy && (proxy.$active = false)
+        if (item && item.$id) {
             item.$active = false
         }
     }
 }
+
+
 
 function createRepeatItem(before, keys, isArray) {
     var heirloom = {}

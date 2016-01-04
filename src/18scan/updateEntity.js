@@ -35,28 +35,28 @@ function updateEntity(nodes, vnodes, parent) {
         cur = i === 0 ? cur : getNextEntity(cur, vnodes[i - 1], parent)
         if (!mirror)
             break
-        if (mirror.disposed) {//如果虚拟节点标识为移除
-            vnodes.splice(i, 1)
-            i--
-            if (cur) {
-                cur && parent.removeChild(cur)
-                mirror.dispose && mirror.dispose(cur)
-            }
-            continue
-        } else if (mirror.created) {
-            delete mirror.created
-            var dom = mirror.toDOM()
-            mirror.create && mirror.create(dom)
-            if (mirror.type !== "#component") {
-                parent.insertBefore(dom, cur)
-                updateEntity([dom], [mirror], parent)
-            } else {//组件必须用东西包起来
-                // div.ms-repeat [repeatStart, other..., repeatEnd]
-                var inserted = avalon.slice(dom)
-                parent.insertBefore(dom, cur)//在同级位置插入
-                updateEntity(inserted, mirror.children, parent)
-            }
-        } else {
+//        if (mirror.disposed) {//如果虚拟节点标识为移除
+//            vnodes.splice(i, 1)
+//            i--
+//            if (cur) {
+//                cur && parent.removeChild(cur)
+//                mirror.dispose && mirror.dispose(cur)
+//            }
+//            continue
+//        } else if (mirror.created) {
+//            delete mirror.created
+//            var dom = mirror.toDOM()
+//            mirror.create && mirror.create(dom)
+//            if (mirror.type !== "#component") {
+//                parent.insertBefore(dom, cur)
+//                updateEntity([dom], [mirror], parent)
+//            } else {//组件必须用东西包起来
+//                // div.ms-repeat [repeatStart, other..., repeatEnd]
+//                var inserted = avalon.slice(dom)
+//                parent.insertBefore(dom, cur)//在同级位置插入
+//                updateEntity(inserted, mirror.children, parent)
+//            }
+//        } else {
             // 如果某一个指令会替换当前元素(比如ms-if,让当元素变成<!--ms-if-->
             // ms-repeat,让当前元素变成<!--ms-repeat-start-->)
             // 那么它们应该做成一个组件
@@ -72,7 +72,7 @@ function updateEntity(nodes, vnodes, parent) {
                 updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
             }
             execHooks(cur, mirror, parent, "afterChange")
-        }
+   //     }
     }
 }
 

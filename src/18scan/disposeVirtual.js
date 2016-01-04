@@ -8,15 +8,18 @@ function disposeVirtual(nodes) {
                 if (node.tokens) {
                     node.tokens.forEach(function (token) {
                         token.element = null
+                        token.__disposed__ = true
                     })
                 }
                 break
             default:
                 node.disposed = true
-                if (node.children)
+                if (node.children) {
                     disposeVirtual(node.children)
-                if (node._children)
-                    disposeVirtual(node._children)
+                }
+                if (node.vmodel) {
+                    node.vmodel.$active = false
+                }
                 break
         }
     }

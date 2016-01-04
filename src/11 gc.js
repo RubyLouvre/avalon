@@ -19,7 +19,6 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
-
     var i = disposeQueue.length
     var n = i
     var allTypes = []
@@ -49,7 +48,7 @@ function rejectDisposeQueue(data) {
                 disposeQueue.splice(i, 1)
                 continue
             }
-            if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
+            if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
                 var lists = data.lists
@@ -69,13 +68,10 @@ function rejectDisposeQueue(data) {
 
 function disposeData(data) {
     delete disposeQueue[data.uuid] // 先清除，不然无法回收了
+    data.element.dispose && data.element.dispose()
     data.element = null
-    data.dispose && data.dispose()
     for (var key in data) {
         data[key] = null
     }
 }
 
-function shouldDispose(el) {
-    return !el || el.disposed
-}

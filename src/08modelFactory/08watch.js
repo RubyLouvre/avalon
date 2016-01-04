@@ -1,17 +1,26 @@
 function $watch(expr, funOrObj) {
     var hive = this.$events || (this.$events = {})
     var list = hive[expr] || (hive[expr] = [])
+    var vm = this
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
+        shouldDispose:function(){
+            return vm.$active === false
+        },
         uuid: getUid(funOrObj)
     } : funOrObj
+    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
     if (avalon.Array.ensure(list, data)) {
         injectDisposeQueue(data, list)
     }
     return function () {
         avalon.Array.remove(list, data)
     }
+}
+function shouldDispose() {
+    var el = this.element
+    return !el || el.disposed
 }
 
 function $emit(topVm, curVm, path, a, b, i) {

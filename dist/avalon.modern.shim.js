@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.3
+ avalon.modern.js 1.6 built in 2016.1.4
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1233,17 +1233,26 @@ function hideProperty(host, name, value) {
 function $watch(expr, funOrObj) {
     var hive = this.$events || (this.$events = {})
     var list = hive[expr] || (hive[expr] = [])
+    var vm = this
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
+        shouldDispose:function(){
+            return vm.$active === false
+        },
         uuid: getUid(funOrObj)
     } : funOrObj
+    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
     if (avalon.Array.ensure(list, data)) {
         injectDisposeQueue(data, list)
     }
     return function () {
         avalon.Array.remove(list, data)
     }
+}
+function shouldDispose() {
+    var el = this.element
+    return !el || el.disposed
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
@@ -1319,20 +1328,41 @@ function observeArray(array, old, heirloom, options) {
             array[i] = newProto[i]
         }
         hideProperty(array, "$id", generateID("$"))
-        array._ = observeObject({
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+
+        array._ = sizeCache.shift() || observeObject({
             length: NaN
         }, {}, {
             pathname: "",
             top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-        array.notify = function () {
-            $emit(heirloom.vm, heirloom.vm, options.pathname)
-            batchUpdateEntity(heirloom.vm)
-        }
+
         array._.length = array.length
-        array._.$watch("length", function (a, b) {
-            if (heirloom.vm) {
-                heirloom.vm.$fire(options.pathname + ".length", a, b)
+        array._.$watch("length", {
+            shouldDispose: function () {
+                if (!heirloom || !heirloom.vm ||
+                        heirloom.vm.$active === false) {
+                    return true
+                }
+                if (!containsArray(heirloom.vm, array)) {
+                    array.length = 0
+                    array._.length = NaN
+                    if (sizeCache.push(array._) < 64) {
+                        sizeCache.shift()
+                    }
+                    delete array._
+                    return true
+                }
+                return false
+            },
+            element: {},
+            update: function (newlen, oldlen) {
+                if (heirloom.vm) {
+                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
+                }
             }
         })
 
@@ -1351,6 +1381,22 @@ function observeArray(array, old, heirloom, options) {
 
         return array
     }
+}
+var sizeCache = []
+
+function containsArray(vm, array) {
+    for (var i in vm) {
+        if (vm.hasOwnProperty(i)) {
+            if (vm[i] === array) {
+                return true
+            } else if (vm[i] && vm[i].$id) {
+                if (containsArray(vm[i], array)) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
 }
 
 function observeItem(item, a, b) {
@@ -1427,6 +1473,7 @@ var newProto = {
 }
 
 var _splice = arrayProto.splice
+
 arrayMethods.forEach(function (method) {
     var original = arrayProto[method]
     newProto[method] = function () {
@@ -1518,7 +1565,6 @@ function injectDisposeQueue(data, list) {
 }
 
 function rejectDisposeQueue(data) {
-
     var i = disposeQueue.length
     var n = i
     var allTypes = []
@@ -1548,7 +1594,7 @@ function rejectDisposeQueue(data) {
                 disposeQueue.splice(i, 1)
                 continue
             }
-            if (iffishTypes[data.type] && shouldDispose(data.element)) { //如果它没有在DOM树
+            if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
                 delete disposeQueue[data.uuid]
                 var lists = data.lists
@@ -1568,16 +1614,13 @@ function rejectDisposeQueue(data) {
 
 function disposeData(data) {
     delete disposeQueue[data.uuid] // 先清除，不然无法回收了
+    data.element.dispose && data.element.dispose()
     data.element = null
-    data.dispose && data.dispose()
     for (var key in data) {
         data[key] = null
     }
 }
 
-function shouldDispose(el) {
-    return !el || el.disposed
-}
 
 /************************************************************************
  *              HTML处理(parseHTML, innerHTML, clearHTML)                *
@@ -3276,15 +3319,18 @@ function disposeVirtual(nodes) {
                 if (node.tokens) {
                     node.tokens.forEach(function (token) {
                         token.element = null
+                        token.__disposed__ = true
                     })
                 }
                 break
             default:
                 node.disposed = true
-                if (node.children)
+                if (node.children) {
                     disposeVirtual(node.children)
-                if (node._children)
-                    disposeVirtual(node._children)
+                }
+                if (node.vmodel) {
+                    node.vmodel.$active = false
+                }
                 break
         }
     }
@@ -3339,28 +3385,28 @@ function updateEntity(nodes, vnodes, parent) {
         cur = i === 0 ? cur : getNextEntity(cur, vnodes[i - 1], parent)
         if (!mirror)
             break
-        if (mirror.disposed) {//如果虚拟节点标识为移除
-            vnodes.splice(i, 1)
-            i--
-            if (cur) {
-                cur && parent.removeChild(cur)
-                mirror.dispose && mirror.dispose(cur)
-            }
-            continue
-        } else if (mirror.created) {
-            delete mirror.created
-            var dom = mirror.toDOM()
-            mirror.create && mirror.create(dom)
-            if (mirror.type !== "#component") {
-                parent.insertBefore(dom, cur)
-                updateEntity([dom], [mirror], parent)
-            } else {//组件必须用东西包起来
-                // div.ms-repeat [repeatStart, other..., repeatEnd]
-                var inserted = avalon.slice(dom)
-                parent.insertBefore(dom, cur)//在同级位置插入
-                updateEntity(inserted, mirror.children, parent)
-            }
-        } else {
+//        if (mirror.disposed) {//如果虚拟节点标识为移除
+//            vnodes.splice(i, 1)
+//            i--
+//            if (cur) {
+//                cur && parent.removeChild(cur)
+//                mirror.dispose && mirror.dispose(cur)
+//            }
+//            continue
+//        } else if (mirror.created) {
+//            delete mirror.created
+//            var dom = mirror.toDOM()
+//            mirror.create && mirror.create(dom)
+//            if (mirror.type !== "#component") {
+//                parent.insertBefore(dom, cur)
+//                updateEntity([dom], [mirror], parent)
+//            } else {//组件必须用东西包起来
+//                // div.ms-repeat [repeatStart, other..., repeatEnd]
+//                var inserted = avalon.slice(dom)
+//                parent.insertBefore(dom, cur)//在同级位置插入
+//                updateEntity(inserted, mirror.children, parent)
+//            }
+//        } else {
             // 如果某一个指令会替换当前元素(比如ms-if,让当元素变成<!--ms-if-->
             // ms-repeat,让当前元素变成<!--ms-repeat-start-->)
             // 那么它们应该做成一个组件
@@ -3376,7 +3422,7 @@ function updateEntity(nodes, vnodes, parent) {
                 updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
             }
             execHooks(cur, mirror, parent, "afterChange")
-        }
+   //     }
     }
 }
 
@@ -3705,6 +3751,7 @@ avalon.directive("data", {
                 elem.watchValueInTimer = true
             }
             elem.duplexEvents = duplexEvents
+            elem.dispose = disposeDuplex
         },
         change: function (value, binding) {
             var vnode = binding.element
@@ -3722,6 +3769,7 @@ avalon.directive("data", {
             addHooks(this, binding)
         },
         update: function (elem, vnode) {
+            vnode._ = elem
             elem.setter = vnode.setter
             var getterValue = elem.getterValue = vnode.getterValue
             var events = vnode.duplexEvents
@@ -3788,6 +3836,15 @@ avalon.directive("data", {
         }
     })
 
+    function disposeDuplex() {
+        var elem = this._
+        if (elem) {
+            elem.changed = elem.avalonSetter = elem.oldValue = 
+                    elem.setter = void 0
+            avalon.unbind(elem)
+            this._ = null
+        }
+    }
     function compositionStart() {
         this.composing = true
     }
@@ -4440,13 +4497,14 @@ avalon.directive("repeat", {
             binding.$outer.names = names.join(",")
         }
 
-        //键名为它过去的位置
+    
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建,-3不做处理
+        //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
         for (var i = 0; i <= last; i++) {
-            if (repeatArray) {
+            if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
                 var item = value[i]
-                var component = isInCache(cache, item)
-            } else {
+                var component = isInCache(cache, item)//从缓存取出立即删掉
+            } else {//如果是对象,直接用key为键名
                 var key = keys[i]
                 item = value[key]
                 component = cache[key]
@@ -4455,9 +4513,9 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 if (proxy.$index !== i) {
-                    command[proxy.$index] = i
+                    command[proxy.$index] = i//发生移动
                 } else {
-                    command[proxy.$index] = -3
+                    command[proxy.$index] = i //-3
                 }
             } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
@@ -4495,14 +4553,17 @@ avalon.directive("repeat", {
         for (i in cache) {
             if (cache[i]) {
                 var ii = cache[i].vmodel.$index
-                if (command[ii] !== -2) {
+                if (command[ii] === -2) {
+                    command[ii] = -3
+                } else {
                     command[ii] = -1
                 }
                 cache[i].dispose()//销毁没有用的组件
                 delete cache[i]
             }
         }
-
+      
+     
         parent.children.length = 0
         pushArray(parent.children, children)
         parent.children.unshift(new VComment(parent.signature + ":start"))
@@ -4519,19 +4580,32 @@ avalon.directive("repeat", {
     },
     update: function (elem, vnode, parent) {
         if (!vnode.disposed) {
+           console.log(avalon.$$subscribers.length)
             var groupText = vnode.signature
+            var nodeValue = elem.nodeValue
+            if(elem.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+                  nodeValue !== groupText + ":start"
+                    ){
+                console.log(vnode)
+                updateSignature(elem, nodeValue, groupText)
+            }
+            
             if (elem.nodeType !== 8 || elem.nodeValue !== groupText + ":start") {
+               // console.log("全新创建 ",elem,groupText, parent.nodeName)
                 var dom = vnode.toDOM()
+
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
+                    parent.removeChild(elem.nextSibling)
                     parent.replaceChild(dom, elem)
                 }
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
+               // console.log("最小化更新 ",parent.nodeName)
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -4548,6 +4622,7 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
+
                 //根据repeatCommand指令进行删增重排
                 var children = []
                 for (var from in vnode.repeatCommand) {
@@ -4555,10 +4630,11 @@ avalon.directive("repeat", {
                     if (to >= 0) {
                         children[to] = froms[from]
                     } else if (to < -1) {//-2.-3
-                        
+                      
                         if (froms[from]) {
                             children[from] = froms[from]
                         } else {
+                           // console.log("创建")
                             children[from] = vnode.children[from].toDOM()
                         }
                     }
@@ -4592,6 +4668,19 @@ avalon.directive("repeat", {
     }
 })
 
+function updateSignature(elem, value, text){
+    var group = value.split(":")[0]
+    do{
+        var nodeValue = elem.nodeValue
+        if(elem.nodeType === 8 && nodeValue.indexOf(group) === 0){
+            elem.nodeValue = nodeValue.replace(group, text)
+            if(nodeValue.indexOf(":last") > 0){
+                break
+            }
+        }
+    }while(elem = elem.nextSibling)
+}
+
 var repeatItem = avalon.components["repeatItem"] = {
     construct: function (item, binding, isArray) {
         var top = binding.vmodel
@@ -4599,7 +4688,7 @@ var repeatItem = avalon.components["repeatItem"] = {
             top = createProxy(top, item)
         }
         var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
-
+        this.valueName = binding.valueName
         var proxy = createRepeatItem(top, keys, isArray)
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
@@ -4608,15 +4697,17 @@ var repeatItem = avalon.components["repeatItem"] = {
         return this
     },
     dispose: function () {
-        this.disposed = true
+        disposeVirtual([this])
         var proxy = this.vmodel
-        var item = proxy[this.itemName]
-        proxy.$active = false
-        if (item) {
+        var item = proxy[this.valueName]
+        proxy && (proxy.$active = false)
+        if(item && item.$id){
             item.$active = false
         }
     }
 }
+
+
 
 function createRepeatItem(before, keys, isArray) {
     var heirloom = {}
@@ -4962,6 +5053,7 @@ avalon.directive("on", {
             }
         }
         binding.expr = value
+        binding.element.dispose = disposeOn
     },
     change: function (listener, binding) {
         var elem = binding.element
@@ -4979,6 +5071,7 @@ avalon.directive("on", {
     },
     update: function (elem, vnode) {
         if (!vnode.disposed) {
+            vnode._ = elem
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
@@ -4986,11 +5079,15 @@ avalon.directive("on", {
             }
             delete vnode.changeEvents
         }
-    },
-    dispose: function (elem) {
-        avalon.unbind(elem)
     }
 })
+
+function disposeOn() {
+    if (this._) {
+        avalon.unbind(this._)
+        this._ = null
+    }
+}
 
 
 

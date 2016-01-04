@@ -1,8 +1,6 @@
 //双工绑定
 ;
 (function () {
-
-
     var rduplexType = /^(?:checkbox|radio)$/
     var rduplexParam = /^(?:radio|checked)$/
     var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
@@ -103,6 +101,7 @@
                 elem.watchValueInTimer = true
             }
             elem.duplexEvents = duplexEvents
+            elem.dispose = disposeDuplex
         },
         change: function (value, binding) {
             var vnode = binding.element
@@ -120,6 +119,7 @@
             addHooks(this, binding)
         },
         update: function (elem, vnode) {
+            vnode._ = elem
             elem.setter = vnode.setter
             var getterValue = elem.getterValue = vnode.getterValue
             var events = vnode.duplexEvents
@@ -186,6 +186,15 @@
         }
     })
 
+    function disposeDuplex() {
+        var elem = this._
+        if (elem) {
+            elem.changed = elem.avalonSetter = elem.oldValue = 
+                    elem.setter = void 0
+            avalon.unbind(elem)
+            this._ = null
+        }
+    }
     function compositionStart() {
         this.composing = true
     }

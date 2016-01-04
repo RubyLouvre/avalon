@@ -15,6 +15,7 @@ avalon.directive("on", {
             }
         }
         binding.expr = value
+        binding.element.dispose = disposeOn
     },
     change: function (listener, binding) {
         var elem = binding.element
@@ -32,6 +33,7 @@ avalon.directive("on", {
     },
     update: function (elem, vnode) {
         if (!vnode.disposed) {
+            vnode._ = elem
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
@@ -39,10 +41,14 @@ avalon.directive("on", {
             }
             delete vnode.changeEvents
         }
-    },
-    dispose: function (elem) {
-        avalon.unbind(elem)
     }
 })
+
+function disposeOn() {
+    if (this._) {
+        avalon.unbind(this._)
+        this._ = null
+    }
+}
 
 

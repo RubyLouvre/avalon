@@ -11,20 +11,41 @@ function observeArray(array, old, heirloom, options) {
             array[i] = newProto[i]
         }
         hideProperty(array, "$id", generateID("$"))
-        array._ = observeObject({
+        array.notify = function () {
+            $emit(heirloom.vm, heirloom.vm, options.pathname)
+            batchUpdateEntity(heirloom.vm)
+        }
+
+        array._ = sizeCache.shift() || observeObject({
             length: NaN
         }, {}, {
             pathname: "",
             top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
         })
-        array.notify = function () {
-            $emit(heirloom.vm, heirloom.vm, options.pathname)
-            batchUpdateEntity(heirloom.vm)
-        }
+
         array._.length = array.length
-        array._.$watch("length", function (a, b) {
-            if (heirloom.vm) {
-                heirloom.vm.$fire(options.pathname + ".length", a, b)
+        array._.$watch("length", {
+            shouldDispose: function () {
+                if (!heirloom || !heirloom.vm ||
+                        heirloom.vm.$active === false) {
+                    return true
+                }
+                if (!containsArray(heirloom.vm, array)) {
+                    array.length = 0
+                    array._.length = NaN
+                    if (sizeCache.push(array._) < 64) {
+                        sizeCache.shift()
+                    }
+                    delete array._
+                    return true
+                }
+                return false
+            },
+            element: {},
+            update: function (newlen, oldlen) {
+                if (heirloom.vm) {
+                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
+                }
             }
         })
 
@@ -43,6 +64,22 @@ function observeArray(array, old, heirloom, options) {
 
         return array
     }
+}
+var sizeCache = []
+
+function containsArray(vm, array) {
+    for (var i in vm) {
+        if (vm.hasOwnProperty(i)) {
+            if (vm[i] === array) {
+                return true
+            } else if (vm[i] && vm[i].$id) {
+                if (containsArray(vm[i], array)) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
 }
 
 function observeItem(item, a, b) {
@@ -119,6 +156,7 @@ var newProto = {
 }
 
 var _splice = arrayProto.splice
+
 arrayMethods.forEach(function (method) {
     var original = arrayProto[method]
     newProto[method] = function () {

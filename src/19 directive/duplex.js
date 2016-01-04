@@ -107,6 +107,7 @@
                 elem.watchValueInTimer = true
             }
             elem.duplexEvents = duplexEvents
+            elem.dispose = disposeDuplex
         },
         change: function (value, binding) {
             var elem = binding.element
@@ -125,6 +126,8 @@
             addHooks(this, binding)
         },
         update: function (elem, vnode) {
+            vnode._ = elem
+            
             elem.setter = vnode.setter
             var getterValue = elem.getterValue = vnode.getterValue
             var events = vnode.duplexEvents
@@ -199,7 +202,16 @@
             }
         }
     })
-
+    
+    function disposeDuplex() {
+        var elem = this._
+        if (elem) {
+            elem.changed = elem.avalonSetter = elem.oldValue = 
+                    elem.setter = void 0
+            avalon.unbind(elem)
+            this._ = null
+        }
+    }
     function compositionStart() {
         this.composing = true
     }
@@ -370,7 +382,8 @@
     }
 
     var watchValueInTimer = noop
-    ;(function () { // jshint ignore:line
+            ;
+    (function () { // jshint ignore:line
         try { //#272 IE9-IE11, firefox
             var setters = {}
             var aproto = HTMLInputElement.prototype
