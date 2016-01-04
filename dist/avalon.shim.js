@@ -3804,9 +3804,8 @@ function getNextEntity(prev, prevVirtual, parent) {
 }
 
 
-
 function updateEntity(nodes, vnodes, parent) {
-    var cur = nodes[0], next
+    var cur = nodes[0]
     if (!cur && !parent)
         return
     parent = parent || cur.parentNode
@@ -3815,44 +3814,15 @@ function updateEntity(nodes, vnodes, parent) {
         cur = i === 0 ? cur : getNextEntity(cur, vnodes[i - 1], parent)
         if (!mirror)
             break
-//        if (mirror.disposed) {//如果虚拟节点标识为移除
-//            vnodes.splice(i, 1)
-//            i--
-//            if (cur) {
-//                cur && parent.removeChild(cur)
-//                mirror.dispose && mirror.dispose(cur)
-//            }
-//            continue
-//        } else if (mirror.created) {
-//            delete mirror.created
-//            var dom = mirror.toDOM()
-//            mirror.create && mirror.create(dom)
-//            if (mirror.type !== "#component") {
-//                parent.insertBefore(dom, cur)
-//                updateEntity([dom], [mirror], parent)
-//            } else {//组件必须用东西包起来
-//                // div.ms-repeat [repeatStart, other..., repeatEnd]
-//                var inserted = avalon.slice(dom)
-//                parent.insertBefore(dom, cur)//在同级位置插入
-//                updateEntity(inserted, mirror.children, parent)
-//            }
-//        } else {
-            // 如果某一个指令会替换当前元素(比如ms-if,让当元素变成<!--ms-if-->
-            // ms-repeat,让当前元素变成<!--ms-repeat-start-->)
-            // 那么它们应该做成一个组件
-            //  next = cur.nextSibling
-            if (false === execHooks(cur, mirror, parent, "change")) {
-                execHooks(cur, mirror, parent, "afterChange")
-//                cur = {
-//                    nextSibling: next
-//                }
-                continue
-            }
-            if (!mirror.skipContent && !mirror.skip && mirror.children && cur && cur.nodeType === 1) {
-                updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
-            }
+        if (false === execHooks(cur, mirror, parent, "change")) {
+            //ms-if,ms-each,ms-repeat这些破坏原来结构的指令会这里进行中断
             execHooks(cur, mirror, parent, "afterChange")
-   //     }
+            continue
+        }
+        if (!mirror.skipContent && !mirror.skip && mirror.children && cur && cur.nodeType === 1) {
+            updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
+        }
+        execHooks(cur, mirror, parent, "afterChange")
     }
 }
 
