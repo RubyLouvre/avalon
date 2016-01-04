@@ -1,14 +1,14 @@
 directives["{{}}"] = {
     init: noop,
     change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         binding.array[binding.index] = value
         var nodeValue = binding.array.join("")
 
-        if (nodeValue !== elem.nodeValue) {
-            elem.nodeValue = nodeValue
+        if (nodeValue !== vnode.nodeValue) {
+            vnode.nodeValue = nodeValue
             addHooks(this, binding)
         }
     },

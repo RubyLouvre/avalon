@@ -3910,9 +3910,9 @@ var attrDir = avalon.directive("attr", {
         binding.expr = normalizeExpr(binding.expr.trim())
     },
     change: function (val, binding) {
-        var elem = binding.element
-        if (elem) {
-            var change = addData(elem, "changeAttrs")
+        var vnode = binding.element
+        if (vnode) {
+            var change = addData(vnode, "changeAttrs")
             var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
             change[name] = toRemove ? false : val
@@ -3947,26 +3947,26 @@ avalon.directive("class", {
             log('ms-' + method + '-xxx="yyy"这种用法已经过时,请使用ms-' + method + '="xxx:yyy"')
             binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
         }
-        var elem = binding.element
+        var vnode = binding.element
         var classEvent = {}
         if (method === "hover") {//在移出移入时切换类名
             classEvent.mouseenter = activateClass
             classEvent.mouseleave = abandonClass
         } else if (method === "active") {//在获得焦点时切换类名
-            elem.props.tabindex = elem.props.tabindex || -1
-            classEvent.tabIndex = elem.props.tabindex
+            vnode.props.tabindex = vnode.props.tabindex || -1
+            classEvent.tabIndex = vnode.props.tabindex
             classEvent.mousedown = activateClass
             classEvent.mouseup = abandonClass
             classEvent.mouseleave = abandonClass
         }
-        elem.classEvent = classEvent
+        vnode.classEvent = classEvent
     },
     change: function (arr, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         var type = binding.type
-        var data = addData(elem, type + "Data")
+        var data = addData(vnode, type + "Data")
         var target = arr[0]
         var toggle = arr[1]
         if (binding.oldClass && target !== binding.oldClass) {
@@ -3990,7 +3990,8 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var wrap = avalon(node)
-        ;["class", "hover", "active"].forEach(function (type) {
+                ;
+        ["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
             if (!data)
                 return
@@ -4033,10 +4034,10 @@ markID(abandonClass)
 avalon.directive("css", {
     init: directives.attr.init,
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        var change = addData(elem, "changeCss")
+        var change = addData(vnode, "changeCss")
         change[this.param] = val
         addHooks(this, binding)
     },
@@ -4054,10 +4055,10 @@ avalon.directive("data", {
     priority: 100,
     init: noop,
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        var change = addData(elem, "changeData")
+        var change = addData(vnode, "changeData")
         val = (val && typeof val === "object") ? val : String(val)
         change["data-" + binding.param] = val
         addHooks(this, binding)
@@ -4851,14 +4852,14 @@ avalon.mix(avalon.effect, {
 directives["{{}}"] = {
     init: noop,
     change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         binding.array[binding.index] = value
         var nodeValue = binding.array.join("")
 
-        if (nodeValue !== elem.nodeValue) {
-            elem.nodeValue = nodeValue
+        if (nodeValue !== vnode.nodeValue) {
+            vnode.nodeValue = nodeValue
             addHooks(this, binding)
         }
     },
@@ -4872,6 +4873,7 @@ directives["{{}}"] = {
 }
 var rinexpr = /^\s*([\s\S]+) in (\w+)/
 var rkeyvalue = /\(\s*(\w+)\s*,\s*(\w+)\s*\)/
+var rremoveRepeat = /^ms-(repeat|each)/
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
@@ -4889,6 +4891,7 @@ avalon.directive("repeat", {
         }
     },
     init: function (binding) {
+        //尝试使用ng风格的 el in array或(index, el) in array
         var expr = binding.expr, match
         if (match = expr.match(rinexpr)) {
             binding.expr = match[2]
@@ -4901,15 +4904,16 @@ avalon.directive("repeat", {
             }
         }
      
-        var parent = binding.element
-        disposeVirtual(parent.children)
+        var vnode = binding.element
+        disposeVirtual(vnode.children)
         var component = new VComponent("ms-repeat")
-        var template = toString(parent, /^ms-(repeat|each)/)
+        var template = toString(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
         var top = binding.vmodel, $outer = {}
         var signature = generateID(type)
         component.signature = signature
-        var rendered = getBindingValue(parent, "data-" + type + "-rendered", top)
+        //处理渲染完毕后的回调的函数
+        var rendered = getBindingValue(vnode, "data-" + type + "-rendered", top)
         if (typeof rendered === "function") {
             binding.rendered = function (a, b, c) {
                 rendered(type === "repeat" ? c : a)
@@ -4917,12 +4921,13 @@ avalon.directive("repeat", {
         } else {
             binding.rendered = noop
         }
-        component.children.length = 0 //将父节点作为它的子节点
+        
+      
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement
             var arr = binding.siblings
             for (var i = 0, el; el = arr[i]; i++) {
-                if (el === parent) {
+                if (el === vnode) {
                     arr[i] = component
                     break
                 }
@@ -4930,14 +4935,14 @@ avalon.directive("repeat", {
             component.template = template + "<!--" + signature + "-->"
         } else {
             //each组件会替换掉原VComponent组件的所有孩子
-            disposeVirtual(parent.children)
-            pushArray(parent.children, [component])
-            component.template = parent.template.trim() + "<!--" + signature + "-->"
+            disposeVirtual(vnode.children)
+            pushArray(vnode.children, [component])
+            component.template = vnode.template.trim() + "<!--" + signature + "-->"
         }
+        
         binding.element = component //偷龙转风
         //计算上级循环的$outer
-        //外层存在的vmodel不存在$outer,那么$outer为一个空对象
-
+        //外层vmodel不存在$outer对象时, $outer为一个空对象
         if (top.hasOwnProperty("$outer") && typeof top.$outer === "object" && top.$outer.names) {
             top.$outer.names.replace(rword, function (name) {
                 if (top.hasOwnProperty(name)) {
@@ -4949,12 +4954,13 @@ avalon.directive("repeat", {
         delete binding.siblings
     },
     change: function (value, binding) {
-        var parent = binding.element
-        if (!parent || parent.disposed) {
+        var vnode = binding.element
+        if (!vnode || vnode.disposed) {
             return
         }
         var cache = binding.cache || {}
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
+        //处理valueName, keyName, last
         var repeatArray = Array.isArray(value)
         if (repeatArray) {
             last = value.length - 1
@@ -4979,6 +4985,7 @@ avalon.directive("repeat", {
             }
             last = keys.length - 1
         }
+        //处理$outer.names
         if (!binding.$outer.names) {
             var names = ["$first", "$last", "$index", "$outer"]
             if (repeatArray) {
@@ -5007,7 +5014,7 @@ avalon.directive("repeat", {
                 command[proxy.$index] = i//标识其从什么位置移动什么位置
             } else {//如果不存在就创建 
                 component = new VComponent("repeatItem")
-                component.template = parent.template
+                component.template = vnode.template
                 component.construct(item, binding, repeatArray)
                 proxy = component.vmodel
                 proxy.$outer = binding.$outer
@@ -5046,27 +5053,27 @@ avalon.directive("repeat", {
                     //但对应的旧虚拟节点还是要销毁的
                     command[ii] = -1
                 }
-                cache[i].dispose()//销毁没有用的组件
+                cache[i].dispose()
                 delete cache[i]
             }
         }
-        parent.children.length = 0
-        pushArray(parent.children, children)
-        parent.children.unshift(new VComment(parent.signature + ":start"))
-        parent.children.push(new VComment(parent.signature + ":end"))
+        var vChildren = vnode.children
+        vChildren.length = 0
+        pushArray(vChildren, children)
+        vChildren.unshift(new VComment(vnode.signature + ":start"))
+        vChildren.push(new VComment(vnode.signature + ":end"))
         binding.cache = newCache
         if (repeatArray) {
             binding.oldValue = value.concat()
         } else {
             binding.oldValue = newCache
         }
-        parent.repeatCommand = command
-        addHook(parent, binding.rendered, "afterChange", 95)
+        vnode.repeatCommand = command
+        addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
     update: function (node, vnode, parent) {
         if (!vnode.disposed) {
-            vnode.entity = node
             var groupText = vnode.signature
             var nodeValue = node.nodeValue
             if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
@@ -5076,9 +5083,7 @@ avalon.directive("repeat", {
             }
 
             if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
-                // console.log("全新创建 ",node,groupText, parent.nodeName)
                 var dom = vnode.toDOM()
-
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
@@ -5110,7 +5115,6 @@ avalon.directive("repeat", {
 
                 //根据repeatCommand指令进行删增重排
                 var children = []
-                console.log(vnode.repeatCommand)
                 for (var from in vnode.repeatCommand) {
                     var to = vnode.repeatCommand[from]
                     if (to >= 0) {
@@ -5166,14 +5170,14 @@ function updateSignature(elem, value, text) {
 }
 
 var repeatItem = avalon.components["repeatItem"] = {
-    construct: function (item, binding, isArray) {
+    construct: function (item, binding, repeatArray) {
         var top = binding.vmodel
         if (item && item.$id) {
             top = createProxy(top, item)
         }
         var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
         this.valueName = binding.valueName
-        var proxy = createRepeatItem(top, keys, isArray)
+        var proxy = createRepeatItem(top, keys, repeatArray)
         this.vmodel = proxy
         this.children = createVirtual(this.template, true)
         this._new = true
@@ -5193,7 +5197,7 @@ var repeatItem = avalon.components["repeatItem"] = {
 
 
 
-function createRepeatItem(before, keys, isArray) {
+function createRepeatItem(before, keys, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
@@ -5202,7 +5206,7 @@ function createRepeatItem(before, keys, isArray) {
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
     }
-    if (isArray) {
+    if (repeatArray) {
         after.$remove = noop
     }
     if (Object.defineProperties) {
@@ -5211,6 +5215,7 @@ function createRepeatItem(before, keys, isArray) {
 
     return createProxy(before, after, heirloom)
 }
+
 function getRepeatChild(children) {
     var ret = []
     for (var i = 0, el; el = children[i++]; ) {
@@ -5228,7 +5233,6 @@ avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 
 function compareObject(a, b) {
-
     var atype = avalon.type(a)
     var btype = avalon.type(a)
     if (atype === btype) {
@@ -5263,6 +5267,7 @@ function compareObject(a, b) {
         return false
     }
 }
+
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
@@ -5317,13 +5322,13 @@ function saveInCache(cache, vm, component) {
 
 avalon.directive("html", {
     change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         value = typeof value === "string" ? value : String(value)
-        disposeVirtual(elem.children)
+        disposeVirtual(vnode.children)
         var children = createVirtual(value, true)
-        pushArray(elem.children, updateVirtual(children, binding.vmodel))
+        pushArray(vnode.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
     },
     update: function (node, vnode) {
@@ -5336,6 +5341,7 @@ avalon.directive("html", {
     }
 })
 
+var rremoveIf = /^ms-if$/
 avalon.directive("if", {
     is: function (a, b) {
         if (b === void 0)
@@ -5343,22 +5349,21 @@ avalon.directive("if", {
         return Boolean(a) === Boolean(b)
     },
     init: function (binding) {
-        var element = binding.element
-        var templale = toString(element, /^ms-if$/)
-
+        var vnode = binding.element
+        var templale = toString(vnode,rremoveIf) //防止死循环
         var component = new VComponent("ms-if")
         component.template = templale
         component.props.ok = createVirtual(templale, true)[0]
         component.props.ng = new VComment("ms-if")
         var arr = binding.siblings
         for (var i = 0, el; el = arr[i]; i++) {
-            if (el === element) {
+            if (el === vnode) {
                 arr[i] = component
                 break
             }
         }
         delete binding.siblings
-        binding.element = component
+        binding.vnode = component
         return false
     },
     change: function (value, binding) {
@@ -5421,8 +5426,8 @@ avalon.directive("include", {
         disposeVirtual(elem.children)
     },
     change: function (id, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         addHooks(this, binding)
         if (binding.param === "src") {
@@ -5579,8 +5584,8 @@ avalon.directive("on", {
         binding.element.dispose = disposeOn
     },
     change: function (listener, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         var type = binding.param
         var uuid = markID(listener)
@@ -5588,7 +5593,7 @@ avalon.directive("on", {
         if (!avalon.__eventVM__[key]) {//注册事件回调
             avalon.__eventVM__[key] = binding.vmodel
         }
-        var change = addData(elem, "changeEvents")// 创建一个更新包
+        var change = addData(vnode, "changeEvents")// 创建一个更新包
         change[key] = listener
         addHooks(this, binding)
     },
@@ -5622,13 +5627,13 @@ function disposeOn() {
 
 avalon.directive("text", {
     change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         value = typeof value === "string" ? value : String(value)
-        disposeVirtual(elem.children)
+        disposeVirtual(vnode.children)
         var children = [new VText(value)]
-        pushArray(elem.children, updateVirtual(children, binding.vmodel))
+        pushArray(vnode.children, updateVirtual(children, binding.vmodel))
         addHooks(this, binding)
     },
     update: function (node, vnode) {
@@ -5669,10 +5674,10 @@ avalon.directive("visible", {
         return Boolean(a) === Boolean(b)
     },
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        elem.isShow = val
+        vnode.isShow = val
         addHooks(this, binding)
     },
     update: function (node, vnode) {

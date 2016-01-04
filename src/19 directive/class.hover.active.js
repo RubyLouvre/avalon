@@ -18,26 +18,26 @@ avalon.directive("class", {
             log('ms-' + method + '-xxx="yyy"这种用法已经过时,请使用ms-' + method + '="xxx:yyy"')
             binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
         }
-        var elem = binding.element
+        var vnode = binding.element
         var classEvent = {}
         if (method === "hover") {//在移出移入时切换类名
             classEvent.mouseenter = activateClass
             classEvent.mouseleave = abandonClass
         } else if (method === "active") {//在获得焦点时切换类名
-            elem.props.tabindex = elem.props.tabindex || -1
-            classEvent.tabIndex = elem.props.tabindex
+            vnode.props.tabindex = vnode.props.tabindex || -1
+            classEvent.tabIndex = vnode.props.tabindex
             classEvent.mousedown = activateClass
             classEvent.mouseup = abandonClass
             classEvent.mouseleave = abandonClass
         }
-        elem.classEvent = classEvent
+        vnode.classEvent = classEvent
     },
     change: function (arr, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         var type = binding.type
-        var data = addData(elem, type + "Data")
+        var data = addData(vnode, type + "Data")
         var target = arr[0]
         var toggle = arr[1]
         if (binding.oldClass && target !== binding.oldClass) {
@@ -61,7 +61,8 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var wrap = avalon(node)
-        ;["class", "hover", "active"].forEach(function (type) {
+                ;
+        ["class", "hover", "active"].forEach(function (type) {
             var data = vnode[type + "Data"]
             if (!data)
                 return

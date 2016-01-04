@@ -18,8 +18,8 @@ avalon.directive("on", {
         binding.element.dispose = disposeOn
     },
     change: function (listener, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         var type = binding.param
         var uuid = markID(listener)
@@ -27,7 +27,7 @@ avalon.directive("on", {
         if (!avalon.__eventVM__[key]) {//注册事件回调
             avalon.__eventVM__[key] = binding.vmodel
         }
-        var change = addData(elem, "changeEvents")// 创建一个更新包
+        var change = addData(vnode, "changeEvents")// 创建一个更新包
         change[key] = listener
         addHooks(this, binding)
     },

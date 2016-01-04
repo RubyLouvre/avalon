@@ -2,10 +2,10 @@ avalon.directive("data", {
     priority: 100,
     init: noop,
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        var change = addData(elem, "changeData")
+        var change = addData(vnode, "changeData")
         val = (val && typeof val === "object") ? val : String(val)
         change["data-" + binding.param] = val
         addHooks(this, binding)

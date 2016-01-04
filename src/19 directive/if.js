@@ -1,3 +1,4 @@
+var rremoveIf = /^ms-if$/
 avalon.directive("if", {
     is: function (a, b) {
         if (b === void 0)
@@ -5,22 +6,21 @@ avalon.directive("if", {
         return Boolean(a) === Boolean(b)
     },
     init: function (binding) {
-        var element = binding.element
-        var templale = toString(element, /^ms-if$/)
-
+        var vnode = binding.element
+        var templale = toString(vnode,rremoveIf) //防止死循环
         var component = new VComponent("ms-if")
         component.template = templale
         component.props.ok = createVirtual(templale, true)[0]
         component.props.ng = new VComment("ms-if")
         var arr = binding.siblings
         for (var i = 0, el; el = arr[i]; i++) {
-            if (el === element) {
+            if (el === vnode) {
                 arr[i] = component
                 break
             }
         }
         delete binding.siblings
-        binding.element = component
+        binding.vnode = component
         return false
     },
     change: function (value, binding) {

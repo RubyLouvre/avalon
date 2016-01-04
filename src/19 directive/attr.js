@@ -7,9 +7,9 @@ var attrDir = avalon.directive("attr", {
         binding.expr = normalizeExpr(binding.expr.trim())
     },
     change: function (val, binding) {
-        var elem = binding.element
-        if (elem) {
-            var change = addData(elem, "changeAttrs")
+        var vnode = binding.element
+        if (vnode) {
+            var change = addData(vnode, "changeAttrs")
             var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
             change[name] = toRemove ? false : val

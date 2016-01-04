@@ -23,10 +23,10 @@ avalon.directive("visible", {
         return Boolean(a) === Boolean(b)
     },
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        elem.isShow = val
+        vnode.isShow = val
         addHooks(this, binding)
     },
     update: function (node, vnode) {

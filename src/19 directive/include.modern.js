@@ -18,8 +18,8 @@ avalon.directive("include", {
         disposeVirtual(elem.children)
     },
     change: function (id, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
         addHooks(this, binding)
         if (binding.param === "src") {

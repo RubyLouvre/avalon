@@ -1,10 +1,10 @@
 avalon.directive("css", {
     init: directives.attr.init,
     change: function (val, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
+        var vnode = binding.element
+        if (!vnode || vnode.disposed)
             return
-        var change = addData(elem, "changeCss")
+        var change = addData(vnode, "changeCss")
         change[this.param] = val
         addHooks(this, binding)
     },
