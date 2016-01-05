@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                array: ["a", "b", "c", "d"],
+                change: function () {
+                    vm.array = ["x", "c", "a", "b", "f", "k"]
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+        <ul>
+            <li ms-repeat="array">{{el}}</li>
+        </ul>
+    </body>
+</html>

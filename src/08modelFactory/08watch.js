@@ -5,7 +5,7 @@ function $watch(expr, funOrObj) {
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
-        shouldDispose:function(){
+        shouldDispose: function () {
             return vm.$active === false
         },
         uuid: getUid(funOrObj)
@@ -26,7 +26,7 @@ function shouldDispose() {
 function $emit(topVm, curVm, path, a, b, i) {
 
     var hive = topVm && topVm.$events
-     
+
     if (hive && hive[path]) {
         var list = hive[path]
         try {
@@ -44,10 +44,10 @@ function $emit(topVm, curVm, path, a, b, i) {
             avalon.log(e, path)
         }
     }
+
     if (new Date() - beginTime > 444) {
         setTimeout(function () {
             rejectDisposeQueue()
         })
-
     }
 }

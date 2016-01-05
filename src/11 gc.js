@@ -9,9 +9,8 @@ var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
-    var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
-    avalon.Array.ensure(lists, list)
+    data.list = list
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = "__"
         disposeQueue.push(data)
@@ -35,41 +34,50 @@ function rejectDisposeQueue(data) {
         }
     }
     var diff = false
-    allTypes.forEach(function (type) {
+    for (var j = 0, jn = allTypes.length; j < jn; j++) {
+        type = allTypes[j]
         if (oldInfo[type] !== newInfo[type]) {
             iffishTypes[type] = 1
             diff = true
         }
-    })
+    }
     i = n
+    var threshold = 0
     if (diff) {
         while (data = disposeQueue[--i]) {
             if (data.element === null) {
                 disposeQueue.splice(i, 1)
+                if (data.list) {
+                    avalon.Array.remove(data.list, data)
+                    delete disposeQueue[data.uuid]
+                }
                 continue
             }
             if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
-                delete disposeQueue[data.uuid]
-                var lists = data.lists
-                if (lists) {
-                    for (var k = 0, list; list = lists[k++]; ) {
-                        avalon.Array.remove(lists, list)
-                        avalon.Array.remove(list, data)
-                    }
-                }
+                avalon.Array.remove(data.list, data)
                 disposeData(data)
+                if (threshold++ > 256) {
+                    break
+                }
             }
         }
+
     }
+    console.log("disposeQueue.length ",disposeQueue.length)
     oldInfo = newInfo
     beginTime = new Date()
 }
 
 function disposeData(data) {
-    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
-    data.element.dispose && data.element.dispose()
-    data.element = null
+    if (!data.uuid)
+        return
+    delete disposeQueue[data.uuid]
+    var el = data.element
+    if (el) {
+        el.dispose && el.dispose()
+        data.element = null
+    }
     for (var key in data) {
         data[key] = null
     }

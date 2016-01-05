@@ -25,6 +25,7 @@ function observeArray(array, old, heirloom, options) {
 
         array._.length = array.length
         array._.$watch("length", {
+            type: "watch",
             shouldDispose: function () {
                 if (!heirloom || !heirloom.vm ||
                         heirloom.vm.$active === false) {

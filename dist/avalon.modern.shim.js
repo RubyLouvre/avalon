@@ -1237,7 +1237,7 @@ function $watch(expr, funOrObj) {
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
-        shouldDispose:function(){
+        shouldDispose: function () {
             return vm.$active === false
         },
         uuid: getUid(funOrObj)
@@ -1258,7 +1258,7 @@ function shouldDispose() {
 function $emit(topVm, curVm, path, a, b, i) {
 
     var hive = topVm && topVm.$events
-     
+
     if (hive && hive[path]) {
         var list = hive[path]
         try {
@@ -1276,11 +1276,11 @@ function $emit(topVm, curVm, path, a, b, i) {
             avalon.log(e, path)
         }
     }
+
     if (new Date() - beginTime > 444) {
         setTimeout(function () {
             rejectDisposeQueue()
         })
-
     }
 }
 
@@ -1342,6 +1342,7 @@ function observeArray(array, old, heirloom, options) {
 
         array._.length = array.length
         array._.$watch("length", {
+            type: "watch",
             shouldDispose: function () {
                 if (!heirloom || !heirloom.vm ||
                         heirloom.vm.$active === false) {
@@ -1555,9 +1556,8 @@ var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
-    var lists = data.lists || (data.lists = [])
     var uuid = getUid(data)
-    avalon.Array.ensure(lists, list)
+    data.list = list
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = "__"
         disposeQueue.push(data)
@@ -1581,41 +1581,50 @@ function rejectDisposeQueue(data) {
         }
     }
     var diff = false
-    allTypes.forEach(function (type) {
+    for (var j = 0, jn = allTypes.length; j < jn; j++) {
+        type = allTypes[j]
         if (oldInfo[type] !== newInfo[type]) {
             iffishTypes[type] = 1
             diff = true
         }
-    })
+    }
     i = n
+    var threshold = 0
     if (diff) {
         while (data = disposeQueue[--i]) {
             if (data.element === null) {
                 disposeQueue.splice(i, 1)
+                if (data.list) {
+                    avalon.Array.remove(data.list, data)
+                    delete disposeQueue[data.uuid]
+                }
                 continue
             }
             if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
                 disposeQueue.splice(i, 1)
-                delete disposeQueue[data.uuid]
-                var lists = data.lists
-                if (lists) {
-                    for (var k = 0, list; list = lists[k++]; ) {
-                        avalon.Array.remove(lists, list)
-                        avalon.Array.remove(list, data)
-                    }
-                }
+                avalon.Array.remove(data.list, data)
                 disposeData(data)
+                if (threshold++ > 256) {
+                    break
+                }
             }
         }
+
     }
+    console.log("disposeQueue.length ",disposeQueue.length)
     oldInfo = newInfo
     beginTime = new Date()
 }
 
 function disposeData(data) {
-    delete disposeQueue[data.uuid] // 先清除，不然无法回收了
-    data.element.dispose && data.element.dispose()
-    data.element = null
+    if (!data.uuid)
+        return
+    delete disposeQueue[data.uuid]
+    var el = data.element
+    if (el) {
+        el.dispose && el.dispose()
+        data.element = null
+    }
     for (var key in data) {
         data[key] = null
     }
@@ -4374,7 +4383,7 @@ avalon.directive("repeat", {
                 binding.valueName = keyvalue
             }
         }
-     
+
         var vnode = binding.element
         disposeVirtual(vnode.children)
         var component = new VComponent("ms-repeat")
@@ -4392,8 +4401,8 @@ avalon.directive("repeat", {
         } else {
             binding.rendered = noop
         }
-        
-      
+
+
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement
             var arr = binding.siblings
@@ -4410,7 +4419,7 @@ avalon.directive("repeat", {
             pushArray(vnode.children, [component])
             component.template = vnode.template.trim() + "<!--" + signature + "-->"
         }
-        
+
         binding.element = component //偷龙转风
         //计算上级循环的$outer
         //外层vmodel不存在$outer对象时, $outer为一个空对象
@@ -4433,6 +4442,7 @@ avalon.directive("repeat", {
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         //处理valueName, keyName, last
         var repeatArray = Array.isArray(value)
+
         if (repeatArray) {
             last = value.length - 1
             if (!binding.valueName) {
@@ -4466,10 +4476,11 @@ avalon.directive("repeat", {
             avalon.Array.ensure(names, binding.keyName)
             binding.$outer.names = names.join(",")
         }
-
-
+        //用于存放新组件的位置
+        var pos = []
         //键值如果为数字,表示它将移动到哪里,-1表示它将移除,-2表示它将创建
         //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
+        var subComponents = {}
         for (var i = 0; i <= last; i++) {
             if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
                 var item = value[i]
@@ -4501,7 +4512,9 @@ avalon.directive("repeat", {
                     /* jshint ignore:end */
                 }
                 command[i] = -2
+                pos.push(i)
             }
+            subComponents[i] = component
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -4519,16 +4532,17 @@ avalon.directive("repeat", {
         for (i in cache) {
             if (cache[i]) {
                 var ii = cache[i].vmodel.$index
-                if (command[ii] !== -2) {
-                    //如果这个位置被新虚拟节点占领了，那么我们就不用移除其对应的真实节点
-                    //但对应的旧虚拟节点还是要销毁的
-                    command[ii] = -1
-                }
+                var num = pos.shift()
+                command[ii] = typeof num === "number" ? num : -1
+                //如果这个位置被新虚拟节点占领了，那么我们就不用移除其对应的真实节点
+                //但对应的旧虚拟节点还是要销毁的
                 cache[i].dispose()
                 delete cache[i]
             }
         }
         var vChildren = vnode.children
+
+        vnode.subComponents = subComponents
         vChildren.length = 0
         pushArray(vChildren, children)
         vChildren.unshift(new VComment(vnode.signature + ":start"))
@@ -4540,6 +4554,7 @@ avalon.directive("repeat", {
             binding.oldValue = newCache
         }
         vnode.repeatCommand = command
+
         addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
@@ -4551,6 +4566,7 @@ avalon.directive("repeat", {
                     nodeValue !== groupText + ":start"
                     ) {
                 updateSignature(node, nodeValue, groupText)
+
             }
 
             if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
@@ -4566,7 +4582,7 @@ avalon.directive("repeat", {
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
-                // console.log("最小化更新 ",parent.nodeName)
+
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -4583,21 +4599,19 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-
                 //根据repeatCommand指令进行删增重排
+                //console.log(vnode.repeatCommand)
                 var children = []
                 for (var from in vnode.repeatCommand) {
                     var to = vnode.repeatCommand[from]
                     if (to >= 0) {
                         children[to] = froms[from]
                     } else if (to < -1) {//-2 
-                        if (froms[from]) { //循环利用要被销毁的真实节点
-                            children[from] = froms[from]
-                        } else {//如果真实节点数量不足
-                            children[from] = vnode.children[from].toDOM()
-                        }
+                        //数量不足
+                        children[from] = vnode.subComponents[from].toDOM()
                     }
                 }
+
                 fragment = document.createDocumentFragment()
                 for (var i = 0, el; el = children[i++]; ) {
                     fragment.appendChild(el)
