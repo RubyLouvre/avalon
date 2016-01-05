@@ -5777,9 +5777,109 @@ var filters = avalon.filters = {
     currency: function (amount, symbol, fractionSize) {
         return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
+    orderBy: function (array, criteria, reverse) {
+        var type = avalon.type(array)
+        if (type !== "array" || type !== "object")
+            throw "orderBy只能处理对象或数组"
+        var order = (reverse && reverse < 0) ? -1 : 1
+
+        if (typeof criteria === "string") {
+            var key = criteria
+            criteria = function (a) {
+                return a && a[key]
+            }
+        }
+        array = convertArray(array)
+        array.forEach(function (el) {
+            el.order = criteria(el.value, el.key)
+        })
+        array.sort(function (left, right) {
+            var a = left.order
+            var b = right.order
+            return a === b ? 0 : a > b ? order : -order
+        })
+        var isArray = type === "array"
+        var target = isArray ? [] : {}
+        for (var i = 0, el; el = array[i++]; ) {
+            if (isArray) {
+                target.push(el.value)
+            } else {
+                target[el.key] = el.value
+            }
+        }
+        return target
+    },
+    filterBy: function (array, search) {
+        var type = avalon.type(array)
+        if (type !== "array" || type !== "object")
+            throw "orderBy只能处理对象或数组"
+        var args = avalon.slice(arguments, 2)
+        if (typeof search === "function") {
+            var criteria = search
+        } else if (typeof search === "string") {
+            args.unshift(new RegExp(escapeRegExp(search), "i"))
+            criteria = containKey
+        } else {
+            throw search + "必须是字任串或函数"
+        }
+        var isArray = type === "array"
+        array = convertArray(array)
+        array.forEach(function (el) {
+            el.take = !!criteria.apply(el, [el.value].concat(args))
+        })
+        var target = isArray ? [] : {}
+        for (var i = 0, el; el = array[i++]; ) {
+            if (el.take) {
+                if (isArray) {
+                    target.push(el.value)
+                } else {
+                    target[el.key] = el.value
+                }
+            }
+        }
+        return target
+    },
+    limitBy: function (input, limit, begin) {
+        if (Array.isArray(input)) {
+            return avalon.slice(input, limit, begin)
+        }
+        if (typeof input === "number" && !isNaN(input)) {
+            input += ""
+        }
+        if (typeof input === "string") {
+            return String.prototype.slice.call(input, limit, begin)
+        }
+        return input
+    },
     number: numberFormat
 }
 
+function containKey(a, reg) {
+    if (avalon.isPlainObject(a)) {
+        for (var k in a) {
+            if (reg.test(a[k]))
+                return true
+        }
+    } else if (Array.isArray(a)) {
+        return a.some(function (b) {
+            return reg.test(b)
+        })
+    } else if (a !== null) {
+        return reg.test(a)
+    }
+    return false
+}
+function convertArray(array, criteria) {
+    var ret = [], i = 0
+    avalon.each(array, function (key, value) {
+        ret[i++] = {
+            value: value,
+            key: key,
+            criteria: criteria(value, key)
+        }
+    })
+    return ret
+}
 /*
  'yyyy': 4 digit representation of year (e.g. AD 1 => 0001, AD 2010 => 2010)
  'yy': 2 digit representation of year, padded (00-99). (e.g. AD 2001 => 01, AD 2010 => 10)
