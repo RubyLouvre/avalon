@@ -133,6 +133,7 @@ var filters = avalon.filters = {
         return target
     },
     filterBy: function (array, search) {
+      
         var type = avalon.type(array)
         if (type !== "array" || type !== "object")
             throw "filterBy只能处理对象或数组"
@@ -143,7 +144,7 @@ var filters = avalon.filters = {
             args.unshift(new RegExp(escapeRegExp(search), "i"))
             criteria = containKey
         } else {
-            throw search + "必须是字任串或函数"
+            throw search + "必须是字符串或函数"
         }
         var isArray = type === "array"
         array = convertArray(array)
@@ -192,13 +193,12 @@ function containKey(a, reg) {
     }
     return false
 }
-function convertArray(array, criteria) {
+function convertArray(array) {
     var ret = [], i = 0
     avalon.each(array, function (key, value) {
         ret[i++] = {
             value: value,
-            key: key,
-            criteria: criteria(value, key)
+            key: key
         }
     })
     return ret

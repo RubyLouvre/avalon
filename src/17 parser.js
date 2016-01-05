@@ -29,15 +29,15 @@ var evaluatorPool = new Cache(512)
 
 
 avalon.mix({
-    __read__: function () {
-        var fn = avalon.filter[name]
+    __read__: function (name) {
+        var fn = avalon.filters[name]
         if (fn) {
             return fn.get ? fn.get : fn
         }
         return K
     },
-    __write__: function () {
-        var fn = avalon.filter[name]
+    __write__: function (name) {
+        var fn = avalon.filters[name]
         return fn && fn.set || K
     }
 })

@@ -66,7 +66,8 @@ avalon.directive("repeat", {
             pushArray(vnode.children, [component])
             component.template = vnode.template.trim() + "<!--" + signature + "-->"
         }
-
+//        component.item = createVirtual(component.template, true)
+//        console.log(component.item)
         binding.element = component //偷龙转风
         //计算上级循环的$outer
         //外层vmodel不存在$outer对象时, $outer为一个空对象
@@ -206,6 +207,7 @@ avalon.directive("repeat", {
         addHooks(this, binding)
     },
     update: function (node, vnode, parent) {
+        console.log(node, vnode.repeatCommand)
         if (!vnode.disposed) {
             var groupText = vnode.signature
             var nodeValue = node.nodeValue
@@ -287,7 +289,22 @@ avalon.directive("repeat", {
         }
     }
 })
-
+function cloneNodes(array) {
+    var ret = []
+    for (var i = 0, el; el = array[i]; i++) {
+        var type = getVType(el)
+        if (type === 1) {
+            var clone = new VElement(el.type, avalon.mix({}, el.props), cloneNodes(el.children))
+            clone.template = el.template
+            ret[i] = clone
+        } else if (type === 3) {
+            ret[i] = new VText(el.nodeValue)
+        } else if (type === 8) {
+            ret[i] = new VComment(el.nodeValue)
+        }
+    }
+    return ret
+}
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]
     do {

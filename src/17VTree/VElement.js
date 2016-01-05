@@ -1,8 +1,35 @@
-function VElement(type, props, children) {
+function VElement(type, props, template) {
     this.type = type
-    this.props = props || {}
-    this.children = children || []
-    this.template = "" //这里相当于innerHTML,保存最原始的模板
+    this.template = ""
+    this.children = []
+    this.props = {}
+
+    if (typeof props === "string") {
+        parseVProps(this, props)
+    } else if (props && typeof props === "object") {
+        this.props = props
+    }
+    if (rmsskip.test(props)) {
+        this.skipContent = true
+    } else if (typeof template === "string") {
+        if (this.type === "option" || this.type === "xmp") {
+            this.children.push(new VText(template))
+        } else if (rnocontent.test(this.type)) {
+            if (this.type === "noscript") {
+                template = escape(innerHTML)
+            }
+            this.skipContent = true
+        } else {//script, noscript, template, textarea
+            pushArray(this.children, createVirtual(template))
+        }
+    } else if (Array.isArray(template)) {
+        pushArray(this.children, template)
+    }
+    
+    if (typeof template === "string") {
+        this.template = template
+    }
+    
 }
 VElement.prototype = {
     constructor: VElement,
@@ -18,17 +45,17 @@ VElement.prototype = {
         if (this.skipContent) {
             switch (this.type) {
                 case "script":
-                    this.text = this.__content
+                    this.text = this.template
                     break;
                 case "style":
                 case "template":
-                    this.innerHTML = this.__content
+                    this.innerHTML = this.template
                     break
                 case "noscript":
-                    this.textContent = this.__content
+                    this.textContent = this.template
                     break
                 default:
-                    var a = avalon.parseHTML(this.__content)
+                    var a = avalon.parseHTML(this.template)
                     dom.appendChild(a)
                     break
             }
@@ -44,9 +71,6 @@ VElement.prototype = {
         return dom
     },
     toHTML: function () {
-        if (this.skip) {
-            return this.outerHTML
-        }
         var arr = []
         for (var i in this.props) {
             arr.push(i + "=" + quote(String(this.props[i])))
@@ -58,7 +82,7 @@ VElement.prototype = {
         }
         str += ">"
         if (this.skipContent) {
-            str += this.__content
+            str += this.template
         } else {
             str += this.children.map(function (el) {
                 return el.toHTML()
@@ -87,5 +111,55 @@ function toString(element, skip) {
 
     return str + "</" + element.type + ">"
 }
+//从元素的开标签中一个个分解属性值
+var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+//判定是否有引号开头，IE有些属性没有用引号括起来
+var rquote = /^['"]/
+var ramp = /&amp;/g
+var rmsskip = /\bms\-skip/
+//内部不存在元素节点的元素
+var rnocontent = /textarea|template|script|style/
+
+function parseVProps(node, str) {
+    var props = node.props, change
+
+    str.replace(rattr2, function (a, n, v) {
+        if (v) {
+            v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
+        }
+        var name = n.toLowerCase()
+        var match = n.match(rmsAttr)
+        if (match) {
+            var type = match[1]
+            switch (type) {
+                case "controller":
+                case "important":
+                    change = addData(node, "changeAttrs")
+                    //移除ms-controller, ms-important
+                    //好让[ms-controller]样式生效,处理{{}}问题
+                    change[name] = false
+                    name = "data-" + type
+                    //添加data-controller, data-controller
+                    //方便收集vmodel
+                    change[name] = v
+                    addAttrHook(node)
+                    break
+                case "with":
+                    change = addData(node, "changeAttrs")
+                    change[name] = false
+                    addAttrHook(node)
+                    name = "each"
+                    break
+            }
+        }
+        props[name] = v || ""
+    })
+
+    return props
+}
+
+
+
+
 
 
