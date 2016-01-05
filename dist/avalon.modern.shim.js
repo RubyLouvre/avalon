@@ -5271,7 +5271,7 @@ var filters = avalon.filters = {
     filterBy: function (array, search) {
         var type = avalon.type(array)
         if (type !== "array" || type !== "object")
-            throw "orderBy只能处理对象或数组"
+            throw "filterBy只能处理对象或数组"
         var args = avalon.slice(arguments, 2)
         if (typeof search === "function") {
             var criteria = search
