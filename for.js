@@ -227,7 +227,6 @@ avalon.directive("repeat", {
 
             if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
-                //console.log("全新创建")
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
@@ -239,7 +238,7 @@ avalon.directive("repeat", {
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
-                //console.log("最少化更新")
+
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -256,7 +255,7 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-                var showLog = false
+                var showLog = true
                 showLog && avalon.log("一共收集了", index, "repeat-item的节点")
                 //根据repeatCommand指令进行删增重排
                 var children = []
@@ -265,25 +264,9 @@ avalon.directive("repeat", {
                     if (typeof num === "number") {
                         showLog && avalon.log("将在", to, "位置使用原", num, "的节点")
                         children[to] = items[num]
-                        delete items[num]
                     } else {
-
-                        var find = false
-                        breakInner:
-                                for (var j in items) {
-                            if (items[j]) {
-                                find = items[j]
-                                delete items[j]
-                                break breakInner
-                            }
-                        }
-                        if (find) {
-                            showLog && avalon.log("将在", to, "位置更新节点")
-                            children[to] = find
-                        } else {
-                            showLog && avalon.log("将在", to, "位置创建新节点")
-                            children[to] = num.toDOM()
-                        }
+                        showLog && avalon.log("将在", to, "位置创建新节点")
+                        children[to] = num.toDOM()
                     }
                 }
 

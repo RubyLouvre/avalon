@@ -1649,10 +1649,8 @@ function $emit(topVm, curVm, path, a, b, i) {
         }
     }
 
-    if (new Date() - beginTime > 444) {
-      //  setTimeout(function () {
-            rejectDisposeQueue()
-      //  })
+    if (new Date() - beginTime > 500) {
+        rejectDisposeQueue()
     }
 }
 
@@ -1923,47 +1921,27 @@ function injectDependency(list, binding) {
 
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
-var oldInfo = {}
 
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var uuid = getUid(data)
     data.list = list
+
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = "__"
+        data.i = ~~data.i
         disposeQueue.push(data)
     }
 }
 
+
+var lastGCIndex = 0
 function rejectDisposeQueue(data) {
-    var i = disposeQueue.length
-    var n = i
-    var allTypes = []
-    var iffishTypes = {}
-    var newInfo = {}
-    //对页面上所有绑定对象进行分门别类, 只检测个数发生变化的类型
-    while (data = disposeQueue[--i]) {
-        var type = data.type
-        if (newInfo[type]) {
-            newInfo[type]++
-        } else {
-            newInfo[type] = 1
-            allTypes.push(type)
-        }
-    }
-    var diff = false
-    for (var j = 0, jn = allTypes.length; j < jn; j++) {
-        type = allTypes[j]
-        if (oldInfo[type] !== newInfo[type]) {
-            iffishTypes[type] = 1
-            diff = true
-        }
-    }
-    i = n
+    var i = lastGCIndex || disposeQueue.length
     var threshold = 0
-    if (diff) {
-        while (data = disposeQueue[--i]) {
+    while (data = disposeQueue[--i]) {
+        if (data.i < 7) {
             if (data.element === null) {
                 disposeQueue.splice(i, 1)
                 if (data.list) {
@@ -1972,19 +1950,29 @@ function rejectDisposeQueue(data) {
                 }
                 continue
             }
-            if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
+            if (data.shouldDispose()) { //如果它的虚拟DOM不在VTree上或其属性不在VM上
                 disposeQueue.splice(i, 1)
                 avalon.Array.remove(data.list, data)
                 disposeData(data)
-                if (threshold++ > 256) {
+                //avalon会在每次全量更新时,取其时间,假若距离上次有半秒
+                //那么会发起一次GC,并且只检测500个绑定
+                //而一个正常的页面不会超过2000个绑定(500即取其4分之一)
+                //用户频繁操作页面,那么2,3秒内就把所有绑定检测一遍,将无效的绑定移除
+                if (threshold++ > 500) {
+                    lastGCIndex = i
                     break
                 }
+                continue
             }
+            data.i++
+            if (data.i === 7) {
+                data.i = 14
+            }
+        } else {
+            data.i--
         }
-
     }
-    console.log("disposeQueue.length ",disposeQueue.length)
-    oldInfo = newInfo
+    avalon.log("disposeQueue.length ", disposeQueue.length)
     beginTime = new Date()
 }
 
@@ -5170,6 +5158,7 @@ avalon.directive("repeat", {
 
             if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
+                //console.log("全新创建")
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
@@ -5181,7 +5170,7 @@ avalon.directive("repeat", {
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
-
+                //console.log("最少化更新")
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -5198,7 +5187,7 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-                var showLog = true
+                var showLog = false
                 showLog && avalon.log("一共收集了", index, "repeat-item的节点")
                 //根据repeatCommand指令进行删增重排
                 var children = []
@@ -5207,9 +5196,25 @@ avalon.directive("repeat", {
                     if (typeof num === "number") {
                         showLog && avalon.log("将在", to, "位置使用原", num, "的节点")
                         children[to] = items[num]
+                        delete items[num]
                     } else {
-                        showLog && avalon.log("将在", to, "位置创建新节点")
-                        children[to] = num.toDOM()
+
+                        var find = false
+                        breakInner:
+                                for (var j in items) {
+                            if (items[j]) {
+                                find = items[j]
+                                delete items[j]
+                                break breakInner
+                            }
+                        }
+                        if (find) {
+                            showLog && avalon.log("将在", to, "位置更新节点")
+                            children[to] = find
+                        } else {
+                            showLog && avalon.log("将在", to, "位置创建新节点")
+                            children[to] = num.toDOM()
+                        }
                     }
                 }
 

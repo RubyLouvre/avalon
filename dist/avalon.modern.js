@@ -853,301 +853,6 @@ kernel.paths = {}
 kernel.shim = {}
 kernel.maxRepeatSize = 100
 
-//avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个ViewModel(VM)
-avalon.vmodels = {} //所有vmodel都储存在这里
-var vtree = {}
-var dtree = {}
-
-avalon.define = function (definition) {
-    var $id = definition.$id
-    if (!$id) {
-        log("warning: vm必须指定$id")
-    }
-    var vmodel = observeObject(definition, {
-        timestamp: new Date() - 0
-    }, {
-        top: true
-    })
-
-    avalon.vmodels[$id] = vmodel
-    vmodel.$id = $id
-
-    return vmodel
-}
-
-
-//observeArray及observeObject的包装函数
-function observe(definition, old, heirloom, options) {
-    if (Array.isArray(definition)) {
-        return observeArray(definition, old, heirloom, options)
-    } else if (avalon.isPlainObject(definition)) {
-        var vm = observeObject(definition, heirloom, options)
-        if (Object(old) === old) {
-            vm = reuseFactory(vm, old, heirloom)
-        }
-        for (var i in definition) {
-            vm[i] = definition[i]
-        }
-        return vm
-    } else {
-        return definition
-    }
-}
-
-
-function Component() {
-}
-
-/*
- 将一个对象转换为一个VM
- 它拥有如下私有属性
- $id: vm.id
- $events: 放置$watch回调与绑定对象
- $watch: 增强版$watch
- $fire: 触发$watch回调
- $active:boolean,false时防止依赖收集
- $model:返回一个纯净的JS对象
- =============================
- $skipArray:用于指定不可监听的属性,但VM生成是没有此属性的
- 
- $$skipArray与$skipArray都不能监控,
- 不同点是
- $$skipArray被hasOwnProperty后返回false
- $skipArray被hasOwnProperty后返回true
- */
-var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$active")
-
-function observeObject(definition, heirloom, options) {
-    options = options || {}
-    heirloom = heirloom || {}
-
-    var $skipArray = {}//收集所有不可监听属性
-    if (definition.$skipArray) {
-        $skipArray = oneObject(definition.$skipArray)
-        delete definition.$skipArray
-    }
-    var $computed = getComputed(definition) // 收集所有计算属性
-    var $pathname = options.pathname || ""
-    var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
-    var $accessors = {} //用于储放所有访问器属性的定义
-    var keys = {}, key, path
-
-    for (key in definition) {
-        if ($$skipArray[key])
-            continue
-        var val = keys[key] = definition[key]
-        if (!isSkip(key, val, $skipArray)) {
-            path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path, heirloom)
-        }
-    }
-
-    for (key in $computed) {
-        keys[key] = definition[key]
-        path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
-    }
-
-    $accessors.$model = $modelDescriptor
-
-    Object.defineProperties($vmodel, $accessors)
-
-    for (key in keys) {
-        //对普通监控属性或访问器属性进行赋值 
-        if (!(key in $computed)) {
-            $vmodel[key] = keys[key]
-        }
-        //删除系统属性
-        if (key in $skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
-    }
-
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-
-    hideProperty($vmodel, "$id", "anonymous")
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
-    //直接用Object.getOwnPropertyDescriptor获取它们
-    if (options.top === true) {
-        makeFire($vmodel, heirloom)
-    }
-
-    for (key in $computed) {
-        val = $vmodel[key]
-    }
-
-    hideProperty($vmodel, "$active", true)
-    return $vmodel
-}
-
-
-function isComputed(val) {//speed up!
-    if (val && typeof val === "object") {
-        for (var i in val) {
-            if (i !== "get" && i !== "set") {
-                return false
-            }
-        }
-        return typeof val.get === "function"
-    }
-}
-
-function getComputed(obj) {
-    if (obj.$computed) {
-        delete obj.$computed
-        return obj.$computed
-    }
-    var $computed = {}
-    for (var i in obj) {
-        if (isComputed(obj[i])) {
-            $computed[i] = obj[i]
-            delete obj[i]
-        }
-    }
-    return $computed
-}
-
-function makeComputed(pathname, heirloom, key, value) {
-    var old = NaN, _this = {}
-    return {
-        get: function () {
-            if (!this.configurable) {
-                _this = this
-            }
-            return old = value.get.call(_this)
-        },
-        set: function (x) {
-            if (typeof value.set === "function") {
-                if (!this.configurable) {
-                    _this = this
-                }
-                var older = old
-                value.set.call(_this, x)
-                var newer = _this[key]
-                if (_this.$active && (newer !== older)) {
-                    $emit(heirloom.vm, _this, pathname, newer, older)
-                    batchUpdateEntity(heirloom.vm)
-                }
-            }
-        },
-        enumerable: true,
-        configurable: true
-    }
-}
-
-function isSkip(key, value, skipArray) {
-    return key.charAt(0) === "$" ||
-            skipArray[key] ||
-            (typeof value === "function") ||
-            (value && value.nodeName && value.nodeType > 0)
-}
-
-function makeObservable(pathname, heirloom) {
-    var old = NaN, _this = {}
-    return {
-        get: function () {
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
-            if (_this.$active) {
-                // collectDependency(pathname, heirloom)
-            }
-            return old
-        },
-        set: function (val) {
-            if (old === val)
-                return
-            if (val && typeof val === "object") {
-                val = observe(val, old, heirloom, {
-                    pathname: pathname
-                })
-            }
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
-            var older = old
-            old = val
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, older)
-                batchUpdateEntity(heirloom.vm)
-            }
-
-        },
-        enumerable: true,
-        configurable: true
-    }
-}
-
-function makeFire($vmodel, heirloom) {
-    hideProperty($vmodel, "$events", {})
-    hideProperty($vmodel, "$watch", $watch)
-    hideProperty($vmodel, "$fire", function (expr, a, b) {
-        if (expr.indexOf("all!") === 0) {
-            var p = expr.slice(4)
-            for (var i in avalon.vmodels) {
-                var v = avalon.vmodels[i]
-                v.$fire && v.$fire(p, a, b)
-            }
-        } else {
-            if (heirloom.vm) {
-                $emit(heirloom.vm, $vmodel, expr, a, b)
-            }
-        }
-    })
-    heirloom.vm = heirloom.vm || $vmodel
-}
-
-
-function toJson(val) {
-    var xtype = avalon.type(val)
-    if (xtype === "array") {
-        var array = []
-        for (var i = 0; i < val.length; i++) {
-            array[i] = toJson(val[i])
-        }
-        return array
-    } else if (xtype === "object") {
-        var obj = {}
-        for (i in val) {
-            if (val.hasOwnProperty(i)) {
-                var value = val[i]
-                obj[i] = value && value.nodeType ? value : toJson(value)
-            }
-        }
-        return obj
-    }
-    return val
-}
-
-var $modelDescriptor = {
-    get: function () {
-        return toJson(this)
-    },
-    set: noop,
-    enumerable: false,
-    configurable: true
-}
-
-
-function hideProperty(host, name, value) {
-    Object.defineProperty(host, name, {
-        value: value,
-        writable: true,
-        enumerable: false,
-        configurable: true
-    })
-}
-
-
-//监听对象属性值的变化(注意,数组元素不是数组的属性),通过对劫持当前对象的访问器实现
-//监听对象或数组的结构变化, 对对象的键值对进行增删重排, 或对数组的进行增删重排,都属于这范畴
-//   通过比较前后代理VM顺序实现
-
 
 //用于合并两个VM为一个VM
 
@@ -1285,10 +990,8 @@ function $emit(topVm, curVm, path, a, b, i) {
         }
     }
 
-    if (new Date() - beginTime > 444) {
-      //  setTimeout(function () {
-            rejectDisposeQueue()
-      //  })
+    if (new Date() - beginTime > 500) {
+        rejectDisposeQueue()
     }
 }
 
@@ -1559,47 +1262,27 @@ function injectDependency(list, binding) {
 
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
-var oldInfo = {}
 
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
     var uuid = getUid(data)
     data.list = list
+
     if (!disposeQueue[uuid]) {
         disposeQueue[uuid] = "__"
+        data.i = ~~data.i
         disposeQueue.push(data)
     }
 }
 
+
+var lastGCIndex = 0
 function rejectDisposeQueue(data) {
-    var i = disposeQueue.length
-    var n = i
-    var allTypes = []
-    var iffishTypes = {}
-    var newInfo = {}
-    //对页面上所有绑定对象进行分门别类, 只检测个数发生变化的类型
-    while (data = disposeQueue[--i]) {
-        var type = data.type
-        if (newInfo[type]) {
-            newInfo[type]++
-        } else {
-            newInfo[type] = 1
-            allTypes.push(type)
-        }
-    }
-    var diff = false
-    for (var j = 0, jn = allTypes.length; j < jn; j++) {
-        type = allTypes[j]
-        if (oldInfo[type] !== newInfo[type]) {
-            iffishTypes[type] = 1
-            diff = true
-        }
-    }
-    i = n
+    var i = lastGCIndex || disposeQueue.length
     var threshold = 0
-    if (diff) {
-        while (data = disposeQueue[--i]) {
+    while (data = disposeQueue[--i]) {
+        if (data.i < 7) {
             if (data.element === null) {
                 disposeQueue.splice(i, 1)
                 if (data.list) {
@@ -1608,19 +1291,29 @@ function rejectDisposeQueue(data) {
                 }
                 continue
             }
-            if (iffishTypes[data.type] && data.shouldDispose()) { //如果它没有在DOM树
+            if (data.shouldDispose()) { //如果它的虚拟DOM不在VTree上或其属性不在VM上
                 disposeQueue.splice(i, 1)
                 avalon.Array.remove(data.list, data)
                 disposeData(data)
-                if (threshold++ > 256) {
+                //avalon会在每次全量更新时,取其时间,假若距离上次有半秒
+                //那么会发起一次GC,并且只检测500个绑定
+                //而一个正常的页面不会超过2000个绑定(500即取其4分之一)
+                //用户频繁操作页面,那么2,3秒内就把所有绑定检测一遍,将无效的绑定移除
+                if (threshold++ > 500) {
+                    lastGCIndex = i
                     break
                 }
+                continue
             }
+            data.i++
+            if (data.i === 7) {
+                data.i = 14
+            }
+        } else {
+            data.i--
         }
-
     }
-    console.log("disposeQueue.length ",disposeQueue.length)
-    oldInfo = newInfo
+    avalon.log("disposeQueue.length ", disposeQueue.length)
     beginTime = new Date()
 }
 
@@ -1718,89 +1411,6 @@ avalon.clearHTML = function(node) {
     return node
 }
 
-var bools = ["autofocus,autoplay,async,allowTransparency,checked,controls",
-    "declare,disabled,defer,defaultChecked,defaultSelected",
-    "contentEditable,isMap,loop,multiple,noHref,noResize,noShade",
-    "open,readOnly,selected"
-].join(",")
-
-var boolMap = {}
-bools.replace(rword, function (name) {
-    boolMap[name.toLowerCase()] = name
-})
-
-var propMap = {//不规则的属性名映射
-    "accept-charset": "acceptCharset",
-    "char": "ch",
-    "charoff": "chOff",
-    "class": "className",
-    "for": "htmlFor",
-    "http-equiv": "httpEquiv"
-}
-
-var anomaly = ["accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan",
-    "dateTime,defaultValue,frameBorder,longDesc,maxLength,marginWidth,marginHeight",
-    "rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"
-].join(",")
-anomaly.replace(rword, function (name) {
-    propMap[name.toLowerCase()] = name
-})
-
-function attrUpdate(node, vnode) {
-    var attrs = vnode.changeAttrs
-    if (!node || node.nodeType !== 1 || vnode.disposed) {
-        return
-    }
-    if (attrs) {
-        for (var attrName in attrs) {
-            var val = attrs[attrName]
-            // switch
-            if (attrName === "href" || attrName === "src") {
-                if (!root.hasAttribute) {
-                    val = String(val).replace(/&amp;/g, "&") //处理IE67自动转义的问题
-                }
-                node[attrName] = val
-                if (window.chrome && node.tagName === "EMBED") {
-                    var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-                    var comment = document.createComment("ms-src")
-                    parent.replaceChild(comment, node)
-                    parent.replaceChild(node, comment)
-                }
-            } else if (attrName.indexOf("data-") === 0) {
-                node.setAttribute(attrName, val)
-
-            } else {
-                var bool = boolMap[attrName]
-                if (typeof node[bool] === "boolean") {
-                    node[bool] = !!val
-                    //布尔属性必须使用el.xxx = true|false方式设值
-                    //如果为false, IE全系列下相当于setAttribute(xxx,''),
-                    //会影响到样式,需要进一步处理
-                }
-                if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
-                    attrName = propMap[attrName]
-                }
-                if (val === false) {
-                    node.removeAttribute(attrName)
-                    continue
-                }
-                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
-                //HTML的固有属性必须node.xxx = yyy
-                var isInnate = rsvg.test(node) ? false :
-                        (DOC.namespaces && isVML(node)) ? true :
-                        attrName in node.cloneNode(false)
-                if (isInnate) {
-                    node[attrName] = val + ""
-                } else {
-                    node.setAttribute(attrName, val)
-                }
-
-            }
-
-        }
-        delete vnode.changeAttrs
-    }
-}
 
 //=============================css相关=======================
 var cssHooks = avalon.cssHooks = {}
@@ -4673,6 +4283,7 @@ avalon.directive("repeat", {
 
             if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
                 var dom = vnode.toDOM()
+                //console.log("全新创建")
                 var keepChild = avalon.slice(dom.childNodes)
                 if (groupText.indexOf("each") === 0) {
                     avalon.clearHTML(parent)
@@ -4684,7 +4295,7 @@ avalon.directive("repeat", {
                 updateEntity(keepChild, getRepeatChild(vnode.children), parent)
                 return false
             } else {
-
+                //console.log("最少化更新")
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -4701,7 +4312,7 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-                var showLog = true
+                var showLog = false
                 showLog && avalon.log("一共收集了", index, "repeat-item的节点")
                 //根据repeatCommand指令进行删增重排
                 var children = []
@@ -4710,9 +4321,25 @@ avalon.directive("repeat", {
                     if (typeof num === "number") {
                         showLog && avalon.log("将在", to, "位置使用原", num, "的节点")
                         children[to] = items[num]
+                        delete items[num]
                     } else {
-                        showLog && avalon.log("将在", to, "位置创建新节点")
-                        children[to] = num.toDOM()
+
+                        var find = false
+                        breakInner:
+                                for (var j in items) {
+                            if (items[j]) {
+                                find = items[j]
+                                delete items[j]
+                                break breakInner
+                            }
+                        }
+                        if (find) {
+                            showLog && avalon.log("将在", to, "位置更新节点")
+                            children[to] = find
+                        } else {
+                            showLog && avalon.log("将在", to, "位置创建新节点")
+                            children[to] = num.toDOM()
+                        }
                     }
                 }
 
