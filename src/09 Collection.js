@@ -84,7 +84,7 @@ function containsArray(vm, array) {
 }
 
 function observeItem(item, a, b) {
-    if (item && typeof item === "object") {
+    if (avalon.isObject(item)) {
         return observe(item, a, b)
     } else {
         return item

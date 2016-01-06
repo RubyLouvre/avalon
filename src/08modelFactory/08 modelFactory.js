@@ -42,7 +42,7 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            var vm = reuseVmodel(old, definition, heirloom)
+            var vm = reuseFactory(old, definition, heirloom)
             for (var i in definition) {
                 vm[i] = definition[i]
             }
@@ -281,7 +281,7 @@ function makeObservable(pathname, heirloom) {
 function SubComponent() {
 }
 //循环利用before的访问器属性,创建新的VM
-function reuseVmodel(before, after, heirloom, pathname) {
+function reuseFactory(before, after, heirloom, pathname) {
     var resue = before.$accessors || {}
     var $accessors = {}
     var keys = {}, key, path
@@ -319,7 +319,7 @@ function reuseVmodel(before, after, heirloom, pathname) {
     return $vmodel
 }
 
-function createProxy(before, after, heirloom) {
+function proxyFactory(before, after, heirloom) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -366,7 +366,7 @@ function createProxy(before, after, heirloom) {
 }
 
 avalon.test.makeObservable = makeObservable
-avalon.test.createProxy = createProxy
+avalon.test.proxyFactory = proxyFactory
 
 
 function toJson(val) {

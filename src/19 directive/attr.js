@@ -9,10 +9,10 @@ var attrDir = avalon.directive("attr", {
     change: function (val, binding) {
         var vnode = binding.element
         if (vnode) {
-            var change = addData(vnode, "changeAttrs")
+            var data = addData(vnode, "changeAttrs")
             var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
-            change[name] = toRemove ? false : val
+            data[name] = toRemove ? false : val
             addHooks(this, binding)
         }
     },

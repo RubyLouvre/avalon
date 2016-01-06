@@ -60,6 +60,10 @@ avalon = function (el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)
 }
 
+avalon.isObject = function(obj){
+   return obj && typeof obj === "object"
+}
+
 /*视浏览器情况采用最快的异步回调*/
 avalon.nextTick = new function () {// jshint ignore:line
     var tickImmediate = window.setImmediate

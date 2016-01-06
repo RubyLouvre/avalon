@@ -5,9 +5,9 @@ avalon.directive("data", {
         var vnode = binding.element
         if (!vnode || vnode.disposed)
             return
-        var change = addData(vnode, "changeData")
-        val = (val && typeof val === "object") ? val : String(val)
-        change["data-" + binding.param] = val
+        var data = addData(vnode, "changeData")
+        val = avalon.isObject(val) ? val : String(val)
+        data["data-" + binding.param] = val
         addHooks(this, binding)
     },
     update: function (node, vnode) {

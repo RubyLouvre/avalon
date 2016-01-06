@@ -28,7 +28,7 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         var vm = observeObject(definition, heirloom, options)
         if (Object(old) === old) {
-            vm = createProxy(vm, old, heirloom)
+            vm = reuseFactory(vm, old, heirloom)
         }
         for (var i in definition) {
             vm[i] = definition[i]
@@ -250,7 +250,7 @@ function makeFire($vmodel, heirloom) {
 function SubComponent() {
 }
 
-function reuseVmodel(before, after, heirloom, pathname) {
+function reuseFactory(before, after, heirloom, pathname) {
     var $accessors = {}
     var keys = {}, key, path
     for (key in after) {
@@ -289,7 +289,7 @@ function reuseVmodel(before, after, heirloom, pathname) {
 }
 
 
-function createProxy(before, after, heirloom) {
+function proxyFactory(before, after, heirloom) {
     var $accessors = {}
     var keys = {}
     //收集所有键值对及访问器属性
@@ -332,7 +332,6 @@ function createProxy(before, after, heirloom) {
     return $vmodel
 }
 
-avalon.createProxy = createProxy
 
 function toJson(val) {
     var xtype = avalon.type(val)

@@ -12,7 +12,7 @@ function scanTag(elem, vmodel, siblings) {
         if (vm) {
             vtree[v] = elem
             if (vmodel) {
-                vm = avalon.createProxy(vmodel, vm)
+                vm = proxyFactory(vmodel, vm)
             }
             vmodel = vm
         }
@@ -26,7 +26,7 @@ function scanTag(elem, vmodel, siblings) {
     } else {
         scanAttrs(elem, vmodel, siblings)
     }
-    
+
     return elem
 }
 

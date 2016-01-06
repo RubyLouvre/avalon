@@ -7,11 +7,14 @@ avalon.directive("if", {
     },
     init: function (binding) {
         var vnode = binding.element
-        var templale = toString(vnode,rremoveIf) //防止死循环
-        var component = new VComponent("ms-if")
-        component.template = templale
-        component.props.ok = createVirtual(templale, true)[0]
-        component.props.ng = new VComment("ms-if")
+        
+        var templale = shimTemplate(vnode, rremoveIf) //防止死循环
+        
+        var component = new VComponent("ms-if", {
+            ok: createVirtual(templale, true)[0],
+            ng: new VComment("ms-if")
+        }, templale)
+       
         var arr = binding.siblings
         for (var i = 0, el; el = arr[i]; i++) {
             if (el === vnode) {
@@ -54,8 +57,3 @@ avalon.directive("if", {
 })
 
 
-avalon.components["ms-if"] = {
-    toDOM: function (self) {
-        return self.children[0].toDOM()
-    }
-}

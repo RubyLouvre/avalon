@@ -33,12 +33,14 @@ avalon.directive("repeat", {
 
         var vnode = binding.element
         disposeVirtual(vnode.children)
-        var component = new VComponent("ms-repeat")
-        var template = toString(vnode, rremoveRepeat) //防止死循环
+
+        var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
+        var component = new VComponent("ms-" + type, {type: type},
+        type === "repeat" ? template : vnode.template.trim())
+
         var top = binding.vmodel, $outer = {}
-        var signature = generateID(type)
-        component.signature = signature
+
         //处理渲染完毕后的回调的函数
         var rendered = getBindingValue(vnode, "data-" + type + "-rendered", top)
         if (typeof rendered === "function") {
@@ -59,15 +61,14 @@ avalon.directive("repeat", {
                     break
                 }
             }
-            component.template = template + "<!--" + signature + "-->"
         } else {
             //each组件会替换掉原VComponent组件的所有孩子
             disposeVirtual(vnode.children)
             pushArray(vnode.children, [component])
-            component.template = vnode.template.trim() + "<!--" + signature + "-->"
         }
 //        component.item = createVirtual(component.template, true)
 //        console.log(component.item)
+
         binding.element = component //偷龙转风
         //计算上级循环的$outer
         //外层vmodel不存在$outer对象时, $outer为一个空对象
@@ -143,11 +144,18 @@ avalon.directive("repeat", {
                 proxy = component.vmodel
                 command[proxy.$index] = i//标识其从什么位置移动什么位置
             } else {//如果不存在就创建 
-                component = new VComponent("repeatItem")
-                component.template = vnode.template
-                component.construct(item, binding, repeatArray)
-                proxy = component.vmodel
+                component = new VComponent("repeat-item", null,
+                        vnode._children.map(function (el) {
+                            return el.clone()
+                        }))
+
+                component.valueName = binding.valueName
+
+                proxy = component.vmodel =
+                        repeatItemFactory(item, binding, repeatArray)
+                
                 proxy.$outer = binding.$outer
+
                 proxy[binding.keyName] = key || i
                 proxy[binding.valueName] = item
                 if (repeatArray) {
@@ -289,22 +297,8 @@ avalon.directive("repeat", {
         }
     }
 })
-function cloneNodes(array) {
-    var ret = []
-    for (var i = 0, el; el = array[i]; i++) {
-        var type = getVType(el)
-        if (type === 1) {
-            var clone = new VElement(el.type, avalon.mix({}, el.props), cloneNodes(el.children))
-            clone.template = el.template
-            ret[i] = clone
-        } else if (type === 3) {
-            ret[i] = new VText(el.nodeValue)
-        } else if (type === 8) {
-            ret[i] = new VComment(el.nodeValue)
-        }
-    }
-    return ret
-}
+
+
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]
     do {
@@ -318,35 +312,19 @@ function updateSignature(elem, value, text) {
     } while (elem = elem.nextSibling)
 }
 
-var repeatItem = avalon.components["repeatItem"] = {
-    construct: function (item, binding, repeatArray) {
-        var top = binding.vmodel
-        if (item && item.$id) {
-            top = createProxy(top, item)
-        }
-        var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
-        this.valueName = binding.valueName
-        var proxy = createRepeatItem(top, keys, repeatArray)
-        this.vmodel = proxy
-        this.children = createVirtual(this.template, true)
-        this._new = true
-        this.dispose = repeatItem.dispose
-        return this
-    },
-    dispose: function () {
-        disposeVirtual([this])
-        var proxy = this.vmodel
-        var item = proxy[this.valueName]
-        proxy && (proxy.$active = false)
-        if (item && item.$id) {
-            item.$active = false
-        }
+
+
+
+
+function repeatItemFactory(item, binding, repeatArray) {
+
+    var before = binding.vmodel
+    if (item && item.$id) {
+        before = proxyFactory(before, item)
     }
-}
 
+    var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
 
-
-function createRepeatItem(before, keys, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
@@ -362,13 +340,13 @@ function createRepeatItem(before, keys, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
 
-    return createProxy(before, after, heirloom)
+    return proxyFactory(before, after, heirloom)
 }
 
 function getRepeatChild(children) {
     var ret = []
     for (var i = 0, el; el = children[i++]; ) {
-        if (el.__type__ === "repeatItem") {
+        if (el.__type__ === "repeat-item") {
             pushArray(ret, el.children)
         } else {
             ret.push(el)
@@ -378,7 +356,6 @@ function getRepeatChild(children) {
 }
 
 avalon.directives.each = avalon.directives.repeat
-avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 
 function compareObject(a, b) {

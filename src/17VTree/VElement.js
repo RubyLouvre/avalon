@@ -4,34 +4,53 @@ function VElement(type, props, template) {
     this.children = []
     this.props = {}
 
-    if (typeof props === "string") {
-        parseVProps(this, props)
-    } else if (props && typeof props === "object") {
+    if (avalon.isObject(props)) {
         this.props = props
     }
-    if (rmsskip.test(props)) {
-        this.skipContent = true
-    } else if (typeof template === "string") {
-        if (this.type === "option" || this.type === "xmp") {
-            this.children.push(new VText(template))
-        } else if (rnocontent.test(this.type)) {
-            if (this.type === "noscript") {
-                template = escape(innerHTML)
-            }
-            this.skipContent = true
-        } else {//script, noscript, template, textarea
-            pushArray(this.children, createVirtual(template))
-        }
-    } else if (Array.isArray(template)) {
+
+    if (Array.isArray(template)) {
         pushArray(this.children, template)
     }
-    
-    if (typeof template === "string") {
-        this.template = template
-    }
-    
+
+    this.init.apply(this, arguments)
+
 }
 VElement.prototype = {
+    init: function (type, props, template) {
+        if (typeof props === "string") {
+            parseVProps(this, props)
+        }
+        
+
+        if (this.props["ms-skip"]) {
+            this.skipContent = true
+        } else if (typeof template === "string") {
+            if (type === "option" || type === "xmp") {
+                this.children.push(new VText(template))
+            } else if (rnocontent.test(type)) {
+                this.skipContent = true
+            } else {//script, noscript, template, textarea
+                pushArray(this.children, createVirtual(template))
+            }
+            this.template = template
+        }
+
+    },
+    clone: function () {
+        var clone = new VElement(this.type,
+                avalon.mix({}, this.props),
+                this.children.map(function (el) {
+                    return el.clone()
+                }))
+        clone.template = this.template
+        if (this.skipContent) {
+            clone.skipContent = this.skipContent
+        }
+        if (this.closeSelf) {
+            clone.closeSelf = this.closeSelf
+        }
+        return clone
+    },
     constructor: VElement,
     toDOM: function () {
         var dom = document.createElement(this.type)
@@ -46,7 +65,8 @@ VElement.prototype = {
             switch (this.type) {
                 case "script":
                     this.text = this.template
-                    break;
+                    break
+                    break
                 case "style":
                 case "template":
                     this.innerHTML = this.template
@@ -59,14 +79,13 @@ VElement.prototype = {
                     dom.appendChild(a)
                     break
             }
-        } else {
+
+        } else if (!this.closeSelf) {
+            
             this.children.forEach(function (c) {
                 dom.appendChild(c.toDOM())
             })
-            if (!this.children.length) {
-                a = avalon.parseHTML(this.template)
-                dom.appendChild(a)
-            }
+
         }
         return dom
     },
@@ -92,25 +111,7 @@ VElement.prototype = {
     }
 }
 
-function toString(element, skip) {
-    var p = []
-    for (var i in element.props) {
-        if (skip && skip.test(i))
-            continue
-        p.push(i + "=" + quote(String(element.props[i])))
-    }
-    p = p.length ? " " + p.join(" ") : ""
 
-    var str = "<" + element.type + p
-    if (element.selfClose) {
-        return str + "/>"
-    }
-    str += ">"
-
-    str += element.template
-
-    return str + "</" + element.type + ">"
-}
 //从元素的开标签中一个个分解属性值
 var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 //判定是否有引号开头，IE有些属性没有用引号括起来
@@ -157,9 +158,3 @@ function parseVProps(node, str) {
 
     return props
 }
-
-
-
-
-
-

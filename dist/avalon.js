@@ -112,6 +112,10 @@ avalon = function (el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)
 }
 
+avalon.isObject = function(obj){
+   return obj && typeof obj === "object"
+}
+
 /*视浏览器情况采用最快的异步回调*/
 avalon.nextTick = new function () {// jshint ignore:line
     var tickImmediate = window.setImmediate
@@ -1118,7 +1122,7 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            var vm = reuseVmodel(old, definition, heirloom)
+            var vm = reuseFactory(old, definition, heirloom)
             for (var i in definition) {
                 vm[i] = definition[i]
             }
@@ -1357,7 +1361,7 @@ function makeObservable(pathname, heirloom) {
 function SubComponent() {
 }
 //循环利用before的访问器属性,创建新的VM
-function reuseVmodel(before, after, heirloom, pathname) {
+function reuseFactory(before, after, heirloom, pathname) {
     var resue = before.$accessors || {}
     var $accessors = {}
     var keys = {}, key, path
@@ -1395,7 +1399,7 @@ function reuseVmodel(before, after, heirloom, pathname) {
     return $vmodel
 }
 
-function createProxy(before, after, heirloom) {
+function proxyFactory(before, after, heirloom) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -1442,7 +1446,7 @@ function createProxy(before, after, heirloom) {
 }
 
 avalon.test.makeObservable = makeObservable
-avalon.test.createProxy = createProxy
+avalon.test.proxyFactory = proxyFactory
 
 
 function toJson(val) {
@@ -1767,7 +1771,7 @@ function containsArray(vm, array) {
 }
 
 function observeItem(item, a, b) {
-    if (item && typeof item === "object") {
+    if (avalon.isObject(item)) {
         return observe(item, a, b)
     } else {
         return item
@@ -3042,10 +3046,13 @@ if (!Object.is) {
 function VComment(text) {
     this.type = "#comment"
     this.nodeValue = text
-    this.skip = true
+    this.skipContent = true
 }
 VComment.prototype = {
     constructor: VComment,
+    clone: function () {
+        return new VComment(this.nodeValue)
+    },
     toDOM: function () {
         return document.createComment(this.nodeValue)
     },
@@ -3055,29 +3062,42 @@ VComment.prototype = {
 }
 function VComponent(type, props, children) {
     this.type = "#component"
-    this.props = props || {}
-    this.children = children || []
+    this.props = {}
+    this.children = []
     this.__type__ = type
+    this.template = ""
+    if (avalon.isObject(props)) {
+        this.props = {}
+    }
+    if (Array.isArray(children)) {
+        pushArray(this.children, children)
+    }
+    var me = avalon.components[type]
+    if (me && me.init && arguments.length) {
+        me.init.apply(this, arguments)
+    }
 }
+
 VComponent.prototype = {
-    construct: function () {
+    clone: function () {
         var me = avalon.components[this.__type__]
-        if (me && me.construct) {
-            return me.construct.apply(this, arguments)
+        if (me && me.clone) {
+            return me.clone.call(this)
         } else {
+            var clone = new VComponent()
+            clone.props = avalon.mix(clone.props, this.props)
+            clone.children = this.children.map(function (el) {
+                return el.clone()
+            })
+            clone.__type__ = this.__type__
+            clone.template = this.template
             return this
-        }
-    },
-    init: function (vm) {
-        var me = avalon.components[this.__type__]
-        if (me && me.init) {
-            me.init(this, vm)
         }
     },
     toDOM: function () {
         var me = avalon.components[this.__type__]
         if (me && me.toDOM) {
-            return me.toDOM(this)
+            return me.toDOM.call(this)
         }
         var fragment = document.createDocumentFragment()
         for (var i = 0; i < this.children.length; i++) {
@@ -3088,7 +3108,7 @@ VComponent.prototype = {
     toHTML: function () {
         var me = avalon.components[this.__type__]
         if (me && me.toHTML) {
-            return me.toHTML(this)
+            return me.toHTML.call(this)
         }
         var ret = ""
         for (var i = 0; i < this.children.length; i++) {
@@ -3099,44 +3119,124 @@ VComponent.prototype = {
 }
 
 
+function shimTemplate(element, skip) {
+    var p = []
+    for (var i in element.props) {
+        if (skip && skip.test(i))
+            continue
+        p.push(i + "=" + quote(String(element.props[i])))
+    }
+    p = p.length ? " " + p.join(" ") : ""
+
+    var str = "<" + element.type + p
+    if (element.selfClose) {
+        return str + "/>"
+    }
+    str += ">"
+
+    str += element.template
+
+    return str + "</" + element.type + ">"
+}
 
 
+avalon.components["ms-if"] = {
+    toDOM: function (self) {
+        return self.children[0].toDOM()
+    }
+}
 
+var repeatCom = avalon.components["ms-repeat"] =
+        avalon.components["ms-each"] = {
+    init: function (type, props, template) {
+        type = props.type
+        var signature = generateID(type)
+        this.signature = signature
 
+        this.template = template + "<!--" + signature + "-->"
+
+        this._children = createVirtual(this.template, true)
+    },
+    clone: function () {
+        var type = this.__type__
+        this.__type__ = 1
+        var clone = this.clone()
+        clone.__type__ = type
+        clone.signature = this.signature
+        clone._children = this._children
+        return clone
+    }
+}
+
+var repeatItem = avalon.components["repeat-item"] = {
+    init: function () {
+        this._new = true
+        this.dispose = repeatItem.dispose
+        return this
+    },
+    dispose: function () {
+        disposeVirtual([this])
+        var proxy = this.vmodel
+        var item = proxy[this.valueName]
+        proxy && (proxy.$active = false)
+        if (item && item.$id) {
+            item.$active = false
+        }
+    }
+}
 function VElement(type, props, template) {
     this.type = type
     this.template = ""
     this.children = []
     this.props = {}
 
-    if (typeof props === "string") {
-        parseVProps(this, props)
-    } else if (props && typeof props === "object") {
+    if (avalon.isObject(props)) {
         this.props = props
     }
-    if (rmsskip.test(props)) {
-        this.skipContent = true
-    } else if (typeof template === "string") {
-        if (this.type === "option" || this.type === "xmp") {
-            this.children.push(new VText(template))
-        } else if (rnocontent.test(this.type)) {
-            if (this.type === "noscript") {
-                template = escape(innerHTML)
-            }
-            this.skipContent = true
-        } else {//script, noscript, template, textarea
-            pushArray(this.children, createVirtual(template))
-        }
-    } else if (Array.isArray(template)) {
+
+    if (Array.isArray(template)) {
         pushArray(this.children, template)
     }
-    
-    if (typeof template === "string") {
-        this.template = template
-    }
-    
+
+    this.init.apply(this, arguments)
+
 }
 VElement.prototype = {
+    init: function (type, props, template) {
+        if (typeof props === "string") {
+            parseVProps(this, props)
+        }
+        
+
+        if (this.props["ms-skip"]) {
+            this.skipContent = true
+        } else if (typeof template === "string") {
+            if (type === "option" || type === "xmp") {
+                this.children.push(new VText(template))
+            } else if (rnocontent.test(type)) {
+                this.skipContent = true
+            } else {//script, noscript, template, textarea
+                pushArray(this.children, createVirtual(template))
+            }
+            this.template = template
+        }
+
+    },
+    clone: function () {
+        var clone = new VElement(this.type,
+                avalon.mix({}, this.props),
+                this.children.map(function (el) {
+                    return el.clone()
+                }))
+        clone.template = this.template
+        if (this.skipContent) {
+            clone.skipContent = this.skipContent
+        }
+        if (this.closeSelf) {
+            clone.closeSelf = this.closeSelf
+        }
+        return clone
+    },
     constructor: VElement,
     toDOM: function () {
         var dom = document.createElement(this.type)
@@ -3151,7 +3251,8 @@ VElement.prototype = {
             switch (this.type) {
                 case "script":
                     this.text = this.template
-                    break;
+                    break
+                    break
                 case "style":
                 case "template":
                     this.innerHTML = this.template
@@ -3164,14 +3265,13 @@ VElement.prototype = {
                     dom.appendChild(a)
                     break
             }
-        } else {
+
+        } else if (!this.closeSelf) {
+            
             this.children.forEach(function (c) {
                 dom.appendChild(c.toDOM())
             })
-            if (!this.children.length) {
-                a = avalon.parseHTML(this.template)
-                dom.appendChild(a)
-            }
+
         }
         return dom
     },
@@ -3197,25 +3297,7 @@ VElement.prototype = {
     }
 }
 
-function toString(element, skip) {
-    var p = []
-    for (var i in element.props) {
-        if (skip && skip.test(i))
-            continue
-        p.push(i + "=" + quote(String(element.props[i])))
-    }
-    p = p.length ? " " + p.join(" ") : ""
 
-    var str = "<" + element.type + p
-    if (element.selfClose) {
-        return str + "/>"
-    }
-    str += ">"
-
-    str += element.template
-
-    return str + "</" + element.type + ">"
-}
 //从元素的开标签中一个个分解属性值
 var rattr2 = /\s+([^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 //判定是否有引号开头，IE有些属性没有用引号括起来
@@ -3263,20 +3345,17 @@ function parseVProps(node, str) {
     return props
 }
 
-
-
-
-
-
-
 function VText(text) {
     this.type = "#text"
     this.nodeValue = text
-    this.skip = !rexpr.test(text)
+    this.skipContent = !rexpr.test(text)
 }
 
 VText.prototype = {
     constructor: VText,
+    clone: function(){
+        return new VText(this.nodeValue)
+    },
     toDOM: function () {
         return document.createTextNode(this.nodeValue)
     },
@@ -3518,7 +3597,7 @@ function scanTag(elem, vmodel, siblings) {
         if (vm) {
             vtree[v] = elem
             if (vmodel) {
-                vm = avalon.createProxy(vmodel, vm)
+                vm = proxyFactory(vmodel, vm)
             }
             vmodel = vm
         }
@@ -3532,7 +3611,7 @@ function scanTag(elem, vmodel, siblings) {
     } else {
         scanAttrs(elem, vmodel, siblings)
     }
-    
+
     return elem
 }
 
@@ -3901,10 +3980,10 @@ var attrDir = avalon.directive("attr", {
     change: function (val, binding) {
         var vnode = binding.element
         if (vnode) {
-            var change = addData(vnode, "changeAttrs")
+            var data = addData(vnode, "changeAttrs")
             var name = binding.param
             var toRemove = (val === false) || (val === null) || (val === void 0)
-            change[name] = toRemove ? false : val
+            data[name] = toRemove ? false : val
             addHooks(this, binding)
         }
     },
@@ -4047,9 +4126,9 @@ avalon.directive("data", {
         var vnode = binding.element
         if (!vnode || vnode.disposed)
             return
-        var change = addData(vnode, "changeData")
-        val = (val && typeof val === "object") ? val : String(val)
-        change["data-" + binding.param] = val
+        var data = addData(vnode, "changeData")
+        val = avalon.isObject(val) ? val : String(val)
+        data["data-" + binding.param] = val
         addHooks(this, binding)
     },
     update: function (node, vnode) {
@@ -4895,12 +4974,14 @@ avalon.directive("repeat", {
 
         var vnode = binding.element
         disposeVirtual(vnode.children)
-        var component = new VComponent("ms-repeat")
-        var template = toString(vnode, rremoveRepeat) //防止死循环
+
+        var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
+        var component = new VComponent("ms-" + type, {type: type},
+        type === "repeat" ? template : vnode.template.trim())
+
         var top = binding.vmodel, $outer = {}
-        var signature = generateID(type)
-        component.signature = signature
+
         //处理渲染完毕后的回调的函数
         var rendered = getBindingValue(vnode, "data-" + type + "-rendered", top)
         if (typeof rendered === "function") {
@@ -4921,15 +5002,14 @@ avalon.directive("repeat", {
                     break
                 }
             }
-            component.template = template + "<!--" + signature + "-->"
         } else {
             //each组件会替换掉原VComponent组件的所有孩子
             disposeVirtual(vnode.children)
             pushArray(vnode.children, [component])
-            component.template = vnode.template.trim() + "<!--" + signature + "-->"
         }
 //        component.item = createVirtual(component.template, true)
 //        console.log(component.item)
+
         binding.element = component //偷龙转风
         //计算上级循环的$outer
         //外层vmodel不存在$outer对象时, $outer为一个空对象
@@ -5005,11 +5085,18 @@ avalon.directive("repeat", {
                 proxy = component.vmodel
                 command[proxy.$index] = i//标识其从什么位置移动什么位置
             } else {//如果不存在就创建 
-                component = new VComponent("repeatItem")
-                component.template = vnode.template
-                component.construct(item, binding, repeatArray)
-                proxy = component.vmodel
+                component = new VComponent("repeat-item", null,
+                        vnode._children.map(function (el) {
+                            return el.clone()
+                        }))
+
+                component.valueName = binding.valueName
+
+                proxy = component.vmodel =
+                        repeatItemFactory(item, binding, repeatArray)
+                
                 proxy.$outer = binding.$outer
+
                 proxy[binding.keyName] = key || i
                 proxy[binding.valueName] = item
                 if (repeatArray) {
@@ -5151,22 +5238,8 @@ avalon.directive("repeat", {
         }
     }
 })
-function cloneNodes(array) {
-    var ret = []
-    for (var i = 0, el; el = array[i]; i++) {
-        var type = getVType(el)
-        if (type === 1) {
-            var clone = new VElement(el.type, avalon.mix({}, el.props), cloneNodes(el.children))
-            clone.template = el.template
-            ret[i] = clone
-        } else if (type === 3) {
-            ret[i] = new VText(el.nodeValue)
-        } else if (type === 8) {
-            ret[i] = new VComment(el.nodeValue)
-        }
-    }
-    return ret
-}
+
+
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]
     do {
@@ -5180,35 +5253,19 @@ function updateSignature(elem, value, text) {
     } while (elem = elem.nextSibling)
 }
 
-var repeatItem = avalon.components["repeatItem"] = {
-    construct: function (item, binding, repeatArray) {
-        var top = binding.vmodel
-        if (item && item.$id) {
-            top = createProxy(top, item)
-        }
-        var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
-        this.valueName = binding.valueName
-        var proxy = createRepeatItem(top, keys, repeatArray)
-        this.vmodel = proxy
-        this.children = createVirtual(this.template, true)
-        this._new = true
-        this.dispose = repeatItem.dispose
-        return this
-    },
-    dispose: function () {
-        disposeVirtual([this])
-        var proxy = this.vmodel
-        var item = proxy[this.valueName]
-        proxy && (proxy.$active = false)
-        if (item && item.$id) {
-            item.$active = false
-        }
+
+
+
+
+function repeatItemFactory(item, binding, repeatArray) {
+
+    var before = binding.vmodel
+    if (item && item.$id) {
+        before = proxyFactory(before, item)
     }
-}
 
+    var keys = [binding.keyName, binding.valueName, "$index", "$first", "$last"]
 
-
-function createRepeatItem(before, keys, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
@@ -5224,13 +5281,13 @@ function createRepeatItem(before, keys, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
 
-    return createProxy(before, after, heirloom)
+    return proxyFactory(before, after, heirloom)
 }
 
 function getRepeatChild(children) {
     var ret = []
     for (var i = 0, el; el = children[i++]; ) {
-        if (el.__type__ === "repeatItem") {
+        if (el.__type__ === "repeat-item") {
             pushArray(ret, el.children)
         } else {
             ret.push(el)
@@ -5240,7 +5297,6 @@ function getRepeatChild(children) {
 }
 
 avalon.directives.each = avalon.directives.repeat
-avalon.components["ms-each"] = avalon.components["ms-repeat"]
 
 
 function compareObject(a, b) {
@@ -5361,11 +5417,14 @@ avalon.directive("if", {
     },
     init: function (binding) {
         var vnode = binding.element
-        var templale = toString(vnode,rremoveIf) //防止死循环
-        var component = new VComponent("ms-if")
-        component.template = templale
-        component.props.ok = createVirtual(templale, true)[0]
-        component.props.ng = new VComment("ms-if")
+        
+        var templale = shimTemplate(vnode, rremoveIf) //防止死循环
+        
+        var component = new VComponent("ms-if", {
+            ok: createVirtual(templale, true)[0],
+            ng: new VComment("ms-if")
+        }, templale)
+       
         var arr = binding.siblings
         for (var i = 0, el; el = arr[i]; i++) {
             if (el === vnode) {
@@ -5408,11 +5467,7 @@ avalon.directive("if", {
 })
 
 
-avalon.components["ms-if"] = {
-    toDOM: function (self) {
-        return self.children[0].toDOM()
-    }
-}
+
 //ms-important绑定已经在scanTag 方法中实现
 
 var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
