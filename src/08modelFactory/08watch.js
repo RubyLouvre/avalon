@@ -46,8 +46,8 @@ function $emit(topVm, curVm, path, a, b, i) {
     }
 
     if (new Date() - beginTime > 444) {
-        setTimeout(function () {
+      //  setTimeout(function () {
             rejectDisposeQueue()
-        })
+      //  })
     }
 }
