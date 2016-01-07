@@ -127,6 +127,7 @@ function parseVProps(node, str) {
     str.replace(rattr2, function (a, n, v) {
         if (v) {
             v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
+            v = v.replace(/&quot;/g, '"')
         }
         var name = n.toLowerCase()
         var match = n.match(rmsAttr)

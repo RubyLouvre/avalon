@@ -7,10 +7,27 @@
             var vm = avalon.define({
                 $id: 'test',
                 array: ["aa", "ba", "ca", "dd"],
-                grid: [{name:"aaa", age: 10},{name:"bbb", age: 13},{name:"ccc", age: 5}],
+                grid: [
+                    {name: "aaa", age: 10},
+                    {name: "bbb", age: 13},
+                    {age: 5, name: "ddd"},
+                    {name: "ccc", age: 5}
+                ],
+                order: 1,
+                
+                mark: function () {
+                    avalon.each(document.querySelectorAll("td"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                },
                 change: function () {
-                    vm.array = ["xa", "ca", "aa", "ba", "f", "ka"]
-                   // vm.array = ["x", "c", "a", "b", "f", "k"]
+                    // vm.array = ["xa", "ca", "aa", "ba", "f", "ka"]
+                    vm.grid = [
+                        {name: "xxx", age: 21},
+                        {age: 13, name: "yyy"},
+                        {age: 21, name: "ddd"},
+                        {name: "ttt", age: 34}
+                    ]
                 }
             })
 
@@ -18,15 +35,39 @@
     </head>
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
-<!--        <ul>
+        <button type="button" ms-click="mark">mark</button>
+        <ul>
             <li ms-repeat="array |filterBy('a') ">{{el}}</li>
         </ul>
-          <ul>
+        <ul>
             <li ms-repeat="array |limitBy(2, 1) ">{{el}}</li>
-        </ul>-->
-        <table>
+        </ul>
+        <p><button type="button" >order</button></p>
+       
+        <table border="1">
+            <tr>
+                <td>name</td> <td>age</td>
+            </tr>
             <tr ms-repeat='tr in grid'>
                 <td ms-repeat='tr'>{{$val}}</td>
+            </tr>
+        </table>
+       
+        <table border="1">
+            <tr>
+                <td>name</td> <td>age</td>
+            </tr>
+            <tr ms-repeat='tr in grid'>
+                <td ms-repeat-elem='tr | selectBy(["name","age"])'>{{elem}}</td>
+            </tr>
+        </table>
+      
+        <table border="1">
+            <tr>
+                <td>name</td> <td>age</td>
+            </tr>
+            <tr ms-repeat='tr in grid | orderBy("age",order)'>
+                <td>{{tr.name}}</td><td>{{tr.age}}</td>
             </tr>
         </table>
     </body>

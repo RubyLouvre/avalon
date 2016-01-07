@@ -2110,6 +2110,16 @@ function parseExpr(expr, vmodel, binding) {
         str = str.replace(/(\w+)/, "avalon.__read__('$1')")
         return "__value__ = " + str
     })
+    var eventFilters = []
+    if (category === "on") {
+        eventFilters = footers.map(function (el) {
+            return  el.replace(/__value__/g, "$event")
+        })
+        if (eventFilters.length) {
+            eventFilters.push("if($event.$return){\n\treturn;\n}\n")
+        }
+        footers = []
+    }
 
     var headers = []
     var unique = {}
@@ -2122,13 +2132,14 @@ function parseExpr(expr, vmodel, binding) {
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
-    binding.paths = pathPool.put(category + ":" + input, 
-                                 pathArray.join("★"))
+    binding.paths = pathPool.put(category + ":" + input,
+            pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
         args = ["$event", "__vm__"]
-        // args.push("$event")
+
+
         if (body.indexOf("(") === -1) {//如果不存在括号
             body += ".call(this, $event)"
         } else {
@@ -2143,6 +2154,16 @@ function parseExpr(expr, vmodel, binding) {
                 return  ".call(" + array + ")"
             })
         }
+        // body = eventFilters.join("\n") + body
+//        if (/|\s*prevent\b/.test(footer)) {
+//            body = "$event.preventDefault();\n" + body.replace(/|\s*prevent\b/, "")
+//        }
+//        if (/|\s*stop\b/.test(body)) {
+//            body = "$event.stopPropagation();\n" + body.replace(/|\s*stop\b/, "")
+//        }
+
+
+
     } else if (category === "duplex") {
         args.push("__value__", "__bind__")
         //Setter
@@ -2161,12 +2182,22 @@ function parseExpr(expr, vmodel, binding) {
                 ":" + input + ":setter", fn)
         // avalon.log(binding.setter + "***")
     }
+    headers.push(eventFilters.join(""))
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
-    fn = new Function(args.join(","), headers.join(""))
+
+    try {
+        fn = new Function(args.join(","), headers.join(""))
+
+    } catch (e) {
+        avalon.log(expr + " convert to\n function( " + args + "){\n" +
+                headers.join("") + "}\n fail")
+    }
+
     if (category === "on") {
         var old = fn
+        console.log(old + "")
         fn = function () {
             return old
         }
@@ -2488,6 +2519,7 @@ function parseVProps(node, str) {
     str.replace(rattr2, function (a, n, v) {
         if (v) {
             v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
+            v = v.replace(/&quot;/g, '"')
         }
         var name = n.toLowerCase()
         var match = n.match(rmsAttr)
@@ -2989,11 +3021,11 @@ function createVirtual(text, force) {
             if (match) {//尝试匹配自闭合标签及注释节点
                 matchText = match[0]
                 //不打算序列化的属性不要放在props中
-                tagName = match[1]
+                tagName = match[1].toLowerCase()
                 //  node = new VElement(match[1])
                 //   node.template = ""
 
-                attrs = matchText.slice(node.type.length + 1).replace(/\/?>$/, "")
+                attrs = matchText.slice(tagName.length + 1).replace(/\/?>$/, "")
                 //这里可能由VElement变成VComponent
                 node = new VElement(tagName, attrs, "")
                
@@ -4067,6 +4099,8 @@ avalon.directive("repeat", {
                 return el !== b[i]
             })
         } else {
+            if (!b)
+                return false
             return compareObject(a, b)
         }
     },
@@ -4153,7 +4187,7 @@ avalon.directive("repeat", {
                     keys.push(k)
                 }
             }
-            binding.last = keys.length - 1
+            last = keys.length - 1
         }
         //第一次循环,从cache中重复利用虚拟节点及对应的代理VM, 没有就创建空的虚拟节点
 
@@ -4164,6 +4198,7 @@ avalon.directive("repeat", {
             } else {//如果是对象,直接用key为键名
                 var key = keys[i]
                 item = value[key]
+
                 component = cache[key]
                 delete cache[key]
             }
@@ -4172,9 +4207,9 @@ avalon.directive("repeat", {
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
-                component.key = key || i
-                component.item = item 
             }
+            component.key = key || i
+            component.item = item
             children.push(component)
         }
 
@@ -4203,8 +4238,6 @@ avalon.directive("repeat", {
                 }
 
                 proxy.$outer = binding.$outer
-                proxy[binding.keyName] = component.key
-                proxy[binding.itemName] = component.item
 
                 component.vmodel = proxy
                 component._new = true
@@ -4220,8 +4253,8 @@ avalon.directive("repeat", {
                     /* jshint ignore:end */
                 }
             }
-
-
+            proxy[binding.keyName] = component.key
+            proxy[binding.itemName] = component.item
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -4314,7 +4347,7 @@ avalon.directive("repeat", {
 
                 for (i in command) {
                     fragment = fragments.shift()
-                   
+
                     if (fragment) {
                         showLog && avalon.log("使用已有节点")
                         children[ i ] = fragment
@@ -5025,6 +5058,16 @@ var filters = avalon.filters = {
         }
         return target
     },
+    selectBy: function (input, array) {
+        if (avalon.isObject(input) && !Array.isArray(input)) {
+            var a = array.map(function (name) {
+                return input.hasOwnProperty(name) ? input[name] : ""
+            })
+            return a
+        } else {
+            throw "selectBy只支持对象"
+        }
+    },
     limitBy: function (input, limit, begin) {
         if (limit >= 0) {
             if (typeof input === "number" && !isNaN(input)) {
@@ -5047,8 +5090,38 @@ var filters = avalon.filters = {
         }
         return input
     },
-    number: numberFormat
+    number: numberFormat,
+    stop: function (e) {
+        e.stopPropagation()
+        return e
+    },
+    prevent: function (e) {
+        e.preventDefault()
+        return e
+    }
 }
+
+var keyFilters = {
+    esc: 27,
+    tab: 9,
+    enter: 13,
+    space: 32,
+    del: 46,
+    up: 38,
+    left: 37,
+    right: 39,
+    down: 40
+}
+
+avalon.each(keyFilters, function (name, keyCode) {
+    filters[name] = function (e) {
+        if (e.which !== keyCode) {
+            e.$return = true
+        }
+        return e
+    }
+})
+
 
 function containKey(a, reg) {
     if (avalon.isPlainObject(a)) {

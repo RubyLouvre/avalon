@@ -164,6 +164,16 @@ var filters = avalon.filters = {
         }
         return target
     },
+    selectBy: function (input, array) {
+        if (avalon.isObject(input) && !Array.isArray(input)) {
+            var a = array.map(function (name) {
+                return input.hasOwnProperty(name) ? input[name] : ""
+            })
+            return a
+        } else {
+            throw "selectBy只支持对象"
+        }
+    },
     limitBy: function (input, limit, begin) {
         if (limit >= 0) {
             if (typeof input === "number" && !isNaN(input)) {
@@ -186,8 +196,38 @@ var filters = avalon.filters = {
         }
         return input
     },
-    number: numberFormat
+    number: numberFormat,
+    stop: function (e) {
+        e.stopPropagation()
+        return e
+    },
+    prevent: function (e) {
+        e.preventDefault()
+        return e
+    }
 }
+
+var keyFilters = {
+    esc: 27,
+    tab: 9,
+    enter: 13,
+    space: 32,
+    del: 46,
+    up: 38,
+    left: 37,
+    right: 39,
+    down: 40
+}
+
+avalon.each(keyFilters, function (name, keyCode) {
+    filters[name] = function (e) {
+        if (e.which !== keyCode) {
+            e.$return = true
+        }
+        return e
+    }
+})
+
 
 function containKey(a, reg) {
     if (avalon.isPlainObject(a)) {

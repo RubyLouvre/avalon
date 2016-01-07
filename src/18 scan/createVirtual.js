@@ -97,11 +97,11 @@ function createVirtual(text, force) {
             if (match) {//尝试匹配自闭合标签及注释节点
                 matchText = match[0]
                 //不打算序列化的属性不要放在props中
-                tagName = match[1]
+                tagName = match[1].toLowerCase()
                 //  node = new VElement(match[1])
                 //   node.template = ""
 
-                attrs = matchText.slice(node.type.length + 1).replace(/\/?>$/, "")
+                attrs = matchText.slice(tagName.length + 1).replace(/\/?>$/, "")
                 //这里可能由VElement变成VComponent
                 node = new VElement(tagName, attrs, "")
                

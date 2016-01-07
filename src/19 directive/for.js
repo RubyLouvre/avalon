@@ -14,6 +14,8 @@ avalon.directive("repeat", {
                 return el !== b[i]
             })
         } else {
+            if (!b)
+                return false
             return compareObject(a, b)
         }
     },
@@ -100,7 +102,7 @@ avalon.directive("repeat", {
                     keys.push(k)
                 }
             }
-            binding.last = keys.length - 1
+            last = keys.length - 1
         }
         //第一次循环,从cache中重复利用虚拟节点及对应的代理VM, 没有就创建空的虚拟节点
 
@@ -111,6 +113,7 @@ avalon.directive("repeat", {
             } else {//如果是对象,直接用key为键名
                 var key = keys[i]
                 item = value[key]
+
                 component = cache[key]
                 delete cache[key]
             }
@@ -119,9 +122,9 @@ avalon.directive("repeat", {
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
-                component.key = key || i
-                component.item = item 
             }
+            component.key = key || i
+            component.item = item
             children.push(component)
         }
 
@@ -150,8 +153,6 @@ avalon.directive("repeat", {
                 }
 
                 proxy.$outer = binding.$outer
-                proxy[binding.keyName] = component.key
-                proxy[binding.itemName] = component.item
 
                 component.vmodel = proxy
                 component._new = true
@@ -167,8 +168,8 @@ avalon.directive("repeat", {
                     /* jshint ignore:end */
                 }
             }
-
-
+            proxy[binding.keyName] = component.key
+            proxy[binding.itemName] = component.item
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -261,7 +262,7 @@ avalon.directive("repeat", {
 
                 for (i in command) {
                     fragment = fragments.shift()
-                   
+
                     if (fragment) {
                         showLog && avalon.log("使用已有节点")
                         children[ i ] = fragment

@@ -117,6 +117,16 @@ function parseExpr(expr, vmodel, binding) {
         str = str.replace(/(\w+)/, "avalon.__read__('$1')")
         return "__value__ = " + str
     })
+    var eventFilters = []
+    if (category === "on") {
+        eventFilters = footers.map(function (el) {
+            return  el.replace(/__value__/g, "$event")
+        })
+        if (eventFilters.length) {
+            eventFilters.push("if($event.$return){\n\treturn;\n}\n")
+        }
+        footers = []
+    }
 
     var headers = []
     var unique = {}
@@ -129,13 +139,14 @@ function parseExpr(expr, vmodel, binding) {
             headers.push("var " + key + " =  __vm__." + key + ";\n")
         }
     }
-    binding.paths = pathPool.put(category + ":" + input, 
-                                 pathArray.join("★"))
+    binding.paths = pathPool.put(category + ":" + input,
+            pathArray.join("★"))
     body = body.replace(rfill, fill).trim()
     var args = ["__vm__"]
     if (category === "on") {
         args = ["$event", "__vm__"]
-        // args.push("$event")
+
+
         if (body.indexOf("(") === -1) {//如果不存在括号
             body += ".call(this, $event)"
         } else {
@@ -150,6 +161,16 @@ function parseExpr(expr, vmodel, binding) {
                 return  ".call(" + array + ")"
             })
         }
+        // body = eventFilters.join("\n") + body
+//        if (/|\s*prevent\b/.test(footer)) {
+//            body = "$event.preventDefault();\n" + body.replace(/|\s*prevent\b/, "")
+//        }
+//        if (/|\s*stop\b/.test(body)) {
+//            body = "$event.stopPropagation();\n" + body.replace(/|\s*stop\b/, "")
+//        }
+
+
+
     } else if (category === "duplex") {
         args.push("__value__", "__bind__")
         //Setter
@@ -168,12 +189,22 @@ function parseExpr(expr, vmodel, binding) {
                 ":" + input + ":setter", fn)
         // avalon.log(binding.setter + "***")
     }
+    headers.push(eventFilters.join(""))
     headers.push("var __value__ = " + body + ";\n")
     headers.push.apply(headers, footers)
     headers.push("return __value__;")
-    fn = new Function(args.join(","), headers.join(""))
+
+    try {
+        fn = new Function(args.join(","), headers.join(""))
+
+    } catch (e) {
+        avalon.log(expr + " convert to\n function( " + args + "){\n" +
+                headers.join("") + "}\n fail")
+    }
+
     if (category === "on") {
         var old = fn
+        console.log(old + "")
         fn = function () {
             return old
         }
