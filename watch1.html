@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: {
+                    bb: {
+                        c: 1
+                    }
+                },
+                array: ["a", "b", "c", "d"],
+                data: [[11, 222], [33, 444]],
+                change: function () {
+                    vm.aaa.bb = {
+                        c: 3
+                    }
+                    vm.array.set(0,88)
+                    vm.array.push("e")
+                }
+            })
+            vm.$watch("array.length", function (a, b, k) {
+                console.log(a, b, k)
+            })
+             vm.$watch("array.*", function (a, b, k) {
+                console.log(a, b, k)
+            })
+            vm.$watch("aaa.bb.c", function (a, b, k) {
+                console.log(a, b, k)
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+    </body>
+</html>

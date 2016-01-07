@@ -971,12 +971,12 @@ function shouldDispose() {
 function $emit(topVm, curVm, path, a, b, i) {
 
     var hive = topVm && topVm.$events
-
     if (hive && hive[path]) {
         var list = hive[path]
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
+               
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
@@ -1039,8 +1039,9 @@ function observeArray(array, old, heirloom, options) {
             array[i] = newProto[i]
         }
         hideProperty(array, "$id", generateID("$"))
-        array.notify = function () {
-            $emit(heirloom.vm, heirloom.vm, options.pathname)
+        array.notify = function (a, b, c) {
+            var path = a != null ? options.pathname+"."+a : options.pathname
+            $emit(heirloom.vm, heirloom.vm, path, b, c)
             batchUpdateEntity(heirloom.vm)
         }
 
@@ -1053,7 +1054,6 @@ function observeArray(array, old, heirloom, options) {
 
         array._.length = array.length
         array._.$watch("length", {
-            type: "watch",
             shouldDispose: function () {
                 if (!heirloom || !heirloom.vm ||
                         heirloom.vm.$active === false) {
@@ -1072,9 +1072,10 @@ function observeArray(array, old, heirloom, options) {
             },
             element: {},
             update: function (newlen, oldlen) {
-                if (heirloom.vm) {
-                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
-                }
+                array.notify("length", newlen,oldlen)
+//                if (heirloom.vm) {
+//                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
+//                }
             }
         })
 
@@ -1127,6 +1128,8 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
+         
+            this.notify("*", val, this[index])
             this.splice(index, 1, val)
         }
     },
@@ -2154,14 +2157,6 @@ function parseExpr(expr, vmodel, binding) {
                 return  ".call(" + array + ")"
             })
         }
-        // body = eventFilters.join("\n") + body
-//        if (/|\s*prevent\b/.test(footer)) {
-//            body = "$event.preventDefault();\n" + body.replace(/|\s*prevent\b/, "")
-//        }
-//        if (/|\s*stop\b/.test(body)) {
-//            body = "$event.stopPropagation();\n" + body.replace(/|\s*stop\b/, "")
-//        }
-
 
 
     } else if (category === "duplex") {
@@ -2180,7 +2175,6 @@ function parseExpr(expr, vmodel, binding) {
                 "__vm__." + body + " = __value__;")
         binding.setter = evaluatorPool.put(category +
                 ":" + input + ":setter", fn)
-        // avalon.log(binding.setter + "***")
     }
     headers.push(eventFilters.join(""))
     headers.push("var __value__ = " + body + ";\n")
@@ -2197,13 +2191,11 @@ function parseExpr(expr, vmodel, binding) {
 
     if (category === "on") {
         var old = fn
-        console.log(old + "")
         fn = function () {
             return old
         }
     }
     binding.getter = evaluatorPool.put(category + ":" + input, fn)
-    //avalon.log(binding.getter + "")
 }
 
 
@@ -2224,7 +2216,7 @@ function normalizeExpr(code) {
     }
 }
 avalon.normalizeExpr = normalizeExpr
-avalon.parseExprProxy = parseExpr
+avalon.parseExprProxy = parseExpr //兼容老版本
 
 /*********************************************************************
  *                          编译系统                                  *

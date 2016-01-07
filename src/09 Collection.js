@@ -11,8 +11,9 @@ function observeArray(array, old, heirloom, options) {
             array[i] = newProto[i]
         }
         hideProperty(array, "$id", generateID("$"))
-        array.notify = function () {
-            $emit(heirloom.vm, heirloom.vm, options.pathname)
+        array.notify = function (a, b, c) {
+            var path = a != null ? options.pathname+"."+a : options.pathname
+            $emit(heirloom.vm, heirloom.vm, path, b, c)
             batchUpdateEntity(heirloom.vm)
         }
 
@@ -25,7 +26,6 @@ function observeArray(array, old, heirloom, options) {
 
         array._.length = array.length
         array._.$watch("length", {
-            type: "watch",
             shouldDispose: function () {
                 if (!heirloom || !heirloom.vm ||
                         heirloom.vm.$active === false) {
@@ -44,9 +44,10 @@ function observeArray(array, old, heirloom, options) {
             },
             element: {},
             update: function (newlen, oldlen) {
-                if (heirloom.vm) {
-                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
-                }
+                array.notify("length", newlen,oldlen)
+//                if (heirloom.vm) {
+//                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
+//                }
             }
         })
 
@@ -99,6 +100,8 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
+         
+            this.notify("*", val, this[index])
             this.splice(index, 1, val)
         }
     },
