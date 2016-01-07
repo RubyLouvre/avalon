@@ -37,8 +37,8 @@ function rejectDisposeQueue(data) {
                 disposeQueue.splice(i, 1)
                 avalon.Array.remove(data.list, data)
                 disposeData(data)
-                //avalon会在每次全量更新时,取其时间,假若距离上次有半秒
-                //那么会发起一次GC,并且只检测500个绑定
+                //avalon会在每次全量更新时,比较上次执行时间,
+                //假若距离上次有半秒,就会发起一次GC,并且只检测当中的500个绑定
                 //而一个正常的页面不会超过2000个绑定(500即取其4分之一)
                 //用户频繁操作页面,那么2,3秒内就把所有绑定检测一遍,将无效的绑定移除
                 if (threshold++ > 500) {
@@ -48,6 +48,7 @@ function rejectDisposeQueue(data) {
                 continue
             }
             data.i++
+            //基于检测频率，如果检测过7次，可以认为其是长久存在的节点，那么以后每7次才检测一次
             if (data.i === 7) {
                 data.i = 14
             }
@@ -58,6 +59,9 @@ function rejectDisposeQueue(data) {
     avalon.log("disposeQueue.length ", disposeQueue.length)
     beginTime = new Date()
 }
+
+
+
 
 function disposeData(data) {
     if (!data.uuid)

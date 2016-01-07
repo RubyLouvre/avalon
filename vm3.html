@@ -8,18 +8,28 @@
                 $id: 'test',
                 array: ["a", "b", "c", "d"],
                 data: [[11, 222], [33, 444]],
-                change: function(){
-                   
-                     vm.data = [[55,666,111],[77,888,222],[123,456,789]]
-                   // vm.array = ["x","y","z","r","55"]
+                change: function () {
+                    console.log("=====")
+                   vm.data = [[55, 666, 111], [77, 888, 222], [123, 456, 789]]
+                    vm.array = ["x", "y", "b", "r", "a"]
+                },
+                add: function () {
+
+                    avalon.each(document.querySelectorAll("td"), function (i, el) {
+                        el.title = i * 10
+                    })
                 }
             })
-          
+
 
         </script>
     </head>
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
+        <button type="button" ms-click="add">add</button>
+        <ul ms-each='array'>
+            <li>{{el}}  <strong>{{$index}}</strong></li>
+        </ul>
 
         <table width="600" border="1">
             <tr ms-repeat="data">

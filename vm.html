@@ -6,9 +6,10 @@
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                array: ["a", "b", "c", "d"],
+                array: ["aa", "ba", "ca", "dd"],
                 change: function () {
-                    vm.array = ["x", "c", "a", "b", "f", "k"]
+                    vm.array = ["xa", "ca", "aa", "ba", "f", "ka"]
+                   // vm.array = ["x", "c", "a", "b", "f", "k"]
                 }
             })
 
@@ -17,7 +18,7 @@
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
         <ul>
-            <li ms-repeat="array">{{el}}</li>
+            <li ms-repeat="array ">{{el}}</li>
         </ul>
     </body>
 </html>

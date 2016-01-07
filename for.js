@@ -32,6 +32,7 @@ avalon.directive("repeat", {
         }
 
         var vnode = binding.element
+
         disposeVirtual(vnode.children)
 
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
@@ -55,6 +56,7 @@ avalon.directive("repeat", {
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement
             var arr = binding.siblings
+
             for (var i = 0, el; el = arr[i]; i++) {
                 if (el === vnode) {
                     arr[i] = component
@@ -63,7 +65,9 @@ avalon.directive("repeat", {
             }
         } else {
             //each组件会替换掉原VComponent组件的所有孩子
+
             disposeVirtual(vnode.children)
+
             pushArray(vnode.children, [component])
         }
 
@@ -124,7 +128,7 @@ avalon.directive("repeat", {
             binding.$outer.names = names.join(",")
         }
         //用于存放新组件的位置
-        var pos = []
+        var newComponents = []
         //键值如果为数字,表示它将重复利用那个位置的节点,
         //———如果是repeat-item组件,那么需要创建
         //只遍历一次算出所有要更新的步骤 O(n) ,比kMP (O(m+n))快
@@ -141,63 +145,67 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
+                updateRepeatItem(component, children, newCache, {
+                    i: i,
+                    last: i === last,
+                    isArray: repeatArray
+                })
 
-            } else {//如果不存在就创建 
-
-                component = new VComponent("repeat-item", null,
-                        vnode._children.map(function (el) {
-                            return el.clone()
-                        }))
-
-                component.valueName = binding.valueName
-
-                proxy = component.vmodel =
-                        repeatItemFactory(item, binding, repeatArray)
-
-                proxy.$outer = binding.$outer
-
-                proxy[binding.keyName] = key || i
-                proxy[binding.valueName] = item
-                if (repeatArray) {
-                    /* jshint ignore:start */
-                    (function (array, el) {
-                        proxy.$remove = function () {
-                            avalon.Array.remove(array, el)
-                        }
-                    })(value, item)
-                    /* jshint ignore:end */
-                }
-                command[i] = component
-                pos.push(i)
-            }
-
-            proxy.$index = i
-            proxy.$first = i === 0
-            proxy.$last = i === last
-            if (component._new) {
-                updateVirtual(component.children, proxy)
-                delete component._new
-            }
-            if (repeatArray) {
-                saveInCache(newCache, item, component)
             } else {
-                newCache[key] = component
+                //不存在的延后创建, 
+                newComponents.push({
+                    i: i,
+                    last: i === last,
+                    isArray: repeatArray,
+                    key: key || i,
+                    item: item
+                })
             }
-            children.push(component)
         }
+        //遍历cache,重复利用旧有组件
         for (i in cache) {
             if (cache[i]) {
-                var ii = cache[i].vmodel.$index
-                var num = pos.shift()
-                if (typeof num === "number") {
-                    command[num] = ii
+                var oldIndex = cache[i].vmodel.$index
+                var data = newComponents.shift()
+                if (data) {
+                    command[data.i] = oldIndex
+                    console.log("1111",vnode.children)
+                    updateRepeatItem(cache[i], children, newCache, data)
+                } else {
+                    //如果旧组件的数量超过新组件,那么销毁没有用过的
+                    cache[i].dispose()
                 }
-                //如果这个位置被新虚拟节点占领了，那么我们就不用移除其对应的真实节点
-                //但对应的旧虚拟节点还是要销毁的
-                cache[i].dispose()
-                delete cache[i]
             }
         }
+        //创建新组件
+        for (i = 0, data; data = newComponents[i++]; ) {
+            component = new VComponent("repeat-item", null,
+                    vnode._children.map(function (el) {
+                        return el.clone()
+                    }))
+
+            component.valueName = binding.valueName
+
+            proxy = component.vmodel =
+                    repeatItemFactory(data.item, binding, repeatArray)
+
+            proxy.$outer = binding.$outer
+
+            proxy[binding.keyName] = data.key
+            proxy[binding.valueName] = data.item
+            if (repeatArray) {
+                /* jshint ignore:start */
+                (function (array, el) {
+                    proxy.$remove = function () {
+                        avalon.Array.remove(array, el)
+                    }
+                })(value, data.item)
+                /* jshint ignore:end */
+            }
+            command[data.i] = component
+            updateRepeatItem(component, children, newCache, data)
+        }
+
         var vChildren = vnode.children
 
         vChildren.length = 0
@@ -262,10 +270,10 @@ avalon.directive("repeat", {
                 for (var to in vnode.repeatCommand) {
                     var num = vnode.repeatCommand[to]
                     if (typeof num === "number") {
-                        showLog && avalon.log("将在", to, "位置使用原", num, "的节点")
+                        showLog && avalon.log("将在", to, "位置使用原", num, "的节点", parent)
                         children[to] = items[num]
                     } else {
-                        showLog && avalon.log("将在", to, "位置创建新节点")
+                        showLog && avalon.log("将在", to, "位置创建新节点", parent)
                         children[to] = num.toDOM()
                     }
                 }
@@ -299,6 +307,22 @@ avalon.directive("repeat", {
     }
 })
 
+function updateRepeatItem(component, children, newCache, data) {
+    var proxy = component.vmodel
+    proxy.$index = data.i
+    proxy.$first = data.i === 0
+    proxy.$last = data.last
+    //if (component._new) {
+        updateVirtual(component.children, proxy)
+        delete component._new
+   // }
+    if (data.isArray) {
+        saveInCache(newCache, data.item, component)
+    } else {
+        newCache[data.key] = component
+    }
+    children[data.i] = component
+}
 
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]

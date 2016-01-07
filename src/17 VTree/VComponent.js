@@ -108,17 +108,10 @@ var repeatCom = avalon.components["ms-repeat"] =
 
 var repeatItem = avalon.components["repeat-item"] = {
     init: function () {
-        this._new = true
         this.dispose = repeatItem.dispose
         return this
     },
     dispose: function () {
-        disposeVirtual([this])
-        var proxy = this.vmodel
-        var item = proxy[this.valueName]
-        proxy && (proxy.$active = false)
-        if (item && item.$id) {
-            item.$active = false
-        }
+        disposeVirtual([this])   
     }
 }

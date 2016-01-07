@@ -8,39 +8,39 @@
                 $id: 'test',
                 array: ["a", "b", "c", "d"],
                 data: [[11, 222], [33, 444]],
-                change: function(){
-                   
-                     vm.data = [[55,666],[77,888]]
-                   // vm.array = ["x","y","z","r","55"]
+                change: function () {
+                    var a = 200
+                    var id = setInterval(function () {
+                        if (--a === 0) {
+                            clearInterval(id)
+                        }
+                        //  console.log("setTimeout")
+                        // vm.array.splice(1,2,"ddd","aaa")
+                        //  vm.data = [[55,666],[77,888]]
+                        var array = []
+                        for (var i = 0; i < 20; i++) {
+                            var list = array[i] = []
+                            for (var j = 0; j < 6; j++) {
+                                list.push(Math.random())
+                            }
+                        }
+                        // console.log(array)
+                        vm.data = array
+
+                    }, 100)
+                    // vm.data = [[55,666],[77,888]]
+                    // vm.array = ["x","y","z","r","55"]
                 }
             })
-           var a = 100
-           var id = setInterval(function () {
-              if(--a === 0){
-                  clearInterval(id)
-             }
-              //  console.log("setTimeout")
-               // vm.array.splice(1,2,"ddd","aaa")
-              //  vm.data = [[55,666],[77,888]]
-                var array = []
-                for (var i = 0; i < 20; i++) {
-                    var list = array[i] = []
-                    for (var j = 0; j < 6; j++) {
-                        list.push(Math.random())
-                    }
-                }
-               // console.log(array)
-                vm.data = array
 
-            }, 90)
 
         </script>
     </head>
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
-<!--        <ul>
-            <li ms-repeat="array">{{el}}</li>
-        </ul>-->
+        <!--        <ul>
+                    <li ms-repeat="array">{{el}}</li>
+                </ul>-->
         <table width="600" border="1">
             <tr ms-repeat="data">
                 <td ms-repeat-elem="el">{{elem}}</td>
