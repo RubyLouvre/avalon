@@ -5047,17 +5047,15 @@ avalon.directive("repeat", {
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
-
                 component.key = key || i
-                component.item = item //valueValue
+                component.item = item 
             }
             children.push(component)
         }
 
-        var pool = []
+        var pool = []//回收所有可利用代理vm
         for (i in cache) {
             var c = cache[i]
-            //var c = c.vmodel
             pool.push(c.vmodel)
             delete c.vmodel
             delete cache[i]
@@ -5072,11 +5070,11 @@ avalon.directive("repeat", {
             } else {
                 proxy = pool.shift()
                 if (proxy) {
-                    command[i] = proxy.$index
+                    command[i] = proxy.$index//占据要"移除的元素"的位置
                 }
                 if (!proxy) {
                     proxy = repeatItemFactory(component.item, binding, repeatArray)
-                    command[i] = component
+                    command[i] = component //这个需要创建真实节点
                 }
 
                 proxy.$outer = binding.$outer
@@ -5152,7 +5150,7 @@ avalon.directive("repeat", {
                     parent.removeChild(node.nextSibling)
                     parent.replaceChild(dom, node)
                 }
-                updateEntity(keepChild, getRepeatChild(vnode.children), parent)
+                updateEntity(keepChild, getRepeatItem(vnode.children), parent)
                 return false
             } else {
                 //console.log("最少化更新")
@@ -5232,37 +5230,6 @@ avalon.directive("repeat", {
     }
 })
 
-function initNames(repeatArray) {
-    var binding = this
-    if (repeatArray) {
-        if (!binding.itemName) {
-            binding.itemName = binding.param || "el"
-            delete binding.param
-        }
-        if (!binding.keyName) {
-            binding.keyName = "$index"
-        }
-    } else {
-        if (!binding.keyName) {
-            binding.keyName = "$key"
-        }
-        if (!binding.itemName) {
-            binding.itemName = "$val"
-        }
-
-    }
-    //处理$outer.names
-    if (!binding.$outer.names) {
-        var names = ["$first", "$last", "$index", "$outer"]
-        if (repeatArray) {
-            names.push("$remove")
-        }
-        avalon.Array.ensure(names, binding.valueName)
-        avalon.Array.ensure(names, binding.keyName)
-        binding.$outer.names = names.join(",")
-    }
-    this.initNames = noop
-}
 
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]
@@ -5304,7 +5271,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     return proxyFactory(before, after, heirloom)
 }
 
-function getRepeatChild(children) {
+function getRepeatItem(children) {
     var ret = []
     for (var i = 0, el; el = children[i++]; ) {
         if (el.__type__ === "repeat-item") {
@@ -5405,6 +5372,38 @@ function saveInCache(cache, vm, component) {
             }
         }
     }
+}
+
+function initNames(repeatArray) {
+    var binding = this
+    if (repeatArray) {
+        if (!binding.itemName) {
+            binding.itemName = binding.param || "el"
+            delete binding.param
+        }
+        if (!binding.keyName) {
+            binding.keyName = "$index"
+        }
+    } else {
+        if (!binding.keyName) {
+            binding.keyName = "$key"
+        }
+        if (!binding.itemName) {
+            binding.itemName = "$val"
+        }
+
+    }
+    //处理$outer.names
+    if (!binding.$outer.names) {
+        var names = ["$first", "$last", "$index", "$outer"]
+        if (repeatArray) {
+            names.push("$remove")
+        }
+        avalon.Array.ensure(names, binding.valueName)
+        avalon.Array.ensure(names, binding.keyName)
+        binding.$outer.names = names.join(",")
+    }
+    this.initNames = noop
 }
 
 avalon.directive("html", {
