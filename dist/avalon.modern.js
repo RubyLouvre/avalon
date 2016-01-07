@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.7
+ avalon.modern.js 1.6 built in 2016.1.8
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -943,10 +943,22 @@ function reuseFactory(before, after, heirloom, pathname) {
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
-function $watch(expr, funOrObj) {
-    var hive = this.$events || (this.$events = {})
-    var list = hive[expr] || (hive[expr] = [])
+
+function $watch(expr, funOrObj, exe) {
     var vm = this
+    if (exe && !funOrObj.oneTime && expr.indexOf(".") > 0 &&  funOrObj.element &&
+            funOrObj.element.type && funOrObj.vmodel.$id.indexOf("??") > 1) {
+        var item = expr.split(".")[0]
+        var vmodel = funOrObj.vmodel
+        if (vmodel.hasOwnProperty(item) && vmodel.hasOwnProperty("$first") && vmodel.hasOwnProperty("$last")) {
+            vm = vmodel[item]
+            expr = expr.replace(/^\w+\./, "")
+            funOrObj.expr = expr
+        }
+    }
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -971,16 +983,25 @@ function shouldDispose() {
 function $emit(topVm, curVm, path, a, b, i) {
 
     var hive = topVm && topVm.$events
+    var uniq = {}
     if (hive && hive[path]) {
         var list = hive[path]
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
-               
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
+                    
                     data.update.call(curVm, a, b, path)
+                    if(data.vmodel){
+                       var id = data.vmodel.$id.split("??")[0]
+                       if(avalon.vtree[id] && !uniq[id]){
+                           uniq[id] = 1
+                           batchUpdateEntity(id)
+                       }
+                    }
+                   
                 }
             }
         } catch (e) {
@@ -996,13 +1017,12 @@ function $emit(topVm, curVm, path, a, b, i) {
 }
 
 var canUpdateEntity = true
-function batchUpdateEntity(vm) {
+function batchUpdateEntity(id) {
+    var vm = avalon.vmodels[id]
+    console.log(id)
     if (vm && canUpdateEntity) {
-        var id = vm.$id
-        var vnode = vtree[id]//虚拟DOM
-        if (!vnode)
-            return
-        var dom = dtree[id]//虚拟DOM
+        var vnode = vtree[id]
+        var dom = dtree[id]//真实DOM
         if (dom) {
             if (!root.contains(dom))
                 return
@@ -1019,6 +1039,7 @@ function batchUpdateEntity(vm) {
         if (dom) {
             canUpdateEntity = false
             setTimeout(function () {
+                console.log("update")
                 updateEntity([dom], [vnode])
                 canUpdateEntity = true
             })
@@ -1042,7 +1063,6 @@ function observeArray(array, old, heirloom, options) {
         array.notify = function (a, b, c) {
             var path = a != null ? options.pathname+"."+a : options.pathname
             $emit(heirloom.vm, heirloom.vm, path, b, c)
-            batchUpdateEntity(heirloom.vm)
         }
 
         array._ = sizeCache.shift() || observeObject({
@@ -1114,7 +1134,7 @@ function containsArray(vm, array) {
 
 function observeItem(item, a, b) {
     if (avalon.isObject(item)) {
-        return observe(item, a, b)
+        return observe(item, 0, a, b)
     } else {
         return item
     }
@@ -2584,7 +2604,7 @@ avalon.injectBinding = function (binding) {
         var trim = path.trim()
         if (trim) {
             try {
-                binding.vmodel.$watch(path, binding)
+                binding.vmodel.$watch(path, binding, true)
             } catch (e) {
                 avalon.log(binding, path)
             }
@@ -4740,7 +4760,9 @@ function scanTemplate(binding, template, id) {
     addHook(vnode, function (elem) {
         binding.rendered(elem.firstChild)
     }, "afterChange", 1053)
-    batchUpdateEntity(binding.vmodel)
+    try{
+    batchUpdateEntity(binding.vmodel.$id.split("??")[0])
+    }catch(e){}
 }
 
 function updateTemplate(elem, vnode) {

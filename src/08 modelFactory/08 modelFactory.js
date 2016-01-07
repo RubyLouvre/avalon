@@ -87,6 +87,8 @@ var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
 function observeObject(definition, heirloom, options) {
     options = options || {}
     heirloom = heirloom || {}
+    if (!heirloom.vm)
+        heirloom.vm = definition
 
     var $skipArray = {}
     if (definition.$skipArray) {//收集所有不可监听属性
@@ -148,6 +150,7 @@ function observeObject(definition, heirloom, options) {
     }
 
     hideProperty($vmodel, "$active", true)
+    heirloom.vm = $vmodel
     return $vmodel
 }
 
@@ -156,7 +159,7 @@ function makeFire($vmodel, heirloom) {
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
-            return $watch.call($vmodel, expr, fn)
+            return $watch.apply($vmodel, arguments)
         } else {
             throw "$watch方法参数不对"
         }
@@ -224,7 +227,6 @@ function makeComputed(pathname, heirloom, key, value) {
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
                     $emit(heirloom.vm, _this, pathname, newer, older)
-                    batchUpdateEntity(heirloom.vm)
                 }
             }
         },
@@ -270,7 +272,6 @@ function makeObservable(pathname, heirloom) {
 
             if (_this.$active) {
                 $emit(heirloom.vm, _this, pathname, val, older)
-                batchUpdateEntity(heirloom.vm)
             }
 
         },

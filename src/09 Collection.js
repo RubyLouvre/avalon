@@ -14,7 +14,6 @@ function observeArray(array, old, heirloom, options) {
         array.notify = function (a, b, c) {
             var path = a != null ? options.pathname+"."+a : options.pathname
             $emit(heirloom.vm, heirloom.vm, path, b, c)
-            batchUpdateEntity(heirloom.vm)
         }
 
         array._ = sizeCache.shift() || observeObject({
@@ -86,7 +85,7 @@ function containsArray(vm, array) {
 
 function observeItem(item, a, b) {
     if (avalon.isObject(item)) {
-        return observe(item, a, b)
+        return observe(item, 0, a, b)
     } else {
         return item
     }

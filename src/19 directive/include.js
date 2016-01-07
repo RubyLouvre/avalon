@@ -110,7 +110,9 @@ function scanTemplate(binding, template, id) {
     addHook(vnode, function (elem) {
         binding.rendered(elem.firstChild)
     }, "afterChange", 1053)
-    batchUpdateEntity(binding.vmodel)
+    try{
+    batchUpdateEntity(binding.vmodel.$id.split("??")[0])
+    }catch(e){}
 }
 
 function updateTemplate(elem, vnode) {
