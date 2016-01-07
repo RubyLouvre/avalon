@@ -4994,9 +4994,9 @@ var filters = avalon.filters = {
         return target
     },
     filterBy: function (array, search) {
-      
+
         var type = avalon.type(array)
-       
+
         if (type !== "array" && type !== "object")
             throw "filterBy只能处理对象或数组"
         var args = avalon.slice(arguments, 2)
@@ -5026,14 +5026,24 @@ var filters = avalon.filters = {
         return target
     },
     limitBy: function (input, limit, begin) {
-        if (Array.isArray(input)) {
-            return avalon.slice(input, limit, begin)
-        }
-        if (typeof input === "number" && !isNaN(input)) {
-            input += ""
-        }
-        if (typeof input === "string") {
-            return String.prototype.slice.call(input, limit, begin)
+        if (limit >= 0) {
+            if (typeof input === "number" && !isNaN(input)) {
+                input += ""
+            }
+            if (typeof input !== "string" && !Array.isArray(input)) {
+                return input
+            }
+            begin = ~~begin
+            begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
+            if (limit >= 0) {
+                return input.slice(begin, begin + limit);
+            } else {
+                if (begin === 0) {
+                    return input.slice(limit, input.length);
+                } else {
+                    return input.slice(Math.max(0, begin + limit), begin);
+                }
+            }
         }
         return input
     },

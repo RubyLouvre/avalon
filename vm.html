@@ -7,6 +7,7 @@
             var vm = avalon.define({
                 $id: 'test',
                 array: ["aa", "ba", "ca", "dd"],
+                grid: [{name:"aaa", age: 10},{name:"bbb", age: 13},{name:"ccc", age: 5}],
                 change: function () {
                     vm.array = ["xa", "ca", "aa", "ba", "f", "ka"]
                    // vm.array = ["x", "c", "a", "b", "f", "k"]
@@ -17,8 +18,16 @@
     </head>
     <body ms-controller="test">
         <button type="button" ms-click="change">change</button>
-        <ul>
-            <li ms-repeat="array ">{{el}}</li>
+<!--        <ul>
+            <li ms-repeat="array |filterBy('a') ">{{el}}</li>
         </ul>
+          <ul>
+            <li ms-repeat="array |limitBy(2, 1) ">{{el}}</li>
+        </ul>-->
+        <table>
+            <tr ms-repeat='tr in grid'>
+                <td ms-repeat='tr'>{{$val}}</td>
+            </tr>
+        </table>
     </body>
 </html>
