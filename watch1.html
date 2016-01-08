@@ -8,25 +8,32 @@
                 $id: 'test',
                 aaa: {
                     bb: {
-                        c: 1
+                        c: 11
                     }
+                },
+                obj: {
+                    aaa:11,
+                    bbb:22,
+                    ccc:33
                 },
                 list: [{a:1},{a:2},{a:3}],
                 array: ["a", "b", "c", "d"],
                 data: [[11, 222], [33, 444]],
                 change: function () {
-                    vm.aaa.bb = {
-                        c: 3
+                    vm.aaa.bb.c = 3
+                    vm.obj = {
+                        aaa: 111,
+                        bbb: 222
                     }
-                    vm.array.set(0,88)
-                    vm.array.push("e")
+                  //  vm.array.set(0,88)
+                  //  vm.array.push("e")
                     vm.list[0].a = 999
                 }
             })
             vm.$watch("array.length", function (a, b, k) {
                 console.log(a, b, k)
             })
-             vm.$watch("array.*", function (a, b, k) {
+            vm.$watch("array.*", function (a, b, k) {
                 console.log(a, b, k)
             })
             vm.$watch("aaa.bb.c", function (a, b, k) {
@@ -38,6 +45,12 @@
         <button type="button" ms-click="change">change</button>
         <ul>
             <li ms-repeat="list">{{el.a}}</li>
+        </ul>
+        <ul>
+            <li ms-repeat="obj">{{$key}}--{{$val}}</li>
+        </ul>
+         <ul>
+            <li ms-repeat="aaa">{{$val.c}}</li>
         </ul>
     </body>
 </html>

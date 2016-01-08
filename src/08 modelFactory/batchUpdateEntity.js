@@ -1,7 +1,6 @@
 var canUpdateEntity = true
 function batchUpdateEntity(id) {
     var vm = avalon.vmodels[id]
-    console.log(id)
     if (vm && canUpdateEntity) {
         var vnode = vtree[id]
         var dom = dtree[id]//真实DOM
@@ -21,7 +20,6 @@ function batchUpdateEntity(id) {
         if (dom) {
             canUpdateEntity = false
             setTimeout(function () {
-                console.log("update")
                 updateEntity([dom], [vnode])
                 canUpdateEntity = true
             })

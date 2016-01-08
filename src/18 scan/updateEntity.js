@@ -39,7 +39,18 @@ function updateEntity(nodes, vnodes, parent) {
             execHooks(cur, mirror, parent, "afterChange")
             continue
         }
-        if (!mirror.skipContent && mirror.children && cur && cur.nodeType === 1) {
+        if (mirror.signature) {
+            var repeatNodes = [cur], next = cur
+            while (next = next.nextSibling) {
+                repeatNodes.push(next)
+                if (next.nodeValue === mirror.signature + "end") {
+                    break
+                }
+            }
+            updateEntity(repeatNodes, getRepeatItem(mirror.children), parent)
+
+        } else if (!mirror.skipContent && mirror.children && cur && cur.nodeType === 1) {
+
             updateEntity(avalon.slice(cur.childNodes), mirror.children, cur)
         }
         execHooks(cur, mirror, parent, "afterChange")

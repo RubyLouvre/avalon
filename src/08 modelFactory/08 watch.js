@@ -1,16 +1,19 @@
 
 function $watch(expr, funOrObj, exe) {
     var vm = this
-    if (exe && !funOrObj.oneTime && expr.indexOf(".") > 0 &&  funOrObj.element &&
-            funOrObj.element.type && funOrObj.vmodel.$id.indexOf("??") > 1) {
-        var item = expr.split(".")[0]
-        var vmodel = funOrObj.vmodel
-        if (vmodel.hasOwnProperty(item) && vmodel.hasOwnProperty("$first") && vmodel.hasOwnProperty("$last")) {
-            vm = vmodel[item]
-            expr = expr.replace(/^\w+\./, "")
-            funOrObj.expr = expr
-        }
+    var vmodel = funOrObj.vmodel
+    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
+    if (exe && !funOrObj.oneTime && 
+            vmodel && vmodel.hasOwnProperty("$repeatItem") &&
+            expr.indexOf(vmodel.$repeatItem + ".") === 0) {
+        vm = vmodel[vmodel.$repeatItem]
+        var old = expr
+        expr = expr.replace(/^[^.]+\./, "")
+        console.log(vmodel.$repeatItem,vm,expr,vmodel)
+        funOrObj.expr = expr
     }
+
+
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
 
@@ -47,16 +50,17 @@ function $emit(topVm, curVm, path, a, b, i) {
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
-                    
+
                     data.update.call(curVm, a, b, path)
-                    if(data.vmodel){
-                       var id = data.vmodel.$id.split("??")[0]
-                       if(avalon.vtree[id] && !uniq[id]){
-                           uniq[id] = 1
-                           batchUpdateEntity(id)
-                       }
+                    if (data.vmodel) {
+                        var id = data.vmodel.$id.split("??")[0]
+                        if (avalon.vtree[id] && !uniq[id]) {
+                            console.log(topVm, curVm)
+                            uniq[id] = 1
+                            batchUpdateEntity(id)
+                        }
                     }
-                   
+
                 }
             }
         } catch (e) {

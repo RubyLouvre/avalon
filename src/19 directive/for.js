@@ -329,7 +329,9 @@ function repeatItemFactory(item, binding, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1
+        $outer: 1,
+        $repeatItem: binding.itemName,
+        $repeatPath: ""
     }
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
@@ -472,8 +474,9 @@ function initNames(repeatArray) {
         if (repeatArray) {
             names.push("$remove")
         }
-        avalon.Array.ensure(names, binding.valueName)
+        avalon.Array.ensure(names, binding.itemName)
         avalon.Array.ensure(names, binding.keyName)
+
         binding.$outer.names = names.join(",")
     }
     this.initNames = noop
