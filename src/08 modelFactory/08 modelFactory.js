@@ -23,33 +23,30 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {
-        __: "avalon.define"
-    }, {
+        pathname: $id,
         top: true
     })
 
     avalon.vmodels[$id] = vmodel
-    vmodel.$id = $id
-
     return vmodel
 }
 
 //observeArray及observeObject的包装函数
-function observe(definition, old, heirloom, options) {
+function observe(definition, old, options) {
     //如果数组转换为监控数组
     if (Array.isArray(definition)) {
-        return observeArray(definition, old, heirloom, options)
+        return observeArray(definition, old, options)
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            var vm = reuseFactory(old, definition, heirloom)
+            var vm = reuseFactory(old, definition, options)
             for (var i in definition) {
                 vm[i] = definition[i]
             }
             return vm
         } else {
             //否则新建一个VM
-            return observeObject(definition, heirloom, options)
+            return observeObject(definition, options)
         }
     } else {
         return definition
@@ -83,20 +80,18 @@ function Component() {
 var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
         "$skipArray,$active,$accessors")
 
-
-function observeObject(definition, heirloom, options) {
+//中间生成的VM都可以通过$id追溯到用户定义的VM
+//用户定义的VM，特指avalon.define(obj)中的第一层对象
+//因为只有这一层才存在$events，所有绑定对象或$watch回调将存放在这里
+function observeObject(definition, options) {
     options = options || {}
-    heirloom = heirloom || {}
-    if (!heirloom.vm)
-        heirloom.vm = definition
-
     var $skipArray = {}
     if (definition.$skipArray) {//收集所有不可监听属性
         $skipArray = oneObject(definition.$skipArray)
         delete definition.$skipArray
     }
     var $computed = getComputed(definition) // 收集所有计算属性
-    var $pathname = options.pathname || ""
+    var $pathname = options.pathname || generateID("$")
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var keys = {}, key, path
@@ -107,14 +102,14 @@ function observeObject(definition, heirloom, options) {
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
             path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path, heirloom)
+            $accessors[key] = makeObservable(path)
         }
     }
 
     for (key in $computed) {
         keys[key] = definition[key]
         path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
+        $accessors[key] = makeComputed(path, key, $computed[key])
     }
 
     $accessors.$model = $modelDescriptor
@@ -138,11 +133,11 @@ function observeObject(definition, heirloom, options) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "$id", $pathname || generateID("$"))
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     if (options.top === true) {
-        makeFire($vmodel, heirloom)
+        makeFire($vmodel)
     }
 
     for (key in $computed) {
@@ -150,12 +145,10 @@ function observeObject(definition, heirloom, options) {
     }
 
     hideProperty($vmodel, "$active", true)
-    heirloom.vm = $vmodel
     return $vmodel
 }
 
-function makeFire($vmodel, heirloom) {
-
+function makeFire($vmodel) {
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
@@ -172,12 +165,9 @@ function makeFire($vmodel, heirloom) {
                 v.$fire && v.$fire(p, a, b)
             }
         } else {
-            if (heirloom.vm) {
-                $emit(heirloom.vm, $vmodel, expr, a, b)
-            }
+            $emit($vmodel, expr, a, b)
         }
     })
-    heirloom.vm = heirloom.vm || $vmodel
 }
 
 function isComputed(val) {//speed up!
@@ -208,7 +198,7 @@ function getComputed(obj) {
 
 
 
-function makeComputed(pathname, heirloom, key, value) {
+function makeComputed(pathname, key, value) {
     var old = NaN, _this = {}
     return {
         get: function () {
@@ -226,7 +216,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 value.set.call(_this, x)
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
-                    $emit(heirloom.vm, _this, pathname, newer, older)
+                    $emit(pathname, newer, older)
                 }
             }
         },
@@ -243,7 +233,7 @@ function isSkip(key, value, skipArray) {
 }
 
 
-function makeObservable(pathname, heirloom) {
+function makeObservable(pathname) {
     var old = NaN, _this = {}
     return {
         get: function () {
@@ -260,10 +250,10 @@ function makeObservable(pathname, heirloom) {
                 return
             if (val && typeof val === "object") {
 
-                val = observe(val, old, heirloom, {
+                val = observe(val, old, {
                     pathname: pathname
                 })
-              
+
             }
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用
@@ -272,7 +262,7 @@ function makeObservable(pathname, heirloom) {
             old = val
 
             if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, older)
+                $emit(pathname, val, older)
             }
 
         },

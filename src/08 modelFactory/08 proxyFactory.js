@@ -1,7 +1,7 @@
 
 //用于合并两个VM为一个VM
 
-function proxyFactory(before, after, heirloom) {
+function proxyFactory(before, after) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -41,8 +41,9 @@ function proxyFactory(before, after, heirloom) {
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     var id = after.$id ? before.$id + "??" + after.$id : before.$id
     hideProperty($vmodel, id)
-
-    makeFire($vmodel, heirloom || {})
+    makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
+
+// xxx  array * a 

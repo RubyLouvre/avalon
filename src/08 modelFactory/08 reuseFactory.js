@@ -2,10 +2,11 @@ function SubComponent() {
 }
 
 //创建子VM
-function reuseFactory(before, after, heirloom, pathname) {
+function reuseFactory(before, after, options) {
+    var $pathname = options.pathname
     var resue = before.$accessors || {}
     var $accessors = {}
-    var keys = {}, key, path
+    var keys = {}, key
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -14,8 +15,7 @@ function reuseFactory(before, after, heirloom, pathname) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                path = pathname ? pathname + "." + key : key
-                $accessors[key] = makeObservable(path, heirloom)
+                $accessors[key] = makeObservable($pathname + "." + key)
             }
         }
     }
@@ -33,7 +33,8 @@ function reuseFactory(before, after, heirloom, pathname) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-    $vmodel.$id = before.$id
+
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$active", true)

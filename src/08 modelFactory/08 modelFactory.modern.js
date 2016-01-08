@@ -9,26 +9,23 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {
-        timestamp: new Date() - 0
-    }, {
+        pathname: $id,
         top: true
     })
 
     avalon.vmodels[$id] = vmodel
-    vmodel.$id = $id
-
     return vmodel
 }
 
 
 //observeArray及observeObject的包装函数
-function observe(definition, old, heirloom, options) {
+function observe(definition, old, options) {
     if (Array.isArray(definition)) {
-        return observeArray(definition, old, heirloom, options)
+        return observeArray(definition, old, options)
     } else if (avalon.isPlainObject(definition)) {
-        var vm = observeObject(definition, heirloom, options)
+        var vm = observeObject(definition, options)
         if (Object(old) === old) {
-            vm = reuseFactory(vm, old, heirloom)
+            vm = reuseFactory(vm, old, options)
         }
         for (var i in definition) {
             vm[i] = definition[i]
@@ -62,9 +59,8 @@ function Component() {
  */
 var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$active")
 
-function observeObject(definition, heirloom, options) {
+function observeObject(definition, options) {
     options = options || {}
-    heirloom = heirloom || {}
 
     var $skipArray = {}//收集所有不可监听属性
     if (definition.$skipArray) {
@@ -83,14 +79,14 @@ function observeObject(definition, heirloom, options) {
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
             path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path, heirloom)
+            $accessors[key] = makeObservable(path)
         }
     }
 
     for (key in $computed) {
         keys[key] = definition[key]
         path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
+        $accessors[key] = makeComputed(path, key, $computed[key])
     }
 
     $accessors.$model = $modelDescriptor
@@ -114,12 +110,12 @@ function observeObject(definition, heirloom, options) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "$id", "anonymous")
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.top === true) {
-        makeFire($vmodel, heirloom)
+        makeFire($vmodel)
     }
 
     for (key in $computed) {
@@ -157,7 +153,7 @@ function getComputed(obj) {
     return $computed
 }
 
-function makeComputed(pathname, heirloom, key, value) {
+function makeComputed(pathname, key, value) {
     var old = NaN, _this = {}
     return {
         get: function () {
@@ -175,8 +171,7 @@ function makeComputed(pathname, heirloom, key, value) {
                 value.set.call(_this, x)
                 var newer = _this[key]
                 if (_this.$active && (newer !== older)) {
-                    $emit(heirloom.vm, _this, pathname, newer, older)
-                    batchUpdateEntity(heirloom.vm)
+                    $emit(pathname, newer, older)
                 }
             }
         },
@@ -192,7 +187,7 @@ function isSkip(key, value, skipArray) {
             (value && value.nodeName && value.nodeType > 0)
 }
 
-function makeObservable(pathname, heirloom) {
+function makeObservable(pathname) {
     var old = NaN, _this = {}
     return {
         get: function () {
@@ -208,7 +203,7 @@ function makeObservable(pathname, heirloom) {
             if (old === val)
                 return
             if (val && typeof val === "object") {
-                val = observe(val, old, heirloom, {
+                val = observe(val, old, {
                     pathname: pathname
                 })
             }
@@ -218,17 +213,15 @@ function makeObservable(pathname, heirloom) {
             var older = old
             old = val
             if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, older)
-                batchUpdateEntity(heirloom.vm)
+                $emit(pathname, val, older)
             }
-
         },
         enumerable: true,
         configurable: true
     }
 }
 
-function makeFire($vmodel, heirloom) {
+function makeFire($vmodel) {
     hideProperty($vmodel, "$events", {})
     hideProperty($vmodel, "$watch", $watch)
     hideProperty($vmodel, "$fire", function (expr, a, b) {
@@ -239,12 +232,9 @@ function makeFire($vmodel, heirloom) {
                 v.$fire && v.$fire(p, a, b)
             }
         } else {
-            if (heirloom.vm) {
-                $emit(heirloom.vm, $vmodel, expr, a, b)
-            }
+            $emit($vmodel, expr, a, b)
         }
     })
-    heirloom.vm = heirloom.vm || $vmodel
 }
 
 

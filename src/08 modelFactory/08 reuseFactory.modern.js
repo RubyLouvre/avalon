@@ -1,7 +1,8 @@
 function SubComponent() {
 }
 
-function reuseFactory(before, after, heirloom, pathname) {
+function reuseFactory(before, after,options ) {
+    var $pathname = options.pathname
     var $accessors = {}
     var keys = {}, key, path
     for (key in after) {
@@ -13,8 +14,7 @@ function reuseFactory(before, after, heirloom, pathname) {
             if (accessor && accessor.get) {
                 $accessors[key] = accessor
             } else {
-                path = pathname ? pathname + "." + key : key
-                $accessors[key] = makeObservable(path, heirloom)
+                $accessors[key] = makeObservable($pathname + "." + key)
             }
         }
     }
@@ -33,8 +33,8 @@ function reuseFactory(before, after, heirloom, pathname) {
         return keys[key] === true
     }
 
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }

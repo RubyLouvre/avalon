@@ -1,4 +1,4 @@
-function proxyFactory(before, after, heirloom) {
+function proxyFactory(before, after) {
     var $accessors = {}
     var keys = {}
     //收集所有键值对及访问器属性
@@ -32,10 +32,10 @@ function proxyFactory(before, after, heirloom) {
     }
 
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$id", before.$id + "??" +
-            String(after.$id).slice(0, 4))
+    var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, id)
 
-    makeFire($vmodel, heirloom || {})
+    makeFire($vmodel)
 
     hideProperty($vmodel, "$active", true)
     return $vmodel
