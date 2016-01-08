@@ -138,7 +138,7 @@ function observeObject(definition, heirloom, options) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "$id", generateID("$"))
+    hideProperty($vmodel, "$id", $pathname || generateID("$"))
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     if (options.top === true) {
@@ -263,6 +263,7 @@ function makeObservable(pathname, heirloom) {
                 val = observe(val, old, heirloom, {
                     pathname: pathname
                 })
+              
             }
             if (!this.configurable) {
                 _this = this // 保存当前子VM的引用

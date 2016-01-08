@@ -10,7 +10,7 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-        hideProperty(array, "$id", generateID("$"))
+        hideProperty(array, "$id", options.pathname || generateID("$"))
         array.notify = function (a, b, c) {
             var path = a != null ? options.pathname+"."+a : options.pathname
             $emit(heirloom.vm, heirloom.vm, path, b, c)

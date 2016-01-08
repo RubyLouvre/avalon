@@ -894,8 +894,8 @@ function proxyFactory(before, after, heirloom) {
 
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$id", before.$id + "??" +
-            String(after.$id).slice(0, 4))
+    var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, id)
 
     makeFire($vmodel, heirloom || {})
     hideProperty($vmodel, "$active", true)
@@ -937,7 +937,7 @@ function reuseFactory(before, after, heirloom, pathname) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
+    $vmodel.$id = before.$id
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$active", true)
@@ -948,13 +948,17 @@ function $watch(expr, funOrObj, exe) {
     var vm = this
     var vmodel = funOrObj.vmodel
     //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime && 
+    if (exe && !funOrObj.oneTime &&
             vmodel && vmodel.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vmodel.$repeatItem + ".") === 0) {
+            expr.indexOf(vmodel.$repeatItem ) === 0) {
         vm = vmodel[vmodel.$repeatItem]
-        var old = expr
-        expr = expr.replace(/^[^.]+\./, "")
-        console.log(vmodel.$repeatItem,vm,expr,vmodel)
+//        if (/^\$\d+/.test(vm.$id)) {
+//            expr = expr.replace(/^[^.]+\./, "")
+//        } else {
+//            expr = expr.replace(/^[^.]+\./, vm.$id)
+//        }
+//
+//        console.log(vm, expr, vmodel)
         funOrObj.expr = expr
     }
 
@@ -1061,7 +1065,7 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-        hideProperty(array, "$id", generateID("$"))
+        hideProperty(array, "$id", options.pathname || generateID("$"))
         array.notify = function (a, b, c) {
             var path = a != null ? options.pathname+"."+a : options.pathname
             $emit(heirloom.vm, heirloom.vm, path, b, c)
@@ -4283,6 +4287,7 @@ avalon.directive("repeat", {
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
+            proxy.$id = value.$id + (repeatArray ? "" : "."+ component.key)
 
             if (component._new) {
                 updateVirtual(component.children, proxy)
@@ -4433,14 +4438,14 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
         $accessors: {},
         $outer: 1,
-        $repeatItem: binding.itemName
+        $repeatItem: binding.itemName,
+        $repeatPath: ""
     }
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
@@ -4452,7 +4457,7 @@ function repeatItemFactory(item, binding, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
 
-    return proxyFactory(before, after, heirloom)
+    return  proxyFactory(before, after, heirloom)
 }
 
 function getRepeatItem(children) {
@@ -4583,8 +4588,9 @@ function initNames(repeatArray) {
         if (repeatArray) {
             names.push("$remove")
         }
-        avalon.Array.ensure(names, binding.valueName)
+        avalon.Array.ensure(names, binding.itemName)
         avalon.Array.ensure(names, binding.keyName)
+
         binding.$outer.names = names.join(",")
     }
     this.initNames = noop

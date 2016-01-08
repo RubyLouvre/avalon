@@ -3,13 +3,17 @@ function $watch(expr, funOrObj, exe) {
     var vm = this
     var vmodel = funOrObj.vmodel
     //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime && 
+    if (exe && !funOrObj.oneTime &&
             vmodel && vmodel.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vmodel.$repeatItem + ".") === 0) {
+            expr.indexOf(vmodel.$repeatItem ) === 0) {
         vm = vmodel[vmodel.$repeatItem]
-        var old = expr
-        expr = expr.replace(/^[^.]+\./, "")
-        console.log(vmodel.$repeatItem,vm,expr,vmodel)
+//        if (/^\$\d+/.test(vm.$id)) {
+//            expr = expr.replace(/^[^.]+\./, "")
+//        } else {
+//            expr = expr.replace(/^[^.]+\./, vm.$id)
+//        }
+//
+//        console.log(vm, expr, vmodel)
         funOrObj.expr = expr
     }
 

@@ -173,6 +173,7 @@ avalon.directive("repeat", {
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
+            proxy.$id = value.$id + (repeatArray ? "" : "."+ component.key)
 
             if (component._new) {
                 updateVirtual(component.children, proxy)
@@ -323,7 +324,6 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
@@ -343,7 +343,7 @@ function repeatItemFactory(item, binding, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
 
-    return proxyFactory(before, after, heirloom)
+    return  proxyFactory(before, after, heirloom)
 }
 
 function getRepeatItem(children) {

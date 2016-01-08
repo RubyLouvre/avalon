@@ -39,8 +39,8 @@ function proxyFactory(before, after, heirloom) {
 
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$id", before.$id + "??" +
-            String(after.$id).slice(0, 4))
+    var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, id)
 
     makeFire($vmodel, heirloom || {})
     hideProperty($vmodel, "$active", true)

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                obj: {
+                    aaa:11,
+                    bbb:22,
+                    ccc:33
+                },
+             
+                 list: [{a:1},{a:2},{a:3}],
+              
+                change: function () {
+                    vm.obj.aaa = 3
+                   
+                  //  vm.array.set(0,88)
+                  //  vm.array.push("e")
+                    vm.list[0].a = 999
+                }
+            })
+            vm.$watch("array.length", function (a, b, k) {
+                console.log(a, b, k)
+            })
+            vm.$watch("array.*", function (a, b, k) {
+                console.log(a, b, k)
+            })
+          
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+        <ul>
+            <li ms-repeat="list">{{el.a}}</li>
+        </ul>
+       
+         <ul>
+            <li ms-repeat="obj">{{$val}}</li>
+        </ul>
+    </body>
+</html>

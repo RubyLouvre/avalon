@@ -33,7 +33,7 @@ function reuseFactory(before, after, heirloom, pathname) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
+    $vmodel.$id = before.$id
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$active", true)
