@@ -8,7 +8,7 @@ avalon.define = function (definition) {
     if (!$id) {
         log("warning: vm必须指定$id")
     }
-    var vmodel = observeObject(definition, {
+    var vmodel = observeObject(definition, {}, {
         pathname: $id,
         top: true
     })
@@ -18,28 +18,31 @@ avalon.define = function (definition) {
 }
 
 
-//observeArray及observeObject的包装函数
-function observe(definition, old, options) {
+function observe(definition, old, heirloom, options) {
+    //如果数组转换为监控数组
     if (Array.isArray(definition)) {
-        return observeArray(definition, old, options)
+        return observeArray(definition, old, heirloom, options)
     } else if (avalon.isPlainObject(definition)) {
-        var vm = observeObject(definition, options)
+        //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            vm = reuseFactory(vm, old, options)
+            var vm = reuseFactory(old, definition, heirloom, options)
+            for (var i in definition) {
+                if ($$skipArray[i])
+                    continue
+                vm[i] = definition[i]
+            }
+            return vm
+        } else {
+            //否则新建一个VM
+            return observeObject(definition, heirloom, options)
         }
-        for (var i in definition) {
-            vm[i] = definition[i]
-        }
-        return vm
     } else {
         return definition
     }
 }
 
-
 function Component() {
 }
-
 /*
  将一个对象转换为一个VM
  它拥有如下私有属性
@@ -59,7 +62,7 @@ function Component() {
  */
 var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$active")
 
-function observeObject(definition, options) {
+function observeObject(definition, heirloom, options) {
     options = options || {}
 
     var $skipArray = {}//收集所有不可监听属性
@@ -79,14 +82,14 @@ function observeObject(definition, options) {
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
             path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path)
+            $accessors[key] = makeObservable(path, heirloom)
         }
     }
 
     for (key in $computed) {
         keys[key] = definition[key]
         path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, key, $computed[key])
+        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
     }
 
     $accessors.$model = $modelDescriptor
@@ -116,6 +119,7 @@ function observeObject(definition, options) {
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.top === true) {
         makeFire($vmodel)
+        heirloom.vm = $vmodel
     }
 
     for (key in $computed) {
@@ -153,25 +157,20 @@ function getComputed(obj) {
     return $computed
 }
 
-function makeComputed(pathname, key, value) {
-    var old = NaN, _this = {}
+function makeComputed(pathname, heirloom, key, value) {
+    var old = NaN
     return {
         get: function () {
-            if (!this.configurable) {
-                _this = this
-            }
-            return old = value.get.call(_this)
+            return old = value.get.call(this)
         },
         set: function (x) {
             if (typeof value.set === "function") {
-                if (!this.configurable) {
-                    _this = this
-                }
                 var older = old
-                value.set.call(_this, x)
-                var newer = _this[key]
-                if (_this.$active && (newer !== older)) {
-                    $emit(pathname, newer, older)
+                value.set.call(this, x)
+                var val = this[key]
+                if (this.$active && (val !== older)) {
+                    var vm = heirloom.vm
+                    vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
                 }
             }
         },
@@ -187,15 +186,13 @@ function isSkip(key, value, skipArray) {
             (value && value.nodeName && value.nodeType > 0)
 }
 
-function makeObservable(pathname) {
-    var old = NaN, _this = {}
+function makeObservable(pathname, heirloom) {
+    var old = NaN
     return {
         get: function () {
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
-            if (_this.$active) {
-                // collectDependency(pathname, heirloom)
+
+            if (this.$active) {
+                //以后再处理  collectDependency(pathname, heirloom)
             }
             return old
         },
@@ -203,17 +200,17 @@ function makeObservable(pathname) {
             if (old === val)
                 return
             if (val && typeof val === "object") {
-                val = observe(val, old, {
+                val = observe(val, old, heirloom, {
                     pathname: pathname
                 })
             }
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
+
             var older = old
             old = val
-            if (_this.$active) {
-                $emit(pathname, val, older)
+
+            if (this.$active) {
+                var vm = heirloom.vm
+                vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
             }
         },
         enumerable: true,
@@ -232,7 +229,7 @@ function makeFire($vmodel) {
                 v.$fire && v.$fire(p, a, b)
             }
         } else {
-            $emit($vmodel, expr, a, b)
+            $emit($vmodel, $vmodel, expr, a, b)
         }
     })
 }

@@ -12,8 +12,12 @@ function observeArray(array, old, heirloom, options) {
         }
         hideProperty(array, "$id", options.pathname || generateID("$"))
         array.notify = function (a, b, c) {
-            var path = a != null ? options.pathname+"."+a : options.pathname
-            $emit(heirloom.vm, heirloom.vm, path, b, c)
+            var vm = heirloom.vm
+            if (vm) {
+                var path = a != null ? options.pathname + "." + a : options.pathname
+                path = path.replace(vm.$id + ".", "")
+                $emit(vm, vm, path, b, c)
+            }
         }
 
         array._ = sizeCache.shift() || observeObject({
@@ -43,10 +47,8 @@ function observeArray(array, old, heirloom, options) {
             },
             element: {},
             update: function (newlen, oldlen) {
-                array.notify("length", newlen,oldlen)
-//                if (heirloom.vm) {
-//                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
-//                }
+                console.log("update length")
+                array.notify("length", newlen, oldlen)
             }
         })
 
@@ -55,8 +57,9 @@ function observeArray(array, old, heirloom, options) {
         } else {
             array.$model = toJson(array)
         }
+        hideProperty(array, "$active", options.top ? generateID("$") : true)
         var arrayOptions = {
-            pathname: "", //options.pathname + ".*",
+            pathname: options.pathname + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -99,7 +102,7 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-         
+
             this.notify("*", val, this[index])
             this.splice(index, 1, val)
         }

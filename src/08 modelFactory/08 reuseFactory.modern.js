@@ -1,10 +1,10 @@
 function SubComponent() {
 }
 
-function reuseFactory(before, after,options ) {
+function reuseFactory(before, after, heirloom, options) {
     var $pathname = options.pathname
     var $accessors = {}
-    var keys = {}, key, path
+    var keys = {}, key
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -14,7 +14,7 @@ function reuseFactory(before, after,options ) {
             if (accessor && accessor.get) {
                 $accessors[key] = accessor
             } else {
-                $accessors[key] = makeObservable($pathname + "." + key)
+                $accessors[key] = makeObservable($pathname + "." + key, heirloom)
             }
         }
     }

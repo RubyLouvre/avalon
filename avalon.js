@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.6 built in 2016.1.8
+ avalon.js 1.6 built in 2016.1.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1102,15 +1102,12 @@ avalon.define = function (definition) {
     if (!$id) {
         log("warning: vm必须指定$id")
     }
-    var vmodel = observeObject(definition, {
-        __: "avalon.define"
-    }, {
+    var vmodel = observeObject(definition, {}, {
+        pathname: $id,
         top: true
     })
 
     avalon.vmodels[$id] = vmodel
-    vmodel.$id = $id
-
     return vmodel
 }
 
@@ -1122,8 +1119,10 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            var vm = reuseFactory(old, definition, heirloom)
+            var vm = reuseFactory(old, definition, heirloom, options)
             for (var i in definition) {
+                if ($$skipArray[i])
+                    continue
                 vm[i] = definition[i]
             }
             return vm
@@ -1163,20 +1162,19 @@ function Component() {
 var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
         "$skipArray,$active,$accessors")
 
-
+//中间生成的VM都可以通过$id追溯到用户定义的VM
+//用户定义的VM，特指avalon.define(obj)中的第一层对象
+//因为只有这一层才存在$events，所有绑定对象或$watch回调将存放在这里
 function observeObject(definition, heirloom, options) {
     options = options || {}
-    heirloom = heirloom || {}
-    if (!heirloom.vm)
-        heirloom.vm = definition
-
     var $skipArray = {}
+    var top = options.top
     if (definition.$skipArray) {//收集所有不可监听属性
         $skipArray = oneObject(definition.$skipArray)
         delete definition.$skipArray
     }
     var $computed = getComputed(definition) // 收集所有计算属性
-    var $pathname = options.pathname || ""
+    var $pathname = options.pathname || generateID("$")
     var $vmodel = new Component() //要返回的对象, 它在IE6-8下可能被偷龙转凤
     var $accessors = {} //用于储放所有访问器属性的定义
     var keys = {}, key, path
@@ -1187,14 +1185,14 @@ function observeObject(definition, heirloom, options) {
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
             path = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(path, heirloom)
+            $accessors[key] = makeObservable(path, heirloom, top)
         }
     }
 
     for (key in $computed) {
         keys[key] = definition[key]
         path = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(path, heirloom, key, $computed[key])
+        $accessors[key] = makeComputed(path, heirloom, key, $computed[key], top)
     }
 
     $accessors.$model = $modelDescriptor
@@ -1218,47 +1216,22 @@ function observeObject(definition, heirloom, options) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "$id", $pathname || generateID("$"))
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    if (options.top === true) {
-        makeFire($vmodel, heirloom)
+    if (top === true) {
+        makeFire($vmodel)
+        heirloom.vm = $vmodel
     }
 
     for (key in $computed) {
         val = $vmodel[key]
     }
 
-    hideProperty($vmodel, "$active", true)
-    heirloom.vm = $vmodel
+    hideProperty($vmodel, "$active", top ? generateID("$"): true )
     return $vmodel
 }
 
-function makeFire($vmodel, heirloom) {
-
-    hideProperty($vmodel, "$events", {})
-    hideProperty($vmodel, "$watch", function (expr, fn) {
-        if (expr && fn) {
-            return $watch.apply($vmodel, arguments)
-        } else {
-            throw "$watch方法参数不对"
-        }
-    })
-    hideProperty($vmodel, "$fire", function (expr, a, b) {
-        if (expr.indexOf("all!") === 0) {
-            var p = expr.slice(4)
-            for (var i in avalon.vmodels) {
-                var v = avalon.vmodels[i]
-                v.$fire && v.$fire(p, a, b)
-            }
-        } else {
-            if (heirloom.vm) {
-                $emit(heirloom.vm, $vmodel, expr, a, b)
-            }
-        }
-    })
-    heirloom.vm = heirloom.vm || $vmodel
-}
 
 function isComputed(val) {//speed up!
     if (val && typeof val === "object") {
@@ -1288,25 +1261,23 @@ function getComputed(obj) {
 
 
 
-function makeComputed(pathname, heirloom, key, value) {
-    var old = NaN, _this = {}
+function makeComputed(pathname, heirloom, key, value, top) {
+    var old = NaN
+    function get() {
+        return old = value.get.call(this)
+    }
+    if (top)
+        get.heirloom = heirloom
     return {
-        get: function () {
-            if (!this.configurable) {
-                _this = this
-            }
-            return old = value.get.call(_this)
-        },
+        get: get,
         set: function (x) {
             if (typeof value.set === "function") {
-                if (!this.configurable) {
-                    _this = this
-                }
                 var older = old
-                value.set.call(_this, x)
-                var newer = _this[key]
-                if (_this.$active && (newer !== older)) {
-                    $emit(heirloom.vm, _this, pathname, newer, older)
+                value.set.call(this, x)
+                var val = this[key]
+                if (this.$active && (val !== older)) {
+                    var vm = heirloom.vm
+                    vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
                 }
             }
         },
@@ -1324,43 +1295,70 @@ function isSkip(key, value, skipArray) {
 
 
 function makeObservable(pathname, heirloom) {
-    var old = NaN, _this = {}
+    var old = NaN
+    function get() {
+        if (this.$active) {
+            //以后再处理  collectDependency(pathname, heirloom)
+        }
+        return old
+    }
+    if (top)
+        get.heirloom = heirloom
     return {
-        get: function () {
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
-            if (_this.$active) {
-                //以后再处理  collectDependency(pathname, heirloom)
-            }
-            return old
-        },
+        get: get,
         set: function (val) {
             if (old === val)
                 return
             if (val && typeof val === "object") {
-
                 val = observe(val, old, heirloom, {
                     pathname: pathname
                 })
-              
             }
-            if (!this.configurable) {
-                _this = this // 保存当前子VM的引用
-            }
+
             var older = old
             old = val
 
-            if (_this.$active) {
-                $emit(heirloom.vm, _this, pathname, val, older)
-            }
+            if (this.$active) {
+                var vm = heirloom.vm
+                //fire a
+                vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
+                if (pathname.indexOf(".*.") > 0) {
+                    var index = pathname.indexOf(".")
 
+                    var top = avalon.vmodels[ pathname.slice(0, index)]
+                    if (top) {
+                          console.log( top, pathname)
+                        top && $emit(top, this, pathname.slice(index + 1), val, older)
+                    }
+                }
+            }
         },
         enumerable: true,
         configurable: true
     }
 }
 
+function makeFire($vmodel) {
+    hideProperty($vmodel, "$events", {})
+    hideProperty($vmodel, "$watch", function (expr, fn) {
+        if (expr && fn) {
+            return $watch.apply($vmodel, arguments)
+        } else {
+            throw "$watch方法参数不对"
+        }
+    })
+    hideProperty($vmodel, "$fire", function (expr, a, b) {
+        if (expr.indexOf("all!") === 0) {
+            var p = expr.slice(4)
+            for (var i in avalon.vmodels) {
+                var v = avalon.vmodels[i]
+                v.$fire && v.$fire(p, a, b)
+            }
+        } else {
+            $emit($vmodel, $vmodel, expr, a, b)
+        }
+    })
+}
 
 
 function toJson(val) {
@@ -1517,7 +1515,7 @@ if (!canHideOwn) {
 
 //用于合并两个VM为一个VM
 
-function proxyFactory(before, after, heirloom) {
+function proxyFactory(before, after) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -1555,22 +1553,23 @@ function proxyFactory(before, after, heirloom) {
 
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, id)
-
-    makeFire($vmodel, heirloom || {})
+   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, "$id", before.$id)
+    makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
-
+avalon.proxyFactory = proxyFactory
+// xxx  array * a 
 function SubComponent() {
 }
-
+// topid + ??1234 + .*.+ prop + . + prop
 //创建子VM
-function reuseFactory(before, after, heirloom, pathname) {
+function reuseFactory(before, after, heirloom, options) {
+    var $pathname = options.pathname
     var resue = before.$accessors || {}
     var $accessors = {}
-    var keys = {}, key, path
+    var keys = {}, key
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -1579,8 +1578,7 @@ function reuseFactory(before, after, heirloom, pathname) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                path = pathname ? pathname + "." + key : key
-                $accessors[key] = makeObservable(path, heirloom)
+                $accessors[key] = makeObservable($pathname + "." + key, heirloom )
             }
         }
     }
@@ -1598,7 +1596,8 @@ function reuseFactory(before, after, heirloom, pathname) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-    $vmodel.$id = before.$id
+
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$active", true)
@@ -1607,22 +1606,33 @@ function reuseFactory(before, after, heirloom, pathname) {
 
 function $watch(expr, funOrObj, exe) {
     var vm = this
-    var vmodel = funOrObj.vmodel
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime &&
-            vmodel && vmodel.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vmodel.$repeatItem ) === 0) {
-        vm = vmodel[vmodel.$repeatItem]
-//        if (/^\$\d+/.test(vm.$id)) {
-//            expr = expr.replace(/^[^.]+\./, "")
-//        } else {
-//            expr = expr.replace(/^[^.]+\./, vm.$id)
-//        }
-//
-//        console.log(vm, expr, vmodel)
-        funOrObj.expr = expr
+    var toppath = expr.split(".")[0]
+    try {
+        //调整要添加绑定对象或回调的VM
+        if (vm.$accessors) {
+            vm = vm.$accessors[toppath].get.heirloom.vm
+        } else {
+            vm = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.vm
+        }
+    } catch (e) {
     }
 
+    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
+    if (exe && !funOrObj.oneTime &&
+            vm.hasOwnProperty("$repeatItem") &&
+            expr.indexOf(vm.$repeatItem + ".") === 0) {
+        if (vm.$repeatObject) {
+            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+            var arr = vm.$id.match(/([^.]+)\.(.+)/)
+            expr = expr.replace(vm.$repeatItem, arr[2])
+            vm = avalon.vmodels[arr[1]]
+        } else {
+            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
+            expr = expr.replace(vm.$repeatItem + ".", "")
+            vm = vm[vm.$repeatItem]
+        }
+        funOrObj.expr = expr
+    }
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
@@ -1649,7 +1659,6 @@ function shouldDispose() {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-
     var hive = topVm && topVm.$events
     var uniq = {}
     if (hive && hive[path]) {
@@ -1660,28 +1669,24 @@ function $emit(topVm, curVm, path, a, b, i) {
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
-
                     data.update.call(curVm, a, b, path)
-                    if (data.vmodel) {
-                        var id = data.vmodel.$id.split("??")[0]
-                        if (avalon.vtree[id] && !uniq[id]) {
-                            console.log(topVm, curVm)
-                            uniq[id] = 1
-                            batchUpdateEntity(id)
-                        }
-                    }
-
                 }
             }
         } catch (e) {
             if (i - 1 > 0)
-                $emit(topVm, curVm, path, a, b, i - 1)
+                $emit(topVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
+        if (new Date() - beginTime > 500) {
+            rejectDisposeQueue()
+        }
     }
-
-    if (new Date() - beginTime > 500) {
-        rejectDisposeQueue()
+    if (topVm) {
+        var id = topVm.$id
+        if (avalon.vtree[id] && !uniq[id]) {
+            console.log("更新domTree")
+            batchUpdateEntity(id)
+        }
     }
 }
 
@@ -1728,8 +1733,12 @@ function observeArray(array, old, heirloom, options) {
         }
         hideProperty(array, "$id", options.pathname || generateID("$"))
         array.notify = function (a, b, c) {
-            var path = a != null ? options.pathname+"."+a : options.pathname
-            $emit(heirloom.vm, heirloom.vm, path, b, c)
+            var vm = heirloom.vm
+            if (vm) {
+                var path = a != null ? options.pathname + "." + a : options.pathname
+                path = path.replace(vm.$id + ".", "")
+                $emit(vm, vm, path, b, c)
+            }
         }
 
         array._ = sizeCache.shift() || observeObject({
@@ -1759,10 +1768,8 @@ function observeArray(array, old, heirloom, options) {
             },
             element: {},
             update: function (newlen, oldlen) {
-                array.notify("length", newlen,oldlen)
-//                if (heirloom.vm) {
-//                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
-//                }
+                console.log("update length")
+                array.notify("length", newlen, oldlen)
             }
         })
 
@@ -1771,8 +1778,9 @@ function observeArray(array, old, heirloom, options) {
         } else {
             array.$model = toJson(array)
         }
+        hideProperty(array, "$active", options.top ? generateID("$") : true)
         var arrayOptions = {
-            pathname: "", //options.pathname + ".*",
+            pathname: options.pathname + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -1815,7 +1823,7 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-         
+
             this.notify("*", val, this[index])
             this.splice(index, 1, val)
         }
@@ -5164,7 +5172,7 @@ avalon.directive("repeat", {
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
-            proxy.$id = value.$id + (repeatArray ? "" : "."+ component.key)
+            proxy.$id = value.$id + (repeatArray ? "" : "." + component.key)
 
             if (component._new) {
                 updateVirtual(component.children, proxy)
@@ -5322,20 +5330,24 @@ function repeatItemFactory(item, binding, repeatArray) {
         $accessors: {},
         $outer: 1,
         $repeatItem: binding.itemName,
-        $repeatPath: ""
+        $repeatObject: !repeatArray 
     }
     for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
+        if (after.$accessors[key])
+            after.$accessors[key] = makeObservable(key, heirloom)
     }
+
     if (repeatArray) {
         after.$remove = noop
     }
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-
-    return  proxyFactory(before, after, heirloom)
+    var a = proxyFactory(before, after)
+    heirloom.vm = a
+    return  a
 }
+avalon.repeatItemFactory = repeatItemFactory
 
 function getRepeatItem(children) {
     var ret = []
@@ -5391,9 +5403,9 @@ function compareObject(a, b) {
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
-        c = cache[vm.$id]
+        c = cache[vm.$active]
         if (c) {
-            delete cache[vm.$id]
+            delete cache[vm.$active]
         }
         return c
     } else {
@@ -5422,7 +5434,7 @@ function isInCache(cache, vm) {
 
 function saveInCache(cache, vm, component) {
     if (Object(vm) === vm) {
-        cache[vm.$id] = component
+        cache[vm.$active] = component
     } else {
         var type = avalon.type(vm)
         var trackId = type + "_" + vm

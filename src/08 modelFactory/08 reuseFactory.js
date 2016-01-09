@@ -1,8 +1,8 @@
 function SubComponent() {
 }
-
+// topid + ??1234 + .*.+ prop + . + prop
 //创建子VM
-function reuseFactory(before, after, options) {
+function reuseFactory(before, after, heirloom, options) {
     var $pathname = options.pathname
     var resue = before.$accessors || {}
     var $accessors = {}
@@ -15,7 +15,7 @@ function reuseFactory(before, after, options) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                $accessors[key] = makeObservable($pathname + "." + key)
+                $accessors[key] = makeObservable($pathname + "." + key, heirloom )
             }
         }
     }

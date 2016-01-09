@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.8
+ avalon.modern.js 1.6 built in 2016.1.10
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -856,7 +856,7 @@ kernel.maxRepeatSize = 100
 
 //用于合并两个VM为一个VM
 
-function proxyFactory(before, after, heirloom) {
+function proxyFactory(before, after) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -894,22 +894,23 @@ function proxyFactory(before, after, heirloom) {
 
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, id)
-
-    makeFire($vmodel, heirloom || {})
+   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, "$id", before.$id)
+    makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
-
+avalon.proxyFactory = proxyFactory
+// xxx  array * a 
 function SubComponent() {
 }
-
+// topid + ??1234 + .*.+ prop + . + prop
 //创建子VM
-function reuseFactory(before, after, heirloom, pathname) {
+function reuseFactory(before, after, heirloom, options) {
+    var $pathname = options.pathname
     var resue = before.$accessors || {}
     var $accessors = {}
-    var keys = {}, key, path
+    var keys = {}, key
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -918,8 +919,7 @@ function reuseFactory(before, after, heirloom, pathname) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                path = pathname ? pathname + "." + key : key
-                $accessors[key] = makeObservable(path, heirloom)
+                $accessors[key] = makeObservable($pathname + "." + key, heirloom )
             }
         }
     }
@@ -937,7 +937,8 @@ function reuseFactory(before, after, heirloom, pathname) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-    $vmodel.$id = before.$id
+
+    hideProperty($vmodel, "$id", $pathname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$active", true)
@@ -946,22 +947,33 @@ function reuseFactory(before, after, heirloom, pathname) {
 
 function $watch(expr, funOrObj, exe) {
     var vm = this
-    var vmodel = funOrObj.vmodel
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime &&
-            vmodel && vmodel.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vmodel.$repeatItem ) === 0) {
-        vm = vmodel[vmodel.$repeatItem]
-//        if (/^\$\d+/.test(vm.$id)) {
-//            expr = expr.replace(/^[^.]+\./, "")
-//        } else {
-//            expr = expr.replace(/^[^.]+\./, vm.$id)
-//        }
-//
-//        console.log(vm, expr, vmodel)
-        funOrObj.expr = expr
+    var toppath = expr.split(".")[0]
+    try {
+        //调整要添加绑定对象或回调的VM
+        if (vm.$accessors) {
+            vm = vm.$accessors[toppath].get.heirloom.vm
+        } else {
+            vm = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.vm
+        }
+    } catch (e) {
     }
 
+    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
+    if (exe && !funOrObj.oneTime &&
+            vm.hasOwnProperty("$repeatItem") &&
+            expr.indexOf(vm.$repeatItem + ".") === 0) {
+        if (vm.$repeatObject) {
+            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+            var arr = vm.$id.match(/([^.]+)\.(.+)/)
+            expr = expr.replace(vm.$repeatItem, arr[2])
+            vm = avalon.vmodels[arr[1]]
+        } else {
+            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
+            expr = expr.replace(vm.$repeatItem + ".", "")
+            vm = vm[vm.$repeatItem]
+        }
+        funOrObj.expr = expr
+    }
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
@@ -988,7 +1000,6 @@ function shouldDispose() {
 }
 
 function $emit(topVm, curVm, path, a, b, i) {
-
     var hive = topVm && topVm.$events
     var uniq = {}
     if (hive && hive[path]) {
@@ -999,28 +1010,24 @@ function $emit(topVm, curVm, path, a, b, i) {
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
-
                     data.update.call(curVm, a, b, path)
-                    if (data.vmodel) {
-                        var id = data.vmodel.$id.split("??")[0]
-                        if (avalon.vtree[id] && !uniq[id]) {
-                            console.log(topVm, curVm)
-                            uniq[id] = 1
-                            batchUpdateEntity(id)
-                        }
-                    }
-
                 }
             }
         } catch (e) {
             if (i - 1 > 0)
-                $emit(topVm, curVm, path, a, b, i - 1)
+                $emit(topVm, path, a, b, i - 1)
             avalon.log(e, path)
         }
+        if (new Date() - beginTime > 500) {
+            rejectDisposeQueue()
+        }
     }
-
-    if (new Date() - beginTime > 500) {
-        rejectDisposeQueue()
+    if (topVm) {
+        var id = topVm.$id
+        if (avalon.vtree[id] && !uniq[id]) {
+            console.log("更新domTree")
+            batchUpdateEntity(id)
+        }
     }
 }
 
@@ -1067,8 +1074,12 @@ function observeArray(array, old, heirloom, options) {
         }
         hideProperty(array, "$id", options.pathname || generateID("$"))
         array.notify = function (a, b, c) {
-            var path = a != null ? options.pathname+"."+a : options.pathname
-            $emit(heirloom.vm, heirloom.vm, path, b, c)
+            var vm = heirloom.vm
+            if (vm) {
+                var path = a != null ? options.pathname + "." + a : options.pathname
+                path = path.replace(vm.$id + ".", "")
+                $emit(vm, vm, path, b, c)
+            }
         }
 
         array._ = sizeCache.shift() || observeObject({
@@ -1098,10 +1109,8 @@ function observeArray(array, old, heirloom, options) {
             },
             element: {},
             update: function (newlen, oldlen) {
-                array.notify("length", newlen,oldlen)
-//                if (heirloom.vm) {
-//                    heirloom.vm.$fire(options.pathname + ".length", newlen, oldlen)
-//                }
+                console.log("update length")
+                array.notify("length", newlen, oldlen)
             }
         })
 
@@ -1110,8 +1119,9 @@ function observeArray(array, old, heirloom, options) {
         } else {
             array.$model = toJson(array)
         }
+        hideProperty(array, "$active", options.top ? generateID("$") : true)
         var arrayOptions = {
-            pathname: "", //options.pathname + ".*",
+            pathname: options.pathname + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -1154,7 +1164,7 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-         
+
             this.notify("*", val, this[index])
             this.splice(index, 1, val)
         }
@@ -4287,7 +4297,7 @@ avalon.directive("repeat", {
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
-            proxy.$id = value.$id + (repeatArray ? "" : "."+ component.key)
+            proxy.$id = value.$id + (repeatArray ? "" : "." + component.key)
 
             if (component._new) {
                 updateVirtual(component.children, proxy)
@@ -4445,20 +4455,24 @@ function repeatItemFactory(item, binding, repeatArray) {
         $accessors: {},
         $outer: 1,
         $repeatItem: binding.itemName,
-        $repeatPath: ""
+        $repeatObject: !repeatArray 
     }
     for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
+        if (after.$accessors[key])
+            after.$accessors[key] = makeObservable(key, heirloom)
     }
+
     if (repeatArray) {
         after.$remove = noop
     }
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-
-    return  proxyFactory(before, after, heirloom)
+    var a = proxyFactory(before, after)
+    heirloom.vm = a
+    return  a
 }
+avalon.repeatItemFactory = repeatItemFactory
 
 function getRepeatItem(children) {
     var ret = []
@@ -4514,9 +4528,9 @@ function compareObject(a, b) {
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
-        c = cache[vm.$id]
+        c = cache[vm.$active]
         if (c) {
-            delete cache[vm.$id]
+            delete cache[vm.$active]
         }
         return c
     } else {
@@ -4545,7 +4559,7 @@ function isInCache(cache, vm) {
 
 function saveInCache(cache, vm, component) {
     if (Object(vm) === vm) {
-        cache[vm.$id] = component
+        cache[vm.$active] = component
     } else {
         var type = avalon.type(vm)
         var trackId = type + "_" + vm

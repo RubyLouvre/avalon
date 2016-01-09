@@ -173,7 +173,7 @@ avalon.directive("repeat", {
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
-            proxy.$id = value.$id + (repeatArray ? "" : "."+ component.key)
+            proxy.$id = value.$id + (repeatArray ? "" : "." + component.key)
 
             if (component._new) {
                 updateVirtual(component.children, proxy)
@@ -331,20 +331,24 @@ function repeatItemFactory(item, binding, repeatArray) {
         $accessors: {},
         $outer: 1,
         $repeatItem: binding.itemName,
-        $repeatPath: ""
+        $repeatObject: !repeatArray 
     }
     for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
+        if (after.$accessors[key])
+            after.$accessors[key] = makeObservable(key, heirloom)
     }
+
     if (repeatArray) {
         after.$remove = noop
     }
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-
-    return  proxyFactory(before, after, heirloom)
+    var a = proxyFactory(before, after)
+    heirloom.vm = a
+    return  a
 }
+avalon.repeatItemFactory = repeatItemFactory
 
 function getRepeatItem(children) {
     var ret = []
@@ -400,9 +404,9 @@ function compareObject(a, b) {
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
-        c = cache[vm.$id]
+        c = cache[vm.$active]
         if (c) {
-            delete cache[vm.$id]
+            delete cache[vm.$active]
         }
         return c
     } else {
@@ -431,7 +435,7 @@ function isInCache(cache, vm) {
 
 function saveInCache(cache, vm, component) {
     if (Object(vm) === vm) {
-        cache[vm.$id] = component
+        cache[vm.$active] = component
     } else {
         var type = avalon.type(vm)
         var trackId = type + "_" + vm

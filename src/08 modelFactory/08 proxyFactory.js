@@ -39,11 +39,11 @@ function proxyFactory(before, after) {
 
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, id)
+   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
+    hideProperty($vmodel, "$id", before.$id)
     makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
-
+avalon.proxyFactory = proxyFactory
 // xxx  array * a 
