@@ -904,7 +904,6 @@ avalon.proxyFactory = proxyFactory
 // xxx  array * a 
 function SubComponent() {
 }
-// topid + ??1234 + .*.+ prop + . + prop
 //创建子VM
 function reuseFactory(before, after, heirloom, options) {
     var $pathname = options.pathname
@@ -919,7 +918,7 @@ function reuseFactory(before, after, heirloom, options) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                $accessors[key] = makeObservable($pathname + "." + key, heirloom )
+                $accessors[key] = makeObservable($pathname + "." + key, heirloom)
             }
         }
     }
