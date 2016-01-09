@@ -18,7 +18,7 @@ function $watch(expr, funOrObj, exe) {
             expr.indexOf(vm.$repeatItem + ".") === 0) {
         if (vm.$repeatObject) {
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vm.$id.match(/([^.]+)\.(.+)/)
+            var arr = vm.$id.match(rtopsub)
             expr = expr.replace(vm.$repeatItem, arr[2])
             vm = avalon.vmodels[arr[1]]
         } else {

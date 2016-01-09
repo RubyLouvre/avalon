@@ -36,13 +36,13 @@ function proxyFactory(before, after) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, "$id", before.$id)
+    
     makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
+    hideProperty($vmodel, "$id", before.$id)
+    hideProperty($vmodel, "$accessors", $accessors)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+
     return $vmodel
 }
 avalon.proxyFactory = proxyFactory

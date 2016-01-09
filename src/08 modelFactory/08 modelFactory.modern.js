@@ -2,6 +2,8 @@
 avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
+var rtopsub = /([^.]+)\.(.+)/
+avalon.vtree = vtree
 
 avalon.define = function (definition) {
     var $id = definition.$id
@@ -157,12 +159,15 @@ function getComputed(obj) {
     return $computed
 }
 
-function makeComputed(pathname, heirloom, key, value) {
+function makeComputed(pathname, heirloom, key, value, top) {
     var old = NaN
+    function get() {
+        return old = value.get.call(this)
+    }
+    if (top)
+        get.heirloom = heirloom
     return {
-        get: function () {
-            return old = value.get.call(this)
-        },
+        get: get,
         set: function (x) {
             if (typeof value.set === "function") {
                 var older = old
@@ -188,14 +193,16 @@ function isSkip(key, value, skipArray) {
 
 function makeObservable(pathname, heirloom) {
     var old = NaN
+    function get() {
+        if (this.$active) {
+            //以后再处理  collectDependency(pathname, heirloom)
+        }
+        return old
+    }
+    if (top)
+        get.heirloom = heirloom
     return {
-        get: function () {
-
-            if (this.$active) {
-                //以后再处理  collectDependency(pathname, heirloom)
-            }
-            return old
-        },
+        get: get,
         set: function (val) {
             if (old === val)
                 return
@@ -210,7 +217,15 @@ function makeObservable(pathname, heirloom) {
 
             if (this.$active) {
                 var vm = heirloom.vm
+                //fire a
                 vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
+                if (pathname.indexOf(".*.") > 0) {
+                    var arr = vm.$id.match(rtopsub)
+                    var top = avalon.vmodels[ arr[1] ]
+                    if (top) {
+                        top && $emit(top, this, arr[2], val, older)
+                    }
+                }
             }
         },
         enumerable: true,

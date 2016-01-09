@@ -891,13 +891,13 @@ function proxyFactory(before, after) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, "$id", before.$id)
+    
     makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
+    hideProperty($vmodel, "$id", before.$id)
+    hideProperty($vmodel, "$accessors", $accessors)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+
     return $vmodel
 }
 avalon.proxyFactory = proxyFactory
@@ -964,7 +964,7 @@ function $watch(expr, funOrObj, exe) {
             expr.indexOf(vm.$repeatItem + ".") === 0) {
         if (vm.$repeatObject) {
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vm.$id.match(/([^.]+)\.(.+)/)
+            var arr = vm.$id.match(rtopsub)
             expr = expr.replace(vm.$repeatItem, arr[2])
             vm = avalon.vmodels[arr[1]]
         } else {
@@ -4468,9 +4468,9 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-    var a = proxyFactory(before, after)
-    heirloom.vm = a
-    return  a
+    var vm = proxyFactory(before, after)
+    heirloom.vm = vm
+    return  vm
 }
 avalon.repeatItemFactory = repeatItemFactory
 

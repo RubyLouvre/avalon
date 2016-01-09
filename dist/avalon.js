@@ -1082,6 +1082,7 @@ kernel.maxRepeatSize = 100
 avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
+var rtopsub = /([^.]+)\.(.+)/
 avalon.vtree = vtree
 
 var defineProperty = Object.defineProperty
@@ -1323,12 +1324,10 @@ function makeObservable(pathname, heirloom) {
                 //fire a
                 vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
                 if (pathname.indexOf(".*.") > 0) {
-                    var index = pathname.indexOf(".")
-
-                    var top = avalon.vmodels[ pathname.slice(0, index)]
+                    var arr = vm.$id.match(rtopsub)
+                    var top = avalon.vmodels[ arr[1] ]
                     if (top) {
-                          console.log( top, pathname)
-                        top && $emit(top, this, pathname.slice(index + 1), val, older)
+                        top && $emit(top, this, arr[2], val, older)
                     }
                 }
             }
@@ -1550,13 +1549,13 @@ function proxyFactory(before, after) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-   // var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, "$id", before.$id)
+    
     makeFire($vmodel)
     hideProperty($vmodel, "$active", true)
+    hideProperty($vmodel, "$id", before.$id)
+    hideProperty($vmodel, "$accessors", $accessors)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+
     return $vmodel
 }
 avalon.proxyFactory = proxyFactory
@@ -1623,7 +1622,7 @@ function $watch(expr, funOrObj, exe) {
             expr.indexOf(vm.$repeatItem + ".") === 0) {
         if (vm.$repeatObject) {
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vm.$id.match(/([^.]+)\.(.+)/)
+            var arr = vm.$id.match(rtopsub)
             expr = expr.replace(vm.$repeatItem, arr[2])
             vm = avalon.vmodels[arr[1]]
         } else {
@@ -5343,9 +5342,9 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-    var a = proxyFactory(before, after)
-    heirloom.vm = a
-    return  a
+    var vm = proxyFactory(before, after)
+    heirloom.vm = vm
+    return  vm
 }
 avalon.repeatItemFactory = repeatItemFactory
 

@@ -2,6 +2,7 @@
 avalon.vmodels = {} //所有vmodel都储存在这里
 var vtree = {}
 var dtree = {}
+var rtopsub = /([^.]+)\.(.+)/
 avalon.vtree = vtree
 
 var defineProperty = Object.defineProperty
@@ -243,12 +244,10 @@ function makeObservable(pathname, heirloom) {
                 //fire a
                 vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
                 if (pathname.indexOf(".*.") > 0) {
-                    var index = pathname.indexOf(".")
-
-                    var top = avalon.vmodels[ pathname.slice(0, index)]
+                    var arr = vm.$id.match(rtopsub)
+                    var top = avalon.vmodels[ arr[1] ]
                     if (top) {
-                          console.log( top, pathname)
-                        top && $emit(top, this, pathname.slice(index + 1), val, older)
+                        top && $emit(top, this, arr[2], val, older)
                     }
                 }
             }

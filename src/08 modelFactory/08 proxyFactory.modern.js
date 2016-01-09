@@ -31,12 +31,10 @@ function proxyFactory(before, after) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    var id = after.$id ? before.$id + "??" + after.$id : before.$id
-    hideProperty($vmodel, id)
-
     makeFire($vmodel)
-
     hideProperty($vmodel, "$active", true)
+    hideProperty($vmodel, "$id", before.$id)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+
     return $vmodel
 }

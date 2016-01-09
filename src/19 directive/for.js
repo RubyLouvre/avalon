@@ -344,9 +344,9 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-    var a = proxyFactory(before, after)
-    heirloom.vm = a
-    return  a
+    var vm = proxyFactory(before, after)
+    heirloom.vm = vm
+    return  vm
 }
 avalon.repeatItemFactory = repeatItemFactory
 
