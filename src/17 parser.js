@@ -145,8 +145,6 @@ function parseExpr(expr, vmodel, binding) {
     var args = ["__vm__"]
     if (category === "on") {
         args = ["$event", "__vm__"]
-
-
         if (body.indexOf("(") === -1) {//如果不存在括号
             body += ".call(this, $event)"
         } else {
@@ -161,7 +159,6 @@ function parseExpr(expr, vmodel, binding) {
                 return  ".call(" + array + ")"
             })
         }
-
 
     } else if (category === "duplex") {
         args.push("__value__", "__bind__")
@@ -187,7 +184,6 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
-       console.log(fn+"")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")

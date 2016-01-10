@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.6 built in 2016.1.10
+ avalon.shim.js 1.6 built in 2016.1.11
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1614,16 +1614,19 @@ function $watch(expr, funOrObj, exe) {
         }
     } catch (e) {
     }
-  console.log(expr, vm.$repeatItem)
+   
     //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
     if (exe && !funOrObj.oneTime &&
             vm.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vm.$repeatItem + ".") === 0) {
+            expr.indexOf(vm.$repeatItem ) === 0) {
         if (vm.$repeatObject) {
+           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
             var arr = vm.$id.match(rtopsub)
             expr = expr.replace(vm.$repeatItem, arr[2])
+          
             vm = avalon.vmodels[arr[1]]
+              console.log(expr, vm)
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
             console.log(expr, vm.$repeatItem)
@@ -2939,8 +2942,6 @@ function parseExpr(expr, vmodel, binding) {
     var args = ["__vm__"]
     if (category === "on") {
         args = ["$event", "__vm__"]
-
-
         if (body.indexOf("(") === -1) {//如果不存在括号
             body += ".call(this, $event)"
         } else {
@@ -2955,7 +2956,6 @@ function parseExpr(expr, vmodel, binding) {
                 return  ".call(" + array + ")"
             })
         }
-
 
     } else if (category === "duplex") {
         args.push("__value__", "__bind__")
@@ -2981,7 +2981,6 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
-       console.log(fn+"")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")
@@ -4961,7 +4960,7 @@ directives["{{}}"] = {
         }
     }
 }
-var rinexpr = /^\s*([\s\S]+) in (\w+)/
+var rinexpr = /^\s*([\s\S]+?)\s+in\s+([\s\S]+?)(?:\s+as\s+([\s\S]+?))?\s*$/
 var rkeyvalue = /\(\s*(\w+)\s*,\s*(\w+)\s*\)/
 var rremoveRepeat = /^ms-(repeat|each)/
 avalon.directive("repeat", {
@@ -4995,7 +4994,7 @@ avalon.directive("repeat", {
                 binding.itemName = keyvalue
             }
         }
-
+       
         var vnode = binding.element
         disposeVirtual(vnode.children)
 
@@ -5111,7 +5110,7 @@ avalon.directive("repeat", {
                     command[i] = proxy.$index//占据要"移除的元素"的位置
                 }
                 if (!proxy) {
-                    proxy = repeatItemFactory(component.item, binding, repeatArray)
+                    proxy = repeatItemFactory(component, binding, repeatArray)
                     command[i] = component //这个需要创建真实节点
                 }
 
@@ -5282,7 +5281,8 @@ function updateSignature(elem, value, text) {
 }
 
 
-function repeatItemFactory(item, binding, repeatArray) {
+function repeatItemFactory(component, binding, repeatArray) {
+    var item = component.item
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
@@ -5297,12 +5297,14 @@ function repeatItemFactory(item, binding, repeatArray) {
         $repeatObject: !repeatArray 
     }
     for (var i = 0, key; key = keys[i++]; ) {
-        if (after.$accessors[key])
-            after.$accessors[key] = makeObservable(key, heirloom)
+        after.$accessors[key] = makeObservable(key, heirloom)
     }
 
     if (repeatArray) {
         after.$remove = noop
+    }else{
+        console.log(after.$accessors,before.$accessors, component.key, binding.itemName)
+        after.$accessors[binding.itemName] = before.$accessors[component.key]
     }
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)

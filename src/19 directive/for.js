@@ -1,4 +1,4 @@
-var rinexpr = /^\s*([\s\S]+) in (\w+)/
+var rinexpr = /^\s*([\s\S]+?)\s+in\s+([\s\S]+?)(?:\s+as\s+([\s\S]+?))?\s*$/
 var rkeyvalue = /\(\s*(\w+)\s*,\s*(\w+)\s*\)/
 var rremoveRepeat = /^ms-(repeat|each)/
 avalon.directive("repeat", {
@@ -32,7 +32,7 @@ avalon.directive("repeat", {
                 binding.itemName = keyvalue
             }
         }
-
+       
         var vnode = binding.element
         disposeVirtual(vnode.children)
 
@@ -334,8 +334,7 @@ function repeatItemFactory(item, binding, repeatArray) {
         $repeatObject: !repeatArray 
     }
     for (var i = 0, key; key = keys[i++]; ) {
-        if (after.$accessors[key])
-            after.$accessors[key] = makeObservable(key, heirloom)
+        after.$accessors[key] = makeObservable(key, heirloom)
     }
 
     if (repeatArray) {
