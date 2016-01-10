@@ -187,7 +187,7 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
-
+       console.log(fn+"")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")

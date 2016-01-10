@@ -20,38 +20,6 @@ function observeArray(array, old, heirloom, options) {
             }
         }
 
-        array._ = sizeCache.shift() || observeObject({
-            length: NaN
-        }, {}, {
-            pathname: "",
-            top: true//这里不能使用watch, 因为firefox中对象拥有watch属性
-        })
-
-        array._.length = array.length
-        array._.$watch("length", {
-            shouldDispose: function () {
-                if (!heirloom || !heirloom.vm ||
-                        heirloom.vm.$active === false) {
-                    return true
-                }
-                if (!containsArray(heirloom.vm, array)) {
-                    array.length = 0
-                    array._.length = NaN
-                    if (sizeCache.push(array._) < 64) {
-                        sizeCache.shift()
-                    }
-                    delete array._
-                    return true
-                }
-                return false
-            },
-            element: {},
-            update: function (newlen, oldlen) {
-                console.log("update length")
-                array.notify("length", newlen, oldlen)
-            }
-        })
-
         if (W3C) {
             hideProperty(array, "$model", $modelDescriptor)
         } else {
@@ -69,22 +37,7 @@ function observeArray(array, old, heirloom, options) {
         return array
     }
 }
-var sizeCache = []
 
-function containsArray(vm, array) {
-    for (var i in vm) {
-        if (vm.hasOwnProperty(i)) {
-            if (vm[i] === array) {
-                return true
-            } else if (vm[i] && vm[i].$id) {
-                if (containsArray(vm[i], array)) {
-                    return true
-                }
-            }
-        }
-    }
-    return false
-}
 
 function observeItem(item, a, b) {
     if (avalon.isObject(item)) {
@@ -129,9 +82,11 @@ var newProto = {
         return []
     },
     size: function () { //取得数组长度，这个函数可以同步视图，length不能
-        return this._.length
+        avalon.log("warnning: array.size()将被废弃！")
+        return this.length
     },
     removeAll: function (all) { //移除N个元素
+        var on = this.length
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
@@ -153,11 +108,18 @@ var newProto = {
             this.$model = toJson(this)
         }
         this.notify()
-        this._.length = this.length
+        notifySize(this, on)
     },
     clear: function () {
         this.removeAll()
         return this
+    }
+}
+
+function notifySize(array, on) {
+    if (array.length !== on) {
+        array.notify("size", array.length, on)
+        array.notify("length", array.length, on)
     }
 }
 
@@ -167,16 +129,19 @@ arrayMethods.forEach(function (method) {
     var original = arrayProto[method]
     newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
-        var args = []
+        var args = [], on = this.length
         for (var i = 0, n = arguments.length; i < n; i++) {
-            args[i] = observeItem(arguments[i])
+            args[i] = observeItem(arguments[i], {}, {
+                pathname: this.$id + ".*",
+                top: true
+            })
         }
         var result = original.apply(this, args)
         if (!W3C) {
             this.$model = toJson(this)
         }
         this.notify()
-        this._.length = this.length
+        notifySize(this, on)
         return result
     }
 })
