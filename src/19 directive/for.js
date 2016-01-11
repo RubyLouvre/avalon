@@ -88,6 +88,7 @@ avalon.directive("repeat", {
         if (!vnode || vnode.disposed) {
             return
         }
+        console.log(value, vnode)
         var cache = binding.cache || {}
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         //处理keyName, itemName, last
@@ -117,12 +118,14 @@ avalon.directive("repeat", {
                 component = cache[key]
                 delete cache[key]
             }
+         
             if (!component) {
                 component = new VComponent("repeat-item", null,
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
             }
+            
             component.key = key || i
             component.item = item
             children.push(component)
@@ -239,13 +242,14 @@ avalon.directive("repeat", {
                     reversal[command[i]] = ~~i
                 }
                 i = 0
-
+               var showLog = false
                 while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
                         fragment.appendChild(next)
                         if (typeof reversal[i] === "number") {
+                               showLog && avalon.log("使用已有的节点")
                             children[reversal[i]] = fragment
                             delete command[reversal[i]]
                         } else {
@@ -258,9 +262,9 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-                var showLog = false
+               
                 showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-
+                console.log(command)
                 for (i in command) {
                     fragment = fragments.shift()
 

@@ -1601,66 +1601,6 @@ function reuseFactory(before, after, heirloom, options) {
     hideProperty($vmodel, "$active", true)
     return $vmodel
 }
-
-function $watch(expr, funOrObj) {
-    var vm = this
-
-    var hive = vm.$events || (vm.$events = {})
-    var list = hive[expr] || (hive[expr] = [])
-
-    var data = typeof funOrObj === "function" ? {
-        update: funOrObj,
-        element: {},
-        shouldDispose: function () {
-            return vm.$active === false
-        },
-        uuid: getUid(funOrObj)
-    } : funOrObj
-    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
-    if (avalon.Array.ensure(list, data)) {
-        injectDisposeQueue(data, list)
-    }
-    return function () {
-        avalon.Array.remove(list, data)
-    }
-}
-function shouldDispose() {
-    var el = this.element
-    return !el || el.disposed
-}
-
-function $emit(topVm, curVm, path, a, b, i) {
-    var hive = topVm && topVm.$events
-    var uniq = {}
-    if (hive && hive[path]) {
-        var list = hive[path]
-        try {
-            for (i = i || list.length - 1; i >= 0; i--) {
-                var data = list[i]
-                if (!data.element || data.element.disposed) {
-                    list.splice(i, 1)
-                } else if (data.update) {
-                    data.update.call(curVm, a, b, path)
-                }
-            }
-        } catch (e) {
-            if (i - 1 > 0)
-                $emit(topVm, path, a, b, i - 1)
-            avalon.log(e, path)
-        }
-        if (new Date() - beginTime > 500) {
-            rejectDisposeQueue()
-        }
-    }
-    if (topVm) {
-        var id = topVm.$id
-        if (avalon.vtree[id] && !uniq[id]) {
-            console.log("更新domTree")
-            batchUpdateEntity(id)
-        }
-    }
-}
-
 var canUpdateEntity = true
 function batchUpdateEntity(id) {
     var vm = avalon.vmodels[id]
@@ -1875,9 +1815,6 @@ var dependencyDetection = (function () {
     };
 })()
 
-//将绑定对象注入到其依赖项的订阅数组中
-var roneval = /^on$/
-
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组
 function injectDependency(list, binding) {
     if (binding.oneTime)
@@ -1889,6 +1826,134 @@ function injectDependency(list, binding) {
         }
     }
 }
+
+
+function $watch(expr, funOrObj) {
+    var vm = this
+
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+
+    var data = typeof funOrObj === "function" ? {
+        update: funOrObj,
+        element: {},
+        shouldDispose: function () {
+            return vm.$active === false
+        },
+        uuid: getUid(funOrObj)
+    } : funOrObj
+    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
+    if (avalon.Array.ensure(list, data)) {
+        injectDisposeQueue(data, list)
+    }
+    return function () {
+        avalon.Array.remove(list, data)
+    }
+}
+function shouldDispose() {
+    var el = this.element
+    return !el || el.disposed
+}
+
+function $emit(topVm, curVm, path, a, b, i) {
+    var hive = topVm && topVm.$events
+    var uniq = {}
+    if (hive && hive[path]) {
+        var list = hive[path]
+        try {
+            for (i = i || list.length - 1; i >= 0; i--) {
+                var data = list[i]
+                if (!data.element || data.element.disposed) {
+                    list.splice(i, 1)
+                } else if (data.update) {
+                    data.update.call(curVm, a, b, path)
+                }
+            }
+        } catch (e) {
+            if (i - 1 > 0)
+                $emit(topVm, path, a, b, i - 1)
+            avalon.log(e, path)
+        }
+        if (new Date() - beginTime > 500) {
+            rejectDisposeQueue()
+        }
+    }
+    if (topVm) {
+        var id = topVm.$id
+        if (avalon.vtree[id] && !uniq[id]) {
+            console.log("更新domTree")
+            batchUpdateEntity(id)
+        }
+    }
+}
+// executeBindings
+function executeBindings(bindings, vmodel) {
+    for (var i = 0, binding; binding = bindings[i++]; ) {
+        binding.vmodel = vmodel
+        var isBreak = directives[binding.type].init(binding )
+        avalon.injectBinding(binding)
+        if (isBreak === false)
+            break
+    }
+    bindings.length = 0
+}
+
+function bindingIs(a, b) {
+    return a === b
+}
+
+avalon.injectBinding = function (binding) {
+    parseExpr(binding.expr, binding.vmodel, binding)
+    binding.paths.split("★").forEach(function (path) {
+        var trim = path.trim()
+        if (trim) {
+            try {
+                binding.watchHost.$watch(path, binding)
+               delete binding.watchHost
+            } catch (e) {
+                avalon.log(binding, path)
+            }
+        }
+    })
+    delete binding.paths
+    binding.update = function (a, b, path) {
+
+        var hasError
+        try {
+            var value = binding.getter(binding.vmodel)
+        } catch (e) {
+            hasError = true
+            avalon.log(e)
+        }
+        var dir = directives[binding.type]
+        var is = dir.is || bindingIs
+
+        if (!is(value, binding.oldValue)) {
+            dir.change(value, binding)
+            if (binding.oneTime && !hasError) {
+                dir.change = noop
+                setTimeout(function () {
+                    delete binding.element
+                })
+            }
+            if (dir.old) {
+                dir.old(binding, value)
+            } else {
+                binding.oldValue = value
+            }
+        }
+    }
+    binding.update()
+}
+
+//一个指令包含以下东西
+//init(binding) 用于处理expr
+//change(val, binding) 用于更新虚拟DOM树及添加更新真实DOM树的钩子
+//update(dom, vnode)   更新真实DOM的具体操作 
+//is(newValue, oldValue)? 比较新旧值的方法
+//old(binding, oldValue)? 如何保持旧值 
+
+
 
 /*********************************************************************
  *                          定时GC回收机制                             *
@@ -2811,45 +2876,46 @@ avalon.mix({
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
     binding = binding || {}
-   
+
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
-   
+    var watchHost = vmodel
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
     var toppath = input.split(".")[0]
     try {
         //调整要添加绑定对象或回调的VM
-        if (vmodel.$accessors) {
-            vmodel = vmodel.$accessors[toppath].get.heirloom.vm
+        if (watchHost.$accessors) {
+            watchHost = watchHost.$accessors[toppath].get.heirloom.vm
         } else {
-            vmodel = Object.getOwnPropertyDescriptor(vmodel, toppath).get.heirloom.vm
+            watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
         }
     } catch (e) {
     }
-   
+
     //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if ( vmodel.hasOwnProperty("$repeatItem") &&
-            input.indexOf(vmodel.$repeatItem ) === 0) {
-        if (vmodel.$repeatObject) {
-           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
+    if (watchHost.hasOwnProperty("$repeatItem") &&
+            (input.indexOf(watchHost.$repeatItem) === 0 ||  input === watchHost.$repeatItem) ) {
+        if (watchHost.$repeatObject) {
+            //  console.log(expr,vm.$repeatItem,"|",vm.$id )
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vmodel.$id.match(rtopsub)
-            input = input.replace(vmodel.$repeatItem, arr[2])
-          
-            vmodel = avalon.vmodels[arr[1]]
-            console.log(input, vmodel)
+            var arr = watchHost.$id.match(rtopsub)
+            input = input.replace(watchHost.$repeatItem, arr[2])
+
+            watchHost = avalon.vmodels[arr[1]]
+            // console.log(input, vmodel)
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
-            console.log(input, vmodel.$repeatItem)
-            input = input.replace(vmodel.$repeatItem + ".", "")
-            vmodel = vmodel[vmodel.$repeatItem]
+
+            input = input.replace(watchHost.$repeatItem + ".", "")
+            watchHost = watchHost[watchHost.$repeatItem]
+            console.log(input, watchHost.$repeatItem, watchHost)
         }
-        binding.vmodel = vmodel
+        //  binding.vmodel = vmodel
         binding.expr = input
     }
-    
-    
+    binding.watchHost = watchHost
+
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -3377,74 +3443,6 @@ VText.prototype = {
         return this.nodeValue
     }
 }
-// executeBindings
-function executeBindings(bindings, vmodel) {
-    for (var i = 0, binding; binding = bindings[i++]; ) {
-        binding.vmodel = vmodel
-        var isBreak = directives[binding.type].init(binding)
-        avalon.injectBinding(binding)
-        if (isBreak === false)
-            break
-    }
-    bindings.length = 0
-}
-
-function bindingIs(a, b) {
-    return a === b
-}
-
-avalon.injectBinding = function (binding) {
-    parseExpr(binding.expr, binding.vmodel, binding)
-    binding.paths.split("★").forEach(function (path) {
-        var trim = path.trim()
-        if (trim) {
-            try {
-                binding.vmodel.$watch(path, binding)
-            } catch (e) {
-                avalon.log(binding, path)
-            }
-        }
-    })
-    delete binding.paths
-    binding.update = function (a, b, path) {
-
-        var hasError
-        try {
-            var value = binding.getter(binding.vmodel)
-        } catch (e) {
-            hasError = true
-            avalon.log(e)
-        }
-        var dir = directives[binding.type]
-        var is = dir.is || bindingIs
-
-        if (!is(value, binding.oldValue)) {
-            dir.change(value, binding)
-            if (binding.oneTime && !hasError) {
-                dir.change = noop
-                setTimeout(function () {
-                    delete binding.element
-                })
-            }
-            if (dir.old) {
-                dir.old(binding, value)
-            } else {
-                binding.oldValue = value
-            }
-        }
-    }
-    binding.update()
-}
-
-//一个指令包含以下东西
-//init(binding) 用于处理expr
-//change(val, binding) 用于更新虚拟DOM树及添加更新真实DOM树的钩子
-//update(dom, vnode)   更新真实DOM的具体操作 
-//is(newValue, oldValue)? 比较新旧值的方法
-//old(binding, oldValue)? 如何保持旧值 
-
-
-
 /*********************************************************************
  *                           扫描系统                                 *
  **********************************************************************/
@@ -5054,6 +5052,7 @@ avalon.directive("repeat", {
         if (!vnode || vnode.disposed) {
             return
         }
+        console.log(value, vnode)
         var cache = binding.cache || {}
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         //处理keyName, itemName, last
@@ -5083,12 +5082,14 @@ avalon.directive("repeat", {
                 component = cache[key]
                 delete cache[key]
             }
+         
             if (!component) {
                 component = new VComponent("repeat-item", null,
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
             }
+            
             component.key = key || i
             component.item = item
             children.push(component)
@@ -5205,13 +5206,14 @@ avalon.directive("repeat", {
                     reversal[command[i]] = ~~i
                 }
                 i = 0
-
+               var showLog = false
                 while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
                         fragment.appendChild(next)
                         if (typeof reversal[i] === "number") {
+                               showLog && avalon.log("使用已有的节点")
                             children[reversal[i]] = fragment
                             delete command[reversal[i]]
                         } else {
@@ -5224,9 +5226,9 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-                var showLog = false
+               
                 showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-
+                console.log(command)
                 for (i in command) {
                     fragment = fragments.shift()
 

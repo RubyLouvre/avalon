@@ -7,38 +7,39 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-            
                 object: {
                     aaa: {
                         a: 1,
                         b: 2
-                    },
-                    bbb: {
-                        c: 3,
-                        d: 4
                     }
+
+                },
+                onMark: function () {
+                    
+                    avalon.each(document.querySelectorAll("p"), function (i, el) {
+                        console.log(el.textContent)
+                        el.title = el.textContent
+                    })
                 },
                 onClick: function () {
                     var el = vm.$events["object.aaa.a"][0]
-                  
-//                    vm.object.aaa = {
-//                        a: 444,
-//                        t: 777
-//                    }
-                  //  vm.array = [[{k: 555}, {k: 666}], [{k: 777}, {k: 888}]]
-                  //  vm.data = ["e", "c", "b", "a", "d", "f"]
+                    vm.object.aaa = {
+                        aa: 11,
+                        a: 2,
+                        bb: 22
+                    }
                 }
             })
         </script>
     </head>
     <body ms-controller="test">
         <p><button type="button" ms-click="onClick">change</button></p>
-       
+        <p><button type="button" ms-click="onMark">mark</button></p>
         <ul>
             <li ms-repeat="object">
                 <p ms-repeat="d in $val">{{d}}</p>
             </li>
         </ul>
-       
+
     </body>
 </html>
