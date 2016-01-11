@@ -2895,21 +2895,32 @@ function parseExpr(expr, vmodel, binding) {
 
     //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
     if (watchHost.hasOwnProperty("$repeatItem") &&
-            (input.indexOf(watchHost.$repeatItem) === 0 ||  input === watchHost.$repeatItem) ) {
+            (input.indexOf(watchHost.$repeatItem) === 0 || input === watchHost.$repeatItem)) {
         if (watchHost.$repeatObject) {
             //  console.log(expr,vm.$repeatItem,"|",vm.$id )
             //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = watchHost.$id.match(rtopsub)
-            input = input.replace(watchHost.$repeatItem, arr[2])
+            var lastIndex = watchHost.$id.lastIndexOf(".*.")
+            if (lastIndex !== -1) {
+                //如果这是数组循环里面的对象循环
+                input = watchHost.$id.slice(lastIndex + 3)
+                input = input.replace(watchHost.$key, watchHost.$repeatItem)
+              
+            } else {
+                  console.log(input,watchHost.$id, "lastIndex")
+                var arr = watchHost.$id.match(rtopsub)
+                //  console.log(arr,input, watchHost.$repeatItem,watchHost)
+                input = input.replace(watchHost.$repeatItem, arr[2])
 
-            watchHost = avalon.vmodels[arr[1]]
+                watchHost = avalon.vmodels[arr[1]]
+            }
+
             // console.log(input, vmodel)
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
 
             input = input.replace(watchHost.$repeatItem + ".", "")
             watchHost = watchHost[watchHost.$repeatItem]
-            console.log(input, watchHost.$repeatItem, watchHost)
+            //  console.log(input, watchHost.$repeatItem, watchHost)
         }
         //  binding.vmodel = vmodel
         binding.expr = input
@@ -3051,6 +3062,7 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
+        console.log(fn + "")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")
@@ -4988,6 +5000,7 @@ avalon.directive("repeat", {
         var expr = binding.expr, match
         if (match = expr.match(rinexpr)) {
             binding.expr = match[2]
+            console.log(match[2],"!!!!",match)
             var keyvalue = match[1]
             if (match = keyvalue.match(rkeyvalue)) {
                 binding.keyName = match[1]
@@ -5052,7 +5065,6 @@ avalon.directive("repeat", {
         if (!vnode || vnode.disposed) {
             return
         }
-        console.log(value, vnode)
         var cache = binding.cache || {}
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         //处理keyName, itemName, last

@@ -24,6 +24,7 @@ avalon.directive("repeat", {
         var expr = binding.expr, match
         if (match = expr.match(rinexpr)) {
             binding.expr = match[2]
+            console.log(match[2],"!!!!",match)
             var keyvalue = match[1]
             if (match = keyvalue.match(rkeyvalue)) {
                 binding.keyName = match[1]
@@ -88,7 +89,6 @@ avalon.directive("repeat", {
         if (!vnode || vnode.disposed) {
             return
         }
-        console.log(value, vnode)
         var cache = binding.cache || {}
         var newCache = {}, children = [], keys = [], command = {}, last, proxy
         //处理keyName, itemName, last

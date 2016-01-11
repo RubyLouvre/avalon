@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                grid: [{a:111,b:222},{a:333,b:444},{a:555,b:666}]
+              
+            })
+          
+          
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+        <table border="1">
+            <tr ms-repeat="tr in grid">
+                <td ms-repeat="td in tr">{{td}}</td>
+            </tr>
+        </table>
+    </body>
+</html>
