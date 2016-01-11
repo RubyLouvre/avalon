@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <title>RunJS</title>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+            
+                object: {
+                    aaa:111,
+                    bbb: 222
+                },
+                onClick: function () {
+                    vm.object = {
+                        a: 444,
+                        t: 777
+                    }
+                 
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <p><button type="button" ms-click="onClick">change</button></p>
+       
+        <ul>
+            <li ms-repeat="d in object">
+                <p> {{d}}</p>
+            </li>
+        </ul>
+    </body>
+</html>

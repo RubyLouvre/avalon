@@ -45,10 +45,45 @@ avalon.mix({
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
     binding = binding || {}
+   
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
+   
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
+    var toppath = input.split(".")[0]
+    try {
+        //调整要添加绑定对象或回调的VM
+        if (vmodel.$accessors) {
+            vmodel = vmodel.$accessors[toppath].get.heirloom.vm
+        } else {
+            vmodel = Object.getOwnPropertyDescriptor(vmodel, toppath).get.heirloom.vm
+        }
+    } catch (e) {
+    }
+   
+    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
+    if ( vmodel.hasOwnProperty("$repeatItem") &&
+            input.indexOf(vmodel.$repeatItem ) === 0) {
+        if (vmodel.$repeatObject) {
+           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
+            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+            var arr = vmodel.$id.match(rtopsub)
+            input = input.replace(vmodel.$repeatItem, arr[2])
+          
+            vmodel = avalon.vmodels[arr[1]]
+            console.log(input, vmodel)
+        } else {
+            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
+            console.log(input, vmodel.$repeatItem)
+            input = input.replace(vmodel.$repeatItem + ".", "")
+            vmodel = vmodel[vmodel.$repeatItem]
+        }
+        binding.vmodel = vmodel
+        binding.expr = input
+    }
+    
+    
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn

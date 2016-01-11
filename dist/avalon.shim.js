@@ -1602,39 +1602,8 @@ function reuseFactory(before, after, heirloom, options) {
     return $vmodel
 }
 
-function $watch(expr, funOrObj, exe) {
+function $watch(expr, funOrObj) {
     var vm = this
-    var toppath = expr.split(".")[0]
-    try {
-        //调整要添加绑定对象或回调的VM
-        if (vm.$accessors) {
-            vm = vm.$accessors[toppath].get.heirloom.vm
-        } else {
-            vm = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.vm
-        }
-    } catch (e) {
-    }
-   
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime &&
-            vm.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vm.$repeatItem ) === 0) {
-        if (vm.$repeatObject) {
-           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
-            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vm.$id.match(rtopsub)
-            expr = expr.replace(vm.$repeatItem, arr[2])
-          
-            vm = avalon.vmodels[arr[1]]
-              console.log(expr, vm)
-        } else {
-            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
-            console.log(expr, vm.$repeatItem)
-            expr = expr.replace(vm.$repeatItem + ".", "")
-            vm = vm[vm.$repeatItem]
-        }
-        funOrObj.expr = expr
-    }
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
@@ -2842,10 +2811,45 @@ avalon.mix({
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
     binding = binding || {}
+   
     var category = (binding.type.match(/on|duplex/) || ["other"])[0]
     var input = expr.trim()
+   
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
+    var toppath = input.split(".")[0]
+    try {
+        //调整要添加绑定对象或回调的VM
+        if (vmodel.$accessors) {
+            vmodel = vmodel.$accessors[toppath].get.heirloom.vm
+        } else {
+            vmodel = Object.getOwnPropertyDescriptor(vmodel, toppath).get.heirloom.vm
+        }
+    } catch (e) {
+    }
+   
+    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
+    if ( vmodel.hasOwnProperty("$repeatItem") &&
+            input.indexOf(vmodel.$repeatItem ) === 0) {
+        if (vmodel.$repeatObject) {
+           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
+            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+            var arr = vmodel.$id.match(rtopsub)
+            input = input.replace(vmodel.$repeatItem, arr[2])
+          
+            vmodel = avalon.vmodels[arr[1]]
+            console.log(input, vmodel)
+        } else {
+            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
+            console.log(input, vmodel.$repeatItem)
+            input = input.replace(vmodel.$repeatItem + ".", "")
+            vmodel = vmodel[vmodel.$repeatItem]
+        }
+        binding.vmodel = vmodel
+        binding.expr = input
+    }
+    
+    
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -3395,7 +3399,7 @@ avalon.injectBinding = function (binding) {
         var trim = path.trim()
         if (trim) {
             try {
-                binding.vmodel.$watch(path, binding, true)
+                binding.vmodel.$watch(path, binding)
             } catch (e) {
                 avalon.log(binding, path)
             }
@@ -5110,7 +5114,7 @@ avalon.directive("repeat", {
                     command[i] = proxy.$index//占据要"移除的元素"的位置
                 }
                 if (!proxy) {
-                    proxy = repeatItemFactory(component, binding, repeatArray)
+                    proxy = repeatItemFactory(component.item, binding, repeatArray)
                     command[i] = component //这个需要创建真实节点
                 }
 
@@ -5281,8 +5285,7 @@ function updateSignature(elem, value, text) {
 }
 
 
-function repeatItemFactory(component, binding, repeatArray) {
-    var item = component.item
+function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
@@ -5302,9 +5305,6 @@ function repeatItemFactory(component, binding, repeatArray) {
 
     if (repeatArray) {
         after.$remove = noop
-    }else{
-        console.log(after.$accessors,before.$accessors, component.key, binding.itemName)
-        after.$accessors[binding.itemName] = before.$accessors[component.key]
     }
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
@@ -5328,7 +5328,6 @@ function getRepeatItem(children) {
 }
 
 avalon.directives.each = avalon.directives.repeat
-
 
 function compareObject(a, b) {
     var atype = avalon.type(a)

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <title>RunJS</title>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+            
+                object: {
+                    aaa: {
+                        a: 1,
+                        b: 2
+                    },
+                    bbb: {
+                        c: 3,
+                        d: 4
+                    }
+                },
+                onClick: function () {
+                    var el = vm.$events["object.aaa.a"][0]
+                  
+//                    vm.object.aaa = {
+//                        a: 444,
+//                        t: 777
+//                    }
+                  //  vm.array = [[{k: 555}, {k: 666}], [{k: 777}, {k: 888}]]
+                  //  vm.data = ["e", "c", "b", "a", "d", "f"]
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <p><button type="button" ms-click="onClick">change</button></p>
+       
+        <ul>
+            <li ms-repeat="object">
+                <p ms-repeat="d in $val">{{d}}</p>
+            </li>
+        </ul>
+       
+    </body>
+</html>

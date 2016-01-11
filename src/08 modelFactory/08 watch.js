@@ -1,37 +1,6 @@
 
-function $watch(expr, funOrObj, exe) {
+function $watch(expr, funOrObj) {
     var vm = this
-    var toppath = expr.split(".")[0]
-    try {
-        //调整要添加绑定对象或回调的VM
-        if (vm.$accessors) {
-            vm = vm.$accessors[toppath].get.heirloom.vm
-        } else {
-            vm = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.vm
-        }
-    } catch (e) {
-    }
-   
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (exe && !funOrObj.oneTime &&
-            vm.hasOwnProperty("$repeatItem") &&
-            expr.indexOf(vm.$repeatItem ) === 0) {
-        if (vm.$repeatObject) {
-           //  console.log(expr,vm.$repeatItem,"|",vm.$id )
-            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
-            var arr = vm.$id.match(rtopsub)
-            expr = expr.replace(vm.$repeatItem, arr[2])
-          
-            vm = avalon.vmodels[arr[1]]
-              console.log(expr, vm)
-        } else {
-            //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
-            console.log(expr, vm.$repeatItem)
-            expr = expr.replace(vm.$repeatItem + ".", "")
-            vm = vm[vm.$repeatItem]
-        }
-        funOrObj.expr = expr
-    }
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])

@@ -363,7 +363,6 @@ function getRepeatItem(children) {
 
 avalon.directives.each = avalon.directives.repeat
 
-
 function compareObject(a, b) {
     var atype = avalon.type(a)
     var btype = avalon.type(a)

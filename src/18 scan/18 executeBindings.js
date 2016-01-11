@@ -20,7 +20,7 @@ avalon.injectBinding = function (binding) {
         var trim = path.trim()
         if (trim) {
             try {
-                binding.vmodel.$watch(path, binding, true)
+                binding.vmodel.$watch(path, binding)
             } catch (e) {
                 avalon.log(binding, path)
             }
