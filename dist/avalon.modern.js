@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.11
+ avalon.modern.js 1.6 built in 2016.1.12
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2095,39 +2095,42 @@ function parseExpr(expr, vmodel, binding) {
         }
     } catch (e) {
     }
-
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (watchHost.hasOwnProperty("$repeatItem") &&
-            (input.indexOf(watchHost.$repeatItem) === 0 || input === watchHost.$repeatItem)) {
-        if (watchHost.$repeatObject) {
-            //  console.log(expr,vm.$repeatItem,"|",vm.$id )
-            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+    console.log(watchHost.$active)
+    var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
+    if (repeatActive && (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2])) {
+        var repeatItem = repeatActive[2]
+        if (repeatActive[1] === "object") {
             var lastIndex = watchHost.$id.lastIndexOf(".*.")
             if (lastIndex !== -1) {
-                //如果这是数组循环里面的对象循环
+                //如果这是数组循环里面的对象循环，那么绑定数据的对象是某个数组item
+                toppath = watchHost.$id.slice(0, lastIndex + 2)
                 input = watchHost.$id.slice(lastIndex + 3)
-                input = input.replace(watchHost.$key, watchHost.$repeatItem)
-              
+                input = input.replace(repeatItem, watchHost.$key)
+                for (var k in watchHost) {
+                    var kv = watchHost[k]
+                    if (kv && kv.$id === toppath) {
+                        watchHost = kv
+                        break
+                    }
+                }
+                console.log(input, watchHost, "with in *")
             } else {
-                  console.log(input,watchHost.$id, "lastIndex")
+                //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
                 var arr = watchHost.$id.match(rtopsub)
-                //  console.log(arr,input, watchHost.$repeatItem,watchHost)
-                input = input.replace(watchHost.$repeatItem, arr[2])
-
+                input = input.replace(repeatItem, arr[2])
                 watchHost = avalon.vmodels[arr[1]]
             }
 
-            // console.log(input, vmodel)
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
-
-            input = input.replace(watchHost.$repeatItem + ".", "")
-            watchHost = watchHost[watchHost.$repeatItem]
-            //  console.log(input, watchHost.$repeatItem, watchHost)
+            //直接去掉前面的部分
+            console.log(input, watchHost)
+            input = input.replace(repeatItem + ".", "")
+            watchHost = watchHost[repeatItem]
         }
-        //  binding.vmodel = vmodel
         binding.expr = input
     }
+    
     binding.watchHost = watchHost
 
     var canReturn = false
@@ -4126,7 +4129,6 @@ avalon.directive("repeat", {
         var expr = binding.expr, match
         if (match = expr.match(rinexpr)) {
             binding.expr = match[2]
-            console.log(match[2],"!!!!",match)
             var keyvalue = match[1]
             if (match = keyvalue.match(rkeyvalue)) {
                 binding.keyName = match[1]
@@ -4135,7 +4137,7 @@ avalon.directive("repeat", {
                 binding.itemName = keyvalue
             }
         }
-       
+
         var vnode = binding.element
         disposeVirtual(vnode.children)
 
@@ -4220,14 +4222,14 @@ avalon.directive("repeat", {
                 component = cache[key]
                 delete cache[key]
             }
-         
+
             if (!component) {
                 component = new VComponent("repeat-item", null,
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
             }
-            
+
             component.key = key || i
             component.item = item
             children.push(component)
@@ -4344,14 +4346,14 @@ avalon.directive("repeat", {
                     reversal[command[i]] = ~~i
                 }
                 i = 0
-               var showLog = false
+                var showLog = false
                 while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
                         fragment.appendChild(next)
                         if (typeof reversal[i] === "number") {
-                               showLog && avalon.log("使用已有的节点")
+                            showLog && avalon.log("使用已有的节点")
                             children[reversal[i]] = fragment
                             delete command[reversal[i]]
                         } else {
@@ -4364,9 +4366,9 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-               
+
                 showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-                console.log(command)
+
                 for (i in command) {
                     fragment = fragments.shift()
 
@@ -4435,9 +4437,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1,
-        $repeatItem: binding.itemName,
-        $repeatObject: !repeatArray 
+        $outer: 1
     }
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
@@ -4451,6 +4451,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     }
     var vm = proxyFactory(before, after)
     heirloom.vm = vm
+    vm.$active = (repeatArray ? "array" : "object") + ":" + binding.itemName
     return  vm
 }
 avalon.repeatItemFactory = repeatItemFactory

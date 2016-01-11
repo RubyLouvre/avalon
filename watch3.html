@@ -6,15 +6,26 @@
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                grid: [{a:111,b:222},{a:333,b:444},{a:555,b:666}]
-              
+                grid: [{a: 111, b: 222}],
+                onClick: function () {
+                    vm.grid = [{a: 123, b: 456}, {a: 333, b: 444}, {a: 555, b: 666}]
+
+                },
+                  onMark: function () {
+                    
+                    avalon.each(document.querySelectorAll("td"), function (i, el) {
+                        console.log(el.textContent)
+                        el.title = el.textContent
+                    })
+                },
             })
-          
-          
+
+
         </script>
     </head>
     <body ms-controller="test">
-        <button type="button" ms-click="change">change</button>
+        <button type="button" ms-click="onClick">change</button>
+         <p><button type="button" ms-click="onMark">mark</button></p>
         <table border="1">
             <tr ms-repeat="tr in grid">
                 <td ms-repeat="td in tr">{{td}}</td>

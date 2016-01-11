@@ -24,7 +24,6 @@ avalon.directive("repeat", {
         var expr = binding.expr, match
         if (match = expr.match(rinexpr)) {
             binding.expr = match[2]
-            console.log(match[2],"!!!!",match)
             var keyvalue = match[1]
             if (match = keyvalue.match(rkeyvalue)) {
                 binding.keyName = match[1]
@@ -33,7 +32,7 @@ avalon.directive("repeat", {
                 binding.itemName = keyvalue
             }
         }
-       
+
         var vnode = binding.element
         disposeVirtual(vnode.children)
 
@@ -118,14 +117,14 @@ avalon.directive("repeat", {
                 component = cache[key]
                 delete cache[key]
             }
-         
+
             if (!component) {
                 component = new VComponent("repeat-item", null,
                         vnode._children.map(function (el) {
                             return el.clone()
                         }))
             }
-            
+
             component.key = key || i
             component.item = item
             children.push(component)
@@ -242,14 +241,14 @@ avalon.directive("repeat", {
                     reversal[command[i]] = ~~i
                 }
                 i = 0
-               var showLog = false
+                var showLog = false
                 while (next = node.nextSibling) {
                     if (next.nodeValue === breakText) {
                         break
                     } else if (next.nodeValue === groupText) {
                         fragment.appendChild(next)
                         if (typeof reversal[i] === "number") {
-                               showLog && avalon.log("使用已有的节点")
+                            showLog && avalon.log("使用已有的节点")
                             children[reversal[i]] = fragment
                             delete command[reversal[i]]
                         } else {
@@ -262,9 +261,9 @@ avalon.directive("repeat", {
                         fragment.appendChild(next)
                     }
                 }
-               
+
                 showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-                console.log(command)
+
                 for (i in command) {
                     fragment = fragments.shift()
 
@@ -333,9 +332,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1,
-        $repeatItem: binding.itemName,
-        $repeatObject: !repeatArray 
+        $outer: 1
     }
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
@@ -349,6 +346,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     }
     var vm = proxyFactory(before, after)
     heirloom.vm = vm
+    vm.$active = (repeatArray ? "array" : "object") + ":" + binding.itemName
     return  vm
 }
 avalon.repeatItemFactory = repeatItemFactory
