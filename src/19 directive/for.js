@@ -328,7 +328,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+    var keys = ["$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
@@ -337,6 +337,8 @@ function repeatItemFactory(item, binding, repeatArray) {
         $repeatItem: binding.itemName,
         $repeatObject: !repeatArray 
     }
+    after[binding.keyName] = 1
+    after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
     }
