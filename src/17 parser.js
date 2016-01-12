@@ -89,9 +89,7 @@ function parseExpr(expr, vmodel, binding) {
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
             //直接去掉前面的部分
-          
            input = input.replace(repeatItem + ".", "")
-           console.log(watchHost,"ms-each")
            //还是放到ms-repeat-item的VM中
             watchHost = watchHost[repeatItem] //找到用户VM的数组元素 
         }

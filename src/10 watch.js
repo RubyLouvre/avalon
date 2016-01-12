@@ -69,7 +69,7 @@ function $emit(topVm, curVm, path, a, b, i) {
     var uniq = {}
     if (hive && hive[path]) {
         var list = hive[path]
-        console.log(list.length, "0000")
+      
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
