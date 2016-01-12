@@ -65,7 +65,6 @@ function parseExpr(expr, vmodel, binding) {
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
     if (repeatActive && (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2])) {
         var repeatItem = repeatActive[2]
-        console.log("repeatItem", repeatActive)
         if (repeatActive[1] === "object") {
             var lastIndex = watchHost.$id.lastIndexOf(".*.")
             if (lastIndex !== -1) {
@@ -80,7 +79,6 @@ function parseExpr(expr, vmodel, binding) {
                         break
                     }
                 }
-             //   console.log(watchHost)
             } else {
                 //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
                 var arr = watchHost.$id.match(rtopsub)
@@ -91,8 +89,11 @@ function parseExpr(expr, vmodel, binding) {
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
             //直接去掉前面的部分
-            input = input.replace(repeatItem + ".", "")
-             watchHost = watchHost[repeatItem]
+          
+           input = input.replace(repeatItem + ".", "")
+           console.log(watchHost,"ms-each")
+           //还是放到ms-repeat-item的VM中
+            watchHost = watchHost[repeatItem] //找到用户VM的数组元素 
         }
         binding.expr = input
     }

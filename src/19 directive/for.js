@@ -130,28 +130,56 @@ avalon.directive("repeat", {
             children.push(component)
         }
 
-        //   var pool = []//回收所有可利用代理vm
+        var pool = []//回收所有可利用代理vm
         for (i in cache) {
-            var c = cache[i]
-            c.vmodel.$active = false
-            delete c.vmodel
+            pool.push(cache[i])
             delete cache[i]
-            c.dispose()
         }
+//        for (i in cache) {
+//            var c = cache[i]
+//            c.vmodel.$active = false
+//            delete c.vmodel
+//            delete cache[i]
+//            c.dispose()
+//        }
         //第二次循环,为没有vmodel的组件创建vmodel或重复利用已有vmodel
+    
+        var oldProxy = false
         for (i = 0; i <= last; i++) {
             component = children[i]
             proxy = component.vmodel
             if (proxy) {
                 command[i] = proxy.$index//获取其现在的位置
             } else {
+                var c = pool.shift()//重复利用已有虚拟节点
+                if (c) {
+                    console.log("========================")
+                    if (c.item && c.item.$events) {//取得旧有的数组元素 
+                        component.item.$events = c.item.$events
+                    }
+                    c.item = component.item //将刚刚新建的虚拟节点收集的东西放到旧的上
+                    c.key = component.key
+                    component = children[i] = c //偷龙转凤
+                    proxy = c.vmodel
+                    command[i] = proxy.$index//占据要"移除的元素"的位置 
+                     oldProxy = proxy
+                    proxy = false
+                   
+                   
+                }
 //                proxy = pool.shift()
 //                if (proxy) {    
 //                    command[i] = proxy.$index//占据要"移除的元素"的位置
 //                }
                 if (!proxy) {
                     proxy = repeatItemFactory(component.item, binding, repeatArray)
-                    command[i] = component //这个需要创建真实节点
+                    if (oldProxy) {
+                       // console.log(proxy, oldProxy)
+                        fixVM(component.item.$events, proxy, oldProxy)
+                        oldProxy = false
+                    } else {
+                        command[i] = component //这个需要创建真实节点
+                    }
                 }
 
                 proxy.$outer = binding.$outer
@@ -188,7 +216,7 @@ avalon.directive("repeat", {
                 newCache[component.key] = component
             }
         }
-
+       
         var vChildren = vnode.children
 
         vChildren.length = 0
@@ -319,24 +347,37 @@ function updateSignature(elem, value, text) {
         }
     } while (elem = elem.nextSibling)
 }
-
+function fixVM(events, newVM, oldVM) {
+    for (var i in events) {
+        var list = events[i]
+        if (Array.isArray(list)) {
+            for (var j = 0, el; el = list[j++]; ) {
+                if (el.vmodel) {
+                    if (el.vmodel === oldVM) {
+                        console.log("成功")
+                        el.vmodel = newVM
+                        el.update()//更新虚拟DOM
+                    }
+                }
+            }
+        }
+    }
+}
 
 function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-    var keys = ["$index", "$first", "$last"]
+    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1,
-        $repeatItem: binding.itemName,
-        $repeatObject: !repeatArray
+        $outer: 1
     }
-    after[binding.keyName] = 1
-    after[binding.itemName] = 1
+    //   after[binding.keyName] = 1
+    //   after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
     }

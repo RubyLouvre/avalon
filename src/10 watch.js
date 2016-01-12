@@ -69,6 +69,7 @@ function $emit(topVm, curVm, path, a, b, i) {
     var uniq = {}
     if (hive && hive[path]) {
         var list = hive[path]
+        console.log(list.length, "0000")
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
@@ -90,12 +91,11 @@ function $emit(topVm, curVm, path, a, b, i) {
     if (topVm) {
         var id = topVm.$id
         if (avalon.vtree[id] && !uniq[id]) {
-            console.log("更新domTree")
+            //avalon.log("更新domTree")
             batchUpdateEntity(id)
         }
     }
 }
-// executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
@@ -118,7 +118,7 @@ avalon.injectBinding = function (binding) {
         if (trim) {
             try {
                 binding.watchHost.$watch(path, binding)
-               delete binding.watchHost
+                delete binding.watchHost
             } catch (e) {
                 avalon.log(binding, path)
             }
@@ -126,7 +126,6 @@ avalon.injectBinding = function (binding) {
     })
     delete binding.paths
     binding.update = function (a, b, path) {
-
         var hasError
         try {
             var value = binding.getter(binding.vmodel)

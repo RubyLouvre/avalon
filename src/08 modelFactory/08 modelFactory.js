@@ -40,12 +40,11 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-         
+
             var vm = reuseFactory(old, definition, heirloom, options)
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
-                console.log(vm[i] , definition[i] )
                 vm[i] = definition[i]
             }
             return vm
@@ -79,8 +78,6 @@ function Component() {
  $$skipArray被hasOwnProperty后返回false
  $skipArray被hasOwnProperty后返回true
  */
-
-
 
 var $$skipArray = oneObject("$id,$watch,$fire,$events,$model," +
         "$skipArray,$active,$accessors")
@@ -151,7 +148,7 @@ function observeObject(definition, heirloom, options) {
         val = $vmodel[key]
     }
 
-    hideProperty($vmodel, "$active", top ? generateID("$"): true )
+    hideProperty($vmodel, "$active", top ? generateID("$") : true)
     return $vmodel
 }
 

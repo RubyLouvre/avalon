@@ -15,12 +15,12 @@
                     vm.grid[0].a = 8888
                 },
                 onMark: function () {
-
+                   console.log(vm.grid[0].$active)
                     avalon.each(document.querySelectorAll("td"), function (i, el) {
                         console.log(el.textContent)
                         el.title = el.textContent
                     })
-                },
+                }
             })
 
 

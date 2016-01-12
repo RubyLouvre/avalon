@@ -1120,12 +1120,12 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-         
+
             var vm = reuseFactory(old, definition, heirloom, options)
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
-                console.log(vm[i] , definition[i] )
+                console.log(vm[i], definition[i])
                 vm[i] = definition[i]
             }
             return vm
@@ -1231,7 +1231,7 @@ function observeObject(definition, heirloom, options) {
         val = $vmodel[key]
     }
 
-    hideProperty($vmodel, "$active", top ? generateID("$"): true )
+    hideProperty($vmodel, "$active", top ? generateID("$") : true)
     return $vmodel
 }
 
@@ -1862,6 +1862,7 @@ function $emit(topVm, curVm, path, a, b, i) {
     var uniq = {}
     if (hive && hive[path]) {
         var list = hive[path]
+        console.log(list.length, "0000")
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
@@ -1883,12 +1884,11 @@ function $emit(topVm, curVm, path, a, b, i) {
     if (topVm) {
         var id = topVm.$id
         if (avalon.vtree[id] && !uniq[id]) {
-            console.log("更新domTree")
+            //avalon.log("更新domTree")
             batchUpdateEntity(id)
         }
     }
 }
-// executeBindings
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
@@ -1911,7 +1911,7 @@ avalon.injectBinding = function (binding) {
         if (trim) {
             try {
                 binding.watchHost.$watch(path, binding)
-               delete binding.watchHost
+                delete binding.watchHost
             } catch (e) {
                 avalon.log(binding, path)
             }
@@ -1919,7 +1919,6 @@ avalon.injectBinding = function (binding) {
     })
     delete binding.paths
     binding.update = function (a, b, path) {
-
         var hasError
         try {
             var value = binding.getter(binding.vmodel)
@@ -2898,7 +2897,6 @@ function parseExpr(expr, vmodel, binding) {
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
     if (repeatActive && (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2])) {
         var repeatItem = repeatActive[2]
-        console.log("repeatItem", repeatActive)
         if (repeatActive[1] === "object") {
             var lastIndex = watchHost.$id.lastIndexOf(".*.")
             if (lastIndex !== -1) {
@@ -2913,7 +2911,6 @@ function parseExpr(expr, vmodel, binding) {
                         break
                     }
                 }
-             //   console.log(watchHost)
             } else {
                 //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
                 var arr = watchHost.$id.match(rtopsub)
@@ -2924,8 +2921,11 @@ function parseExpr(expr, vmodel, binding) {
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
             //直接去掉前面的部分
-            input = input.replace(repeatItem + ".", "")
-             watchHost = watchHost[repeatItem]
+          
+           input = input.replace(repeatItem + ".", "")
+           console.log(watchHost,"ms-each")
+           //还是放到ms-repeat-item的VM中
+            watchHost = watchHost[repeatItem] //找到用户VM的数组元素 
         }
         binding.expr = input
     }
@@ -5110,28 +5110,56 @@ avalon.directive("repeat", {
             children.push(component)
         }
 
-        //   var pool = []//回收所有可利用代理vm
+        var pool = []//回收所有可利用代理vm
         for (i in cache) {
-            var c = cache[i]
-            c.vmodel.$active = false
-            delete c.vmodel
+            pool.push(cache[i])
             delete cache[i]
-            c.dispose()
         }
+//        for (i in cache) {
+//            var c = cache[i]
+//            c.vmodel.$active = false
+//            delete c.vmodel
+//            delete cache[i]
+//            c.dispose()
+//        }
         //第二次循环,为没有vmodel的组件创建vmodel或重复利用已有vmodel
+    
+        var oldProxy = false
         for (i = 0; i <= last; i++) {
             component = children[i]
             proxy = component.vmodel
             if (proxy) {
                 command[i] = proxy.$index//获取其现在的位置
             } else {
+                var c = pool.shift()//重复利用已有虚拟节点
+                if (c) {
+                    console.log("========================")
+                    if (c.item && c.item.$events) {//取得旧有的数组元素 
+                        component.item.$events = c.item.$events
+                    }
+                    c.item = component.item //将刚刚新建的虚拟节点收集的东西放到旧的上
+                    c.key = component.key
+                    component = children[i] = c //偷龙转凤
+                    proxy = c.vmodel
+                    command[i] = proxy.$index//占据要"移除的元素"的位置 
+                     oldProxy = proxy
+                    proxy = false
+                   
+                   
+                }
 //                proxy = pool.shift()
 //                if (proxy) {    
 //                    command[i] = proxy.$index//占据要"移除的元素"的位置
 //                }
                 if (!proxy) {
                     proxy = repeatItemFactory(component.item, binding, repeatArray)
-                    command[i] = component //这个需要创建真实节点
+                    if (oldProxy) {
+                       // console.log(proxy, oldProxy)
+                        fixVM(component.item.$events, proxy, oldProxy)
+                        oldProxy = false
+                    } else {
+                        command[i] = component //这个需要创建真实节点
+                    }
                 }
 
                 proxy.$outer = binding.$outer
@@ -5168,7 +5196,7 @@ avalon.directive("repeat", {
                 newCache[component.key] = component
             }
         }
-
+       
         var vChildren = vnode.children
 
         vChildren.length = 0
@@ -5299,24 +5327,38 @@ function updateSignature(elem, value, text) {
         }
     } while (elem = elem.nextSibling)
 }
-
+function fixVM(events, newVM, oldVM) {
+    for (var i in events) {
+        var list = events[i]
+        if (Array.isArray(list)) {
+            for (var j = 0, el; el = list[j++]; ) {
+                if (el.vmodel) {
+                    if (el.vmodel === oldVM) {
+                        console.log("成功")
+                        el.vmodel = newVM
+                        el.update()
+                       // el.getter(el.vmodelvalue)
+                    }
+                }
+            }
+        }
+    }
+}
 
 function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-    var keys = ["$index", "$first", "$last"]
+    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1,
-        $repeatItem: binding.itemName,
-        $repeatObject: !repeatArray
+        $outer: 1
     }
-    after[binding.keyName] = 1
-    after[binding.itemName] = 1
+    //   after[binding.keyName] = 1
+    //   after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable(key, heirloom)
     }
