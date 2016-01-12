@@ -61,39 +61,42 @@ function parseExpr(expr, vmodel, binding) {
         }
     } catch (e) {
     }
-
-    //如果是通过executeBinding静态绑定的,并且不是单次绑定,并且对象是代理VM,并且表达式用到这代理VM的别名
-    if (watchHost.hasOwnProperty("$repeatItem") &&
-            (input.indexOf(watchHost.$repeatItem) === 0 || input === watchHost.$repeatItem)) {
-        if (watchHost.$repeatObject) {
-            //  console.log(expr,vm.$repeatItem,"|",vm.$id )
-            //处理 ms-with的代理VM 直接回溯到顶层VM  $val.a --> obj.aa.a
+  
+    var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
+    if (repeatActive && (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2])) {
+        var repeatItem = repeatActive[2]
+        console.log("repeatItem", repeatActive)
+        if (repeatActive[1] === "object") {
             var lastIndex = watchHost.$id.lastIndexOf(".*.")
             if (lastIndex !== -1) {
-                //如果这是数组循环里面的对象循环
+                //如果这是数组循环里面的对象循环，那么绑定数据的对象是某个数组item
+                toppath = watchHost.$id.slice(0, lastIndex + 2)
                 input = watchHost.$id.slice(lastIndex + 3)
-                input = input.replace(watchHost.$key, watchHost.$repeatItem)
-              
+                input = input.replace(repeatItem, watchHost.$key)
+                for (var k in watchHost) {
+                    var kv = watchHost[k]
+                    if (kv && kv.$id === toppath) {
+                        watchHost = kv
+                        break
+                    }
+                }
+             //   console.log(watchHost)
             } else {
-                  console.log(input,watchHost.$id, "lastIndex")
+                //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
                 var arr = watchHost.$id.match(rtopsub)
-                //  console.log(arr,input, watchHost.$repeatItem,watchHost)
-                input = input.replace(watchHost.$repeatItem, arr[2])
-
+                input = input.replace(repeatItem, arr[2])
                 watchHost = avalon.vmodels[arr[1]]
             }
 
-            // console.log(input, vmodel)
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
-
-            input = input.replace(watchHost.$repeatItem + ".", "")
-            watchHost = watchHost[watchHost.$repeatItem]
-            //  console.log(input, watchHost.$repeatItem, watchHost)
+            //直接去掉前面的部分
+            input = input.replace(repeatItem + ".", "")
+             watchHost = watchHost[repeatItem]
         }
-        //  binding.vmodel = vmodel
         binding.expr = input
     }
+    
     binding.watchHost = watchHost
 
     var canReturn = false
@@ -231,7 +234,6 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
-        console.log(fn + "")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")

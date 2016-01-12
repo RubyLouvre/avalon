@@ -40,10 +40,12 @@ function observe(definition, old, heirloom, options) {
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
+         
             var vm = reuseFactory(old, definition, heirloom, options)
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
+                console.log(vm[i] , definition[i] )
                 vm[i] = definition[i]
             }
             return vm
