@@ -138,6 +138,7 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
+                console.log("重复利用旧的虚拟节点 proxy", i, proxy)
             } else {
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (component) {
@@ -169,7 +170,7 @@ avalon.directive("repeat", {
             proxy.$last = i === last
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
             proxy.$outer = binding.$outer
-
+console.log(proxy)
             children[i] = component
             component.vmodel = proxy
             component.item = curItem
@@ -182,6 +183,7 @@ avalon.directive("repeat", {
                         avalon.Array.remove(array, el)
                     }
                 })(value, curItem)
+                
                 saveInCache(newCache, curItem, component)
                 /* jshint ignore:end */
             } else {
@@ -189,6 +191,7 @@ avalon.directive("repeat", {
             }
 
             if (oldProxy) {
+                console.log("----")
                 //遍历events中的订阅者数组，刷新vmodel，更新视图
                 proxy.$events = oldProxy.$events
                 fixVM(proxy.$events, proxy, oldProxy) 
@@ -197,6 +200,7 @@ avalon.directive("repeat", {
                 }
                 oldProxy = false
             } else if (newCom) {
+                 console.log("=============") 
                 //对全新的虚拟节点进行绑定
                 updateVirtual(component.children, proxy)
                 newCom = false
@@ -342,7 +346,7 @@ function fixVM(events, newVM, oldVM) {
                 if (el.vmodel) {
                     if (el.vmodel === oldVM) {
                         console.log("成功")
-                        console.log(el.getter + "")
+                      //  console.log(el.getter + "")
                         el.vmodel = newVM
                         el.update()//更新虚拟DOM
                     }
@@ -367,6 +371,7 @@ function watchItemFactory(item, binding, repeatArray) {
     }
     if (repeatArray) {
         if (item && /\.\*$/.test(item.$id)) {
+            console.log("这是item")
             after.$watchHost = item
         }
     } else {
