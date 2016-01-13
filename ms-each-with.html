@@ -1,36 +1,37 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="avalon.js"></script>
         <script>
             var vm = avalon.define({
-                $id: "test",
-                array: [{a: 1}, {a: 2}, {a: 3}],
+                $id: 'test',
+                array: [{a: 1, b: 2}, {a: 3, b: 4}],
                 onClick: function () {
-                    vm.array = [{a: 33}, {a: 22}, {a: 56}, {a: 333}]
-                    setTimeout(function () {
-                        vm.array.reverse()
-                    }, 1000)
+                    vm.array = [{a: 15, b: 25}, {a: 33, b: 44}, {a: 55, b: 66}]
+                     setTimeout(function(){
+                     
+                        vm.array[0].a = 999
+                        vm.array[0].b = 888
+                    },1000)
                 },
                 onMark: function () {
-                    avalon.each(document.querySelectorAll("li"), function (i, el) {
+                    avalon.each(document.querySelectorAll("p"), function (i, el) {
                         el.title = el.textContent
                     })
                 }
             })
+
         </script>
     </head>
     <body ms-controller="test">
-        <h1>测试对象数组单层循环</h1>
+        <h1>测试先数组循环再对象循环</h1>
         <p><button type="button" ms-click="onClick">change</button></p>
         <p><button type="button" ms-click="onMark">mark</button></p>
 
         <ul>
             <li ms-repeat="array">
-                {{el.a}}|| {{$first}}||{{$index}}
+                <p ms-repeat="el">{{$key}}||{{$val}}||{{$index}}</p>
             </li>
         </ul>
     </body>

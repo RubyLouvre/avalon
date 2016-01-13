@@ -8,16 +8,18 @@
                 $id: 'test',
                 grid: [{a: 111, b: 222}],
                 onClick: function () {
-                    vm.grid = [{a: 123, b: 456}, {a: 333, b: 444}]
+                    vm.grid = [{ a: 789,b:888}]//, {a: 333, b: 444, c: "yui"}
+//                    setTimeout(function(){
+//                        console.log("----")
+//                        vm.grid[0].c = 999
+//                        vm.grid[0].a = 888
+//                        vm.grid[1].b = 777
+//                    },1000)
+                  
 
                 },
-                onClick2: function () {
-                    vm.grid[0].a = 8888
-                },
                 onMark: function () {
-                   console.log(vm.grid[0].$active)
                     avalon.each(document.querySelectorAll("td"), function (i, el) {
-                        console.log(el.textContent)
                         el.title = el.textContent
                     })
                 }
@@ -27,9 +29,10 @@
         </script>
     </head>
     <body ms-controller="test">
+        <h1>测试先数组循环再对象循环</h1>
         <button type="button" ms-click="onClick">change</button>
-        <button type="button" ms-click="onClick2">change2</button>
         <p><button type="button" ms-click="onMark">mark</button></p>
+
         <table border="1">
             <tr ms-repeat="tr in grid">
                 <td ms-repeat="td in tr">{{td}}</td>

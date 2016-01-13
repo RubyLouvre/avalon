@@ -8,7 +8,7 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                array: [1,2,3],
+                array: [1, 2, 3],
                 onClick: function () {
                     vm.array = ["e", "c", "b", "a", "d", "f"]
                 }
@@ -16,10 +16,11 @@
         </script>
     </head>
     <body ms-controller="test">
-          <p><button type="button" ms-click="onClick">change</button></p>
+        <h1>测试简单数组单层循环</h1>  
+        <p><button type="button" ms-click="onClick">change</button></p>
         <ul>
             <li ms-repeat="array">
-               {{el}}
+                {{el}}||{{$index}}
             </li>
         </ul>
     </body>

@@ -68,10 +68,7 @@ function parseExpr(expr, vmodel, binding) {
 
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
    //$last, $first, $index 应该放在代理VM
-    if (repeatActive &&  
-            (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2]) &&
-            ohasOwn.call(watchHost, "$watchHost")
-            ) {
+    if (repeatActive &&   ohasOwn.call(watchHost, "$watchHost") ) {
         var w = watchHost.$watchHost
         var repeatItem = repeatActive[2]
         if (repeatActive[1] === "object") {
@@ -79,12 +76,14 @@ function parseExpr(expr, vmodel, binding) {
             //var arr = watchHost.$id.match(rtopsub)
             //input = input.replace(repeatItem, arr[2])
             input = watchHost.$id.replace(w.$id + ".", "")
-        } else {
-            //watchExpr : el.aa --> aaa
+           console.log("input object", input, w)
+        } else if(repeatActive[1] === "array" && (input.indexOf(repeatActive[2]+".") === 0)){
+            //watchExpr : el.aa --> aaa 
             input = input.replace(repeatItem + ".", "")
             //watchHost : 总是为对象数组的某个元素
         }
         watchHost = w
+        
         binding.expr = input
     }
 

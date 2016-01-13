@@ -39,7 +39,7 @@ avalon.directive("repeat", {
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
         var component = new VComponent("ms-" + type, {type: type},
-        type === "repeat" ? template : vnode.template.trim())
+                type === "repeat" ? template : vnode.template.trim())
 
         var top = binding.vmodel, $outer = {}
 
@@ -52,7 +52,6 @@ avalon.directive("repeat", {
         } else {
             binding.rendered = noop
         }
-
 
         if (type === "repeat") {
             // repeat组件会替换旧原来的VElement
@@ -138,7 +137,7 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                console.log("重复利用旧的虚拟节点 proxy", i, proxy)
+                console.log("重复利用旧的虚拟节点与proxy", curKey, binding)
             } else {
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (component) {
@@ -158,11 +157,11 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 if (!proxy) {
-                    proxy = watchItemFactory(curItem, binding, repeatArray)
+                    proxy = watchItemFactory(curItem, curKey, binding, repeatArray)
                     command[i] = component //这个需要创建真实节点
                 }
             }
-
+            console.log(curKey, curItem)
             proxy[binding.keyName] = curKey
             proxy[binding.itemName] = curItem
             proxy.$index = i
@@ -170,7 +169,6 @@ avalon.directive("repeat", {
             proxy.$last = i === last
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
             proxy.$outer = binding.$outer
-console.log(proxy)
             children[i] = component
             component.vmodel = proxy
             component.item = curItem
@@ -183,7 +181,7 @@ console.log(proxy)
                         avalon.Array.remove(array, el)
                     }
                 })(value, curItem)
-                
+
                 saveInCache(newCache, curItem, component)
                 /* jshint ignore:end */
             } else {
@@ -191,16 +189,19 @@ console.log(proxy)
             }
 
             if (oldProxy) {
-                console.log("----")
+                console.log("重复利用旧虚拟DOM,更改proxy", curKey, binding.itemName, curItem, proxy)
                 //遍历events中的订阅者数组，刷新vmodel，更新视图
                 proxy.$events = oldProxy.$events
-                fixVM(proxy.$events, proxy, oldProxy) 
+
+                fixVM(proxy.$events, proxy, oldProxy)
+
                 if (proxy.$watchHost && proxy.$watchHost !== proxy) {
+
                     fixVM(proxy.$watchHost.$events, proxy, oldProxy)//处理item中的events
                 }
                 oldProxy = false
             } else if (newCom) {
-                 console.log("=============") 
+                console.log("创建新")
                 //对全新的虚拟节点进行绑定
                 updateVirtual(component.children, proxy)
                 newCom = false
@@ -346,7 +347,7 @@ function fixVM(events, newVM, oldVM) {
                 if (el.vmodel) {
                     if (el.vmodel === oldVM) {
                         console.log("成功")
-                      //  console.log(el.getter + "")
+                        //  console.log(el.getter + "")
                         el.vmodel = newVM
                         el.update()//更新虚拟DOM
                     }
@@ -356,12 +357,12 @@ function fixVM(events, newVM, oldVM) {
     }
 }
 
-function watchItemFactory(item, binding, repeatArray) {
+function watchItemFactory(item, key, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+    var keys = [binding.keyName,binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
@@ -370,12 +371,16 @@ function watchItemFactory(item, binding, repeatArray) {
         $watchHost: null
     }
     if (repeatArray) {
+      //  keys.push(binding.itemName)
         if (item && /\.\*$/.test(item.$id)) {
             console.log("这是item")
             after.$watchHost = item
         }
     } else {
+        
+      //  after.$accessors[binding.itemName] = before.$accessors[key]
         var kid = before.$id + ".*"
+        console.log("处理对象", binding.itemName, key)
         for (var k in before) {
             var kv = before[k]
             if (kv && kv.$id === kid) {
