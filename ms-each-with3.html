@@ -6,9 +6,10 @@
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                grid: [{a: 111, b: 222}],
+                array: [{a: 111, b: 222}],
                 onClick: function () {
-                    vm.grid = [{ a: 789,b:888}]//, {a: 333, b: 444, c: "yui"}
+                    console.log("==== 更新") 
+                    vm.array = [{ a: 789,b:888}]//, {a: 333, b: 444, c: "yui"}
 //                    setTimeout(function(){
 //                        console.log("----")
 //                        vm.grid[0].c = 999
@@ -16,7 +17,6 @@
 //                        vm.grid[1].b = 777
 //                    },1000)
                   
-
                 },
                 onMark: function () {
                     avalon.each(document.querySelectorAll("td"), function (i, el) {
@@ -24,6 +24,8 @@
                     })
                 }
             })
+            
+           
 
 
         </script>
@@ -34,7 +36,7 @@
         <p><button type="button" ms-click="onMark">mark</button></p>
 
         <table border="1">
-            <tr ms-repeat="tr in grid">
+            <tr ms-repeat="tr in array">
                 <td ms-repeat="td in tr">{{td}}</td>
             </tr>
         </table>

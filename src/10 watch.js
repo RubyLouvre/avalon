@@ -39,7 +39,6 @@ function injectDependency(list, binding) {
 
 function $watch(expr, funOrObj) {
     var vm = this
-
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
 

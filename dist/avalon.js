@@ -1829,7 +1829,6 @@ function injectDependency(list, binding) {
 
 function $watch(expr, funOrObj) {
     var vm = this
-
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
 
@@ -2896,8 +2895,8 @@ function parseExpr(expr, vmodel, binding) {
     }
 
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
-   //$last, $first, $index 应该放在代理VM
-    if (repeatActive &&   ohasOwn.call(watchHost, "$watchHost") ) {
+    //$last, $first, $index 应该放在代理VM
+    if (repeatActive && ohasOwn.call(watchHost, "$watchHost")) {
         var w = watchHost.$watchHost
         var repeatItem = repeatActive[2]
         if (repeatActive[1] === "object") {
@@ -2905,14 +2904,15 @@ function parseExpr(expr, vmodel, binding) {
             //var arr = watchHost.$id.match(rtopsub)
             //input = input.replace(repeatItem, arr[2])
             input = watchHost.$id.replace(w.$id + ".", "")
-           console.log("input object", input, w)
-        } else if(repeatActive[1] === "array" && (input.indexOf(repeatActive[2]+".") === 0)){
+            watchHost = w
+        } else if (repeatActive[1] === "array" && (input.indexOf(repeatActive[2] + ".") === 0)) {
             //watchExpr : el.aa --> aaa 
             input = input.replace(repeatItem + ".", "")
             //watchHost : 总是为对象数组的某个元素
+            watchHost = w
         }
-        watchHost = w
-        
+
+
         binding.expr = input
     }
 
@@ -5005,7 +5005,7 @@ avalon.directive("repeat", {
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
         var component = new VComponent("ms-" + type, {type: type},
-                type === "repeat" ? template : vnode.template.trim())
+        type === "repeat" ? template : vnode.template.trim())
 
         var top = binding.vmodel, $outer = {}
 
@@ -5049,6 +5049,7 @@ avalon.directive("repeat", {
         delete binding.siblings
     },
     change: function (value, binding) {
+        console.log(" 更新视图 ",value)
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -5103,15 +5104,21 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                console.log("重复利用旧的虚拟节点与proxy", curKey, binding)
+
+                //console.log("重复利用旧的虚拟节点与proxy", proxy)
+
+
             } else {
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (component) {
                     item = component.item
                     if (item && item.$events) {
                         curItem.$events = item.$events
+                        updateBindingVmodel(avalon.$$subscribers, curItem, item)
+                        item.$active = false
                     }
                     proxy = component.vmodel
+
                     command[i] = proxy.$index//占据要"移除的元素"的位置 
                     oldProxy = proxy
                     proxy = false
@@ -5123,11 +5130,10 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 if (!proxy) {
-                    proxy = watchItemFactory(curItem, curKey, binding, repeatArray)
+                    proxy = watchItemFactory(curItem, binding, repeatArray)
                     command[i] = component //这个需要创建真实节点
                 }
             }
-            console.log(curKey, curItem)
             proxy[binding.keyName] = curKey
             proxy[binding.itemName] = curItem
             proxy.$index = i
@@ -5155,27 +5161,23 @@ avalon.directive("repeat", {
             }
 
             if (oldProxy) {
-                console.log("重复利用旧虚拟DOM,更改proxy", curKey, binding.itemName, curItem, proxy)
+                console.log("重复利用旧虚拟DOM,更改proxy", curItem)
                 //遍历events中的订阅者数组，刷新vmodel，更新视图
                 proxy.$events = oldProxy.$events
 
-                fixVM(proxy.$events, proxy, oldProxy)
+                oldProxy.$active = false
+                updateBindingVmodel(avalon.$$subscribers, proxy, oldProxy)
 
-                if (proxy.$watchHost && proxy.$watchHost !== proxy) {
-
-                    fixVM(proxy.$watchHost.$events, proxy, oldProxy)//处理item中的events
-                }
                 oldProxy = false
             } else if (newCom) {
-                console.log("创建新")
+                console.log("创建新节点")
                 //对全新的虚拟节点进行绑定
                 updateVirtual(component.children, proxy)
                 newCom = false
             }
 
         }
-
-
+    
         var vChildren = vnode.children
         vChildren.length = 0
         pushArray(vChildren, children)
@@ -5305,30 +5307,15 @@ function updateSignature(elem, value, text) {
         }
     } while (elem = elem.nextSibling)
 }
-function fixVM(events, newVM, oldVM) {
-    for (var i in events) {
-        var list = events[i]
-        if (Array.isArray(list)) {
-            for (var j = 0, el; el = list[j++]; ) {
-                if (el.vmodel) {
-                    if (el.vmodel === oldVM) {
-                        console.log("成功")
-                        //  console.log(el.getter + "")
-                        el.vmodel = newVM
-                        el.update()//更新虚拟DOM
-                    }
-                }
-            }
-        }
-    }
-}
 
-function watchItemFactory(item, key, binding, repeatArray) {
+
+
+function watchItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
     }
-    var keys = [binding.keyName,binding.itemName, "$index", "$first", "$last"]
+    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
     var heirloom = {}
     var after = {
@@ -5337,16 +5324,12 @@ function watchItemFactory(item, key, binding, repeatArray) {
         $watchHost: null
     }
     if (repeatArray) {
-      //  keys.push(binding.itemName)
         if (item && /\.\*$/.test(item.$id)) {
             console.log("这是item")
             after.$watchHost = item
         }
     } else {
-        
-      //  after.$accessors[binding.itemName] = before.$accessors[key]
         var kid = before.$id + ".*"
-        console.log("处理对象", binding.itemName, key)
         for (var k in before) {
             var kv = before[k]
             if (kv && kv.$id === kid) {
@@ -5426,7 +5409,14 @@ function compareObject(a, b) {
         return false
     }
 }
-
+function updateBindingVmodel(list, curItem, item) {
+    for (var i = 0, el; el = list[i++]; ) {
+        if (el.vmodel === item) {
+            console.log(" 更新  ", el)
+            el.vmodel = curItem
+        }
+    }
+}
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
