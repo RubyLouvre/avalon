@@ -157,7 +157,7 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 if (!proxy) {
-                    proxy = repeatItemFactory(curItem, binding, repeatArray)
+                    proxy = watchItemFactory(curItem, binding, repeatArray)
                     command[i] = component //这个需要创建真实节点
                 }
             }
@@ -191,8 +191,10 @@ avalon.directive("repeat", {
             if (oldProxy) {
                 //遍历events中的订阅者数组，刷新vmodel，更新视图
                 proxy.$events = oldProxy.$events
-                fixVM(proxy.$events, proxy, oldProxy)
-                fixVM(curItem.$events, proxy, oldProxy)//处理item中的events
+                fixVM(proxy.$events, proxy, oldProxy) 
+                if (proxy.$watchHost && proxy.$watchHost !== proxy) {
+                    fixVM(proxy.$watchHost.$events, proxy, oldProxy)//处理item中的events
+                }
                 oldProxy = false
             } else if (newCom) {
                 //对全新的虚拟节点进行绑定
@@ -350,7 +352,7 @@ function fixVM(events, newVM, oldVM) {
     }
 }
 
-function repeatItemFactory(item, binding, repeatArray) {
+function watchItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
@@ -360,7 +362,25 @@ function repeatItemFactory(item, binding, repeatArray) {
     var heirloom = {}
     var after = {
         $accessors: {},
-        $outer: 1
+        $outer: 1,
+        $watchHost: null
+    }
+    if (repeatArray) {
+        if (item && /\.\*$/.test(item.$id)) {
+            after.$watchHost = item
+        }
+    } else {
+        var kid = before.$id + ".*"
+        for (var k in before) {
+            var kv = before[k]
+            if (kv && kv.$id === kid) {
+                after.$watchHost = kv
+                break
+            }
+        }
+        if (!after.$watchHost) {
+            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
+        }
     }
     //   after[binding.keyName] = 1
     //   after[binding.itemName] = 1
@@ -379,7 +399,7 @@ function repeatItemFactory(item, binding, repeatArray) {
     vm.$active = (repeatArray ? "array" : "object") + ":" + binding.itemName
     return  vm
 }
-avalon.repeatItemFactory = repeatItemFactory
+avalon.watchItemFactory = watchItemFactory
 
 function getRepeatItem(children) {
     var ret = []

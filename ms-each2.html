@@ -8,18 +8,18 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                array: [{a: 1}, {a: 2}, {a: 3}],
+                array: [1,2,3],
                 onClick: function () {
-                    vm.array = [{a: 33}, {b: 22}, {c: 56}]
+                    vm.array = ["e", "c", "b", "a", "d", "f"]
                 }
             })
         </script>
     </head>
     <body ms-controller="test">
-        <p><button type="button" ms-click="onClick">change</button></p>
+          <p><button type="button" ms-click="onClick">change</button></p>
         <ul>
             <li ms-repeat="array">
-                <p ms-repeat="(k,v) in el">{{k}}:{{v}}</p>
+               {{el}}
             </li>
         </ul>
     </body>

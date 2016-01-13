@@ -41,16 +41,11 @@ avalon.mix({
         return fn && fn.set || K
     }
 })
-
-function parseExpr(expr, vmodel, binding) {
-    //目标生成一个函数
-    binding = binding || {}
-
-    var category = (binding.type.match(/on|duplex/) || ["other"])[0]
-    var input = expr.trim()
-    var watchHost = vmodel
-    var fn = evaluatorPool.get(category + ":" + input)
-    binding.paths = pathPool.get(category + ":" + input)
+//avalon对于数组循环与对象循环，会将其绑定属性分别保存到watchHost与watchItem中
+//watchHost为用户定义的VM，可能是顶层VM或数组item
+//watchItem是循环过程中通过watchItemFactory生成的代理VM，它包含了顶层VM的所有属性，当前数组元素或键值对，
+// 及el, $index, $first, $last, $val, $key等系统属性
+function getWatchHost(input, watchHost, binding) {
     var toppath = input.split(".")[0]
     try {
         //调整要添加绑定对象或回调的VM
@@ -61,7 +56,7 @@ function parseExpr(expr, vmodel, binding) {
         }
     } catch (e) {
     }
-  
+
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
     if (repeatActive && (input.indexOf(repeatActive[2]) === 0 || input === repeatActive[2])) {
         var repeatItem = repeatActive[2]
@@ -83,19 +78,62 @@ function parseExpr(expr, vmodel, binding) {
                 //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
                 var arr = watchHost.$id.match(rtopsub)
                 input = input.replace(repeatItem, arr[2])
+                console.log(arr)
                 watchHost = avalon.vmodels[arr[1]]
             }
 
         } else {
             //处理 ms-each的代理VM 只回溯到数组的item VM el.a --> a
             //直接去掉前面的部分
-           input = input.replace(repeatItem + ".", "")
-           //还是放到ms-repeat-item的VM中
+            input = input.replace(repeatItem + ".", "")
+            //还是放到ms-repeat-item的VM中
             watchHost = watchHost[repeatItem] //找到用户VM的数组元素 
         }
         binding.expr = input
     }
-    
+
+    binding.watchHost = watchHost
+}
+
+function parseExpr(expr, vmodel, binding) {
+    //目标生成一个函数
+    binding = binding || {}
+
+    var category = (binding.type.match(/on|duplex/) || ["other"])[0]
+    var input = expr.trim()
+    var fn = evaluatorPool.get(category + ":" + input)
+    binding.paths = pathPool.get(category + ":" + input)
+    var watchHost = vmodel
+    var toppath = input.split(".")[0]
+    try {
+        //调整要添加绑定对象或回调的VM
+        if (watchHost.$accessors) {
+            watchHost = watchHost.$accessors[toppath].get.heirloom.vm
+        } else {
+            watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
+        }
+    } catch (e) {
+    }
+
+    var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
+    if (repeatActive && watchHost.$watchHost) {
+        var w = watchHost.$watchHost
+        var repeatItem = repeatActive[2]
+        if (repeatActive[1] === "object") {
+            //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
+            //var arr = watchHost.$id.match(rtopsub)
+            //input = input.replace(repeatItem, arr[2])
+            input = watchHost.$id.replace(w.$id + ".", "")
+            //  watchHost = avalon.vmodels[arr[1]]
+        } else {
+            //watchExpr : el.aa --> aaa
+            input = input.replace(repeatItem + ".", "")
+            //watchHost : 总是为对象数组的某个元素
+        }
+        watchHost = w
+        binding.expr = input
+    }
+
     binding.watchHost = watchHost
 
     var canReturn = false
