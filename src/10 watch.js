@@ -48,7 +48,7 @@ function shouldDispose() {
  * @returns {undefined}
  */
 function $emit(list, vm, path, a, b, i) {
-    if (list.length) {
+    if (list && list.length) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]

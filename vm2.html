@@ -8,11 +8,20 @@
                 $id: 'test',
                 aa: 11
             })
+            vm.$watch("aa", function(){
+                console.log("创建vm1")
+            })
             var vm3 = avalon.define({
                 $id: 'test2',
                 bb: 22
             })
             var vm4 = avalon.proxyFactory(vm,vm3)
+            
+            vm4.$watch("aa", function(){
+                console.log("创建vm1")
+            })
+            
+            
             var vm2 = avalon.watchItemFactory(0, {
                 keyName: "$index",
                 itemName: "el",
