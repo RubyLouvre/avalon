@@ -1,6 +1,7 @@
 
 /**
  * 回收已有子vm构建新的子vm
+ * 用于vm.obj = newObj 的场合
  * 
  * @param {Component} before
  * @param {Component} after
@@ -45,6 +46,7 @@ function reuseFactory(before, after, heirloom, options) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
+    
     before.$hashcode = false
     hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "$accessors", $accessors)

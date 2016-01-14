@@ -99,6 +99,7 @@ function makeObservable(sid, spath, heirloom, top) {
     function get() {
         return old
     }
+    get.list = []
     if (top) {
         get.heirloom = heirloom
     }
@@ -116,28 +117,28 @@ function makeObservable(sid, spath, heirloom, top) {
 
             var older = old
             old = val
-            if (this.$hashcode) {
-                var vm = heirloom.vm
-                if (vm) {
-                    //如果是子vm
-                    var eventList = vm.$events[spath]
-                    if (eventList && eventList != get.list) {
-                        get.list = get.list || []
-                        ap.push.apply(get.list, eventList)
-                        vm.$events[spath] = get.list
-                    }
-                    $emit(get.list, this, spath, val, older)
-                    if (spath.indexOf(".*.") > 0) {//如果是item vm
-                        var arr = vm.$id.match(rtopsub)
-                        var top = avalon.vmodels[ arr[1] ]
-                        if (top) {
-                            $emit(top.$events[ arr[2] ], this, arr[2], val, older)
-                        }
-                    }
-                    if (avalon.vtree[vm.$id]) {
-                        batchUpdateEntity(vm.$id)
+            var vm = heirloom.__vmodel__
+            if (this.$hashcode && vm) {
+                //如果是子vm
+                var eventList = heirloom[spath]
+                console.log(spath)
+                if (eventList && eventList !== get.list) {
+                    get.list = get.list || []
+                    ap.push.apply(get.list, eventList)
+                    heirloom[spath] = get.list
+                }
+                $emit(get.list, this, spath, val, older)
+                if (spath.indexOf(".*.") > 0) {//如果是item vm
+                    var arr = vm.$id.match(rtopsub)
+                    var top = avalon.vmodels[ arr[1] ]
+                    if (top) {
+                        $emit(top.$events[ arr[2] ], this, arr[2], val, older)
                     }
                 }
+                if (avalon.vtree[vm.$id]) {
+                    batchUpdateEntity(vm.$id)
+                }
+
             }
         },
         enumerable: true,
@@ -174,7 +175,7 @@ function makeComputed(sid, spath, heirloom, top, key, value) {
                 value.set.call(this, x)
                 var val = this[key]
                 if (this.$hashcode && (val !== older)) {
-                    var vm = heirloom.vm
+                    var vm = heirloom.__vmodel__
                     if (vm) {
                         $emit(get.list, this, spath, val, older)
                         if (avalon.vtree[vm.$id]) {

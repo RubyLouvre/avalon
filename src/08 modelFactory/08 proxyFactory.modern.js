@@ -1,12 +1,13 @@
 /**
  * 合并两个vm为一个vm,方便依赖收集
- * 
- * @param {Component} before 
+ *
+ * @param {Component} before
  * @param {Component} after
- * @param {Boolean}   disabled 让before不可用
+ * @param {Object} heirloom
  * @returns {Component}
  */
-function proxyFactory(before, after) {
+function proxyFactory(before, after, heirloom) {
+    heirloom = heirloom || {}
     var $accessors = {}
     var keys = {}
     //收集所有键值对及访问器属性
@@ -24,7 +25,7 @@ function proxyFactory(before, after) {
             $accessors[key] = accessor
         }
     }
-    
+
 
     var $vmodel = new SubComponent()
     Object.defineProperties($vmodel, $accessors)
@@ -40,7 +41,7 @@ function proxyFactory(before, after) {
         return keys[key] === true
     }
 
-    makeFire($vmodel)
+    makeFire($vmodel, heirloom)
 
     hideProperty($vmodel, "$id", before.$id)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
@@ -49,6 +50,6 @@ function proxyFactory(before, after) {
     return $vmodel
 }
 /**
- * @private 
+ * @private
  */
 avalon.proxyFactory = proxyFactory

@@ -1,11 +1,13 @@
 /**
  * 合并两个vm为一个vm,方便依赖收集
- * 
- * @param {Component} before 
+ *
+ * @param {Component} before
  * @param {Component} after
+ * @param {Object} heirloom
  * @returns {Component}
  */
-function proxyFactory(before, after) {
+function proxyFactory(before, after, heirloom) {
+    heirloom = heirloom || {}
     var b = before.$accessors || {}
     var a = after.$accessors || {}
     var $accessors = {}
@@ -24,7 +26,7 @@ function proxyFactory(before, after) {
         }
     }
 
-    
+
     var $vmodel = new Component()
     $vmodel = defineProperties($vmodel, $accessors, keys)
 
@@ -43,16 +45,15 @@ function proxyFactory(before, after) {
         return keys[key] === true
     }
 
-    makeFire($vmodel)
-
+    makeFire($vmodel, heirloom)
     hideProperty($vmodel, "$id", before.$id)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$hashcode", makeHashCode("$"))
-    
+
     return $vmodel
 }
 /**
- * @private 
+ * @private
  */
 avalon.proxyFactory = proxyFactory

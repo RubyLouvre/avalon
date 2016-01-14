@@ -5,7 +5,8 @@ function $watch(expr, funOrObj) {
     var vm = this
 
     if (vm.hasOwnProperty(expr)) {
-        var prop = W3C ? Object.getOwnPropertyDescriptor(vm, expr) :
+        var prop = W3C ?
+                Object.getOwnPropertyDescriptor(vm, expr) :
                 vm.$accessors[expr]
         var list = prop && prop.get && prop.get.list
     } else {
@@ -23,9 +24,11 @@ function $watch(expr, funOrObj) {
         uuid: getUid(funOrObj)
     } : funOrObj
     funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
+
     if (avalon.Array.ensure(list, data)) {
         injectDisposeQueue(data, list)
     }
+
     return function () {
         avalon.Array.remove(list, data)
     }
@@ -33,7 +36,7 @@ function $watch(expr, funOrObj) {
 
 function shouldDispose() {
     var el = this.element
-    return !el || el.disposed 
+    return !el || el.disposed
 }
 
 /**
@@ -84,9 +87,15 @@ avalon.injectBinding = function (binding) {
     })
     delete binding.paths
     binding.update = function () {
+        var vm = binding.vmodel
+        //用于高效替换binding上的vmodel
+        if (vm.$events.__vmodel__ != vm) {
+            vm = binding.vmodel = vm.$events.__vmodel__
+        }
+
         var hasError
         try {
-            var value = binding.getter(binding.vmodel)
+            var value = binding.getter(vm)
         } catch (e) {
             hasError = true
             avalon.log(e)
@@ -118,7 +127,8 @@ function bindingIs(a, b) {
 
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
-        binding.vmodel = vmodel
+        binding.mat = vmodel.$events
+        binding.mat.__vmodel__ = vmodel
         var isBreak = directives[binding.type].init(binding)
         avalon.injectBinding(binding)
         if (isBreak === false)

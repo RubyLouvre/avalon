@@ -64,12 +64,13 @@ function parseExpr(expr, vmodel, binding) {
             } else {
                 watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
             }
-            console.log(watchHost)
+           
             if (!watchHost) {
                 throw new Error("不存在")
             }
         } catch (e) {
-            console.log(e)
+             console.log(input, watchHost,"!!!", e)
+            
         }
     }
     if (!watchHost)

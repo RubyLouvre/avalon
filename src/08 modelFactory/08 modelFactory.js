@@ -17,14 +17,14 @@ var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$hashcod
 
 /**
  * 生成一个vm
- * 
+ *
  * @param {Object} definition 用户的原始数据
  * @param {Object} heirloom   用来保存顶层vm的引用
- * @param {Object} options   
+ * @param {Object} options
  *        top      {Boolean} 是否顶层vm
  *        idname   {String}  $id
  *        pathname {String}  当前路径
- * @returns {Component} 
+ * @returns {Component}
  */
 
 function observeObject(definition, heirloom, options) {
@@ -69,7 +69,7 @@ function observeObject(definition, heirloom, options) {
     $vmodel = defineProperties($vmodel, $accessors, definition)
 
     for (key in keys) {
-        //对普通监控属性或访问器属性进行赋值 
+        //对普通监控属性或访问器属性进行赋值
         if (!(key in $computed)) {
             $vmodel[key] = keys[key]
         }
@@ -90,8 +90,8 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
 
     if (top === true) {
-        makeFire($vmodel)
-        heirloom.vm = $vmodel
+        makeFire($vmodel, heirloom)
+        heirloom.__vmodel__ = $vmodel
     }
 
     for (key in $computed) {
@@ -106,12 +106,13 @@ function observeObject(definition, heirloom, options) {
 
 /**
  * 为vm添加$events, $watch, $fire方法
- * 
+ *
  * @param {Component} $vmodel
  * @returns {undefined}
  */
-function makeFire($vmodel) {
-    hideProperty($vmodel, "$events", {})
+function makeFire($vmodel, heirloom) {
+    heirloom.__vmodel__ = $vmodel
+    hideProperty($vmodel, "$events", heirloom)
     hideProperty($vmodel, "$watch", function (expr, fn) {
         if (expr && fn) {
             return $watch.apply($vmodel, arguments)
@@ -142,7 +143,7 @@ function makeFire($vmodel) {
 
 /**
  * 生成vm的$model
- * 
+ *
  * @param {Component} val
  * @returns {Object|Array}
  */
@@ -171,7 +172,7 @@ function toJson(val) {
 
 /**
  * 添加不可遍历的系统属性($$skipArray中的那些属性)
- * 
+ *
  * @param {type} host
  * @param {type} name
  * @param {type} value
@@ -244,8 +245,8 @@ function repeatItemFactory(item, binding, repeatArray) {
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
-    var vm = proxyFactory(before, after)
-    heirloom.vm = vm
+    var vm = proxyFactory(before, after, heirloom)
+
     vm.$hashcode = (repeatArray ? "a" : "o") + ":" + binding.itemName+":"
     console.log("这是代理vm", vm)
     return  vm
@@ -254,3 +255,7 @@ function repeatItemFactory(item, binding, repeatArray) {
 avalon.repeatItemFactory = repeatItemFactory
 
 
+//旧的数组元素 -->  旧的proxy vm
+//新的数组元素 -->
+//如果数组元素是简单类型 ，无法转换为vm， 其订阅数组保存到 proxy vm的el中
+//新的数组元素， 重用旧的proxy vm, 更换其绑定对象

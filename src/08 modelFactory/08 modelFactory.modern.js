@@ -3,14 +3,14 @@ var $$skipArray = oneObject("$id,$watch,$fire,$events,$model,$skipArray,$hashcod
 
 /**
  * 生成一个vm
- * 
+ *
  * @param {Object} definition 用户的原始数据
  * @param {Object} heirloom   用来保存顶层vm的引用
- * @param {Object} options   
+ * @param {Object} options
  *        top      {Boolean} 是否顶层vm
  *        idname   {String}  $id
  *        pathname {String}  当前路径
- * @returns {Component} 
+ * @returns {Component}
  */
 function observeObject(definition, heirloom, options) {
     options = options || {}
@@ -55,7 +55,7 @@ function observeObject(definition, heirloom, options) {
     Object.defineProperties($vmodel, $accessors)
 
     for (key in keys) {
-        //对普通监控属性或访问器属性进行赋值 
+        //对普通监控属性或访问器属性进行赋值
         if (!(key in $computed)) {
             $vmodel[key] = keys[key]
         }
@@ -76,8 +76,7 @@ function observeObject(definition, heirloom, options) {
     //在高级浏览器,我们不需要搞一个$accessors存放所有访问器属性的定义
     //直接用Object.getOwnPropertyDescriptor获取它们
     if (options.top === true) {
-        makeFire($vmodel)
-        heirloom.vm = $vmodel
+        makeFire($vmodel, heirloom)
     }
 
     for (key in $computed) {
@@ -91,7 +90,7 @@ function observeObject(definition, heirloom, options) {
 
 /**
  * 为vm添加$events, $watch, $fire方法
- * 
+ *
  * @param {Component} $vmodel
  * @returns {undefined}
  */
@@ -125,7 +124,7 @@ function makeFire($vmodel) {
 
 /**
  * 生成vm的$model
- * 
+ *
  * @param {Component} val
  * @returns {Object|Array}
  */
@@ -152,7 +151,7 @@ function toJson(val) {
 
 /**
  * 添加不可遍历的系统属性($$skipArray中的那些属性)
- * 
+ *
  * @param {type} host
  * @param {type} name
  * @param {type} value
