@@ -71,8 +71,8 @@ avalon.innerHTML = function(node, html) {
 
 avalon.clearHTML = function(node) {
     node.textContent = ""
-    while (node.firstChild) {
-        node.removeChild(node.firstChild)
+    while (node.lastChild) {
+        node.removeChild(node.lastChild)
     }
     return node
 }

@@ -36,7 +36,8 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {}, {
-        pathname: $id,
+        pathname: "",
+        idname: $id,
         top: true
     })
 

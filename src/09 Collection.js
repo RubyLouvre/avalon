@@ -31,7 +31,7 @@ function observeArray(array, old, heirloom, options) {
         }
 
         var arrayOptions = {
-            pathname: options.pathname + ".*",
+            idname: array.$id + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {

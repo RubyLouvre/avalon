@@ -891,7 +891,8 @@ avalon.define = function (definition) {
         log("warning: vm必须指定$id")
     }
     var vmodel = observeObject(definition, {}, {
-        pathname: $id,
+        pathname: "",
+        idname: $id,
         top: true
     })
 
@@ -1275,7 +1276,7 @@ function observeArray(array, old, heirloom, options) {
         }
 
         var arrayOptions = {
-            pathname: options.pathname + ".*",
+            idname: array.$id + ".*",
             top: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
@@ -1731,8 +1732,8 @@ avalon.innerHTML = function(node, html) {
 
 avalon.clearHTML = function(node) {
     node.textContent = ""
-    while (node.firstChild) {
-        node.removeChild(node.firstChild)
+    while (node.lastChild) {
+        node.removeChild(node.lastChild)
     }
     return node
 }
@@ -2371,15 +2372,21 @@ function parseExpr(expr, vmodel, binding) {
     binding.paths = pathPool.get(category + ":" + input)
     var watchHost = vmodel
     var toppath = input.split(".")[0]
-    try {
-        //调整要添加绑定对象或回调的VM
-        if (watchHost.$accessors) {
-            watchHost = watchHost.$accessors[toppath].get.heirloom.vm
-        } else {
-            watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
+    if (vmodel.hasOwnProperty(expr)) {
+        try {
+            //调整要添加绑定对象或回调的VM
+            if (watchHost.$accessors) {
+                watchHost = watchHost.$accessors[toppath].get.heirloom.vm
+            } else {
+                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
+            }
+            console.log(watchHost)
+            if (!watchHost) {
+                throw new Error("不存在")
+            }
+        } catch (e) {
+            console.log(e)
         }
-    } catch (e) {
-
     }
     if (!watchHost)
         watchHost = vmodel
@@ -2389,12 +2396,12 @@ function parseExpr(expr, vmodel, binding) {
         var w = watchHost.$watchHost
         if (repeatActive[1] === "object") {
             input = watchHost.$id.replace(w.$id + ".", "")
-          
+
             binding.expr = input
             watchHost = w
         } else if (repeatActive[1] === "array") {
             binding.expr = input
-         
+
         }
         //console.log(watchHost.$id, vmodel.$id)
     }

@@ -36,7 +36,6 @@ function observeObject(definition, heirloom, options) {
         delete definition.$skipArray
     }
 
-    //处女症发作!
     var keys = {}
     var $accessors = {}
     var top = options.top
