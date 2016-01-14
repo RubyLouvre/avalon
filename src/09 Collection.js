@@ -134,6 +134,7 @@ arrayMethods.forEach(function (method) {
     newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
+        
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
                 pathname: this.$id + ".*",

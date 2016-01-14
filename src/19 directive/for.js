@@ -170,7 +170,7 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
-                proxy = watchItemFactory(curItem, binding, repeatArray)
+                proxy = repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }
 
@@ -190,7 +190,6 @@ avalon.directive("repeat", {
 
             proxy[binding.keyName] = curKey
             firePath(proxy, binding.keyName)
-console.log(binding.itemName)
             proxy[binding.itemName] = curItem
             firePath(proxy, binding.itemName)
             proxy.$index = i

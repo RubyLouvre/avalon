@@ -1273,7 +1273,7 @@ function hideProperty(host, name, value) {
 }
 
 
-function watchItemFactory(item, binding, repeatArray) {
+function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)
@@ -1316,7 +1316,7 @@ function watchItemFactory(item, binding, repeatArray) {
     //   after[binding.keyName] = 1
     //   after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
+        after.$accessors[key] = makeObservable("", key, heirloom)
     }
 
     if (repeatArray) {
@@ -1794,7 +1794,7 @@ function reuseFactory(before, after, heirloom, options) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
+    before.$hashcode = false
     hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
@@ -1967,6 +1967,7 @@ arrayMethods.forEach(function (method) {
     newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
+        
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
                 pathname: this.$id + ".*",
@@ -2074,7 +2075,7 @@ avalon.injectBinding = function (binding) {
                 binding.watchHost.$watch(path, binding)
                 delete binding.watchHost
             } catch (e) {
-                avalon.log(binding, path)
+                avalon.log(e, binding, path)
             }
         }
     })
@@ -5369,7 +5370,7 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
-                proxy = watchItemFactory(curItem, binding, repeatArray)
+                proxy = repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }
 
@@ -5389,7 +5390,6 @@ avalon.directive("repeat", {
 
             proxy[binding.keyName] = curKey
             firePath(proxy, binding.keyName)
-console.log(binding.itemName)
             proxy[binding.itemName] = curItem
             firePath(proxy, binding.itemName)
             proxy.$index = i

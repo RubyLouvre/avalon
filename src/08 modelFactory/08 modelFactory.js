@@ -193,7 +193,7 @@ function hideProperty(host, name, value) {
 }
 
 
-function watchItemFactory(item, binding, repeatArray) {
+function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     if (item && item.$id) {
         before = proxyFactory(before, item)

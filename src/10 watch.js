@@ -78,7 +78,7 @@ avalon.injectBinding = function (binding) {
                 binding.watchHost.$watch(path, binding)
                 delete binding.watchHost
             } catch (e) {
-                avalon.log(binding, path)
+                avalon.log(e, binding, path)
             }
         }
     })
