@@ -39,8 +39,16 @@ function injectDependency(list, binding) {
 
 function $watch(expr, funOrObj) {
     var vm = this
-    var hive = vm.$events || (vm.$events = {})
-    var list = hive[expr] || (hive[expr] = [])
+
+    if (vm.hasOwnProperty(expr)) {
+        var prop = W3C ? Object.getOwnPropertyDescriptor(vm, expr) :
+                vm.$accessors[expr]
+        var list = prop && prop.get && prop.get.list
+    } else {
+        var hive = vm.$events || (vm.$events = {})
+        list = hive[expr] || (hive[expr] = [])
+    }
+
 
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
@@ -58,47 +66,37 @@ function $watch(expr, funOrObj) {
         avalon.Array.remove(list, data)
     }
 }
+
 function shouldDispose() {
     var el = this.element
-    return !el || el.disposed
+    return !el || el.disposed 
 }
 
-function $emit(topVm, curVm, path, a, b, i) {
-    var hive = topVm && topVm.$events
-    var uniq = {}
-    if (hive && hive[path]) {
-        var list = hive[path]
-     
+function $emit(list, vm, path, a, b, i) {
+    if (list.length) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
                 if (!data.element || data.element.disposed) {
                     list.splice(i, 1)
                 } else if (data.update) {
-                    data.update.call(curVm, a, b, path)
+                    data.update.call(vm, a, b, path)
                 }
             }
         } catch (e) {
             if (i - 1 > 0)
-                $emit(topVm, path, a, b, i - 1)
+                $emit(list, vm, path, a, b, i - 1)
             avalon.log(e, path)
         }
         if (new Date() - beginTime > 500) {
             rejectDisposeQueue()
         }
     }
-    if (topVm) {
-        var id = topVm.$id
-        if (avalon.vtree[id] && !uniq[id]) {
-            //avalon.log("更新domTree")
-            batchUpdateEntity(id)
-        }
-    }
 }
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
         binding.vmodel = vmodel
-        var isBreak = directives[binding.type].init(binding )
+        var isBreak = directives[binding.type].init(binding)
         avalon.injectBinding(binding)
         if (isBreak === false)
             break
@@ -113,19 +111,18 @@ function bindingIs(a, b) {
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
     binding.paths.split("★").forEach(function (path) {
-        var trim = path.trim()
-        console.log(trim,"__________")
+        path = path.trim()
         if (trim) {
             try {
-                binding.watchHost.$watch(trim, binding)
+                binding.watchHost.$watch(path, binding)
                 delete binding.watchHost
             } catch (e) {
-                avalon.log(binding, trim)
+                avalon.log(binding, path)
             }
         }
     })
     delete binding.paths
-    binding.update = function (a, b, path) {
+    binding.update = function () {
         var hasError
         try {
             var value = binding.getter(binding.vmodel)
