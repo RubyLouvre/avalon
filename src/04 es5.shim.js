@@ -10,11 +10,11 @@ if (!"司徒正美".trim) {
 }
 
 var hasDontEnumBug = !({
-            'toString': null
-        }).propertyIsEnumerable('toString'),
-    hasProtoEnumBug = (function () {
+    'toString': null
+}).propertyIsEnumerable('toString'),
+        hasProtoEnumBug = (function () {
         }).propertyIsEnumerable('prototype'),
-    dontEnums = [
+        dontEnums = [
             "toString",
             "toLocaleString",
             "valueOf",
@@ -23,7 +23,7 @@ var hasDontEnumBug = !({
             "propertyIsEnumerable",
             "constructor"
         ],
-    dontEnumsLength = dontEnums.length;
+        dontEnumsLength = dontEnums.length;
 
 if (!Object.keys) {
     Object.keys = function (object) { //ecma262v5 15.2.3.14
@@ -79,6 +79,12 @@ if (!noop.bind) {
 }
 
 if (!rnative.test([].map)) {
+    var iterator = function (vars, body, ret) {
+        var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
+        /* jshint ignore:start */
+        return Function("fn,scope", fun)
+        /* jshint ignore:end */
+    }
     avalon.mix(ap, {
         //定位操作，返回数组中第一个等于给定参数的元素的索引值。
         indexOf: function (item, index) {
@@ -113,10 +119,5 @@ if (!rnative.test([].map)) {
         //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Prototype.js的对应名字为all。
         every: iterator("", 'if(!_)return false', 'return true')
     })
-    var iterator = function(vars, body, ret) {
-        var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' + body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') + '}' + ret
-        /* jshint ignore:start */
-        return Function("fn,scope", fun)
-        /* jshint ignore:end */
-    }
+
 }
