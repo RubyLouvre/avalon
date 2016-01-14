@@ -39,7 +39,7 @@ function observeObject(definition, heirloom, options) {
         if (!isSkip(key, val, $skipArray)) {
             sid = $idname + "." + key
             spath = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(sid, spath, heirloom, top)
+            $accessors[key] = makeObservable(sid, spath, heirloom)
         }
     }
 
@@ -47,7 +47,7 @@ function observeObject(definition, heirloom, options) {
         keys[key] = definition[key]
         sid = $idname + "." + key
         spath = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(sid, spath, heirloom, top, key, $computed[key])
+        $accessors[key] = makeComputed(sid, spath, heirloom, key, $computed[key])
     }
 
     $accessors.$model = $modelDescriptor

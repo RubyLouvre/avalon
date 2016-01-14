@@ -16,7 +16,7 @@ function observeArray(array, old, heirloom, options) {
         hideProperty(array, "$id", options.idname || hashcode)
         
         array.notify = function (a, b, c) {
-            var vm = heirloom.vm
+            var vm = heirloom.__vmodel__
             if (vm) {
                 var path = a != null ? options.pathname + "." + a : options.pathname
                 path = path.replace(vm.$id + ".", "")
@@ -137,7 +137,7 @@ arrayMethods.forEach(function (method) {
         
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
-                pathname: this.$id + ".*",
+                idname: this.$id + ".*",
                 top: true
             })
         }

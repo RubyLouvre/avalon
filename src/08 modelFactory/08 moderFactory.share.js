@@ -91,18 +91,15 @@ function SubComponent() {
  * @param {type} sid
  * @param {type} spath
  * @param {type} heirloom
- * @param {type} top
  * @returns {PropertyDescriptor}
  */
-function makeObservable(sid, spath, heirloom, top) {
+function makeObservable(sid, spath, heirloom) {
     var old = NaN
     function get() {
         return old
     }
     get.list = []
-    if (top) {
-        get.heirloom = heirloom
-    }
+    get.heirloom = heirloom
     return {
         get: get,
         set: function (val) {
@@ -121,7 +118,6 @@ function makeObservable(sid, spath, heirloom, top) {
             if (this.$hashcode && vm) {
                 //如果是子vm
                 var eventList = heirloom[spath]
-                console.log(spath)
                 if (eventList && eventList !== get.list) {
                     get.list = get.list || []
                     ap.push.apply(get.list, eventList)
@@ -158,15 +154,13 @@ function makeObservable(sid, spath, heirloom, top) {
  * @returns {PropertyDescriptor}
  */
 
-function makeComputed(sid, spath, heirloom, top, key, value) {
+function makeComputed(sid, spath, heirloom, key, value) {
     var old = NaN
     function get() {
         return old = value.get.call(this)
     }
-    if (top) {// 顶层vm的访问器能保存绑定对象及$watch回调
-        get.heirloom = heirloom
-        get.list = []
-    }
+    get.heirloom = heirloom
+    get.list = []
     return {
         get: get,
         set: function (x) {

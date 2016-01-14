@@ -53,7 +53,7 @@ function observeObject(definition, heirloom, options) {
         if (!isSkip(key, val, $skipArray)) {
             sid = $idname + "." + key
             spath = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(sid, spath, heirloom, top)
+            $accessors[key] = makeObservable(sid, spath, heirloom)
         }
     }
 
@@ -61,7 +61,7 @@ function observeObject(definition, heirloom, options) {
         keys[key] = definition[key]
         sid = $idname + "." + key
         spath = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(sid, spath, heirloom, top, key, $computed[key])
+        $accessors[key] = makeComputed(sid, spath, heirloom, key, $computed[key])
     }
 
     $accessors.$model = $modelDescriptor
@@ -91,7 +91,6 @@ function observeObject(definition, heirloom, options) {
 
     if (top === true) {
         makeFire($vmodel, heirloom)
-        heirloom.__vmodel__ = $vmodel
     }
 
     for (key in $computed) {
@@ -195,25 +194,26 @@ function hideProperty(host, name, value) {
 
 function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
+    var heirloom = {}
     if (item && item.$id) {
-        before = proxyFactory(before, item)
+        before = proxyFactory(before, item, heirloom)
     }
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
-    var heirloom = {}
+
     var after = {
         $accessors: {},
-        $outer: 1,
-        $watchHost: null
+        $outer: 1
+                //  $watchHost: null
     }
-    if (item && item.$id) {
-        after.$watchHost = item
-    }
-    if (!repeatArray) {
-        if (!after.$watchHost) {
-            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
-        }
-    }
+//    if (item && item.$id) {
+//        after.$watchHost = item
+//    }
+//    if (!repeatArray) {
+//        if (!after.$watchHost) {
+//            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
+//        }
+//    }
 
 //    if (repeatArray) {
 //        if (item && /\.\*$/.test(item.$id)) {
@@ -246,9 +246,9 @@ function repeatItemFactory(item, binding, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
     var vm = proxyFactory(before, after, heirloom)
-
-    vm.$hashcode = (repeatArray ? "a" : "o") + ":" + binding.itemName+":"
-    console.log("这是代理vm", vm)
+console.log(heirloom, "这是代理vm")
+    vm.$hashcode = makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
+   // console.log("这是代理vm", vm)
     return  vm
 }
 

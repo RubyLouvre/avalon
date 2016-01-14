@@ -946,18 +946,15 @@ function SubComponent() {
  * @param {type} sid
  * @param {type} spath
  * @param {type} heirloom
- * @param {type} top
  * @returns {PropertyDescriptor}
  */
-function makeObservable(sid, spath, heirloom, top) {
+function makeObservable(sid, spath, heirloom) {
     var old = NaN
     function get() {
         return old
     }
     get.list = []
-    if (top) {
-        get.heirloom = heirloom
-    }
+    get.heirloom = heirloom
     return {
         get: get,
         set: function (val) {
@@ -976,7 +973,6 @@ function makeObservable(sid, spath, heirloom, top) {
             if (this.$hashcode && vm) {
                 //如果是子vm
                 var eventList = heirloom[spath]
-                console.log(spath)
                 if (eventList && eventList !== get.list) {
                     get.list = get.list || []
                     ap.push.apply(get.list, eventList)
@@ -1013,15 +1009,13 @@ function makeObservable(sid, spath, heirloom, top) {
  * @returns {PropertyDescriptor}
  */
 
-function makeComputed(sid, spath, heirloom, top, key, value) {
+function makeComputed(sid, spath, heirloom, key, value) {
     var old = NaN
     function get() {
         return old = value.get.call(this)
     }
-    if (top) {// 顶层vm的访问器能保存绑定对象及$watch回调
-        get.heirloom = heirloom
-        get.list = []
-    }
+    get.heirloom = heirloom
+    get.list = []
     return {
         get: get,
         set: function (x) {
@@ -1112,9 +1106,10 @@ function getComputed(obj) {
  *
  * @param {Component} before
  * @param {Component} after
+ * @param {Object} heirloom
  * @returns {Component}
  */
-function proxyFactory(before, after,  heirloom) {
+function proxyFactory(before, after, heirloom) {
     heirloom = heirloom || {}
     var b = before.$accessors || {}
     var a = after.$accessors || {}
@@ -1270,7 +1265,7 @@ function observeArray(array, old, heirloom, options) {
         hideProperty(array, "$id", options.idname || hashcode)
         
         array.notify = function (a, b, c) {
-            var vm = heirloom.vm
+            var vm = heirloom.__vmodel__
             if (vm) {
                 var path = a != null ? options.pathname + "." + a : options.pathname
                 path = path.replace(vm.$id + ".", "")
@@ -1391,7 +1386,7 @@ arrayMethods.forEach(function (method) {
         
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
-                pathname: this.$id + ".*",
+                idname: this.$id + ".*",
                 top: true
             })
         }
@@ -1507,7 +1502,7 @@ avalon.injectBinding = function (binding) {
     binding.update = function () {
         var vm = binding.vmodel
         //用于高效替换binding上的vmodel
-        if (vm.$events.__vmodel__ != vm) {
+        if (vm.$events.__vmodel__ !== vm) {
             vm = binding.vmodel = vm.$events.__vmodel__
         }
 
@@ -1545,8 +1540,7 @@ function bindingIs(a, b) {
 
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
-        binding.mat = vmodel.$events
-        binding.mat.__vmodel__ = vmodel
+        binding.vmodel = vmodel
         var isBreak = directives[binding.type].init(binding)
         avalon.injectBinding(binding)
         if (isBreak === false)
@@ -2395,9 +2389,10 @@ function parseExpr(expr, vmodel, binding) {
         try {
             //调整要添加绑定对象或回调的VM
             if (watchHost.$accessors) {
-                watchHost = watchHost.$accessors[toppath].get.heirloom.vm
+                console.log(watchHost.$accessors[toppath].get.heirloom)
+                watchHost = watchHost.$accessors[toppath].get.heirloom.__vmodel__
             } else {
-                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
+                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
             }
            
             if (!watchHost) {
@@ -2411,20 +2406,21 @@ function parseExpr(expr, vmodel, binding) {
     if (!watchHost)
         watchHost = vmodel
 
-    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
-    if (repeatActive) {
-        var w = watchHost.$watchHost
-        if (repeatActive[1] === "object") {
-            input = watchHost.$id.replace(w.$id + ".", "")
-
-            binding.expr = input
-            watchHost = w
-        } else if (repeatActive[1] === "array") {
-            binding.expr = input
-
-        }
-        //console.log(watchHost.$id, vmodel.$id)
-    }
+//    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
+//    if (repeatActive) {
+//        var w = watchHost.$watchHost
+//        // [{a:111}]
+//        if (repeatActive[1] === "object") {
+//            input = watchHost.$id.replace(w.$id + ".", "")
+//
+//            binding.expr = input
+//            watchHost = w
+//        } else if (repeatActive[1] === "array") {
+//            binding.expr = input
+//
+//        }
+//        //console.log(watchHost.$id, vmodel.$id)
+//    }
 
     //$last, $first, $index 应该放在代理VM
 

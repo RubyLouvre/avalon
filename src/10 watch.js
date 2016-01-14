@@ -89,7 +89,7 @@ avalon.injectBinding = function (binding) {
     binding.update = function () {
         var vm = binding.vmodel
         //用于高效替换binding上的vmodel
-        if (vm.$events.__vmodel__ != vm) {
+        if (vm.$events.__vmodel__ !== vm) {
             vm = binding.vmodel = vm.$events.__vmodel__
         }
 
@@ -127,8 +127,7 @@ function bindingIs(a, b) {
 
 function executeBindings(bindings, vmodel) {
     for (var i = 0, binding; binding = bindings[i++]; ) {
-        binding.mat = vmodel.$events
-        binding.mat.__vmodel__ = vmodel
+        binding.vmodel = vmodel
         var isBreak = directives[binding.type].init(binding)
         avalon.injectBinding(binding)
         if (isBreak === false)

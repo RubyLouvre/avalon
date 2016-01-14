@@ -60,9 +60,9 @@ function parseExpr(expr, vmodel, binding) {
         try {
             //调整要添加绑定对象或回调的VM
             if (watchHost.$accessors) {
-                watchHost = watchHost.$accessors[toppath].get.heirloom.vm
+                watchHost = watchHost.$accessors[toppath].get.heirloom.__vmodel__
             } else {
-                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
+                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
             }
            
             if (!watchHost) {
@@ -76,20 +76,21 @@ function parseExpr(expr, vmodel, binding) {
     if (!watchHost)
         watchHost = vmodel
 
-    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
-    if (repeatActive) {
-        var w = watchHost.$watchHost
-        if (repeatActive[1] === "object") {
-            input = watchHost.$id.replace(w.$id + ".", "")
-
-            binding.expr = input
-            watchHost = w
-        } else if (repeatActive[1] === "array") {
-            binding.expr = input
-
-        }
-        //console.log(watchHost.$id, vmodel.$id)
-    }
+//    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
+//    if (repeatActive) {
+//        var w = watchHost.$watchHost
+//        // [{a:111}]
+//        if (repeatActive[1] === "object") {
+//            input = watchHost.$id.replace(w.$id + ".", "")
+//
+//            binding.expr = input
+//            watchHost = w
+//        } else if (repeatActive[1] === "array") {
+//            binding.expr = input
+//
+//        }
+//        //console.log(watchHost.$id, vmodel.$id)
+//    }
 
     //$last, $first, $index 应该放在代理VM
 
