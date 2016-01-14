@@ -230,16 +230,19 @@ function makeObservable(pathname, heirloom) {
             if (old === val)
                 return
             if (val && typeof val === "object") {
-                val = observe(val, old, heirloom, {
-                    pathname: pathname
-                })
+             
+                    val = observe(val, old, heirloom, {
+                        pathname: pathname
+                    })
             }
 
             var older = old
             old = val
 
             if (this.$active) {
-                var vm = heirloom.vm
+                var vm = heirloom.vm || this
+                if(pathname === "array2")
+                console.log(pathname, vm, pathname.replace(vm.$id + ".", ""))
                 //fire a
                 vm && $emit(vm, this, pathname.replace(vm.$id + ".", ""), val, older)
                 if (pathname.indexOf(".*.") > 0) {

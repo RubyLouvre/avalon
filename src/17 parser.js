@@ -64,29 +64,48 @@ function parseExpr(expr, vmodel, binding) {
             watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.vm
         }
     } catch (e) {
+
     }
+    if (!watchHost)
+        watchHost = vmodel
 
     var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
-    //$last, $first, $index 应该放在代理VM
-    if (repeatActive && ohasOwn.call(watchHost, "$watchHost")) {
+    if (repeatActive) {
         var w = watchHost.$watchHost
-        var repeatItem = repeatActive[2]
         if (repeatActive[1] === "object") {
-            //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
-            //var arr = watchHost.$id.match(rtopsub)
-            //input = input.replace(repeatItem, arr[2])
             input = watchHost.$id.replace(w.$id + ".", "")
+          
+            binding.expr = input
             watchHost = w
-        } else if (repeatActive[1] === "array" && (input.indexOf(repeatActive[2] + ".") === 0)) {
-            //watchExpr : el.aa --> aaa 
-            input = input.replace(repeatItem + ".", "")
-            //watchHost : 总是为对象数组的某个元素
-            watchHost = w
+        } else if (repeatActive[1] === "array") {
+            binding.expr = input
+         
         }
-
-
-        binding.expr = input
+        //console.log(watchHost.$id, vmodel.$id)
     }
+
+    //$last, $first, $index 应该放在代理VM
+
+//    if (repeatActive && ohasOwn.call(watchHost, "$watchHost")) {
+//        var w = watchHost.$watchHost
+//        var repeatItem = repeatActive[2]
+//        if (repeatActive[1] === "object") {
+//            //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
+//            //var arr = watchHost.$id.match(rtopsub)
+//            //input = input.replace(repeatItem, arr[2])
+//            console.log(watchHost.$id,w.$id, w, input)
+//            input = watchHost.$id.replace(w.$id + ".", "")
+//            watchHost = w
+//        } else if (repeatActive[1] === "array" && (input.indexOf(repeatActive[2] + ".") === 0)) {
+//            //watchExpr : el.aa --> aaa 
+//            input = input.replace(repeatItem + ".", "")
+//            //watchHost : 总是为对象数组的某个元素
+//            watchHost = w
+//        }
+//
+//
+//        binding.expr = input
+//    }
 
     binding.watchHost = watchHost
 

@@ -68,7 +68,7 @@ function $emit(topVm, curVm, path, a, b, i) {
     var uniq = {}
     if (hive && hive[path]) {
         var list = hive[path]
-      
+     
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var data = list[i]
@@ -114,12 +114,13 @@ avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
     binding.paths.split("★").forEach(function (path) {
         var trim = path.trim()
+        console.log(trim,"__________")
         if (trim) {
             try {
-                binding.watchHost.$watch(path, binding)
+                binding.watchHost.$watch(trim, binding)
                 delete binding.watchHost
             } catch (e) {
-                avalon.log(binding, path)
+                avalon.log(binding, trim)
             }
         }
     })
