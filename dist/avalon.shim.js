@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.1 built in 2016.1.14
+ avalon.shim.js 1.5.6 built in 2016.1.14
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -284,7 +284,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.51,
+    version: 1.56,
     ui: {},
     log: log,
     slice: W3C ? function (nodes, start, end) {
