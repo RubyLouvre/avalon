@@ -1,6 +1,10 @@
-
-//用于合并两个VM为一个VM
-
+/**
+ * 合并两个vm为一个vm,方便依赖收集
+ * 
+ * @param {Component} before 
+ * @param {Component} after
+ * @returns {Component}
+ */
 function proxyFactory(before, after) {
     var b = before.$accessors || {}
     var a = after.$accessors || {}
@@ -19,6 +23,8 @@ function proxyFactory(before, after) {
             $accessors[key] = a[key]
         }
     }
+
+    
     var $vmodel = new Component()
     $vmodel = defineProperties($vmodel, $accessors, keys)
 
@@ -36,14 +42,17 @@ function proxyFactory(before, after) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-    
+
     makeFire($vmodel)
-    hideProperty($vmodel, "$active", true)
+
     hideProperty($vmodel, "$id", before.$id)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-
+    hideProperty($vmodel, "$hashcode", generateID("$"))
+    
     return $vmodel
 }
+/**
+ * @private 
+ */
 avalon.proxyFactory = proxyFactory
-// xxx  array * a 

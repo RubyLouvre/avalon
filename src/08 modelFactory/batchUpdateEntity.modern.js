@@ -1,10 +1,8 @@
 var canUpdateEntity = true
-function batchUpdateEntity(vm) {
+function batchUpdateEntity(id) {
+    var vm = avalon.vmodels[id]
     if (vm && canUpdateEntity) {
-        var id = vm.$id
-        var vnode = vtree[id]//虚拟DOM
-        if (!vnode)
-            return
+        var vnode = vtree[id]
         var dom = dtree[id]//真实DOM
         if (dom) {
             if (!root.contains(dom))

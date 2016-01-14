@@ -1,11 +1,22 @@
-function SubComponent() {
-}
-//创建子VM
+
+/**
+ * 回收已有子vm构建新的子vm
+ * 
+ * @param {Component} before
+ * @param {Component} after
+ * @param {Object} heirloom
+ * @param {Object} options
+ * @returns {Component}
+ */
 function reuseFactory(before, after, heirloom, options) {
+    var keys = {}
+    var $accessors = {}
+    var $idname = options.idname
     var $pathname = options.pathname
     var resue = before.$accessors || {}
-    var $accessors = {}
-    var keys = {}, key
+
+    var key, sid, spath
+
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -14,7 +25,9 @@ function reuseFactory(before, after, heirloom, options) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
             } else {
-                $accessors[key] = makeObservable($pathname + "." + key, heirloom)
+                sid = $idname + "." + key
+                spath = $pathname ? $pathname + "." + key : key
+                $accessors[key] = makeObservable(sid, spath, heirloom)
             }
         }
     }
@@ -33,9 +46,10 @@ function reuseFactory(before, after, heirloom, options) {
         return keys[key] === true
     }
 
-    hideProperty($vmodel, "$id", $pathname)
+    hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$active", true)
+    hideProperty($vmodel, "$hashcode", generateID("$"))
+    
     return $vmodel
 }

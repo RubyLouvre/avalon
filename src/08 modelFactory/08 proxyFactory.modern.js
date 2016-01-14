@@ -1,3 +1,11 @@
+/**
+ * 合并两个vm为一个vm,方便依赖收集
+ * 
+ * @param {Component} before 
+ * @param {Component} after
+ * @param {Boolean}   disabled 让before不可用
+ * @returns {Component}
+ */
 function proxyFactory(before, after) {
     var $accessors = {}
     var keys = {}
@@ -16,6 +24,7 @@ function proxyFactory(before, after) {
             $accessors[key] = accessor
         }
     }
+    
 
     var $vmodel = new SubComponent()
     Object.defineProperties($vmodel, $accessors)
@@ -32,9 +41,14 @@ function proxyFactory(before, after) {
     }
 
     makeFire($vmodel)
-    hideProperty($vmodel, "$active", true)
+
     hideProperty($vmodel, "$id", before.$id)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+    hideProperty($vmodel, "$hashcode", generateID("$"))
 
     return $vmodel
 }
+/**
+ * @private 
+ */
+avalon.proxyFactory = proxyFactory

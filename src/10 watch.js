@@ -1,42 +1,6 @@
 /*********************************************************************
  *                           依赖调度系统                              *
  **********************************************************************/
-
-//检测两个对象间的依赖关系
-var dependencyDetection = (function () {
-    var outerFrames = []
-    var currentFrame
-    return {
-        begin: function (binding) {
-            //accessorObject为一个拥有callback的对象
-            outerFrames.push(currentFrame)
-            currentFrame = binding
-        },
-        end: function () {
-            currentFrame = outerFrames.pop()
-        },
-        collectDependency: function (array) {
-            if (currentFrame) {
-                //被dependencyDetection.begin调用
-                currentFrame.callback(array)
-            }
-        }
-    };
-})()
-
-//将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组
-function injectDependency(list, binding) {
-    if (binding.oneTime)
-        return
-    if (list && avalon.Array.ensure(list, binding) && binding.element) {
-        injectDisposeQueue(binding, list)
-        if (new Date() - beginTime > 444) {
-            rejectDisposeQueue()
-        }
-    }
-}
-
-
 function $watch(expr, funOrObj) {
     var vm = this
 
@@ -54,7 +18,7 @@ function $watch(expr, funOrObj) {
         update: funOrObj,
         element: {},
         shouldDispose: function () {
-            return vm.$active === false
+            return vm.$hashcode === false
         },
         uuid: getUid(funOrObj)
     } : funOrObj
@@ -72,6 +36,17 @@ function shouldDispose() {
     return !el || el.disposed 
 }
 
+/**
+ * $fire 方法的内部实现
+ * 
+ * @param {Array} list 订阅者数组
+ * @param {Component} vm
+ * @param {String} path 监听属性名或路径
+ * @param {Any} a 当前值 
+ * @param {Any} b 过去值
+ * @param {Number} i 如果抛错,让下一个继续执行
+ * @returns {undefined}
+ */
 function $emit(list, vm, path, a, b, i) {
     if (list.length) {
         try {
@@ -93,26 +68,12 @@ function $emit(list, vm, path, a, b, i) {
         }
     }
 }
-function executeBindings(bindings, vmodel) {
-    for (var i = 0, binding; binding = bindings[i++]; ) {
-        binding.vmodel = vmodel
-        var isBreak = directives[binding.type].init(binding)
-        avalon.injectBinding(binding)
-        if (isBreak === false)
-            break
-    }
-    bindings.length = 0
-}
-
-function bindingIs(a, b) {
-    return a === b
-}
 
 avalon.injectBinding = function (binding) {
     parseExpr(binding.expr, binding.vmodel, binding)
     binding.paths.split("★").forEach(function (path) {
         path = path.trim()
-        if (trim) {
+        if (path) {
             try {
                 binding.watchHost.$watch(path, binding)
                 delete binding.watchHost
@@ -151,6 +112,20 @@ avalon.injectBinding = function (binding) {
     binding.update()
 }
 
+function bindingIs(a, b) {
+    return a === b
+}
+
+function executeBindings(bindings, vmodel) {
+    for (var i = 0, binding; binding = bindings[i++]; ) {
+        binding.vmodel = vmodel
+        var isBreak = directives[binding.type].init(binding)
+        avalon.injectBinding(binding)
+        if (isBreak === false)
+            break
+    }
+    bindings.length = 0
+}
 //一个指令包含以下东西
 //init(binding) 用于处理expr
 //change(val, binding) 用于更新虚拟DOM树及添加更新真实DOM树的钩子
@@ -158,4 +133,39 @@ avalon.injectBinding = function (binding) {
 //is(newValue, oldValue)? 比较新旧值的方法
 //old(binding, oldValue)? 如何保持旧值 
 
+
+
+//检测两个对象间的依赖关系
+var dependencyDetection = (function () {
+    var outerFrames = []
+    var currentFrame
+    return {
+        begin: function (binding) {
+            //accessorObject为一个拥有callback的对象
+            outerFrames.push(currentFrame)
+            currentFrame = binding
+        },
+        end: function () {
+            currentFrame = outerFrames.pop()
+        },
+        collectDependency: function (array) {
+            if (currentFrame) {
+                //被dependencyDetection.begin调用
+                currentFrame.callback(array)
+            }
+        }
+    };
+})()
+
+//将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组
+function injectDependency(list, binding) {
+    if (binding.oneTime)
+        return
+    if (list && avalon.Array.ensure(list, binding) && binding.element) {
+        injectDisposeQueue(binding, list)
+        if (new Date() - beginTime > 444) {
+            rejectDisposeQueue()
+        }
+    }
+}
 
