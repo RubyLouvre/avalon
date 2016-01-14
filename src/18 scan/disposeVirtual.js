@@ -18,7 +18,7 @@ function disposeVirtual(nodes) {
                     disposeVirtual(node.children)
                 }
                 if (node.vmodel) {
-                    node.vmodel.$active = false
+                    node.vmodel.$hashcode = false
                 }
                 break
         }

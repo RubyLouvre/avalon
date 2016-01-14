@@ -116,7 +116,7 @@ function makeObservable(sid, spath, heirloom, top) {
 
             var older = old
             old = val
-            if (this.$active) {
+            if (this.$hashcode) {
                 var vm = heirloom.vm
                 if (vm) {
                     $emit(get.list, this, spath, val, older)
@@ -166,7 +166,7 @@ function makeComputed(sid, spath, heirloom, top, key, value) {
                 var older = old
                 value.set.call(this, x)
                 var val = this[key]
-                if (this.$active && (val !== older)) {
+                if (this.$hashcode && (val !== older)) {
                     var vm = heirloom.vm
                     if (vm) {
                         $emit(get.list, this, spath, val, older)

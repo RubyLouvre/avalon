@@ -43,7 +43,7 @@ function observeObject(definition, heirloom, options) {
     var $vmodel = new Component()
     var $pathname = options.pathname || ""
     var $computed = getComputed(definition)
-    var $idname = options.idname || generateID("$")
+    var $idname = options.idname || makeHashCode("$")
 
     var key, sid, spath
 
@@ -99,7 +99,7 @@ function observeObject(definition, heirloom, options) {
         val = $vmodel[key]
     }
 
-    hideProperty($vmodel, "$hashcode", generateID("$"))
+    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
 
     return $vmodel
 }
@@ -191,3 +191,67 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
+
+
+function watchItemFactory(item, binding, repeatArray) {
+    var before = binding.vmodel
+    if (item && item.$id) {
+        before = proxyFactory(before, item)
+    }
+    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+
+    var heirloom = {}
+    var after = {
+        $accessors: {},
+        $outer: 1,
+        $watchHost: null
+    }
+    if (item && item.$id) {
+        after.$watchHost = item
+    }
+    if (!repeatArray) {
+        if (!after.$watchHost) {
+            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
+        }
+    }
+
+//    if (repeatArray) {
+//        if (item && /\.\*$/.test(item.$id)) {
+//            // console.log("这是item")
+//            after.$watchHost = item
+//        }
+//    } else {
+//        var kid = before.$id + ".*"
+//        for (var k in before) {
+//            var kv = before[k]
+//            if (kv && kv.$id === kid) {
+//                after.$watchHost = kv
+//                break
+//            }
+//        }
+//        if (!after.$watchHost) {
+//            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
+//        }
+//    }
+    //   after[binding.keyName] = 1
+    //   after[binding.itemName] = 1
+    for (var i = 0, key; key = keys[i++]; ) {
+        after.$accessors[key] = makeObservable(key, heirloom)
+    }
+
+    if (repeatArray) {
+        after.$remove = noop
+    }
+    if (Object.defineProperties) {
+        Object.defineProperties(after, after.$accessors)
+    }
+    var vm = proxyFactory(before, after)
+    heirloom.vm = vm
+    vm.$hashcode = (repeatArray ? "a" : "o") + ":" + binding.itemName+":"
+    console.log("这是代理vm", vm)
+    return  vm
+}
+
+avalon.repeatItemFactory = repeatItemFactory
+
+

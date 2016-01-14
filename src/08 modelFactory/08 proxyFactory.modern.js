@@ -44,7 +44,7 @@ function proxyFactory(before, after) {
 
     hideProperty($vmodel, "$id", before.$id)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", generateID("$"))
+    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
 
     return $vmodel
 }

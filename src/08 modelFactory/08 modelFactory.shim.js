@@ -87,7 +87,7 @@ if (!canHideOwn) {
             var body = buffer.join("\r\n")
             var className = VBClassPool[body]
             if (!className) {
-                className = generateID("VBClass")
+                className = makeHashCode("VBClass")
                 window.parseVB("Class " + className + body)
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数

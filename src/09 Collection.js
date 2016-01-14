@@ -10,13 +10,17 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-        hideProperty(array, "$id", options.pathname || generateID("$"))
+        
+        var hashcode = makeHashCode("$")
+        hideProperty(array, "$hashcode", hashcode)
+        hideProperty(array, "$id", options.idname || hashcode)
+        
         array.notify = function (a, b, c) {
             var vm = heirloom.vm
             if (vm) {
                 var path = a != null ? options.pathname + "." + a : options.pathname
                 path = path.replace(vm.$id + ".", "")
-                $emit(vm, vm, path, b, c)
+                $emit(vm.$events[path], vm, path, b, c)
             }
         }
 
@@ -25,7 +29,7 @@ function observeArray(array, old, heirloom, options) {
         } else {
             array.$model = toJson(array)
         }
-        hideProperty(array, "$active", options.top ? generateID("$") : true)
+
         var arrayOptions = {
             pathname: options.pathname + ".*",
             top: true

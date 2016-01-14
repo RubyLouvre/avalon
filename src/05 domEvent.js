@@ -125,7 +125,7 @@ function dispatch(event) {
             var fn = avalon.__eventPool__[uuid]
             if (fn) {
                 var vm = avalon.__eventVM__[curType + ":" + uuid + "??"]
-                if (vm && vm.$active === false) {
+                if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
                 if (/move|scroll/.test(curType)) {

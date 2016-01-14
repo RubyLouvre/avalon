@@ -46,7 +46,7 @@ function reuseFactory(before, after, heirloom, options) {
 
     hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", generateID("$"))
+    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
 
     return $vmodel
 }

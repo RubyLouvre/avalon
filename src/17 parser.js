@@ -69,7 +69,7 @@ function parseExpr(expr, vmodel, binding) {
     if (!watchHost)
         watchHost = vmodel
 
-    var repeatActive = String(watchHost.$active).match(/^(array|object):(\S+)/)
+    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
     if (repeatActive) {
         var w = watchHost.$watchHost
         if (repeatActive[1] === "object") {

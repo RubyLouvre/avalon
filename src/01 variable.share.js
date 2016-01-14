@@ -24,13 +24,13 @@ function getUid(el) {
 }
 
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = function (prefix) {
+var makeHashCode = function (prefix) {
     prefix = prefix || "avalon"
     return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
 }
 
 function markID(fn) {
-    return fn.uuid || (fn.uuid = generateID("e"))
+    return fn.uuid || (fn.uuid = makeHashCode("e"))
 }
 
 var IEVersion = NaN

@@ -88,7 +88,7 @@ var repeatCom = avalon.components["ms-repeat"] =
         avalon.components["ms-each"] = {
     init: function (type, props, template) {
         type = props.type
-        var signature = generateID(type)
+        var signature = makeHashCode(type)
         this.signature = signature
 
         this.template = template + "<!--" + signature + "-->"

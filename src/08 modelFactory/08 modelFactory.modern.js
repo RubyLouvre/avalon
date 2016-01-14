@@ -28,7 +28,7 @@ function observeObject(definition, heirloom, options) {
     var $vmodel = new Component()
     var $pathname = options.pathname || ""
     var $computed = getComputed(definition)
-    var $idname = options.idname || generateID("$")
+    var $idname = options.idname || makeHashCode("$")
 
     var key, sid, spath
 
@@ -84,7 +84,7 @@ function observeObject(definition, heirloom, options) {
         val = $vmodel[key]
     }
 
-    hideProperty($vmodel, "$hashcode", generateID("$"))
+    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
 
     return $vmodel
 }

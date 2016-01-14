@@ -138,7 +138,7 @@ avalon.directive("repeat", {
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                if (proxy.$watchHost && proxy.$watchHost.$active === false) {
+                if (proxy.$watchHost && proxy.$watchHost.$hashcode === false) {
                     oldProxy = proxy
                     proxy = false
                     console.log("要delete", proxy)
@@ -152,7 +152,7 @@ avalon.directive("repeat", {
                     if (item && item.$events) {
                         curItem.$events = item.$events
                         updateBindingVmodel(avalon.$$subscribers, curItem, item)
-                        item.$active = false
+                        item.$hashcode = false
                     }
                     proxy = component.vmodel
                     console.log("这是回收的", proxy)
@@ -181,7 +181,7 @@ avalon.directive("repeat", {
                 //遍历events中的订阅者数组，刷新vmodel，更新视图
 
 
-                oldProxy.$active = false
+                oldProxy.$hashcode = false
                 updateBindingVmodel(avalon.$$subscribers, proxy, oldProxy)
 
 
@@ -365,65 +365,7 @@ function updateSignature(elem, value, text) {
 
 //复杂即错误！！！！
 
-function watchItemFactory(item, binding, repeatArray) {
-    var before = binding.vmodel
-    if (item && item.$id) {
-        before = proxyFactory(before, item)
-    }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
-    var heirloom = {}
-    var after = {
-        $accessors: {},
-        $outer: 1,
-        $watchHost: null
-    }
-    if (item && item.$id) {
-        after.$watchHost = item
-    }
-    if (!repeatArray) {
-        if (!after.$watchHost) {
-            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
-        }
-    }
-
-//    if (repeatArray) {
-//        if (item && /\.\*$/.test(item.$id)) {
-//            // console.log("这是item")
-//            after.$watchHost = item
-//        }
-//    } else {
-//        var kid = before.$id + ".*"
-//        for (var k in before) {
-//            var kv = before[k]
-//            if (kv && kv.$id === kid) {
-//                after.$watchHost = kv
-//                break
-//            }
-//        }
-//        if (!after.$watchHost) {
-//            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
-//        }
-//    }
-    //   after[binding.keyName] = 1
-    //   after[binding.itemName] = 1
-    for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
-    }
-
-    if (repeatArray) {
-        after.$remove = noop
-    }
-    if (Object.defineProperties) {
-        Object.defineProperties(after, after.$accessors)
-    }
-    var vm = proxyFactory(before, after)
-    heirloom.vm = vm
-    vm.$active = (repeatArray ? "array" : "object") + ":" + binding.itemName
-    console.log("这是代理vm", vm)
-    return  vm
-}
-avalon.watchItemFactory = watchItemFactory
 
 function getRepeatItem(children) {
     var ret = []
@@ -485,9 +427,9 @@ function updateBindingVmodel(list, curItem, item) {
 function isInCache(cache, vm) {
     var isObject = Object(vm) === vm, c
     if (isObject) {
-        c = cache[vm.$active]
+        c = cache[vm.$hashcode]
         if (c) {
-            delete cache[vm.$active]
+            delete cache[vm.$hashcode]
         }
         return c
     } else {
@@ -516,7 +458,7 @@ function isInCache(cache, vm) {
 
 function saveInCache(cache, vm, component) {
     if (Object(vm) === vm) {
-        cache[vm.$active] = component
+        cache[vm.$hashcode] = component
     } else {
         var type = avalon.type(vm)
         var trackId = type + "_" + vm
