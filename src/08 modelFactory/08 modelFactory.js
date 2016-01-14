@@ -236,7 +236,7 @@ function watchItemFactory(item, binding, repeatArray) {
     //   after[binding.keyName] = 1
     //   after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
-        after.$accessors[key] = makeObservable(key, heirloom)
+        after.$accessors[key] = makeObservable("", key, heirloom)
     }
 
     if (repeatArray) {

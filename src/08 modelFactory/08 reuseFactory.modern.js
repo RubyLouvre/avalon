@@ -43,7 +43,7 @@ function reuseFactory(before, after, heirloom, options) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
+    before.$hashcode = false
     hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
     hideProperty($vmodel, "$hashcode", makeHashCode("$"))
