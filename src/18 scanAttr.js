@@ -122,8 +122,10 @@ if (!W3C) {
             return []
         }
         var str = html.match(rtag)[0]
+        if(str.slice(-1) === ">"){
+            str = str.slice(0,-1)
+        }
         var attributes = [],
-                match,
                 k, v
         var ret = attrPool.get(str)
         if (ret) {
@@ -135,7 +137,6 @@ if (!W3C) {
                 v = (rquote.test(v) ? v.slice(1, -1) : v).replace(ramp, "&")
             }
             var name = k[1].toLowerCase()
-            match = name.match(rmsAttr)
             var binding = {
                 name: name,
                 specified: true,
