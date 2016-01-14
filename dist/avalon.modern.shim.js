@@ -856,7 +856,7 @@ kernel.maxRepeatSize = 100
 //这里放置modelFactory新旧版都用到的方法
 
 //所有vmodel都储存在这里
-avalon.vmodels = {} 
+avalon.vmodels = {}
 var vtree = {}
 var dtree = {}
 var rtopsub = /([^.]+)\.(.+)/
@@ -865,22 +865,22 @@ avalon.vtree = vtree
 /**
  * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
  *  vm拥有如下私有属性
-  
-    $id: vm.id
-    $events: 放置$watch回调与绑定对象
-    $watch: 增强版$watch
-    $fire: 触发$watch回调
-    $hashcode:相当于uuid,但为false时会防止依赖收集,让框架来回收
-    $model:返回一个纯净的JS对象
-    $accessors: avalon.js独有的对象,放置所有访问器属性
-    =============================
-    $skipArray:用于指定不可监听的属性,但vm生成是没有此属性的
-
-    $$skipArray与$skipArray都不能监控,
-    不同点是
-    $$skipArray被hasOwnProperty后返回false
-    $skipArray被hasOwnProperty后返回true
-
+ 
+ $id: vm.id
+ $events: 放置$watch回调与绑定对象
+ $watch: 增强版$watch
+ $fire: 触发$watch回调
+ $hashcode:相当于uuid,但为false时会防止依赖收集,让框架来回收
+ $model:返回一个纯净的JS对象
+ $accessors: avalon.js独有的对象,放置所有访问器属性
+ =============================
+ $skipArray:用于指定不可监听的属性,但vm生成是没有此属性的
+ 
+ $$skipArray与$skipArray都不能监控,
+ 不同点是
+ $$skipArray被hasOwnProperty后返回false
+ $skipArray被hasOwnProperty后返回true
+ 
  * 
  * @param {Object} definition 用户定义
  * @returns {Component} vm
@@ -956,7 +956,6 @@ function makeObservable(sid, spath, heirloom, top) {
     }
     if (top) {
         get.heirloom = heirloom
-        get.list = []
     }
     return {
         get: get,
@@ -972,9 +971,17 @@ function makeObservable(sid, spath, heirloom, top) {
 
             var older = old
             old = val
+            console.log(spath, this)
             if (this.$hashcode) {
                 var vm = heirloom.vm
                 if (vm) {
+                    //  fixPath(vm, spath, get.list)
+                    var eventList = vm.$events[spath]
+                    if (eventList && eventList != get.list) {
+                        get.list = get.list || []
+                        ap.push.apply(get.list, eventList)
+                        vm.$events[spath] = get.list
+                    }
                     $emit(get.list, this, spath, val, older)
                     if (spath.indexOf(".*.") > 0) {//如果是item vm
                         var arr = vm.$id.match(rtopsub)
