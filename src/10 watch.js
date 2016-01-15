@@ -14,7 +14,10 @@ function $watch(expr, funOrObj) {
         var hive = vm.$events || (vm.$events = {})
         list = hive[expr] || (hive[expr] = [])
     }
-
+    if (!list) {
+        console.log(expr, "对应的数组不存在", vm)
+        return
+    }
 
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
@@ -79,11 +82,11 @@ avalon.injectBinding = function (binding) {
         path = path.trim()
         if (path) {
             try {
-                binding.watchHost.$watch(path, binding)
-                delete binding.watchHost
-                if (binding.watchItem) {
-                    binding.watchItem.$watch(path, binding)
-                    delete binding.watchItem
+                binding.outerVm.$watch(path, binding)
+                delete binding.outerVm
+                if (binding.innerVm) {
+                    binding.innerVm.$watch(path, binding)
+                    delete binding.innerVm
                 }
 
             } catch (e) {

@@ -1441,7 +1441,10 @@ function $watch(expr, funOrObj) {
         var hive = vm.$events || (vm.$events = {})
         list = hive[expr] || (hive[expr] = [])
     }
-
+    if (!list) {
+        console.log(expr, "对应的数组不存在", vm)
+        return
+    }
 
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
@@ -1506,11 +1509,11 @@ avalon.injectBinding = function (binding) {
         path = path.trim()
         if (path) {
             try {
-                binding.watchHost.$watch(path, binding)
-                delete binding.watchHost
-                if (binding.watchItem) {
-                    binding.watchItem.$watch(path, binding)
-                    delete binding.watchItem
+                binding.outerVm.$watch(path, binding)
+                delete binding.outerVm
+                if (binding.innerVm) {
+                    binding.innerVm.$watch(path, binding)
+                    delete binding.innerVm
                 }
 
             } catch (e) {
@@ -2390,10 +2393,10 @@ avalon.mix({
         return fn && fn.set || K
     }
 })
-//avalon对于数组循环与对象循环，会将其绑定属性分别保存到watchHost与watchItem中
-//watchHost为用户定义的VM，可能是顶层VM或数组item
-//watchItem是循环过程中通过watchItemFactory生成的代理VM，它包含了顶层VM的所有属性，当前数组元素或键值对，
-// 及el, $index, $first, $last, $val, $key等系统属性
+//如果不存在循环,那么绑定对象直接放到顶层vm的events中
+//如果存在数组循环,那么绑定同时放进数组元素及其代理vm  
+//如果存在对象循环,那么绑定同时放进顶层vm及其代理vm
+//用户能直接访问到的vm叫outerVm, 内部生成的依附于vtree中的叫innerVm
 
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
@@ -2403,38 +2406,50 @@ function parseExpr(expr, vmodel, binding) {
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
-    var watchHost = vmodel
+    var outerVm = vmodel
     var toppath = input.split(".")[0]
     if (vmodel.hasOwnProperty(expr)) {
         try {
             //调整要添加绑定对象或回调的VM
-            if (watchHost.$accessors) {
-                watchHost = watchHost.$accessors[toppath].get.heirloom.__vmodel__
+            if (outerVm.$accessors) {
+                outerVm = outerVm.$accessors[toppath].get.heirloom.__vmodel__
             } else {
-                watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
+                outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
             }
 
-            if (!watchHost) {
+            if (!outerVm) {
                 throw new Error("不存在")
             }
         } catch (e) {
-            avalon.log(input, watchHost, "!!!", e)
+            avalon.log(input, outerVm, "!!!", e)
         }
     }
-    
-    if (!watchHost)
-        watchHost = vmodel
+    //如果不循环,都是放在用户定义的vm上
+    if (!outerVm)
+        outerVm = vmodel
 
-    var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+    var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
     if (repeatActive) {
-        input = binding.expr = input.replace(repeatActive[2] + ".", "")
-        if (typeof watchHost[repeatActive[2]] === "object") {
-            binding.watchItem = watchHost[repeatActive[2]]
+        console.log(input, repeatActive)
+        if (repeatActive[1] === "o") {
+            binding.innerVm = outerVm
+            var idarr = outerVm.$id.match(rtopsub)
+            if (idarr) {
+                input = binding.expr = idarr[2]
+                outerVm = avalon.vmodels[idarr[1]]
+            }
+
+        } else {
+            input = binding.expr = input.replace(repeatActive[2] + ".", "")
+            if (typeof outerVm[repeatActive[2]] === "object") {
+                binding.innerVm = outerVm[repeatActive[2]]
+            }
         }
+
     }
 
 
-    binding.watchHost = watchHost
+    binding.outerVm = outerVm
 
     var canReturn = false
     if (typeof fn === "function") {
@@ -2450,7 +2465,7 @@ function parseExpr(expr, vmodel, binding) {
     if (canReturn)
         return
     var number = 1
-    //相同的表达式生成相同的函数
+//相同的表达式生成相同的函数
     var maps = {}
     function dig(a) {
         var key = "??" + number++
@@ -2474,14 +2489,14 @@ function parseExpr(expr, vmodel, binding) {
             replace(/\s*(\.|\1)\s*/g, "$1").//移除. |两端空白
             split(/\|(?=\w)/) //分离过滤器
     var paths = {}
-    //处理表达式的本体
+//处理表达式的本体
     var body = input.shift().
             replace(rkeywords, dig).
             replace(rpaths, function (a) {
                 paths[a] = true //抽取所有要$watch的东西
                 return a
             })
-    //处理表达式的过滤器部分
+//处理表达式的过滤器部分
     var footers = input.map(function (str) {
         return str.replace(/\w+/, dig).//去掉过滤名
                 replace(rkeywords, dig).//去掉关键字

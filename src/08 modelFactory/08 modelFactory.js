@@ -207,6 +207,7 @@ function repeatItemFactory(item, binding, repeatArray) {
         $accessors: {},
         $outer: 1
     }
+    console.log(before.$id, binding.itemName)
 
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable("", key, heirloom)
