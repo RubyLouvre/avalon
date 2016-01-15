@@ -8,11 +8,11 @@ function $watch(expr, funOrObj) {
         var prop = W3C ?
                 Object.getOwnPropertyDescriptor(vm, expr) :
                 vm.$accessors[expr]
-        var list = prop && prop.get && prop.get.list
+        list = prop && prop.get && prop.get.list
         vm.$events[expr] = list
     } else {
         var hive = vm.$events || (vm.$events = {})
-        list = hive[expr] || (hive[expr] = [])
+        var list = hive[expr] || (hive[expr] = [])
     }
     if (!list) {
         console.log(expr, "对应的数组不存在", vm)

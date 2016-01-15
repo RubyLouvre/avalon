@@ -125,13 +125,14 @@ function makeObservable(sid, spath, heirloom) {
             var older = old
             old = val
             var vm = heirloom.__vmodel__
+             
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
-                get.list = get.heirloom[spath]
-                
+                get.list = get.heirloom[spath] || []
+
                 $emit(get.list, this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)

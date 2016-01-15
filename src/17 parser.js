@@ -78,26 +78,30 @@ function parseExpr(expr, vmodel, binding) {
 
     var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
     if (repeatActive) {
-        console.log(input, repeatActive)
-        if (repeatActive[1] === "o") {
+        if (repeatActive[1] === "o") {//处理对象循环
             binding.innerVm = outerVm
             var idarr = outerVm.$id.match(rtopsub)
             if (idarr) {
-                input = binding.expr = idarr[2]
-                outerVm = avalon.vmodels[idarr[1]]
+                if (input === repeatActive[2]) {//处理$val
+                    input = binding.expr = idarr[2]
+                }
+                binding.outerVm = avalon.vmodels[idarr[1]]
             }
-
-        } else {
+        } else {//处理数组循环
             input = binding.expr = input.replace(repeatActive[2] + ".", "")
+            binding.innerVm = outerVm
             if (typeof outerVm[repeatActive[2]] === "object") {
-                binding.innerVm = outerVm[repeatActive[2]]
+                binding.outerVm = outerVm[repeatActive[2]]
+                // console.log("inner ", outerVm[repeatActive[2]], repeatActive[2])
             }
         }
 
+    } else {
+        binding.outerVm = outerVm
     }
 
 
-    binding.outerVm = outerVm
+
 
     var canReturn = false
     if (typeof fn === "function") {

@@ -980,13 +980,14 @@ function makeObservable(sid, spath, heirloom) {
             var older = old
             old = val
             var vm = heirloom.__vmodel__
+             
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
-                get.list = get.heirloom[spath]
-                
+                get.list = get.heirloom[spath] || []
+
                 $emit(get.list, this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
@@ -1435,11 +1436,11 @@ function $watch(expr, funOrObj) {
         var prop = W3C ?
                 Object.getOwnPropertyDescriptor(vm, expr) :
                 vm.$accessors[expr]
-        var list = prop && prop.get && prop.get.list
+        list = prop && prop.get && prop.get.list
         vm.$events[expr] = list
     } else {
         var hive = vm.$events || (vm.$events = {})
-        list = hive[expr] || (hive[expr] = [])
+        var list = hive[expr] || (hive[expr] = [])
     }
     if (!list) {
         console.log(expr, "对应的数组不存在", vm)
@@ -2430,26 +2431,30 @@ function parseExpr(expr, vmodel, binding) {
 
     var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
     if (repeatActive) {
-        console.log(input, repeatActive)
-        if (repeatActive[1] === "o") {
+        if (repeatActive[1] === "o") {//处理对象循环
             binding.innerVm = outerVm
             var idarr = outerVm.$id.match(rtopsub)
             if (idarr) {
-                input = binding.expr = idarr[2]
-                outerVm = avalon.vmodels[idarr[1]]
+                if (input === repeatActive[2]) {//处理$val
+                    input = binding.expr = idarr[2]
+                }
+                binding.outerVm = avalon.vmodels[idarr[1]]
             }
-
-        } else {
+        } else {//处理数组循环
             input = binding.expr = input.replace(repeatActive[2] + ".", "")
+            binding.innerVm = outerVm
             if (typeof outerVm[repeatActive[2]] === "object") {
-                binding.innerVm = outerVm[repeatActive[2]]
+                binding.outerVm = outerVm[repeatActive[2]]
+                // console.log("inner ", outerVm[repeatActive[2]], repeatActive[2])
             }
         }
 
+    } else {
+        binding.outerVm = outerVm
     }
 
 
-    binding.outerVm = outerVm
+
 
     var canReturn = false
     if (typeof fn === "function") {
