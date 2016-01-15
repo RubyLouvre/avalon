@@ -981,14 +981,12 @@ function makeObservable(sid, spath, heirloom) {
             old = val
             var vm = heirloom.__vmodel__
             if (this.$hashcode && vm) {
-
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
-                    get.list = get.heirloom[spath]
-                    // console.log(get.list, eventList, heirloom[spath], spath)
                 }
-                // console.log(spath, val, older, sid)
+                get.list = get.heirloom[spath]
+                
                 $emit(get.list, this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
@@ -1510,6 +1508,11 @@ avalon.injectBinding = function (binding) {
             try {
                 binding.watchHost.$watch(path, binding)
                 delete binding.watchHost
+                if (binding.watchItem) {
+                    binding.watchItem.$watch(path, binding)
+                    delete binding.watchItem
+                }
+
             } catch (e) {
                 avalon.log(e, binding, path)
             }
@@ -2410,22 +2413,25 @@ function parseExpr(expr, vmodel, binding) {
             } else {
                 watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
             }
-           
+
             if (!watchHost) {
                 throw new Error("不存在")
             }
         } catch (e) {
-             avalon.log(input, watchHost,"!!!", e)
-            
+            avalon.log(input, watchHost, "!!!", e)
         }
     }
+    
     if (!watchHost)
         watchHost = vmodel
 
-   var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-   if (repeatActive) {
-      input = binding.expr = input.replace(repeatActive[2]+".", "")
-   }
+    var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+    if (repeatActive) {
+        input = binding.expr = input.replace(repeatActive[2] + ".", "")
+        if (typeof watchHost[repeatActive[2]] === "object") {
+            binding.watchItem = watchHost[repeatActive[2]]
+        }
+    }
 
 
     binding.watchHost = watchHost

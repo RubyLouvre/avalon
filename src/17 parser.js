@@ -64,22 +64,25 @@ function parseExpr(expr, vmodel, binding) {
             } else {
                 watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
             }
-           
+
             if (!watchHost) {
                 throw new Error("不存在")
             }
         } catch (e) {
-             avalon.log(input, watchHost,"!!!", e)
-            
+            avalon.log(input, watchHost, "!!!", e)
         }
     }
+    
     if (!watchHost)
         watchHost = vmodel
 
-   var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-   if (repeatActive) {
-      input = binding.expr = input.replace(repeatActive[2]+".", "")
-   }
+    var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+    if (repeatActive) {
+        input = binding.expr = input.replace(repeatActive[2] + ".", "")
+        if (typeof watchHost[repeatActive[2]] === "object") {
+            binding.watchItem = watchHost[repeatActive[2]]
+        }
+    }
 
 
     binding.watchHost = watchHost
