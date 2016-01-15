@@ -129,37 +129,21 @@ avalon.directive("repeat", {
             delete cache[i]
         }
         //第二次循环,创建缺失的虚拟节点或proxy
-        var oldProxy, newCom
+        var newCom
         for (i = 0; i <= last; i++) {
             component = children[i]
             var curItem = items[i].item
             var curKey = items[i].key
             var proxy = false
+            var oldProxy = false
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                if (proxy.$watchHost && proxy.$watchHost.$hashcode === false) {
-                    oldProxy = proxy
-                    proxy = false
-                    console.log("要delete", proxy)
-                }
-
             } else {
                 component = reuse.shift()//重复利用回收的虚拟节点
-                if (component) {
-
-                    item = component.item
-                    if (item && item.$events) {
-                        curItem.$events = item.$events
-                        updateBindingVmodel(avalon.$$subscribers, curItem, item)
-                        item.$hashcode = false
-                    }
-                    proxy = component.vmodel
-                    console.log("这是回收的", proxy)
-                    command[i] = proxy.$index//占据要"移除的元素"的位置 
-                    oldProxy = proxy
-
-                    proxy = false
+                if (component) {// 如果是splice走这里
+                    oldProxy = component.vmodel
+                    command[i] = oldProxy.$index//占据要"移除的元素"的位置 
                 } else {
                     component = new VComponent("repeat-item", null,
                             vnode._children.map(function (el) {
@@ -170,28 +154,24 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
-                proxy = repeatItemFactory(curItem, binding, repeatArray)
+                proxy = oldProxy || repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }
 
             if (oldProxy) {
                 proxy.$events = oldProxy.$events
-                console.log(proxy, "!!!!!!!!!!!!!!", oldProxy.$events)
-                console.log("重复利用旧虚拟DOM,更改proxy", curItem)
-                //遍历events中的订阅者数组，刷新vmodel，更新视图
-
-
-                oldProxy.$hashcode = false
-                updateBindingVmodel(avalon.$$subscribers, proxy, oldProxy)
-
-
+                oldProxy.$events.__vmodel__ = proxy
                 oldProxy = false
+                item = component.item
+                if (item && item.$events) {
+                    curItem.$events = item.$events
+                    item.$events.__vmodel__ = curItem
+                }
             }
 
             proxy[binding.keyName] = curKey
-            firePath(proxy, binding.keyName)
             proxy[binding.itemName] = curItem
-            firePath(proxy, binding.itemName)
+
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -340,14 +320,7 @@ avalon.directive("repeat", {
         }
     }
 })
-function firePath(proxy, p, a, b) {
-    for (var i in proxy.$events) {
-        if (i.indexOf(p + ".") === 0 || i === p) {
-            $emit(proxy, proxy, i)
-        }
-    }
 
-}
 
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]

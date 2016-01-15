@@ -918,6 +918,7 @@ function observe(definition, old, heirloom, options) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
             var vm = reuseFactory(old, definition, heirloom, options)
+
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
@@ -926,7 +927,8 @@ function observe(definition, old, heirloom, options) {
             return vm
         } else {
             //否则新建一个VM
-            return observeObject(definition, heirloom, options)
+            vm = observeObject(definition, heirloom, options)
+            return vm
         }
     } else {
         return definition
@@ -958,26 +960,35 @@ function makeObservable(sid, spath, heirloom) {
     return {
         get: get,
         set: function (val) {
-            if (old === val)
+            if (old === val) {
                 return
+            }
             if (val && typeof val === "object") {
-                val = observe(val, old, heirloom, {
-                    pathname: spath,
-                    idname: sid
-                })
+                if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
+                    for (var ii in val) {
+                        old[ii] = val[ii]
+                    }
+                    console.log("这是新添加的分支", old, val)
+                } else {
+                    val = observe(val, old, heirloom, {
+                        pathname: spath,
+                        idname: sid
+                    })
+                }
             }
 
             var older = old
             old = val
             var vm = heirloom.__vmodel__
             if (this.$hashcode && vm) {
-                //如果是子vm
-                var eventList = heirloom[spath]
-                if (eventList && eventList !== get.list) {
-                    get.list = get.list || []
-                    ap.push.apply(get.list, eventList)
-                    heirloom[spath] = get.list
+
+                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
+                if (heirloom !== vm.$events) {
+                    get.heirloom = vm.$events
+                    get.list = get.heirloom[spath]
+                    // console.log(get.list, eventList, heirloom[spath], spath)
                 }
+                // console.log(spath, val, older, sid)
                 $emit(get.list, this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
@@ -986,8 +997,8 @@ function makeObservable(sid, spath, heirloom) {
                         $emit(top.$events[ arr[2] ], this, arr[2], val, older)
                     }
                 }
-                if (avalon.vtree[vm.$id]) {
-                    batchUpdateEntity(vm.$id)
+                if (avalon.vtree[ vm.$id.split(".")[0] ]) {
+                    batchUpdateEntity(vm.$id.split(".")[0])
                 }
 
             }
@@ -1218,6 +1229,11 @@ function reuseFactory(before, after, heirloom, options) {
     
     return $vmodel
 }
+
+function reuse(itemProxy, name, item){
+   var obj =  itemProxy[name]
+   
+}
 var canUpdateEntity = true
 function batchUpdateEntity(id) {
     var vm = avalon.vmodels[id]
@@ -1259,17 +1275,17 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-        
+
         var hashcode = makeHashCode("$")
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
-        
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
             if (vm) {
-                var path = a != null ? options.pathname + "." + a : options.pathname
-                path = path.replace(vm.$id + ".", "")
-                $emit(vm.$events[path], vm, path, b, c)
+                var path = a === null || a === void 0 ?
+                        options.pathname :
+                        options.pathname + "." + a
+                vm.$fire(path, b, c)
             }
         }
 
@@ -1309,7 +1325,7 @@ var newProto = {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
 
-            this.notify("*", val, this[index])
+            this.notify(null, val, this[index])
             this.splice(index, 1, val)
         }
     },
@@ -1383,7 +1399,7 @@ arrayMethods.forEach(function (method) {
     newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
-        
+
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
                 idname: this.$id + ".*",
@@ -1422,6 +1438,7 @@ function $watch(expr, funOrObj) {
                 Object.getOwnPropertyDescriptor(vm, expr) :
                 vm.$accessors[expr]
         var list = prop && prop.get && prop.get.list
+        vm.$events[expr] = list
     } else {
         var hive = vm.$events || (vm.$events = {})
         list = hive[expr] || (hive[expr] = [])
@@ -1499,7 +1516,7 @@ avalon.injectBinding = function (binding) {
         }
     })
     delete binding.paths
-    binding.update = function () {
+    binding.update = function (a, b, p) {
         var vm = binding.vmodel
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
@@ -2389,7 +2406,6 @@ function parseExpr(expr, vmodel, binding) {
         try {
             //调整要添加绑定对象或回调的VM
             if (watchHost.$accessors) {
-                console.log(watchHost.$accessors[toppath].get.heirloom)
                 watchHost = watchHost.$accessors[toppath].get.heirloom.__vmodel__
             } else {
                 watchHost = Object.getOwnPropertyDescriptor(watchHost, toppath).get.heirloom.__vmodel__
@@ -2399,51 +2415,18 @@ function parseExpr(expr, vmodel, binding) {
                 throw new Error("不存在")
             }
         } catch (e) {
-             console.log(input, watchHost,"!!!", e)
+             avalon.log(input, watchHost,"!!!", e)
             
         }
     }
     if (!watchHost)
         watchHost = vmodel
 
-//    var repeatActive = String(watchHost.$hashcode).match(/^(array|object):(\S+)/)
-//    if (repeatActive) {
-//        var w = watchHost.$watchHost
-//        // [{a:111}]
-//        if (repeatActive[1] === "object") {
-//            input = watchHost.$id.replace(w.$id + ".", "")
-//
-//            binding.expr = input
-//            watchHost = w
-//        } else if (repeatActive[1] === "array") {
-//            binding.expr = input
-//
-//        }
-//        //console.log(watchHost.$id, vmodel.$id)
-//    }
+   var repeatActive = String(watchHost.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+   if (repeatActive) {
+      input = binding.expr = input.replace(repeatActive[2]+".", "")
+   }
 
-    //$last, $first, $index 应该放在代理VM
-
-//    if (repeatActive && ohasOwn.call(watchHost, "$watchHost")) {
-//        var w = watchHost.$watchHost
-//        var repeatItem = repeatActive[2]
-//        if (repeatActive[1] === "object") {
-//            //如果这是单纯的对象循环,那么绑定数据的对象是顶层VM
-//            //var arr = watchHost.$id.match(rtopsub)
-//            //input = input.replace(repeatItem, arr[2])
-//            console.log(watchHost.$id,w.$id, w, input)
-//            input = watchHost.$id.replace(w.$id + ".", "")
-//            watchHost = w
-//        } else if (repeatActive[1] === "array" && (input.indexOf(repeatActive[2] + ".") === 0)) {
-//            //watchExpr : el.aa --> aaa 
-//            input = input.replace(repeatItem + ".", "")
-//            //watchHost : 总是为对象数组的某个元素
-//            watchHost = w
-//        }
-//
-//
-//        binding.expr = input
-//    }
 
     binding.watchHost = watchHost
 
@@ -4547,37 +4530,21 @@ avalon.directive("repeat", {
             delete cache[i]
         }
         //第二次循环,创建缺失的虚拟节点或proxy
-        var oldProxy, newCom
+        var newCom
         for (i = 0; i <= last; i++) {
             component = children[i]
             var curItem = items[i].item
             var curKey = items[i].key
             var proxy = false
+            var oldProxy = false
             if (component) {
                 proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                if (proxy.$watchHost && proxy.$watchHost.$hashcode === false) {
-                    oldProxy = proxy
-                    proxy = false
-                    console.log("要delete", proxy)
-                }
-
             } else {
                 component = reuse.shift()//重复利用回收的虚拟节点
-                if (component) {
-
-                    item = component.item
-                    if (item && item.$events) {
-                        curItem.$events = item.$events
-                        updateBindingVmodel(avalon.$$subscribers, curItem, item)
-                        item.$hashcode = false
-                    }
-                    proxy = component.vmodel
-                    console.log("这是回收的", proxy)
-                    command[i] = proxy.$index//占据要"移除的元素"的位置 
-                    oldProxy = proxy
-
-                    proxy = false
+                if (component) {// 如果是splice走这里
+                    oldProxy = component.vmodel
+                    command[i] = oldProxy.$index//占据要"移除的元素"的位置 
                 } else {
                     component = new VComponent("repeat-item", null,
                             vnode._children.map(function (el) {
@@ -4588,28 +4555,24 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
-                proxy = repeatItemFactory(curItem, binding, repeatArray)
+                proxy = oldProxy || repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }
 
             if (oldProxy) {
                 proxy.$events = oldProxy.$events
-                console.log(proxy, "!!!!!!!!!!!!!!", oldProxy.$events)
-                console.log("重复利用旧虚拟DOM,更改proxy", curItem)
-                //遍历events中的订阅者数组，刷新vmodel，更新视图
-
-
-                oldProxy.$hashcode = false
-                updateBindingVmodel(avalon.$$subscribers, proxy, oldProxy)
-
-
+                oldProxy.$events.__vmodel__ = proxy
                 oldProxy = false
+                item = component.item
+                if (item && item.$events) {
+                    curItem.$events = item.$events
+                    item.$events.__vmodel__ = curItem
+                }
             }
 
             proxy[binding.keyName] = curKey
-            firePath(proxy, binding.keyName)
             proxy[binding.itemName] = curItem
-            firePath(proxy, binding.itemName)
+
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
@@ -4758,14 +4721,7 @@ avalon.directive("repeat", {
         }
     }
 })
-function firePath(proxy, p, a, b) {
-    for (var i in proxy.$events) {
-        if (i.indexOf(p + ".") === 0 || i === p) {
-            $emit(proxy, proxy, i)
-        }
-    }
 
-}
 
 function updateSignature(elem, value, text) {
     var group = value.split(":")[0]

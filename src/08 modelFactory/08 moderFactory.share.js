@@ -63,6 +63,7 @@ function observe(definition, old, heirloom, options) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
             var vm = reuseFactory(old, definition, heirloom, options)
+
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
@@ -71,7 +72,8 @@ function observe(definition, old, heirloom, options) {
             return vm
         } else {
             //否则新建一个VM
-            return observeObject(definition, heirloom, options)
+            vm = observeObject(definition, heirloom, options)
+            return vm
         }
     } else {
         return definition
@@ -103,26 +105,35 @@ function makeObservable(sid, spath, heirloom) {
     return {
         get: get,
         set: function (val) {
-            if (old === val)
+            if (old === val) {
                 return
+            }
             if (val && typeof val === "object") {
-                val = observe(val, old, heirloom, {
-                    pathname: spath,
-                    idname: sid
-                })
+                if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
+                    for (var ii in val) {
+                        old[ii] = val[ii]
+                    }
+                    console.log("这是新添加的分支", old, val)
+                } else {
+                    val = observe(val, old, heirloom, {
+                        pathname: spath,
+                        idname: sid
+                    })
+                }
             }
 
             var older = old
             old = val
             var vm = heirloom.__vmodel__
             if (this.$hashcode && vm) {
-                //如果是子vm
-                var eventList = heirloom[spath]
-                if (eventList && eventList !== get.list) {
-                    get.list = get.list || []
-                    ap.push.apply(get.list, eventList)
-                    heirloom[spath] = get.list
+
+                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
+                if (heirloom !== vm.$events) {
+                    get.heirloom = vm.$events
+                    get.list = get.heirloom[spath]
+                    // console.log(get.list, eventList, heirloom[spath], spath)
                 }
+                // console.log(spath, val, older, sid)
                 $emit(get.list, this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
@@ -131,8 +142,8 @@ function makeObservable(sid, spath, heirloom) {
                         $emit(top.$events[ arr[2] ], this, arr[2], val, older)
                     }
                 }
-                if (avalon.vtree[vm.$id]) {
-                    batchUpdateEntity(vm.$id)
+                if (avalon.vtree[ vm.$id.split(".")[0] ]) {
+                    batchUpdateEntity(vm.$id.split(".")[0])
                 }
 
             }

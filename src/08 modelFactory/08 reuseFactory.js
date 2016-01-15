@@ -55,3 +55,8 @@ function reuseFactory(before, after, heirloom, options) {
     
     return $vmodel
 }
+
+function reuse(itemProxy, name, item){
+   var obj =  itemProxy[name]
+   
+}

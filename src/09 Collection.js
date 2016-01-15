@@ -10,17 +10,17 @@ function observeArray(array, old, heirloom, options) {
         for (var i in newProto) {
             array[i] = newProto[i]
         }
-        
+
         var hashcode = makeHashCode("$")
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
-        
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
             if (vm) {
-                var path = a != null ? options.pathname + "." + a : options.pathname
-                path = path.replace(vm.$id + ".", "")
-                $emit(vm.$events[path], vm, path, b, c)
+                var path = a === null || a === void 0 ?
+                        options.pathname :
+                        options.pathname + "." + a
+                vm.$fire(path, b, c)
             }
         }
 
@@ -60,7 +60,7 @@ var newProto = {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
 
-            this.notify("*", val, this[index])
+            this.notify(null, val, this[index])
             this.splice(index, 1, val)
         }
     },
@@ -134,7 +134,7 @@ arrayMethods.forEach(function (method) {
     newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
-        
+
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
                 idname: this.$id + ".*",

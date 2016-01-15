@@ -132,6 +132,7 @@ function makeFire($vmodel, heirloom) {
                         Object.getOwnPropertyDescriptor($vmodel, expr) :
                         $vmodel.$accessors[expr]
                 var list = prop && prop.get && prop.get.list
+              
             } else {
                 list = $vmodel.$events[expr]
             }
@@ -139,6 +140,7 @@ function makeFire($vmodel, heirloom) {
         }
     })
 }
+
 
 /**
  * 生成vm的$model
@@ -190,51 +192,22 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
-
+//顶层的可以复用
 
 function repeatItemFactory(item, binding, repeatArray) {
     var before = binding.vmodel
     var heirloom = {}
     if (item && item.$id) {
+        //item优化级高于before, 其同名的访问器会覆盖before的
         before = proxyFactory(before, item, heirloom)
     }
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 
-
     var after = {
         $accessors: {},
         $outer: 1
-                //  $watchHost: null
     }
-//    if (item && item.$id) {
-//        after.$watchHost = item
-//    }
-//    if (!repeatArray) {
-//        if (!after.$watchHost) {
-//            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
-//        }
-//    }
 
-//    if (repeatArray) {
-//        if (item && /\.\*$/.test(item.$id)) {
-//            // console.log("这是item")
-//            after.$watchHost = item
-//        }
-//    } else {
-//        var kid = before.$id + ".*"
-//        for (var k in before) {
-//            var kv = before[k]
-//            if (kv && kv.$id === kid) {
-//                after.$watchHost = kv
-//                break
-//            }
-//        }
-//        if (!after.$watchHost) {
-//            after.$watchHost = avalon.vmodels[before.$id.split(".")[0]]
-//        }
-//    }
-    //   after[binding.keyName] = 1
-    //   after[binding.itemName] = 1
     for (var i = 0, key; key = keys[i++]; ) {
         after.$accessors[key] = makeObservable("", key, heirloom)
     }
@@ -246,7 +219,7 @@ function repeatItemFactory(item, binding, repeatArray) {
         Object.defineProperties(after, after.$accessors)
     }
     var vm = proxyFactory(before, after, heirloom)
-console.log(heirloom, "这是代理vm")
+
     vm.$hashcode = makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
    // console.log("这是代理vm", vm)
     return  vm
@@ -254,7 +227,13 @@ console.log(heirloom, "这是代理vm")
 
 avalon.repeatItemFactory = repeatItemFactory
 
-
+/*
+var proxy = avalon.vtree.test.children[3].children[1].children[1].vmodel
+proxy.$accessors.a.get == proxy.el.$accessors.a.get
+true
+proxy.$accessors.a.get == vm.array[0].$accessors.a.get
+true
+*/
 //旧的数组元素 -->  旧的proxy vm
 //新的数组元素 -->
 //如果数组元素是简单类型 ，无法转换为vm， 其订阅数组保存到 proxy vm的el中

@@ -9,6 +9,7 @@ function $watch(expr, funOrObj) {
                 Object.getOwnPropertyDescriptor(vm, expr) :
                 vm.$accessors[expr]
         var list = prop && prop.get && prop.get.list
+        vm.$events[expr] = list
     } else {
         var hive = vm.$events || (vm.$events = {})
         list = hive[expr] || (hive[expr] = [])
@@ -86,7 +87,7 @@ avalon.injectBinding = function (binding) {
         }
     })
     delete binding.paths
-    binding.update = function () {
+    binding.update = function (a, b, p) {
         var vm = binding.vmodel
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
