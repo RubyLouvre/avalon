@@ -9,6 +9,7 @@
            var vm = avalon.define({
                 $id: "test",
                 a: 111,
+                obj: {a:222},
                 array: [{aa:{b:11}},{aa:{b:22}},{aa:{b:33}}],
                 object: {
                   aa:111,
@@ -23,6 +24,7 @@
     <body>
         <div ms-controller="test" >
             <p>{{a}}</p>
+            <p>{{obj.a}}</p>
             <ul>
                 <li ms-repeat="array">{{el.aa.b}}</li>
             </ul>

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.15
+ avalon.modern.js 1.6 built in 2016.1.17
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -983,7 +983,7 @@ function makeObservable(sid, spath, heirloom) {
              
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-                if (heirloom !== vm.$events) {
+                    if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
                 get.list = get.heirloom[spath] || []
@@ -1278,6 +1278,11 @@ function observeArray(array, old, heirloom, options) {
         var hashcode = makeHashCode("$")
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
+        if (options.top) {
+            hideProperty(array, "$watch", function(a){
+                avalon.log("array.$watch",a)
+            })
+        }
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
             if (vm) {
@@ -1429,19 +1434,24 @@ arrayMethods.forEach(function (method) {
 /*********************************************************************
  *                           依赖调度系统                              *
  **********************************************************************/
+function shouldDispose() {
+    var el = this.element
+    return !el || el.disposed
+}
+
 function $watch(expr, funOrObj) {
     var vm = this
 
-    if (vm.hasOwnProperty(expr)) {
-        var prop = W3C ?
-                Object.getOwnPropertyDescriptor(vm, expr) :
-                vm.$accessors[expr]
-        list = prop && prop.get && prop.get.list
-        vm.$events[expr] = list
-    } else {
-        var hive = vm.$events || (vm.$events = {})
-        var list = hive[expr] || (hive[expr] = [])
-    }
+    //    if (vm.hasOwnProperty(expr)) {
+//        var prop = W3C ?
+//                Object.getOwnPropertyDescriptor(vm, expr) :
+//                vm.$accessors[expr]
+//        list = prop && prop.get && prop.get.list
+//        vm.$events[expr] = list
+//    } else {
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+    //  }
     if (!list) {
         console.log(expr, "对应的数组不存在", vm)
         return
@@ -1466,10 +1476,7 @@ function $watch(expr, funOrObj) {
     }
 }
 
-function shouldDispose() {
-    var el = this.element
-    return !el || el.disposed
-}
+
 
 /**
  * $fire 方法的内部实现
@@ -1504,23 +1511,80 @@ function $emit(list, vm, path, a, b, i) {
     }
 }
 
+
 avalon.injectBinding = function (binding) {
+
+    binding.shouldDispose = shouldDispose
     parseExpr(binding.expr, binding.vmodel, binding)
+
     binding.paths.split("★").forEach(function (path) {
-        path = path.trim()
-        if (path) {
+        var outerVm = binding.vmodel
+        var toppath = path.split(".")[0]
+        if (outerVm.hasOwnProperty(toppath)) {
             try {
-                binding.outerVm.$watch(path, binding)
-                delete binding.outerVm
-                if (binding.innerVm) {
-                    binding.innerVm.$watch(path, binding)
-                    delete binding.innerVm
+                //调整要添加绑定对象或回调的VM
+                if (outerVm.$accessors) {
+                    outerVm = outerVm.$accessors[toppath].get.heirloom.__vmodel__
+                } else {
+                    outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
                 }
 
+                if (!outerVm) {
+                    throw new Error("不存在")
+                }
             } catch (e) {
-                avalon.log(e, binding, path)
+                avalon.log(path, outerVm, "!!!", e)
             }
         }
+        //如果不循环,都是放在用户定义的vm上
+        if (!outerVm)
+            outerVm = binding.vmodel
+
+        var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+
+        if (repeatActive) {
+            if (repeatActive[1] === "o") {//处理对象循环
+                binding.innerVm = outerVm
+                binding.innerExpr = path
+                var idarr = outerVm.$id.match(rtopsub)
+                if (idarr) {
+                    binding.outerExpr = idarr[2]
+                    binding.outerVm = avalon.vmodels[idarr[1]]
+                }
+            } else {//处理数组循环
+
+                binding.innerExpr = path
+                binding.innerVm = outerVm
+                if (typeof outerVm[repeatActive[2]] === "object") {
+                    binding.outerVm = outerVm[repeatActive[2]]
+                    binding.outerExpr = path.replace(repeatActive[2] + ".", "")
+                }
+            }
+
+        } else {
+            //addWatcher(outerVm, input, binding)
+            binding.outerVm = outerVm
+            binding.outerExpr = path
+        }
+
+
+        try {
+            if (binding.innerVm) {
+                binding.innerVm.$watch(binding.innerExpr, binding)
+            }
+            if (binding.innerVm && binding.outerVm) {
+                binding.outerVm.$events[binding.outerExpr] =
+                        binding.innerVm.$events[binding.innerExpr]
+                console.log("=====")
+            } else if (binding.outerVm) {//简单数组的元素没有outerVm
+                binding.outerVm.$watch(binding.outerExpr, binding)
+            }
+            delete binding.innerVm
+            delete binding.outerVm
+        } catch (e) {
+            avalon.log(e, binding, path)
+        }
+
     })
     delete binding.paths
     binding.update = function (a, b, p) {
@@ -2398,6 +2462,16 @@ avalon.mix({
 //如果存在数组循环,那么绑定同时放进数组元素及其代理vm  
 //如果存在对象循环,那么绑定同时放进顶层vm及其代理vm
 //用户能直接访问到的vm叫outerVm, 内部生成的依附于vtree中的叫innerVm
+function addWatcher(vm, expr, binding) {
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+    binding.shouldDispose = binding.shouldDispose || shouldDispose
+
+    if (avalon.Array.ensure(list, binding)) {
+        injectDisposeQueue(binding, list)
+    }
+}
+
 
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
@@ -2407,55 +2481,7 @@ function parseExpr(expr, vmodel, binding) {
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
-    var outerVm = vmodel
-    var toppath = input.split(".")[0]
-    if (vmodel.hasOwnProperty(expr)) {
-        try {
-            //调整要添加绑定对象或回调的VM
-            if (outerVm.$accessors) {
-                outerVm = outerVm.$accessors[toppath].get.heirloom.__vmodel__
-            } else {
-                outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
-            }
-
-            if (!outerVm) {
-                throw new Error("不存在")
-            }
-        } catch (e) {
-            avalon.log(input, outerVm, "!!!", e)
-        }
-    }
-    //如果不循环,都是放在用户定义的vm上
-    if (!outerVm)
-        outerVm = vmodel
-
-    var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-    if (repeatActive) {
-        if (repeatActive[1] === "o") {//处理对象循环
-            binding.innerVm = outerVm
-            var idarr = outerVm.$id.match(rtopsub)
-            if (idarr) {
-                if (input === repeatActive[2]) {//处理$val
-                    input = binding.expr = idarr[2]
-                }
-                binding.outerVm = avalon.vmodels[idarr[1]]
-            }
-        } else {//处理数组循环
-            input = binding.expr = input.replace(repeatActive[2] + ".", "")
-            binding.innerVm = outerVm
-            if (typeof outerVm[repeatActive[2]] === "object") {
-                binding.outerVm = outerVm[repeatActive[2]]
-                // console.log("inner ", outerVm[repeatActive[2]], repeatActive[2])
-            }
-        }
-
-    } else {
-        binding.outerVm = outerVm
-    }
-
-
-
-
+  
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn
@@ -4581,6 +4607,7 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
+              
                 proxy = oldProxy || repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }

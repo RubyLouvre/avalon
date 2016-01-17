@@ -38,7 +38,6 @@ function observeObject(definition, heirloom, options) {
 
     var keys = {}
     var $accessors = {}
-    var top = options.top
     var $vmodel = new Component()
     var $pathname = options.pathname || ""
     var $computed = getComputed(definition)
@@ -89,7 +88,7 @@ function observeObject(definition, heirloom, options) {
     hideProperty($vmodel, "$accessors", $accessors)
     hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
 
-    if (top === true) {
+    if (options.top === true) {
         makeFire($vmodel, heirloom)
     }
 

@@ -154,6 +154,7 @@ avalon.directive("repeat", {
 
             }
             if (!proxy) {
+              
                 proxy = oldProxy || repeatItemFactory(curItem, binding, repeatArray)
                 command[i] = component //这个需要创建真实节点
             }

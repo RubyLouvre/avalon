@@ -45,6 +45,16 @@ avalon.mix({
 //如果存在数组循环,那么绑定同时放进数组元素及其代理vm  
 //如果存在对象循环,那么绑定同时放进顶层vm及其代理vm
 //用户能直接访问到的vm叫outerVm, 内部生成的依附于vtree中的叫innerVm
+function addWatcher(vm, expr, binding) {
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+    binding.shouldDispose = binding.shouldDispose || shouldDispose
+
+    if (avalon.Array.ensure(list, binding)) {
+        injectDisposeQueue(binding, list)
+    }
+}
+
 
 function parseExpr(expr, vmodel, binding) {
     //目标生成一个函数
@@ -54,55 +64,7 @@ function parseExpr(expr, vmodel, binding) {
     var input = expr.trim()
     var fn = evaluatorPool.get(category + ":" + input)
     binding.paths = pathPool.get(category + ":" + input)
-    var outerVm = vmodel
-    var toppath = input.split(".")[0]
-    if (vmodel.hasOwnProperty(expr)) {
-        try {
-            //调整要添加绑定对象或回调的VM
-            if (outerVm.$accessors) {
-                outerVm = outerVm.$accessors[toppath].get.heirloom.__vmodel__
-            } else {
-                outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
-            }
-
-            if (!outerVm) {
-                throw new Error("不存在")
-            }
-        } catch (e) {
-            avalon.log(input, outerVm, "!!!", e)
-        }
-    }
-    //如果不循环,都是放在用户定义的vm上
-    if (!outerVm)
-        outerVm = vmodel
-
-    var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-    if (repeatActive) {
-        if (repeatActive[1] === "o") {//处理对象循环
-            binding.innerVm = outerVm
-            var idarr = outerVm.$id.match(rtopsub)
-            if (idarr) {
-                if (input === repeatActive[2]) {//处理$val
-                    input = binding.expr = idarr[2]
-                }
-                binding.outerVm = avalon.vmodels[idarr[1]]
-            }
-        } else {//处理数组循环
-            input = binding.expr = input.replace(repeatActive[2] + ".", "")
-            binding.innerVm = outerVm
-            if (typeof outerVm[repeatActive[2]] === "object") {
-                binding.outerVm = outerVm[repeatActive[2]]
-                // console.log("inner ", outerVm[repeatActive[2]], repeatActive[2])
-            }
-        }
-
-    } else {
-        binding.outerVm = outerVm
-    }
-
-
-
-
+  
     var canReturn = false
     if (typeof fn === "function") {
         binding.getter = fn

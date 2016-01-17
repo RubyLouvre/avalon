@@ -24,7 +24,6 @@ function observeObject(definition, heirloom, options) {
     //处女症发作!
     var keys = {}
     var $accessors = {}
-    var top = options.top
     var $vmodel = new Component()
     var $pathname = options.pathname || ""
     var $computed = getComputed(definition)
@@ -111,9 +110,11 @@ function makeFire($vmodel) {
                 v.$fire && v.$fire(p, a, b)
             }
         } else {
-            if ($vmodel.hasOwnProperty(expr)) {
-                var prop = Object.getOwnPropertyDescriptor($vmodel, expr)
+             if ($vmodel.hasOwnProperty(expr)) {
+                var prop =  Object.getOwnPropertyDescriptor($vmodel, expr) ||
+                        $vmodel.$accessors[expr]
                 var list = prop && prop.get && prop.get.list
+              
             } else {
                 list = $vmodel.$events[expr]
             }

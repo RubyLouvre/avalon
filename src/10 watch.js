@@ -1,19 +1,24 @@
 /*********************************************************************
  *                           依赖调度系统                              *
  **********************************************************************/
+function shouldDispose() {
+    var el = this.element
+    return !el || el.disposed
+}
+
 function $watch(expr, funOrObj) {
     var vm = this
 
-    if (vm.hasOwnProperty(expr)) {
-        var prop = W3C ?
-                Object.getOwnPropertyDescriptor(vm, expr) :
-                vm.$accessors[expr]
-        list = prop && prop.get && prop.get.list
-        vm.$events[expr] = list
-    } else {
-        var hive = vm.$events || (vm.$events = {})
-        var list = hive[expr] || (hive[expr] = [])
-    }
+    //    if (vm.hasOwnProperty(expr)) {
+//        var prop = W3C ?
+//                Object.getOwnPropertyDescriptor(vm, expr) :
+//                vm.$accessors[expr]
+//        list = prop && prop.get && prop.get.list
+//        vm.$events[expr] = list
+//    } else {
+    var hive = vm.$events || (vm.$events = {})
+    var list = hive[expr] || (hive[expr] = [])
+    //  }
     if (!list) {
         console.log(expr, "对应的数组不存在", vm)
         return
@@ -38,10 +43,7 @@ function $watch(expr, funOrObj) {
     }
 }
 
-function shouldDispose() {
-    var el = this.element
-    return !el || el.disposed
-}
+
 
 /**
  * $fire 方法的内部实现
@@ -76,23 +78,80 @@ function $emit(list, vm, path, a, b, i) {
     }
 }
 
+
 avalon.injectBinding = function (binding) {
+
+    binding.shouldDispose = shouldDispose
     parseExpr(binding.expr, binding.vmodel, binding)
+
     binding.paths.split("★").forEach(function (path) {
-        path = path.trim()
-        if (path) {
+        var outerVm = binding.vmodel
+        var toppath = path.split(".")[0]
+        if (outerVm.hasOwnProperty(toppath)) {
             try {
-                binding.outerVm.$watch(path, binding)
-                delete binding.outerVm
-                if (binding.innerVm) {
-                    binding.innerVm.$watch(path, binding)
-                    delete binding.innerVm
+                //调整要添加绑定对象或回调的VM
+                if (outerVm.$accessors) {
+                    outerVm = outerVm.$accessors[toppath].get.heirloom.__vmodel__
+                } else {
+                    outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
                 }
 
+                if (!outerVm) {
+                    throw new Error("不存在")
+                }
             } catch (e) {
-                avalon.log(e, binding, path)
+                avalon.log(path, outerVm, "!!!", e)
             }
         }
+        //如果不循环,都是放在用户定义的vm上
+        if (!outerVm)
+            outerVm = binding.vmodel
+
+        var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+
+        if (repeatActive) {
+            if (repeatActive[1] === "o") {//处理对象循环
+                binding.innerVm = outerVm
+                binding.innerExpr = path
+                var idarr = outerVm.$id.match(rtopsub)
+                if (idarr) {
+                    binding.outerExpr = idarr[2]
+                    binding.outerVm = avalon.vmodels[idarr[1]]
+                }
+            } else {//处理数组循环
+
+                binding.innerExpr = path
+                binding.innerVm = outerVm
+                if (typeof outerVm[repeatActive[2]] === "object") {
+                    binding.outerVm = outerVm[repeatActive[2]]
+                    binding.outerExpr = path.replace(repeatActive[2] + ".", "")
+                }
+            }
+
+        } else {
+            //addWatcher(outerVm, input, binding)
+            binding.outerVm = outerVm
+            binding.outerExpr = path
+        }
+
+
+        try {
+            if (binding.innerVm) {
+                binding.innerVm.$watch(binding.innerExpr, binding)
+            }
+            if (binding.innerVm && binding.outerVm) {
+                binding.outerVm.$events[binding.outerExpr] =
+                        binding.innerVm.$events[binding.innerExpr]
+                console.log("=====")
+            } else if (binding.outerVm) {//简单数组的元素没有outerVm
+                binding.outerVm.$watch(binding.outerExpr, binding)
+            }
+            delete binding.innerVm
+            delete binding.outerVm
+        } catch (e) {
+            avalon.log(e, binding, path)
+        }
+
     })
     delete binding.paths
     binding.update = function (a, b, p) {

@@ -128,7 +128,7 @@ function makeObservable(sid, spath, heirloom) {
              
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-                if (heirloom !== vm.$events) {
+                    if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
                 get.list = get.heirloom[spath] || []
