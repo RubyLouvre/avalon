@@ -9,21 +9,9 @@ function shouldDispose() {
 function $watch(expr, funOrObj) {
     var vm = this
 
-    //    if (vm.hasOwnProperty(expr)) {
-//        var prop = W3C ?
-//                Object.getOwnPropertyDescriptor(vm, expr) :
-//                vm.$accessors[expr]
-//        list = prop && prop.get && prop.get.list
-//        vm.$events[expr] = list
-//    } else {
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-    //  }
-    if (!list) {
-        console.log(expr, "对应的数组不存在", vm)
-        return
-    }
-
+   
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -129,11 +117,9 @@ avalon.injectBinding = function (binding) {
             }
 
         } else {
-            //addWatcher(outerVm, input, binding)
             binding.outerVm = outerVm
             binding.outerExpr = path
         }
-
 
         try {
             if (binding.innerVm) {
@@ -161,18 +147,19 @@ avalon.injectBinding = function (binding) {
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
             vm = binding.vmodel = vm.$events.__vmodel__
+            //console.log("要换vm", vm)
         }
 
         var hasError
         try {
             var value = binding.getter(vm)
         } catch (e) {
+            
             hasError = true
             avalon.log(e)
         }
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
-
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
             if (binding.oneTime && !hasError) {

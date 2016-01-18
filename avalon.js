@@ -1271,56 +1271,7 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
-//顶层的可以复用
-//{a:2},{aa:333}
-function repeatItemFactory(item, binding, repeatArray, oldItem, oldProxy) {
-    var before = binding.vmodel
-    var heirloom = {}
 
-    if (oldItem && item && item.$events) { 
-        item.$events = oldItem.$events
-        item.$events.__vmodel__ = item
-    }
-
-    if (item && item.$id) {
-        before = proxyFactory(before, item, heirloom)
-    }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
-
-    var after = {
-        $accessors: {},
-        $outer: 1
-    }
-
-    for (var i = 0, key; key = keys[i++]; ) {
-        if (oldProxy) {
-            after.$accessors[key] = oldProxy.$accessors[key]
-        } else {
-            after.$accessors[key] = makeObservable("", key, heirloom)
-        }
-    }
-
-    if (repeatArray) {
-        after.$remove = noop
-    }
-
-
-    if (Object.defineProperties) {
-        Object.defineProperties(after, after.$accessors)
-    }
-    var vm = proxyFactory(before, after, heirloom)
-
-    vm.$hashcode = oldProxy ?
-            oldProxy.$hashcode :
-            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-    return  vm
-}
-
-
-
-
-
-avalon.repeatItemFactory = repeatItemFactory
 
 /*
  var proxy = avalon.vtree.test.children[3].children[1].children[1].vmodel
@@ -1487,8 +1438,6 @@ avalon.define = function (definition) {
     return vmodel
 }
 
-
-
 /**
  * observeArray及observeObject的包装函数
  * @param {type} definition
@@ -1539,15 +1488,6 @@ function SubComponent() {
 function makeObservable(sid, spath, heirloom) {
     var old = NaN
     function get() {
-        var vm = heirloom.__vmodel__
-
-        if (this.$hashcode && vm) {
-            //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-            if (heirloom !== vm.$events) {
-                get.heirloom = vm.$events
-            }
-            get.list = get.heirloom[spath] || []
-        }
         return old
     }
     get.list = []
@@ -1562,7 +1502,8 @@ function makeObservable(sid, spath, heirloom) {
                 if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
                     for (var ii in val) {
                         old[ii] = val[ii]
-                    }                  
+                    }   
+                    
                 } else {
                     val = observe(val, old, heirloom, {
                         pathname: spath,
@@ -1580,9 +1521,7 @@ function makeObservable(sid, spath, heirloom) {
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
-                get.list = get.heirloom[spath] || []
-
-                $emit(get.list, this, spath, val, older)
+                $emit(get.heirloom[spath], this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
                     var top = avalon.vmodels[ arr[1] ]
@@ -1633,9 +1572,7 @@ function makeComputed(sid, spath, heirloom, key, value) {
                         if (heirloom !== vm.$events) {
                             get.heirloom = vm.$events
                         }
-                        get.list = get.heirloom[spath] || []
-
-                        $emit(get.list, this, spath, val, older)
+                        $emit(get.heirloom[spath], this, spath, val, older)
                         if (avalon.vtree[vm.$id]) {
                             batchUpdateEntity(vm.$id)
                         }
@@ -2041,21 +1978,9 @@ function shouldDispose() {
 function $watch(expr, funOrObj) {
     var vm = this
 
-    //    if (vm.hasOwnProperty(expr)) {
-//        var prop = W3C ?
-//                Object.getOwnPropertyDescriptor(vm, expr) :
-//                vm.$accessors[expr]
-//        list = prop && prop.get && prop.get.list
-//        vm.$events[expr] = list
-//    } else {
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-    //  }
-    if (!list) {
-        console.log(expr, "对应的数组不存在", vm)
-        return
-    }
-
+   
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -2161,11 +2086,9 @@ avalon.injectBinding = function (binding) {
             }
 
         } else {
-            //addWatcher(outerVm, input, binding)
             binding.outerVm = outerVm
             binding.outerExpr = path
         }
-
 
         try {
             if (binding.innerVm) {
@@ -2193,18 +2116,19 @@ avalon.injectBinding = function (binding) {
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
             vm = binding.vmodel = vm.$events.__vmodel__
+            //console.log("要换vm", vm)
         }
 
         var hasError
         try {
             var value = binding.getter(vm)
         } catch (e) {
+            
             hasError = true
             avalon.log(e)
         }
         var dir = directives[binding.type]
         var is = dir.is || bindingIs
-
         if (!is(value, binding.oldValue)) {
             dir.change(value, binding)
             if (binding.oneTime && !hasError) {
@@ -5344,7 +5268,7 @@ avalon.directive("repeat", {
         delete binding.siblings
     },
     change: function (value, binding) {
-        console.log(" 更新ms-repeat ", value)
+        console.log("ms-repeat change ...")
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -5395,7 +5319,7 @@ avalon.directive("repeat", {
             component = children[i]
             var curItem = items[i].item
             var curKey = items[i].key
-           // var proxy = false
+            // var proxy = false
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
@@ -5409,15 +5333,10 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 //新建或重利用旧的proxy, item创建一个proxy
-                proxy = repeatItemFactory(curItem, binding, repeatArray,
+                proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
             }
 
-//            if (!proxy) {
-//                //新建或重利用旧的proxy, item创建一个proxy
-//                proxy = repeatItemFactory(curItem, binding, repeatArray,
-//                        component.item, component.vmodel)
-//            }
 
             if (component.vmodel) {
                 command[i] = component.vmodel.$index//获取其现在的位置
@@ -5500,7 +5419,6 @@ avalon.directive("repeat", {
                 updateEntity(keepChild, getRepeatItem(vnode.children), parent)
                 return false
             } else {
-                //console.log("最少化更新")
                 var breakText = groupText + ":end"
                 var fragment = document.createDocumentFragment()
                 //将原有节点移出DOM, 试根据groupText分组
@@ -5592,7 +5510,6 @@ function updateSignature(elem, value, text) {
 }
 
 //复杂即错误！！！！
-
 
 
 function getRepeatItem(children) {
@@ -5729,6 +5646,64 @@ function initNames(repeatArray) {
     }
     this.initNames = noop
 }
+
+//顶层的可以复用
+function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
+
+    var before = binding.vmodel
+    var heirloom = {}
+
+    if (oldItem && item && item.$events) {
+        item.$events = oldItem.$events
+        item.$events.__vmodel__ = item
+    }
+
+    if (item && item.$id) {
+        before = proxyFactory(before, item, heirloom)
+    }
+    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+    var after = {
+        $accessors: {},
+        $outer: 1
+    }
+
+    for (var i = 0, key; key = keys[i++]; ) {
+        if (oldProxy) {
+            after.$accessors[key] = oldProxy.$accessors[key]
+        } else {
+            after.$accessors[key] = makeObservable("", key, heirloom)
+        }
+    }
+    if (repeatArray) {
+        after.$remove = noop
+    }
+
+
+    if (Object.defineProperties) {
+        Object.defineProperties(after, after.$accessors)
+    }
+    var vm = proxyFactory(before, after, heirloom)
+    if (oldProxy) {
+        vm.$hashcode = oldProxy.$hashcode
+        oldProxy.$hashcode = false
+    } else {
+        vm.$hashcode =
+                makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
+    }
+    if (!repeatArray) {
+        before.$watch(binding.expr + "." + name, function (v) {
+            //比如outerVm.object.aaa = 8需要同步到innerVm.$val
+            vm[binding.itemName] = v
+        })
+    }
+    return  vm
+}
+
+
+
+
+
+avalon.repeatItemFactory = repeatItemFactory
 
 avalon.directive("html", {
     change: function (value, binding) {

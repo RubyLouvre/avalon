@@ -45,8 +45,6 @@ avalon.define = function (definition) {
     return vmodel
 }
 
-
-
 /**
  * observeArray及observeObject的包装函数
  * @param {type} definition
@@ -97,15 +95,6 @@ function SubComponent() {
 function makeObservable(sid, spath, heirloom) {
     var old = NaN
     function get() {
-        var vm = heirloom.__vmodel__
-
-        if (this.$hashcode && vm) {
-            //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-            if (heirloom !== vm.$events) {
-                get.heirloom = vm.$events
-            }
-            get.list = get.heirloom[spath] || []
-        }
         return old
     }
     get.list = []
@@ -120,7 +109,8 @@ function makeObservable(sid, spath, heirloom) {
                 if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
                     for (var ii in val) {
                         old[ii] = val[ii]
-                    }                  
+                    }   
+                    
                 } else {
                     val = observe(val, old, heirloom, {
                         pathname: spath,
@@ -138,9 +128,7 @@ function makeObservable(sid, spath, heirloom) {
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
-                get.list = get.heirloom[spath] || []
-
-                $emit(get.list, this, spath, val, older)
+                $emit(get.heirloom[spath], this, spath, val, older)
                 if (spath.indexOf(".*.") > 0) {//如果是item vm
                     var arr = vm.$id.match(rtopsub)
                     var top = avalon.vmodels[ arr[1] ]
@@ -191,9 +179,7 @@ function makeComputed(sid, spath, heirloom, key, value) {
                         if (heirloom !== vm.$events) {
                             get.heirloom = vm.$events
                         }
-                        get.list = get.heirloom[spath] || []
-
-                        $emit(get.list, this, spath, val, older)
+                        $emit(get.heirloom[spath], this, spath, val, older)
                         if (avalon.vtree[vm.$id]) {
                             batchUpdateEntity(vm.$id)
                         }

@@ -191,56 +191,7 @@ function hideProperty(host, name, value) {
         host[name] = value
     }
 }
-//顶层的可以复用
-//{a:2},{aa:333}
-function repeatItemFactory(item, binding, repeatArray, oldItem, oldProxy) {
-    var before = binding.vmodel
-    var heirloom = {}
 
-    if (oldItem && item && item.$events) { 
-        item.$events = oldItem.$events
-        item.$events.__vmodel__ = item
-    }
-
-    if (item && item.$id) {
-        before = proxyFactory(before, item, heirloom)
-    }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
-
-    var after = {
-        $accessors: {},
-        $outer: 1
-    }
-
-    for (var i = 0, key; key = keys[i++]; ) {
-        if (oldProxy) {
-            after.$accessors[key] = oldProxy.$accessors[key]
-        } else {
-            after.$accessors[key] = makeObservable("", key, heirloom)
-        }
-    }
-
-    if (repeatArray) {
-        after.$remove = noop
-    }
-
-
-    if (Object.defineProperties) {
-        Object.defineProperties(after, after.$accessors)
-    }
-    var vm = proxyFactory(before, after, heirloom)
-
-    vm.$hashcode = oldProxy ?
-            oldProxy.$hashcode :
-            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-    return  vm
-}
-
-
-
-
-
-avalon.repeatItemFactory = repeatItemFactory
 
 /*
  var proxy = avalon.vtree.test.children[3].children[1].children[1].vmodel
