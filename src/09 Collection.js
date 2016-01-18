@@ -15,9 +15,7 @@ function observeArray(array, old, heirloom, options) {
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
         if (options.top) {
-            hideProperty(array, "$watch", function(a){
-                avalon.log("array.$watch",a)
-            })
+            makeFire(array, heirloom)
         }
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__

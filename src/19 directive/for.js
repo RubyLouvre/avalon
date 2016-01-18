@@ -138,6 +138,7 @@ avalon.directive("repeat", {
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
+                //   console.log("((((((", proxy)
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
@@ -150,17 +151,18 @@ avalon.directive("repeat", {
                 //新建或重利用旧的proxy, item创建一个proxy
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
+                proxy[binding.keyName] = curKey
+                proxy[binding.itemName] = curItem
             }
 
 
             if (component.vmodel) {
                 command[i] = component.vmodel.$index//获取其现在的位置
+                component.vmodel.$hashcode = false
             } else {
                 command[i] = component  //标识这里需要新建一个虚拟节点
             }
 
-            proxy[binding.keyName] = curKey
-            proxy[binding.itemName] = curItem
 
             proxy.$index = i
             proxy.$first = i === 0
@@ -465,15 +467,15 @@ function initNames(repeatArray) {
 //顶层的可以复用
 function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
-    var before = binding.vmodel
+    var before = binding.vmodel//上一级的VM
+    console.log(before, "::::")
     var heirloom = {}
-
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events
         item.$events.__vmodel__ = item
     }
 
-    if (item && item.$id) {
+    if (item && item.$id && !Array.isArray(before)) {
         before = proxyFactory(before, item, heirloom)
     }
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
@@ -493,26 +495,41 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
         after.$remove = noop
     }
 
-
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
     var vm = proxyFactory(before, after, heirloom)
     if (oldProxy) {
         vm.$hashcode = oldProxy.$hashcode
-        oldProxy.$hashcode = false
     } else {
         vm.$hashcode =
                 makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
     }
     if (!repeatArray) {
-        before.$watch(binding.expr + "." + name, function (v) {
+        var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+
+        //数组循环中的对象循环,得到数组元素
+        if (match && match[1] === "a") {
+            before = before[match[2]]
+            var path = name
+        } else {
+            path = binding.expr + "." + name
+        }
+        before.$watch(path, function (v) {
             //比如outerVm.object.aaa = 8需要同步到innerVm.$val
             vm[binding.itemName] = v
         })
+    } else {//处理el.length
+        vm.$watch(binding.itemName, function (a) {
+            if (Array.isArray(a))
+                $emit(vm.$events[binding.itemName + ".length"], a.length)
+        })
     }
+
+
     return  vm
 }
+
 
 
 

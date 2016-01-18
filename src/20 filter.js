@@ -112,6 +112,7 @@ var filters = avalon.filters = {
                 return a && a[key]
             }
         }
+        var oldData = array
         array = convertArray(array)
         array.forEach(function (el) {
             el.order = criteria(el.value, el.key)
@@ -123,14 +124,13 @@ var filters = avalon.filters = {
         })
         var isArray = type === "array"
         var target = isArray ? [] : {}
-        for (var i = 0, el; el = array[i++]; ) {
+        return makeData(target, array, oldData, function (el) {
             if (isArray) {
                 target.push(el.value)
             } else {
                 target[el.key] = el.value
             }
-        }
-        return target
+        })
     },
     filterBy: function (array, search) {
 
@@ -138,6 +138,7 @@ var filters = avalon.filters = {
 
         if (type !== "array" && type !== "object")
             throw "filterBy只能处理对象或数组"
+        var oldData = array
         var args = avalon.slice(arguments, 2)
         if (typeof search === "function") {
             var criteria = search
@@ -147,29 +148,27 @@ var filters = avalon.filters = {
         } else {
             throw search + "必须是字符串或函数"
         }
-        var isArray = type === "array"
+
         array = convertArray(array)
         array.forEach(function (el) {
             el.take = !!criteria.apply(el, [el.value].concat(args))
         })
+        var isArray = type === "array"
         var target = isArray ? [] : {}
-        for (var i = 0, el; el = array[i++]; ) {
-            if (el.take) {
-                if (isArray) {
-                    target.push(el.value)
-                } else {
-                    target[el.key] = el.value
-                }
+        return makeData(target, array, oldData, function (el) {
+            if (isArray) {
+                target.push(el.value)
+            } else {
+                target[el.key] = el.value
             }
-        }
-        return target
+        })
     },
-    selectBy: function (input, array) {
-        if (avalon.isObject(input) && !Array.isArray(input)) {
-            var a = array.map(function (name) {
-                return input.hasOwnProperty(name) ? input[name] : ""
+    selectBy: function (data, array) {
+        if (avalon.isObject(data) && !Array.isArray(data)) {
+            var target = []
+            return makeData(target, array, data, function (name) {
+                target.push(data.hasOwnProperty(name) ? data[name] : "")
             })
-            return a
         } else {
             throw "selectBy只支持对象"
         }
@@ -181,6 +180,9 @@ var filters = avalon.filters = {
             }
             if (typeof input !== "string" && !Array.isArray(input)) {
                 return input
+            }
+            if (Array.isArray(input)) {
+                var data = input
             }
             begin = ~~begin
             begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
@@ -194,6 +196,10 @@ var filters = avalon.filters = {
                 }
             }
         }
+        if (oldData) {
+            input.$id = data.$id
+            input.$hashcode = data.$hashcode
+        }
         return input
     },
     number: numberFormat,
@@ -206,7 +212,14 @@ var filters = avalon.filters = {
         return e
     }
 }
-
+function makeData(ret, array, data, callback) {
+    for (var i = 0, n = array.length; i < n; i++) {
+        callback(array[i])
+    }
+    ret.$id = data.$id
+    ret.$hashcode = data.$hashcode
+    return ret
+}
 var keyFilters = {
     esc: 27,
     tab: 9,

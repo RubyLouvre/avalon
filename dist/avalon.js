@@ -1815,9 +1815,7 @@ function observeArray(array, old, heirloom, options) {
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
         if (options.top) {
-            hideProperty(array, "$watch", function(a){
-                avalon.log("array.$watch",a)
-            })
+            makeFire(array, heirloom)
         }
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
@@ -2070,10 +2068,26 @@ avalon.injectBinding = function (binding) {
             if (repeatActive[1] === "o") {//处理对象循环
                 binding.innerVm = outerVm
                 binding.innerExpr = path
-                var idarr = outerVm.$id.match(rtopsub)
-                if (idarr) {
-                    binding.outerExpr = idarr[2]
-                    binding.outerVm = avalon.vmodels[idarr[1]]
+                var outerPath = outerVm.$id
+                var sindex = outerPath.lastIndexOf(".*.")
+                //  console.log(itemName,outerVm, sindex, outerPath.slice(sindex + 3))
+                if (sindex > 0) {
+                    var innerId = outerPath.slice(0, sindex+2)
+                    for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
+                        if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
+                            binding.outerVm = outerVm[kj]
+                            binding.outerExpr = outerPath.slice(sindex + 3)
+                            break
+                        }
+                    }
+                    
+                } else {
+                    var idarr = outerPath.match(rtopsub)
+
+                    if (idarr) {
+                        binding.outerExpr = idarr[2] //顶层vm的$id
+                        binding.outerVm = avalon.vmodels[idarr[1]]
+                    }
                 }
             } else {//处理数组循环
                 var itemName = repeatActive[2]
@@ -2095,9 +2109,10 @@ avalon.injectBinding = function (binding) {
                 binding.innerVm.$watch(binding.innerExpr, binding)
             }
             if (binding.innerVm && binding.outerVm) {
+                // console.log(binding.outerVm, binding.outerExpr)
                 var array = binding.outerVm.$events[binding.outerExpr]
-                var array2 =  binding.innerVm.$events[binding.innerExpr]
-                ap.push.apply(array2, array|| [])
+                var array2 = binding.innerVm.$events[binding.innerExpr]
+                ap.push.apply(array2, array || [])
                 binding.outerVm.$events[binding.outerExpr] =
                         array2
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
@@ -5323,6 +5338,7 @@ avalon.directive("repeat", {
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
+                //   console.log("((((((", proxy)
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
@@ -5335,17 +5351,18 @@ avalon.directive("repeat", {
                 //新建或重利用旧的proxy, item创建一个proxy
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
+                proxy[binding.keyName] = curKey
+                proxy[binding.itemName] = curItem
             }
 
 
             if (component.vmodel) {
                 command[i] = component.vmodel.$index//获取其现在的位置
+                component.vmodel.$hashcode = false
             } else {
                 command[i] = component  //标识这里需要新建一个虚拟节点
             }
 
-            proxy[binding.keyName] = curKey
-            proxy[binding.itemName] = curItem
 
             proxy.$index = i
             proxy.$first = i === 0
@@ -5650,15 +5667,15 @@ function initNames(repeatArray) {
 //顶层的可以复用
 function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
-    var before = binding.vmodel
+    var before = binding.vmodel//上一级的VM
+    console.log(before, "::::")
     var heirloom = {}
-
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events
         item.$events.__vmodel__ = item
     }
 
-    if (item && item.$id) {
+    if (item && item.$id && !Array.isArray(before)) {
         before = proxyFactory(before, item, heirloom)
     }
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
@@ -5678,26 +5695,41 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
         after.$remove = noop
     }
 
-
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
     }
     var vm = proxyFactory(before, after, heirloom)
     if (oldProxy) {
         vm.$hashcode = oldProxy.$hashcode
-        oldProxy.$hashcode = false
     } else {
         vm.$hashcode =
                 makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
     }
     if (!repeatArray) {
-        before.$watch(binding.expr + "." + name, function (v) {
+        var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+
+        //数组循环中的对象循环,得到数组元素
+        if (match && match[1] === "a") {
+            before = before[match[2]]
+            var path = name
+        } else {
+            path = binding.expr + "." + name
+        }
+        before.$watch(path, function (v) {
             //比如outerVm.object.aaa = 8需要同步到innerVm.$val
             vm[binding.itemName] = v
         })
+    } else {//处理el.length
+        vm.$watch(binding.itemName, function (a) {
+            if (Array.isArray(a))
+                $emit(vm.$events[binding.itemName + ".length"], a.length)
+        })
     }
+
+
     return  vm
 }
+
 
 
 
@@ -6191,6 +6223,7 @@ var filters = avalon.filters = {
                 return a && a[key]
             }
         }
+        var oldData = array
         array = convertArray(array)
         array.forEach(function (el) {
             el.order = criteria(el.value, el.key)
@@ -6202,14 +6235,13 @@ var filters = avalon.filters = {
         })
         var isArray = type === "array"
         var target = isArray ? [] : {}
-        for (var i = 0, el; el = array[i++]; ) {
+        return makeData(target, array, oldData, function (el) {
             if (isArray) {
                 target.push(el.value)
             } else {
                 target[el.key] = el.value
             }
-        }
-        return target
+        })
     },
     filterBy: function (array, search) {
 
@@ -6217,6 +6249,7 @@ var filters = avalon.filters = {
 
         if (type !== "array" && type !== "object")
             throw "filterBy只能处理对象或数组"
+        var oldData = array
         var args = avalon.slice(arguments, 2)
         if (typeof search === "function") {
             var criteria = search
@@ -6226,29 +6259,27 @@ var filters = avalon.filters = {
         } else {
             throw search + "必须是字符串或函数"
         }
-        var isArray = type === "array"
+
         array = convertArray(array)
         array.forEach(function (el) {
             el.take = !!criteria.apply(el, [el.value].concat(args))
         })
+        var isArray = type === "array"
         var target = isArray ? [] : {}
-        for (var i = 0, el; el = array[i++]; ) {
-            if (el.take) {
-                if (isArray) {
-                    target.push(el.value)
-                } else {
-                    target[el.key] = el.value
-                }
+        return makeData(target, array, oldData, function (el) {
+            if (isArray) {
+                target.push(el.value)
+            } else {
+                target[el.key] = el.value
             }
-        }
-        return target
+        })
     },
-    selectBy: function (input, array) {
-        if (avalon.isObject(input) && !Array.isArray(input)) {
-            var a = array.map(function (name) {
-                return input.hasOwnProperty(name) ? input[name] : ""
+    selectBy: function (data, array) {
+        if (avalon.isObject(data) && !Array.isArray(data)) {
+            var target = []
+            return makeData(target, array, data, function (name) {
+                target.push(data.hasOwnProperty(name) ? data[name] : "")
             })
-            return a
         } else {
             throw "selectBy只支持对象"
         }
@@ -6260,6 +6291,9 @@ var filters = avalon.filters = {
             }
             if (typeof input !== "string" && !Array.isArray(input)) {
                 return input
+            }
+            if (Array.isArray(input)) {
+                var data = input
             }
             begin = ~~begin
             begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
@@ -6273,6 +6307,10 @@ var filters = avalon.filters = {
                 }
             }
         }
+        if (oldData) {
+            input.$id = data.$id
+            input.$hashcode = data.$hashcode
+        }
         return input
     },
     number: numberFormat,
@@ -6285,7 +6323,14 @@ var filters = avalon.filters = {
         return e
     }
 }
-
+function makeData(ret, array, data, callback) {
+    for (var i = 0, n = array.length; i < n; i++) {
+        callback(array[i])
+    }
+    ret.$id = data.$id
+    ret.$hashcode = data.$hashcode
+    return ret
+}
 var keyFilters = {
     esc: 27,
     tab: 9,

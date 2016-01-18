@@ -101,10 +101,26 @@ avalon.injectBinding = function (binding) {
             if (repeatActive[1] === "o") {//处理对象循环
                 binding.innerVm = outerVm
                 binding.innerExpr = path
-                var idarr = outerVm.$id.match(rtopsub)
-                if (idarr) {
-                    binding.outerExpr = idarr[2]
-                    binding.outerVm = avalon.vmodels[idarr[1]]
+                var outerPath = outerVm.$id
+                var sindex = outerPath.lastIndexOf(".*.")
+                //  console.log(itemName,outerVm, sindex, outerPath.slice(sindex + 3))
+                if (sindex > 0) {
+                    var innerId = outerPath.slice(0, sindex+2)
+                    for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
+                        if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
+                            binding.outerVm = outerVm[kj]
+                            binding.outerExpr = outerPath.slice(sindex + 3)
+                            break
+                        }
+                    }
+                    
+                } else {
+                    var idarr = outerPath.match(rtopsub)
+
+                    if (idarr) {
+                        binding.outerExpr = idarr[2] //顶层vm的$id
+                        binding.outerVm = avalon.vmodels[idarr[1]]
+                    }
                 }
             } else {//处理数组循环
                 var itemName = repeatActive[2]
@@ -126,9 +142,10 @@ avalon.injectBinding = function (binding) {
                 binding.innerVm.$watch(binding.innerExpr, binding)
             }
             if (binding.innerVm && binding.outerVm) {
+                // console.log(binding.outerVm, binding.outerExpr)
                 var array = binding.outerVm.$events[binding.outerExpr]
-                var array2 =  binding.innerVm.$events[binding.innerExpr]
-                ap.push.apply(array2, array|| [])
+                var array2 = binding.innerVm.$events[binding.innerExpr]
+                ap.push.apply(array2, array || [])
                 binding.outerVm.$events[binding.outerExpr] =
                         array2
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
