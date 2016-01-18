@@ -2105,7 +2105,7 @@ avalon.injectBinding = function (binding) {
                     throw new Error("不存在")
                 }
             } catch (e) {
-                avalon.log(path, outerVm, "!!!", e)
+                avalon.log(path, e)
             }
         }
         //如果不循环,都是放在用户定义的vm上
@@ -2169,6 +2169,7 @@ avalon.injectBinding = function (binding) {
         var hasError
         try {
             var value = binding.getter(vm)
+            console.log(binding.getter+"")
         } catch (e) {
             hasError = true
             avalon.log(e)
