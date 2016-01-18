@@ -119,12 +119,12 @@ avalon.injectBinding = function (binding) {
                     binding.outerVm = avalon.vmodels[idarr[1]]
                 }
             } else {//处理数组循环
-
+                var itemName = repeatActive[2]
                 binding.innerExpr = path
                 binding.innerVm = outerVm
-                if (typeof outerVm[repeatActive[2]] === "object") {
-                    binding.outerVm = outerVm[repeatActive[2]]
-                    binding.outerExpr = path.replace(repeatActive[2] + ".", "")
+                if (typeof outerVm[itemName] === "object" && path.indexOf(itemName) === 0) {
+                    binding.outerVm = outerVm[itemName]
+                    binding.outerExpr = path.replace(itemName + ".", "")
                 }
             }
 
@@ -140,9 +140,11 @@ avalon.injectBinding = function (binding) {
                 binding.innerVm.$watch(binding.innerExpr, binding)
             }
             if (binding.innerVm && binding.outerVm) {
+                var array = binding.outerVm.$events[binding.outerExpr]
+                var array2 =  binding.innerVm.$events[binding.innerExpr]
+                ap.push.apply(array2, array|| [])
                 binding.outerVm.$events[binding.outerExpr] =
-                        binding.innerVm.$events[binding.innerExpr]
-                console.log("=====")
+                        array2
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
                 binding.outerVm.$watch(binding.outerExpr, binding)
             }
@@ -164,7 +166,6 @@ avalon.injectBinding = function (binding) {
         var hasError
         try {
             var value = binding.getter(vm)
-            console.log(binding.getter+"")
         } catch (e) {
             hasError = true
             avalon.log(e)

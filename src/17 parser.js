@@ -45,15 +45,6 @@ avalon.mix({
 //如果存在数组循环,那么绑定同时放进数组元素及其代理vm  
 //如果存在对象循环,那么绑定同时放进顶层vm及其代理vm
 //用户能直接访问到的vm叫outerVm, 内部生成的依附于vtree中的叫innerVm
-function addWatcher(vm, expr, binding) {
-    var hive = vm.$events || (vm.$events = {})
-    var list = hive[expr] || (hive[expr] = [])
-    binding.shouldDispose = binding.shouldDispose || shouldDispose
-
-    if (avalon.Array.ensure(list, binding)) {
-        injectDisposeQueue(binding, list)
-    }
-}
 
 
 function parseExpr(expr, vmodel, binding) {

@@ -63,7 +63,6 @@ function observe(definition, old, heirloom, options) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
             var vm = reuseFactory(old, definition, heirloom, options)
-
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
@@ -98,6 +97,15 @@ function SubComponent() {
 function makeObservable(sid, spath, heirloom) {
     var old = NaN
     function get() {
+        var vm = heirloom.__vmodel__
+
+        if (this.$hashcode && vm) {
+            //★★确保切换到新的events中(这个events可能是来自oldProxy)               
+            if (heirloom !== vm.$events) {
+                get.heirloom = vm.$events
+            }
+            get.list = get.heirloom[spath] || []
+        }
         return old
     }
     get.list = []
@@ -112,8 +120,7 @@ function makeObservable(sid, spath, heirloom) {
                 if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
                     for (var ii in val) {
                         old[ii] = val[ii]
-                    }
-                    console.log("这是新添加的分支", old, val)
+                    }                  
                 } else {
                     val = observe(val, old, heirloom, {
                         pathname: spath,
@@ -125,10 +132,10 @@ function makeObservable(sid, spath, heirloom) {
             var older = old
             old = val
             var vm = heirloom.__vmodel__
-             
+
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-                    if (heirloom !== vm.$events) {
+                if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
                 get.list = get.heirloom[spath] || []
@@ -181,6 +188,11 @@ function makeComputed(sid, spath, heirloom, key, value) {
                 if (this.$hashcode && (val !== older)) {
                     var vm = heirloom.__vmodel__
                     if (vm) {
+                        if (heirloom !== vm.$events) {
+                            get.heirloom = vm.$events
+                        }
+                        get.list = get.heirloom[spath] || []
+
                         $emit(get.list, this, spath, val, older)
                         if (avalon.vtree[vm.$id]) {
                             batchUpdateEntity(vm.$id)

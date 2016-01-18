@@ -9,7 +9,7 @@
             var vm = avalon.define({
                 $id: "test",
            
-                array: [{a: 1}, {a: 2}, {a: 3}],
+                array: [{a: 1},{a: 2}, {a: 3}],
                 onClick: function () {
                     vm.array = [{a: 33}, {a: 22}, {a: 56}, {a: 333}]
                     setTimeout(function () {
@@ -32,6 +32,11 @@
         <ul>
             <li ms-repeat="array">
                 {{el.a}}|| {{$first}}||{{$index}}
+            </li>
+        </ul>
+         <ul>
+            <li ms-repeat="array">
+                {{el.a+22}}
             </li>
         </ul>
     </body>
