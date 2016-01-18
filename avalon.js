@@ -1815,9 +1815,7 @@ function observeArray(array, old, heirloom, options) {
         hideProperty(array, "$hashcode", hashcode)
         hideProperty(array, "$id", options.idname || hashcode)
         if (options.top) {
-            hideProperty(array, "$watch", function(a){
-                avalon.log("array.$watch",a)
-            })
+           makeFire(array, heirloom)
         }
         array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
@@ -1980,7 +1978,7 @@ function $watch(expr, funOrObj) {
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-   
+
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -2067,16 +2065,35 @@ avalon.injectBinding = function (binding) {
         var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
 
         if (repeatActive) {
+            var itemName = repeatActive[2]
             if (repeatActive[1] === "o") {//处理对象循环
                 binding.innerVm = outerVm
                 binding.innerExpr = path
-                var idarr = outerVm.$id.match(rtopsub)
-                if (idarr) {
-                    binding.outerExpr = idarr[2]
-                    binding.outerVm = avalon.vmodels[idarr[1]]
+                var outerPath = outerVm.$id
+                var sindex = outerPath.lastIndexOf(".*.")
+                //  console.log(itemName,outerVm, sindex, outerPath.slice(sindex + 3))
+                if (sindex > 0) {
+                    var innerId = outerPath.slice(0, sindex+2)
+                    for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
+                        if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
+                            binding.outerVm = outerVm[kj]
+                            binding.outerExpr = outerPath.slice(sindex + 3)
+                            break
+                        }
+                    }
+                    
+                } else {
+                    var idarr = outerPath.match(rtopsub)
+
+                    if (idarr) {
+                        binding.outerExpr = idarr[2] //顶层vm的$id
+                        binding.outerVm = avalon.vmodels[idarr[1]]
+                    }
                 }
+
+
             } else {//处理数组循环
-                var itemName = repeatActive[2]
+
                 binding.innerExpr = path
                 binding.innerVm = outerVm
                 if (typeof outerVm[itemName] === "object" && path.indexOf(itemName) === 0) {
@@ -2091,13 +2108,16 @@ avalon.injectBinding = function (binding) {
         }
 
         try {
+            //console.log(binding.innerExpr, binding.outerExpr)
             if (binding.innerVm) {
+
                 binding.innerVm.$watch(binding.innerExpr, binding)
             }
             if (binding.innerVm && binding.outerVm) {
+                // console.log(binding.outerVm, binding.outerExpr)
                 var array = binding.outerVm.$events[binding.outerExpr]
-                var array2 =  binding.innerVm.$events[binding.innerExpr]
-                ap.push.apply(array2, array|| [])
+                var array2 = binding.innerVm.$events[binding.innerExpr]
+                ap.push.apply(array2, array || [])
                 binding.outerVm.$events[binding.outerExpr] =
                         array2
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
@@ -2123,7 +2143,7 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(vm)
         } catch (e) {
-            
+
             hasError = true
             avalon.log(e)
         }
@@ -5658,7 +5678,8 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
         item.$events.__vmodel__ = item
     }
 
-    if (item && item.$id) {
+    if (item && item.$id && !repeatArray) {
+
         before = proxyFactory(before, item, heirloom)
     }
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
@@ -5691,9 +5712,33 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
                 makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
     }
     if (!repeatArray) {
-        before.$watch(binding.expr + "." + name, function (v) {
+        try {
+            var match = before.$hashcode.match(/^(a|o):(\S+):(?:\d+)$/)
+        } catch (e) {
+            console.log(e)
+            console.log(before, binding.itemName, match, name)
+        }
+
+        //数组循环中的对象循环,得到数组元素
+        if (match) {
+            before = before[match[2]]
+            var path = name
+        } else {
+            path = binding.expr + "." + name
+        }
+
+
+
+        // console.log(binding,item)
+        //  console.log(binding.expr + "." + name, "同步")
+        before.$watch(path, function (v) {
             //比如outerVm.object.aaa = 8需要同步到innerVm.$val
             vm[binding.itemName] = v
+        })
+    } else {//处理el.length
+        vm.$watch(binding.itemName, function (a) {
+            if (Array.isArray(a))
+                $emit(vm.$events[binding.itemName + ".length"], a.length)
         })
     }
     return  vm
