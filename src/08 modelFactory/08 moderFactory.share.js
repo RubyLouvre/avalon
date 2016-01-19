@@ -97,7 +97,7 @@ function makeObservable(sid, spath, heirloom) {
     function get() {
         return old
     }
-    get.list = []
+    //get.list = []
     get.heirloom = heirloom
     return {
         get: get,
@@ -165,7 +165,7 @@ function makeComputed(sid, spath, heirloom, key, value) {
         return old = value.get.call(this)
     }
     get.heirloom = heirloom
-    get.list = []
+    //get.list = []
     return {
         get: get,
         set: function (x) {

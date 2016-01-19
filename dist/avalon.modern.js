@@ -952,7 +952,7 @@ function makeObservable(sid, spath, heirloom) {
     function get() {
         return old
     }
-    get.list = []
+    //get.list = []
     get.heirloom = heirloom
     return {
         get: get,
@@ -1020,7 +1020,7 @@ function makeComputed(sid, spath, heirloom, key, value) {
         return old = value.get.call(this)
     }
     get.heirloom = heirloom
-    get.list = []
+    //get.list = []
     return {
         get: get,
         set: function (x) {
@@ -1523,14 +1523,13 @@ avalon.injectBinding = function (binding) {
         if (!outerVm)
             outerVm = binding.vmodel
 
-        var repeatActive = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-
-        if (repeatActive) {
-            if (repeatActive[1] === "o") {//处理对象循环
-
-                binding.innerVm = outerVm
-                binding.innerExpr = path
-                if (path.indexOf(repeatActive[1]) === 0) {
+        var match = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
+        if (match) {
+            binding.innerVm = outerVm
+            binding.innerPath = path
+            var repeatItem = match[2]
+            if (path.indexOf(repeatItem) === 0) {
+                if (match[1] === "o") {//处理对象循环 $val
                     //处理$val
                     var outerPath = outerVm.$id
                     var sindex = outerPath.lastIndexOf(".*.")
@@ -1539,48 +1538,41 @@ avalon.injectBinding = function (binding) {
                         for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
                             if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
                                 binding.outerVm = outerVm[kj]
-                                binding.outerExpr = outerPath.slice(sindex + 3)
+                                binding.outerPath = outerPath.slice(sindex + 3)
                                 break
                             }
                         }
-
                     } else {//处理一层对象
                         var idarr = outerPath.match(rtopsub)
                         if (idarr) {
-                            binding.outerExpr = idarr[2] //顶层vm的$id
+                            binding.outerPath = idarr[2] //顶层vm的$id
                             binding.outerVm = avalon.vmodels[idarr[1]]
                         }
                     }
-                }
-            } else {//处理数组循环
-                var itemName = repeatActive[2]
-                binding.innerExpr = path
-                binding.innerVm = outerVm
-                if (typeof outerVm[itemName] === "object" && path.indexOf(itemName) === 0) {
-                    //处理对象数组
-                    binding.outerVm = outerVm[itemName]
-                    binding.outerExpr = path.replace(itemName + ".", "")
+                } else {//处理对象数组循环 el
+                    if (typeof outerVm[repeatItem] === "object" ) {
+                        binding.outerVm = outerVm[repeatItem]
+                        binding.outerPath = path.replace(repeatItem + ".", "")
+                    }
                 }
             }
-
         } else {
             binding.outerVm = outerVm
-            binding.outerExpr = path
+            binding.outerPath = path
         }
 
         try {
             if (binding.innerVm) {
-                binding.innerVm.$watch(binding.innerExpr, binding)
+                binding.innerVm.$watch(binding.innerPath, binding)
             }
             if (binding.innerVm && binding.outerVm) {
-                // console.log(binding.outerVm, binding.outerExpr)
-                var array = binding.outerVm.$events[binding.outerExpr]
-                var array2 = binding.innerVm.$events[binding.innerExpr]
+                var array = binding.outerVm.$events[binding.outerPath]
+                var array2 = binding.innerVm.$events[binding.innerPath]
                 ap.push.apply(array2, array || [])
-                binding.outerVm.$events[binding.outerExpr] =
+                binding.outerVm.$events[binding.outerPath] =
                         array2
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
-                binding.outerVm.$watch(binding.outerExpr, binding)
+                binding.outerVm.$watch(binding.outerPath, binding)
             }
 
         } catch (e) {
