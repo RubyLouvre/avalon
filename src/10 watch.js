@@ -11,7 +11,7 @@ function $watch(expr, funOrObj) {
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-   
+
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -113,7 +113,7 @@ avalon.injectBinding = function (binding) {
                             break
                         }
                     }
-                    
+
                 } else {
                     var idarr = outerPath.match(rtopsub)
 
@@ -171,7 +171,7 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(vm)
         } catch (e) {
-            
+
             hasError = true
             avalon.log(e)
         }

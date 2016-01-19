@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.18
+ avalon.modern.js 1.6 built in 2016.1.19
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1440,7 +1440,7 @@ function $watch(expr, funOrObj) {
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-   
+
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -1542,7 +1542,7 @@ avalon.injectBinding = function (binding) {
                             break
                         }
                     }
-                    
+
                 } else {
                     var idarr = outerPath.match(rtopsub)
 
@@ -1600,7 +1600,7 @@ avalon.injectBinding = function (binding) {
         try {
             var value = binding.getter(vm)
         } catch (e) {
-            
+
             hasError = true
             avalon.log(e)
         }
@@ -4580,11 +4580,10 @@ avalon.directive("repeat", {
             component = children[i]
             var curItem = items[i].item
             var curKey = items[i].key
-            // var proxy = false
+            //  var proxy = false
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                //   console.log("((((((", proxy)
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
@@ -4595,11 +4594,12 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 //新建或重利用旧的proxy, item创建一个proxy
-                proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
-                        component.item, component.vmodel)
-                proxy[binding.keyName] = curKey
-                proxy[binding.itemName] = curItem
+                proxy = repeatItemFactory(curItem, curKey,
+                        binding, repeatArray, component.item, component.vmodel)
+                proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
+
             }
+
 
 
             if (component.vmodel) {
@@ -4608,12 +4608,14 @@ avalon.directive("repeat", {
             } else {
                 command[i] = component  //标识这里需要新建一个虚拟节点
             }
-
+            //这两行实现排序
+            proxy[binding.itemName] = curItem
+            proxy[binding.keyName] = curKey
 
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
-            proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
+            //  proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
             proxy.$outer = binding.$outer
             children[i] = component
             component.vmodel = proxy
