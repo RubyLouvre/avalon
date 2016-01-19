@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.6 built in 2016.1.18
+ avalon.modern.js 1.6 built in 2016.1.19
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -964,8 +964,8 @@ function makeObservable(sid, spath, heirloom) {
                 if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
                     for (var ii in val) {
                         old[ii] = val[ii]
-                    }   
-                    
+                    }
+
                 } else {
                     val = observe(val, old, heirloom, {
                         pathname: spath,
@@ -980,7 +980,7 @@ function makeObservable(sid, spath, heirloom) {
 
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-                if (heirloom !== vm.$events) {
+                if (vm && heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
                 $emit(get.heirloom[spath], this, spath, val, older)
@@ -1440,7 +1440,7 @@ function $watch(expr, funOrObj) {
 
     var hive = vm.$events || (vm.$events = {})
     var list = hive[expr] || (hive[expr] = [])
-   
+
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
@@ -1512,7 +1512,6 @@ avalon.injectBinding = function (binding) {
                 } else {
                     outerVm = outerVm.getOwnPropertyDescriptor(outerVm, toppath).get.heirloom.__vmodel__
                 }
-
                 if (!outerVm) {
                     throw new Error("不存在")
                 }
@@ -1528,27 +1527,29 @@ avalon.injectBinding = function (binding) {
 
         if (repeatActive) {
             if (repeatActive[1] === "o") {//处理对象循环
+
                 binding.innerVm = outerVm
                 binding.innerExpr = path
-                var outerPath = outerVm.$id
-                var sindex = outerPath.lastIndexOf(".*.")
-                //  console.log(itemName,outerVm, sindex, outerPath.slice(sindex + 3))
-                if (sindex > 0) {
-                    var innerId = outerPath.slice(0, sindex+2)
-                    for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
-                        if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
-                            binding.outerVm = outerVm[kj]
-                            binding.outerExpr = outerPath.slice(sindex + 3)
-                            break
+                if (path.indexOf(repeatActive[1]) === 0) {
+                    //处理$val
+                    var outerPath = outerVm.$id
+                    var sindex = outerPath.lastIndexOf(".*.")
+                    if (sindex > 0) {//处理多级对象
+                        var innerId = outerPath.slice(0, sindex + 2)
+                        for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
+                            if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
+                                binding.outerVm = outerVm[kj]
+                                binding.outerExpr = outerPath.slice(sindex + 3)
+                                break
+                            }
                         }
-                    }
-                    
-                } else {
-                    var idarr = outerPath.match(rtopsub)
 
-                    if (idarr) {
-                        binding.outerExpr = idarr[2] //顶层vm的$id
-                        binding.outerVm = avalon.vmodels[idarr[1]]
+                    } else {//处理一层对象
+                        var idarr = outerPath.match(rtopsub)
+                        if (idarr) {
+                            binding.outerExpr = idarr[2] //顶层vm的$id
+                            binding.outerVm = avalon.vmodels[idarr[1]]
+                        }
                     }
                 }
             } else {//处理数组循环
@@ -1556,6 +1557,7 @@ avalon.injectBinding = function (binding) {
                 binding.innerExpr = path
                 binding.innerVm = outerVm
                 if (typeof outerVm[itemName] === "object" && path.indexOf(itemName) === 0) {
+                    //处理对象数组
                     binding.outerVm = outerVm[itemName]
                     binding.outerExpr = path.replace(itemName + ".", "")
                 }
@@ -1580,12 +1582,12 @@ avalon.injectBinding = function (binding) {
             } else if (binding.outerVm) {//简单数组的元素没有outerVm
                 binding.outerVm.$watch(binding.outerExpr, binding)
             }
-            delete binding.innerVm
-            delete binding.outerVm
+
         } catch (e) {
             avalon.log(e, binding, path)
         }
-
+        delete binding.innerVm
+        delete binding.outerVm
     })
     delete binding.paths
     binding.update = function (a, b, p) {
@@ -1593,14 +1595,12 @@ avalon.injectBinding = function (binding) {
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
             vm = binding.vmodel = vm.$events.__vmodel__
-            //console.log("要换vm", vm)
         }
 
         var hasError
         try {
             var value = binding.getter(vm)
         } catch (e) {
-            
             hasError = true
             avalon.log(e)
         }
@@ -2389,10 +2389,13 @@ var valHooks = {
                 i = index < 0 ? max : one ? index : 0
         for (; i < max; i++) {
             option = options[i]
-            //旧式IE在reset后不会改变selected，需要改用i === index判定
-            //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
+            //IE6-9在reset后不会改变selected，需要改用i === index判定
+            //我们过滤所有disabled的option元素，但在safari5下，
+            //如果设置optgroup为disable，那么其所有孩子都disable
             //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
-            if ((option.selected || i === index) && !option.disabled) {
+            if ((option.selected || i === index) && !option.disabled &&
+                     (!option.parentNode.disabled || option.parentNode.tagName !== "OPTGROUP")
+                    ) {
                 value = getter(option)
                 if (one) {
                     return value
@@ -2416,6 +2419,8 @@ var valHooks = {
         }
     }
 }
+
+
 
 
 
@@ -4529,7 +4534,7 @@ avalon.directive("repeat", {
         delete binding.siblings
     },
     change: function (value, binding) {
-        console.log("ms-repeat change ...")
+        //console.log("ms-repeat change ...")
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -4584,7 +4589,7 @@ avalon.directive("repeat", {
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                //   console.log("((((((", proxy)
+               
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
@@ -4597,25 +4602,28 @@ avalon.directive("repeat", {
                 //新建或重利用旧的proxy, item创建一个proxy
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
-                proxy[binding.keyName] = curKey
-                proxy[binding.itemName] = curItem
             }
-
 
             if (component.vmodel) {
                 command[i] = component.vmodel.$index//获取其现在的位置
-                component.vmodel.$hashcode = false
+                //component.vmodel.$hashcode = false
             } else {
                 command[i] = component  //标识这里需要新建一个虚拟节点
             }
-
+            proxy[binding.keyName] = curKey
+            proxy[binding.itemName] = curItem
 
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
+
             proxy.$outer = binding.$outer
             children[i] = component
+            
+            if(component.vmodel && component.vmodel !== proxy){
+                component.vmodel.$hashcode = false
+            }
             component.vmodel = proxy
             component.item = curItem
             component.itemName = binding.itemName
@@ -4655,7 +4663,6 @@ avalon.directive("repeat", {
             binding.oldValue = newCache
         }
         vnode.repeatCommand = command
-
         addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
@@ -4914,7 +4921,7 @@ function initNames(repeatArray) {
 function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
     var before = binding.vmodel//上一级的VM
-    console.log(before, "::::")
+    // console.log(before, "::::")
     var heirloom = {}
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events

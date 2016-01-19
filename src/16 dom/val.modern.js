@@ -5,28 +5,35 @@ function getValType(elem) {
     return ret === "input" && /checkbox|radio/.test(elem.type) ? "checked" : ret
 }
 var valHooks = {
-    "select:get": function (node, value) {
-        var option, options = node.options,
-                index = node.selectedIndex,
-                one = node.type === "select-one" || index < 0,
-                values = one ? null : [],
-                max = one ? index + 1 : options.length,
-                i = index < 0 ? max : one ? index : 0
-        for (; i < max; i++) {
-            option = options[i]
-            //旧式IE在reset后不会改变selected，需要改用i === index判定
-            //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
-            //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
-            if ((option.selected || i === index) && !option.disabled) {
-                value = option.value
-                if (one) {
-                    return value
+    "select:get": function self(node, ret, index, singleton) {
+        var nodes = node.children, value,
+                getter = valHooks["option:get"]
+        index = ret ? index : node.selectedIndex
+        singleton = ret ? singleton : node.type === "select-one" || index < 0
+        ret = ret || []
+        for (var i = 0, el; el = nodes[i++]; ) {
+            if (!el.disabled) {
+                switch (el.nodeName.toLowerCase()) {
+                    case "option":
+                        if ((el.selected || el.index === index)) {
+                            value = getter(el)
+                            if (singleton) {
+                                return value
+                            } else {
+                                ret.push(value)
+                            }
+                        }
+                        break
+                    case "optgroup":
+                        value = self(el, ret, index, singleton)
+                        if (typeof value === "string") {
+                            return value
+                        }
+                        break
                 }
-                //收集所有selected值组成数组返回
-                values.push(value)
             }
         }
-        return values
+        return singleton ? null : ret
     },
     "select:set": function (node, values, optionSet) {
         values = [].concat(values) //强制转换为数组

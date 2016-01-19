@@ -109,8 +109,8 @@ function makeObservable(sid, spath, heirloom) {
                 if (old && old.$id && val.$id) {//合并两个vm,比如proxy item中的el = newEl
                     for (var ii in val) {
                         old[ii] = val[ii]
-                    }   
-                    
+                    }
+
                 } else {
                     val = observe(val, old, heirloom, {
                         pathname: spath,
@@ -125,7 +125,7 @@ function makeObservable(sid, spath, heirloom) {
 
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-                if (heirloom !== vm.$events) {
+                if (vm && heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
                 $emit(get.heirloom[spath], this, spath, val, older)

@@ -21,10 +21,13 @@ var valHooks = {
                 i = index < 0 ? max : one ? index : 0
         for (; i < max; i++) {
             option = options[i]
-            //旧式IE在reset后不会改变selected，需要改用i === index判定
-            //我们过滤所有disabled的option元素，但在safari5下，如果设置select为disable，那么其所有孩子都disable
+            //IE6-9在reset后不会改变selected，需要改用i === index判定
+            //我们过滤所有disabled的option元素，但在safari5下，
+            //如果设置optgroup为disable，那么其所有孩子都disable
             //因此当一个元素为disable，需要检测其是否显式设置了disable及其父节点的disable情况
-            if ((option.selected || i === index) && !option.disabled) {
+            if ((option.selected || i === index) && !option.disabled &&
+                     (!option.parentNode.disabled || option.parentNode.tagName !== "OPTGROUP")
+                    ) {
                 value = getter(option)
                 if (one) {
                     return value
@@ -48,3 +51,5 @@ var valHooks = {
         }
     }
 }
+
+

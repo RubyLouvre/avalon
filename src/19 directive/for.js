@@ -83,7 +83,7 @@ avalon.directive("repeat", {
         delete binding.siblings
     },
     change: function (value, binding) {
-        console.log("ms-repeat change ...")
+        //console.log("ms-repeat change ...")
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -138,7 +138,7 @@ avalon.directive("repeat", {
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 command[i] = proxy.$index//获取其现在的位置
-                //   console.log("((((((", proxy)
+               
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
@@ -151,25 +151,28 @@ avalon.directive("repeat", {
                 //新建或重利用旧的proxy, item创建一个proxy
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
-                proxy[binding.keyName] = curKey
-                proxy[binding.itemName] = curItem
             }
-
 
             if (component.vmodel) {
                 command[i] = component.vmodel.$index//获取其现在的位置
-                component.vmodel.$hashcode = false
+                //component.vmodel.$hashcode = false
             } else {
                 command[i] = component  //标识这里需要新建一个虚拟节点
             }
-
+            proxy[binding.keyName] = curKey
+            proxy[binding.itemName] = curItem
 
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
+
             proxy.$outer = binding.$outer
             children[i] = component
+            
+            if(component.vmodel && component.vmodel !== proxy){
+                component.vmodel.$hashcode = false
+            }
             component.vmodel = proxy
             component.item = curItem
             component.itemName = binding.itemName
@@ -209,7 +212,6 @@ avalon.directive("repeat", {
             binding.oldValue = newCache
         }
         vnode.repeatCommand = command
-
         addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
     },
@@ -468,7 +470,7 @@ function initNames(repeatArray) {
 function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
     var before = binding.vmodel//上一级的VM
-    console.log(before, "::::")
+    // console.log(before, "::::")
     var heirloom = {}
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events
