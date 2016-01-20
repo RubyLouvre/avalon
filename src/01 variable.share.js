@@ -24,6 +24,8 @@ function noop() {
 }
 
 function getUid(el){
+    if(el.nodeType === 3 || el.nodeType === 8)
+        el = el.parentNode
     return el.uuid || (el.uuid = "_"+(++bindingId))
 }
 

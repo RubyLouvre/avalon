@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js(无加载器版本) 1.4.7.1 built in 2016.1.14
+ avalon.shim.js(无加载器版本) 1.4.7.1 built in 2016.1.20
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -75,6 +75,8 @@ function noop() {
 }
 
 function getUid(el){
+    if(el.nodeType === 3 || el.nodeType === 8)
+        el = el.parentNode
     return el.uuid || (el.uuid = "_"+(++bindingId))
 }
 
