@@ -3,37 +3,39 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <script src="dist/avalon.js"></script>
+        <script src="avalon.js"></script>
+
         <script>
-            var model = avalon.define({
-                $id: "computed4",
-                test1: "test1",
-                test2: {
-                    get: function () {
-                        return this.test1;
-                    }
+            var vm = avalon.define({
+                $id: "test",
+                name: "aaa",
+                step: 1,
+                arr: [{name: "bbb"}, {name: "ccc"}, {name: "ddd"}, {name: "eee"}],
+                jump: function (index) {
+                    //   console.log(index)
+                    vm.step = index;
                 }
             });
-            function expect(a) {
-                return {
-                    to: {
-                        be: function (b) {
-                            console.log(a, b, a === b)
-                        }
-                    }
-                }
-            }
-            expect(model.test2).to.be("test1")
-            model.test1 = "test@@@"
-            expect(model.$model.test2).to.be("test@@@")
-            // delete avalon.vmodels.computed4
+           
+
         </script>
+        <style>
+            .active{
+                background: red
+            }
+        </style>
     </head>
-    <body>
-        <div  ms-controller="xxx">
-            <textarea></textarea>
-            <div contenteditable="true"></div>
-            <input ms-attr-value="aaa">
+    <body  data-bind="ddd">
+        <div ms-controller="test">
+            text:{{name}}
+            <br>
+            array:
+            <ul>
+                <li ms-repeat="arr" ms-class="active:$index==step" class="step" ms-click="jump($index)">
+                    {{el.name}}
+                </li>
+            </ul>
         </div>
+
     </body>
 </html>

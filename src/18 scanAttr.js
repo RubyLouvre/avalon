@@ -43,7 +43,7 @@ function scanAttr(elem, vmodels, match) {
                             name: name,
                             value: newValue,
                             oneTime: oneTime,
-                            uuid: getUid(elem)+name+value,     // "_" + (++bindingId), 
+                            uuid: name + "-" + getUid(elem),
                             //chrome与firefox下Number(param)得到的值不一样 #855
                             priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                         }
@@ -126,6 +126,7 @@ if (!W3C) {
             str = str.slice(0,-1)
         }
         var attributes = [],
+                match,
                 k, v
         var ret = attrPool.get(str)
         if (ret) {

@@ -59,30 +59,21 @@ avalon.injectBinding = function (data) {
 }
 
 //将依赖项(比它高层的访问器或构建视图刷新函数的绑定对象)注入到订阅者数组 
- function injectDependency(list, data) {
-        if (data.oneTime || !list)
-            return
-        var uuid = data.uuid
-        if(!uuid){
-            uuid = data.uuid = getUid(data.element)+data.name+data.value
-        }
-        for (var i = 0, el; el = list[i++]; ) {
-            if (el.uuid && el.uuid === uuid) {
-                return
-            }
-        }
-        list.push(data)
+function injectDependency(list, data) {
+    if (data.oneTime)
+        return
+    if (list && avalon.Array.ensure(list, data) && data.element) {
         injectDisposeQueue(data, list)
-        if (new Date() - beginTime > 333) {
+        if (new Date() - beginTime > 444 ) {
             rejectDisposeQueue()
         }
-
     }
+}
 
 //通知依赖于这个访问器的订阅者更新自身
 function fireDependencies(list) {
     if (list && list.length) {
-        if (new Date() - beginTime > 333 && typeof list[0] === "object") {
+        if (new Date() - beginTime > 444 && typeof list[0] === "object") {
             rejectDisposeQueue()
         }
         var args = aslice.call(arguments, 1)
