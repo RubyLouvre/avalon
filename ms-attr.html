@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js">
+
+        </script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: 11,
+                bbb: 22,
+                ccc: 33,
+                ddd: 44,
+                eee: 55,
+                fff: 66
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-attr-title="aaa">
+            <b ms-attr-title="ddd">a</b>
+        </div>
+        <div ms-attr-title="bbb">
+            <b>b</b>
+        </div>
+        <div ms-attr-title="ccc">
+            <b ms-attr-title="eee">c</b>
+        </div>
+         <div>
+            <b ms-attr-title="fff">d</b>
+        </div>
+    </body>
+</html>

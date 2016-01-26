@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: '司徒正美',
+                bbb: '<b>xxx</b>',
+                ccc: '<p>xxx{{aaa}}yyy</p>'
+            })//    
+            window.onload = function () {
+                
+            }
+            //safari, chrome 的innerHTML, outerHTML都会转义
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-text="aaa">没有东西</div>
+        <div ms-text="bbb">没有东西</div>
+        <div ms-text="ccc">没有东西</div>
+    </body>
+</html>
+
+

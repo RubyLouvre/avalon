@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                array: [{a: 1}, {a: 2}, {a: 3}],
+               
+                onSort: function () {
+                    vm.array.reverse()
+                },
+                onMark: function () {
+                    avalon.each(document.querySelectorAll("li"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <h1>测试对象数组单层循环</h1>
+        
+        <p><button type="button" ms-click="onMark">mark</button></p>
+        <p><button type="button" ms-click="onSort">change</button></p>
+        <ul>
+            <li ms-repeat="array">
+                {{el.a}}|| {{$first}}||{{$index}}
+            </li>
+        </ul>
+       
+    </body>
+</html>

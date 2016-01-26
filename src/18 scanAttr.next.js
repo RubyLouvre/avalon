@@ -28,7 +28,6 @@ function scanAttr(elem, vmodels, match) {
                         element: elem,
                         name: name,
                         value: value,
-                        uuid: "_" + (++bindingId), 
                         //chrome与firefox下Number(param)得到的值不一样 #855
                         priority: (priorityMap[type] || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
                     }

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                array: ["a", "b", "c", "d"],
+                data: {
+                    aa: 11,
+                    bb: 22,
+                    cc: 33
+                },
+                grid: {
+                    aa: {
+                        xx: 111,
+                        yy: 222
+                    },
+                    bb: {
+                        xx: 333,
+                        yy: 444
+                    },
+                    cc: {
+                        xx: 555,
+                        yy: 666
+                    }
+                },
+                mark: function () {
+                    avalon.each(document.querySelectorAll("li"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                },
+                change: function () {
+
+                    vm.data = {
+                        cc: 55,
+                        aa: 66,
+                        dd: 22,
+                        bb: 44
+                    }
+                }
+
+            })
+
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="change">change</button>
+        <button type="button" ms-click="mark">mark</button>
+        <ul ms-each='data'>
+            <li>{{$key}}=={{$val}} </li>
+        </ul>
+        <ul ms-each='(k,v) in data'>
+            <li>{{k}}=={{v}} </li>
+        </ul>
+        <table border="1">
+            <tr ms-repeat="tr in grid">
+                <td ms-repeat="(n, td) in tr">{{n}}:{{td}}</td>
+            </tr>
+        </table>
+    </body>
+</html>

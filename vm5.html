@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                array: [
+                    {ul: [[111, 222], [3333, 4444]]},
+                    {ul: [[555, 666], [7777, 8888]]},
+                    {ul: [[1212, 1313], [4343, 5656]]}
+                ],
+                onMark: function () {
+                    avalon.each(document.querySelectorAll("li"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                },
+                onClick: function () {
+                    vm.array = [
+                        {ul: [[Math.random(), Math.random()], [Math.random(), Math.random(), Math.random()]]},
+                        {ul: [[Math.random(), Math.random()], [Math.random(), Math.random(), Math.random()]]},
+                        {ul: [[Math.random(), Math.random()], [Math.random(), Math.random(), Math.random()]]}
+                    ]
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <button type="button" ms-click="onClick">change</button>
+        <button type="button" ms-click="onMark">mark</button>
+        <div ms-repeat="array">
+            <ul ms-repeat-ul="el.ul">
+                <li ms-repeat-text="ul">{{text}}</li>
+            </ul>
+        </div>
+    </body>
+</html>

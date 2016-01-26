@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <script>
+            avalon.mix(avalon.templateCache, {
+                aaa: "<div>{{a}}</div>",
+                bbb: "<div><strong>{{a}}</strong></div>"
+            })
+            var vm = avalon.define({
+                $id: "test",
+                aaa: "aaa",
+                a: "司徒正美",
+                toggle: function () {
+                    vm.aaa = vm.aaa === "aaa" ? "bbb" : "aaa"
+                }
+            })
+
+        </script>
+    </head>
+    <body ms-controller='test'>
+        <button ms-click='toggle'>toggle</button>
+        <div ms-include-src="aaa">TODO write content</div>
+        <noscript id='aaa'>
+        <strong>xxxx</strong>
+        </noscript>
+    </body>
+</html>

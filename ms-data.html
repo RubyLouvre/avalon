@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: "test",
+                $skipArray: ["array", "object"],
+                number: 111,
+                number2: NaN,
+                bool: false,
+                bool2: true,
+                nn: null,
+                vv: void 0,
+                array: [1, 2, 3],
+                date: new Date,
+                object: {
+                    name: "这是数据"
+                },
+                show: function () {
+                    var elem = avalon(this)
+                    avalon.log(
+                            elem.data("number"), elem.data("number2"),
+                            elem.data("bool"), elem.data("bool2"),
+                            elem.data("null"), elem.data("void"),
+                            elem.data("fn"), this["data-array"],
+                            this["data-date"], this["data-object"]
+                            )
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-data-number="number"
+             ms-data-number2="number2"
+             ms-data-bool="bool"
+             ms-data-bool2="bool2"
+             ms-data-void="vv"
+             ms-data-null="nn"
+             ms-data-array="array"
+             ms-data-date="date"
+             ms-data-object="object"
+             ms-data-fn="show"
+             ms-click="show"
+             >点我</div>
+    </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: '<s>司徒正美</s>',
+                bbb: '<b>xxx</b>',
+                ccc: '<p ms-html="aaa">yyyy</p>',
+                toggle: true
+            })
+
+  avalon.directive("me",{
+      init : function(bingding){
+        avalon.log(bingding.param);
+      }
+  });
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-me-ff-gg class='test'></div>
+
+        <div ms-html="aaa">没有东西</div>
+        <div ms-html="bbb">没有东西</div>
+        <div ms-html="ccc">没有东西</div>
+        <div ms-if="toggle" ms-html="ccc">没有东西</div>
+    </body>
+</html>

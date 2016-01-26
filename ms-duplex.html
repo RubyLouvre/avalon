@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: '司徒正美',
+                bbb: 'xxx',
+                ccc: "222",
+                eee: ["a3"],
+                checkbox:'a3'
+            })
+            vm.$watch("eee.length", function (a) {
+                vm.checkbox = vm.eee+""
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <p><input ms-duplex="aaa"/>{{aaa}}</p>
+        <p><input ms-duplex="bbb" data-duplex-event="change"/>{{bbb}}</p>
+        <p>
+            <input ms-duplex="eee" type="checkbox" value="a1"/>
+            <input ms-duplex="eee" type="checkbox" value="a2"/>
+            <input ms-duplex="eee" type="checkbox" value="a3"/>
+            <input ms-duplex="eee" type="checkbox" value="a4"/>{{checkbox}}
+        </p>
+        <p>
+            <select ms-duplex="ccc">
+                <option>111</option>
+                <option>222</option>
+                <option>333</option>
+            </select>
+            {{ccc}}
+        </p>
+    </body>
+</html>

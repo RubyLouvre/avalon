@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+          
+         //   console.log(reg.test(str))
+            window.onload = function () {
+                var el = document.querySelector("#xxx")
+                console.log(el)
+               // el.title = "aaa"
+                el.setAttribute("title", "TEST")
+            }
+
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-if="!toggle" ><a id="xxx" href="">没有东西</a></div>
+        <div ms-if="toggle">{{aaa}}</div>
+        <div ms-if="!toggle">{{aaa}}</div>
+        <div ms-if="toggle">有东西</div>
+    </body>
+</html>

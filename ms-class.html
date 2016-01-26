@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js">
+
+        </script>
+        <style>
+            .hover{
+                background: red;
+            }
+            .active{
+                background: green;
+            }
+        </style>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: "ccc ddd",
+                toggle: true
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-class="aaa">1111</div>
+        <div class="ccc" ms-class="{{aaa}}:false">2222</div>
+        <div class="eee" ms-class-qqq="toggle">3333</div>
+        <div ms-hover="hover">222</div>
+        <div ms-active="active">333</div>
+    </body>
+</html>

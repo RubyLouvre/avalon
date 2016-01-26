@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js">
+
+        </script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: "ccc ddd",
+                onClick: function (n, e) {
+                    console.log(n, e, "!")
+                },
+                move: function (e) {
+                    console.log(e.pageX)
+                },
+                type: function (e) {
+                    console.log(e.type)
+                },
+                toggle: true
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+
+        <div class="cookie">
+            <div class="round animated flip" style="background:red">
+                <div class="before">
+                    <p></p>
+                    <p></p>
+                    <p></p>
+                    <p></p>
+                    <p></p>
+                </div>
+            </div>
+        </div>
+        <style>
+            .cookie{
+                width:200px;
+                height:200px;
+            }
+            .round{
+                border-radius: 100px   
+            }
+            .before{
+                display: none
+            }
+            .before p{
+                text-align: center;
+            }
+        </style>
+
+        <div ms-click="onClick(222)|stop|prevent">1111</div>
+        <div ><input ms-focus="type" ms-blur="type" ms-keyup="type"/> </div>
+        <div ms-mousemove="move" style="width:300px;height:100px;border:1px solid red">1111</div>
+    </body>
+</html>

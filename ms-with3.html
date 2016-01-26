@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="avalon.js"></script>
+        <title>RunJS</title>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                object: {
+                    aaa: {
+                        aa: 11,
+                        bb: 22,
+                        cc: 33
+                    },
+                    bbb: {
+                        aa: 44,
+                        bb: 55,
+                        cc: 66
+                    }
+                },
+                onMark: function () {
+                    avalon.each(document.querySelectorAll("p"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                },
+                onClick: function () {
+                    vm.object = {
+                        aaa: {
+                            aa: 123,
+                            bb: 234,
+                            cc: 345
+                        },
+                        bbb: {
+                            cc: 456,
+                            bb: 567,
+                            ee: 678
+                        }
+                    }
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <p><button type="button" ms-click="onClick">change</button></p>
+        <p><button type="button" ms-click="onMark">mark</button></p>
+
+        <ul>
+            <li ms-repeat="d in object">
+                <p ms-repeat="(kk,vv) in d">{{kk}};;;{{vv}}</p>
+            </li>
+        </ul>
+    </body>
+</html>

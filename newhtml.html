@@ -1,0 +1,39 @@
+&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;script type="text/javascript"&gt;
+            //try{先执行的代码} catch(err){出错时执行的代码}
+            //select的add方法,第一个参数是需要被添加的option元素,第二个参数决定了被添加的位置
+            //普通浏览器中,第二个参数是一个既有的option对象,添加的option元素被插入到它之前.
+            //ie7浏览器中,第二个参数是一个索引,表示第n个既有的option对象.
+            //ie8以上版本,传入两种对象它都能识别.
+            //如果没有第二个参数,则插入在最后.
+            //对于普通浏览器,如果传入的是索引数值,它不会认为是出错,还是会添加在最后,所以,使用try{}catch{}方法解决这个问题,必须把普通浏览器的适用方法放在try里面.
+            window.onload = function () {
+                var select = document.getElementById("select")
+                var btn = document.getElementById("btn")
+                btn.onclick = function () {
+                    //通过下标可以把jquery对象转换为javascript对象
+                    try {    //普通浏览器和ie8以上版本执行以下代码
+                        select.add(new Option('2.5'), select.options[2])
+                    } catch (err) {   //ie7执行以下代码
+                        select.add(new Option('2.5'), 2)
+                    }
+                }
+            }
+        &lt;/script&gt;
+    &lt;/head&gt;
+
+    &lt;body&gt;
+        &lt;select id="select" multiple="multiple" size="5"&gt;
+            &lt;option value="1"&gt;One&lt;/option&gt;
+            &lt;option value="2"&gt;Two&lt;/option&gt;
+            &lt;option value="3"&gt;Three&lt;/option&gt;
+            &lt;option value="4"&gt;Four&lt;/option&gt;
+        &lt;/select&gt;
+        &lt;div&gt;
+            &lt;button type="button" id="btn"&gt;Click me!&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;

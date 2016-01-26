@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 111,
+                array: ["a", "b", "c", "d", "e"],
+                list: [{sub: [{a: [11, 22]}, {a: [111, 222]}]},
+                    {sub: [{a: [33, 44]}, {a: [333, 444]}]}]
+                        //  toggle: true
+            })
+
+        </script>
+    </head>
+    <body ms-controller="test">
+
+        <ul>
+            <li>这是第一项</li>
+            <li ms-repeat="array">{{el}}:{{$index}}:{{$last}}
+                <button type="button" ms-click="$remove">delete</button></li>
+            <li ms-attr-title="aaa">这是最后一项</li>
+        </ul>
+        <ol ms-each="array">
+            <li >{{el}}:{{$index}}:{{$first}}</li>
+        </ol>
+
+        <table>
+            <tr ms-repeat="list">
+                <td ms-repeat-elem="el.sub">
+                    <strong ms-repeat-x="elem.a">{{x}}</strong>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
