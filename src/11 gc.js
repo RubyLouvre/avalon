@@ -4,7 +4,6 @@
 
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
-var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
