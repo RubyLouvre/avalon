@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>first example</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                name: "司徒正美",
+                "aaa-bbb-ccc": 111
+            })
+            window.onload = function () {
+                var el = document.getElementById("aaa")
+                el.onclick = function (e) {
+                    console.log(e)
+                    e.preventDefault()
+                }
+                
+                el.click()
+            }
+
+        </script>
+    </head>
+
+    <body ms-controller="test">
+
+        <p><a href="http://www.baidu.com" id="aaa">aaa</a></p>
+    </body>
+
+</html>

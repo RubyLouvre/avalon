@@ -3107,7 +3107,7 @@ var keywords = [
     "throws,transient,volatile", /*保留字*/
     "arguments,let,yield,undefined" /* ECMA 5 - use strict*/].join(",")
 var rkeywords = new RegExp(["\\b" + keywords.replace(/,/g, '\\b|\\b') + "\\b"].join('|'), 'g')
-var rpaths = /[$_a-z]\w*(\.[$_a-z]\w*)*/g
+var rpaths = /[$_a-z][-\w]*(\.[$_a-z][-\w]*)*/g
 var rfilter = /^[$_a-z]\w*/
 //当属性发生变化时, 执行update
 var rfill = /\?\?\d+/g
@@ -3178,7 +3178,6 @@ function parseExpr(expr, vmodel, binding) {
     function fill(a) {
         return maps[a]
     }
-
     input = input.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
             replace(rmethod, dig2).//移除所有正则或字符串方法
@@ -3231,17 +3230,30 @@ function parseExpr(expr, vmodel, binding) {
     var headers = []
     var unique = {}
     var pathArray = []
+    var replaceBody = {}
     for (var i in paths) {
         pathArray.push(i)
         if (!unique[i]) {
             var key = i.split(".").shift()
             unique[key] = true
-            headers.push("var " + key + " =  __vm__." + key + ";\n")
+            if(key.indexOf("-")>0){
+                var $key = key.replace(/-/g,"$")
+                replaceBody[key] = $key
+                headers.push("var " + $key + " =  __vm__[" + quote(key) + "];\n")
+            }else{
+                headers.push("var " + key + " =  __vm__." + key + ";\n")
+            }
+            
+          
         }
     }
     binding.paths = pathPool.put(category + ":" + input,
             pathArray.join("★"))
+        for(var i in replaceBody){
+            body = body.replace(new RegExp(escapeRegExp(key),"g"), replaceBody[i])
+        }
     body = body.replace(rfill, fill).trim()
+    
     var args = ["__vm__"]
     if (category === "on") {
         args = ["$event", "__vm__"]
@@ -3284,6 +3296,7 @@ function parseExpr(expr, vmodel, binding) {
 
     try {
         fn = new Function(args.join(","), headers.join(""))
+        console.log(fn+"")
     } catch (e) {
         avalon.log(expr + " convert to\n function( " + args + "){\n" +
                 headers.join("") + "}\n fail")
