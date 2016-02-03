@@ -28,7 +28,7 @@ var oldName = {
 }
 avalon.directive("duplex", {
     priority: 2000,
-    init: function (binding, hasCast) {
+    init: function (binding) {
         var elem = binding.element
         var vmodel = binding.vmodel
         var fn = getBindingValue(elem, "data-duplex-changed", vmodel)
@@ -141,11 +141,24 @@ avalon.directive("duplex", {
     },
     update: function (node, vnode) {
         var binding = vnode.binding
-        var curValue = node.vmValue = vnode.value
+        var curValue = vnode.value
         vnode.dom = node //方便进行垃圾回收
 
-        node.duplexSet = function (value) {
-            binding.setter(binding.vmodel, value, node)
+        if (vnode.props.xtype === "checkbox") {
+            node.duplexSet = function (val, checked) {
+                var array = vnode.value
+                if (!Array.isArray(array)) {
+                    log("ms-duplex应用于checkbox上要对应一个数组")
+                    array = [array]
+                }
+                var method = checked ? "ensure" : "remove"
+                avalon.Array[method](array, val)
+                return array
+            }
+        } else {
+            node.duplexSet = function (value) {
+                binding.setter(binding.vmodel, value, node)
+            }
         }
 
         node.duplexGet = function (value) {
@@ -187,7 +200,6 @@ avalon.directive("duplex", {
                 curValue = vnode.props.xtype === "checked" ? !!curValue :
                         curValue + "" === node.value
                 node.oldValue = curValue
-
                 node.checked = curValue
 
                 break
@@ -232,6 +244,27 @@ function duplexChecked() {
     elem.changed(lastValue)
 }
 
+
+function duplexValueHack(e) {
+    if (e.propertyName === "value") {
+        duplexValue.call(this, e)
+    }
+}
+
+function duplexDragEnd(e) {
+    var elem = this
+    setTimeout(function () {
+        duplexValue.call(elem, e)
+    }, 17)
+}
+
+function duplexCheckBox() {
+    var elem = this
+    var lastValue = elem.oldValue = elem.duplexGet()
+    elem.duplexSet(lastValue)
+    elem.changed(lastValue)
+}
+
 function duplexValue() { //原来的updateVModel
     var elem = this, fixCaret
     var val = elem.value //防止递归调用形成死循环
@@ -260,32 +293,6 @@ function duplexValue() { //原来的updateVModel
         avalon.log(ex)
     }
 }
-function duplexValueHack(e) {
-    if (e.propertyName === "value") {
-        duplexValue.call(this, e)
-    }
-}
-
-function duplexDragEnd(e) {
-    var elem = this
-    setTimeout(function () {
-        duplexValue.call(elem, e)
-    }, 17)
-}
-
-function duplexCheckBox() {
-    var elem = this
-    var method = elem.checked ? "ensure" : "remove"
-    var array = elem.vmValue
-    if (!Array.isArray(array)) {
-        log("ms-duplex应用于checkbox上要对应一个数组")
-        array = [array]
-    }
-    var val = elem.duplexGet(elem.value)
-    avalon.Array[method](array, val)
-    elem.changed(array)
-}
-
 //用于更新VM
 function duplexSelect() {
     var elem = this

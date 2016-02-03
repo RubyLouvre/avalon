@@ -6267,16 +6267,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    update: function (node, vnode) {
 	        var binding = vnode.binding
-	        try{
-	        var curValue = node.vmValue = vnode.value
-	    }catch(e){
-	        console.log(vnode, node)
-	        return 
-	    }
+
+	        var curValue = vnode.value
+
 	        vnode.dom = node //方便进行垃圾回收
 
-	        node.duplexSet = function (value) {
-	            binding.setter(binding.vmodel, value, node)
+	        if (vnode.props.xtype === "checkbox") {
+	            node.duplexSet = function (val, checked) {
+	                var array = vnode.value
+	                if (!Array.isArray(array)) {
+	                    log("ms-duplex应用于checkbox上要对应一个数组")
+	                    array = [array]
+	                }
+	                var method = checked ? "ensure" : "remove"
+	                avalon.Array[method](array, val)
+	                return array
+	            }
+	        } else {
+	            node.duplexSet = function (value) {
+	                binding.setter(binding.vmodel, value, node)
+	            }
 	        }
 
 	        node.duplexGet = function (value) {
@@ -6371,6 +6381,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    elem.changed(lastValue)
 	}
 
+
+	function duplexValueHack(e) {
+	    if (e.propertyName === "value") {
+	        duplexValue.call(this, e)
+	    }
+	}
+
+	function duplexDragEnd(e) {
+	    var elem = this
+	    setTimeout(function () {
+	        duplexValue.call(elem, e)
+	    }, 17)
+	}
+
+	function duplexCheckBox() {
+	    var elem = this
+	    var val = elem.duplexGet(elem.value)
+	    var array = elem.duplexSet(val, elem.checked)
+	    elem.changed(array)
+	}
 	function duplexValue(e) { //原来的updateVModel
 	    var elem = this, fixCaret
 	    var val = elem.value //防止递归调用形成死循环
@@ -6399,31 +6429,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.log(ex)
 	    }
 	}
-	function duplexValueHack(e) {
-	    if (e.propertyName === "value") {
-	        duplexValue.call(this, e)
-	    }
-	}
-
-	function duplexDragEnd(e) {
-	    var elem = this
-	    setTimeout(function () {
-	        duplexValue.call(elem, e)
-	    }, 17)
-	}
-
-	function duplexCheckBox() {
-	    var elem = this
-	    var method = elem.checked ? "ensure" : "remove"
-	    var array = elem.vmValue
-	    if (!Array.isArray(array)) {
-	        log("ms-duplex应用于checkbox上要对应一个数组")
-	        array = [array]
-	    }
-	    var val = elem.duplexGet(elem.value)
-	    avalon.Array[method](array, val)
-	    elem.changed(array)
-	}
 
 	//用于更新VM
 	function duplexSelect() {
@@ -6431,7 +6436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var val = avalon(elem).val() //字符串或字符串数组
 	    if (Array.isArray(val)) {
 	        val = val.map(function (v) {
-	            return  elem.duplexGet(v)
+	            return elem.duplexGet(v)
 	        })
 	    } else {
 	        val = elem.duplexGet(val)
