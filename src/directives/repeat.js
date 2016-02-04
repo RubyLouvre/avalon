@@ -267,7 +267,6 @@ avalon.directive("repeat", {
                     avalon.clearHTML(parent)
                     parent.appendChild(dom)
                 } else {
-                    parent.removeChild(node.nextSibling)
                     parent.replaceChild(dom, node)
                 }
                 updateEntity(keepChild, vnode.children, parent)

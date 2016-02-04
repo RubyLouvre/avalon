@@ -598,6 +598,7 @@ arrayMethods.forEach(function (method) {
 module.exports = {
     observeArray: observeArray,
     observeObject: observeObject,
+    makeObservable: makeObservable,
     mediatorFactory: mediatorFactory,
     define: define
 }

@@ -66,9 +66,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.define = __webpack_require__(18).define
 	avalon.mediatorFactory = __webpack_require__(18).mediatorFactory
 
-	__webpack_require__(61)
 	__webpack_require__(30)
-	__webpack_require__(36)
+	__webpack_require__(37)
+	__webpack_require__(42)
 	module.exports = avalon
 
 
@@ -3401,6 +3401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 	    observeArray: observeArray,
 	    observeObject: observeObject,
+	    makeObservable: makeObservable,
 	    mediatorFactory: mediatorFactory,
 	    define: define
 	}
@@ -4541,107 +4542,223 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/*********************************************************************
-	 *                           扫描系统                                 *
-	 **********************************************************************/
-	var rbind = avalon.config.rbind
-	var scanNodes = __webpack_require__(31)
-
-	var updateEntity = __webpack_require__(24)
-	var createVirtual = __webpack_require__(61)
-
-	avalon.scan = function (elem, vmodel) {
-	    var text = elem.outerHTML
-	    if (rbind.test(text)) {
-	        var tree = createVirtual(text)
-	        scanNodes(tree, vmodel)
-	        updateEntity([elem], tree)
-	    }
-	}
-
-
-
-
-
-/***/ },
-/* 31 */
-/***/ function(module, exports, __webpack_require__) {
-
 	
-	var rexpr = avalon.config.rexpr
-	var scanText = __webpack_require__(32)
-	var scanTag = __webpack_require__(34)
+	var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+	//匹配只有开标签的无内容元素（Void elements 或 self-contained tags）
+	//http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
+	//http://blog.jobbole.com/61514/
+	var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
+	//用于创建适配某一种标签的正则表达式
+	//var openStr = "(?:\\s+[^=\\s]+(?:\\=[^>\\s]+)?)*\\s*>"
+	var openStr = "(?:\\s+[^>=]*?(?:=[^>]+?)?)*>"
+	//匹配文本节点
+	var rtext = /^[^<]+/
+	//匹配注释节点
+	var rcomment = /^<!--([\w\W]*?)-->/
 
-	//更新整个虚拟DOM树
-	function scanNodes(nodes, vm) {
-	    for (var i = 0, n = nodes.length; i < n; i++) {
-	        var node = nodes[i]
+	var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+	var rstring2 = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/
+	// /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
+	var rnocontent = /textarea|template|script|style/
+	var tagCache = {}// 缓存所有匹配开标签闭标签的正则
+	var controllerHook = __webpack_require__(31).controllerHook
 
-	        switch (node.type) {
-	            case "#comment":
-	            case "#component":
-	                break
-	            case "#text":
-	                if (!node.skipContent) {
-	                    if (rexpr.test(String(node.nodeValue))) {
-	                        scanText(node, vm)
-	                    }
-	                }
-	                break
-	            default:
-	                vm = scanTag(node, vm, nodes)
-	                scanNodes(node.children, vm)
-	                break
+	var maps = {}
+	var number = 1
+	function dig(a) {
+	    var key = "??" + number++
+	    maps[key] = a
+	    return key
+	}
+	var rfill = /\?\?\d+/g
+	function fill(a) {
+	    var val = maps[a]
+	    return val
+	}
+	var pushArray = __webpack_require__(2).pushArray
+	var vdom = __webpack_require__(32)
+	var VText = vdom.VText
+	var VComment = vdom.VComment
+	var VElement = vdom.VElement
+	var rchar = /./g
+	//=== === === === 创建虚拟DOM树 === === === === =
+
+	//此阶段只会生成VElement,VText,VComment
+	function createVirtual(text, recursive) {
+
+	    var nodes = []
+	    if (recursive && !avalon.config.rbind.test(text)) {
+	        return nodes
+	    }
+	    if (!recursive) {
+	        text = text.replace(rstring, dig)
+	    }
+	    do {
+	        var matchText = ""
+
+	        var match = text.match(rtext)
+	        var node = false
+
+	        if (match) {//尝试匹配文本
+	            matchText = match[0]
+	            node = new VText(matchText.replace(rfill, fill))
 	        }
 
+	        if (!node) {//尝试匹配注释
+	            match = text.match(rcomment)
+	            if (match) {
+	                matchText = match[0]
+	                node = new VComment(match[1].replace(rfill, fill))
+	            }
+	        }
+
+
+	        if (!node) {//尝试匹配拥有闭标签的元素节点
+	            match = text.match(rfullTag)
+	            if (match) {
+	                matchText = match[0]//贪婪匹配 outerHTML,可能匹配过多
+	                var type = match[1].toLowerCase()//nodeName
+	                var opens = []
+	                var closes = []
+	                var ropen = tagCache[type + "open"] ||
+	                        (tagCache[type + "open"] = new RegExp("<" + type + openStr, "g"))
+	                var rclose = tagCache[type + "close"] ||
+	                        (tagCache[type + "close"] = new RegExp("<\/" + type + ">", "g"))
+	                /* jshint ignore:start */
+	                matchText.replace(ropen, function (_, b) {
+	                    //注意,页面有时很长,b的数值就很大,如
+	                    //000000000<000000011>000000041<000000066>000000096<000000107>
+	                    opens.push(("0000000000" + b + "<").slice(-10))//取得所有开标签的位置
+	                    return _.replace(rchar, "1")
+	                }).replace(rclose, function (_, b) {
+	                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置               
+	                })
+
+	                /* jshint ignore:end */
+	                //<div><div>01</div><div>02</div></div><div>222</div><div>333</div>
+	                //会变成000<005<012>018<025>031>037<045>051<059>
+	                //再变成<<><>><><>
+	                //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
+	                var pos = opens.concat(closes).sort()
+	                var gtlt = pos.join("").replace(/\d+/g, "")
+	                var k = 0, last = 0
+
+	                for (var i = 0, n = gtlt.length; i < n; i++) {
+	                    var c = gtlt.charAt(i)
+	                    if (c === "<") {
+	                        k += 1
+	                    } else {
+	                        k -= 1
+	                    }
+	                    if (k === 0) {
+	                        last = i
+	                        break
+	                    }
+	                }
+	                var findex = parseFloat(pos[last]) + type.length + 3 // (</>为三个字符)
+	                matchText = matchText.slice(0, findex) //取得正确的outerHTML
+	                match = matchText.match(rvoidTag) //抽取所有属性
+
+	                var attrs = {}
+	                if (match[2]) {
+	                    parseAttrs(match[2], attrs)
+	                }
+
+	                var template = matchText.slice(match[0].length,
+	                        (type.length + 3) * -1) //抽取innerHTML
+	                var innerHTML = template.replace(rfill, fill)
+
+	                node = {
+	                    type: type,
+	                    props: attrs,
+	                    template: innerHTML,
+	                    children: []
+	                }
+
+	                if (node.props["ms-skip"]) {
+	                    node.skipContent = true
+	                } else if (type === "option") {
+	                    node.children.push(new VText(trimHTML(innerHTML)))
+	                } else if (type === "xmp") {
+	                    node.children.push(new VText(innerHTML))
+	                } else if (rnocontent.test(type)) {
+	                    node.skipContent = true
+	                } else {//script, noscript, template, textarea
+	                    var childs = createVirtual(template, true)
+	                    if (childs.length) {
+	                        pushArray(node.children, childs)
+	                    }
+	                }
+	                node = new VElement(node)
+	                controllerHook(node)
+	            }
+	        }
+
+	        if (!node) {
+	            match = text.match(rvoidTag)
+	            if (match) {//尝试匹配自闭合标签及注释节点
+	                matchText = match[0]
+	                type = match[1].toLowerCase()
+	                attrs = {}
+	                if (match[2]) {
+	                    parseAttrs(match[2], attrs)
+	                }
+	                node = new VElement({
+	                    type: type,
+	                    props: attrs,
+	                    template: "",
+	                    children: [],
+	                    isVoidTag: true
+	                })
+	                controllerHook(node)
+	            }
+	        }
+	        if (node) {
+	            nodes.push(node)
+	            text = text.slice(matchText.length)
+	        } else {
+	            break
+	        }
+	    } while (1);
+	    if (!recursive) {
+	        maps = {}
 	    }
 	    return nodes
 	}
-	module.exports = scanNodes
 
-/***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
+	var rnowhite = /\S+/g
+	var rnogutter = /\s*=\s*/g
+	var rquote = /&quot;/g
+	var ramp = /&amp;/g
 
-	var scanExpr = __webpack_require__(29)
-	var addHooks = __webpack_require__(33).addHooks
-
-	function scanText(node, vmodel) {
-	    var tokens = scanExpr(String(node.nodeValue), true)
-	    node.tokens = tokens
-	    var texts = []
-	    for (var i = 0, token; token = tokens[i]; i++) {
-	        if (token.type) {
-	            /* jshint ignore:start */
-	            token.expr = token.expr.replace(/^\s*::/, function () {
-	                token.oneTime = true
-	                return ""
-	            })
-	            /* jshint ignore:end */
-	            token.element = node
-	            token.vmodel = vmodel
-	            token.index = i
-	            token.array = texts
-	            avalon.injectBinding(token)
-	        } else {
-	            texts[i] = token.expr
-	            var nodeValue = texts.join("")
-	            if (nodeValue !== node.nodeValue) {
-	                node.nodeValue = nodeValue
-	                addHooks(avalon.directives["{{}}"], {
-	                   element: node,
-	                   priority:1160
-	                })
+	function parseAttrs(str, attrs) {
+	    str.replace(rnogutter, "=").replace(rnowhite, function (el) {
+	        var arr = el.split("="), value = arr[1] || "",
+	                name = arr[0].toLowerCase()
+	        if (arr.length === 2) {
+	            value = value.replace(rfill, fill)
+	            //test的方法用到的正则不能出现g
+	            if (value.match(rstring)) { //if(rstring2.test(value)) {
+	                value = value.replace(ramp, "&").
+	                        replace(rquote, '"').
+	                        slice(1, -1)
 	            }
+
 	        }
-	    }
-	    return [node]
+	        attrs[name] = value
+	    })
+	}
+	//form prototype.js
+	var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
+	function trimHTML(v) {
+	    return String(v).replace(rtrimHTML, "").trim()
 	}
 
-	module.exports = scanText
+
+	module.exports = avalon.createVirtual = createVirtual
 
 /***/ },
-/* 33 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var attrUpdate = __webpack_require__(6)
@@ -4762,10 +4879,347 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 /***/ },
-/* 34 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var scanAttrs = __webpack_require__(35)
+	/**
+	 * 虚拟DOM的4大构造器
+	 */
+	module.exports = {
+	    VText: __webpack_require__(33),
+	    VComment: __webpack_require__(34),
+	    VElement: __webpack_require__(35),
+	    VComponent: __webpack_require__(36)
+	}
+
+
+/***/ },
+/* 33 */
+/***/ function(module, exports) {
+
+	var rexpr = avalon.config.rexpr
+	var rexpr = avalon.config.rexpr
+
+	function VText(text) {
+	    this.type = "#text"
+	    this.nodeValue = text
+	    this.skipContent = !rexpr.test(text)
+	}
+
+	VText.prototype = {
+	    constructor: VText,
+	    clone: function () {
+	        return new VText(this.nodeValue)
+	    },
+	    toDOM: function () {
+	        return document.createTextNode(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return this.nodeValue
+	    }
+	}
+
+	module.exports = VText
+
+/***/ },
+/* 34 */
+/***/ function(module, exports) {
+
+	
+	function VComment(text) {
+	    this.type = "#comment"
+	    this.nodeValue = text
+	    this.skipContent = true
+	}
+	VComment.prototype = {
+	    constructor: VComment,
+	    clone: function () {
+	        return new VComment(this.nodeValue)
+	    },
+	    toDOM: function () {
+	        return document.createComment(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return "<!--" + this.nodeValue + "-->"
+	    }
+	}
+
+	module.exports = VComment
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var builtin = __webpack_require__(2)
+	var rmsAttr = builtin.rmsAttr
+	var quote = builtin.quote
+	var pushArray = builtin.pushArray
+
+	function VElement(type, props, children) {
+	    if (typeof type === "object") {
+	        for (var i in type) {
+	            this[i] = type[i]
+	        }
+	    } else {
+	        this.type = type
+	        this.props = props
+	        this.children = children
+	        this.template = ""
+	    }
+	}
+	VElement.prototype = {
+	    clone: function () {
+	        var clone = new VElement(this.type,
+	                avalon.mix({}, this.props),
+	                this.children.map(function (el) {
+	                    return el.clone()
+	                }))
+	        clone.template = this.template
+	        if (this.skipContent) {
+	            clone.skipContent = this.skipContent
+	        }
+	        if (this.isVoidTag) {
+	            clone.isVoidTag = this.isVoidTag
+	        }
+	        return clone
+	    },
+	    constructor: VElement,
+	    toDOM: function () {
+	        var dom = document.createElement(this.type)
+	        for (var i in this.props) {
+	            if (this.props[i] === false) {
+	                dom.removeAttribute(i)
+	            } else {
+	                dom.setAttribute(i, String(this.props[i]))
+	            }
+	        }
+	        if (this.skipContent) {
+	            switch (this.type) {
+	                case "script":
+	                    dom.text = this.template
+	                    break
+	                    break
+	                case "style":
+	                case "template":
+	                    dom.innerHTML = this.template
+	                    break
+	                case "noscript":
+	                    dom.textContent = this.template
+	                    break
+	                default:
+	                    var a = avalon.parseHTML(this.template)
+	                    dom.appendChild(a)
+	                    break
+	            }
+
+	        } else if (!this.isVoidTag) {
+	            if (this.children.length) {
+	                this.children.forEach(function (c) {
+	                    dom.appendChild(c.toDOM())
+	                })
+	            } else if (window.Range) {
+	                dom.innerHTML = this.template
+	            } else {
+	                dom.appendChild(avalon.parseHTML(this.template))
+	            }
+
+	        }
+	        return dom
+	    },
+	    toHTML: function () {
+	        var arr = []
+	        for (var i in this.props) {
+	            arr.push(i + "=" + quote(String(this.props[i])))
+	        }
+	        arr = arr.length ? " " + arr.join(" ") : ""
+	        var str = "<" + this.type + arr
+	        if (this.isVoidTag) {
+	            return str + "/>"
+	        }
+	        str += ">"
+	        if (this.children.length) {
+	            str += this.children.map(function (el) {
+	                return el.toHTML()
+	            }).join("")
+	        } else {
+	            str += this.template
+	        }
+	        return str + "</" + this.type + ">"
+	    }
+	}
+
+	module.exports = VElement
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var pushArray = __webpack_require__(2).pushArray
+
+	function VComponent(config) {
+	    for (var i in config) {
+	        this[i] = config[i]
+	    }
+	    var type = this.__type__ = this.type 
+	    
+	    this.type = "#component"
+	    var me = avalon.components[type]
+	    if (me && me.init && arguments.length) {
+	        me.init.apply(this, arguments)
+	    }
+	}
+
+	VComponent.prototype = {
+	    clone: function () {
+	        var me = avalon.components[this.__type__]
+	        if (me && me.clone) {
+	            return me.clone.call(this)
+	        } else {
+	            var clone = new VComponent()
+	            clone.props = avalon.mix(clone.props, this.props)
+	            clone.children = this.children.map(function (el) {
+	                return el.clone()
+	            })
+	            clone.__type__ = this.__type__
+	            clone.template = this.template
+	            return this
+	        }
+	    },
+	    toDOM: function () {
+	        var me = avalon.components[this.__type__]
+	        if (me && me.toDOM) {
+	            return me.toDOM.call(this)
+	        }
+	        var fragment = document.createDocumentFragment()
+	        for (var i = 0; i < this.children.length; i++) {
+	            fragment.appendChild(this.children[i].toDOM())
+	        }
+	        return fragment
+	    },
+	    toHTML: function () {
+	        var me = avalon.components[this.__type__]
+	        if (me && me.toHTML) {
+	            return me.toHTML.call(this)
+	        }
+	        var ret = ""
+	        for (var i = 0; i < this.children.length; i++) {
+	            ret += this.children[i].toHTML()
+	        }
+	        return ret
+	    }
+	}
+
+
+	module.exports = VComponent
+
+/***/ },
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*********************************************************************
+	 *                           扫描系统                                 *
+	 **********************************************************************/
+	var rbind = avalon.config.rbind
+	var scanNodes = __webpack_require__(38)
+
+	var updateEntity = __webpack_require__(24)
+	var createVirtual = __webpack_require__(30)
+
+	avalon.scan = function (elem, vmodel) {
+	    var text = elem.outerHTML
+	    if (rbind.test(text)) {
+	        var tree = createVirtual(text)
+	        scanNodes(tree, vmodel)
+	        updateEntity([elem], tree)
+	    }
+	}
+
+
+
+
+
+/***/ },
+/* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var rexpr = avalon.config.rexpr
+	var scanText = __webpack_require__(39)
+	var scanTag = __webpack_require__(40)
+
+	//更新整个虚拟DOM树
+	function scanNodes(nodes, vm) {
+	    for (var i = 0, n = nodes.length; i < n; i++) {
+	        var node = nodes[i]
+
+	        switch (node.type) {
+	            case "#comment":
+	            case "#component":
+	                break
+	            case "#text":
+	                if (!node.skipContent) {
+	                    if (rexpr.test(String(node.nodeValue))) {
+	                        scanText(node, vm)
+	                    }
+	                }
+	                break
+	            default:
+	                vm = scanTag(node, vm, nodes)
+	                scanNodes(node.children, vm)
+	                break
+	        }
+
+	    }
+	    return nodes
+	}
+	module.exports = scanNodes
+
+/***/ },
+/* 39 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var scanExpr = __webpack_require__(29)
+	var addHooks = __webpack_require__(31).addHooks
+
+	function scanText(node, vmodel) {
+	    var tokens = scanExpr(String(node.nodeValue), true)
+	    node.tokens = tokens
+	    var texts = []
+	    for (var i = 0, token; token = tokens[i]; i++) {
+	        if (token.type) {
+	            /* jshint ignore:start */
+	            token.expr = token.expr.replace(/^\s*::/, function () {
+	                token.oneTime = true
+	                return ""
+	            })
+	            /* jshint ignore:end */
+	            token.element = node
+	            token.vmodel = vmodel
+	            token.index = i
+	            token.array = texts
+	            avalon.injectBinding(token)
+	        } else {
+	            texts[i] = token.expr
+	            var nodeValue = texts.join("")
+	            if (nodeValue !== node.nodeValue) {
+	                node.nodeValue = nodeValue
+	                addHooks(avalon.directives["{{}}"], {
+	                   element: node,
+	                   priority:1160
+	                })
+	            }
+	        }
+	    }
+	    return [node]
+	}
+
+	module.exports = scanText
+
+/***/ },
+/* 40 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var scanAttrs = __webpack_require__(41)
 
 	function scanTag(elem, vmodel, siblings) {
 	    var props = elem.props
@@ -4802,7 +5256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanTag
 
 /***/ },
-/* 35 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4890,29 +5344,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanAttrs
 
 /***/ },
-/* 36 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(37)
-	__webpack_require__(38)
-	__webpack_require__(39)
-	__webpack_require__(40)
-	__webpack_require__(41)
+	__webpack_require__(43)
 	__webpack_require__(44)
 	__webpack_require__(45)
 	__webpack_require__(46)
-	__webpack_require__(48)
+	__webpack_require__(47)
+	__webpack_require__(49)
 	__webpack_require__(50)
 	__webpack_require__(51)
-	__webpack_require__(52)
+	__webpack_require__(53)
+	__webpack_require__(55)
 	__webpack_require__(56)
+	__webpack_require__(57)
+	__webpack_require__(59)
 
 /***/ },
-/* 37 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var quoteExpr = __webpack_require__(27).quoteExpr
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addHooks = hooks.addHooks
 
@@ -4954,10 +5408,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 38 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 
 	var addHooks = hooks.addHooks
 
@@ -4985,10 +5439,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 39 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addHooks = hooks.addHooks
 
@@ -5019,10 +5473,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 40 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addHooks = hooks.addHooks
 
@@ -5049,14 +5503,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var VText = __webpack_require__(42)
-	var disposeVirtual = __webpack_require__(43)
+	var VText = __webpack_require__(33)
+	var disposeVirtual = __webpack_require__(48)
 	var pushArray = __webpack_require__(2).pushArray
-	var scanNodes = __webpack_require__(31)
-	var addHooks = __webpack_require__(33).addHooks
+	var scanNodes = __webpack_require__(38)
+	var addHooks = __webpack_require__(31).addHooks
 
 	avalon.directive("text", {
 	    change: function (value, binding) {
@@ -5084,35 +5538,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 42 */
-/***/ function(module, exports) {
-
-	var rexpr = avalon.config.rexpr
-	var rexpr = avalon.config.rexpr
-
-	function VText(text) {
-	    this.type = "#text"
-	    this.nodeValue = text
-	    this.skipContent = !rexpr.test(text)
-	}
-
-	VText.prototype = {
-	    constructor: VText,
-	    clone: function () {
-	        return new VText(this.nodeValue)
-	    },
-	    toDOM: function () {
-	        return document.createTextNode(this.nodeValue)
-	    },
-	    toHTML: function () {
-	        return this.nodeValue
-	    }
-	}
-
-	module.exports = VText
-
-/***/ },
-/* 43 */
+/* 48 */
 /***/ function(module, exports) {
 
 	//销毁虚拟DOM树，方便avalon在$emit方法中回收它们
@@ -5146,16 +5572,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = disposeVirtual
 
 /***/ },
-/* 44 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var disposeVirtual = __webpack_require__(43)
-	var createVirtual = __webpack_require__(61)
+	var disposeVirtual = __webpack_require__(48)
+	var createVirtual = __webpack_require__(30)
 
 	var pushArray = __webpack_require__(2).pushArray
-	var scanNodes = __webpack_require__(31)
-	var addHooks = __webpack_require__(33).addHooks
+	var scanNodes = __webpack_require__(38)
+	var addHooks = __webpack_require__(31).addHooks
 
 	avalon.directive("html", {
 	    change: function (value, binding) {
@@ -5185,14 +5611,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 45 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
 	var document = builtin.document
 	var W3C = builtin.W3C
 	var root = builtin.root
-	var addHooks = __webpack_require__(33).addHooks
+	var addHooks = __webpack_require__(31).addHooks
 	function parseDisplay(nodeName, val) {
 	    //用于取得此类标签的默认display值
 	    var key = "_" + nodeName
@@ -5244,19 +5670,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 46 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
 	//http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-	var divide = __webpack_require__(47)
+	var divide = __webpack_require__(52)
 	var builtin = __webpack_require__(2)
 	var quote = builtin.quote
 	var rword = builtin.rword
 	var markID = builtin.markID
 	var rsvg = builtin.rsvg
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addHooks = hooks.addHooks
 
@@ -5391,7 +5817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(16)
@@ -5425,18 +5851,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = divide
 
 /***/ },
-/* 48 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var disposeVirtual = __webpack_require__(43)
-	var createVirtual = __webpack_require__(61)
+	var disposeVirtual = __webpack_require__(48)
+	var createVirtual = __webpack_require__(30)
 	var batchUpdateEntity = __webpack_require__(23)
-	var getBindingValue = __webpack_require__(49)
+	var getBindingValue = __webpack_require__(54)
 	var quoteExpr = __webpack_require__(27).quoteExpr
-	var scanNodes = __webpack_require__(31)
+	var scanNodes = __webpack_require__(38)
 	var msie = __webpack_require__(2).msie
-	var addHooks = __webpack_require__(33).addHooks
-	var addHook = __webpack_require__(33).addHook
+	var addHooks = __webpack_require__(31).addHooks
+	var addHook = __webpack_require__(31).addHook
 
 	var rnoscripts = /<noscript.*?>(?:[\s\S]+?)<\/noscript>/img
 	var rnoscriptText = /<noscript.*?>([\s\S]+?)<\/noscript>/im
@@ -5605,7 +6031,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 49 */
+/* 54 */
 /***/ function(module, exports) {
 
 	var getBindingValue = function (elem, name, vmodel) {
@@ -5622,12 +6048,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(2).markID
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addHooks = hooks.addHooks
 
@@ -5689,7 +6115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//双工绑定
@@ -5699,10 +6125,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var msie = builtin.msie
 	var markID = builtin.markID
 	var pushArray = builtin.pushArray
-	var getBindingValue = __webpack_require__(49)
-	var createVirtual = __webpack_require__(61)
+	var getBindingValue = __webpack_require__(54)
+	var createVirtual = __webpack_require__(30)
 
-	var hooks = __webpack_require__(33)
+	var hooks = __webpack_require__(31)
 	var addData = hooks.addData
 	var addAttrHook = hooks.addAttrHook
 
@@ -6141,18 +6567,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var addHooks = __webpack_require__(33).addHooks
-	var scanNodes = __webpack_require__(31)
+	var addHooks = __webpack_require__(31).addHooks
+	var scanNodes = __webpack_require__(38)
 
-	var shimTemplate = __webpack_require__(53)
-	var VComponent = __webpack_require__(54)
-	var VComment = __webpack_require__(55)
+	var shimTemplate = __webpack_require__(58)
+	var VComponent = __webpack_require__(36)
+	var VComment = __webpack_require__(34)
 	var updateEntity = __webpack_require__(24)
-	var createVirtual = __webpack_require__(61)
+	var createVirtual = __webpack_require__(30)
 	var rremoveIf = /^(?:ms|av)-if$/
 	avalon.directive("if", {
 	    is: function (a, b) {
@@ -6228,7 +6654,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 53 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var quote = __webpack_require__(2).quote
@@ -6255,112 +6681,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = shimTemplate
 
 /***/ },
-/* 54 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var pushArray = __webpack_require__(2).pushArray
-
-	function VComponent(config) {
-	    for (var i in config) {
-	        this[i] = config[i]
-	    }
-	    var type = this.__type__ = this.type 
-	    
-	    this.type = "#component"
-	    var me = avalon.components[type]
-	    if (me && me.init && arguments.length) {
-	        me.init.apply(this, arguments)
-	    }
-	}
-
-	VComponent.prototype = {
-	    clone: function () {
-	        var me = avalon.components[this.__type__]
-	        if (me && me.clone) {
-	            return me.clone.call(this)
-	        } else {
-	            var clone = new VComponent()
-	            clone.props = avalon.mix(clone.props, this.props)
-	            clone.children = this.children.map(function (el) {
-	                return el.clone()
-	            })
-	            clone.__type__ = this.__type__
-	            clone.template = this.template
-	            return this
-	        }
-	    },
-	    toDOM: function () {
-	        var me = avalon.components[this.__type__]
-	        if (me && me.toDOM) {
-	            return me.toDOM.call(this)
-	        }
-	        var fragment = document.createDocumentFragment()
-	        for (var i = 0; i < this.children.length; i++) {
-	            fragment.appendChild(this.children[i].toDOM())
-	        }
-	        return fragment
-	    },
-	    toHTML: function () {
-	        var me = avalon.components[this.__type__]
-	        if (me && me.toHTML) {
-	            return me.toHTML.call(this)
-	        }
-	        var ret = ""
-	        for (var i = 0; i < this.children.length; i++) {
-	            ret += this.children[i].toHTML()
-	        }
-	        return ret
-	    }
-	}
-
-
-	module.exports = VComponent
-
-/***/ },
-/* 55 */
-/***/ function(module, exports) {
-
-	
-	function VComment(text) {
-	    this.type = "#comment"
-	    this.nodeValue = text
-	    this.skipContent = true
-	}
-	VComment.prototype = {
-	    constructor: VComment,
-	    clone: function () {
-	        return new VComment(this.nodeValue)
-	    },
-	    toDOM: function () {
-	        return document.createComment(this.nodeValue)
-	    },
-	    toHTML: function () {
-	        return "<!--" + this.nodeValue + "-->"
-	    }
-	}
-
-	module.exports = VComment
-
-/***/ },
-/* 56 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rinexpr = /^\s*([\s\S]+?)\s+in\s+([\s\S]+?)(?:\s+as\s+([\s\S]+?))?\s*$/
 	var rkeyvalue = /\(\s*(\w+)\s*,\s*(\w+)\s*\)/
 	var rremoveRepeat = /^(?:ms|av)-(repeat|each)/
-	var addHook = __webpack_require__(33).addHook
-	var addHooks = __webpack_require__(33).addHooks
-	var scanNodes = __webpack_require__(31)
-	var getBindingValue = __webpack_require__(49)
+	var addHook = __webpack_require__(31).addHook
+	var addHooks = __webpack_require__(31).addHooks
+	var scanNodes = __webpack_require__(38)
+	var getBindingValue = __webpack_require__(54)
 
 	var vars = __webpack_require__(2)
 	var pushArray = vars.pushArray
 	var noop = vars.noop
 	var rword = vars.rword
 	var makeHashCode = vars.makeHashCode
-	var shimTemplate = __webpack_require__(53)
-	var VComponent = __webpack_require__(54)
-	var VComment = __webpack_require__(55)
+	var shimTemplate = __webpack_require__(58)
+	var VComponent = __webpack_require__(36)
+	var VComment = __webpack_require__(34)
 	var factory = __webpack_require__(18)
 	var $emit = __webpack_require__(25).$emit
 
@@ -6368,8 +6707,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var mediatorFactory = factory.mediatorFactory
 
 	var updateEntity = __webpack_require__(24)
-	var createVirtual = __webpack_require__(61)
-	var disposeVirtual = __webpack_require__(43)
+	var createVirtual = __webpack_require__(30)
+	var disposeVirtual = __webpack_require__(48)
 
 	avalon.directive("repeat", {
 	    is: function (a, b) {
@@ -6614,7 +6953,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    avalon.clearHTML(parent)
 	                    parent.appendChild(dom)
 	                } else {
-	                    parent.removeChild(node.nextSibling)
 	                    parent.replaceChild(dom, node)
 	                }
 	                updateEntity(keepChild, vnode.children, parent)
@@ -6935,348 +7273,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	avalon.repeatItemFactory = repeatItemFactory
-
-/***/ },
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
-	//匹配只有开标签的无内容元素（Void elements 或 self-contained tags）
-	//http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
-	//http://blog.jobbole.com/61514/
-	var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
-	//用于创建适配某一种标签的正则表达式
-	//var openStr = "(?:\\s+[^=\\s]+(?:\\=[^>\\s]+)?)*\\s*>"
-	var openStr = "(?:\\s+[^>=]*?(?:=[^>]+?)?)*>"
-	//匹配文本节点
-	var rtext = /^[^<]+/
-	//匹配注释节点
-	var rcomment = /^<!--([\w\W]*?)-->/
-
-	var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-	var rstring2 = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/
-	// /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
-	var rnocontent = /textarea|template|script|style/
-	var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-	var controllerHook = __webpack_require__(33).controllerHook
-
-	var maps = {}
-	var number = 1
-	function dig(a) {
-	    var key = "??" + number++
-	    maps[key] = a
-	    return key
-	}
-	var rfill = /\?\?\d+/g
-	function fill(a) {
-	    var val = maps[a]
-	    return val
-	}
-	var pushArray = __webpack_require__(2).pushArray
-	var vdom = __webpack_require__(62)
-	var VText = vdom.VText
-	var VComment = vdom.VComment
-	var VElement = vdom.VElement
-	var rchar = /./g
-	//=== === === === 创建虚拟DOM树 === === === === =
-
-	//此阶段只会生成VElement,VText,VComment
-	function createVirtual(text, recursive) {
-
-	    var nodes = []
-	    if (recursive && !avalon.config.rbind.test(text)) {
-	        return nodes
-	    }
-	    if (!recursive) {
-	        text = text.replace(rstring, dig)
-	    }
-	    do {
-	        var matchText = ""
-
-	        var match = text.match(rtext)
-	        var node = false
-
-	        if (match) {//尝试匹配文本
-	            matchText = match[0]
-	            node = new VText(matchText.replace(rfill, fill))
-	        }
-
-	        if (!node) {//尝试匹配注释
-	            match = text.match(rcomment)
-	            if (match) {
-	                matchText = match[0]
-	                node = new VComment(match[1].replace(rfill, fill))
-	            }
-	        }
-
-
-	        if (!node) {//尝试匹配拥有闭标签的元素节点
-	            match = text.match(rfullTag)
-	            if (match) {
-	                matchText = match[0]//贪婪匹配 outerHTML,可能匹配过多
-	                var type = match[1].toLowerCase()//nodeName
-	                var opens = []
-	                var closes = []
-	                var ropen = tagCache[type + "open"] ||
-	                        (tagCache[type + "open"] = new RegExp("<" + type + openStr, "g"))
-	                var rclose = tagCache[type + "close"] ||
-	                        (tagCache[type + "close"] = new RegExp("<\/" + type + ">", "g"))
-	                /* jshint ignore:start */
-	                matchText.replace(ropen, function (_, b) {
-	                    //注意,页面有时很长,b的数值就很大,如
-	                    //000000000<000000011>000000041<000000066>000000096<000000107>
-	                    opens.push(("0000000000" + b + "<").slice(-10))//取得所有开标签的位置
-	                    return _.replace(rchar, "1")
-	                }).replace(rclose, function (_, b) {
-	                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置               
-	                })
-
-	                /* jshint ignore:end */
-	                //<div><div>01</div><div>02</div></div><div>222</div><div>333</div>
-	                //会变成000<005<012>018<025>031>037<045>051<059>
-	                //再变成<<><>><><>
-	                //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
-	                var pos = opens.concat(closes).sort()
-	                var gtlt = pos.join("").replace(/\d+/g, "")
-	                var k = 0, last = 0
-
-	                for (var i = 0, n = gtlt.length; i < n; i++) {
-	                    var c = gtlt.charAt(i)
-	                    if (c === "<") {
-	                        k += 1
-	                    } else {
-	                        k -= 1
-	                    }
-	                    if (k === 0) {
-	                        last = i
-	                        break
-	                    }
-	                }
-	                var findex = parseFloat(pos[last]) + type.length + 3 // (</>为三个字符)
-	                matchText = matchText.slice(0, findex) //取得正确的outerHTML
-	                match = matchText.match(rvoidTag) //抽取所有属性
-
-	                var attrs = {}
-	                if (match[2]) {
-	                    parseAttrs(match[2], attrs)
-	                }
-
-	                var template = matchText.slice(match[0].length,
-	                        (type.length + 3) * -1) //抽取innerHTML
-	                var innerHTML = template.replace(rfill, fill)
-
-	                node = {
-	                    type: type,
-	                    props: attrs,
-	                    template: innerHTML,
-	                    children: []
-	                }
-
-	                if (node.props["ms-skip"]) {
-	                    node.skipContent = true
-	                } else if (type === "option") {
-	                    node.children.push(new VText(trimHTML(innerHTML)))
-	                } else if (type === "xmp") {
-	                    node.children.push(new VText(innerHTML))
-	                } else if (rnocontent.test(type)) {
-	                    node.skipContent = true
-	                } else {//script, noscript, template, textarea
-	                    var childs = createVirtual(template, true)
-	                    if (childs.length) {
-	                        pushArray(node.children, childs)
-	                    }
-	                }
-	                node = new VElement(node)
-	                controllerHook(node)
-	            }
-	        }
-
-	        if (!node) {
-	            match = text.match(rvoidTag)
-	            if (match) {//尝试匹配自闭合标签及注释节点
-	                matchText = match[0]
-	                type = match[1].toLowerCase()
-	                attrs = {}
-	                if (match[2]) {
-	                    parseAttrs(match[2], attrs)
-	                }
-	                node = new VElement({
-	                    type: type,
-	                    props: attrs,
-	                    template: "",
-	                    children: [],
-	                    isVoidTag: true
-	                })
-	                controllerHook(node)
-	            }
-	        }
-	        if (node) {
-	            nodes.push(node)
-	            text = text.slice(matchText.length)
-	        } else {
-	            break
-	        }
-	    } while (1);
-	    if (!recursive) {
-	        maps = {}
-	    }
-	    return nodes
-	}
-
-	var rnowhite = /\S+/g
-	var rnogutter = /\s*=\s*/g
-	var rquote = /&quot;/g
-	var ramp = /&amp;/g
-
-	function parseAttrs(str, attrs) {
-	    str.replace(rnogutter, "=").replace(rnowhite, function (el) {
-	        var arr = el.split("="), value = arr[1] || "",
-	                name = arr[0].toLowerCase()
-	        if (arr.length === 2) {
-	            value = value.replace(rfill, fill)
-	            //test的方法用到的正则不能出现g
-	            if (value.match(rstring)) { //if(rstring2.test(value)) {
-	                value = value.replace(ramp, "&").
-	                        replace(rquote, '"').
-	                        slice(1, -1)
-	            }
-
-	        }
-	        attrs[name] = value
-	    })
-	}
-	//form prototype.js
-	var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
-	function trimHTML(v) {
-	    return String(v).replace(rtrimHTML, "").trim()
-	}
-
-
-	module.exports = avalon.createVirtual = createVirtual
-
-/***/ },
-/* 62 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * 虚拟DOM的4大构造器
-	 */
-	module.exports = {
-	    VText: __webpack_require__(42),
-	    VComment: __webpack_require__(55),
-	    VElement: __webpack_require__(63),
-	    VComponent: __webpack_require__(54)
-	}
-
-
-/***/ },
-/* 63 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var builtin = __webpack_require__(2)
-	var rmsAttr = builtin.rmsAttr
-	var quote = builtin.quote
-	var pushArray = builtin.pushArray
-
-	function VElement(type, props, children) {
-	    if (typeof type === "object") {
-	        for (var i in type) {
-	            this[i] = type[i]
-	        }
-	    } else {
-	        this.type = type
-	        this.props = props
-	        this.children = children
-	        this.template = ""
-	    }
-	}
-	VElement.prototype = {
-	    clone: function () {
-	        var clone = new VElement(this.type,
-	                avalon.mix({}, this.props),
-	                this.children.map(function (el) {
-	                    return el.clone()
-	                }))
-	        clone.template = this.template
-	        if (this.skipContent) {
-	            clone.skipContent = this.skipContent
-	        }
-	        if (this.isVoidTag) {
-	            clone.isVoidTag = this.isVoidTag
-	        }
-	        return clone
-	    },
-	    constructor: VElement,
-	    toDOM: function () {
-	        var dom = document.createElement(this.type)
-	        for (var i in this.props) {
-	            if (this.props[i] === false) {
-	                dom.removeAttribute(i)
-	            } else {
-	                dom.setAttribute(i, String(this.props[i]))
-	            }
-	        }
-	        if (this.skipContent) {
-	            switch (this.type) {
-	                case "script":
-	                    dom.text = this.template
-	                    break
-	                    break
-	                case "style":
-	                case "template":
-	                    dom.innerHTML = this.template
-	                    break
-	                case "noscript":
-	                    dom.textContent = this.template
-	                    break
-	                default:
-	                    var a = avalon.parseHTML(this.template)
-	                    dom.appendChild(a)
-	                    break
-	            }
-
-	        } else if (!this.isVoidTag) {
-	            if (this.children.length) {
-	                this.children.forEach(function (c) {
-	                    dom.appendChild(c.toDOM())
-	                })
-	            } else if (window.Range) {
-	                dom.innerHTML = this.template
-	            } else {
-	                dom.appendChild(avalon.parseHTML(this.template))
-	            }
-
-	        }
-	        return dom
-	    },
-	    toHTML: function () {
-	        var arr = []
-	        for (var i in this.props) {
-	            arr.push(i + "=" + quote(String(this.props[i])))
-	        }
-	        arr = arr.length ? " " + arr.join(" ") : ""
-	        var str = "<" + this.type + arr
-	        if (this.isVoidTag) {
-	            return str + "/>"
-	        }
-	        str += ">"
-	        if (this.children.length) {
-	            str += this.children.map(function (el) {
-	                return el.toHTML()
-	            }).join("")
-	        } else {
-	            str += this.template
-	        }
-	        return str + "</" + this.type + ">"
-	    }
-	}
-
-	module.exports = VElement
 
 /***/ }
 /******/ ])
