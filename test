@@ -1,0 +1,5 @@
+// mocha的入口文件
+
+process.env.foo = "compact"
+var assert = require('assert')
+require("./src/__test__")

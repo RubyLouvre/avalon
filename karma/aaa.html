@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                a: 111,
+                obj: {a: 222},
+                array: [{aa: {b: 11}}, {aa: {b: 22}}, {aa: {b: 33}}],
+                object: {
+                    aa: 111,
+                    bb: 222,
+                    cc: 333
+                },
+                onClick: function () {
+                    vm.obj = {
+                        a: 77
+                    }
+                    vm.object = {
+                        aa: 123,
+                        bb: 222,
+                        cc: 333
+                    }
+                    vm.array = [{aa: {b: 111}}, {aa: {b: 223}}, {aa: {b: 334}}, {aa: {b: 555}}]
+                },
+                onMark: function () {
+                    avalon.each(document.querySelectorAll("li"), function (i, el) {
+                        el.title = el.textContent
+                    })
+                }
+            })
+
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test" >
+            <p><button type="button" ms-click="onClick">change</button></p>
+            <p><button type="button" ms-click="onMark">mark</button></p>
+            <p>{{a}}</p>
+            <p>{{obj.a}}</p>
+            <ul>
+                <li ms-repeat="array">{{el.aa.b}}</li>
+            </ul>
+            <ul>
+                <li ms-repeat="object">{{$val}}::{{$key}}</li>
+            </ul>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,352 @@
+var builtin = require("../base/builtin")
+var document = builtin.document
+var window = builtin.window
+var root = builtin.root
+
+var getUid = builtin.getUid
+var W3C = builtin.W3C
+////http://www.feiesoft.com/html/events.html
+//http://segmentfault.com/q/1010000000687977/a-1020000000688757
+var canBubbleUp = {
+    click: true,
+    dblclick: true,
+    keydown: true,
+    keypress: true,
+    keyup: true,
+    mousedown: true,
+    mousemove: true,
+    mouseup: true,
+    mouseover: true,
+    mouseout: true,
+    wheel: true,
+    mousewheel: true,
+    input: true,
+    change: true,
+    beforeinput: true,
+    compositionstart: true,
+    compositionupdate: true,
+    compositionend: true,
+    select: true,
+    cut: true,
+    paste: true,
+    focusin: true,
+    focusout: true,
+    DOMFocusIn: true,
+    DOMFocusOut: true,
+    DOMActivate: true,
+    dragend: true,
+    datasetchanged: true
+}
+if (!W3C) {
+    delete canBubbleUp.change
+    delete canBubbleUp.select
+}
+
+avalon.eventHandlers = {}
+avalon.__eventVM__ = {}
+var eventHooks = avalon.eventHooks
+/*绑定事件*/
+avalon.bind = function (elem, type, fn) {
+    if (elem.nodeType === 1) {
+        var value = elem.getAttribute("avalon-events") || ""
+        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
+        //如果是使用bind方法绑定的回调,其uuid格式为_12
+        var uuid = getUid(fn)
+        var key = type + ":" + uuid
+        var hook = eventHooks[type]
+        if (hook) {
+            type = hook.type
+            if (hook.fix) {
+                fn = hook.fix(elem, fn)
+                fn.uuid = uuid + "0"
+            }
+            key = type + ":" + fn.uuid
+        }
+        avalon.eventHandlers[fn.uuid] = fn
+
+        if (value.indexOf(type + ":") === -1) {//同一种事件只绑定一次
+            if (canBubbleUp[type]) {
+                delegateEvent(type)
+            } else {
+                nativeBind(elem, type, dispatch)
+            }
+        }
+        var keys = value.split("??")
+        if (keys[0] === "") {
+            keys.shift()
+        }
+        if (keys.indexOf(key) === -1) {
+            keys.push(key)
+            keys.sort()
+            elem.setAttribute("avalon-events", keys.join("??"))
+            //将令牌放进avalon-events属性中
+        }
+
+    } else {
+        nativeBind(elem, type, fn)
+    }
+    return fn //兼容之前的版本
+}
+
+avalon.unbind = function (elem, type, fn) {
+    if (elem.nodeType === 1) {
+        var value = elem.getAttribute("avalon-events") || ""
+        switch (arguments.length) {
+            case 1:
+                nativeUnBind(elem, type, dispatch)
+                elem.removeAttribute("avalon-events")
+                break
+            case 2:
+                value = value.split("??").filter(function (str) {
+                    return str.indexOf(type + ":") === -1
+                }).join("??")
+
+                elem.setAttribute("avalon-events", value)
+                break
+            case 3:
+                var search = type + ":" + fn.uuid
+                value = value.split("??").filter(function (str) {
+                    return str !== search
+                }).join("??")
+                elem.setAttribute("avalon-events", value)
+                if (search.length > 10) {
+                    delete avalon.__eventVM__[search]
+                } else {
+                    delete avalon.eventHandlers[fn.uuid]
+                }
+                break
+        }
+    } else {
+        nativeUnBind(elem, type, fn)
+    }
+}
+
+var reventNames = /[^\s\?]+/g
+var last = +new Date()
+function collectHandlers(elem, type, handlers) {
+    var value = elem.getAttribute("avalon-events")
+    if (value && (elem.disabled !== true || type !== "click")) {
+        var uuids = [], isBreak
+        var arr = value.match(reventNames) || []
+        for (var i = 0, el; el = arr[i++]; ) {
+            var v = el.split(":")
+            if (v[0] === type) {
+                uuids.push(v[1])
+                isBreak = true
+            } else if (isBreak) {
+                break
+            }
+        }
+        if (uuids.length) {
+            handlers.push({
+                elem: elem,
+                uuids: uuids
+            })
+        }
+    }
+    elem = elem.parentNode
+    if (elem && elem.getAttribute && canBubbleUp[type]) {
+        collectHandlers(elem, type, handlers)
+    }
+
+}
+function dispatch(event) {
+    event = new avEvent(event)
+    var type = event.type
+    var elem = event.target
+    
+    var handlers = []
+
+    collectHandlers(elem, type, handlers)
+   
+    var i = 0, j, uuid, handler
+    while ((handler = handlers[i++]) && !event.cancelBubble) {
+        event.currentTarget = handler.elem
+        j = 0
+        while ((uuid = handler.uuids[ j++ ]) &&
+                !event.isImmediatePropagationStopped) {
+            var fn = avalon.eventHandlers[uuid]
+            if (fn) {
+                var vm = avalon.__eventVM__[type + ":" + uuid ]
+                if (vm && vm.$hashcode === false) {
+                    return avalon.unbind(elem, type, fn)
+                }
+                if (/move|scroll/.test(type)) {
+                    var curr = +new Date()
+                    if (curr - last > 16) {
+                        fn.call(elem, event, vm)
+                        last = curr
+                    }
+                } else {
+                    fn.call(handler.elem, event, vm)
+                }
+            }
+        }
+    }
+}
+
+
+var nativeBind = W3C ? function (el, type, fn) {
+    el.addEventListener(type, fn)
+} : function (el, type, fn) {
+    el.attachEvent("on" + type, fn)
+}
+var nativeUnBind = W3C ? function (el, type, fn) {
+    el.removeEventListener(type, fn)
+} : function (el, type, fn) {
+    el.detachEvent("on" + type, fn)
+}
+
+function delegateEvent(type) {
+    var value = root.getAttribute("delegate-events") || ""
+    if (value.indexOf(type) === -1) {
+        var arr = value.match(reventNames) || []
+        arr.push(type)
+        root.setAttribute("delegate-events", arr.join("??"))
+        nativeBind(root, type, dispatch)
+    }
+}
+
+avalon.fireDom = function (elem, type, opts) {
+    if (document.createEvent) {
+        var hackEvent = document.createEvent("Events");
+        hackEvent.initEvent(type, true, true, opts)
+        avalon.mix(hackEvent, opts)
+
+        elem.dispatchEvent(hackEvent)
+    } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报"SCRIPT16389: 未指明的错误"
+        hackEvent = document.createEventObject()
+        avalon.mix(hackEvent, opts)
+        elem.fireEvent("on" + type, hackEvent)
+    }
+}
+
+var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
+var rsponsor = /^(ms|webkit|moz)/
+function avEvent(event) {
+    if (event.originalEvent) {
+        return this
+    }
+    for (var i in event) {
+        if (!rsponsor.test(i) && typeof event[i] !== "function") {
+            this[i] = event[i]
+        }
+    }
+    if(!this.target){
+        this.target = event.srcElement
+    }
+    var target = this.target
+    if (event.type.indexOf("key") === 0) {
+        this.which = event.charCode != null ? event.charCode : event.keyCode
+    } else if (rmouseEvent.test(event.type) && !("pageX" in this)) {
+        var doc = target.ownerDocument || document
+        var box = doc.compatMode === "BackCompat" ? doc.body : doc.documentElement
+        this.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+        this.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+        this.wheelDeltaY = this.wheelDelta
+        this.wheelDeltaX = 0
+    }
+    this.timeStamp = new Date() - 0
+    this.originalEvent = event
+}
+avEvent.prototype = {
+    preventDefault: function () {
+        var e = this.originalEvent;
+        this.returnValue = false
+        if (e) {
+            e.returnValue = false
+            if (e.preventDefault) {
+                e.preventDefault()
+            }
+        }
+    },
+    stopPropagation: function () {
+        var e = this.originalEvent
+        this.cancelBubble = true
+        if (e) {
+            e.cancelBubble = true
+            if (e.stopPropagation) {
+                e.stopPropagation()
+            }
+        }
+    },
+    stopImmediatePropagation: function () {
+        var e = this.originalEvent
+        this.isImmediatePropagationStopped = true
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation()
+        }
+        this.stopPropagation()
+    }
+}
+
+//针对firefox, chrome修正mouseenter, mouseleave
+if (!("onmouseenter" in root)) {
+    avalon.each({
+        mouseenter: "mouseover",
+        mouseleave: "mouseout"
+    }, function (origType, fixType) {
+        eventHooks[origType] = {
+            type: fixType,
+            fix: function (elem, fn) {
+                return function (e) {
+                    var t = e.relatedTarget
+                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
+                        delete e.type
+                        e.type = origType
+                        return fn.apply(elem, arguments)
+                    }
+                }
+            }
+        }
+    })
+}
+//针对IE9+, w3c修正animationend
+avalon.each({
+    AnimationEvent: "animationend",
+    WebKitAnimationEvent: "webkitAnimationEnd"
+}, function (construct, fixType) {
+    if (window[construct] && !eventHooks.animationend) {
+        eventHooks.animationend = {
+            type: fixType
+        }
+    }
+})
+//针对IE6-8修正input
+if (!("oninput" in document.createElement("input"))) {
+    eventHooks.input = {
+        type: "propertychange",
+        fix: function (elem, fn) {
+            return function (e) {
+                if (e.propertyName === "value") {
+                    e.type = "input"
+                    return fn.apply(elem, arguments)
+                }
+            }
+        }
+    }
+}
+if (document.onmousewheel === void 0) {
+    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
+     firefox DOMMouseScroll detail 下3 上-3
+     firefox wheel detlaY 下3 上-3
+     IE9-11 wheel deltaY 下40 上-40
+     chrome wheel deltaY 下100 上-100 */
+    var fixWheelType = document.onwheel !== void 0 ? "wheel" : "DOMMouseScroll"
+    var fixWheelDelta = fixWheelType === "wheel" ? "deltaY" : "detail"
+    eventHooks.mousewheel = {
+        type: fixWheelType,
+        fix: function (elem, fn) {
+            return function (e) {
+                e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
+                e.wheelDeltaX = 0
+                if (Object.defineProperty) {
+                    Object.defineProperty(e, "type", {
+                        value: "mousewheel"
+                    })
+                }
+                return fn.apply(elem, arguments)
+            }
+        }
+    }
+}
