@@ -24,6 +24,8 @@ var updateEntity = require("../strategy/updateEntity")
 var createVirtual = require("../strategy/createVirtual")
 var disposeVirtual = require("../strategy/disposeVirtual")
 
+
+
 avalon.directive("repeat", {
     is: function (a, b) {
         if (Array.isArray(a)) {
@@ -62,7 +64,7 @@ avalon.directive("repeat", {
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
         var component = new VComponent({
-            type: "ms-" + type,
+            type: "av-" + type,
             props: {
                 spec: type
             },
@@ -99,21 +101,12 @@ avalon.directive("repeat", {
         }
 
         binding.element = component //偷龙转风
-        //计算上级循环的$outer
-        //外层vmodel不存在$outer对象时, $outer为一个空对象
-        if (top.hasOwnProperty("$outer") && typeof top.$outer === "object" && top.$outer.names) {
-            top.$outer.names.replace(rword, function (name) {
-                if (top.hasOwnProperty(name)) {
-                    $outer[name] = top[name]
-                }
-            })
-        }
+        //移除$outer,$remove
+     
         binding.initNames = initNames
-        binding.$outer = $outer
         delete binding.siblings
     },
     change: function (value, binding) {
-        //console.log("ms-repeat change ...")
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -168,7 +161,6 @@ avalon.directive("repeat", {
             if (component) {//排序时进此分支
                 var proxy = component.vmodel
                 component.oldIndex = proxy.$index
-                //command[i] = proxy.$index//获取其现在的位置
 
             } else {//增删改时进这分支
                 component = reuse.shift()//重复利用回收的虚拟节点
@@ -185,7 +177,7 @@ avalon.directive("repeat", {
             if (component.vmodel) {
                 component.oldIndex = component.vmodel.$index//获取其现在的位置
             } else {
-                //  command[i] = component  //标识这里需要新建一个虚拟节点
+                //这里需要新建一个虚拟节点
             }
             proxy[binding.keyName] = curKey
             proxy[binding.itemName] = curItem
@@ -195,7 +187,6 @@ avalon.directive("repeat", {
             proxy.$last = i === last
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
             /*兼容1.4与1.5, 1.6去掉*/
-            proxy.$outer = binding.$outer
             components[i] = component
 
             if (component.vmodel && component.vmodel !== proxy) {
@@ -206,16 +197,7 @@ avalon.directive("repeat", {
             component.itemName = binding.itemName
 
             if (repeatArray) {
-                /* jshint ignore:start */
-                /*兼容1.4与1.5, 1.6去掉*/
-                (function (array, el) {
-                    proxy.$remove = function () {
-                        avalon.Array.remove(array, el)
-                    }
-                })(value, curItem)
-
                 saveInCache(newCache, curItem, component)
-                /* jshint ignore:end */
             } else {
                 newCache[curKey] = component
             }
@@ -229,7 +211,6 @@ avalon.directive("repeat", {
         }
 
         vnode.components = components
-
         var nodes = vnode.children
         nodes.length = 0
 
@@ -476,17 +457,8 @@ function initNames(repeatArray) {
         }
 
     }
-    //处理$outer.names
-    if (!binding.$outer.names) {
-        var names = ["$first", "$last", "$index", "$outer"]
-        if (repeatArray) {
-            names.push("$remove")
-        }
-        avalon.Array.ensure(names, binding.itemName)
-        avalon.Array.ensure(names, binding.keyName)
-
-        binding.$outer.names = names.join(",")
-    }
+   
+ 
     this.initNames = noop
 }
 
@@ -494,7 +466,6 @@ function initNames(repeatArray) {
 function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
     var before = binding.vmodel//上一级的VM
-    // console.log(before, "::::")
     var heirloom = {}
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events
@@ -507,7 +478,6 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
     var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
     var after = {
         $accessors: {},
-        $outer: 1
     }
 
     for (var i = 0, key; key = keys[i++]; ) {
@@ -517,9 +487,7 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
             after.$accessors[key] = makeObservable("", key, heirloom)
         }
     }
-    if (repeatArray) {
-        after.$remove = noop
-    }
+   
 
     if (Object.defineProperties) {
         Object.defineProperties(after, after.$accessors)
@@ -552,14 +520,12 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
         })
     }
 
-
     return  vm
 }
 
 
-
-var repeatCom = avalon.components["ms-repeat"] =
-        avalon.components["ms-each"] = {
+var repeatCom = avalon.components["av-repeat"] =
+        avalon.components["av-each"] = {
     init: function () {
 
         var signature = makeHashCode(this.props.spec)

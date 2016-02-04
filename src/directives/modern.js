@@ -1,7 +1,13 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
+require('./attr')
+require('./expr')
+require('./data')
+require('./css')
+require('./text.modren')
+require('./html')
+require('./visible')
+require('./class.hover.active')
+require('./include')
+require('./on')
+require('./duplex.modern')
+require("./if")
+require("./repeat.modern")
