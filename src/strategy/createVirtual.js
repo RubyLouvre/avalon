@@ -16,7 +16,7 @@ var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 var rstring2 = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/
 // /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
 var rnocontent = /textarea|template|script|style/
-var tagCache = {}// 缓存所有匹配开标签闭标签的正则
+var tagCache = {}// 缓存所有匹配开标签闭标签的正则
 var controllerHook = require("../vdom/hooks").controllerHook
 
 var maps = {}
