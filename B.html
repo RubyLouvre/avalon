@@ -1,33 +1,27 @@
 <!DOCTYPE html>
 <html>
-
     <head>
-        <title>first example</title>
+        <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="avalon.js"></script>
+        <script src="dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: "test",
-                name: "司徒正美",
-                "aaa-bbb-ccc": 111
-            })
+            var vm
             window.onload = function () {
-                var el = document.getElementById("aaa")
-                el.onclick = function (e) {
-                    console.log(e)
-                    e.preventDefault()
-                }
-                
-                el.click()
+                vm = avalon.define({
+                    $id: "test",
+                    array: [1, 2, 3, 4]
+                })
+                avalon.scan(document.body, vm)
             }
 
         </script>
     </head>
-
-    <body ms-controller="test">
-
-        <p><a href="http://www.baidu.com" id="aaa">aaa</a></p>
+    <body>
+        <div ms-controller="test">
+            <ul>
+                <li ms-repeat="array">{{el}}-{{$first}}-{{$last}}-{{$index}}</li>
+            </ul>
+        </div>
     </body>
-
 </html>

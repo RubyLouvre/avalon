@@ -55,12 +55,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var buildin = global.buildin = __webpack_require__(2)
-	var avalon = global.avalon = __webpack_require__(59).avalon //这个版本兼容IE10+
+	var avalon = global.avalon = __webpack_require__(60).avalon //这个版本兼容IE10+
 
 	__webpack_require__(4)
-	__webpack_require__(60)
+	__webpack_require__(61)
 
-	avalon.define = __webpack_require__(61).define
+	avalon.define = __webpack_require__(62).define
 	__webpack_require__(30)
 	__webpack_require__(37)
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
@@ -1890,7 +1890,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//此阶段只会生成VElement,VText,VComment
 	function createVirtual(text, recursive) {
-	   
+
 	    var nodes = []
 	    if (recursive && !avalon.config.rbind.test(text)) {
 	        return nodes
@@ -1936,7 +1936,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    opens.push(("0000000000" + b + "<").slice(-10))//取得所有开标签的位置
 	                    return _.replace(rchar, "1")
 	                }).replace(rclose, function (_, b) {
-	                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置
+	                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置               
 	                })
 
 	                /* jshint ignore:end */
@@ -1947,7 +1947,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var pos = opens.concat(closes).sort()
 	                var gtlt = pos.join("").replace(/\d+/g, "")
 	                var k = 0, last = 0
-	                
+
 	                for (var i = 0, n = gtlt.length; i < n; i++) {
 	                    var c = gtlt.charAt(i)
 	                    if (c === "<") {
@@ -1972,7 +1972,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var template = matchText.slice(match[0].length,
 	                        (type.length + 3) * -1) //抽取innerHTML
 	                var innerHTML = template.replace(rfill, fill)
-	               
+
 	                node = {
 	                    type: type,
 	                    props: attrs,
@@ -2667,7 +2667,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 56 */,
 /* 57 */,
 /* 58 */,
-/* 59 */
+/* 59 */,
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var vars = __webpack_require__(2)
@@ -2813,7 +2814,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
@@ -3244,10 +3245,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $$skipArray = __webpack_require__(62)
+	var $$skipArray = __webpack_require__(63)
 
 
 	var builtin = __webpack_require__(2)
@@ -3853,7 +3854,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports) {
 
 	/**

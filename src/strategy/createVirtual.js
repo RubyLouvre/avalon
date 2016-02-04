@@ -41,7 +41,7 @@ var rchar = /./g
 
 //此阶段只会生成VElement,VText,VComment
 function createVirtual(text, recursive) {
-   
+
     var nodes = []
     if (recursive && !avalon.config.rbind.test(text)) {
         return nodes
@@ -87,7 +87,7 @@ function createVirtual(text, recursive) {
                     opens.push(("0000000000" + b + "<").slice(-10))//取得所有开标签的位置
                     return _.replace(rchar, "1")
                 }).replace(rclose, function (_, b) {
-                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置
+                    closes.push(("0000000000" + b + ">").slice(-10))//取得所有闭标签的位置               
                 })
 
                 /* jshint ignore:end */
@@ -98,7 +98,7 @@ function createVirtual(text, recursive) {
                 var pos = opens.concat(closes).sort()
                 var gtlt = pos.join("").replace(/\d+/g, "")
                 var k = 0, last = 0
-                
+
                 for (var i = 0, n = gtlt.length; i < n; i++) {
                     var c = gtlt.charAt(i)
                     if (c === "<") {
@@ -123,7 +123,7 @@ function createVirtual(text, recursive) {
                 var template = matchText.slice(match[0].length,
                         (type.length + 3) * -1) //抽取innerHTML
                 var innerHTML = template.replace(rfill, fill)
-               
+
                 node = {
                     type: type,
                     props: attrs,
