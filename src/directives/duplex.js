@@ -190,7 +190,7 @@ avalon.directive("duplex", {
                     if (!node.msFocus) {
                         node.valueSet()
                     }
-                } else if (!node.msRetain) {
+                } else {
                     return false
                 }
             })
@@ -389,7 +389,6 @@ var watchValueInTimer = avalon.noop
         var bproto = HTMLTextAreaElement.prototype
         function newSetter(value) { // jshint ignore:line
             setters[this.tagName].call(this, value)
-
             if (!this.msFocus && this.valueSet) {
                 this.valueSet()
             }
