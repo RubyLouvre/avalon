@@ -15,18 +15,18 @@ function fireClick(el) {
         !el.dispatchEvent(evt);
     }
 }
-describe('duplex', function () {
+describe('duplex', function() {
     var body = document.body, div, vm
-    beforeEach(function () {
+    beforeEach(function() {
         div = document.createElement("div")
         body.appendChild(div)
     })
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it("test", function (done) {
-        div.innerHTML = heredoc(function () {
+    it("test", function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='duplex1' >
              <input ms-duplex="aaa|string|limitBy(2)"><span>{{aaa}}</span>
@@ -44,33 +44,36 @@ describe('duplex', function () {
 
         })
         avalon.scan(div, vm)
-        var inputs = div.getElementsByTagName("input")
-        var spans = div.getElementsByTagName("span")
+        setTimeout(function() {
+            var inputs = div.getElementsByTagName("input")
+            var spans = div.getElementsByTagName("span")
 
-        expect(inputs[0].value).to.equal("12")
-        expect(vm.aaa).to.equal("12")
-        expect(spans[0].innerHTML).to.equal("12")
-        expect(inputs[1].value).to.equal("123")
-        expect(vm.bbb).to.equal(123)
-        expect(spans[1].innerHTML).to.equal("123")
-        expect(inputs[2].value).to.equal("true")
-        expect(vm.ccc).to.equal(true)
-        expect(spans[2].innerHTML).to.equal("true")
-        vm.bbb = "333b"
-        vm.ccc = "NaN"
-        setTimeout(function () {
-            expect(inputs[1].value).to.equal("333")
-            expect(vm.bbb).to.equal(333)
-            expect(spans[1].innerHTML).to.equal("333")
-            expect(inputs[2].value).to.equal("false")
-            expect(vm.ccc).to.equal(false)
-            expect(spans[2].innerHTML).to.equal("false")
-            done()
-        })
+            expect(inputs[0].value).to.equal("12")
+            expect(vm.aaa).to.equal("12")
+            expect(spans[0].innerHTML).to.equal("12")
+            expect(inputs[1].value).to.equal("123")
+            expect(vm.bbb).to.equal(123)
+            expect(spans[1].innerHTML).to.equal("123")
+            expect(inputs[2].value).to.equal("true")
+            expect(vm.ccc).to.equal(true)
+            expect(spans[2].innerHTML).to.equal("true")
+            vm.bbb = "333b"
+            vm.ccc = "NaN"
+            setTimeout(function() {
+                expect(inputs[1].value).to.equal("333")
+                expect(vm.bbb).to.equal(333)
+                expect(spans[1].innerHTML).to.equal("333")
+                expect(inputs[2].value).to.equal("false")
+                expect(vm.ccc).to.equal(false)
+                expect(spans[2].innerHTML).to.equal("false")
+                done()
+            }, 100)//chrome 37还是使用定时器，需要延迟足够的时间
+        }, 100)
+
     })
 
-    it("test", function (done) {
-        div.innerHTML = heredoc(function () {
+    it("test", function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='duplex2' >
              <input type='radio' ms-duplex='aaa|checked'><span>{{aaa}}</span>
@@ -108,63 +111,66 @@ describe('duplex', function () {
             hhh: []
         })
         avalon.scan(div, vm)
-        var inputs = div.getElementsByTagName("input")
-        var spans = div.getElementsByTagName("span")
-        var options = div.getElementsByTagName("option")
-        var selects = div.getElementsByTagName("select")
-        expect(inputs[0].checked).to.equal(false)
-        expect(vm.aaa).to.equal(false)
-        expect(spans[0].innerHTML).to.equal("false")
-        expect(inputs[1].checked).to.equal(false)
-        expect(vm.bbb).to.equal(false)
-        expect(spans[1].innerHTML).to.equal("false")
+        setTimeout(function() {
+            var inputs = div.getElementsByTagName("input")
+            var spans = div.getElementsByTagName("span")
+            var options = div.getElementsByTagName("option")
+            var selects = div.getElementsByTagName("select")
+            expect(inputs[0].checked).to.equal(false)
+            expect(vm.aaa).to.equal(false)
+            expect(spans[0].innerHTML).to.equal("false")
+            expect(inputs[1].checked).to.equal(false)
+            expect(vm.bbb).to.equal(false)
+            expect(spans[1].innerHTML).to.equal("false")
 
-        expect(inputs[2].checked).to.equal(true)
-        expect(inputs[3].checked).to.equal(false)
-        expect(inputs[4].checked).to.equal(false)
-        expect(inputs[5].checked).to.equal(true)
+            expect(inputs[2].checked).to.equal(true)
+            expect(inputs[3].checked).to.equal(false)
+            expect(inputs[4].checked).to.equal(false)
+            expect(inputs[5].checked).to.equal(true)
 
-        expect(options[1].selected).to.equal(true)
-        expect(options[2].selected).to.equal(false)
-        expect(options[4].selected).to.equal(false)
-        expect(inputs[6].value).to.equal("222")
-        fireClick(inputs[0])
-        fireClick(inputs[1])
-        fireClick(inputs[4])
-        fireClick(inputs[5])
-        //模执选择option事件
-        options[3].selected = true
-        avalon.fireDom(selects[0], "change")
-        //第二个select元素
-        options[5].selected = true
-        options[6].selected = true
-        options[7].selected = true
-        avalon.fireDom(selects[1], "change")
-        vm.ccc = "bbb"
-        setTimeout(function () {
-            expect(inputs[0].checked).to.equal(true)
-            expect(vm.aaa).to.equal(true)
-            expect(spans[0].innerHTML).to.equal("true")
-            expect(inputs[1].checked).to.equal(true)
-            expect(vm.bbb).to.equal(true)
-            expect(spans[1].innerHTML).to.equal("true")
-            expect(inputs[2].checked).to.equal(false)
-            expect(inputs[3].checked).to.equal(true)
-            expect(inputs[4].checked).to.equal(true)
-            expect(inputs[5].checked).to.equal(false)
-            expect(vm.ddd.concat()).to.eql([111])
-            expect(vm.ggg).to.equal("444")
-            expect(inputs[6].value).to.equal("444")
-            inputs[6].value = "111"
-            expect(options[1].selected).to.equal(false)
+            expect(options[1].selected).to.equal(true)
             expect(options[2].selected).to.equal(false)
-            //==========
-            expect(vm.hhh.concat()).to.eql([22, 33, 44])
-            setTimeout(function () {
-                expect(options[0].selected).to.equal(true)
-                done()
-            })
+            expect(options[4].selected).to.equal(false)
+            expect(inputs[6].value).to.equal("222")
+            fireClick(inputs[0])
+            fireClick(inputs[1])
+            fireClick(inputs[4])
+            fireClick(inputs[5])
+            //模执选择option事件
+            options[3].selected = true
+            avalon.fireDom(selects[0], "change")
+            //第二个select元素
+            options[5].selected = true
+            options[6].selected = true
+            options[7].selected = true
+            avalon.fireDom(selects[1], "change")
+            vm.ccc = "bbb"
+            setTimeout(function() {
+                expect(inputs[0].checked).to.equal(true)
+                expect(vm.aaa).to.equal(true)
+                expect(spans[0].innerHTML).to.equal("true")
+                expect(inputs[1].checked).to.equal(true)
+                expect(vm.bbb).to.equal(true)
+                expect(spans[1].innerHTML).to.equal("true")
+                expect(inputs[2].checked).to.equal(false)
+                expect(inputs[3].checked).to.equal(true)
+                expect(inputs[4].checked).to.equal(true)
+                expect(inputs[5].checked).to.equal(false)
+                expect(vm.ddd.concat()).to.eql([111])
+                expect(vm.ggg).to.equal("444")
+                expect(inputs[6].value).to.equal("444")
+                inputs[6].value = "111"
+                expect(options[1].selected).to.equal(false)
+                expect(options[2].selected).to.equal(false)
+                //==========
+                expect(vm.hhh.concat()).to.eql([22, 33, 44])
+                setTimeout(function() {
+                    expect(options[0].selected).to.equal(true)
+                    done()
+                },80)
 
-        })
+            },80)
+        }, 80)
+
     })
 })
