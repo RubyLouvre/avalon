@@ -39,8 +39,8 @@ describe('class', function() {
         style.innerHTML = cssText
     }
     afterEach(function() {
-      //  body.removeChild(div)
-      //  delete avalon.vmodels[vm.$id]
+        body.removeChild(div)
+        delete avalon.vmodels[vm.$id]
     })
 
     it("test", function(done) {
@@ -86,10 +86,7 @@ describe('class', function() {
                 done()
             }, 80)
 
-
         }, 80)
-
-
 
     })
 })
