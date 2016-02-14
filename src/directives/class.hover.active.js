@@ -13,21 +13,21 @@ var addHooks = hooks.addHooks
 
 var directives = avalon.directives
 avalon.directive("class", {
-    is: function (a, b) {
+    is: function(a, b) {
         if (!Array.isArray(b)) {
             return false
         } else {
             return a[0] === b[0] && a[1] === b[1]
         }
     },
-    init: function (binding) {
+    init: function(binding) {
         var oldStyle = binding.param
         var method = binding.type
         if (!oldStyle || isFinite(oldStyle)) {
             binding.param = "" //去掉数字
             divide(binding)
         } else {
-            log('ms-' + method + '-xxx="yyy"这种用法已经过时,请使用ms-' + method + '="xxx:yyy"')
+            avalon.log('ms-' + method + '-xxx="yyy"这种用法已经过时,请使用ms-' + method + '="xxx:yyy"')
             binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
         }
         var vnode = binding.element
@@ -44,30 +44,24 @@ avalon.directive("class", {
         }
         vnode.classEvent = classEvent
     },
-    change: function (arr, binding) {
+    change: function(arr, binding) {
+//aaa bbb ccc
         var vnode = binding.element
         if (!vnode || vnode.disposed)
             return
         var type = binding.type
         var data = addData(vnode, type + "Data")
-        var old = addData(binding, type + "Old")
         var toggle = arr[1]
-        for (var i in data) {
-            if (old[i]) {
-                delete data[i]
-                delete old[i]
-            }
-        }
-
-        arr[0].replace(/\S+/g, function (cls) {
-            data[cls] = toggle
-            if (toggle) {
-                old[cls] = 1
+        arr[0].replace(/\S+/g, function(cls) {
+            if (type === "class") {
+                data[cls] = toggle
+            } else if (toggle) {
+                data[cls] = true
             }
         })
         addHooks(this, binding)
     },
-    update: function (node, vnode) {
+    update: function(node, vnode) {
         var classEvent = vnode.classEvent
         if (classEvent) {
             for (var i in classEvent) {
@@ -80,49 +74,75 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var names = ["class", "hover", "active"]
-        names.forEach(function (type) {
+        names.forEach(function(type) {
             var data = vnode[type + "Data"]
             if (!data)
                 return
             if (type === "class") {
-                setClass(node, data)
+                setClass(node, vnode)
             } else {
-                node.targetClass = data
+                var oldType = node.getAttribute(type + "-class")
+                if (oldType) {
+                    avalon(node).removeClass(oldType)
+                }
+                node.setAttribute(type + "-class", Object.keys(data).join(" "))
             }
         })
     }
 })
 
+var classMap = {
+    mouseenter: "hover-class",
+    mouseleave: "hover-class",
+    mousedown: "active-class",
+    mouseup: "active-class"
+}
+
 function activateClass(e) {
     var elem = e.target
-    setClass(elem, elem.targetClass)
+    avalon(elem).addClass(elem.getAttribute(classMap[e.type]) || "")
 }
 
 function abandonClass(e) {
     var elem = e.target
-    setClass(elem, elem.targetClass, true)
+    var name = classMap[e.type]
+    avalon(elem).removeClass(elem.getAttribute(name) || "")
+    if (name !== "active-class") {
+        avalon(elem).removeClass(elem.getAttribute("active-class") || "")
+    }
 }
 
-function setClass(node, other, remove) {
+function setClass(node, vnode) {
+    var old = vnode.classOldData
+    var neo = vnode.classData
     var svg = rsvg.test(node)
     var className = svg ? node.getAttribute("class") : node.className
-    var obj = {}
-    className.replace(/\S+/g, function (name) {
-        obj[name] = true
+    var classOne = {}
+    className.replace(/\S+/g, function(name) {
+        classOne[name] = true
     })
-
-    for (var name in other) {
-        var val = other[name]
-        if (val) {
-            obj[name] = remove ? false : true
-        } else {
-            delete obj[name]
+    //remove old className
+    if (old) {
+        for (var name in old) {
+            delete classOne[name]
         }
     }
+    //add and remove current
+    for (name in neo) {
+        var val = neo[name]
+        if (val) {
+            classOne[name] = true
+        } else {
+            delete classOne[name]
+        }
+    }
+    vnode.classOldData = {}
+    vnode.classData = {}
     var classArr = []
-    for (name in obj) {
-        if (obj[name] === true) {
+    for (name in classOne) {
+        if (classOne[name] === true) {
             classArr.push(name)
+            vnode.classOldData[name] = true
         }
     }
     className = classArr.join(" ")
@@ -136,6 +156,6 @@ function setClass(node, other, remove) {
 markID(activateClass)
 markID(abandonClass)
 
-"hover,active".replace(rword, function (name) {
+"hover,active".replace(rword, function(name) {
     directives[name] = directives["class"]
 })
