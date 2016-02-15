@@ -15,22 +15,22 @@ function fireClick(el) {
         !el.dispatchEvent(evt);
     }
 }
-describe('repeat', function () {
+describe('repeat', function() {
     var body = document.body, div, vm
-    beforeEach(function () {
+    beforeEach(function() {
         div = document.createElement("div")
         body.appendChild(div)
     })
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it("test", function (done) {
-        div.innerHTML = heredoc(function () {
+    it("ms-class+ms-repeat", function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="repeat0">
              <ul>
-             <li ms-repeat="array">{{el}}-{{$first}}-{{$last}}-{{$index}}</li>
+             <li ms-repeat="array" ms-class="{{el}}">{{el}}-{{$first}}-{{$last}}-{{$index}}</li>
              </ul>
              </div>
              */
@@ -46,16 +46,19 @@ describe('repeat', function () {
         expect(lis[1].innerHTML).to.equal("2-false-false-1")
         expect(lis[2].innerHTML).to.equal("3-false-false-2")
         expect(lis[3].innerHTML).to.equal("4-false-true-3")
-
+        expect(lis[0].className).to.equal("1")
+        expect(lis[1].className).to.equal("2")
+        expect(lis[2].className).to.equal("3")
+        expect(lis[3].className).to.equal("4")
         vm.array.push(5)
-        setTimeout(function () {
+        setTimeout(function() {
 
             lis = div.getElementsByTagName("li")
             expect(lis.length).to.equal(5)
             expect(lis[3].innerHTML).to.equal("4-false-false-3")
             expect(lis[4].innerHTML).to.equal("5-false-true-4")
             vm.array.reverse()
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(lis[0].innerHTML).to.equal("5-true-false-0")
                 expect(lis[1].innerHTML).to.equal("4-false-false-1")
                 expect(lis[2].innerHTML).to.equal("3-false-false-2")
@@ -65,7 +68,7 @@ describe('repeat', function () {
                 vm.array.unshift("a")
                 vm.array.pop()
                 vm.array.remove(3)
-                setTimeout(function () {
+                setTimeout(function() {
                     expect(lis[0].innerHTML).to.equal("a-true-false-0")
                     expect(lis[1].innerHTML).to.equal("4-false-false-1")
                     expect(lis[2].innerHTML).to.equal("2-false-true-2")
@@ -76,8 +79,8 @@ describe('repeat', function () {
 
 
     })
-    it("test2", function (done) {
-        div.innerHTML = heredoc(function () {
+    it("test2", function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="repeat1">
              <select multiple="true" ms-each="array">
@@ -97,7 +100,7 @@ describe('repeat', function () {
         expect(options[0].text).to.equal("11")
         expect(options[1].text).to.equal("22")
         expect(options[2].text).to.equal("33")
-        avalon.each(options, function (i, el) {
+        avalon.each(options, function(i, el) {
             el.title = el.text
         })
         var ps = div.getElementsByTagName("p")
@@ -105,11 +108,11 @@ describe('repeat', function () {
         expect(ps[0][prop]).to.equal("233")
         expect(ps[1][prop]).to.equal("244")
         expect(ps[2][prop]).to.equal("255")
-        avalon.each(ps, function (i, el) {
+        avalon.each(ps, function(i, el) {
             el.title = el[prop]
         })
         vm.array.reverse()
-        setTimeout(function () {
+        setTimeout(function() {
             expect(options[0].text).to.equal("33")
             expect(options[1].text).to.equal("22")
             expect(options[2].text).to.equal("11")
@@ -123,7 +126,7 @@ describe('repeat', function () {
             expect(ps[1].title).to.equal("244")
             expect(ps[2].title).to.equal("233")
             vm.array = [{a: 66}, {a: 77}, {a: 88}, {a: 99}]
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(options[0].text).to.equal("66")
                 expect(options[1].text).to.equal("77")
                 expect(options[2].text).to.equal("88")
@@ -147,5 +150,71 @@ describe('repeat', function () {
         })
 
     })
+    it("test3", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <table ms-controller="repeat2">
+             <tr ms-repeat-db="databases">
+             <td class="dbname">
+             {{db.dbname}}
+             </td>
+             <!-- Sample -->
+             <td class="query-count">
+             <span ms-class="{{db.lastSample.className}}">
+             {{db.lastSample.queries.length}}
+             </span>
+             <b ms-repeat='q in db.lastSample.queries' ms-class="{{q}}">{{q}}</b>
+             </td>
+             
+             </tr>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat2",
+            databases: []
+        })
+        avalon.scan(div, vm)
+        var trs = div.getElementsByTagName("tr")
+        var tds = div.getElementsByTagName("td")
+        var bs = div.getElementsByTagName("b")
+        expect(trs.length).to.equal(0)
 
+        vm.databases = [{
+                dbname: "xxx",
+                lastSample: {
+                    className: "aa bb cc",
+                    queries: ["aa", "bb", "cc"]
+                }
+            }, {
+                dbname: "yyy",
+                lastSample: {
+                    className: "aa bb cc",
+                    queries: ["xx", "yy", "zz", 'dd']
+                }
+            }]
+        setTimeout(function() {
+            expect(trs.length).to.equal(2)
+            expect(tds[0].innerHTML).to.equal("xxx")
+            var spans = div.getElementsByTagName("span")
+            expect(spans[0].innerHTML).to.equal("3")
+            expect(spans[1].innerHTML).to.equal("4")
+            expect(bs[0].innerHTML).to.equal("aa")
+            expect(bs[1].innerHTML).to.equal("bb")
+            expect(bs[2].innerHTML).to.equal("cc")
+            expect(bs[3].innerHTML).to.equal("xx")
+            expect(bs[4].innerHTML).to.equal("yy")
+            expect(bs[5].innerHTML).to.equal("zz")
+            expect(bs[6].innerHTML).to.equal("dd")
+//            expect(bs[0].className).to.equal("aa")
+//            expect(bs[1].className).to.equal("bb")
+//            expect(bs[2].className).to.equal("cc")
+//            expect(bs[3].className).to.equal("xx")
+//            expect(bs[4].className).to.equal("yy")
+//            expect(bs[5].className).to.equal("zz")
+//            expect(bs[6].className).to.equal("dd")
+            
+            done()
+        })
+
+    })
 })
