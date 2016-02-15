@@ -79,7 +79,7 @@ describe('repeat', function() {
 
 
     })
-    it("test2", function(done) {
+    it("ms-each", function(done) {
         div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="repeat1">
@@ -205,16 +205,102 @@ describe('repeat', function() {
             expect(bs[4].innerHTML).to.equal("yy")
             expect(bs[5].innerHTML).to.equal("zz")
             expect(bs[6].innerHTML).to.equal("dd")
-//            expect(bs[0].className).to.equal("aa")
-//            expect(bs[1].className).to.equal("bb")
-//            expect(bs[2].className).to.equal("cc")
-//            expect(bs[3].className).to.equal("xx")
-//            expect(bs[4].className).to.equal("yy")
-//            expect(bs[5].className).to.equal("zz")
-//            expect(bs[6].className).to.equal("dd")
-            
+            expect(bs[0].className).to.equal("aa")
+            expect(bs[1].className).to.equal("bb")
+            expect(bs[2].className).to.equal("cc")
+            expect(bs[3].className).to.equal("xx")
+            expect(bs[4].className).to.equal("yy")
+            expect(bs[5].className).to.equal("zz")
+            expect(bs[6].className).to.equal("dd")
+
             done()
         })
 
     })
+
+    it("double loop", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <ul ms-controller=repeat3>
+             <li ms-repeat="array"> <b>{{el.length}}</b><span ms-repeat="elem in el">{{elem}}</span></li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat3",
+            array: [[1, 2], [3, 4, 5]],
+            onClick: function() {
+                vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
+            }
+        })
+        avalon.scan(div, vm)
+        var bs = div.getElementsByTagName("b")
+        var spans = div.getElementsByTagName("span")
+        expect(bs[0].innerHTML).to.equal("2")
+        expect(bs[1].innerHTML).to.equal("3")
+        expect(spans[0].innerHTML).to.equal("1")
+        expect(spans[1].innerHTML).to.equal("2")
+        expect(spans[2].innerHTML).to.equal("3")
+        expect(spans[3].innerHTML).to.equal("4")
+        expect(spans[4].innerHTML).to.equal("5")
+        vm.onClick()
+        setTimeout(function() {
+            expect(bs[0].innerHTML).to.equal("4")
+            expect(bs[1].innerHTML).to.equal("5")
+            expect(spans[0].innerHTML).to.equal("a")
+            expect(spans[1].innerHTML).to.equal("b")
+            expect(spans[2].innerHTML).to.equal("c")
+            expect(spans[3].innerHTML).to.equal("d")
+            expect(spans[4].innerHTML).to.equal("3")
+            expect(spans[5].innerHTML).to.equal("4")
+            expect(spans[6].innerHTML).to.equal("6")
+            expect(spans[7].innerHTML).to.equal("7")
+            expect(spans[8].innerHTML).to.equal("8")
+            done()
+        })
+        
+    })
+    
+    it("object single repeat", function(done){
+        div.innerHTML = heredoc(function(){
+            /*
+            <ul ms-controller="repeat4">
+            <li ms-repeat="object">
+                {{$key}}||{{$val}}||{{$index}}
+            </li>
+            </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat4",
+            object: {
+                aaa: 111,
+                bbb: 222,
+                ccc: 333
+            }
+        })
+        avalon.scan(div,vm)
+        var lis = div.getElementsByTagName("li")
+        expect(lis.length).to.equal(3)
+        expect(lis[0].innerHTML.trim()).to.equal("aaa||111||0")
+        expect(lis[1].innerHTML.trim()).to.equal("bbb||222||1")
+        expect(lis[2].innerHTML.trim()).to.equal("ccc||333||2")
+        vm.object = {
+            eee: 777,
+            ddd: 444,
+            aaa: 333,
+            bbb: 555
+        }
+        setTimeout(function(){
+            var lis = div.getElementsByTagName("li")
+            expect(lis.length).to.equal(4)
+            expect(lis[0].innerHTML.trim()).to.equal("eee||777||0")
+            expect(lis[1].innerHTML.trim()).to.equal("ddd||444||1")
+            expect(lis[2].innerHTML.trim()).to.equal("aaa||333||2")
+            expect(lis[3].innerHTML.trim()).to.equal("bbb||555||3")
+            done()
+        })   
+        
+    })
+
 })
