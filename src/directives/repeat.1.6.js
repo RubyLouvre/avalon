@@ -16,7 +16,7 @@ var VComponent = require("../vdom/VComponent")
 var VComment = require("../vdom/VComment")
 var factory = require("../model/compact")
 var $emit = require("../model/dispatch").$emit
-
+var $$skipArray = require("../model/skipArray.compact")
 var makeObservable = factory.makeObservable
 var mediatorFactory = factory.mediatorFactory
 

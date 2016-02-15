@@ -15,6 +15,7 @@ var shimTemplate = require("../vdom/shimTemplate")
 var VComponent = require("../vdom/VComponent")
 var VComment = require("../vdom/VComment")
 var factory = require("../model/compact")
+var $$skipArray = require("../model/skipArray.compact")
 var $emit = require("../model/dispatch").$emit
 
 var makeObservable = factory.makeObservable
