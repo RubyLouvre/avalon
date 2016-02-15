@@ -3861,15 +3861,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function adjustVm(vm, expr) {
 	    var toppath = expr.split(".")[0], other
-	    if (vm.hasOwnProperty(toppath)) {
-	        try {
+	    try {
+	        if (vm.hasOwnProperty(toppath)) {
 	            if (vm.$accessors) {
 	                other = vm.$accessors[toppath].get.heirloom.__vmodel__
 	            } else {
 	                other = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.__vmodel__
 	            }
-	        } catch (e) {
+
 	        }
+	    } catch (e) {
+	        avalon.log("adjustVm "+e)
 	    }
 	    return other || vm
 	}
@@ -3885,7 +3887,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var data = typeof funOrObj === "function" ? {
 	        update: funOrObj,
 	        element: {},
-	        shouldDispose: function () {
+	        shouldDispose: function() {
 	            return vm.$hashcode === false
 	        },
 	        uuid: getUid(funOrObj)
@@ -3897,7 +3899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        injectDisposeQueue(data, list)
 	    }
 
-	    return function () {
+	    return function() {
 	        avalon.Array.remove(list, data)
 	    }
 	}
@@ -3943,12 +3945,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	avalon.injectBinding = function (binding) {
+	avalon.injectBinding = function(binding) {
 
 	    parseExpr(binding.expr, binding.vmodel, binding)
 	//在ms-class中,expr: '["XXX YYY ZZZ",true]' 其path为空
-	    binding.paths.split("★").forEach(function (path) {
-	        var outerVm = adjustVm(binding.vmodel, path)
+	    binding.paths.split("★").forEach(function(path) {
+	        var outerVm = adjustVm(binding.vmodel, path) || {}
 	        var match = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
 	        if (match) {
 	            binding.innerVm = outerVm
@@ -4015,7 +4017,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        delete binding.outerVm
 	    })
 	    delete binding.paths
-	    binding.update = function (a, b, p) {
+	    binding.update = function(a, b, p) {
 	        var vm = binding.vmodel
 	        //用于高效替换binding上的vmodel
 	        if (vm.$events.__vmodel__ !== vm) {
@@ -4035,7 +4037,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dir.change(value, binding)
 	            if (binding.oneTime && !hasError) {
 	                dir.change = noop
-	                setTimeout(function () {
+	                setTimeout(function() {
 	                    delete binding.element
 	                })
 	            }
@@ -5273,8 +5275,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "data": 100,
 	    "each": 1400,
 	    "with": 1500,
-	    "duplex": 2000,
-	    "on": 3000
+	    "duplex": 20000,
+	    "on": 30000
 	}
 	//ms-repeat,ms-if会创建一个组件,作为原元素的父节点,没有孩子,
 	//将原元素的outerHTML作为其props.template
@@ -5314,7 +5316,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    name: name,
 	                    expr: newValue,
 	                    oneTime: oneTime,
-	                    priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
+	                    priority: priorityMap[type] || directives[type].priority || 
+	                    type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, "")) || 0)
 	                }
 	                if (/each|repeat|if|text|html/.test(type)) {
 	                    binding.siblings = siblings
@@ -5720,14 +5723,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        vnode.classEvent = classEvent
 	    },
 	    change: function(arr, binding) {
-	//aaa bbb ccc
 	        var vnode = binding.element
-	        if (!vnode || vnode.disposed)
+	        if (!vnode || vnode.disposed ||  arr[0] === void 0)
 	            return
+	       
 	        var type = binding.type
 	        var data = addData(vnode, type + "Data")
 	        var toggle = arr[1]
-	        arr[0].replace(/\S+/g, function(cls) {
+	        String(arr[0]).replace(/\S+/g, function(cls) {
 	            if (type === "class") {
 	                data[cls] = toggle
 	            } else if (toggle) {
