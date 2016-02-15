@@ -12,8 +12,8 @@ var priorityMap = {
     "data": 100,
     "each": 1400,
     "with": 1500,
-    "duplex": 2000,
-    "on": 3000
+    "duplex": 20000,
+    "on": 30000
 }
 //ms-repeat,ms-if会创建一个组件,作为原元素的父节点,没有孩子,
 //将原元素的outerHTML作为其props.template
@@ -53,7 +53,8 @@ function scanAttrs(elem, vmodel, siblings) {
                     name: name,
                     expr: newValue,
                     oneTime: oneTime,
-                    priority: (directives[type].priority || type.charCodeAt(0) * 10) + (Number(param.replace(/\D/g, "")) || 0)
+                    priority: priorityMap[type] || directives[type].priority || 
+                    type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, "")) || 0)
                 }
                 if (/each|repeat|if|text|html/.test(type)) {
                     binding.siblings = siblings

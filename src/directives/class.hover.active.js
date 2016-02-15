@@ -45,14 +45,14 @@ avalon.directive("class", {
         vnode.classEvent = classEvent
     },
     change: function(arr, binding) {
-//aaa bbb ccc
         var vnode = binding.element
-        if (!vnode || vnode.disposed)
+        if (!vnode || vnode.disposed ||  arr[0] === void 0)
             return
+       
         var type = binding.type
         var data = addData(vnode, type + "Data")
         var toggle = arr[1]
-        arr[0].replace(/\S+/g, function(cls) {
+        String(arr[0]).replace(/\S+/g, function(cls) {
             if (type === "class") {
                 data[cls] = toggle
             } else if (toggle) {

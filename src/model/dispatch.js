@@ -18,15 +18,17 @@ var parseExpr = require("../parser/parser").parseExpr
 
 function adjustVm(vm, expr) {
     var toppath = expr.split(".")[0], other
-    if (vm.hasOwnProperty(toppath)) {
-        try {
+    try {
+        if (vm.hasOwnProperty(toppath)) {
             if (vm.$accessors) {
                 other = vm.$accessors[toppath].get.heirloom.__vmodel__
             } else {
                 other = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.__vmodel__
             }
-        } catch (e) {
+
         }
+    } catch (e) {
+        avalon.log("adjustVm "+e)
     }
     return other || vm
 }
@@ -42,7 +44,7 @@ function $watch(expr, funOrObj) {
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
-        shouldDispose: function () {
+        shouldDispose: function() {
             return vm.$hashcode === false
         },
         uuid: getUid(funOrObj)
@@ -54,7 +56,7 @@ function $watch(expr, funOrObj) {
         injectDisposeQueue(data, list)
     }
 
-    return function () {
+    return function() {
         avalon.Array.remove(list, data)
     }
 }
@@ -100,12 +102,12 @@ function $emit(list, vm, path, a, b, i) {
 }
 
 
-avalon.injectBinding = function (binding) {
+avalon.injectBinding = function(binding) {
 
     parseExpr(binding.expr, binding.vmodel, binding)
 //在ms-class中,expr: '["XXX YYY ZZZ",true]' 其path为空
-    binding.paths.split("★").forEach(function (path) {
-        var outerVm = adjustVm(binding.vmodel, path)
+    binding.paths.split("★").forEach(function(path) {
+        var outerVm = adjustVm(binding.vmodel, path) || {}
         var match = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
         if (match) {
             binding.innerVm = outerVm
@@ -172,7 +174,7 @@ avalon.injectBinding = function (binding) {
         delete binding.outerVm
     })
     delete binding.paths
-    binding.update = function (a, b, p) {
+    binding.update = function(a, b, p) {
         var vm = binding.vmodel
         //用于高效替换binding上的vmodel
         if (vm.$events.__vmodel__ !== vm) {
@@ -192,7 +194,7 @@ avalon.injectBinding = function (binding) {
             dir.change(value, binding)
             if (binding.oneTime && !hasError) {
                 dir.change = noop
-                setTimeout(function () {
+                setTimeout(function() {
                     delete binding.element
                 })
             }
