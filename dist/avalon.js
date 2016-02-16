@@ -2833,7 +2833,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.log("warning:[", $id, "]已经被定义")
 	    }
 	    avalon.vmodels[$id] = vmodel
-	    
+
 	    return vmodel
 	}
 
@@ -2976,14 +2976,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get.heirloom = heirloom
 	    return {
 	        get: get,
-	        set: function (val) {
+	        set: function(val) {
 	            if (old === val) {
 	                return
 	            }
 	            if (val && typeof val === "object") {
-	                if (old && old.$id && val.$id) {
-	                    //合并两个vm,比如proxy item中的el = newEl
+	                if (old && old.$id &&  val.$id && !Array.isArray(old) ) {
+	                    //合并两个对象类型的子vm,比如proxy item中的el = newEl
 	                    for (var ii in val) {
+	                        
 	                        old[ii] = val[ii]
 	                    }
 	                } else {
@@ -3031,14 +3032,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	function makeFire($vmodel, heirloom) {
 	    heirloom.__vmodel__ = $vmodel
 	    hideProperty($vmodel, "$events", heirloom)
-	    hideProperty($vmodel, "$watch", function (expr, fn) {
+	    hideProperty($vmodel, "$watch", function(expr, fn) {
 	        if (arguments.length === 2) {
 	            return $watch.apply($vmodel, arguments)
 	        } else {
 	            throw "$watch方法参数不对"
 	        }
 	    })
-	    hideProperty($vmodel, "$fire", function (expr, a, b) {
+	    hideProperty($vmodel, "$fire", function(expr, a, b) {
 	        if (expr.indexOf("all!") === 0) {
 	            var p = expr.slice(4)
 	            for (var i in avalon.vmodels) {
@@ -3084,7 +3085,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//$model的PropertyDescriptor
 	var $modelAccessor = {
-	    get: function () {
+	    get: function() {
 	        return toJson(this)
 	    },
 	    set: avalon.noop,
@@ -3253,7 +3254,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (options.top) {
 	            makeFire(array, heirloom)
 	        }
-	        array.notify = function (a, b, c) {
+	        array.notify = function(a, b, c) {
 	            var vm = heirloom.__vmodel__
 	            if (vm) {
 	                var path = a === null || a === void 0 ?
@@ -3292,7 +3293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 	var newProto = {
-	    set: function (index, val) {
+	    set: function(index, val) {
 	        if (((index >>> 0) === index) && this[index] !== val) {
 	            if (index > this.length) {
 	                throw Error(index + "set方法的第一个参数不能大于原数组长度")
@@ -3301,32 +3302,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.splice(index, 1, val)
 	        }
 	    },
-	    contains: function (el) { //判定是否包含
+	    contains: function(el) { //判定是否包含
 	        return this.indexOf(el) !== -1
 	    },
-	    ensure: function (el) {
+	    ensure: function(el) {
 	        if (!this.contains(el)) { //只有不存在才push
 	            this.push(el)
 	        }
 	        return this
 	    },
-	    pushArray: function (arr) {
+	    pushArray: function(arr) {
 	        return this.push.apply(this, arr)
 	    },
-	    remove: function (el) { //移除第一个等于给定值的元素
+	    remove: function(el) { //移除第一个等于给定值的元素
 	        return this.removeAt(this.indexOf(el))
 	    },
-	    removeAt: function (index) { //移除指定索引上的元素
+	    removeAt: function(index) { //移除指定索引上的元素
 	        if ((index >>> 0) === index) {
 	            return this.splice(index, 1)
 	        }
 	        return []
 	    },
-	    size: function () { //取得数组长度，这个函数可以同步视图，length不能
+	    size: function() { //取得数组长度，这个函数可以同步视图，length不能
 	        avalon.log("warnning: array.size()将被废弃！")
 	        return this.length
 	    },
-	    removeAll: function (all) { //移除N个元素
+	    removeAll: function(all) { //移除N个元素
 	        var on = this.length
 	        if (Array.isArray(all)) {
 	            for (var i = this.length - 1; i >= 0; i--) {
@@ -3351,7 +3352,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.notify()
 	        notifySize(this, on)
 	    },
-	    clear: function () {
+	    clear: function() {
 	        this.removeAll()
 	        return this
 	    }
@@ -3366,9 +3367,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _splice = ap.splice
 
-	arrayMethods.forEach(function (method) {
+	arrayMethods.forEach(function(method) {
 	    var original = ap[method]
-	    newProto[method] = function () {
+	    newProto[method] = function() {
 	        // 继续尝试劫持数组元素的属性
 	        var args = [], on = this.length
 
@@ -3388,8 +3389,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	"sort,reverse".replace(rword, function (method) {
-	    newProto[method] = function () {
+	"sort,reverse".replace(rword, function(method) {
+	    newProto[method] = function() {
 	        ap[method].apply(this, arguments)
 	        if (!W3C) {
 	            this.$model = toJson(this)
@@ -5933,7 +5934,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            }
 
 	                        } else {
-	                            log("ms-include load [" + id + "] error")
+	                            avalon.log("ms-include load [" + id + "] error")
 	                        }
 	                    }
 	                }
@@ -6018,7 +6019,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var target = elem.firstChild
 	    if (!target || target.nodeType !== 1) {
-	        avalon.clearHTML(target)
+	        avalon.clearHTML(elem)
 	        elem.appendChild(cache[id])
 	    } else if (target.getAttribute("data-include-id") !== id) {
 	        elem.replaceChild(cache[id], target)
