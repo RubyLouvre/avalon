@@ -53,7 +53,7 @@ avalon.directive("include", {
                             }
 
                         } else {
-                            log("ms-include load [" + id + "] error")
+                            avalon.log("ms-include load [" + id + "] error")
                         }
                     }
                 }
@@ -138,7 +138,7 @@ function updateTemplate(elem, vnode) {
     }
     var target = elem.firstChild
     if (!target || target.nodeType !== 1) {
-        avalon.clearHTML(target)
+        avalon.clearHTML(elem)
         elem.appendChild(cache[id])
     } else if (target.getAttribute("data-include-id") !== id) {
         elem.replaceChild(cache[id], target)
