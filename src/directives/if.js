@@ -51,7 +51,6 @@ avalon.directive("if", {
             elem.children[0] = elem.props.ng
         }
         addHooks(this, binding)
-
     },
     update: function (node, vnode, parent) {
         //vnode为#component

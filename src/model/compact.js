@@ -57,6 +57,7 @@ function define(definition) {
         avalon.log("warning:[", $id, "]已经被定义")
     }
     avalon.vmodels[$id] = vmodel
+    
     return vmodel
 }
 

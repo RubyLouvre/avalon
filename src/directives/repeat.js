@@ -112,6 +112,7 @@ avalon.directive("repeat", {
         binding.initNames = initNames
         binding.$outer = $outer
         delete binding.siblings
+        return false
     },
     change: function (value, binding) {
         //console.log("ms-repeat change ...")

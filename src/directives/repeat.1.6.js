@@ -105,6 +105,7 @@ avalon.directive("repeat", {
      
         binding.initNames = initNames
         delete binding.siblings
+        return false
     },
     change: function (value, binding) {
         var vnode = binding.element
