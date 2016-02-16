@@ -29,12 +29,12 @@ describe('{{}}', function () {
 
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller=test>{{aa_bb}}</div>
+             <div ms-controller=expr1>{{aa_bb}}</div>
              */
         })
 
         vm = avalon.define({
-            $id: "test",
+            $id: "expr1",
             "aa_bb": "司徒正美"
         })
         avalon.scan(div, vm)
@@ -50,12 +50,12 @@ describe('{{}}', function () {
 
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller=test2 ms-attr-title="{{a}} {{b}}">{{a}} {{b}}</div>
+             <div ms-controller=expr2 ms-attr-title="{{a}} {{b}}">{{a}} {{b}}</div>
              */
         })
 
         vm = avalon.define({
-            $id: "test2",
+            $id: "expr2",
             a: "司徒正美",
             b: "清风火羽"
         })
@@ -75,12 +75,12 @@ describe('{{}}', function () {
 
         div.innerHTML = heredoc(function () {
             /*
-             <input ms-controller=test3 ms-attr-value="a">
+             <input ms-controller=expr3 ms-attr-value="a">
              */
         })
 
         vm = avalon.define({
-            $id: "test3",
+            $id: "expr3",
             a: "司徒正美"
         })
 
@@ -112,12 +112,12 @@ describe('css', function () {
 
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="test4" ms-css-background=a>测试样式</div>
+             <div ms-controller="css1" ms-css-background=a>测试样式</div>
              */
         })
 
         vm = avalon.define({
-            $id: "test4",
+            $id: "css1",
             a: "red"
         })
         avalon.scan(div, vm)
@@ -139,12 +139,12 @@ describe('css', function () {
     it("float", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="test5" ms-css-float=a>测试样式</div>
+             <div ms-controller="css2" ms-css-float=a>测试样式</div>
              */
         })
 
         vm = avalon.define({
-            $id: "test5",
+            $id: "css2",
             a: "right"
         })
 
@@ -164,12 +164,12 @@ describe('css', function () {
     it("width", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="test6" ms-css-width=a>测试样式</div>
+             <div ms-controller="css3" ms-css-width=a>测试样式</div>
              */
         })
 
         vm = avalon.define({
-            $id: "test6",
+            $id: "css3",
             a: 100
         })
 
@@ -189,11 +189,11 @@ describe('css', function () {
     it("opacity", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="test7" ms-css-opacity=a>测试样式</div>
+             <div ms-controller="css4" ms-css-opacity=a>测试样式</div>
              */
         })
         vm = avalon.define({
-            $id: "test7",
+            $id: "css4",
             a: 0.6
         })
         avalon.scan(div, vm)
@@ -222,11 +222,11 @@ describe('attr', function () {
     it("checked", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <input type='radio' ms-controller="aaa" ms-attr-checked="a" >
+             <input type='radio' ms-controller="attr1" ms-attr-checked="a" >
              */
         })
         vm = avalon.define({
-            $id: "aaa",
+            $id: "attr1",
             a: true
         })
         avalon.scan(div, vm)
@@ -249,11 +249,11 @@ describe('attr', function () {
     it("readOnly", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <input ms-attr-disabled=b ms-controller="bbb" ms-attr-readonly="a" >
+             <input ms-attr-disabled=b ms-controller="attr2" ms-attr-readonly="a" >
              */
         })
         vm = avalon.define({
-            $id: "bbb",
+            $id: "attr2",
             a: true,
             b: true
         })
@@ -275,7 +275,7 @@ describe('attr', function () {
     it("selected", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <select ms-controller=ccc ms-attr-multiple=b>
+             <select ms-controller=attr3 ms-attr-multiple=b>
              <option>000</option>
              <option ms-attr-selected=a>111</option>
              <option>222</option>
@@ -284,7 +284,7 @@ describe('attr', function () {
              */
         })
         vm = avalon.define({
-            $id: "ccc",
+            $id: "attr3",
             a: true,
             b: true
         })
@@ -309,11 +309,11 @@ describe('attr', function () {
     it("contentEditable", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='ddd' ms-attr-contenteditable='e'>ddd</div>
+             <div ms-controller='attr4' ms-attr-contenteditable='e'>ddd</div>
              */
         })
         vm = avalon.define({
-            $id: "ddd",
+            $id: "attr4",
             e: "true"
         })
         avalon.scan(div, vm)

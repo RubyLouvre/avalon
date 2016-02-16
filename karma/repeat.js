@@ -325,6 +325,7 @@ describe('repeat', function() {
              <table ms-controller="repeat5">
              <tbody>
              <tr ms-repeat-db="databases">
+             <td>{{db.lastSample.queries.length}}</td>
              <td ms-repeat-q="db.lastSample.queries" ms-class="{{q.name}}">
              {{q.query}}
              </td>
@@ -351,11 +352,46 @@ describe('repeat', function() {
         })
         avalon.scan(div, vm)
         var tds = div.getElementsByTagName("td")
-        expect(tds[0].innerHTML.trim()).to.equal("111s")
-        expect(tds[0].className.trim()).to.equal("second")
-        expect(tds[1].innerHTML.trim()).to.equal("23d")
-        expect(tds[1].className.trim()).to.equal("dsd")
-        done()
+        expect(tds[0].innerHTML.trim()).to.equal("2")
+        expect(tds[1].innerHTML.trim()).to.equal("111s")
+        expect(tds[1].className.trim()).to.equal("second")
+        expect(tds[2].innerHTML.trim()).to.equal("23d")
+        expect(tds[2].className.trim()).to.equal("dsd")
+
+        var a = [{
+                dbname: "ddd",
+                lastSample: {
+                    name: "first",
+                    queries: [{
+                            name: "aaa",
+                            query: "aaa"
+                        }, {
+                            name: "bbb",
+                            query: "bbb"
+                        },
+                        {
+                            name: "ccc",
+                            query: "ccc"
+                        }, {
+                            name: "ddd",
+                            query: "ddd"
+                        }]
+                }
+            }]
+
+        vm.databases = a
+        setTimeout(function() {
+            expect(tds[0].innerHTML.trim()).to.equal("4")
+            expect(tds[1].innerHTML.trim()).to.equal("aaa")
+            expect(tds[1].className.trim()).to.equal("aaa")
+            expect(tds[2].innerHTML.trim()).to.equal("bbb")
+            expect(tds[2].className.trim()).to.equal("bbb")
+            expect(tds[3].innerHTML.trim()).to.equal("ccc")
+            expect(tds[3].className.trim()).to.equal("ccc")
+            expect(tds[4].innerHTML.trim()).to.equal("ddd")
+            expect(tds[4].className.trim()).to.equal("ddd")
+            done()
+        })
     })
     it("replace object key and value", function(done) {
         div.innerHTML = heredoc(function() {
