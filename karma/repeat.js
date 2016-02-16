@@ -258,17 +258,17 @@ describe('repeat', function() {
             expect(spans[8].innerHTML).to.equal("8")
             done()
         })
-        
+
     })
-    
-    it("object single repeat", function(done){
-        div.innerHTML = heredoc(function(){
+
+    it("object single repeat", function(done) {
+        div.innerHTML = heredoc(function() {
             /*
-            <ul ms-controller="repeat4">
-            <li ms-repeat="object">
-                {{$key}}||{{$val}}||{{$index}}
-            </li>
-            </ul>
+             <ul ms-controller="repeat4">
+             <li ms-repeat="object">
+             {{$key}}||{{$val}}||{{$index}}
+             </li>
+             </ul>
              */
         })
         vm = avalon.define({
@@ -279,7 +279,7 @@ describe('repeat', function() {
                 ccc: 333
             }
         })
-        avalon.scan(div,vm)
+        avalon.scan(div, vm)
         var lis = div.getElementsByTagName("li")
         expect(lis.length).to.equal(3)
         expect(lis[0].innerHTML.trim()).to.equal("aaa||111||0")
@@ -291,16 +291,193 @@ describe('repeat', function() {
             aaa: 333,
             bbb: 555
         }
-        setTimeout(function(){
+        setTimeout(function() {
             var lis = div.getElementsByTagName("li")
             expect(lis.length).to.equal(4)
             expect(lis[0].innerHTML.trim()).to.equal("eee||777||0")
             expect(lis[1].innerHTML.trim()).to.equal("ddd||444||1")
             expect(lis[2].innerHTML.trim()).to.equal("aaa||333||2")
             expect(lis[3].innerHTML.trim()).to.equal("bbb||555||3")
+            vm.object = {
+                eee: 111,
+                ddd: 222,
+                aaa: 444,
+                bbb: 666,
+                kkk: 999
+            }
+            setTimeout(function() {
+                var lis = div.getElementsByTagName("li")
+                expect(lis.length).to.equal(5)
+                expect(lis[0].innerHTML.trim()).to.equal("eee||111||0")
+                expect(lis[1].innerHTML.trim()).to.equal("ddd||222||1")
+                expect(lis[2].innerHTML.trim()).to.equal("aaa||444||2")
+                expect(lis[3].innerHTML.trim()).to.equal("bbb||666||3")
+                expect(lis[4].innerHTML.trim()).to.equal("kkk||999||4")
+
+                done()
+            })
+        })
+
+    })
+    it("double repeat+ms-class", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <table ms-controller="repeat5">
+             <tbody>
+             <tr ms-repeat-db="databases">
+             <td ms-repeat-q="db.lastSample.queries" ms-class="{{q.name}}">
+             {{q.query}}
+             </td>
+             </tr>
+             </tbody>
+             </table>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat5",
+            databases: [{
+                    dbname: "ddd",
+                    lastSample: {
+                        name: "first",
+                        queries: [{
+                                name: "second",
+                                query: "111s"
+                            }, {
+                                name: "dsd",
+                                query: "23d"
+                            }]
+                    }
+                }]
+        })
+        avalon.scan(div, vm)
+        var tds = div.getElementsByTagName("td")
+        expect(tds[0].innerHTML.trim()).to.equal("111s")
+        expect(tds[0].className.trim()).to.equal("second")
+        expect(tds[1].innerHTML.trim()).to.equal("23d")
+        expect(tds[1].className.trim()).to.equal("dsd")
+        done()
+    })
+    it("replace object key and value", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <ul ms-controller="repeat6">
+             <li ms-repeat="d in object">{{d}};;;{{$key}}</li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat6",
+            object: {
+                aaa: 111,
+                bbb: 222
+            }
+        })
+        avalon.scan(div, vm)
+        var lis = div.getElementsByTagName("li")
+        expect(lis.length).to.equal(2)
+        expect(lis[0].innerHTML.trim()).to.equal("111;;;aaa")
+        expect(lis[1].innerHTML.trim()).to.equal("222;;;bbb")
+        avalon.each(lis, function(i, el) {
+            el.title = el.innerHTML
+        })
+        vm.object = {
+            a: 333,
+            b: 444,
+            c: 555
+        }
+        setTimeout(function() {
+            expect(lis.length).to.equal(3)
+            expect(lis[0].innerHTML.trim()).to.equal("333;;;a")
+            expect(lis[1].innerHTML.trim()).to.equal("444;;;b")
+            expect(lis[2].innerHTML.trim()).to.equal("555;;;c")
+            expect(lis[0].title).to.equal("111;;;aaa")
+            expect(lis[1].title).to.equal("222;;;bbb")
             done()
-        })   
-        
+        })
     })
 
+    it("ms-each+ms-with", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <ul ms-controller="repeat7">
+             <li ms-repeat="array">
+             <p ms-repeat="el">{{$key}}||{{$val}}||{{$index}}</p>
+             </li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat7",
+            array: [{a: 1, b: 2}, {a: 3, b: 4}]
+        })
+        avalon.scan(div, vm)
+        var ps = div.getElementsByTagName("p")
+        expect(ps[0].innerHTML.trim()).to.equal("a||1||0")
+        expect(ps[1].innerHTML.trim()).to.equal("b||2||1")
+        expect(ps[2].innerHTML.trim()).to.equal("a||3||0")
+        expect(ps[3].innerHTML.trim()).to.equal("b||4||1")
+        avalon.each(ps, function(i, el) {
+            el.title = el.innerHTML
+        })
+        vm.array = [{a: 15, b: 25}, {a: 33, c: 44, b: 78}, {a: 55, b: 66}]
+        setTimeout(function() {
+            expect(ps[0].innerHTML.trim()).to.equal("a||15||0")
+            expect(ps[1].innerHTML.trim()).to.equal("b||25||1")
+            expect(ps[2].innerHTML.trim()).to.equal("a||33||0")
+            expect(ps[3].innerHTML.trim()).to.equal("c||44||1")
+            expect(ps[4].innerHTML.trim()).to.equal("b||78||2")
+            expect(ps[5].innerHTML.trim()).to.equal("a||55||0")
+            expect(ps[6].innerHTML.trim()).to.equal("b||66||1")
+            expect(ps[0].title).to.equal("a||1||0")
+            expect(ps[1].title).to.equal("b||2||1")
+            expect(ps[2].title).to.equal("a||3||0")
+            expect(ps[3].title).to.equal("")
+            expect(ps[4].title).to.equal("b||4||1")
+            expect(ps[5].title).to.equal("")
+            vm.array[0].a = 999
+            vm.array[0].b = 888
+            setTimeout(function() {
+                expect(ps[0].innerHTML.trim()).to.equal("a||999||0")
+                expect(ps[1].innerHTML.trim()).to.equal("b||888||1")
+                done()
+            })
+
+        })
+    })
+
+    it("ms-with+ms-each", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <ul ms-controller="repeat8">
+             <li ms-repeat="tr in grid">
+             <p ms-repeat="td in tr">{{td}}</p>
+             </li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: "repeat8",
+            grid: [{a: 111, b: 222}]
+        })
+        avalon.scan(div, vm)
+        avalon.scan(div, vm)
+        var ps = div.getElementsByTagName("p")
+        expect(ps[0].innerHTML.trim()).to.equal("111")
+        expect(ps[1].innerHTML.trim()).to.equal("222")
+        vm.grid = [{c: 123, d: 456, a: 789}, {a: 333, b: 444, c: "yui"}]
+
+        vm.grid[0].c = 999
+        vm.grid[0].a = 888
+        vm.grid[1].b = 777
+        setTimeout(function() {
+            expect(ps[0].innerHTML.trim()).to.equal("999")
+            expect(ps[1].innerHTML.trim()).to.equal("456")
+            expect(ps[2].innerHTML.trim()).to.equal("888")
+            expect(ps[3].innerHTML.trim()).to.equal("333")
+            expect(ps[4].innerHTML.trim()).to.equal("777")
+            expect(ps[5].innerHTML.trim()).to.equal("yui")
+            done()
+        })
+
+    })
 })
