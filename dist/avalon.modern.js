@@ -1558,6 +1558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.log("warning:[", $id, "]已经被定义")
 	    }
 	    avalon.vmodels[$id] = vmodel
+	    
 	    return vmodel
 	}
 
@@ -4869,7 +4870,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            elem.children[0] = elem.props.ng
 	        }
 	        addHooks(this, binding)
-
 	    },
 	    update: function (node, vnode, parent) {
 	        //vnode为#component
@@ -6700,6 +6700,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        binding.initNames = initNames
 	        binding.$outer = $outer
 	        delete binding.siblings
+	        return false
 	    },
 	    change: function (value, binding) {
 	        var vnode = binding.element
