@@ -55,6 +55,7 @@ function rejectDisposeQueue(data) {
             data.i--
         }
     }
+    avalon.log(disposeQueue.length,"gc")
     rejectDisposeQueue.beginTime = new Date()
 }
 

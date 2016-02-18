@@ -35,9 +35,7 @@ VElement.prototype = {
     toDOM: function () {
         var dom = document.createElement(this.type)
         for (var i in this.props) {
-            if (this.props[i] === false) {
-                dom.removeAttribute(i)
-            } else {
+            if (this.props[i] !== false) {
                 dom.setAttribute(i, String(this.props[i]))
             }
         }

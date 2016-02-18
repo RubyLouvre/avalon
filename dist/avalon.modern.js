@@ -2859,6 +2859,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            data.i--
 	        }
 	    }
+	    avalon.log(disposeQueue.length,"gc")
 	    rejectDisposeQueue.beginTime = new Date()
 	}
 
@@ -3717,9 +3718,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toDOM: function () {
 	        var dom = document.createElement(this.type)
 	        for (var i in this.props) {
-	            if (this.props[i] === false) {
-	                dom.removeAttribute(i)
-	            } else {
+	            if (this.props[i] !== false) {
 	                dom.setAttribute(i, String(this.props[i]))
 	            }
 	        }

@@ -4134,6 +4134,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            data.i--
 	        }
 	    }
+	    avalon.log(disposeQueue.length,"gc")
 	    rejectDisposeQueue.beginTime = new Date()
 	}
 
@@ -4992,9 +4993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toDOM: function () {
 	        var dom = document.createElement(this.type)
 	        for (var i in this.props) {
-	            if (this.props[i] === false) {
-	                dom.removeAttribute(i)
-	            } else {
+	            if (this.props[i] !== false) {
 	                dom.setAttribute(i, String(this.props[i]))
 	            }
 	        }
@@ -6992,65 +6991,117 @@ return /******/ (function(modules) { // webpackBootstrap
 	                updateEntity(keepChild, vnode.children, parent)
 	                return false
 	            } else {
+
 	                var breakText = groupText + ":end"
 	                var emptyFragment = document.createDocumentFragment()
 	                var fragment = emptyFragment.cloneNode(false)
 	                //将原有节点移出DOM, 试根据groupText分组
-
-	                var fragments = [], i, el, next, toClone
+	                var toClone = avalon.parseHTML(vnode.template)
+	                var fragments = [], i, el, next
 	                var sortedFragments = []
 	                var c = vnode.components
 	                var indexes = {}
-	                for (var i in c) {
+	                //尝试使用更高效的,不挪动元素的方式更新
+	                var inplaceUpdate = true
+	                var inplaceIndex = 0
+	                for (i in c) {
 	                    var ii = c[i].oldIndex
 	                    if (ii !== void 0) {
 	                        indexes[ii] = ~~i
+	                        if (inplaceUpdate) {
+	                            inplaceUpdate = indexes[ii] === ii
+	                            inplaceIndex++
+	                        }
 	                    } else {
 	                        indexes[i + "_"] = c[i]
 	                    }
 	                }
-	                var showLog = false
 	                i = 0
-	                while (next = node.nextSibling) {
-	                    if (next.nodeValue === breakText) {
-	                        break
-	                    } else if (next.nodeValue === groupText) {
-	                        fragment.appendChild(next)
-	                        if (indexes[i] !== void 0) {
-	                            showLog && avalon.log("使用已有的节点")
-	                            sortedFragments[indexes[i]] = fragment
+	                if (inplaceIndex) {
+	                    next = node
+	                    var entity = []
+	                    var continueRemove = false
+	                    var lastAnchor
+	                    while (next = next.nextSibling) {
+	                        if (next.nodeValue === breakText) {
+	                            lastAnchor = next
+	                            break
+	                        } else if (next.nodeValue === groupText) {
+	                            entity.push(next)
 	                            delete indexes[i]
+	                            i++
 	                        } else {
-	                            fragments.push(fragment)
+	                            if (inplaceIndex === i) {
+	                                delete indexes[i]
+	                                continueRemove = true
+	                                break
+	                            }
+	                            entity.push(next)
 	                        }
-	                        i++
-	                        fragment = emptyFragment.cloneNode(false)
-	                    } else {
-	                        fragment.appendChild(next)
 	                    }
-	                }
-	                showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-	                var needUpdate = false
-	                for (i in indexes) {
-	                    needUpdate = true
-	                    i = parseFloat(i)
-	                    fragment = fragments.shift()
-	                    if (fragment) {
-	                        showLog && avalon.log("使用已有节点")
-	                        sortedFragments[ i ] = fragment
-	                    } else {
-	                        showLog && avalon.log("创建新节点")
-	                        sortedFragments[ i ] = toClone ? toClone.cloneNode(true) : (toClone = avalon.parseHTML(vnode.template))
+	                    var needUpdate = true
+	                    if (continueRemove) {
+	                        while (next.nextSibling) {
+	                            if (next.nodeValue !== breakText) {
+	                                parent.removeChild(next.nextSibling)
+	                            } else {
+	                                lastAnchor = next.nextSibling
+	                            }
+	                        }
 	                    }
+	                    for (i in indexes) {
+	                        var vdom = indexes[i]
+	                        if (typeof vdom === "object") {
+	                            emptyFragment.appendChild(toClone.cloneNode(true))
+	                        }
+	                    }
+	                    if (vdom) {
+	                        pushArray(entity, avalon.slice(emptyFragment.childNodes))
+	                    }
+	                    parent.insertBefore(emptyFragment, lastAnchor)
+
+	                } else {
+	                    var showLog = false
+	                    while (next = node.nextSibling) {
+	                        if (next.nodeValue === breakText) {
+	                            break
+	                        } else if (next.nodeValue === groupText) {
+	                            fragment.appendChild(next)
+	                            if (indexes[i] !== void 0) {
+	                                showLog && avalon.log("使用已有的节点")
+	                                sortedFragments[indexes[i]] = fragment
+	                                delete indexes[i]
+	                            } else {
+	                                fragments.push(fragment)
+	                            }
+	                            i++
+	                            fragment = emptyFragment.cloneNode(false)
+	                        } else {
+	                            fragment.appendChild(next)
+	                        }
+	                    }
+	                    showLog && avalon.log("一共收集了", i, "repeat-item的节点")
+	                    needUpdate = false
+	                    for (i in indexes) {
+	                        needUpdate = true
+	                        i = parseFloat(i)
+	                        fragment = fragments.shift()
+	                        if (fragment) {
+	                            showLog && avalon.log("使用已有节点")
+	                            sortedFragments[ i ] = fragment
+	                        } else {
+	                            showLog && avalon.log("创建新节点")
+	                            sortedFragments[ i ] = toClone ? toClone.cloneNode(true) : (toClone = avalon.parseHTML(vnode.template))
+	                        }
+	                    }
+
+	                    for (i = 0, el; el = sortedFragments[i++]; ) {
+	                        emptyFragment.appendChild(el)
+	                    }
+
+	                    var entity = avalon.slice(emptyFragment.childNodes)
+	                    parent.insertBefore(emptyFragment, node.nextSibling)
 	                }
-
-	                for (i = 0, el; el = sortedFragments[i++]; ) {
-	                    emptyFragment.appendChild(el)
-	                }
-
-	                var entity = avalon.slice(emptyFragment.childNodes)
-	                parent.insertBefore(emptyFragment, node.nextSibling)
-
 	                needUpdate && updateEntity(entity, vnode.children.slice(1, -1), parent)
 
 	                return false
@@ -7236,7 +7287,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	    var $hashcode = oldProxy ? oldProxy.$hashcode :
 	            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-	    
+
 	    vm.$hashcode = $hashcode
 
 	    if (!repeatArray) {
