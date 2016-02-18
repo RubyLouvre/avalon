@@ -44,6 +44,7 @@ function $watch(expr, funOrObj) {
     var data = typeof funOrObj === "function" ? {
         update: funOrObj,
         element: {},
+        expr:"[[ "+ expr+ " ]]",
         shouldDispose: function() {
             return vm.$hashcode === false
         },

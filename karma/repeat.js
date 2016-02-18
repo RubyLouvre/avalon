@@ -217,8 +217,8 @@ describe('repeat', function() {
         })
 
     })
-
-    it("double loop", function(done) {
+    
+    it("监控数组元素也是数组的长度变化", function(done) {
         div.innerHTML = heredoc(function() {
             /*
              <ul ms-controller=repeat3>

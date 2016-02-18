@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm
+            window.onload = function () {
+                vm = avalon.define({
+                    $id: "repeat7",
+                    array: [{a: 1, b: 2}, {a: 3, b: 4}]
+                })
+                avalon.scan(document.body, vm)
+                setTimeout(function () {
+                    vm.array = [{a: 15, b: 25}, {a: 33, c: 44, b: 78}, {a: 55, b: 66}]
+                    setTimeout(function () {
+                        vm.array[0].a = 999
+                        vm.array[0].b = 888
+                    }, 1000)
+                }, 1000)
+            }
+
+        </script>
+    </head>
+    <body>
+        <ul ms-controller="repeat7">
+            <li ms-repeat="array">
+                <p ms-repeat="el">{{$key}}||{{$val}}||{{$index}}</p>
+            </li>
+        </ul>
+    </body>
+</html>

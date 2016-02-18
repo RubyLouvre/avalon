@@ -408,7 +408,7 @@ function subModelFactory(before, after, heirloom, options) {
  * @param {Object} heirloom
  * @returns {Component}
  */
-function mediatorFactory(before, after, heirloom) {
+function mediatorFactory(before, after, heirloom, callback) {
     heirloom = heirloom || {}
     var b = before.$accessors || {}
     var a = after.$accessors || {}
@@ -421,13 +421,15 @@ function mediatorFactory(before, after, heirloom) {
             $accessors[key] = b[key]
         }
     }
+   
     for (key in after) {
         keys[key] = after[key]
         if (a[key]) {
             $accessors[key] = a[key]
         }
     }
-
+    callback && callback(keys, $accessors)
+    
     var $vmodel = new Observer()
     $vmodel = defineProperties($vmodel, $accessors, keys)
 
@@ -454,8 +456,6 @@ function mediatorFactory(before, after, heirloom) {
 
     return $vmodel
 }
-
-//avalon.mediatorFactory = mediatorFactory
 
 
 

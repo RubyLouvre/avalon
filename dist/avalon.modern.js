@@ -1909,7 +1909,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {Object} heirloom
 	 * @returns {Component}
 	 */
-	function mediatorFactory(before, after, heirloom) {
+	function mediatorFactory(before, after, heirloom, callback) {
 	    heirloom = heirloom || {}
 	    var b = before.$accessors || {}
 	    var a = after.$accessors || {}
@@ -1922,13 +1922,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            $accessors[key] = b[key]
 	        }
 	    }
+	   
 	    for (key in after) {
 	        keys[key] = after[key]
 	        if (a[key]) {
 	            $accessors[key] = a[key]
 	        }
 	    }
-
+	    callback && callback(keys, $accessors)
+	    
 	    var $vmodel = new Observer()
 	    $vmodel = defineProperties($vmodel, $accessors, keys)
 
@@ -1955,8 +1957,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return $vmodel
 	}
-
-	//avalon.mediatorFactory = mediatorFactory
 
 
 
@@ -2859,7 +2859,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            data.i--
 	        }
 	    }
-	    console.log("disposeQueue.length",disposeQueue.length)
 	    rejectDisposeQueue.beginTime = new Date()
 	}
 
@@ -5903,7 +5902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {Object} heirloom
 	 * @returns {Component}
 	 */
-	function mediatorFactory(before, after, heirloom) {
+	function mediatorFactory(before, after, heirloom, callback) {
 	    heirloom = heirloom || {}
 	    var $accessors = {}
 	    var keys = {}
@@ -5922,7 +5921,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            $accessors[key] = accessor
 	        }
 	    }
-
+	    callback && callback(keys, $accessors)
 
 	    var $vmodel = new Observer()
 	    Object.defineProperties($vmodel, $accessors)
@@ -5946,9 +5945,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return $vmodel
 	}
-
-	//avalon.mediatorFactory = convergedModelFactory
-
 
 
 	/*********************************************************************
@@ -7086,49 +7082,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
 	    var before = binding.vmodel//上一级的VM
-	    // console.log(before, "::::")
 	    var heirloom = {}
 	    if (oldItem && item && item.$events) {
 	        item.$events = oldItem.$events
 	        item.$events.__vmodel__ = item
 	    }
 
-	    if (item && item.$id && !Array.isArray(before)) {
-	        before = mediatorFactory(before, item, heirloom)
-	    }
-	    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
-	    var $accessors = {}
-	    var after = {
-	        $outer: 1
-	    }
+	    var useItem = item && item.$id
+	    var vm = mediatorFactory(before, useItem ? item : {}, heirloom,
+	            function (obj, $accessors) {
+	                var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+	                for (var i = 0, key; key = keys[i++]; ) {
+	                    if (oldProxy) {
+	                        $accessors[key] = Object.getOwnPropertyDescriptor(oldProxy, key)
+	                    } else {
+	                        $accessors[key] = makeObservable("", key, heirloom)
+	                    }
+	                }
+	            })
+	            
+	    var $hashcode = oldProxy ? oldProxy.$hashcode :
+	            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
+	    
+	    vm.$hashcode = $hashcode
 
-	    for (var i = 0, key; key = keys[i++]; ) {
-	        if (oldProxy) {
-	            $accessors[key] = Object.getOwnPropertyDescriptor(oldProxy, key)
-	        } else {
-	            $accessors[key] = makeObservable("", key, heirloom)
-	        }
-	    }
-	    if (repeatArray) {
-	        after.$remove = noop
-	    }
-
-
-	    Object.defineProperties(after, $accessors)
-
-	    var vm = mediatorFactory(before, after, heirloom)
-	    if (oldProxy) {
-	        vm.$hashcode = oldProxy.$hashcode
-	    } else {
-	        vm.$hashcode =
-	                makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-	    }
 	    if (!repeatArray) {
 	        var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
 
 	        //数组循环中的对象循环,得到数组元素
 	        if (match && match[1] === "a") {
-	            before = before[match[2]]
+	            before = vm[match[2]]
 	            var path = name
 	        } else {
 	            path = binding.expr + "." + name
@@ -7146,7 +7129,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //       $emit(vm.$events[binding.itemName + ".length"], a.length)
 	        //})
 	    }
-
 
 	    return  vm
 	}

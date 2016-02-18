@@ -499,53 +499,41 @@ function initNames(repeatArray) {
     this.initNames = noop
 }
 
-//顶层的可以复用
-function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
 
+function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
     var before = binding.vmodel//上一级的VM
-    // console.log(before, "::::")
     var heirloom = {}
     if (oldItem && item && item.$events) {
         item.$events = oldItem.$events
         item.$events.__vmodel__ = item
     }
 
-    if (item && item.$id && !Array.isArray(before)) {
-        before = mediatorFactory(before, item, heirloom)
-    }
-    var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
-    var after = {
-        $accessors: {},
-        $outer: 1
-    }
+    var useItem = item && item.$id
+    var vm = mediatorFactory(before, useItem ? item : {}, heirloom,
+            function (obj, $accessors) {
+                obj.$outer = obj.$outer || 1
+                if (repeatArray) {
+                    obj.$remove = noop
+                }
+                var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
+                for (var i = 0, key; key = keys[i++]; ) {
+                    if (oldProxy) {
+                        $accessors[key] = oldProxy.$accessors[key]
+                    } else {
+                        $accessors[key] = makeObservable("", key, heirloom)
+                    }
+                }
+            })
+    var $hashcode = oldProxy ? oldProxy.$hashcode :
+            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
+    
+    vm.$hashcode = $hashcode
 
-    for (var i = 0, key; key = keys[i++]; ) {
-        if (oldProxy) {
-            after.$accessors[key] = oldProxy.$accessors[key]
-        } else {
-            after.$accessors[key] = makeObservable("", key, heirloom)
-        }
-    }
-    if (repeatArray) {
-        after.$remove = noop
-    }
-
-    if (Object.defineProperties) {
-        Object.defineProperties(after, after.$accessors)
-    }
-    var vm = mediatorFactory(before, after, heirloom)
-    if (oldProxy) {
-        vm.$hashcode = oldProxy.$hashcode
-    } else {
-        vm.$hashcode =
-                makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-    }
     if (!repeatArray) {
         var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-
         //数组循环中的对象循环,得到数组元素
         if (match && match[1] === "a") {
-            before = before[match[2]]
+            before = vm[match[2]]
             var path = name
         } else {
             path = binding.expr + "." + name
@@ -554,17 +542,18 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
             //比如outerVm.object.aaa = 8需要同步到innerVm.$val
             vm[binding.itemName] = v
         })
-    } else {//处理el.length
-        vm.$watch(binding.itemName, function (a) {
-            if (Array.isArray(a))
-                $emit(vm.$events[binding.itemName + ".length"], a.length)
-        })
+    } else {
+        //处理el.length
+        //数组元素亦是数组,需要对其长度进行监听情况,已经在
+        //makeObservable的old && old.$id &&  val.$id && !Array.isArray(old)分支中处理了
+        //vm.$watch(binding.itemName, function (a) {
+        //   if (Array.isArray(a))
+        //       $emit(vm.$events[binding.itemName + ".length"], a.length)
+        //})
     }
-
 
     return  vm
 }
-
 
 
 var repeatCom = avalon.components["ms-repeat"] =
@@ -594,6 +583,5 @@ function RepeatItem(array) {
         return el.clone()
     })
 }
-
 
 avalon.repeatItemFactory = repeatItemFactory

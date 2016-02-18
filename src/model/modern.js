@@ -390,7 +390,7 @@ function subModelFactory(before, after, heirloom, options) {
  * @param {Object} heirloom
  * @returns {Component}
  */
-function mediatorFactory(before, after, heirloom) {
+function mediatorFactory(before, after, heirloom, callback) {
     heirloom = heirloom || {}
     var $accessors = {}
     var keys = {}
@@ -409,7 +409,7 @@ function mediatorFactory(before, after, heirloom) {
             $accessors[key] = accessor
         }
     }
-
+    callback && callback(keys, $accessors)
 
     var $vmodel = new Observer()
     Object.defineProperties($vmodel, $accessors)
@@ -433,9 +433,6 @@ function mediatorFactory(before, after, heirloom) {
 
     return $vmodel
 }
-
-//avalon.mediatorFactory = convergedModelFactory
-
 
 
 /*********************************************************************

@@ -10,9 +10,17 @@
             window.onload = function () {
                 vm = avalon.define({
                     $id: "test",
-                    array: [1, 2, 3, 4]
+                    aaa: {
+                        a: 11,
+                        b: 22
+                    }
                 })
                 avalon.scan(document.body, vm)
+                setTimeout(function(){
+                    console.log("---")
+                    vm.aaa.a = 999
+                   // vm.array =[[1,2,3,5],[3,4,5,9,8]]
+                },1000)
             }
 
         </script>
@@ -20,7 +28,7 @@
     <body>
         <div ms-controller="test">
             <ul>
-                <li ms-repeat="array">{{el}}-{{$first}}-{{$last}}-{{$index}}</li>
+                <li ms-repeat="aaa">{{$key}}--{{$val}}</li>
             </ul>
         </div>
     </body>
