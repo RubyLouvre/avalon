@@ -8,7 +8,7 @@ function disposeVirtual(nodes) {
                 if (node.tokens) {
                     node.tokens.forEach(function (token) {
                         token.element = null
-                        token.__disposed__ = true
+                      //  token.__disposed__ = true
                     })
                 }
                 break

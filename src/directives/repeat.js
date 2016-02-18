@@ -139,7 +139,7 @@ avalon.directive("repeat", {
         //第一次循环,从cache中重复利用虚拟节点及对应的代理VM, 没有就创建空的虚拟节点
         var components = {}
         var entries = []
-         for (var i = 0; i <= last; i++) {
+        for (var i = 0; i <= last; i++) {
             if (repeatArray) {//如果是数组,以$id或type+值+"_"为键名
                 var item = value[i]
                 var component = isInCache(cache, item)//从缓存取出立即删掉
@@ -153,7 +153,9 @@ avalon.directive("repeat", {
                 key: key || i,
                 item: item
             })
-            components[i] = component
+            if (component !== void 0) {
+                components[i] = component
+            }
         }
 
         var reuse = []//回收剩下的虚拟节点
@@ -176,7 +178,7 @@ avalon.directive("repeat", {
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
                     component = new RepeatItem(vnode.copy)
-                      
+
                     newCom = true
                 }
                 //新建或重利用旧的proxy, item创建一个proxy
@@ -228,6 +230,12 @@ avalon.directive("repeat", {
                 newCom = false
             }
 
+        }
+        while (component = reuse.shift()) {
+            disposeVirtual([component])
+            if (component.item) {
+                component.item.$hashcode = false
+            }
         }
 
         vnode.components = components
