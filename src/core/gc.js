@@ -20,6 +20,7 @@ function injectDisposeQueue(data, list) {
 
 var lastGCIndex = 0
 function rejectDisposeQueue(data) {
+    var now = new Date
     var i = lastGCIndex || disposeQueue.length
     var threshold = 0
     while (data = disposeQueue[--i]) {
@@ -55,7 +56,7 @@ function rejectDisposeQueue(data) {
             data.i--
         }
     }
-    avalon.log(disposeQueue.length,"gc")
+    avalon.log(new Date - now, "cost gc", disposeQueue.length)
     rejectDisposeQueue.beginTime = new Date()
 }
 
@@ -70,9 +71,9 @@ function disposeData(data) {
         el.dispose && el.dispose()
         data.element = null
     }
-    for (var key in data) {
-        data[key] = null
-    }
+//    for (var key in data) {
+//        data[key] = null
+//    }
 }
 
 module.exports = {

@@ -15,18 +15,18 @@ function fireClick(el) {
         !el.dispatchEvent(evt);
     }
 }
-describe('repeat', function() {
+describe('repeat', function () {
     var body = document.body, div, vm
-    beforeEach(function() {
+    beforeEach(function () {
         div = document.createElement("div")
         body.appendChild(div)
     })
-    afterEach(function() {
+    afterEach(function () {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it("ms-class+ms-repeat", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("ms-class+ms-repeat", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="repeat0">
              <ul>
@@ -51,14 +51,14 @@ describe('repeat', function() {
         expect(lis[2].className).to.equal("3")
         expect(lis[3].className).to.equal("4")
         vm.array.push(5)
-        setTimeout(function() {
+        setTimeout(function () {
 
             lis = div.getElementsByTagName("li")
             expect(lis.length).to.equal(5)
             expect(lis[3].innerHTML).to.equal("4-false-false-3")
             expect(lis[4].innerHTML).to.equal("5-false-true-4")
             vm.array.reverse()
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(lis[0].innerHTML).to.equal("5-true-false-0")
                 expect(lis[1].innerHTML).to.equal("4-false-false-1")
                 expect(lis[2].innerHTML).to.equal("3-false-false-2")
@@ -68,7 +68,7 @@ describe('repeat', function() {
                 vm.array.unshift("a")
                 vm.array.pop()
                 vm.array.remove(3)
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(lis[0].innerHTML).to.equal("a-true-false-0")
                     expect(lis[1].innerHTML).to.equal("4-false-false-1")
                     expect(lis[2].innerHTML).to.equal("2-false-true-2")
@@ -79,8 +79,8 @@ describe('repeat', function() {
 
 
     })
-    it("ms-each", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("ms-each", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="repeat1">
              <select multiple="true" ms-each="array">
@@ -100,7 +100,7 @@ describe('repeat', function() {
         expect(options[0].text).to.equal("11")
         expect(options[1].text).to.equal("22")
         expect(options[2].text).to.equal("33")
-        avalon.each(options, function(i, el) {
+        avalon.each(options, function (i, el) {
             el.title = el.text
         })
         var ps = div.getElementsByTagName("p")
@@ -108,12 +108,12 @@ describe('repeat', function() {
         expect(ps[0][prop]).to.equal("233")
         expect(ps[1][prop]).to.equal("244")
         expect(ps[2][prop]).to.equal("255")
-        avalon.each(ps, function(i, el) {
+        avalon.each(ps, function (i, el) {
             el.title = el[prop]
         })
         vm.array.reverse()
-        setTimeout(function() {
-            expect(options[0].text).to.equal("33")
+        setTimeout(function () {
+            expect(options[0].text + "!").to.equal("33!")
             expect(options[1].text).to.equal("22")
             expect(options[2].text).to.equal("11")
             expect(options[0].title).to.equal("33")
@@ -126,7 +126,7 @@ describe('repeat', function() {
             expect(ps[1].title).to.equal("244")
             expect(ps[2].title).to.equal("233")
             vm.array = [{a: 66}, {a: 77}, {a: 88}, {a: 99}]
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(options[0].text).to.equal("66")
                 expect(options[1].text).to.equal("77")
                 expect(options[2].text).to.equal("88")
@@ -150,8 +150,8 @@ describe('repeat', function() {
         })
 
     })
-    it("test3", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("test3", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <table ms-controller="repeat2">
              <tr ms-repeat-db="databases">
@@ -192,7 +192,7 @@ describe('repeat', function() {
                     queries: ["xx", "yy", "zz", 'dd']
                 }
             }]
-        setTimeout(function() {
+        setTimeout(function () {
             expect(trs.length).to.equal(2)
             expect(tds[0].innerHTML).to.equal("xxx")
             var spans = div.getElementsByTagName("span")
@@ -217,9 +217,9 @@ describe('repeat', function() {
         })
 
     })
-    
-    it("监控数组元素也是数组的长度变化", function(done) {
-        div.innerHTML = heredoc(function() {
+
+    it("监控数组元素也是数组的长度变化", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <ul ms-controller=repeat3>
              <li ms-repeat="array"> <b>{{el.length}}</b><span ms-repeat="elem in el">{{elem}}</span></li>
@@ -229,7 +229,7 @@ describe('repeat', function() {
         vm = avalon.define({
             $id: "repeat3",
             array: [[1, 2], [3, 4, 5]],
-            onClick: function() {
+            onClick: function () {
                 vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
             }
         })
@@ -244,7 +244,7 @@ describe('repeat', function() {
         expect(spans[3].innerHTML).to.equal("4")
         expect(spans[4].innerHTML).to.equal("5")
         vm.onClick()
-        setTimeout(function() {
+        setTimeout(function () {
             expect(bs[0].innerHTML).to.equal("4")
             expect(bs[1].innerHTML).to.equal("5")
             expect(spans[0].innerHTML).to.equal("a")
@@ -261,8 +261,8 @@ describe('repeat', function() {
 
     })
 
-    it("object single repeat", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("object single repeat", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <ul ms-controller="repeat4">
              <li ms-repeat="object">
@@ -291,7 +291,7 @@ describe('repeat', function() {
             aaa: 333,
             bbb: 555
         }
-        setTimeout(function() {
+        setTimeout(function () {
             var lis = div.getElementsByTagName("li")
             expect(lis.length).to.equal(4)
             expect(lis[0].innerHTML.trim()).to.equal("eee||777||0")
@@ -305,7 +305,7 @@ describe('repeat', function() {
                 bbb: 666,
                 kkk: 999
             }
-            setTimeout(function() {
+            setTimeout(function () {
                 var lis = div.getElementsByTagName("li")
                 expect(lis.length).to.equal(5)
                 expect(lis[0].innerHTML.trim()).to.equal("eee||111||0")
@@ -319,8 +319,8 @@ describe('repeat', function() {
         })
 
     })
-    it("double repeat+ms-class", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("double repeat+ms-class", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <table ms-controller="repeat5">
              <tbody>
@@ -380,7 +380,7 @@ describe('repeat', function() {
             }]
 
         vm.databases = a
-        setTimeout(function() {
+        setTimeout(function () {
             expect(tds[0].innerHTML.trim()).to.equal("4")
             expect(tds[1].innerHTML.trim()).to.equal("aaa")
             expect(tds[1].className.trim()).to.equal("aaa")
@@ -393,8 +393,8 @@ describe('repeat', function() {
             done()
         })
     })
-    it("replace object key and value", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("replace object key and value", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <ul ms-controller="repeat6">
              <li ms-repeat="d in object">{{d}};;;{{$key}}</li>
@@ -413,27 +413,29 @@ describe('repeat', function() {
         expect(lis.length).to.equal(2)
         expect(lis[0].innerHTML.trim()).to.equal("111;;;aaa")
         expect(lis[1].innerHTML.trim()).to.equal("222;;;bbb")
-        avalon.each(lis, function(i, el) {
+        avalon.each(lis, function (i, el) {
             el.title = el.innerHTML
         })
         vm.object = {
             a: 333,
             b: 444,
-            c: 555
+            c: 555,
+            $d: 666
         }
-        setTimeout(function() {
-            expect(lis.length).to.equal(3)
+        setTimeout(function () {
+            expect(lis.length).to.equal(4)
             expect(lis[0].innerHTML.trim()).to.equal("333;;;a")
             expect(lis[1].innerHTML.trim()).to.equal("444;;;b")
             expect(lis[2].innerHTML.trim()).to.equal("555;;;c")
+            expect(lis[3].innerHTML.trim()).to.equal("666;;;$d")
             expect(lis[0].title).to.equal("111;;;aaa")
             expect(lis[1].title).to.equal("222;;;bbb")
             done()
         })
     })
 
-    it("ms-each+ms-with", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("ms-each+ms-with", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <ul ms-controller="repeat7">
              <li ms-repeat="array">
@@ -452,11 +454,11 @@ describe('repeat', function() {
         expect(ps[1].innerHTML.trim()).to.equal("b||2||1")
         expect(ps[2].innerHTML.trim()).to.equal("a||3||0")
         expect(ps[3].innerHTML.trim()).to.equal("b||4||1")
-        avalon.each(ps, function(i, el) {
+        avalon.each(ps, function (i, el) {
             el.title = el.innerHTML
         })
         vm.array = [{a: 15, b: 25}, {a: 33, c: 44, b: 78}, {a: 55, b: 66}]
-        setTimeout(function() {
+        setTimeout(function () {
             expect(ps[0].innerHTML.trim()).to.equal("a||15||0")
             expect(ps[1].innerHTML.trim()).to.equal("b||25||1")
             expect(ps[2].innerHTML.trim()).to.equal("a||33||0")
@@ -472,7 +474,7 @@ describe('repeat', function() {
             expect(ps[5].title).to.equal("")
             vm.array[0].a = 999
             vm.array[0].b = 888
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(ps[0].innerHTML.trim()).to.equal("a||999||0")
                 expect(ps[1].innerHTML.trim()).to.equal("b||888||1")
                 done()
@@ -481,8 +483,8 @@ describe('repeat', function() {
         })
     })
 
-    it("ms-with+ms-each", function(done) {
-        div.innerHTML = heredoc(function() {
+    it("ms-with+ms-each", function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <ul ms-controller="repeat8">
              <li ms-repeat="tr in grid">
@@ -505,7 +507,7 @@ describe('repeat', function() {
         vm.grid[0].c = 999
         vm.grid[0].a = 888
         vm.grid[1].b = 777
-        setTimeout(function() {
+        setTimeout(function () {
             expect(ps[0].innerHTML.trim()).to.equal("999")
             expect(ps[1].innerHTML.trim()).to.equal("456")
             expect(ps[2].innerHTML.trim()).to.equal("888")

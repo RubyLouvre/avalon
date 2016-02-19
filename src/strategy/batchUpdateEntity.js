@@ -37,7 +37,7 @@ function batchUpdateEntity(id, immediate) {
                         node.getAttribute("ms-important") === id ||
                         node.getAttribute("av-controller") === id ||
                         node.getAttribute("av-important") === id ||
-                        String(node.getAttribute("data-controller")).slice(0, -2) === id
+                        node.getAttribute("avalonctrl") === id
                         ) {
                     dom = dtree[id] = node
 

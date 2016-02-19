@@ -16,5 +16,5 @@ avalon.scan = function (elem, vmodel) {
     }
 }
 
-
+require("./autoScan")
 

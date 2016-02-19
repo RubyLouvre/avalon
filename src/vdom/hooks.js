@@ -42,9 +42,13 @@ function controllerHook(node) {
                     //移除ms-controller, ms-important
                     //好让[ms-controller]样式生效,处理{{}}问题
                     var oldName = name
-                    name = "data-controller" 
-                    v = type === "important" ? v + "!!" : v + "??"
-                    //添加data-controller, data-controller
+                    name = "avalonctrl"
+                    if (type === "important") {
+                        addData(node, "changeAttr")["data-important"] = true
+                        props["data-important"] = true
+                    }
+                   
+                    //添加avalonctrl, data-important
                     //方便收集vmodel
                     break
                 case "with":

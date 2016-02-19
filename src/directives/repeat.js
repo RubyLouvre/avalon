@@ -164,7 +164,10 @@ avalon.directive("repeat", {
             delete cache[i]
         }
         //第二次循环,创建缺失的虚拟节点或proxy
+        var now = new Date
         var newCom
+        var createTime = 0
+        var asignTime = 0
         for (i = 0; i <= last; i++) {
             component = components[i]
             var curItem = entries[i].item
@@ -182,8 +185,10 @@ avalon.directive("repeat", {
                     newCom = true
                 }
                 //新建或重利用旧的proxy, item创建一个proxy
+                var atime = new Date - 0
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
                         component.item, component.vmodel)
+                createTime += (new Date - atime)
             }
 
             if (component.vmodel) {
@@ -191,12 +196,16 @@ avalon.directive("repeat", {
             } else {
                 //  command[i] = component  //标识这里需要新建一个虚拟节点
             }
-            proxy[binding.keyName] = curKey
-            proxy[binding.itemName] = curItem
+            var btime = new Date - 0
 
+            if (binding.keyName !== "$index") {
+                proxy[binding.keyName] = curKey
+            }
+            proxy[binding.itemName] = curItem
             proxy.$index = i
             proxy.$first = i === 0
             proxy.$last = i === last
+            asignTime += (new Date - btime)
             proxy.$id = value.$id + (repeatArray ? "" : "." + curKey)
             /*兼容1.4与1.5, 1.6去掉*/
             proxy.$outer = binding.$outer
@@ -231,6 +240,9 @@ avalon.directive("repeat", {
             }
 
         }
+        console.log("第二次循环", new Date - now, last)
+        console.log("创建", createTime, last)
+        console.log("赋值", asignTime, last)
         while (component = reuse.shift()) {
             disposeVirtual([component])
             if (component.item) {
@@ -260,6 +272,7 @@ avalon.directive("repeat", {
         addHooks(this, binding)
     },
     update: function (node, vnode, parent) {
+        var now = new Date - 0
         if (!vnode.disposed) {
             var groupText = vnode.signature
             var nodeValue = node.nodeValue
@@ -280,12 +293,13 @@ avalon.directive("repeat", {
                     parent.replaceChild(dom, node)
                 }
                 updateEntity(keepChild, vnode.children, parent)
+                //avalon.log(new Date - now, "cost repeat1")
                 return false
             } else {
 
                 var breakText = groupText + ":end"
                 var emptyFragment = document.createDocumentFragment()
-                var fragment = emptyFragment.cloneNode(false)
+
                 //将原有节点移出DOM, 试根据groupText分组
                 var toClone = avalon.parseHTML(vnode.template)
                 var fragments = [], i, el, next
@@ -293,21 +307,34 @@ avalon.directive("repeat", {
                 var c = vnode.components
                 var indexes = {}
                 //尝试使用更高效的,不挪动元素的方式更新
-                var inplaceUpdate = true
                 var inplaceIndex = 0
+                var inplaceState = "maybe"
                 for (i in c) {
                     var ii = c[i].oldIndex
                     if (ii !== void 0) {
                         indexes[ii] = ~~i
-                        if (inplaceUpdate) {
-                            inplaceUpdate = indexes[ii] === ii
-                            inplaceIndex++
+                        if (inplaceState) {
+                            if (inplaceState === "maybenot") {
+                                inplaceState = false
+                                inplaceIndex = 0
+                                continue
+                            }
+                            if (ii === indexes[ii]) {
+                                inplaceIndex++
+                            } else {
+                                inplaceState = false
+                            }
                         }
                     } else {
                         indexes[i + "_"] = c[i]
+                        if (inplaceState === "maybe") {
+                            inplaceState = "maybenot"
+                        }
+
                     }
                 }
                 i = 0
+            
                 if (inplaceIndex) {
                     next = node
                     var entity = []
@@ -330,7 +357,7 @@ avalon.directive("repeat", {
                             entity.push(next)
                         }
                     }
-                    var needUpdate = true
+
                     if (continueRemove) {
                         while (next.nextSibling) {
                             if (next.nodeValue !== breakText) {
@@ -350,16 +377,17 @@ avalon.directive("repeat", {
                         pushArray(entity, avalon.slice(emptyFragment.childNodes))
                     }
                     parent.insertBefore(emptyFragment, lastAnchor)
-
+                    updateEntity(entity, vnode.children.slice(1, -1), parent)
+                    //avalon.log(new Date - now, "cost repeat2")
+                    return false
                 } else {
-                    var showLog = false
+                    var fragment = emptyFragment.cloneNode(false)
                     while (next = node.nextSibling) {
                         if (next.nodeValue === breakText) {
                             break
                         } else if (next.nodeValue === groupText) {
                             fragment.appendChild(next)
                             if (indexes[i] !== void 0) {
-                                showLog && avalon.log("使用已有的节点")
                                 sortedFragments[indexes[i]] = fragment
                                 delete indexes[i]
                             } else {
@@ -371,17 +399,14 @@ avalon.directive("repeat", {
                             fragment.appendChild(next)
                         }
                     }
-                    showLog && avalon.log("一共收集了", i, "repeat-item的节点")
-                    needUpdate = false
+                    var needUpdate = false
                     for (i in indexes) {
                         needUpdate = true
                         i = parseFloat(i)
                         fragment = fragments.shift()
                         if (fragment) {
-                            showLog && avalon.log("使用已有节点")
                             sortedFragments[ i ] = fragment
                         } else {
-                            showLog && avalon.log("创建新节点")
                             sortedFragments[ i ] = toClone ? toClone.cloneNode(true) : (toClone = avalon.parseHTML(vnode.template))
                         }
                     }
@@ -394,7 +419,7 @@ avalon.directive("repeat", {
                     parent.insertBefore(emptyFragment, node.nextSibling)
                 }
                 needUpdate && updateEntity(entity, vnode.children.slice(1, -1), parent)
-
+                //avalon.log(new Date - now, "cost repeat3")
                 return false
             }
         }
@@ -468,7 +493,7 @@ function compareObject(a, b) {
 // 新 位置: 旧位置
 function isInCache(cache, vm) {
     var c
-    if (avalon.isObject(vm)) {
+    if (Object(vm) === vm) {
         c = cache[vm.$hashcode]
         if (c) {
             delete cache[vm.$hashcode]
@@ -502,8 +527,7 @@ function saveInCache(cache, vm, component) {
     if (Object(vm) === vm) {
         cache[vm.$hashcode] = component
     } else {
-        var type = avalon.type(vm)
-        var trackId = type + "_" + vm
+        var trackId = avalon.type(vm) + "_" + vm
         if (!cache[trackId]) {
             cache[trackId] = component
         } else {

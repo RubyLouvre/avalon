@@ -15,7 +15,7 @@ function scanNodes(nodes, vm) {
             case "#text":
                 if (!node.skipContent) {
                     if (rexpr.test(String(node.nodeValue))) {
-                        scanText(node, vm)
+                       vm && scanText(node, vm)
                     }
                 }
                 break

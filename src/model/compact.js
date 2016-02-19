@@ -200,15 +200,14 @@ function makeObservable(sid, spath, heirloom) {
     get.heirloom = heirloom
     return {
         get: get,
-        set: function(val) {
+        set: function (val) {
             if (old === val) {
                 return
             }
             if (val && typeof val === "object") {
-                if (old && old.$id &&  val.$id && !Array.isArray(old) ) {
+                if (old && old.$id && val.$id && !Array.isArray(old)) {
                     //合并两个对象类型的子vm,比如proxy item中的el = newEl
                     for (var ii in val) {
-                        
                         old[ii] = val[ii]
                     }
                 } else {
@@ -256,14 +255,14 @@ function makeObservable(sid, spath, heirloom) {
 function makeFire($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
     hideProperty($vmodel, "$events", heirloom)
-    hideProperty($vmodel, "$watch", function(expr, fn) {
+    hideProperty($vmodel, "$watch", function (expr, fn) {
         if (arguments.length === 2) {
             return $watch.apply($vmodel, arguments)
         } else {
             throw "$watch方法参数不对"
         }
     })
-    hideProperty($vmodel, "$fire", function(expr, a, b) {
+    hideProperty($vmodel, "$fire", function (expr, a, b) {
         if (expr.indexOf("all!") === 0) {
             var p = expr.slice(4)
             for (var i in avalon.vmodels) {
@@ -309,7 +308,7 @@ function toJson(val) {
 
 //$model的PropertyDescriptor
 var $modelAccessor = {
-    get: function() {
+    get: function () {
         return toJson(this)
     },
     set: avalon.noop,
@@ -351,6 +350,7 @@ function hideProperty(host, name, value) {
  * @param {Object} options
  * @returns {Observer}
  */
+
 function subModelFactory(before, after, heirloom, options) {
     var keys = {}
     var $accessors = {}
@@ -359,11 +359,11 @@ function subModelFactory(before, after, heirloom, options) {
     var resue = before.$accessors || {}
 
     var key, sid, spath
-
+    var skips = {}
     for (key in after) {
         if ($$skipArray[key])
             continue
-        keys[key] = before[key]
+        keys[key] = true
         if (!isSkip(key, after[key], {})) {
             if (resue[key]) {
                 $accessors[key] = resue[key]
@@ -372,18 +372,18 @@ function subModelFactory(before, after, heirloom, options) {
                 spath = $pathname ? $pathname + "." + key : key
                 $accessors[key] = makeObservable(sid, spath, heirloom)
             }
+        } else {
+            skips[key] = after[key]
         }
     }
     var hashcode = before.$hashcode
     $accessors.$model = $modelAccessor
     var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, $accessors, keys)
+    $vmodel = defineProperties($vmodel, $accessors, skips)
 
-    for (key in keys) {
-        if (!$accessors[key]) {//添加不可监控的属性
-            $vmodel[key] = keys[key]
-        }
-        keys[key] = true
+    for (key in skips) {
+        $vmodel[key] = skips[key]
+        delete after[key]
     }
     function hasOwnKey(key) {
         return keys[key] === true
@@ -421,7 +421,7 @@ function mediatorFactory(before, after, heirloom, callback) {
             $accessors[key] = b[key]
         }
     }
-   
+
     for (key in after) {
         keys[key] = after[key]
         if (a[key]) {
@@ -429,7 +429,7 @@ function mediatorFactory(before, after, heirloom, callback) {
         }
     }
     callback && callback(keys, $accessors)
-    
+
     var $vmodel = new Observer()
     $vmodel = defineProperties($vmodel, $accessors, keys)
 
@@ -478,7 +478,7 @@ function observeArray(array, old, heirloom, options) {
         if (options.top) {
             makeFire(array, heirloom)
         }
-        array.notify = function(a, b, c) {
+        array.notify = function (a, b, c) {
             var vm = heirloom.__vmodel__
             if (vm) {
                 var path = a === null || a === void 0 ?
@@ -517,7 +517,7 @@ function observeItem(item, a, b) {
 
 var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 var newProto = {
-    set: function(index, val) {
+    set: function (index, val) {
         if (((index >>> 0) === index) && this[index] !== val) {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
@@ -526,32 +526,32 @@ var newProto = {
             this.splice(index, 1, val)
         }
     },
-    contains: function(el) { //判定是否包含
+    contains: function (el) { //判定是否包含
         return this.indexOf(el) !== -1
     },
-    ensure: function(el) {
+    ensure: function (el) {
         if (!this.contains(el)) { //只有不存在才push
             this.push(el)
         }
         return this
     },
-    pushArray: function(arr) {
+    pushArray: function (arr) {
         return this.push.apply(this, arr)
     },
-    remove: function(el) { //移除第一个等于给定值的元素
+    remove: function (el) { //移除第一个等于给定值的元素
         return this.removeAt(this.indexOf(el))
     },
-    removeAt: function(index) { //移除指定索引上的元素
+    removeAt: function (index) { //移除指定索引上的元素
         if ((index >>> 0) === index) {
             return this.splice(index, 1)
         }
         return []
     },
-    size: function() { //取得数组长度，这个函数可以同步视图，length不能
+    size: function () { //取得数组长度，这个函数可以同步视图，length不能
         avalon.log("warnning: array.size()将被废弃！")
         return this.length
     },
-    removeAll: function(all) { //移除N个元素
+    removeAll: function (all) { //移除N个元素
         var on = this.length
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
@@ -576,7 +576,7 @@ var newProto = {
         this.notify()
         notifySize(this, on)
     },
-    clear: function() {
+    clear: function () {
         this.removeAll()
         return this
     }
@@ -591,12 +591,11 @@ function notifySize(array, on) {
 
 var _splice = ap.splice
 
-arrayMethods.forEach(function(method) {
+arrayMethods.forEach(function (method) {
     var original = ap[method]
-    newProto[method] = function() {
+    newProto[method] = function () {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
-
         for (var i = 0, n = arguments.length; i < n; i++) {
             args[i] = observeItem(arguments[i], {}, {
                 idname: this.$id + ".*",
@@ -607,14 +606,16 @@ arrayMethods.forEach(function(method) {
         if (!W3C) {
             this.$model = toJson(this)
         }
+        var now2 = new Date - 0
+
         this.notify()
         notifySize(this, on)
         return result
     }
 })
 
-"sort,reverse".replace(rword, function(method) {
-    newProto[method] = function() {
+"sort,reverse".replace(rword, function (method) {
+    newProto[method] = function () {
         ap[method].apply(this, arguments)
         if (!W3C) {
             this.$model = toJson(this)
