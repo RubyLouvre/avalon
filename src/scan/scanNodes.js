@@ -15,13 +15,15 @@ function scanNodes(nodes, vm) {
             case "#text":
                 if (!node.skipContent) {
                     if (rexpr.test(String(node.nodeValue))) {
-                       vm && scanText(node, vm)
+                        vm && scanText(node, vm)
                     }
                 }
                 break
             default:
                 vm = scanTag(node, vm, nodes)
-                scanNodes(node.children, vm)
+                if (!node.disposed) {//ms-repeat会销毁原来的节点
+                    scanNodes(node.children, vm)
+                }
                 break
         }
 

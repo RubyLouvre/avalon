@@ -204,6 +204,10 @@ function makeObservable(sid, spath, heirloom) {
             if (old === val) {
                 return
             }
+            if(val === "$$getpath$$"){
+                avalon.withPath = spath
+                return
+            }
             if (val && typeof val === "object") {
                 if (old && old.$id && val.$id && !Array.isArray(old)) {
                     //合并两个对象类型的子vm,比如proxy item中的el = newEl
@@ -275,7 +279,6 @@ function makeFire($vmodel, heirloom) {
         }
     })
 }
-
 
 /**
  * 生成vm的$model
@@ -602,12 +605,11 @@ arrayMethods.forEach(function (method) {
                 top: true
             })
         }
+        
         var result = original.apply(this, args)
         if (!W3C) {
             this.$model = toJson(this)
         }
-        var now2 = new Date - 0
-
         this.notify()
         notifySize(this, on)
         return result

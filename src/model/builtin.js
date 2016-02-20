@@ -3,6 +3,7 @@
 var rtopsub = /([^.]+)\.(.+)/
 
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
+var $emit = require("./dispatch").$emit
 
 //一个vm总是为Observer的实例
 function Observer() {
@@ -41,8 +42,9 @@ function makeComputed(sid, spath, heirloom, key, value) {
                             get.heirloom = vm.$events
                         }
                         $emit(get.heirloom[spath], this, spath, val, older)
-                        if (avalon.vtree[vm.$id]) {
-                            batchUpdateEntity(vm.$id)
+                        var vid = vm.$id.split(".")[0]
+                        if (avalon.vtree[ vid ]) {
+                            batchUpdateEntity(vid)
                         }
                     }
                 }
@@ -112,7 +114,6 @@ module.exports = {
     rtopsub: rtopsub,
     Observer: Observer,
     isSkip: isSkip,
-    
     getComputed: getComputed,
     isComputed: isComputed,
     makeComputed: makeComputed

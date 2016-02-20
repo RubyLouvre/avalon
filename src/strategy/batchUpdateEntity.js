@@ -14,7 +14,7 @@ function batchUpdateEntity(id, immediate) {
         return
     var vm = avalon.vmodels[id]
     if (vm) { //确保是有效ID
-        if (isBatchingUpdates) {
+        if (isBatchingUpdates|| avalon.repeatCount ) {
             dirtyTrees[id] = true
             return
         }

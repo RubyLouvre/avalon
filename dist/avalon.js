@@ -2980,6 +2980,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (old === val) {
 	                return
 	            }
+	            if(val === "$$getpath$$"){
+	                avalon.withPath = spath
+	                return
+	            }
 	            if (val && typeof val === "object") {
 	                if (old && old.$id && val.$id && !Array.isArray(old)) {
 	                    //合并两个对象类型的子vm,比如proxy item中的el = newEl
@@ -3051,7 +3055,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    })
 	}
-
 
 	/**
 	 * 生成vm的$model
@@ -3378,12 +3381,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                top: true
 	            })
 	        }
+	        
 	        var result = original.apply(this, args)
 	        if (!W3C) {
 	            this.$model = toJson(this)
 	        }
-	        var now2 = new Date - 0
-
 	        this.notify()
 	        notifySize(this, on)
 	        return result
@@ -3577,6 +3579,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rtopsub = /([^.]+)\.(.+)/
 
 	var batchUpdateEntity = __webpack_require__(23)
+	var $emit = __webpack_require__(25).$emit
 
 	//一个vm总是为Observer的实例
 	function Observer() {
@@ -3615,8 +3618,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            get.heirloom = vm.$events
 	                        }
 	                        $emit(get.heirloom[spath], this, spath, val, older)
-	                        if (avalon.vtree[vm.$id]) {
-	                            batchUpdateEntity(vm.$id)
+	                        var vid = vm.$id.split(".")[0]
+	                        if (avalon.vtree[ vid ]) {
+	                            batchUpdateEntity(vid)
 	                        }
 	                    }
 	                }
@@ -3686,7 +3690,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rtopsub: rtopsub,
 	    Observer: Observer,
 	    isSkip: isSkip,
-	    
 	    getComputed: getComputed,
 	    isComputed: isComputed,
 	    makeComputed: makeComputed
@@ -3712,7 +3715,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    var vm = avalon.vmodels[id]
 	    if (vm) { //确保是有效ID
-	        if (isBatchingUpdates) {
+	        if (isBatchingUpdates|| avalon.repeatCount ) {
 	            dirtyTrees[id] = true
 	            return
 	        }
@@ -3874,7 +3877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        }
 	    } catch (e) {
-	        avalon.log("adjustVm "+e)
+	        avalon.log("adjustVm " + e)
 	    }
 	    return other || vm
 	}
@@ -3890,8 +3893,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var data = typeof funOrObj === "function" ? {
 	        update: funOrObj,
 	        element: {},
-	        expr:"[[ "+ expr+ " ]]",
-	        shouldDispose: function() {
+	        expr: "[[ " + expr + " ]]",
+	        shouldDispose: function () {
 	            return vm.$hashcode === false
 	        },
 	        uuid: getUid(funOrObj)
@@ -3903,7 +3906,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        injectDisposeQueue(data, list)
 	    }
 
-	    return function() {
+	    return function () {
 	        avalon.Array.remove(list, data)
 	    }
 	}
@@ -3948,86 +3951,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-
-	avalon.injectBinding = function(binding) {
+	var rparseRepeatItem = /^(a|o):(\w+):(\S+):(?:\d+)$/
+	avalon.injectBinding = function (binding) {
 
 	    parseExpr(binding.expr, binding.vmodel, binding)
 	//在ms-class中,expr: '["XXX YYY ZZZ",true]' 其path为空
-	    binding.paths.split("★").forEach(function(path) {
-	        var outerVm = adjustVm(binding.vmodel, path) || {}
-	        var match = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-	        if (match) {
-	            binding.innerVm = outerVm
-	            binding.innerPath = path
-	            var repeatItem = match[2]
-	            if (path.indexOf(repeatItem) === 0) {
-	                if (match[1] === "o") {//处理对象循环 $val
-	                    //处理$val
-	                    var outerPath = outerVm.$id
-	                    var sindex = outerPath.lastIndexOf(".*.")
-	                    if (sindex > 0) {//处理多级对象
-	                        var innerId = outerPath.slice(0, sindex + 2)
-	                        for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
-	                            if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
-	                                binding.outerVm = outerVm[kj]
-	                                binding.outerPath = outerPath.slice(sindex + 3)
-	                                break
-	                            }
-	                        }
-	                    } else {//处理一层对象
-	                        var idarr = outerPath.match(rtopsub)
-	                        if (idarr) {
-	                            binding.outerPath = idarr[2] //顶层vm的$id
-	                            binding.outerVm = avalon.vmodels[idarr[1]]
-	                        }
+	    binding.paths.split("★").forEach(function (path) {
+	        var vm = adjustVm(binding.vmodel, path) || {}
+	        var match = String(vm.$hashcode).match(rparseRepeatItem)
+	        try {
+	            if (match) {
+	                var repeatItem = match[2]
+	                var spath = match[3]
+	                if (match[1] === "a") {
+	                    if (typeof vm[repeatItem] === "object") {
+	                        vm[repeatItem].$watch(path.replace(repeatItem + ".", ""), binding)
+	                    } else {
+	                        vm.$watch(repeatItem, binding)
 	                    }
-	                } else {//处理对象数组循环 el
-	                    if (typeof outerVm[repeatItem] === "object") {
-	                        binding.outerVm = outerVm[repeatItem]
-	                        binding.outerPath = path.replace(repeatItem + ".", "")
+	                } else if (match[1] === "o") {
+	                    if (path === repeatItem) {//el
+	                        vm.$watch(spath, binding)
+	                    } else if (path.indexOf(repeatItem + ".") === 0) {//el.ccc
+	                        vm.$watch(path.replace(repeatItem, spath), binding)
 	                    }
 	                }
-	            }
-	        } else {
-	            binding.outerVm = outerVm
-	            binding.outerPath = path
-	        }
 
-
-	        if (binding.innerVm) {
-	            try {
-	                binding.innerVm.$watch(binding.innerPath, binding)
-	            } catch (e) {
-	                avalon.log(e, binding)
+	            } else {
+	                vm.$watch(path, binding)
 	            }
+	        } catch (e) {
+	            avalon.log(e, binding)
 	        }
-	        if (binding.innerVm && binding.outerVm) {
-	            var array = binding.outerVm.$events[binding.outerPath]
-	            var array2 = binding.innerVm.$events[binding.innerPath]
-	            if (!array2) {
-	                avalon.log(binding.innerPath, "对应的订阅数组不存在")
-	            }
-	            ap.push.apply(array2 || [], array || [])
-	            binding.outerVm.$events[binding.outerPath] = array2
-	        } else if (binding.outerVm) {//简单数组的元素没有outerVm
-	            try {
-	                binding.outerVm.$watch(binding.outerPath, binding)
-	            } catch (e) {
-	                avalon.log(e, binding)
-	            }
-	        }
-
-	        delete binding.innerVm
-	        delete binding.outerVm
 	    })
 	    delete binding.paths
-	    binding.update = function(a, b, p) {
+	    binding.update = function (a, b, p) {
 	        var vm = binding.vmodel
 	        //用于高效替换binding上的vmodel
 	        if (vm.$events.__vmodel__ !== vm) {
 	            vm = binding.vmodel = vm.$events.__vmodel__
 	        }
-
 	        var hasError
 	        try {
 	            var value = binding.getter(vm)
@@ -4041,7 +4004,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dir.change(value, binding)
 	            if (binding.oneTime && !hasError) {
 	                dir.change = noop
-	                setTimeout(function() {
+	                setTimeout(function () {
 	                    delete binding.element
 	                })
 	            }
@@ -5169,13 +5132,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            case "#text":
 	                if (!node.skipContent) {
 	                    if (rexpr.test(String(node.nodeValue))) {
-	                       vm && scanText(node, vm)
+	                        vm && scanText(node, vm)
 	                    }
 	                }
 	                break
 	            default:
 	                vm = scanTag(node, vm, nodes)
-	                scanNodes(node.children, vm)
+	                if (!node.disposed) {//ms-repeat会销毁原来的节点
+	                    scanNodes(node.children, vm)
+	                }
 	                break
 	        }
 
@@ -6766,6 +6731,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VComponent = __webpack_require__(36)
 	var VComment = __webpack_require__(34)
 	var factory = __webpack_require__(18)
+	var batchUpdateEntity = __webpack_require__(23)
+
+	var makeComputed = __webpack_require__(22).makeComputed
+
+
 	var $$skipArray = __webpack_require__(21)
 	var $emit = __webpack_require__(25).$emit
 
@@ -6809,7 +6779,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var vnode = binding.element
-	        disposeVirtual(vnode.children)
+
+	        //disposeVirtual(vnode.children) ms-each已经做了, ms-repeat直接disposed
 
 	        var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
 	        var type = binding.type
@@ -6841,6 +6812,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var i = 0, el; el = arr[i]; i++) {
 	                if (el === vnode) {
 	                    arr[i] = component
+	                    vnode.disposed = true
 	                    break
 	                }
 	            }
@@ -6866,11 +6838,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false
 	    },
 	    change: function (value, binding) {
-	        //console.log("ms-repeat change ...")
+	        // console.log("ms-repeat change ...", value)
+
 	        var vnode = binding.element
 	        if (!vnode || vnode.disposed) {
 	            return
 	        }
+	        if (avalon.repeatCount) {
+	            avalon.repeatCount++
+	        } else {
+	            avalon.repeatCount = 1
+	        }
+
 	        var cache = binding.cache || {}
 	        var newCache = {}, keys = [], last
 	        //处理keyName, itemName, last
@@ -6908,7 +6887,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                components[i] = component
 	            }
 	        }
-
 	        var reuse = []//回收剩下的虚拟节点
 	        for (i in cache) {
 	            reuse.push(cache[i])
@@ -6919,6 +6897,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var newCom
 	        var createTime = 0
 	        var asignTime = 0
+	        var onlyMove = true
 	        for (i = 0; i <= last; i++) {
 	            component = components[i]
 	            var curItem = entries[i].item
@@ -6932,26 +6911,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	                component = reuse.shift()//重复利用回收的虚拟节点
 	                if (!component) {// 如果是splice走这里
 	                    component = new RepeatItem(vnode.copy)
-
 	                    newCom = true
 	                }
+
+	                if (component.item !== curItem) {
+	                    vnode.updateChildren = true
+	                }
+
+
+	                component.value = value
+	                component.key = curKey
+
+
 	                //新建或重利用旧的proxy, item创建一个proxy
 	                var atime = new Date - 0
 	                proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
-	                        component.item, component.vmodel)
+	                        component)
+
 	                createTime += (new Date - atime)
+
+	                if (component.vmodel) {
+	                    component.oldIndex = component.vmodel.$index//获取其现在的位置
+	                }
+
 	            }
 
-	            if (component.vmodel) {
-	                component.oldIndex = component.vmodel.$index//获取其现在的位置
-	            } else {
-	                //  command[i] = component  //标识这里需要新建一个虚拟节点
-	            }
+
 	            var btime = new Date - 0
 
 	            if (binding.keyName !== "$index") {
 	                proxy[binding.keyName] = curKey
 	            }
+
 	            proxy[binding.itemName] = curItem
 	            proxy.$index = i
 	            proxy.$first = i === 0
@@ -6965,13 +6956,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (component.vmodel && component.vmodel !== proxy) {
 	                component.vmodel.$hashcode = false
 	            }
+	            component.index = i
 	            component.vmodel = proxy
 	            component.item = curItem
 	            component.itemName = binding.itemName
-
 	            if (repeatArray) {
-	                /* jshint ignore:start */
 	                /*兼容1.4与1.5, 1.6去掉*/
+	                /* jshint ignore:start */
 	                (function (array, el) {
 	                    proxy.$remove = function () {
 	                        avalon.Array.remove(array, el)
@@ -6979,8 +6970,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                })(value, curItem)
 
 	                saveInCache(newCache, curItem, component)
+	                component.vmodel.$hashcode = "a:" + binding.itemName + ":a:" + (new Date - 0)
 	                /* jshint ignore:end */
 	            } else {
+	                value[curKey] = "$$getpath$$"
+
+	                component.vmodel.$hashcode = "o:" + binding.itemName + ":" + avalon.withPath + ":" + (new Date - 0)
 	                newCache[curKey] = component
 	            }
 
@@ -6991,9 +6986,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	        }
-	        console.log("第二次循环", new Date - now, last)
-	        console.log("创建", createTime, last)
-	        console.log("赋值", asignTime, last)
+	//        console.log("第二次循环", new Date - now, last)
+	//        console.log("创建", createTime, last)
+	//        console.log("赋值", asignTime, last)
 	        while (component = reuse.shift()) {
 	            disposeVirtual([component])
 	            if (component.item) {
@@ -7021,157 +7016,155 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        addHook(vnode, binding.rendered, "afterChange", 95)
 	        addHooks(this, binding)
+	        console.log(avalon.repeatCount, vnode.updateChildren)
+	        if (--avalon.repeatCount === 0) {
+	            batchUpdateEntity(binding.vmodel.$id.split(".")[0])
+	        }
+
 	    },
 	    update: function (node, vnode, parent) {
-	        var now = new Date - 0
-	        if (!vnode.disposed) {
-	            var groupText = vnode.signature
-	            var nodeValue = node.nodeValue
-	            if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
-	                    nodeValue !== groupText + ":start"
-	                    ) {
-	                //更新注释节点的nodeValue
-	                updateSignature(node, nodeValue, groupText)
-	            }
-	            if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
-	                //如果是第一次
-	                var dom = vnode.toDOM()
-	                var keepChild = avalon.slice(dom.childNodes)
-	                if (groupText.indexOf("each") === 0) {
-	                    avalon.clearHTML(parent)
-	                    parent.appendChild(dom)
-	                } else {
-	                    parent.replaceChild(dom, node)
-	                }
-	                updateEntity(keepChild, vnode.children, parent)
-	                //avalon.log(new Date - now, "cost repeat1")
-	                return false
+	        if (vnode.disposed) {
+	            return false
+	        }
+	        var groupText = vnode.signature
+	        var nodeValue = node.nodeValue
+	        if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+	                nodeValue !== groupText + ":start"
+	                ) {
+	            //更新注释节点的nodeValue
+	            updateSignature(node, nodeValue, groupText)
+	        }
+	        if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
+	            //如果是第一次
+	            var dom = vnode.toDOM()
+	            var keepChild = avalon.slice(dom.childNodes)
+	            if (groupText.indexOf("each") === 0) {
+	                avalon.clearHTML(parent)
+	                parent.appendChild(dom)
 	            } else {
+	                parent.replaceChild(dom, node)
+	            }
+	            updateEntity(keepChild, vnode.children, parent)
+	        } else {
+	            var breakText = groupText + ":end"
+	            var emptyFragment = document.createDocumentFragment()
 
-	                var breakText = groupText + ":end"
-	                var emptyFragment = document.createDocumentFragment()
-
-	                //将原有节点移出DOM, 试根据groupText分组
-	                var toClone = avalon.parseHTML(vnode.template)
-	                var fragments = [], i, el, next
-	                var sortedFragments = []
-	                var c = vnode.components
-	                var indexes = {}
-	                //尝试使用更高效的,不挪动元素的方式更新
-	                var inplaceIndex = 0
-	                var inplaceState = "maybe"
-	                for (i in c) {
-	                    var ii = c[i].oldIndex
-	                    if (ii !== void 0) {
-	                        indexes[ii] = ~~i
-	                        if (inplaceState) {
-	                            if (inplaceState === "maybenot") {
-	                                inplaceState = false
-	                                inplaceIndex = 0
-	                                continue
-	                            }
-	                            if (ii === indexes[ii]) {
-	                                inplaceIndex++
-	                            } else {
-	                                inplaceState = false
-	                            }
+	            //将原有节点移出DOM, 试根据groupText分组
+	            var toClone = avalon.parseHTML(vnode.template)
+	            var fragments = [], i, el, next
+	            var sortedFragments = []
+	            var c = vnode.components
+	            var indexes = {}
+	            //尝试使用更高效的,不挪动元素的方式更新
+	            var inplaceIndex = 0
+	            var inplaceState = "maybe"
+	            for (i in c) {
+	                var ii = c[i].oldIndex
+	                if (ii !== void 0) {
+	                    indexes[ii] = ~~i
+	                    if (inplaceState) {
+	                        if (inplaceState === "maybenot") {
+	                            inplaceState = false
+	                            inplaceIndex = 0
+	                            continue
 	                        }
-	                    } else {
-	                        indexes[i + "_"] = c[i]
-	                        if (inplaceState === "maybe") {
-	                            inplaceState = "maybenot"
-	                        }
-
-	                    }
-	                }
-	                i = 0
-	            
-	                if (inplaceIndex) {
-	                    next = node
-	                    var entity = []
-	                    var continueRemove = false
-	                    var lastAnchor
-	                    while (next = next.nextSibling) {
-	                        if (next.nodeValue === breakText) {
-	                            lastAnchor = next
-	                            break
-	                        } else if (next.nodeValue === groupText) {
-	                            entity.push(next)
-	                            delete indexes[i]
-	                            i++
+	                        if (ii === indexes[ii]) {
+	                            inplaceIndex++
 	                        } else {
-	                            if (inplaceIndex === i) {
-	                                delete indexes[i]
-	                                continueRemove = true
-	                                break
-	                            }
-	                            entity.push(next)
+	                            inplaceState = false
 	                        }
 	                    }
-
-	                    if (continueRemove) {
-	                        while (next.nextSibling) {
-	                            if (next.nodeValue !== breakText) {
-	                                parent.removeChild(next.nextSibling)
-	                            } else {
-	                                lastAnchor = next.nextSibling
-	                            }
-	                        }
-	                    }
-	                    for (i in indexes) {
-	                        var vdom = indexes[i]
-	                        if (typeof vdom === "object") {
-	                            emptyFragment.appendChild(toClone.cloneNode(true))
-	                        }
-	                    }
-	                    if (vdom) {
-	                        pushArray(entity, avalon.slice(emptyFragment.childNodes))
-	                    }
-	                    parent.insertBefore(emptyFragment, lastAnchor)
-	                    updateEntity(entity, vnode.children.slice(1, -1), parent)
-	                    //avalon.log(new Date - now, "cost repeat2")
-	                    return false
 	                } else {
-	                    var fragment = emptyFragment.cloneNode(false)
-	                    while (next = node.nextSibling) {
-	                        if (next.nodeValue === breakText) {
-	                            break
-	                        } else if (next.nodeValue === groupText) {
-	                            fragment.appendChild(next)
-	                            if (indexes[i] !== void 0) {
-	                                sortedFragments[indexes[i]] = fragment
-	                                delete indexes[i]
-	                            } else {
-	                                fragments.push(fragment)
-	                            }
-	                            i++
-	                            fragment = emptyFragment.cloneNode(false)
-	                        } else {
-	                            fragment.appendChild(next)
-	                        }
-	                    }
-	                    var needUpdate = false
-	                    for (i in indexes) {
-	                        needUpdate = true
-	                        i = parseFloat(i)
-	                        fragment = fragments.shift()
-	                        if (fragment) {
-	                            sortedFragments[ i ] = fragment
-	                        } else {
-	                            sortedFragments[ i ] = toClone ? toClone.cloneNode(true) : (toClone = avalon.parseHTML(vnode.template))
-	                        }
+	                    indexes[i + "_"] = c[i]
+	                    if (inplaceState === "maybe") {
+	                        inplaceState = "maybenot"
 	                    }
 
-	                    for (i = 0, el; el = sortedFragments[i++]; ) {
-	                        emptyFragment.appendChild(el)
-	                    }
-
-	                    var entity = avalon.slice(emptyFragment.childNodes)
-	                    parent.insertBefore(emptyFragment, node.nextSibling)
 	                }
-	                needUpdate && updateEntity(entity, vnode.children.slice(1, -1), parent)
-	                //avalon.log(new Date - now, "cost repeat3")
-	                return false
+	            }
+	            i = 0
+	            if (inplaceState) {
+	                next = node
+	                var entity = []
+	                var continueRemove = false
+	                var lastAnchor
+	                while (next = next.nextSibling) {
+	                    if (next.nodeValue === breakText) {
+	                        lastAnchor = next
+	                        break
+	                    } else if (next.nodeValue === groupText) {
+	                        entity.push(next)
+	                        delete indexes[i]
+	                        i++
+	                    } else {
+	                        if (inplaceIndex === i) {
+	                            delete indexes[i]
+	                            continueRemove = true
+	                            break
+	                        }
+	                        entity.push(next)
+	                    }
+	                }
+
+	                if (continueRemove) {
+	                    while (next.nextSibling) {
+	                        if (next.nodeValue !== breakText) {
+	                            parent.removeChild(next.nextSibling)
+	                        } else {
+	                            lastAnchor = next.nextSibling
+	                        }
+	                    }
+	                }
+	                for (i in indexes) {
+	                    var vdom = indexes[i]
+	                    if (typeof vdom === "object") {
+	                        emptyFragment.appendChild(toClone.cloneNode(true))
+	                    }
+	                }
+	                if (vdom) {
+	                    pushArray(entity, avalon.slice(emptyFragment.childNodes))
+	                }
+	                parent.insertBefore(emptyFragment, lastAnchor)
+	                updateEntity(entity, vnode.children.slice(1, -1), parent)
+	            } else {
+	                var fragment = emptyFragment.cloneNode(false)
+	                while (next = node.nextSibling) {
+	                    if (next.nodeValue === breakText) {
+	                        break
+	                    } else if (next.nodeValue === groupText) {
+	                        fragment.appendChild(next)
+	                        if (indexes[i] !== void 0) {
+	                            sortedFragments[indexes[i]] = fragment
+	                            delete indexes[i]
+	                        } else {
+	                            fragments.push(fragment)
+	                        }
+	                        i++
+	                        fragment = emptyFragment.cloneNode(false)
+	                    } else {
+	                        fragment.appendChild(next)
+	                    }
+	                }
+	                for (i in indexes) {
+	                    i = parseFloat(i)
+	                    fragment = fragments.shift()
+	                    if (fragment) {
+	                        sortedFragments[ i ] = fragment
+	                    } else {
+	                        sortedFragments[ i ] = toClone.cloneNode(true)
+	                    }
+	                }
+
+	                for (i = 0, el; el = sortedFragments[i++]; ) {
+	                    emptyFragment.appendChild(el)
+	                }
+
+	                var entity = avalon.slice(emptyFragment.childNodes)
+	                parent.insertBefore(emptyFragment, node.nextSibling)
+	            }
+	            if (vnode.updateChildren) {
+	                updateEntity(entity, vnode.children.slice(1, -1), parent)
+	                delete vnode.updateChildren
 	            }
 	        }
 	        return false
@@ -7327,16 +7320,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
+	function repeatItemFactory(item, name, binding, repeatArray, c) {
+	    var oldItem = c.item, oldProxy = c.vmodel
 	    var before = binding.vmodel//上一级的VM
 	    var heirloom = {}
-	    if (oldItem && item && item.$events) {
+	    var isObject = item && typeof item === "object"
+
+	    if (isObject && oldItem) {
 	        item.$events = oldItem.$events
 	        item.$events.__vmodel__ = item
 	    }
-
+	    if (!isObject && oldProxy) {
+	        return oldProxy
+	    }
 	    var useItem = item && item.$id
-	    var vm = mediatorFactory(before, useItem ? item : {}, heirloom,
+	    var vm = mediatorFactory(before,
+	            useItem ? item : {},
+	            heirloom,
 	            function (obj, $accessors) {
 	                obj.$outer = obj.$outer || 1
 	                if (repeatArray) {
@@ -7344,41 +7344,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
 	                for (var i = 0, key; key = keys[i++]; ) {
-	                    if (oldProxy) {
+	                    if (key === binding.itemName) {
+	                        $accessors[key] = makeComputed("", key, heirloom, key, {
+	                            set: function (a) {
+	                                c.value[c.key] = a
+	                            },
+	                            get: function () {
+	                                return c.value[c.key]
+	                            }
+	                        })
+	                    } else if (oldProxy) {
 	                        $accessors[key] = oldProxy.$accessors[key]
 	                    } else {
 	                        $accessors[key] = makeObservable("", key, heirloom)
 	                    }
 	                }
+
 	            })
-	    var $hashcode = oldProxy ? oldProxy.$hashcode :
-	            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-
-	    vm.$hashcode = $hashcode
-
-	    if (!repeatArray) {
-	        var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-	        //数组循环中的对象循环,得到数组元素
-	        if (match && match[1] === "a") {
-	            before = vm[match[2]]
-	            var path = name
-	        } else {
-	            path = binding.expr + "." + name
-	        }
-	        before.$watch(path, function (v) {
-	            //比如outerVm.object.aaa = 8需要同步到innerVm.$val
-	            vm[binding.itemName] = v
-	        })
-	    } else {
-	        //处理el.length
-	        //数组元素亦是数组,需要对其长度进行监听情况,已经在
-	        //makeObservable的old && old.$id &&  val.$id && !Array.isArray(old)分支中处理了
-	        //vm.$watch(binding.itemName, function (a) {
-	        //   if (Array.isArray(a))
-	        //       $emit(vm.$events[binding.itemName + ".length"], a.length)
-	        //})
+	    if (oldProxy) {
+	        vm.$events = oldProxy.$events
+	        vm.$events.__vmodel__ = vm
 	    }
-
 	    return  vm
 	}
 

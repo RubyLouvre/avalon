@@ -1705,6 +1705,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (old === val) {
 	                return
 	            }
+	            if(val === "$$getpath$$"){
+	                avalon.withPath = spath
+	                return
+	            }
 	            if (val && typeof val === "object") {
 	                if (old && old.$id && val.$id && !Array.isArray(old)) {
 	                    //合并两个对象类型的子vm,比如proxy item中的el = newEl
@@ -1776,7 +1780,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    })
 	}
-
 
 	/**
 	 * 生成vm的$model
@@ -2103,12 +2106,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                top: true
 	            })
 	        }
+	        
 	        var result = original.apply(this, args)
 	        if (!W3C) {
 	            this.$model = toJson(this)
 	        }
-	        var now2 = new Date - 0
-
 	        this.notify()
 	        notifySize(this, on)
 	        return result
@@ -2302,6 +2304,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rtopsub = /([^.]+)\.(.+)/
 
 	var batchUpdateEntity = __webpack_require__(23)
+	var $emit = __webpack_require__(25).$emit
 
 	//一个vm总是为Observer的实例
 	function Observer() {
@@ -2340,8 +2343,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            get.heirloom = vm.$events
 	                        }
 	                        $emit(get.heirloom[spath], this, spath, val, older)
-	                        if (avalon.vtree[vm.$id]) {
-	                            batchUpdateEntity(vm.$id)
+	                        var vid = vm.$id.split(".")[0]
+	                        if (avalon.vtree[ vid ]) {
+	                            batchUpdateEntity(vid)
 	                        }
 	                    }
 	                }
@@ -2411,7 +2415,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rtopsub: rtopsub,
 	    Observer: Observer,
 	    isSkip: isSkip,
-	    
 	    getComputed: getComputed,
 	    isComputed: isComputed,
 	    makeComputed: makeComputed
@@ -2437,7 +2440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    var vm = avalon.vmodels[id]
 	    if (vm) { //确保是有效ID
-	        if (isBatchingUpdates) {
+	        if (isBatchingUpdates|| avalon.repeatCount ) {
 	            dirtyTrees[id] = true
 	            return
 	        }
@@ -2599,7 +2602,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        }
 	    } catch (e) {
-	        avalon.log("adjustVm "+e)
+	        avalon.log("adjustVm " + e)
 	    }
 	    return other || vm
 	}
@@ -2615,8 +2618,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var data = typeof funOrObj === "function" ? {
 	        update: funOrObj,
 	        element: {},
-	        expr:"[[ "+ expr+ " ]]",
-	        shouldDispose: function() {
+	        expr: "[[ " + expr + " ]]",
+	        shouldDispose: function () {
 	            return vm.$hashcode === false
 	        },
 	        uuid: getUid(funOrObj)
@@ -2628,7 +2631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        injectDisposeQueue(data, list)
 	    }
 
-	    return function() {
+	    return function () {
 	        avalon.Array.remove(list, data)
 	    }
 	}
@@ -2673,86 +2676,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-
-	avalon.injectBinding = function(binding) {
+	var rparseRepeatItem = /^(a|o):(\w+):(\S+):(?:\d+)$/
+	avalon.injectBinding = function (binding) {
 
 	    parseExpr(binding.expr, binding.vmodel, binding)
 	//在ms-class中,expr: '["XXX YYY ZZZ",true]' 其path为空
-	    binding.paths.split("★").forEach(function(path) {
-	        var outerVm = adjustVm(binding.vmodel, path) || {}
-	        var match = String(outerVm.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-	        if (match) {
-	            binding.innerVm = outerVm
-	            binding.innerPath = path
-	            var repeatItem = match[2]
-	            if (path.indexOf(repeatItem) === 0) {
-	                if (match[1] === "o") {//处理对象循环 $val
-	                    //处理$val
-	                    var outerPath = outerVm.$id
-	                    var sindex = outerPath.lastIndexOf(".*.")
-	                    if (sindex > 0) {//处理多级对象
-	                        var innerId = outerPath.slice(0, sindex + 2)
-	                        for (var kj in outerVm) {//这个以后要移入到repeatItemFactory
-	                            if (outerVm[kj] && (outerVm[kj].$id === innerId)) {
-	                                binding.outerVm = outerVm[kj]
-	                                binding.outerPath = outerPath.slice(sindex + 3)
-	                                break
-	                            }
-	                        }
-	                    } else {//处理一层对象
-	                        var idarr = outerPath.match(rtopsub)
-	                        if (idarr) {
-	                            binding.outerPath = idarr[2] //顶层vm的$id
-	                            binding.outerVm = avalon.vmodels[idarr[1]]
-	                        }
+	    binding.paths.split("★").forEach(function (path) {
+	        var vm = adjustVm(binding.vmodel, path) || {}
+	        var match = String(vm.$hashcode).match(rparseRepeatItem)
+	        try {
+	            if (match) {
+	                var repeatItem = match[2]
+	                var spath = match[3]
+	                if (match[1] === "a") {
+	                    if (typeof vm[repeatItem] === "object") {
+	                        vm[repeatItem].$watch(path.replace(repeatItem + ".", ""), binding)
+	                    } else {
+	                        vm.$watch(repeatItem, binding)
 	                    }
-	                } else {//处理对象数组循环 el
-	                    if (typeof outerVm[repeatItem] === "object") {
-	                        binding.outerVm = outerVm[repeatItem]
-	                        binding.outerPath = path.replace(repeatItem + ".", "")
+	                } else if (match[1] === "o") {
+	                    if (path === repeatItem) {//el
+	                        vm.$watch(spath, binding)
+	                    } else if (path.indexOf(repeatItem + ".") === 0) {//el.ccc
+	                        vm.$watch(path.replace(repeatItem, spath), binding)
 	                    }
 	                }
-	            }
-	        } else {
-	            binding.outerVm = outerVm
-	            binding.outerPath = path
-	        }
 
-
-	        if (binding.innerVm) {
-	            try {
-	                binding.innerVm.$watch(binding.innerPath, binding)
-	            } catch (e) {
-	                avalon.log(e, binding)
+	            } else {
+	                vm.$watch(path, binding)
 	            }
+	        } catch (e) {
+	            avalon.log(e, binding)
 	        }
-	        if (binding.innerVm && binding.outerVm) {
-	            var array = binding.outerVm.$events[binding.outerPath]
-	            var array2 = binding.innerVm.$events[binding.innerPath]
-	            if (!array2) {
-	                avalon.log(binding.innerPath, "对应的订阅数组不存在")
-	            }
-	            ap.push.apply(array2 || [], array || [])
-	            binding.outerVm.$events[binding.outerPath] = array2
-	        } else if (binding.outerVm) {//简单数组的元素没有outerVm
-	            try {
-	                binding.outerVm.$watch(binding.outerPath, binding)
-	            } catch (e) {
-	                avalon.log(e, binding)
-	            }
-	        }
-
-	        delete binding.innerVm
-	        delete binding.outerVm
 	    })
 	    delete binding.paths
-	    binding.update = function(a, b, p) {
+	    binding.update = function (a, b, p) {
 	        var vm = binding.vmodel
 	        //用于高效替换binding上的vmodel
 	        if (vm.$events.__vmodel__ !== vm) {
 	            vm = binding.vmodel = vm.$events.__vmodel__
 	        }
-
 	        var hasError
 	        try {
 	            var value = binding.getter(vm)
@@ -2766,7 +2729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dir.change(value, binding)
 	            if (binding.oneTime && !hasError) {
 	                dir.change = noop
-	                setTimeout(function() {
+	                setTimeout(function () {
 	                    delete binding.element
 	                })
 	            }
@@ -3894,13 +3857,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            case "#text":
 	                if (!node.skipContent) {
 	                    if (rexpr.test(String(node.nodeValue))) {
-	                       vm && scanText(node, vm)
+	                        vm && scanText(node, vm)
 	                    }
 	                }
 	                break
 	            default:
 	                vm = scanTag(node, vm, nodes)
-	                scanNodes(node.children, vm)
+	                if (!node.disposed) {//ms-repeat会销毁原来的节点
+	                    scanNodes(node.children, vm)
+	                }
 	                break
 	        }
 

@@ -15,6 +15,11 @@ var shimTemplate = require("../vdom/shimTemplate")
 var VComponent = require("../vdom/VComponent")
 var VComment = require("../vdom/VComment")
 var factory = require("../model/compact")
+var batchUpdateEntity = require("../strategy/batchUpdateEntity")
+
+var makeComputed = require("../model/builtin").makeComputed
+
+
 var $$skipArray = require("../model/skipArray.compact")
 var $emit = require("../model/dispatch").$emit
 
@@ -58,7 +63,8 @@ avalon.directive("repeat", {
         }
 
         var vnode = binding.element
-        disposeVirtual(vnode.children)
+
+        //disposeVirtual(vnode.children) ms-each已经做了, ms-repeat直接disposed
 
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
@@ -90,6 +96,7 @@ avalon.directive("repeat", {
             for (var i = 0, el; el = arr[i]; i++) {
                 if (el === vnode) {
                     arr[i] = component
+                    vnode.disposed = true
                     break
                 }
             }
@@ -115,11 +122,18 @@ avalon.directive("repeat", {
         return false
     },
     change: function (value, binding) {
-        //console.log("ms-repeat change ...")
+        // console.log("ms-repeat change ...", value)
+
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
         }
+        if (avalon.repeatCount) {
+            avalon.repeatCount++
+        } else {
+            avalon.repeatCount = 1
+        }
+
         var cache = binding.cache || {}
         var newCache = {}, keys = [], last
         //处理keyName, itemName, last
@@ -157,7 +171,6 @@ avalon.directive("repeat", {
                 components[i] = component
             }
         }
-
         var reuse = []//回收剩下的虚拟节点
         for (i in cache) {
             reuse.push(cache[i])
@@ -168,6 +181,7 @@ avalon.directive("repeat", {
         var newCom
         var createTime = 0
         var asignTime = 0
+        var onlyMove = true
         for (i = 0; i <= last; i++) {
             component = components[i]
             var curItem = entries[i].item
@@ -181,26 +195,38 @@ avalon.directive("repeat", {
                 component = reuse.shift()//重复利用回收的虚拟节点
                 if (!component) {// 如果是splice走这里
                     component = new RepeatItem(vnode.copy)
-
                     newCom = true
                 }
+
+                if (component.item !== curItem) {
+                    vnode.updateChildren = true
+                }
+
+
+                component.value = value
+                component.key = curKey
+
+
                 //新建或重利用旧的proxy, item创建一个proxy
                 var atime = new Date - 0
                 proxy = repeatItemFactory(curItem, curKey, binding, repeatArray,
-                        component.item, component.vmodel)
+                        component)
+
                 createTime += (new Date - atime)
+
+                if (component.vmodel) {
+                    component.oldIndex = component.vmodel.$index//获取其现在的位置
+                }
+
             }
 
-            if (component.vmodel) {
-                component.oldIndex = component.vmodel.$index//获取其现在的位置
-            } else {
-                //  command[i] = component  //标识这里需要新建一个虚拟节点
-            }
+
             var btime = new Date - 0
 
             if (binding.keyName !== "$index") {
                 proxy[binding.keyName] = curKey
             }
+
             proxy[binding.itemName] = curItem
             proxy.$index = i
             proxy.$first = i === 0
@@ -214,13 +240,13 @@ avalon.directive("repeat", {
             if (component.vmodel && component.vmodel !== proxy) {
                 component.vmodel.$hashcode = false
             }
+            component.index = i
             component.vmodel = proxy
             component.item = curItem
             component.itemName = binding.itemName
-
             if (repeatArray) {
-                /* jshint ignore:start */
                 /*兼容1.4与1.5, 1.6去掉*/
+                /* jshint ignore:start */
                 (function (array, el) {
                     proxy.$remove = function () {
                         avalon.Array.remove(array, el)
@@ -228,8 +254,12 @@ avalon.directive("repeat", {
                 })(value, curItem)
 
                 saveInCache(newCache, curItem, component)
+                component.vmodel.$hashcode = "a:" + binding.itemName + ":a:" + (new Date - 0)
                 /* jshint ignore:end */
             } else {
+                value[curKey] = "$$getpath$$"
+
+                component.vmodel.$hashcode = "o:" + binding.itemName + ":" + avalon.withPath + ":" + (new Date - 0)
                 newCache[curKey] = component
             }
 
@@ -240,9 +270,9 @@ avalon.directive("repeat", {
             }
 
         }
-        console.log("第二次循环", new Date - now, last)
-        console.log("创建", createTime, last)
-        console.log("赋值", asignTime, last)
+//        console.log("第二次循环", new Date - now, last)
+//        console.log("创建", createTime, last)
+//        console.log("赋值", asignTime, last)
         while (component = reuse.shift()) {
             disposeVirtual([component])
             if (component.item) {
@@ -270,157 +300,155 @@ avalon.directive("repeat", {
         }
         addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
+        console.log(avalon.repeatCount, vnode.updateChildren)
+        if (--avalon.repeatCount === 0) {
+            batchUpdateEntity(binding.vmodel.$id.split(".")[0])
+        }
+
     },
     update: function (node, vnode, parent) {
-        var now = new Date - 0
-        if (!vnode.disposed) {
-            var groupText = vnode.signature
-            var nodeValue = node.nodeValue
-            if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
-                    nodeValue !== groupText + ":start"
-                    ) {
-                //更新注释节点的nodeValue
-                updateSignature(node, nodeValue, groupText)
-            }
-            if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
-                //如果是第一次
-                var dom = vnode.toDOM()
-                var keepChild = avalon.slice(dom.childNodes)
-                if (groupText.indexOf("each") === 0) {
-                    avalon.clearHTML(parent)
-                    parent.appendChild(dom)
-                } else {
-                    parent.replaceChild(dom, node)
-                }
-                updateEntity(keepChild, vnode.children, parent)
-                //avalon.log(new Date - now, "cost repeat1")
-                return false
+        if (vnode.disposed) {
+            return false
+        }
+        var groupText = vnode.signature
+        var nodeValue = node.nodeValue
+        if (node.nodeType === 8 && /\w+\d+\:start/.test(nodeValue) &&
+                nodeValue !== groupText + ":start"
+                ) {
+            //更新注释节点的nodeValue
+            updateSignature(node, nodeValue, groupText)
+        }
+        if (node.nodeType !== 8 || node.nodeValue !== groupText + ":start") {
+            //如果是第一次
+            var dom = vnode.toDOM()
+            var keepChild = avalon.slice(dom.childNodes)
+            if (groupText.indexOf("each") === 0) {
+                avalon.clearHTML(parent)
+                parent.appendChild(dom)
             } else {
+                parent.replaceChild(dom, node)
+            }
+            updateEntity(keepChild, vnode.children, parent)
+        } else {
+            var breakText = groupText + ":end"
+            var emptyFragment = document.createDocumentFragment()
 
-                var breakText = groupText + ":end"
-                var emptyFragment = document.createDocumentFragment()
-
-                //将原有节点移出DOM, 试根据groupText分组
-                var toClone = avalon.parseHTML(vnode.template)
-                var fragments = [], i, el, next
-                var sortedFragments = []
-                var c = vnode.components
-                var indexes = {}
-                //尝试使用更高效的,不挪动元素的方式更新
-                var inplaceIndex = 0
-                var inplaceState = "maybe"
-                for (i in c) {
-                    var ii = c[i].oldIndex
-                    if (ii !== void 0) {
-                        indexes[ii] = ~~i
-                        if (inplaceState) {
-                            if (inplaceState === "maybenot") {
-                                inplaceState = false
-                                inplaceIndex = 0
-                                continue
-                            }
-                            if (ii === indexes[ii]) {
-                                inplaceIndex++
-                            } else {
-                                inplaceState = false
-                            }
+            //将原有节点移出DOM, 试根据groupText分组
+            var toClone = avalon.parseHTML(vnode.template)
+            var fragments = [], i, el, next
+            var sortedFragments = []
+            var c = vnode.components
+            var indexes = {}
+            //尝试使用更高效的,不挪动元素的方式更新
+            var inplaceIndex = 0
+            var inplaceState = "maybe"
+            for (i in c) {
+                var ii = c[i].oldIndex
+                if (ii !== void 0) {
+                    indexes[ii] = ~~i
+                    if (inplaceState) {
+                        if (inplaceState === "maybenot") {
+                            inplaceState = false
+                            inplaceIndex = 0
+                            continue
                         }
-                    } else {
-                        indexes[i + "_"] = c[i]
-                        if (inplaceState === "maybe") {
-                            inplaceState = "maybenot"
-                        }
-
-                    }
-                }
-                i = 0
-            
-                if (inplaceIndex) {
-                    next = node
-                    var entity = []
-                    var continueRemove = false
-                    var lastAnchor
-                    while (next = next.nextSibling) {
-                        if (next.nodeValue === breakText) {
-                            lastAnchor = next
-                            break
-                        } else if (next.nodeValue === groupText) {
-                            entity.push(next)
-                            delete indexes[i]
-                            i++
+                        if (ii === indexes[ii]) {
+                            inplaceIndex++
                         } else {
-                            if (inplaceIndex === i) {
-                                delete indexes[i]
-                                continueRemove = true
-                                break
-                            }
-                            entity.push(next)
+                            inplaceState = false
                         }
                     }
-
-                    if (continueRemove) {
-                        while (next.nextSibling) {
-                            if (next.nodeValue !== breakText) {
-                                parent.removeChild(next.nextSibling)
-                            } else {
-                                lastAnchor = next.nextSibling
-                            }
-                        }
-                    }
-                    for (i in indexes) {
-                        var vdom = indexes[i]
-                        if (typeof vdom === "object") {
-                            emptyFragment.appendChild(toClone.cloneNode(true))
-                        }
-                    }
-                    if (vdom) {
-                        pushArray(entity, avalon.slice(emptyFragment.childNodes))
-                    }
-                    parent.insertBefore(emptyFragment, lastAnchor)
-                    updateEntity(entity, vnode.children.slice(1, -1), parent)
-                    //avalon.log(new Date - now, "cost repeat2")
-                    return false
                 } else {
-                    var fragment = emptyFragment.cloneNode(false)
-                    while (next = node.nextSibling) {
-                        if (next.nodeValue === breakText) {
-                            break
-                        } else if (next.nodeValue === groupText) {
-                            fragment.appendChild(next)
-                            if (indexes[i] !== void 0) {
-                                sortedFragments[indexes[i]] = fragment
-                                delete indexes[i]
-                            } else {
-                                fragments.push(fragment)
-                            }
-                            i++
-                            fragment = emptyFragment.cloneNode(false)
-                        } else {
-                            fragment.appendChild(next)
-                        }
-                    }
-                    var needUpdate = false
-                    for (i in indexes) {
-                        needUpdate = true
-                        i = parseFloat(i)
-                        fragment = fragments.shift()
-                        if (fragment) {
-                            sortedFragments[ i ] = fragment
-                        } else {
-                            sortedFragments[ i ] = toClone ? toClone.cloneNode(true) : (toClone = avalon.parseHTML(vnode.template))
-                        }
+                    indexes[i + "_"] = c[i]
+                    if (inplaceState === "maybe") {
+                        inplaceState = "maybenot"
                     }
 
-                    for (i = 0, el; el = sortedFragments[i++]; ) {
-                        emptyFragment.appendChild(el)
-                    }
-
-                    var entity = avalon.slice(emptyFragment.childNodes)
-                    parent.insertBefore(emptyFragment, node.nextSibling)
                 }
-                needUpdate && updateEntity(entity, vnode.children.slice(1, -1), parent)
-                //avalon.log(new Date - now, "cost repeat3")
-                return false
+            }
+            i = 0
+            if (inplaceState) {
+                next = node
+                var entity = []
+                var continueRemove = false
+                var lastAnchor
+                while (next = next.nextSibling) {
+                    if (next.nodeValue === breakText) {
+                        lastAnchor = next
+                        break
+                    } else if (next.nodeValue === groupText) {
+                        entity.push(next)
+                        delete indexes[i]
+                        i++
+                    } else {
+                        if (inplaceIndex === i) {
+                            delete indexes[i]
+                            continueRemove = true
+                            break
+                        }
+                        entity.push(next)
+                    }
+                }
+
+                if (continueRemove) {
+                    while (next.nextSibling) {
+                        if (next.nodeValue !== breakText) {
+                            parent.removeChild(next.nextSibling)
+                        } else {
+                            lastAnchor = next.nextSibling
+                        }
+                    }
+                }
+                for (i in indexes) {
+                    var vdom = indexes[i]
+                    if (typeof vdom === "object") {
+                        emptyFragment.appendChild(toClone.cloneNode(true))
+                    }
+                }
+                if (vdom) {
+                    pushArray(entity, avalon.slice(emptyFragment.childNodes))
+                }
+                parent.insertBefore(emptyFragment, lastAnchor)
+                updateEntity(entity, vnode.children.slice(1, -1), parent)
+            } else {
+                var fragment = emptyFragment.cloneNode(false)
+                while (next = node.nextSibling) {
+                    if (next.nodeValue === breakText) {
+                        break
+                    } else if (next.nodeValue === groupText) {
+                        fragment.appendChild(next)
+                        if (indexes[i] !== void 0) {
+                            sortedFragments[indexes[i]] = fragment
+                            delete indexes[i]
+                        } else {
+                            fragments.push(fragment)
+                        }
+                        i++
+                        fragment = emptyFragment.cloneNode(false)
+                    } else {
+                        fragment.appendChild(next)
+                    }
+                }
+                for (i in indexes) {
+                    i = parseFloat(i)
+                    fragment = fragments.shift()
+                    if (fragment) {
+                        sortedFragments[ i ] = fragment
+                    } else {
+                        sortedFragments[ i ] = toClone.cloneNode(true)
+                    }
+                }
+
+                for (i = 0, el; el = sortedFragments[i++]; ) {
+                    emptyFragment.appendChild(el)
+                }
+
+                var entity = avalon.slice(emptyFragment.childNodes)
+                parent.insertBefore(emptyFragment, node.nextSibling)
+            }
+            if (vnode.updateChildren) {
+                updateEntity(entity, vnode.children.slice(1, -1), parent)
+                delete vnode.updateChildren
             }
         }
         return false
@@ -576,16 +604,23 @@ function initNames(repeatArray) {
 }
 
 
-function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) {
+function repeatItemFactory(item, name, binding, repeatArray, c) {
+    var oldItem = c.item, oldProxy = c.vmodel
     var before = binding.vmodel//上一级的VM
     var heirloom = {}
-    if (oldItem && item && item.$events) {
+    var isObject = item && typeof item === "object"
+
+    if (isObject && oldItem) {
         item.$events = oldItem.$events
         item.$events.__vmodel__ = item
     }
-
+    if (!isObject && oldProxy) {
+        return oldProxy
+    }
     var useItem = item && item.$id
-    var vm = mediatorFactory(before, useItem ? item : {}, heirloom,
+    var vm = mediatorFactory(before,
+            useItem ? item : {},
+            heirloom,
             function (obj, $accessors) {
                 obj.$outer = obj.$outer || 1
                 if (repeatArray) {
@@ -593,41 +628,27 @@ function repeatItemFactory(item, name, binding, repeatArray, oldItem, oldProxy) 
                 }
                 var keys = [binding.keyName, binding.itemName, "$index", "$first", "$last"]
                 for (var i = 0, key; key = keys[i++]; ) {
-                    if (oldProxy) {
+                    if (key === binding.itemName) {
+                        $accessors[key] = makeComputed("", key, heirloom, key, {
+                            set: function (a) {
+                                c.value[c.key] = a
+                            },
+                            get: function () {
+                                return c.value[c.key]
+                            }
+                        })
+                    } else if (oldProxy) {
                         $accessors[key] = oldProxy.$accessors[key]
                     } else {
                         $accessors[key] = makeObservable("", key, heirloom)
                     }
                 }
+
             })
-    var $hashcode = oldProxy ? oldProxy.$hashcode :
-            makeHashCode((repeatArray ? "a" : "o") + ":" + binding.itemName + ":")
-
-    vm.$hashcode = $hashcode
-
-    if (!repeatArray) {
-        var match = String(before.$hashcode).match(/^(a|o):(\S+):(?:\d+)$/)
-        //数组循环中的对象循环,得到数组元素
-        if (match && match[1] === "a") {
-            before = vm[match[2]]
-            var path = name
-        } else {
-            path = binding.expr + "." + name
-        }
-        before.$watch(path, function (v) {
-            //比如outerVm.object.aaa = 8需要同步到innerVm.$val
-            vm[binding.itemName] = v
-        })
-    } else {
-        //处理el.length
-        //数组元素亦是数组,需要对其长度进行监听情况,已经在
-        //makeObservable的old && old.$id &&  val.$id && !Array.isArray(old)分支中处理了
-        //vm.$watch(binding.itemName, function (a) {
-        //   if (Array.isArray(a))
-        //       $emit(vm.$events[binding.itemName + ".length"], a.length)
-        //})
+    if (oldProxy) {
+        vm.$events = oldProxy.$events
+        vm.$events.__vmodel__ = vm
     }
-
     return  vm
 }
 
