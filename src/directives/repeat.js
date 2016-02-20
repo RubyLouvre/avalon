@@ -64,7 +64,7 @@ avalon.directive("repeat", {
 
         var vnode = binding.element
 
-        //disposeVirtual(vnode.children) ms-each已经做了, ms-repeat直接disposed
+        //disposeVirtual(vnode.children)// ms-each已经做了, ms-repeat直接disposed
 
         var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
         var type = binding.type
@@ -122,8 +122,6 @@ avalon.directive("repeat", {
         return false
     },
     change: function (value, binding) {
-        // console.log("ms-repeat change ...", value)
-
         var vnode = binding.element
         if (!vnode || vnode.disposed) {
             return
@@ -181,7 +179,6 @@ avalon.directive("repeat", {
         var newCom
         var createTime = 0
         var asignTime = 0
-        var onlyMove = true
         for (i = 0; i <= last; i++) {
             component = components[i]
             var curItem = entries[i].item
@@ -202,10 +199,8 @@ avalon.directive("repeat", {
                     vnode.updateChildren = true
                 }
 
-
                 component.value = value
                 component.key = curKey
-
 
                 //新建或重利用旧的proxy, item创建一个proxy
                 var atime = new Date - 0
@@ -219,7 +214,6 @@ avalon.directive("repeat", {
                 }
 
             }
-
 
             var btime = new Date - 0
 
@@ -300,7 +294,6 @@ avalon.directive("repeat", {
         }
         addHook(vnode, binding.rendered, "afterChange", 95)
         addHooks(this, binding)
-        console.log(avalon.repeatCount, vnode.updateChildren)
         if (--avalon.repeatCount === 0) {
             batchUpdateEntity(binding.vmodel.$id.split(".")[0])
         }
@@ -367,7 +360,7 @@ avalon.directive("repeat", {
                 }
             }
             i = 0
-            if (inplaceState) {
+            if (inplaceState && inplaceIndex) {
                 next = node
                 var entity = []
                 var continueRemove = false
