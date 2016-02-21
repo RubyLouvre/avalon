@@ -1,11 +1,11 @@
 /*==================================================
- Copyright (c) 2013-2015 司徒正美 and other contributors
+ Copyright (c) 2013-2016 司徒正美 and other contributors
  http://www.cnblogs.com/rubylouvre/
  https://github.com/RubyLouvre
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.6 built in 2016.1.21
+ avalon.js 1.5.6 built in 2016.2.21
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1870,7 +1870,6 @@ function getProxyIds(a, isArray) {
 
 var disposeQueue = avalon.$$subscribers = []
 var beginTime = new Date()
-var oldInfo = {}
 
 //添加到回收列队中
 function injectDisposeQueue(data, list) {
@@ -5082,8 +5081,7 @@ avalon.directive("repeat", {
                 if (retain[keyOrId] !== true) {
 
                     action = "del"
-                    removeItem(retain[keyOrId].$anchor, binding)
-                    // avalon.log("删除", keyOrId)
+                    removeItem(retain[keyOrId].$anchor, binding,true)
                     // 相当于delete binding.cache[key]
                     proxyRecycler(this.cache, keyOrId, param)
                     retain[keyOrId] = null
@@ -5096,7 +5094,7 @@ avalon.directive("repeat", {
                 keyOrId = xtype === "array" ? proxy.$id : proxy.$key
                 var pre = proxies[i - 1]
                 var preEl = pre ? pre.$anchor : binding.start
-                if (!retain[keyOrId]) {//如果还没有插入到DOM树
+                if (!retain[keyOrId]) {//如果还没有插入到DOM树,进行插入动画
                     (function (fragment, preElement) {
                         var nodes = fragment.nodes
                         var vmodels = fragment.vmodels
@@ -5109,19 +5107,17 @@ avalon.directive("repeat", {
                         }
                         fragment.nodes = fragment.vmodels = null
                     })(fragments[i], preEl)// jshint ignore:line
-                    // avalon.log("插入")
 
-                } else if (proxy.$index !== proxy.$oldIndex) {
+                } else if (proxy.$index !== proxy.$oldIndex) {//进行移动动画
                     (function (proxy2, preElement) {
                         staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
-                            var curNode = removeItem(proxy2.$anchor)//如果位置被挪动了
+                            var curNode = removeItem(proxy2.$anchor)
                             var inserted = avalon.slice(curNode.childNodes)
                             parent.insertBefore(curNode, preElement.nextSibling)
                             animateRepeat(inserted, 1, binding)
                         }, staggerIndex)
                     })(proxy, preEl)// jshint ignore:line
 
-                    // avalon.log("移动", proxy.$oldIndex, "-->", proxy.$index)
                 }
             }
 
@@ -5177,7 +5173,7 @@ function mayStaggerAnimate(staggerTime, callback, index) {
     return index
 }
 
-function removeItem(node, binding) {
+function removeItem(node, binding, flagRemove) {
     var fragment = avalonFragment.cloneNode(false)
     var last = node
     var breakText = last.nodeValue
@@ -5189,7 +5185,7 @@ function removeItem(node, binding) {
         if (!pre || String(pre.nodeValue).indexOf(breakText) === 0) {
             break
         }
-        if (binding && (pre.className === binding.effectClass)) {
+        if (!flagRemove && binding && (pre.className === binding.effectClass)) {
             node = pre;
             (function (cur) {
                 binding.staggerIndex = mayStaggerAnimate(binding.effectLeaveStagger, function () {
