@@ -171,7 +171,7 @@ function observe(definition, old, heirloom, options) {
                 vm[i] = definition[i]
             }
             return vm
-        } else {
+        } else { 
             //否则新建一个VM
             vm = observeObject(definition, heirloom, options)
             return vm
@@ -204,7 +204,7 @@ function makeObservable(sid, spath, heirloom) {
             if (old === val) {
                 return
             }
-            if(val === "$$getpath$$"){
+            if (val === "$$getpath$$") {
                 avalon.withPath = spath
                 return
             }
@@ -391,7 +391,9 @@ function subModelFactory(before, after, heirloom, options) {
     function hasOwnKey(key) {
         return keys[key] === true
     }
-
+    if (options.top === true) {
+        makeFire($vmodel, heirloom)
+    }
     before.$hashcode = false
     hideProperty($vmodel, "$id", $idname)
     hideProperty($vmodel, "$accessors", $accessors)
@@ -596,17 +598,31 @@ var _splice = ap.splice
 
 arrayMethods.forEach(function (method) {
     var original = ap[method]
-    newProto[method] = function () {
+    newProto[method] = function (a, b) {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
-        for (var i = 0, n = arguments.length; i < n; i++) {
-            args[i] = observeItem(arguments[i], {}, {
-                idname: this.$id + ".*",
-                top: true
-            })
+        //observe(definition, old, heirloom, options)
+        var options = {
+            idname: this.$id + ".*",
+            top: true
         }
-        
+        if (method === "splice" && this[0] && typeof this[0] === "object") {
+            var old = this.slice(a, b)
+            var neo = ap.slice.call(arguments, 2)
+            var args = [a, b]
+            for (var j = 0, jn = neo.length; j < jn; j++) {
+                args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
+            }
+            //console.log(args)
+        } else {
+            for (var i = 0, n = arguments.length; i < n; i++) {
+                args[i] = observeItem(arguments[i], {}, options)
+            }
+        }
+
+
         var result = original.apply(this, args)
+        console.log(this, "---")
         if (!W3C) {
             this.$model = toJson(this)
         }

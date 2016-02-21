@@ -10,17 +10,22 @@
             window.onload = function () {
                 vm = avalon.define({
                     $id: "test",
-                    aaa: {
-                        a: 11,
-                        b: 22
+                    obj: {
+                        aaa: 111,
+                        bbb: 222,
+                        ccc: 333
                     }
                 })
                 avalon.scan(document.body, vm)
-                setTimeout(function(){
-                    console.log("---")
-                    vm.aaa.a = 999
-                   // vm.array =[[1,2,3,5],[3,4,5,9,8]]
-                },1000)
+                setTimeout(function () {
+                    vm.obj = {
+                        eee: 777,
+                        ddd: 444,
+                        aaa: 333,
+                        bbb: 555
+                    }
+                    // vm.array =[[1,2,3,5],[3,4,5,9,8]]
+                }, 1000)
             }
 
         </script>
@@ -28,7 +33,7 @@
     <body>
         <div ms-controller="test">
             <ul>
-                <li ms-repeat="aaa">{{$key}}--{{$val}}</li>
+                <li ms-repeat="obj">{{$key}}||{{$val}}||{{$index}}</li>
             </ul>
         </div>
     </body>

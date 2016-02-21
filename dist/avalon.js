@@ -2947,7 +2947,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vm[i] = definition[i]
 	            }
 	            return vm
-	        } else {
+	        } else { 
 	            //否则新建一个VM
 	            vm = observeObject(definition, heirloom, options)
 	            return vm
@@ -2980,7 +2980,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (old === val) {
 	                return
 	            }
-	            if(val === "$$getpath$$"){
+	            if (val === "$$getpath$$") {
 	                avalon.withPath = spath
 	                return
 	            }
@@ -3167,7 +3167,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function hasOwnKey(key) {
 	        return keys[key] === true
 	    }
-
+	    if (options.top === true) {
+	        makeFire($vmodel, heirloom)
+	    }
 	    before.$hashcode = false
 	    hideProperty($vmodel, "$id", $idname)
 	    hideProperty($vmodel, "$accessors", $accessors)
@@ -3372,17 +3374,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	arrayMethods.forEach(function (method) {
 	    var original = ap[method]
-	    newProto[method] = function () {
+	    newProto[method] = function (a, b) {
 	        // 继续尝试劫持数组元素的属性
 	        var args = [], on = this.length
-	        for (var i = 0, n = arguments.length; i < n; i++) {
-	            args[i] = observeItem(arguments[i], {}, {
-	                idname: this.$id + ".*",
-	                top: true
-	            })
+	        //observe(definition, old, heirloom, options)
+	        var options = {
+	            idname: this.$id + ".*",
+	            top: true
 	        }
-	        
+	        if (method === "splice" && this[0] && typeof this[0] === "object") {
+	            var old = this.slice(a, b)
+	            var neo = ap.slice.call(arguments, 2)
+	            var args = [a, b]
+	            for (var j = 0, jn = neo.length; j < jn; j++) {
+	                args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
+	            }
+	            //console.log(args)
+	        } else {
+	            for (var i = 0, n = arguments.length; i < n; i++) {
+	                args[i] = observeItem(arguments[i], {}, options)
+	            }
+	        }
+
+
 	        var result = original.apply(this, args)
+	        console.log(this, "---")
 	        if (!W3C) {
 	            this.$model = toJson(this)
 	        }
@@ -6780,7 +6796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var vnode = binding.element
 
-	        //disposeVirtual(vnode.children) ms-each已经做了, ms-repeat直接disposed
+	        //disposeVirtual(vnode.children)// ms-each已经做了, ms-repeat直接disposed
 
 	        var template = shimTemplate(vnode, rremoveRepeat) //防止死循环
 	        var type = binding.type
@@ -6838,8 +6854,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false
 	    },
 	    change: function (value, binding) {
-	        // console.log("ms-repeat change ...", value)
-
 	        var vnode = binding.element
 	        if (!vnode || vnode.disposed) {
 	            return
@@ -6897,7 +6911,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var newCom
 	        var createTime = 0
 	        var asignTime = 0
-	        var onlyMove = true
 	        for (i = 0; i <= last; i++) {
 	            component = components[i]
 	            var curItem = entries[i].item
@@ -6918,10 +6931,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    vnode.updateChildren = true
 	                }
 
-
 	                component.value = value
 	                component.key = curKey
-
 
 	                //新建或重利用旧的proxy, item创建一个proxy
 	                var atime = new Date - 0
@@ -6935,7 +6946,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 
 	            }
-
 
 	            var btime = new Date - 0
 
@@ -7016,7 +7026,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        addHook(vnode, binding.rendered, "afterChange", 95)
 	        addHooks(this, binding)
-	        console.log(avalon.repeatCount, vnode.updateChildren)
 	        if (--avalon.repeatCount === 0) {
 	            batchUpdateEntity(binding.vmodel.$id.split(".")[0])
 	        }
@@ -7083,7 +7092,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	            i = 0
-	            if (inplaceState) {
+	            if (inplaceState && inplaceIndex) {
 	                next = node
 	                var entity = []
 	                var continueRemove = false
