@@ -13,6 +13,9 @@ var attrDir = avalon.directive("attr", {
         //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
         binding.expr = quoteExpr(binding.expr.trim())
     },
+    parse: function (binding, num) {
+        return "vnode" + num + ".props[" + quote(binding.name) + "] = " + parse(binding.expr) + "\n"
+    },
     change: function (val, binding) {
         var vnode = binding.element
         if (vnode) {

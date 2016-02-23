@@ -3,11 +3,12 @@ var hooks = require("../vdom/hooks")
 var addHooks = hooks.addHooks
 
 avalon.directive("{{}}", {
+   
     change: function (value, binding) {
         var vnode = binding.element
         if (!vnode || vnode.disposed)
             return
-        
+
         binding.array[binding.index] = value == null ? "" : value
         var nodeValue = binding.array.join("")
 

@@ -46,17 +46,27 @@ avalon.vtree = vars.vtree
 function define(definition) {
     var $id = definition.$id
     if (!$id) {
-        avalon.log("warning: vm必须指定$id")
+        avalon.log("warning: vm.$id must be specified")
     }
-    var vmodel = observeObject(definition, {}, {
+    var vm = observeObject(definition, {}, {
         pathname: "",
         idname: $id,
         top: true
     })
+
     if (avalon.vmodels[$id]) {
-        avalon.log("warning:[", $id, "]已经被定义")
+        throw Error("warning:[", $id, "] had defined!")
     }
-    avalon.vmodels[$id] = vmodel
+    avalon.vmodels[$id] = vm
+    avalon.ready(function () {
+        var elem = document.getElementById($id)
+        var vnode = avalon.createVirtual(elem.outerHTML)[0]
+        vm.render = avalon.createRender(vnode)
+        var vnodeHasData = vm.$render(vm, true)
+      
+        elem.vnode = vnodeHasData[0]
+        avalon.patch(vm.$id)
+    })
 
     return vmodel
 }
@@ -171,7 +181,7 @@ function observe(definition, old, heirloom, options) {
                 vm[i] = definition[i]
             }
             return vm
-        } else { 
+        } else {
             //否则新建一个VM
             vm = observeObject(definition, heirloom, options)
             return vm

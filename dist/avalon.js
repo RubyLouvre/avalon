@@ -6966,6 +6966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (component.vmodel && component.vmodel !== proxy) {
 	                component.vmodel.$hashcode = false
 	            }
+	            console.log(i, i===0, i===last)
 	            component.index = i
 	            component.vmodel = proxy
 	            component.item = curItem
@@ -6996,9 +6997,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	        }
-	//        console.log("第二次循环", new Date - now, last)
-	//        console.log("创建", createTime, last)
-	//        console.log("赋值", asignTime, last)
+	        console.log("第二次循环", new Date - now, last)
+	        console.log("创建", createTime, last)
+	        console.log("赋值", asignTime, last)
 	        while (component = reuse.shift()) {
 	            disposeVirtual([component])
 	            if (component.item) {
@@ -7092,49 +7093,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	            i = 0
-	            if (inplaceState && inplaceIndex) {
-	                next = node
-	                var entity = []
-	                var continueRemove = false
-	                var lastAnchor
-	                while (next = next.nextSibling) {
-	                    if (next.nodeValue === breakText) {
-	                        lastAnchor = next
-	                        break
-	                    } else if (next.nodeValue === groupText) {
-	                        entity.push(next)
-	                        delete indexes[i]
-	                        i++
-	                    } else {
-	                        if (inplaceIndex === i) {
-	                            delete indexes[i]
-	                            continueRemove = true
-	                            break
-	                        }
-	                        entity.push(next)
-	                    }
-	                }
-
-	                if (continueRemove) {
-	                    while (next.nextSibling) {
-	                        if (next.nodeValue !== breakText) {
-	                            parent.removeChild(next.nextSibling)
-	                        } else {
-	                            lastAnchor = next.nextSibling
-	                        }
-	                    }
-	                }
-	                for (i in indexes) {
-	                    var vdom = indexes[i]
-	                    if (typeof vdom === "object") {
-	                        emptyFragment.appendChild(toClone.cloneNode(true))
-	                    }
-	                }
-	                if (vdom) {
-	                    pushArray(entity, avalon.slice(emptyFragment.childNodes))
-	                }
-	                parent.insertBefore(emptyFragment, lastAnchor)
-	                updateEntity(entity, vnode.children.slice(1, -1), parent)
+	            
+	            if (inplaceState && inplaceIndex && NaN) {
+	//                next = node
+	//                var entity = []
+	//                var continueRemove = false
+	//                var lastAnchor
+	//                while (next = next.nextSibling) {
+	//                    if (next.nodeValue === breakText) {
+	//                        lastAnchor = next
+	//                        break
+	//                    } else if (next.nodeValue === groupText) {
+	//                        entity.push(next)
+	//                        delete indexes[i]
+	//                        i++
+	//                    } else {
+	//                        if (inplaceIndex === i) {
+	//                            delete indexes[i]
+	//                            continueRemove = true
+	//                            break
+	//                        }
+	//                        entity.push(next)
+	//                    }
+	//                }
+	//
+	//                if (continueRemove) {
+	//                    while (next.nextSibling) {
+	//                        if (next.nodeValue !== breakText) {
+	//                            parent.removeChild(next.nextSibling)
+	//                        } else {
+	//                            lastAnchor = next.nextSibling
+	//                        }
+	//                    }
+	//                }
+	//                for (i in indexes) {
+	//                    var vdom = indexes[i]
+	//                    if (typeof vdom === "object") {
+	//                        emptyFragment.appendChild(toClone.cloneNode(true))
+	//                    }
+	//                }
+	//                if (vdom) {
+	//                    pushArray(entity, avalon.slice(emptyFragment.childNodes))
+	//                }
+	//                parent.insertBefore(emptyFragment, lastAnchor)
+	//                updateEntity(entity, vnode.children.slice(1, -1), parent)
 	            } else {
 	                var fragment = emptyFragment.cloneNode(false)
 	                while (next = node.nextSibling) {

@@ -27,6 +27,6 @@ avalon.ready = function (fn) {
     loaded ? fn(avalon) : fns.push(fn)
 }
 
-avalon.ready(function () {
-    avalon.scan(document.body)
-})
+//avalon.ready(function () {
+//   avalon.scan(document.body)
+//})
