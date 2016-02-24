@@ -122,7 +122,7 @@ function createVirtual(text, recursive) {
 
                 var template = matchText.slice(match[0].length,
                         (type.length + 3) * -1) //抽取innerHTML
-                var innerHTML = template.replace(rfill, fill)
+                var innerHTML = template.replace(rfill, fill).trim()
 
                 node = {
                     type: type,
@@ -146,7 +146,7 @@ function createVirtual(text, recursive) {
                     }
                 }
                 node = new VElement(node)
-                controllerHook(node)
+               // controllerHook(node)
             }
         }
 
@@ -166,7 +166,7 @@ function createVirtual(text, recursive) {
                     children: [],
                     isVoidTag: true
                 })
-                controllerHook(node)
+              //  controllerHook(node)
             }
         }
         if (node) {

@@ -1,9 +1,7 @@
-var rexpr = /\@\w+/
-var rsss = /(\S*)\{\{(\S+)\}\}(\S*)/
 
 var parseAttrs = require("./parseAttrs")
 var parseExpr = require("./parseExpr")
-var parse = require("./parse")
+var parse = require("./parser2")
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote
@@ -33,13 +31,13 @@ var quote = require("../base/builtin").quote
 //    return str.replace("@", "__vmodel__.")
 //}
 function wrap(a, num) {
-    return "(function(){\n\n" + a + "\n\nreturn arr" + num + "\n})();\n"
+    return "(function(){\n\n" + a + "\n\nreturn nodes" + num + "\n})();\n"
 }
 //av-for: a in @array
 
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
-    var body = toTemplate(arr, num) + "\n\nreturn arr" + num
+    var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
     
     var fn = Function("__vmodel__", body)
      console.log(fn + "")
@@ -59,12 +57,14 @@ function toTemplate(arr, num) {
         if (el.type === "#text") {
             str += "var " + vnode + " = {type:'text', skipContent:true}\n"
             var hasExpr = rexpr.test(el.nodeValue)
+           
             if (hasExpr) {
                 var array = parseExpr(el.nodeValue, false)
+                console.log(array)
                 if (array.length === 1) {
                     var a = parse(array[0].expr)
                 } else {
-                    var a = array.map(function (el) {
+                    a = array.map(function (el) {
                         return el.type ? "String(" + parse(el.expr) + ")" : quote(el.expr)
                     }).join(" + ")
 
@@ -108,7 +108,7 @@ function toTemplate(arr, num) {
             }
             continue
         } else { //处理元素节点
-            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[]}\n"
+            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:"+quote(el.template)+"}\n"
             str += vnode + ".isVoidTag = " + !!el.isVoidTag + "\n"
             if (hasIf) {
 
@@ -118,7 +118,7 @@ function toTemplate(arr, num) {
             }
 
             parseAttrs(el.props, num)
-
+console.log(el.children," -- ",el.type)
             str += vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
 
             str += children + ".push(" + vnode + ")\n"

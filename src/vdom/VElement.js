@@ -44,7 +44,6 @@ VElement.prototype = {
                 case "script":
                     dom.text = this.template
                     break
-                    break
                 case "style":
                 case "template":
                     dom.innerHTML = this.template

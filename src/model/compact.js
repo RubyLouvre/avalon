@@ -16,6 +16,7 @@ var getComputed = innerBuiltin.getComputed
 var makeComputed = innerBuiltin.makeComputed
 var Observer = innerBuiltin.Observer
 var rtopsub = innerBuiltin.rtopsub
+var createRender = require("../parser/createRender")
 
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
 var dispatch = require("./dispatch")
@@ -61,14 +62,16 @@ function define(definition) {
     avalon.ready(function () {
         var elem = document.getElementById($id)
         var vnode = avalon.createVirtual(elem.outerHTML)[0]
-        vm.render = avalon.createRender(vnode)
+        console.log(vnode)
+        vm.$render = avalon.createRender([vnode])
+        console.log(vm.$render+"")
         var vnodeHasData = vm.$render(vm, true)
-      
-        elem.vnode = vnodeHasData[0]
-        avalon.patch(vm.$id)
+      console.log(vnodeHasData)
+       // elem.vnode = vnodeHasData[0]
+      //  avalon.patch(vm.$id)
     })
 
-    return vmodel
+    return vm
 }
 
 

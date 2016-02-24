@@ -29,50 +29,12 @@ function addAttrHook(node) {
     addHook(node, attrUpdate)
 }
 
-function controllerHook(node) {
-    var props = node.props
-    for (var name in node.props) {
-        var match = name.match(/^(?:ms|av)-(\w+)-?(.*)/)
-        if (match) {
-            var v = node.props[name]
-            var type = match[1]
-            switch (type) {
-                case "controller":
-                case "important":
-                    //移除ms-controller, ms-important
-                    //好让[ms-controller]样式生效,处理{{}}问题
-                    var oldName = name
-                    name = "avalonctrl"
-                    if (type === "important") {
-                        addData(node, "changeAttr")["data-important"] = true
-                        props["data-important"] = true
-                    }
-                   
-                    //添加avalonctrl, data-important
-                    //方便收集vmodel
-                    break
-                case "with":
-                    var oldName = name
-                    name = "av-each-" + match[2]
-                    break
-            }
-            if (oldName) {
-                var change = addData(node, "changeAttr")
-                change[oldName] = false
-                change[name] = v
-                delete props[oldName]
-                props[name] = v
-                addAttrHook(node)
-            }
-        }
-    }
-}
+
 
 module.exports = {
     addData: addData,
     addHook: addHook,
     addHooks: addHooks,
-    controllerHook: controllerHook,
     addAttrHook: addAttrHook
 }
 
