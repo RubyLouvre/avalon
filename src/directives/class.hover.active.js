@@ -13,14 +13,14 @@ var addHooks = hooks.addHooks
 
 var directives = avalon.directives
 avalon.directive("class", {
-    is: function(a, b) {
+    is: function (a, b) {
         if (!Array.isArray(b)) {
             return false
         } else {
             return a[0] === b[0] && a[1] === b[1]
         }
     },
-    init: function(binding) {
+    init: function (binding) {
         var oldStyle = binding.param
         var method = binding.type
         if (!oldStyle || isFinite(oldStyle)) {
@@ -44,24 +44,46 @@ avalon.directive("class", {
         }
         vnode.classEvent = classEvent
     },
-    change: function(arr, binding) {
-        var vnode = binding.element
-        if (!vnode || vnode.disposed ||  arr[0] === void 0)
-            return
-       
-        var type = binding.type
-        var data = addData(vnode, type + "Data")
-        var toggle = arr[1]
-        String(arr[0]).replace(/\S+/g, function(cls) {
-            if (type === "class") {
-                data[cls] = toggle
-            } else if (toggle) {
-                data[cls] = true
-            }
-        })
-        addHooks(this, binding)
+    parse: function (binding, num) {
+        return "vnode" + num + ".props[\"av-class\"] = " + parse(binding.expr) + ";\n"
     },
-    update: function(node, vnode) {
+    diff: function (cur, pre) {
+        var a = cur.props["av-class"]
+        var p = pre.props["av-class"]
+        if (a && typeof a === "object") {
+            if (Array.isArray(a)) {
+                a = cur.props["av-class"] = a.join(" ")
+            }else{
+                a = cur.props["av-class"] = Object.keys(a).map(function(name){
+                    if(a[name])
+                        return name
+                    return ""
+                }).join(" ")
+            }
+            if (typeof p !== "string") {
+                cur.changeClass = a
+            } else {
+                var patch = {}
+                var hasChange = false
+                for (var i in a) {
+                    if (a[i] !== p[i]) {
+                        hasChange = true
+                        patch = a[i]
+                    }
+                }
+                if (hasChange) {
+                    cur.changeStyle = patch
+                }
+            }
+            if (cur.changeStyle) {
+                var list = cur.change || (cur.change = [])
+                avalon.Array.ensure(list, this.update)
+            }
+        } else {
+            cur.props["av-style"] = pre.props["av-style"]
+        }
+    },
+    update: function (node, vnode) {
         var classEvent = vnode.classEvent
         if (classEvent) {
             for (var i in classEvent) {
@@ -74,7 +96,7 @@ avalon.directive("class", {
             delete vnode.classEvent
         }
         var names = ["class", "hover", "active"]
-        names.forEach(function(type) {
+        names.forEach(function (type) {
             var data = vnode[type + "Data"]
             if (!data)
                 return
@@ -118,7 +140,7 @@ function setClass(node, vnode) {
     var svg = rsvg.test(node)
     var className = svg ? node.getAttribute("class") : node.className
     var classOne = {}
-    className.replace(/\S+/g, function(name) {
+    className.replace(/\S+/g, function (name) {
         classOne[name] = true
     })
     //remove old className
@@ -156,6 +178,6 @@ function setClass(node, vnode) {
 markID(activateClass)
 markID(abandonClass)
 
-"hover,active".replace(rword, function(name) {
+"hover,active".replace(rword, function (name) {
     directives[name] = directives["class"]
 })

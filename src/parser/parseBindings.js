@@ -6,11 +6,13 @@ var directives = avalon.directives
 var eventMap = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 
 var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
-function parseAttrs(props, num) {
+function parseBindings(props, num) {
     var bindings = []
     for (var i in props) {
         var value = props[i], match
-
+        if (i === "av-skip") {
+            return  "vnode" + num + ".skipAttrs = true\n"
+        }
         if (value && (match = i.match(rmsAttr))) {
             var type = match[1]
             var param = match[2] || ""
@@ -34,6 +36,10 @@ function parseAttrs(props, num) {
             }
         }
     }
+
+    if (!bindings.length) {
+        return "vnode" + num + ".skipAttrs = true\n"
+    }
     var ret = ""
     bindings.sort(bindingSorter).forEach(function (binding) {
         ret += directives[type].parse(binding, num)
@@ -45,4 +51,4 @@ function bindingSorter(a, b) {
     return a.priority - b.priority
 }
 
-module.exports = parseAttrs
+module.exports = parseBindings

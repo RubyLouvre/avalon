@@ -1,43 +1,44 @@
-var quoteExpr = require("../parser/parser").quoteExpr
-var hooks = require("../vdom/hooks")
-var addData = hooks.addData
-var addHooks = hooks.addHooks
 
 var attrUpdate = require("../dom/attr")
-var propMap = require("../dom/propMap")
-var rword = require("../base/builtin").rword
+var parse = require("../parser/parser")
+
 
 var attrDir = avalon.directive("attr", {
-    init: function (binding) {
-        //{{aaa}} --> aaa
-        //{{aaa}}/bbb.html --> (aaa) + "/bbb.html"
-        binding.expr = quoteExpr(binding.expr.trim())
-    },
     parse: function (binding, num) {
-        return "vnode" + num + ".props[" + quote(binding.name) + "] = " + parse(binding.expr) + "\n"
+        return "vnode" + num + ".props['av-attr'] = " + parse(binding.expr) + ";\n"
     },
-    change: function (val, binding) {
-        var vnode = binding.element
-        if (vnode) {
-            var data = addData(vnode, "changeAttr")
-            var name = binding.param
-            var toRemove = (val === false) || (val === null) || (val === void 0)
-            if (toRemove) {
-                delete vnode.props[name]
-                data[name] = false
-            } else {
-                if (!propMap[name]) {
-                    vnode.props[name] = val
-                }
-                data[name] = val
+    diff: function (cur, pre) {
+        var a = cur.props["av-attr"]
+        var p = pre.props["av-attr"]
+        if (a && typeof a === "object") {
+            if (Array.isArray(a)) {
+                a = cur.props["av-attr"] = avalon.mix.apply({}, a)
             }
+            if (typeof p !== "object") {
+                cur.changeAttr = a
+            } else {
+                var patch = {}
+                var hasChange = false
+                for (var i in a) {
+                    if (a[i] !== p[i]) {
+                        hasChange = true
+                        patch = a[i]
+                    }
+                }
+                if (hasChange) {
+                    cur.changeAttr = patch
+                }
+            }
+            if (cur.changeAttr) {
+                var list = cur.change || (cur.change = [])
+                avalon.Array.ensure(list, this.update)
+            }
+        }else {
+            cur.props["av-attr"] = pre.props["av-attr"]
         }
-        addHooks(this, binding)
     },
+    //dom, vnode
     update: attrUpdate
 })
 
-//这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
-"title,alt,src,value,css,href".replace(rword, function (name) {
-    avalon.directives[name] = attrDir
-})
+"aa:2, aa:2"

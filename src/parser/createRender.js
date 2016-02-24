@@ -1,35 +1,11 @@
 
-var parseAttrs = require("./parseAttrs")
+var parseBindings = require("./parseBindings")
 var parseExpr = require("./parseExpr")
-var parse = require("./parser2")
+var parse = require("./parser")
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote
-//function avalon() {
-//}
-//avalon.each = function (obj, fn) {
-//    if (Array.isArray(obj)) {
-//        for (var i = 0; i < obj.length; i++) {
-//            var value = obj[i]
-//            var type = typeof value
-//            var key = value && type === "object" ? obj : type + value
-//            fn(i, obj[i], key)
-//        }
-//    } else {
-//        for (var i in obj) {
-//            if (obj.hasOwnProperty(i)) {
-//                fn(i, obj[i], i)
-//            }
-//        }
-//    }
-//}
 
-//function quote(str) {
-//    return JSON.stringify(str)
-//}
-//function parse(str) {
-//    return str.replace("@", "__vmodel__.")
-//}
 function wrap(a, num) {
     return "(function(){\n\n" + a + "\n\nreturn nodes" + num + "\n})();\n"
 }
@@ -38,9 +14,9 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-    
+    //console.log(body)
     var fn = Function("__vmodel__", body)
-     console.log(fn + "")
+    console.log(fn+"")
     return fn
 
 }
@@ -55,12 +31,11 @@ function toTemplate(arr, num) {
     for (var i = 0; i < arr.length; i++) {
         var el = arr[i]
         if (el.type === "#text") {
-            str += "var " + vnode + " = {type:'text', skipContent:true}\n"
+            str += "var " + vnode + " = {type:'#text', skipContent:true}\n"
             var hasExpr = rexpr.test(el.nodeValue)
            
             if (hasExpr) {
                 var array = parseExpr(el.nodeValue, false)
-                console.log(array)
                 if (array.length === 1) {
                     var a = parse(array[0].expr)
                 } else {
@@ -115,10 +90,10 @@ function toTemplate(arr, num) {
                 str += "if(!(" + parse(hasIf) + ")){\n\n"
                 str += vnode + ".disposed = true\n"
                 str += "\n}else{\n\n"
+                
             }
 
-            parseAttrs(el.props, num)
-console.log(el.children," -- ",el.type)
+            str += parseBindings(el.props, num)
             str += vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
 
             str += children + ".push(" + vnode + ")\n"

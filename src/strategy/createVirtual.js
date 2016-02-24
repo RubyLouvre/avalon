@@ -131,7 +131,7 @@ function createVirtual(text, recursive) {
                     children: []
                 }
 
-                if (node.props["ms-skip"]) {
+                if (node.props["av-skip"]) {
                     node.skipContent = true
                 } else if (type === "option") {
                     node.children.push(new VText(trimHTML(innerHTML)))
@@ -146,7 +146,7 @@ function createVirtual(text, recursive) {
                     }
                 }
                 node = new VElement(node)
-               // controllerHook(node)
+                // controllerHook(node)
             }
         }
 
@@ -166,7 +166,7 @@ function createVirtual(text, recursive) {
                     children: [],
                     isVoidTag: true
                 })
-              //  controllerHook(node)
+                //  controllerHook(node)
             }
         }
         if (node) {
@@ -186,19 +186,21 @@ var rnowhite = /\S+/g
 var rnogutter = /\s*=\s*/g
 var rquote = /&quot;/g
 var ramp = /&amp;/g
+var rstringFill = /^\?\?\d+$/
 
 function parseAttrs(str, attrs) {
     str.replace(rnogutter, "=").replace(rnowhite, function (el) {
         var arr = el.split("="), value = arr[1] || "",
                 name = arr[0].toLowerCase()
         if (arr.length === 2) {
-            value = value.replace(rfill, fill)
-            //test的方法用到的正则不能出现g
-            if (value.match(rstring)) { //if(rstring2.test(value)) {
-                value = value.replace(ramp, "&").
-                        replace(rquote, '"').
-                        slice(1, -1)
-            }
+            //if (value.match(rstring)) { //if(rstring2.test(value)) {
+            if (value.indexOf("??") === 0) {
+                value = value.replace(rfill, fill).
+                        slice(1, -1).
+                        replace(ramp, "&").
+                        replace(rquote, '"')
+                        
+            } 
 
         }
         attrs[name] = value

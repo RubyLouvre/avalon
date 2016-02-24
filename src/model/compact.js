@@ -17,8 +17,11 @@ var makeComputed = innerBuiltin.makeComputed
 var Observer = innerBuiltin.Observer
 var rtopsub = innerBuiltin.rtopsub
 var createRender = require("../parser/createRender")
+var diff = require("../parser/diff")
 
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
+var updateEntity = require("../strategy/updateEntity")
+
 var dispatch = require("./dispatch")
 var $watch = dispatch.$watch
 var $emit = dispatch.$emit
@@ -61,14 +64,26 @@ function define(definition) {
     avalon.vmodels[$id] = vm
     avalon.ready(function () {
         var elem = document.getElementById($id)
-        var vnode = avalon.createVirtual(elem.outerHTML)[0]
-        console.log(vnode)
-        vm.$render = avalon.createRender([vnode])
-        console.log(vm.$render+"")
-        var vnodeHasData = vm.$render(vm, true)
-      console.log(vnodeHasData)
-       // elem.vnode = vnodeHasData[0]
-      //  avalon.patch(vm.$id)
+        var now = new Date - 0
+        var vnode = avalon.createVirtual(elem.outerHTML)
+        console.log("create primitive vtree", new Date - now)
+        now = new Date
+        vm.$render = avalon.createRender(vnode)
+        console.log("create template Function ", new Date - now)
+        now = new Date
+        var vnodeHasData = vm.$render(vm)
+        console.log("create vtree that has data", new Date - now)
+        now = new Date
+        console.log(vnodeHasData)
+        diff(vnodeHasData, vnode)
+        console.log("diff vtrees", new Date - now)
+        now = new Date
+
+        updateEntity([elem], vnodeHasData)
+        console.log("render dom tree", new Date - now)
+      
+        elem.vnode = vnodeHasData[0]
+       
     })
 
     return vm
