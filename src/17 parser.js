@@ -122,6 +122,8 @@ function addAssign(vars, vmodel, name, binding) {
                     p: prop
                 })
                 vars.splice(i, 1)
+            } else {
+                break
             }
         }
     }

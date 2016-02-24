@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.6 built in 2016.2.23
+ avalon.modern.js 1.5.6 built in 2016.2.24
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2198,6 +2198,8 @@ function addAssign(vars, vmodel, name, binding) {
                     p: prop
                 })
                 vars.splice(i, 1)
+            } else {
+                break
             }
         }
     }
