@@ -74,7 +74,7 @@ function define(definition) {
         var vnodeHasData = vm.$render(vm)
         console.log("create vtree that has data", new Date - now)
         now = new Date
-        console.log(vnodeHasData)
+        //console.log(vnodeHasData)
         diff(vnodeHasData, vnode)
         console.log("diff vtrees", new Date - now)
         now = new Date

@@ -1,31 +1,59 @@
 
-var disposeVirtual = require("../strategy/disposeVirtual")
 var createVirtual = require("../strategy/createVirtual")
+var parse = require("../parser/parser")
+var VElement = require("../vdom/VElement")
 
-var pushArray = require("../base/builtin").pushArray
-var scanNodes = require("../scan/scanNodes")
-var addHooks = require("../vdom/hooks").addHooks
-
+avalon.createRender2 = function (str, vm) {
+    if (this.$render === avalon.createRender2) {
+        var vnode = avalon.createVirtual(str, true)
+        this.$render = avalon.createRender(vnode)
+    }
+    var fn = this.$render
+    return fn(vm)
+}
+function wrapHTML(text, num) {
+    return "(function(){\nvar dynamic" + num + " = " + text + ";\n" +
+            "vnode" + num + ".$render = avalon.createRender2\n" +
+            "return dynamic" + num + "\n" +
+            "})()"
+}
 avalon.directive("html", {
-    change: function (value, binding) {
-        var vnode = binding.element
-        if (!vnode || vnode.disposed)
-            return
-        value = typeof value === "string" ? value : String(value)
-        disposeVirtual(vnode.children)
-        var children = createVirtual(value)
-        pushArray(vnode.children, scanNodes(children, binding.vmodel))
-        addHooks(this, binding)
+    parse: function (binding, num) {
+        return "vnode" + num + ".props['av-html'] = " +
+                "vnode" + num + ".dynamicText = " + wrapHTML(parse(binding.expr), num) + ";\n"
+    },
+    diff: function (cur, pre) {
+        var curValue = cur.props["av-html"]
+        var preValue = pre.props["av-html"]
+        if (curValue !== preValue) {
+            cur.$render = pre.$render
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
+        } else {
+            cur.$render = pre.$render
+            cur.children = pre.children.concat()
+        }
+
     },
     update: function (node, vnode) {
-        if (window.Rage) {
+        if (window.Range) {
             node.innerHTML = vnode.children.map(function (el) {
-                return el.toHTML()
+                if (el.type === '#text')
+                    return el.nodeValue
+                if (el.type === '#comment')
+                    return "<!--" + el.nodeValue + "-->"
+                return (new VElement(el)).toHTML()
             }).join("")
         } else {
             avalon.clearHTML(node)
             for (var i = 0, el; el = vnode.children[i++]; ) {
-                node.appendChild(el.toDOM())
+                if (el.type === '#text') {
+                    node.appendChild(document.createTextNode(el.nodeValue))
+                } else if (el.type === '#comment') {
+                    node.appendChild(document.createComment(el.nodeValue))
+                } else {
+                    node.appendChild((new VElement(el)).toDOM())
+                }
             }
         }
         //这里就不用劳烦用created, disposed

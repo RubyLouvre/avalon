@@ -1,6 +1,6 @@
 require('./attr')
 require('./expr')
-require('./css')
+require('./style')
 require('./text')
 require('./html')
 require('./visible')

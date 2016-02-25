@@ -16,7 +16,7 @@ function createRender(arr) {
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
     //console.log(body)
     var fn = Function("__vmodel__", body)
-    console.log(fn+"")
+    console.log(fn + "")
     return fn
 
 }
@@ -33,7 +33,7 @@ function toTemplate(arr, num) {
         if (el.type === "#text") {
             str += "var " + vnode + " = {type:'#text', skipContent:true}\n"
             var hasExpr = rexpr.test(el.nodeValue)
-           
+
             if (hasExpr) {
                 var array = parseExpr(el.nodeValue, false)
                 if (array.length === 1) {
@@ -83,19 +83,24 @@ function toTemplate(arr, num) {
             }
             continue
         } else { //处理元素节点
-            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:"+quote(el.template)+"}\n"
+            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:" + quote(el.template) + "}\n"
             str += vnode + ".isVoidTag = " + !!el.isVoidTag + "\n"
             if (hasIf) {
 
                 str += "if(!(" + parse(hasIf) + ")){\n\n"
                 str += vnode + ".disposed = true\n"
                 str += "\n}else{\n\n"
-                
+
             }
 
             str += parseBindings(el.props, num)
+            //av-text,av-html,会将一个元素变成组件
+            str += "if(" + vnode + ".$render){\n"
+            
+            str += vnode + ".$render(" + vnode + ".dynamicText,__vmodel__)\n"
+            str += "}else{\n"
             str += vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
-
+            str += "}\n"
             str += children + ".push(" + vnode + ")\n"
 
             if (hasIf) {

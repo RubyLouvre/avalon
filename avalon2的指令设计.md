@@ -51,7 +51,13 @@
 }
 ```
 
-### av-attr-name="@ddd"
+### av-attr
+```
+ av-attr="{ title:@title, align:@bb+1 }"
+ av-attr="[ @obj1, @obj2 ]"
+ av-attr="@obj"
+ av-attr="[ @obj1, isB ? @objB : {}]"
+```
 指定一个属性，可使用过滤器， 但其值为false，null, undefined，会移除真实DOM的对应属性
 
 #### av-visible="@toggle"
@@ -88,11 +94,14 @@ av-click="@fn"
 可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
 
 ### av-text
+
 可使用过滤器 类似于`{{ }}`，会清空此元素底下的所有节点，再添加新文本内容
 
 ### av-html
+```/Users/qitmac000408/avalon/avaloon2 vm的设计.md
+av-html="@longtext"
+```
 可使用过滤器，将vm中的某个字任串属性转换成HTML节点，插入到目标元素底下，
-
 
 ### av-duplex
 可使用过滤器，双工绑定
@@ -101,7 +110,37 @@ av-click="@fn"
 ### av-effect
 可使用过滤器，结合其他指令使用动画效果
 
-### av-widget `<av-xxxx>` `<av:xxxx>`
+### av-widget
+```
+av-wiget="@obj"
+av-wiget="{title: @ddd, $id: "sss"}"
+av-wiget="[@obj1,@obj2,{$id: 'item' + i }]"
+```
 可使用过滤器，将普通元素变成一个组件
 
-## data-xxx-ccc回调
+```
+av-attr="{xxx:yyy}"--> props[av-attr] = fn
+av-text   --> 检测template children 与 update
+av-html   --> 检测template children 与 update
+av-duplex --> 检测DOM的update
+av-on     --> 检测DOM的update
+```
+
+
+| 指令           | 语法               | 进度  |
+| ------------- |:-----------------:| -----:|
+| av-attr       | 对象或对象数组       | yes |
+| av-style      | 对象或对象数组       | yes |
+| expr          | 字符                | yes |
+| av-class      | 布尔对象或字符串数组  | half |
+| av-hover      | 布尔对象或字符串数组  | half |
+| av-active     | 布尔对象或字符串数组  | half |
+| av-on         | 函数                | no |
+| av-text       | 字符串              | yes |
+| av-html       | 字符串              | yes |
+| av-effect     | 对象或对象数组        | no |
+| av-widget     | 对象或对象数组        | no |
+| if指令        |     合法JS代码       | half |
+| for指令       | 类PHP的特殊语法       | half |
+| forEnd指令    | 空指令（仅表示结束）   | yes|
+| js指令        |  合法JS代码          | yes|

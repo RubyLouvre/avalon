@@ -1,19 +1,29 @@
-var VText = require("../vdom/VText")
-var disposeVirtual = require("../strategy/disposeVirtual")
-var pushArray = require("../base/builtin").pushArray
-var scanNodes = require("../scan/scanNodes")
-var addHooks = require("../vdom/hooks").addHooks
 
+var parse = require("../parser/parser")
+
+//var scanNodes = require("../scan/scanNodes")
+//var addHooks = require("../vdom/hooks").addHooks
+function wrapText(text, num) {
+    return "(function(){\nvar dynamic" + num + " = " + text + ";\n" +
+            "vnode" + num + ".$render = function(a, vm){\n" +
+            "\tthis.children = [{type:'#text',nodeValue:String(a) }]"+
+            "}\n" +
+            "return dynamic" + num + "\n" +
+            "})()"
+}
 avalon.directive("text", {
-    change: function (value, binding) {
-        var vnode = binding.element
-        if (!vnode || vnode.disposed)
-            return
-        value = typeof value === "string" ? value : String(value)
-        disposeVirtual(vnode.children)
-        var children = [new VText(value)]
-        pushArray(vnode.children, scanNodes(children, binding.vmodel))
-        addHooks(this, binding)
+    parse: function (binding, num) {
+        return "vnode" + num + ".props['av-text'] = " +
+                "vnode" + num + ".dynamicText = " +
+                wrapText(parse(binding.expr), num) + ";\n"
+    },
+    diff: function (cur, pre) {
+        var curValue = cur.props["av-text"]
+        var preValue = pre.props["av-text"]
+        if (curValue !== preValue) {
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
+        }
     },
     update: function (node, vnode) {
         var child = vnode.children[0]
@@ -21,9 +31,9 @@ avalon.directive("text", {
             return
         }
         if ("textContent" in node) {
-            node.textContent = child.toHTML()
+            node.textContent = child.nodeValue + ""
         } else {
-            node.innerText = child.toHTML()
+            node.innerText = child.nodeValue + ""
         }
     }
 })

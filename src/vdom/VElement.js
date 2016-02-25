@@ -60,7 +60,16 @@ VElement.prototype = {
         } else if (!this.isVoidTag) {
             if (this.children.length) {
                 this.children.forEach(function (c) {
-                    dom.appendChild(c.toDOM())
+                    var cc
+                    if (c.type === '#text') {
+                        cc = document.createTextNode(c.nodeValue)
+                    } else if (c.type === '#comment') {
+                        cc = document.createComment(c.nodeValue)
+                    } else {
+                        cc = (new VElement(c)).toDOM()
+                    }
+
+                    dom.appendChild(cc)
                 })
             } else if (window.Range) {
                 dom.innerHTML = this.template
@@ -84,7 +93,13 @@ VElement.prototype = {
         str += ">"
         if (this.children.length) {
             str += this.children.map(function (el) {
-                return el.toHTML()
+                if (el.type === '#text') {
+                    return el.nodeValue
+                } else if (el.type === '#comment') {
+                    return "<!--" + el.nodeValue + "-->"
+                } else {
+                    return (new VElement(el)).toHTML()
+                }
             }).join("")
         } else {
             str += this.template

@@ -12,7 +12,6 @@ avalon.directive("class", {
         return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding.expr) + ";\n"
     },
     diff: function (cur, pre, name) {
-        console.log(cur)
         var curValue = cur.props["av-" + name]
         var preValue = pre.props["av-" + name]
         if (!pre.classEvent) {

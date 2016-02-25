@@ -1,7 +1,7 @@
 require('./attr')
 require('./expr')
 
-require('./css')
+require('./style')
 require('./text.modern')
 require('./html')
 require('./visible')
