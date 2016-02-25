@@ -62,7 +62,7 @@ function toTemplate(arr, num) {
                     nodeValue: forstack[forstack.length - 1] + ":start",
                     skipContent: true
                 }) + " )\n"
-                str += avalon.directives["for"].parse(nodeValue)
+                str += avalon.directives["for"].parse(nodeValue, num)
             } else if (nodeValue.indexOf("for-end:") === 0) {
                 str += "\n})\n"
                 if (forstack.length) {

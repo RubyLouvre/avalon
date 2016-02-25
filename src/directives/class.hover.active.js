@@ -1,86 +1,58 @@
 //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-var divide = require('./var/divide')
-var builtin = require("../base/builtin")
-var quote = builtin.quote
-var rword = builtin.rword
-var markID = builtin.markID
-var rsvg = builtin.rsvg
+var markID = require("../base/builtin").markID
+var parse = require("../parser/parser")
 
-var hooks = require("../vdom/hooks")
-var addData = hooks.addData
-var addHooks = hooks.addHooks
+
 
 var directives = avalon.directives
 avalon.directive("class", {
-    is: function (a, b) {
-        if (!Array.isArray(b)) {
-            return false
-        } else {
-            return a[0] === b[0] && a[1] === b[1]
-        }
-    },
-    init: function (binding) {
-        var oldStyle = binding.param
-        var method = binding.type
-        if (!oldStyle || isFinite(oldStyle)) {
-            binding.param = "" //去掉数字
-            divide(binding)
-        } else {
-            avalon.log('ms-' + method + '-xxx="yyy"这种用法已经过时,请使用ms-' + method + '="xxx:yyy"')
-            binding.expr = '[' + quote(oldStyle) + "," + binding.expr + "]"
-        }
-        var vnode = binding.element
-        var classEvent = {}
-        if (method === "hover") {//在移出移入时切换类名
-            classEvent.mouseenter = activateClass
-            classEvent.mouseleave = abandonClass
-        } else if (method === "active") {//在获得焦点时切换类名
-            vnode.props.tabindex = vnode.props.tabindex || -1
-            classEvent.tabIndex = vnode.props.tabindex
-            classEvent.mousedown = activateClass
-            classEvent.mouseup = abandonClass
-            classEvent.mouseleave = abandonClass
-        }
-        vnode.classEvent = classEvent
-    },
     parse: function (binding, num) {
-        return "vnode" + num + ".props[\"av-class\"] = " + parse(binding.expr) + ";\n"
+        //必须是布尔对象或字符串数组
+        return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding.expr) + ";\n"
     },
-    diff: function (cur, pre) {
-        var a = cur.props["av-class"]
-        var p = pre.props["av-class"]
-        if (a && typeof a === "object") {
-            if (Array.isArray(a)) {
-                a = cur.props["av-class"] = a.join(" ")
-            }else{
-                a = cur.props["av-class"] = Object.keys(a).map(function(name){
-                    if(a[name])
-                        return name
-                    return ""
+    diff: function (cur, pre, name) {
+        console.log(cur)
+        var curValue = cur.props["av-" + name]
+        var preValue = pre.props["av-" + name]
+        if (!pre.classEvent) {
+            var classEvent = {}
+            if (name === "hover") {//在移出移入时切换类名
+                classEvent.mouseenter = activateClass
+                classEvent.mouseleave = abandonClass
+            } else if (name === "active") {//在获得焦点时切换类名
+                cur.props.tabindex = cur.props.tabindex || -1
+                classEvent.tabIndex = cur.props.tabindex
+                classEvent.mousedown = activateClass
+                classEvent.mouseup = abandonClass
+                classEvent.mouseleave = abandonClass
+            }
+            cur.classEvent = classEvent
+        } else {
+            cur.classEvent = pre.classEvent
+        }
+
+        if (Object(curValue) === curValue) {
+            var className
+            if (Array.isArray(curValue)) {
+                className = curValue.join(" ").trim().replae(/\s+/, " ")
+            } else if (typeof curValue === "object") {
+                className = Object.keys(curValue).filter(function (name) {
+                    return curValue[name]
                 }).join(" ")
             }
-            if (typeof p !== "string") {
-                cur.changeClass = a
-            } else {
-                var patch = {}
-                var hasChange = false
-                for (var i in a) {
-                    if (a[i] !== p[i]) {
-                        hasChange = true
-                        patch = a[i]
-                    }
-                }
-                if (hasChange) {
-                    cur.changeStyle = patch
-                }
+            if (typeof className !== "string") {
+                cur.props["av-" + name] = preValue
+                return
             }
-            if (cur.changeStyle) {
+            if (!preValue || preValue !== className) {
+                cur["change-" + name] = className
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
             }
+
         } else {
-            cur.props["av-style"] = pre.props["av-style"]
+             cur.props["av-" + name] = preValue
         }
     },
     update: function (node, vnode) {
@@ -97,27 +69,29 @@ avalon.directive("class", {
         }
         var names = ["class", "hover", "active"]
         names.forEach(function (type) {
-            var data = vnode[type + "Data"]
-            if (!data)
+            var name = "change-" + type
+            var value = vnode[ name ]
+            if (!value)
                 return
             if (type === "class") {
+
                 setClass(node, vnode)
             } else {
-                var oldType = node.getAttribute(type + "-class")
+                var oldType = node.getAttribute(name)
                 if (oldType) {
                     avalon(node).removeClass(oldType)
                 }
-                node.setAttribute(type + "-class", Object.keys(data).join(" "))
+                node.setAttribute(name, value)
             }
         })
     }
 })
-
+directives.active = directives.hover = directives["class"]
 var classMap = {
-    mouseenter: "hover-class",
-    mouseleave: "hover-class",
-    mousedown: "active-class",
-    mouseup: "active-class"
+    mouseenter: "change-hover",
+    mouseleave: "change-hover",
+    mousedown: "change-active",
+    mouseup: "change-active"
 }
 
 function activateClass(e) {
@@ -129,55 +103,20 @@ function abandonClass(e) {
     var elem = e.target
     var name = classMap[e.type]
     avalon(elem).removeClass(elem.getAttribute(name) || "")
-    if (name !== "active-class") {
-        avalon(elem).removeClass(elem.getAttribute("active-class") || "")
+    if (name !== "change-active") {
+        avalon(elem).removeClass(elem.getAttribute("change-active") || "")
     }
 }
 
 function setClass(node, vnode) {
-    var old = vnode.classOldData
-    var neo = vnode.classData
-    var svg = rsvg.test(node)
-    var className = svg ? node.getAttribute("class") : node.className
-    var classOne = {}
-    className.replace(/\S+/g, function (name) {
-        classOne[name] = true
-    })
-    //remove old className
-    if (old) {
-        for (var name in old) {
-            delete classOne[name]
-        }
-    }
-    //add and remove current
-    for (name in neo) {
-        var val = neo[name]
-        if (val) {
-            classOne[name] = true
-        } else {
-            delete classOne[name]
-        }
-    }
-    vnode.classOldData = {}
-    vnode.classData = {}
-    var classArr = []
-    for (name in classOne) {
-        if (classOne[name] === true) {
-            classArr.push(name)
-            vnode.classOldData[name] = true
-        }
-    }
-    className = classArr.join(" ")
-    if (svg) {
-        node.setAttribute("class", className)
-    } else {
-        node.className = className
-    }
+    var old = vnode["old-change-class"]
+    var neo = vnode["change-class"]
+    avalon(node).removeClass(old).addClass(neo)
+    vnode["old-change-class"] = neo
+    delete vnode["change-class"]
 }
 
 markID(activateClass)
 markID(abandonClass)
 
-"hover,active".replace(rword, function (name) {
-    directives[name] = directives["class"]
-})
+

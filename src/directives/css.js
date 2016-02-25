@@ -1,11 +1,9 @@
-//var hooks = require("../vdom/hooks")
-//var addData = hooks.addData
-//var addHooks = hooks.addHooks
+
 var parse = require("../parser/parser")
 
 avalon.directive("style", {
     parse: function (binding, num) {
-        return "vnode" + num + ".props[\"av-style\"] = " + parse(binding.expr) + ";\n"
+        return "vnode" + num + ".props['av-style'] = " + parse(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         var a = cur.props["av-style"]

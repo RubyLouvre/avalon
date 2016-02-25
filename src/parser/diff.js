@@ -24,7 +24,7 @@ function diffProps(current, previous) {
         var match = name.match(rmsAttr)
         if (match) {
             name = match[1]
-            directives[name] && directives[name].diff(current, previous)
+            directives[name] && directives[name].diff(current, previous, name)
         }
     }
 

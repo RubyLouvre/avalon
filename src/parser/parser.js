@@ -35,7 +35,6 @@ var brackets = /\(([^)]*)\)/
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
 function parser(str, category) {
     category = category || "other"
-
     var input = str.trim()
     var cacheStr = evaluatorPool.get(category + ":" + input)
     if (cacheStr) {
@@ -87,12 +86,12 @@ function parser(str, category) {
         "var __value__ = " + body,
         "return __value__",
         "}catch(e){",
-        "\tavalon.log(e, "+  quote('parse "'+ str+'" fail')+")",
+        "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
         "\treturn ''",
         "}",
         "})()"
     ]
-    
+
     filters.unshift(3, 0)
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
