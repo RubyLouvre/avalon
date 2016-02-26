@@ -11,15 +11,15 @@ avalon.directive("class", {
         //必须是布尔对象或字符串数组
         return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding.expr) + ";\n"
     },
-    diff: function (cur, pre, name) {
-        var curValue = cur.props["av-" + name]
-        var preValue = pre.props["av-" + name]
+    diff: function (cur, pre, type) {
+        var curValue = cur.props["av-" + type]
+        var preValue = pre.props["av-" + type]
         if (!pre.classEvent) {
             var classEvent = {}
-            if (name === "hover") {//在移出移入时切换类名
+            if (type === "hover") {//在移出移入时切换类名
                 classEvent.mouseenter = activateClass
                 classEvent.mouseleave = abandonClass
-            } else if (name === "active") {//在获得焦点时切换类名
+            } else if (type === "active") {//在获得焦点时切换类名
                 cur.props.tabindex = cur.props.tabindex || -1
                 classEvent.tabIndex = cur.props.tabindex
                 classEvent.mousedown = activateClass

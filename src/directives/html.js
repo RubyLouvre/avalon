@@ -3,34 +3,24 @@ var createVirtual = require("../strategy/createVirtual")
 var parse = require("../parser/parser")
 var VElement = require("../vdom/VElement")
 
-avalon.createRender2 = function (str, vm) {
-    if (this.$render === avalon.createRender2) {
-        var vnode = avalon.createVirtual(str, true)
-        this.$render = avalon.createRender(vnode)
-    }
-    var fn = this.$render
-    return fn(vm)
+avalon.createRenderProxy = function (str) {
+    var vnode = avalon.createVirtual(str, true)
+    return avalon.caches["render:"+ str] = avalon.createRender(vnode)
 }
-function wrapHTML(text, num) {
-    return "(function(){\nvar dynamic" + num + " = " + text + ";\n" +
-            "vnode" + num + ".$render = avalon.createRender2\n" +
-            "return dynamic" + num + "\n" +
-            "})()"
-}
+
 avalon.directive("html", {
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-html'] = " +
-                "vnode" + num + ".dynamicText = " + wrapHTML(parse(binding.expr), num) + ";\n"
+        return "var dynamicHTML" + num + " = vnode" + num + ".props['av-html'] = " + parse(binding.expr) +
+                ";\nvnode" + num + ".$render = avalon.caches['render:'+dynamicHTML" + num + "] || " +
+                "avalon.createRenderProxy(dynamicHTML" + num + ")\n"
     },
     diff: function (cur, pre) {
         var curValue = cur.props["av-html"]
         var preValue = pre.props["av-html"]
         if (curValue !== preValue) {
-            cur.$render = pre.$render
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         } else {
-            cur.$render = pre.$render
             cur.children = pre.children.concat()
         }
 

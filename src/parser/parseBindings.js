@@ -20,6 +20,9 @@ function parseBindings(props, num) {
             if (eventMap[type]) {
                 param = type
                 type = "on"
+                delete props[name]
+                name = "av-on-"+param
+                props[name] = value
             }
             if (directives[type]) {
 
@@ -42,7 +45,7 @@ function parseBindings(props, num) {
     }
     var ret = ""
     bindings.sort(bindingSorter).forEach(function (binding) {
-        ret += directives[type].parse(binding, num)
+        ret += directives[binding.type].parse(binding, num)
     })
     return ret
 

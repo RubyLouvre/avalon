@@ -3,19 +3,16 @@ var parse = require("../parser/parser")
 
 //var scanNodes = require("../scan/scanNodes")
 //var addHooks = require("../vdom/hooks").addHooks
-function wrapText(text, num) {
-    return "(function(){\nvar dynamic" + num + " = " + text + ";\n" +
-            "vnode" + num + ".$render = function(a, vm){\n" +
-            "\tthis.children = [{type:'#text',nodeValue:String(a) }]"+
-            "}\n" +
-            "return dynamic" + num + "\n" +
-            "})()"
+avalon.caches["text:all"] = function () {
+    var a = this.props["av-text"]
+    a = a == null ? '' : a + ""
+    return [{type: '#text', nodeValue: String(a)}]
 }
+
 avalon.directive("text", {
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-text'] = " +
-                "vnode" + num + ".dynamicText = " +
-                wrapText(parse(binding.expr), num) + ";\n"
+        return "vnode" + num + ".$render = avalon.caches['text:all'];\n" +
+                "vnode" + num + ".props['av-text'] =" + parse(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         var curValue = cur.props["av-text"]

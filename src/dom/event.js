@@ -63,7 +63,6 @@ avalon.bind = function (elem, type, fn) {
             key = type + ":" + fn.uuid
         }
         avalon.eventHandlers[fn.uuid] = fn
-
         if (value.indexOf(type + ":") === -1) {//同一种事件只绑定一次
             if (canBubbleUp[type]) {
                 delegateEvent(type)
@@ -158,7 +157,6 @@ function dispatch(event) {
     var handlers = []
 
     collectHandlers(elem, type, handlers)
-   
     var i = 0, j, uuid, handler
     while ((handler = handlers[i++]) && !event.cancelBubble) {
         event.currentTarget = handler.elem
@@ -174,11 +172,11 @@ function dispatch(event) {
                 if (/move|scroll/.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(elem, event, vm)
+                        fn.call(vm, event)
                         last = curr
                     }
                 } else {
-                    fn.call(handler.elem, event, vm)
+                    fn.call(vm, event)
                 }
             }
         }
@@ -198,6 +196,7 @@ var nativeUnBind = W3C ? function (el, type, fn) {
 }
 
 function delegateEvent(type) {
+console.log(root, type)
     var value = root.getAttribute("delegate-events") || ""
     if (value.indexOf(type) === -1) {
         var arr = value.match(reventNames) || []

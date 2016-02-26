@@ -1,7 +1,7 @@
 var directives = avalon.directives
 require("../directives/compact")
 var empty = {
-    children:[], props: {}
+    children: [], props: {}
 }
 function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {
@@ -9,7 +9,7 @@ function diff(current, previous) {
         var pre = previous[i] || empty
         if (cur.type === "#text") {
             if (!cur.skipContent) {
-                directives.expr.diff(cur, pre )
+                directives.expr.diff(cur, pre)
             }
         } else {
             if (!cur.skipAttrs)
@@ -26,8 +26,8 @@ function diffProps(current, previous) {
     for (var name in current.props) {
         var match = name.match(rmsAttr)
         if (match) {
-            name = match[1]
-            directives[name] && directives[name].diff(current, previous, name)
+            var type = match[1]
+            directives[type] && directives[type].diff(current, previous, type, name)
         }
     }
 

@@ -80,24 +80,49 @@ function parser(str, category) {
         str = str.replace(/(\w+)/, "avalon.__read__('$1')")
         return "__value__ = " + str
     })
-    var ret = [
-        "(function(){",
-        "try{",
-        "var __value__ = " + body,
-        "return __value__",
-        "}catch(e){",
-        "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
-        "\treturn ''",
-        "}",
-        "})()"
-    ]
+    var ret = []
+    if (category === "on") {
+        filters = filters.map(function (el) {
+            return el.replace("__value__", "$event")
+        })
+        ret = ["function self($event){",
+            "try{",
+            "\tvar __vmodel__ = this;",
+            "\t" + body,
+            "}catch(e){",
+            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+            "}",
+            "}"]
+        filters.unshift(2, 0)
+    } else {
+        ret = [
+            "(function(){",
+            "try{",
+            "var __value__ = " + body,
+            "return __value__",
+            "}catch(e){",
+            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+            "\treturn ''",
+            "}",
+            "})()"
+        ]
+        filters.unshift(3, 0)
+    }
 
-    filters.unshift(3, 0)
+
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
     evaluatorPool.put(category + ":" + input, cacheStr)
     return cacheStr
 
+}
+
+avalon.parseExprProxy = function (code, type) {
+    var fn = parser(code, type)
+    if (fn) {
+        return Function("return " + fn)()
+    }
+    return fn
 }
 
 module.exports = parser

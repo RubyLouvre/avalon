@@ -5,6 +5,7 @@ var noop = vars.noop
 var cssHooks = {}
 
 avalon.mix({
+    caches: {},
     version: 1.6,
     vtree: vars.vtree,
     ui: {}, //兼容1.4.*

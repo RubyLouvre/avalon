@@ -14,9 +14,9 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-    //console.log(body)
+    // console.log(body)
     var fn = Function("__vmodel__", body)
-    console.log(fn + "")
+    //console.log(fn + "")
     return fn
 
 }
@@ -96,10 +96,10 @@ function toTemplate(arr, num) {
             str += parseBindings(el.props, num)
             //av-text,av-html,会将一个元素变成组件
             str += "if(" + vnode + ".$render){\n"
-            
-            str += vnode + ".$render(" + vnode + ".dynamicText,__vmodel__)\n"
+
+            str += "\t" + vnode + ".children = " + vnode + ".$render(__vmodel__)\n"
             str += "}else{\n"
-            str += vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
+            str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
             str += "}\n"
             str += children + ".push(" + vnode + ")\n"
 
