@@ -1913,7 +1913,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function delegateEvent(type) {
-	console.log(root, type)
 	    var value = root.getAttribute("delegate-events") || ""
 	    if (value.indexOf(type) === -1) {
 	        var arr = value.match(reventNames) || []
@@ -2850,7 +2849,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var vnodeHasData = vm.$render(vm)
 	        console.log("create vtree that has data", new Date - now)
 	        now = new Date
-	        console.log(vnodeHasData)
 	        diff(vnodeHasData, vnode)
 	        console.log("diff vtrees", new Date - now)
 	        now = new Date
@@ -4855,7 +4853,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.createRenderProxy = function (str) {
 	    var vnode = avalon.createVirtual(str, true)
-	    return avalon.caches["render:"+ str] = avalon.createRender(vnode)
+	    return avalon.caches["render:" + str] = avalon.createRender(vnode)
 	}
 
 	avalon.directive("html", {
@@ -4876,6 +4874,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    },
 	    update: function (node, vnode) {
+
+	        if (node.querySelectorAll) {
+	            var nodes = node.querySelectorAll("[avalon-events]")
+	            avalon.each(nodes, function (el) {
+	                avalon.unbind(el)
+	            })
+	        } else {
+	            var nodes = node.getElementsByTagName("")
+	            avalon.each(nodes, function (el) {
+	                if (el.getAttribute("avalon-events")){
+	                    avalon.unbind(el)
+	                }
+	            })
+	        }
+
 	        if (window.Range) {
 	            node.innerHTML = vnode.children.map(function (el) {
 	                if (el.type === '#text')
@@ -5554,24 +5567,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (Object(curValue) === curValue) {
 	            var className
 	            if (Array.isArray(curValue)) {
-	                className = curValue.join(" ").trim().replae(/\s+/, " ")
-	            } else if (typeof curValue === "object") {
+	                //convert it to a string 
+	                className = curValue.join(" ").trim().replace(/\s+/, " ")
+	            } else if (typeof curValue === "object") { 
 	                className = Object.keys(curValue).filter(function (name) {
 	                    return curValue[name]
 	                }).join(" ")
 	            }
 	            if (typeof className !== "string") {
-	                cur.props["av-" + name] = preValue
+	                cur.props["av-" + type] = preValue
 	                return
 	            }
 	            if (!preValue || preValue !== className) {
-	                cur["change-" + name] = className
+	                cur["change-" + type] = className
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
 	            }
 
 	        } else {
-	             cur.props["av-" + name] = preValue
+	             cur.props["av-" + type] = preValue
 	        }
 	    },
 	    update: function (node, vnode) {
@@ -5606,6 +5620,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 	directives.active = directives.hover = directives["class"]
+
 	var classMap = {
 	    mouseenter: "change-hover",
 	    mouseleave: "change-hover",

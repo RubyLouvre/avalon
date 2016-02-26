@@ -196,7 +196,6 @@ var nativeUnBind = W3C ? function (el, type, fn) {
 }
 
 function delegateEvent(type) {
-console.log(root, type)
     var value = root.getAttribute("delegate-events") || ""
     if (value.indexOf(type) === -1) {
         var arr = value.match(reventNames) || []
