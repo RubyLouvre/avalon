@@ -34,24 +34,25 @@ avalon.directive("class", {
         if (Object(curValue) === curValue) {
             var className
             if (Array.isArray(curValue)) {
-                className = curValue.join(" ").trim().replae(/\s+/, " ")
-            } else if (typeof curValue === "object") {
+                //convert it to a string 
+                className = curValue.join(" ").trim().replace(/\s+/, " ")
+            } else if (typeof curValue === "object") { 
                 className = Object.keys(curValue).filter(function (name) {
                     return curValue[name]
                 }).join(" ")
             }
             if (typeof className !== "string") {
-                cur.props["av-" + name] = preValue
+                cur.props["av-" + type] = preValue
                 return
             }
             if (!preValue || preValue !== className) {
-                cur["change-" + name] = className
+                cur["change-" + type] = className
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
             }
 
         } else {
-             cur.props["av-" + name] = preValue
+             cur.props["av-" + type] = preValue
         }
     },
     update: function (node, vnode) {
@@ -86,6 +87,7 @@ avalon.directive("class", {
     }
 })
 directives.active = directives.hover = directives["class"]
+
 var classMap = {
     mouseenter: "change-hover",
     mouseleave: "change-hover",
