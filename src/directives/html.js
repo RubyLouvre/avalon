@@ -5,7 +5,7 @@ var VElement = require("../vdom/VElement")
 
 avalon.createRenderProxy = function (str) {
     var vnode = avalon.createVirtual(str, true)
-    return avalon.caches["render:"+ str] = avalon.createRender(vnode)
+    return avalon.caches["render:" + str] = avalon.createRender(vnode)
 }
 
 avalon.directive("html", {
@@ -26,6 +26,21 @@ avalon.directive("html", {
 
     },
     update: function (node, vnode) {
+
+        if (node.querySelectorAll) {
+            var nodes = node.querySelectorAll("[avalon-events]")
+            avalon.each(nodes, function (el) {
+                avalon.unbind(el)
+            })
+        } else {
+            var nodes = node.getElementsByTagName("")
+            avalon.each(nodes, function (el) {
+                if (el.getAttribute("avalon-events")){
+                    avalon.unbind(el)
+                }
+            })
+        }
+
         if (window.Range) {
             node.innerHTML = vnode.children.map(function (el) {
                 if (el.type === '#text')
