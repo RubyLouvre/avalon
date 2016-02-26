@@ -1,81 +1,38 @@
 
-var addHooks = require("../vdom/hooks").addHooks
-var scanNodes = require("../scan/scanNodes")
+var parse = require("../parser/parser")
 
-var shimTemplate = require("../vdom/shimTemplate")
-var VComponent = require("../vdom/VComponent")
-var VComment = require("../vdom/VComment")
-var updateEntity = require("../strategy/updateEntity")
-var createVirtual = require("../strategy/createVirtual")
-var rremoveIf = /^(?:ms|av)-if$/
+var makeHashCode = require("../base/builtin").makeHashCode
+var quote = require("../base/builtin").quote
+
 avalon.directive("if", {
-    is: function (a, b) {
-        if (b === void 0)
-            return false
-        return Boolean(a) === Boolean(b)
+    priority: 5,
+    parse: function (binding, num) {
+        return "vnode" + num + ".props['av-if'] = " + quote(binding.expr) + ";\n"
     },
-    init: function (binding) {
-        var vnode = binding.element
-
-        var templale = shimTemplate(vnode, rremoveIf) //防止死循环
-
-        var component = new VComponent({
-            type: "ms-if",
-            props: {
-                ok: createVirtual(templale)[0],
-                ng: new VComment("ms-if")
-            },
-            children: [],
-            template: templale
-        })
-        var arr = binding.siblings
-        for (var i = 0, el; el = arr[i]; i++) {
-            if (el === vnode) {
-                arr[i] = component
-                break
+    diff: function (cur, pre) {
+        if (cur.type !== pre.type) {
+            cur.change = [this.update]
+        }
+    },
+    update: function (dom, vnode, parent) {
+        var dtype = dom.nodeName.toLowerCase()
+        var vtype = vnode.type
+        if (dtype !== vtype) {
+            if (dom.nodeType === 1) {
+                var a = makeHashCode("if")
+                avalon.caches[a] = dom
+                parent.replaceChild(document.createComment(a), dom)
+            } else {
+                a = dom.nodeValue
+                var keep = avalon.caches[a]
+                if (keep) {
+                    parent.replaceChild(keep, dom)
+                    delete avalon.caches[a]
+                } else {
+                    var el = new VElement(vnode)
+                    parent.replaceChild(el.toDOM(), dom)
+                }
             }
         }
-        delete binding.siblings
-        binding.element = component
-        return false
-    },
-    change: function (value, binding) {
-        var elem = binding.element
-        if (!elem || elem.disposed)
-            return
-        elem.isMount = !!value
-        if (value) {
-            elem.children[0] = elem.props.ok
-            scanNodes([elem.props.ok], binding.vmodel)
-        } else {
-            elem.children[0] = elem.props.ng
-        }
-        addHooks(this, binding)
-    },
-    update: function (node, vnode, parent) {
-        //vnode为#component
-        if (!vnode.okDom) {
-            vnode.okDom = node
-        }
-        if (!vnode.ngDom) {
-            vnode.ngDom = vnode.props.ng.toDOM()
-        }
-        var curNode = vnode.isMount ? vnode.okDom : vnode.ngDom
-
-        if (node !== curNode) {
-            parent.replaceChild(curNode, node)
-        }
-
-        if (curNode.nodeType === 1) {
-            updateEntity([curNode], [vnode.children[0]], parent)
-        }
-        return false
     }
 })
-
-
-avalon.components["ms-if"] = {
-    toDOM: function (self) {
-        return self.children[0].toDOM()
-    }
-}

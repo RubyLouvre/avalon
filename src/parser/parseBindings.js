@@ -24,6 +24,7 @@ function parseBindings(props, num) {
                 name = "av-on-"+param
                 props[name] = value
             }
+            
             if (directives[type]) {
 
                 var binding = {

@@ -85,6 +85,9 @@ function parser(str, category) {
         filters = filters.map(function (el) {
             return el.replace("__value__", "$event")
         })
+        if (filters.length) {
+            filters.push("if($event.$return){\n\treturn;\n}")
+        }
         ret = ["function self($event){",
             "try{",
             "\tvar __vmodel__ = this;",

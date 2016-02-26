@@ -14,11 +14,8 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-    // console.log(body)
     var fn = Function("__vmodel__", body)
-    //console.log(fn + "")
     return fn
-
 }
 function toTemplate(arr, num) {
     num = num || String(new Date - 0).slice(0, 5)
@@ -73,9 +70,6 @@ function toTemplate(arr, num) {
                     }) + ")\n"
                     forstack.pop()
                 }
-            } else if (nodeValue.indexOf("if:") === 0) {
-                str += avalon.directives["if"].parse(nodeValue, num)
-                hasIf = nodeValue.replace("if:", "")
             } else if (nodeValue.indexOf("js:") === 0) {
                 str += parse(nodeValue.replace("js:", "")) + "\n"
             } else {
@@ -83,17 +77,24 @@ function toTemplate(arr, num) {
             }
             continue
         } else { //处理元素节点
-            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:" + quote(el.template) + "}\n"
+            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:''}\n"
             str += vnode + ".isVoidTag = " + !!el.isVoidTag + "\n"
+            var hasIf = el.props["av-if"]
+
             if (hasIf) {
 
                 str += "if(!(" + parse(hasIf) + ")){\n\n"
-                str += vnode + ".disposed = true\n"
+                str += children + ".push({type:'#comment',nodeValue: '<!--av-if:-->',"+
+                        "skipContent:true, props:{'av-if':true}})\n"
                 str += "\n}else{\n\n"
 
             }
-
-            str += parseBindings(el.props, num)
+            var hasBindings = parseBindings(el.props, num)
+            if (hasBindings) {
+                str += parseBindings(el.props, num)
+            } else {
+                str += vnode + "template= " + quote(el.template) + "\n"
+            }
             //av-text,av-html,会将一个元素变成组件
             str += "if(" + vnode + ".$render){\n"
 

@@ -12,7 +12,6 @@
 <!--for: （key,value）in @array-->
 <!--forEnd:-->
 
-<!--if: @el > 4 -->
 
 <!--js: var fullName = @firstName + @lastName-->
 
@@ -50,6 +49,8 @@
   display: none !important;
 }
 ```
+### av-if
+
 
 ### av-attr
 ```

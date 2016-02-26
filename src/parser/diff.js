@@ -10,10 +10,11 @@ function diff(current, previous) {
         if (cur.type === "#text") {
             if (!cur.skipContent) {
                 directives.expr.diff(cur, pre)
-            }
-        } else {
-            if (!cur.skipAttrs)
+            } 
+        }else {
+            if (!cur.skipAttrs){
                 diffProps(cur, pre)
+            }
             if (!cur.skipContent) {
                 diff(cur.children, pre.children)
             }
@@ -27,7 +28,11 @@ function diffProps(current, previous) {
         var match = name.match(rmsAttr)
         if (match) {
             var type = match[1]
-            directives[type] && directives[type].diff(current, previous, type, name)
+            try {
+                directives[type] && directives[type].diff(current, previous, type, name)
+            } catch (e) {
+                avalon.log(current, previous, "diffProps error")
+            }
         }
     }
 
