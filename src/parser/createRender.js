@@ -15,7 +15,7 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-    console.log(body)
+   // console.log(body)
     var fn = Function("__vmodel__", body)
     return fn
 }
@@ -63,8 +63,7 @@ function toTemplate(arr, num) {
                         "\n\tnodeValue:" + quote(signature + ":start") + "," +
                         "\n})\n"
                 str += avalon.directives["for"].parse(nodeValue, num)
-                console.log("========")
-                continue
+                
             } else if (nodeValue.indexOf("av-for-end:") === 0) {
                  var signature = forstack[forstack.length - 1]
 

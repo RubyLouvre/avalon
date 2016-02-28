@@ -14,9 +14,7 @@ function diff(current, previous) {
         } else if (cur.type === "#comment") {
             if (!cur.skipContent) {
                 if (cur.signature + ":start" === cur.nodeValue) {
-                   directives.for.diff(current, previous, i)
-                   break
-                   //收集两个循环体的内容 
+                    i = directives["for"].diff(current, previous, i)
                 }
             }
         } else {

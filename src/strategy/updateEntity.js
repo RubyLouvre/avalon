@@ -31,7 +31,7 @@ function updateEntity(nodes, vnodes, parent) {
                     break
                 }
             }
-            updateEntity(repeatNodes, vnode.children, parent)
+            updateEntity(repeatNodes, vnode.repeatNodes, parent)
 
         } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
 
