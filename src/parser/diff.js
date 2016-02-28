@@ -10,9 +10,17 @@ function diff(current, previous) {
         if (cur.type === "#text") {
             if (!cur.skipContent) {
                 directives.expr.diff(cur, pre)
-            } 
-        }else {
-            if (!cur.skipAttrs){
+            }
+        } else if (cur.type === "#comment") {
+            if (!cur.skipContent) {
+                if (cur.signature + ":start" === cur.nodeValue) {
+                   directives.for.diff(current, previous, i)
+                   break
+                   //收集两个循环体的内容 
+                }
+            }
+        } else {
+            if (!cur.skipAttrs) {
                 diffProps(cur, pre)
             }
             if (!cur.skipContent) {

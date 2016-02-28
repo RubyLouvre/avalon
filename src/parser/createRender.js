@@ -5,6 +5,7 @@ var parse = require("./parser")
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote
+var makeHashCode = require("../base/builtin").makeHashCode
 
 function wrap(a, num) {
     return "(function(){\n\n" + a + "\n\nreturn nodes" + num + "\n})();\n"
@@ -14,6 +15,7 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
+    console.log(body)
     var fn = Function("__vmodel__", body)
     return fn
 }
@@ -52,28 +54,42 @@ function toTemplate(arr, num) {
 
         } else if (el.type === "#comment") {
             var nodeValue = el.nodeValue
-            if (nodeValue.indexOf("for:") === 0) {
-                forstack.push(("for" + Math.random()).replace(/\d\.\d{8}/, ""))
-                str += children + ".push( " + quote({
-                    type: "#comment",
-                    nodeValue: forstack[forstack.length - 1] + ":start",
-                    skipContent: true
-                }) + " )\n"
+            if (nodeValue.indexOf("av-for:") === 0) {
+                var signature = makeHashCode("for")
+                forstack.push(signature)
+                str += children + ".push({" +
+                        "\n\ttype:'#comment'," +
+                        "\n\tsignature:" + quote(signature) + "," +
+                        "\n\tnodeValue:" + quote(signature + ":start") + "," +
+                        "\n})\n"
                 str += avalon.directives["for"].parse(nodeValue, num)
-            } else if (nodeValue.indexOf("for-end:") === 0) {
-                str += "\n})\n"
+                console.log("========")
+                continue
+            } else if (nodeValue.indexOf("av-for-end:") === 0) {
+                 var signature = forstack[forstack.length - 1]
+
+                 str += children + ".push({" +
+                    "\n\ttype:'#comment'," +
+                    "\n\tskipContent:true," +
+                    "\n\tsignature:" + quote(signature) + "," +
+                    "\n\tnodeValue:" + quote(signature) + "," +
+                    "\n\tkey:traceKey\n})\n"
+                str += "\n})\n" //结束循环
                 if (forstack.length) {
-                    str += children + ".push(" + quote({
-                        type: "#comment",
-                        nodeValue: forstack[forstack.length - 1] + ":end",
-                        skipContent: true
-                    }) + ")\n"
+                    var signature = forstack[forstack.length - 1]
+                    str += children + ".push({" +
+                            "\n\ttype:'#comment'," +
+                            "\n\tskipContent:true," +
+                            "\n\tsignature:" + quote(signature) + "," +
+                            "\n\tnodeValue:" + quote(signature + ":end") + "," +
+                            "\n})\n"
+                    
                     forstack.pop()
                 }
             } else if (nodeValue.indexOf("js:") === 0) {
                 str += parse(nodeValue.replace("js:", "")) + "\n"
             } else {
-                str += children + ".push(" + quote(el) + ")\n"
+                str += children + ".push(" + quote(el) + ");;;;\n"
             }
             continue
         } else { //处理元素节点
@@ -83,9 +99,12 @@ function toTemplate(arr, num) {
 
             if (hasIf) {
 
-                str += "if(!(" + parse(hasIf) + ")){\n\n"
-                str += children + ".push({type:'#comment',nodeValue: '<!--av-if:-->',"+
-                        "skipContent:true, props:{'av-if':true}})\n"
+                str += "if(!(" + parse(hasIf) + ")){\n"
+                str += children + ".push({" +
+                        "\n\ttype:'#comment'," +
+                        "\n\tnodeValue: '<!--av-if:-->'," +
+                        "\n\tskipContent:true," +
+                        "\n\tprops:{'av-if':true}})\n"
                 str += "\n}else{\n\n"
 
             }
@@ -108,13 +127,7 @@ function toTemplate(arr, num) {
                 str += "}\n"
                 hasIf = false
             }
-        }
-
-        if (forstack.length) {
-            str += "var " + vnode + " = {\n\ttype:'#comment',\n\tskipContent:true,\n\tnodeValue:" +
-                    quote(forstack[forstack.length - 1]) + ",\n\tkey:traceKey\n}\n"
-            str += children + ".push(" + vnode + ")\n"
-        }
+        } 
 
     }
     return str

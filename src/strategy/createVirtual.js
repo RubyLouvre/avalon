@@ -37,10 +37,16 @@ var VText = vdom.VText
 var VComment = vdom.VComment
 var VElement = vdom.VElement
 var rchar = /./g
+var rsp = /^\s+$/
+var rspAfterForStart = /^(ms|av)-for\:/
+var rspBeforeForEnd = /^(ms|av)-for-end\:/
+var rleftTrim = /^\s+/
 //=== === === === 创建虚拟DOM树 === === === === =
+
 
 //此阶段只会生成VElement,VText,VComment
 function createVirtual(text, recursive) {
+    //text.replace(/<!--(ms|av)-for\:(\S)-->(\s+)/)
 
     var nodes = []
     if (recursive && !avalon.config.rbind.test(text)) {
@@ -65,6 +71,13 @@ function createVirtual(text, recursive) {
             if (match) {
                 matchText = match[0]
                 node = new VComment(match[1].replace(rfill, fill))
+                if (rspBeforeForEnd.test(node.nodeValue)) {
+                    var sp = nodes[nodes.length - 1]
+                    //移除紧挨着<!--av-for-end:xxxx-->前的空白节点
+                    if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
+                        nodes.pop()
+                    }
+                }
             }
         }
 
@@ -146,7 +159,6 @@ function createVirtual(text, recursive) {
                     }
                 }
                 node = new VElement(node)
-                // controllerHook(node)
             }
         }
 
@@ -172,6 +184,10 @@ function createVirtual(text, recursive) {
         if (node) {
             nodes.push(node)
             text = text.slice(matchText.length)
+            if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
+                //移除紧挨着<!--av-for:xxxx-->后的空白节点
+                text = text.replace(rleftTrim, "")
+            }
         } else {
             break
         }
@@ -199,8 +215,8 @@ function parseAttrs(str, attrs) {
                         slice(1, -1).
                         replace(ramp, "&").
                         replace(rquote, '"')
-                        
-            } 
+
+            }
 
         }
         attrs[name] = value
