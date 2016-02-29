@@ -1,13 +1,19 @@
 
 function VComment(text) {
-    this.type = "#comment"
-    this.nodeValue = text
-    this.skipContent = true
+    if (typeof text === "string") {
+        this.type = "#comment"
+        this.nodeValue = text
+        this.skipContent = true
+    } else {
+        for (var i in text) {
+            this[i] = text[i]
+        }
+    }
 }
 VComment.prototype = {
     constructor: VComment,
     clone: function () {
-        return new VComment(this.nodeValue)
+        return new VComment(this)
     },
     toDOM: function () {
         return document.createComment(this.nodeValue)

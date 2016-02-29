@@ -62,16 +62,23 @@ avalon.directive("for", {
             first.change.push(function (a, b, parent) {
                 var entity = b.entity
                 var virtual = b.virtual
-                console.log("a1", entity)
-                for (var i = 0, n = entity.length; i < n; i++) {
+               
+                for (var i = 1, n = entity.length - 1; i < n; i++) {
                     parent.removeChild(entity[i])
                 }
-                var div = document.createElement("div")
-                div.innerHTML = "loop"
-                parent.appendChild(div)
+                var fragment = document.createDocumentFragment()
+                virtual.slice(1, -1).forEach(function (c) {
+                    console.log(avalon.vdomAdaptor(c), "====")
+                    fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+                })
+
+
+                parent.appendChild(fragment)
                 //挖空它的内部
                 return false
             })
+        }else{
+            
         }
         first.virtual = curLoop
         return i + curLoop.length - 1

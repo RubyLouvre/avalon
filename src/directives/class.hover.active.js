@@ -36,7 +36,7 @@ avalon.directive("class", {
             if (Array.isArray(curValue)) {
                 //convert it to a string 
                 className = curValue.join(" ").trim().replace(/\s+/, " ")
-            } else if (typeof curValue === "object") { 
+            } else if (typeof curValue === "object") {
                 className = Object.keys(curValue).filter(function (name) {
                     return curValue[name]
                 }).join(" ")
@@ -52,7 +52,7 @@ avalon.directive("class", {
             }
 
         } else {
-             cur.props["av-" + type] = preValue
+            cur.props["av-" + type] = preValue
         }
     },
     update: function (node, vnode) {
@@ -65,7 +65,7 @@ avalon.directive("class", {
                     avalon.bind(node, i, classEvent[i])
                 }
             }
-            delete vnode.classEvent
+            vnode.classEvent = {}
         }
         var names = ["class", "hover", "active"]
         names.forEach(function (type) {

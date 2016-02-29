@@ -26,7 +26,7 @@ avalon.directive("html", {
 
     },
     update: function (node, vnode) {
-
+        //移除事件
         if (node.querySelectorAll) {
             var nodes = node.querySelectorAll("[avalon-events]")
             avalon.each(nodes, function (el) {
@@ -35,32 +35,24 @@ avalon.directive("html", {
         } else {
             var nodes = node.getElementsByTagName("")
             avalon.each(nodes, function (el) {
-                if (el.getAttribute("avalon-events")){
+                if (el.getAttribute("avalon-events")) {
                     avalon.unbind(el)
                 }
             })
         }
-
+        //添加节点
         if (window.Range) {
-            node.innerHTML = vnode.children.map(function (el) {
-                if (el.type === '#text')
-                    return el.nodeValue
-                if (el.type === '#comment')
-                    return "<!--" + el.nodeValue + "-->"
-                return (new VElement(el)).toHTML()
+            node.innerHTML = vnode.children.map(function (c) {
+                return avalon.vdomAdaptor(c).toHTML()
             }).join("")
         } else {
             avalon.clearHTML(node)
-            for (var i = 0, el; el = vnode.children[i++]; ) {
-                if (el.type === '#text') {
-                    node.appendChild(document.createTextNode(el.nodeValue))
-                } else if (el.type === '#comment') {
-                    node.appendChild(document.createComment(el.nodeValue))
-                } else {
-                    node.appendChild((new VElement(el)).toDOM())
-                }
-            }
+            var fragment = document.createDocumentFragment()
+            vnode.children.forEach(function (c) {
+                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+            })
+
+            node.appendChild(fragment)
         }
-        //这里就不用劳烦用created, disposed
     }
 })

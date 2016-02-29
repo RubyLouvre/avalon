@@ -107,7 +107,7 @@ function toTemplate(arr, num) {
                 str += "\n}else{\n\n"
 
             }
-            var hasBindings = parseBindings(el.props, num)
+            var hasBindings = parseBindings( el.props, num,  el )
             if (hasBindings) {
                 str += parseBindings(el.props, num)
             } else {

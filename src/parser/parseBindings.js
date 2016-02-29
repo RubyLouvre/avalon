@@ -6,7 +6,7 @@ var directives = avalon.directives
 var eventMap = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 
 var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
-function parseBindings(props, num) {
+function parseBindings(props, num, elem) {
     var bindings = []
     for (var i in props) {
         var value = props[i], match
@@ -46,7 +46,7 @@ function parseBindings(props, num) {
     }
     var ret = ""
     bindings.sort(bindingSorter).forEach(function (binding) {
-        ret += directives[binding.type].parse(binding, num)
+        ret += directives[binding.type].parse(binding, num, elem)
     })
     return ret
 
