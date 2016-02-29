@@ -83,6 +83,31 @@ avalon.directive("repeat", {
         var length = track.length
 
         var parent = elem.parentNode
+        
+        //检查新元素数量
+        var newCount = 0;
+        for (i = 0; i < length; i++)
+        {
+            var keyOrId = track[i];
+            if (!retain[keyOrId])
+                newCount++;
+        }
+        var oldCount = 0;
+        for (key in retain)
+            oldCount++;
+
+        var clear = (length == 0 || newCount == length) && oldCount > 10;   //当全部是新元素,且移除元素较多(10)时使用clear
+        if (clear)
+        {
+            var kill = elem.previousSibling;
+            var start = binding.start;
+            while(kill != start)
+            {
+                kill.remove();
+                kill = elem.previousSibling;
+            }
+        }
+        
         for (i = 0; i < length; i++) {
 
             var keyOrId = track[i] //array为随机数, object 为keyName
@@ -152,7 +177,7 @@ avalon.directive("repeat", {
                 if (retain[keyOrId] !== true) {
 
                     action = "del"
-                    removeItem(retain[keyOrId].$anchor, binding,true)
+                    !clear && removeItem(retain[keyOrId].$anchor, binding,true)
                     // 相当于delete binding.cache[key]
                     proxyRecycler(this.cache, keyOrId, param)
                     retain[keyOrId] = null
