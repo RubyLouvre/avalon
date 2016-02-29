@@ -85,26 +85,26 @@ avalon.directive("repeat", {
         var parent = elem.parentNode
         
         //检查新元素数量
-        var newCount = 0;
+        var newCount = 0
         for (i = 0; i < length; i++)
         {
-            var keyOrId = track[i];
+            var keyOrId = track[i]
             if (!retain[keyOrId])
-                newCount++;
+                newCount++
         }
-        var oldCount = 0;
+        var oldCount = 0
         for (key in retain)
-            oldCount++;
+            oldCount++
 
-        var clear = (length == 0 || newCount == length) && oldCount > 10;   //当全部是新元素,且移除元素较多(10)时使用clear
+        var clear = (length == 0 || newCount == length) && oldCount > 10   //当全部是新元素,且移除元素较多(10)时使用clear
         if (clear)
         {
-            var kill = elem.previousSibling;
-            var start = binding.start;
+            var kill = elem.previousSibling
+            var start = binding.start
             while(kill != start)
             {
-                kill.remove();
-                kill = elem.previousSibling;
+                parent.removeChild(kill)
+                kill = elem.previousSibling
             }
         }
         
