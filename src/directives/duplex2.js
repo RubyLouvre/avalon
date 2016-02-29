@@ -41,15 +41,18 @@ avalon.directive("duplex", {
             }
         }
         binding.expr = expr
-
-        return "vnode" + num + ".props['av-attr'] = " + parse(expr) + ";\n"
+        parse(binding)
+        return "vnode" + num + ".duplex_vm = __vmodel__;\n" +
+                "vnode" + num + ".props['av-attr'] = " + quote(binding.exr) + ";\n"
     },
     diff: function (elem, pre, type) {
-        var value = elem.props["av-duplex"]
+
         elem.props.xtype = pre.props.xtype
-        if (pre.duplexEvents) {
-            elem.duplexEvents = pre.duplexEvents
+        if (pre.duplexData) {
+            elem.duplexData = pre.duplexData
         } else {
+
+
             var elemType = elem.props.type
             //获取controll
             if (!elem.props.xtype) {
@@ -59,47 +62,47 @@ avalon.directive("duplex", {
                         /|\s*change/.test(value) ? "change" :
                         "input"
             }
-            var duplexEvents = {}
+            var duplexData = {}
             switch (elem.props.xtype) {
                 case "checked"://当用户指定了checked过滤器
-                    duplexEvents.click = duplexChecked
+                    duplexData.click = duplexChecked
                     break
                 case "radio":
-                    duplexEvents.click = duplexValue
+                    duplexData.click = duplexValue
                     break
                 case "checkbox":
-                    duplexEvents[msie < 9 ? "click" : "change"] = duplexCheckBox
+                    duplexData[msie < 9 ? "click" : "change"] = duplexCheckBox
                     break
                 case "change":
-                    duplexEvents.change = duplexValue
+                    duplexData.change = duplexValue
                     break
                 case "select":
                     if (!elem.children.length) {
                         pushArray(elem.children, createVirtual(elem.template))
                     }
-                    duplexEvents.change = duplexSelect
+                    duplexData.change = duplexSelect
                     break
                 case "input":
                     if (!msie) { // W3C
-                        duplexEvents.input = duplexValue
-                        duplexEvents.compositionstart = compositionStart
-                        duplexEvents.compositionend = compositionEnd
-                        duplexEvents.DOMAutoComplete = duplexValue
+                        duplexData.input = duplexValue
+                        duplexData.compositionstart = compositionStart
+                        duplexData.compositionend = compositionEnd
+                        duplexData.DOMAutoComplete = duplexValue
                     } else {
                         // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
                         if (msie > 8) {
                             if (msie === 9) {
                                 //IE9删除字符后再失去焦点不会同步 #1167
-                                duplexEvents.keyup = duplexValue
+                                duplexData.keyup = duplexValue
                             }
                             //IE9使用propertychange无法监听中文输入改动
-                            duplexEvents.input = duplexValue
+                            duplexData.input = duplexValue
                         } else {
                             //onpropertychange事件无法区分是程序触发还是用户触发
                             //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
-                            duplexEvents.propertychange = duplexValueHack
+                            duplexData.propertychange = duplexValueHack
                         }
-                        duplexEvents.dragend = duplexDragEnd
+                        duplexData.dragend = duplexDragEnd
                         //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                         //http://www.matts411.com/post/internet-explorer-9-oninput/
                     }
@@ -109,29 +112,39 @@ avalon.directive("duplex", {
 
             if (elem.props.xtype === "input" && !rnoduplexInput.test(elemType)) {
                 if (elemType !== "hidden") {
-                    duplexEvents.focus = duplexFocus
-                    duplexEvents.blur = duplexBlur
+                    duplexData.focus = duplexFocus
+                    duplexData.blur = duplexBlur
                 }
                 elem.watchValueInTimer = true
             }
-            elem.duplexEvents = duplexEvents
+            var expr = elem.props["av-duplex"]
+            var evaluatorPool = parser.caches
+            duplexData.getter = evaluatorPool.get("duplex:" + expr)
+            duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")
+
+            elem.duplexData = duplexData
             elem.dispose = disposeDuplex
+
         }
-        var preValue = pre.props["av-duplex"]
-        var isEqual
-        if (Array.isArray(value)) {
-            isEqual = value + "" === preValue + ""
+        duplexData.vmode = elem.duplexVm
+        if (!duplexData.elem) {
+            var isEqual = false
         } else {
-            isEqual = value === preValue
+            var value = elem.props.value = duplexData.getter(duplexData.vmode, duplexData.elem)
+            var preValue = pre.props.value
+            if (Array.isArray(value)) {
+                isEqual = value + "" === preValue + ""
+            } else {
+                isEqual = value === preValue
+            }
         }
+
         if (!isEqual) {
             var afterChange = elem.afterChange || (elem.afterChange = [])
             if (elem.type === "select") {
                 avalon.Array.ensure(afterChange, duplexSelectAfter)
-
             }
             avalon.Array.ensure(afterChange, this.update)
-
         }
 
     },
@@ -165,12 +178,12 @@ avalon.directive("duplex", {
 
         node.changed = binding.changed
 
-        var events = vnode.duplexEvents
+        var events = vnode.duplexData
         if (events) {
             for (var eventName in events) {
                 avalon.bind(node, eventName, events[eventName])
             }
-            delete vnode.duplexEvents
+            delete vnode.duplexData
         }
         if (vnode.watchValueInTimer) {
             node.valueSet = duplexValue //#765
@@ -225,7 +238,7 @@ avalon.directive("duplex", {
 function disposeDuplex() {
     var elem = this.dom
     if (elem) {
-        elem.changed = elem.oldValue = elem.valueSet =
+        elem.oldValue = elem.valueSet =
                 elem.duplexSet = elem.duplexGet = void 0
         avalon.unbind(elem)
         this.dom = null
