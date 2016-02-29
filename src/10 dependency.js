@@ -85,7 +85,7 @@ avalon.injectBinding = function (binding) {
                 binding.oldValue = a.concat()
             } else if (!("oldValue" in binding) || a !== b) {
                 binding.handler(a, b)
-                binding.oldValue = a
+                binding.oldValue = Array.isArray(a) ? a.concat() : a
             }
         } catch (e) {
             delete binding.getter
