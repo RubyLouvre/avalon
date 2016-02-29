@@ -149,15 +149,15 @@ avalon.directive("duplex", {
 
     },
     update: function (node, vnode) {
-        var binding = vnode.binding
-
-        var curValue = vnode.value
+        var binding = vnode.duplexData
+        binding.elem = node
+        var curValue = vnode.props.value
 
         vnode.dom = node //方便进行垃圾回收
 
         if (vnode.props.xtype === "checkbox") {
             node.duplexSet = function (val, checked) {
-                var array = vnode.value
+                var array = vnode.props.value
                 if (!Array.isArray(array)) {
                     log("ms-duplex应用于checkbox上要对应一个数组")
                     array = [array]
@@ -176,7 +176,6 @@ avalon.directive("duplex", {
             return binding.getter(binding.vmodel, value, node)
         }
 
-        node.changed = binding.changed
 
         var events = vnode.duplexData
         if (events) {

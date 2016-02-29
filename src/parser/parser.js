@@ -106,32 +106,44 @@ function parser(str, category) {
             "}"]
         filters.unshift(2, 0)
     } else if (category === "duplex") {
-        var setters = filters.map(function (str) {
+        var setterFilters = filters.map(function (str) {
             str = str.replace("__read__", "__write__")
             return str.replace(");", ",__elem__);")
         })
         //setter
-        ret = ["function (__vmodel__, __value__, __elem__){",
+        var setterBody = [
+            "function (__vmodel__, __value__, __elem__){",
             "if(!__elem__ || __elem__.nodeType !== 1) ",
-            "return",
+            "\treturn",
             "try{",
             "\t" + body + " = __value__",
             "}catch(e){",
             "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
             "}",
             "}"]
-        var setterArr = ret.concat()
-        setterArr.splice(3, 0, setters.join("\n"))
-        var fn = Function("return " + setterArr.join("\n"))()
+
+        setterBody.splice(3, 0, setterFilters.join("\n"))
+        var fn = Function("return " + setterBody.join("\n"))()
         evaluatorPool.put("duplex:" + input + ":setter", fn)
 
-        var getters = filters.map(function (str) {
+        var getterFilters = filters.map(function (str) {
             return str.replace(");", ",__elem__);")
         })
-        ret[0] = "function (__vmodel__, __elem__){"
-        ret[4] = "\treturn " + body
-        ret.splice(3, 0, getters.join("\n"))
-        fn = Function("return " + ret.join("\n"))()
+        var getterBody = [
+            "function (__vmodel__, __value__, __elem__){",
+            "try{",
+            "if(argument.length === 2)",
+            "\treturn " + body,
+            "if(!__elem__ || __elem__.nodeType !== 1) ",
+            "return",
+            "return __value__",
+            "}catch(e){",
+            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+            "}",
+            "}"]
+
+        getterBody.splice(5, 0, getterFilters.join("\n"))
+        fn = Function("return " + getterBody.join("\n"))()
         evaluatorPool.put("duplex:" + input, fn)
         return
     } else {
