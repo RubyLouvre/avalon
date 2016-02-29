@@ -14,6 +14,7 @@ function K(a) {
 
 //缓存求值函数，以便多次利用
 var evaluatorPool = new Cache(512)
+var ifStatement = "if(!__elem__ || __elem__.nodeType !== 1){\n\treturn __value__\n}\n"
 
 avalon.mix({
     __read__: function (name) {
@@ -34,9 +35,16 @@ var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
 function parser(str, category) {
+    var binding = {}
+    if (typeof str === "object") {
+        binding = str
+        str = binding.expr
+    }
     category = category || "other"
     var input = str.trim()
+
     var cacheStr = evaluatorPool.get(category + ":" + input)
+
     if (cacheStr) {
         return cacheStr
     }
@@ -97,6 +105,35 @@ function parser(str, category) {
             "}",
             "}"]
         filters.unshift(2, 0)
+    } else if (category === "duplex") {
+        var setters = filters.map(function (str) {
+            str = str.replace("__read__", "__write__")
+            return str.replace(");", ",__elem__);")
+        })
+        //setter
+        ret = ["function (__vmodel__, __value__, __elem__){",
+            "if(!__elem__ || __elem__.nodeType !== 1) ",
+            "return",
+            "try{",
+            "\t" + body + " = __value__",
+            "}catch(e){",
+            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+            "}",
+            "}"]
+        var setterArr = ret.concat()
+        setterArr.splice(3, 0, setters.join("\n"))
+        var fn = Function("return " + setterArr.join("\n"))()
+        evaluatorPool.put("duplex:" + input + ":setter", fn)
+
+        var getters = filters.map(function (str) {
+            return str.replace(");", ",__elem__);")
+        })
+        ret[0] = "function (__vmodel__, __elem__){"
+        ret[4] = "\treturn " + body
+        ret.splice(3, 0, getters.join("\n"))
+        fn = Function("return " + ret.join("\n"))()
+        evaluatorPool.put("duplex:" + input, fn)
+        return
     } else {
         ret = [
             "(function(){",
@@ -112,7 +149,6 @@ function parser(str, category) {
         filters.unshift(3, 0)
     }
 
-
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
     evaluatorPool.put(category + ":" + input, cacheStr)
@@ -127,6 +163,8 @@ avalon.parseExprProxy = function (code, type) {
     }
     return fn
 }
+
+parser.caches = evaluatorPool
 
 module.exports = parser
 //var str = parser("@aaa |upper(11)|ddd | eee")

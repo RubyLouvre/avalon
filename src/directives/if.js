@@ -7,7 +7,7 @@ var quote = require("../base/builtin").quote
 avalon.directive("if", {
     priority: 5,
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-if'] = " + quote(binding.expr) + ";\n"
+        return "vnode" + num + ".props['av-if'] = " + quote(binding) + ";\n"
     },
     diff: function (cur, pre) {
         if (cur.type !== pre.type) {

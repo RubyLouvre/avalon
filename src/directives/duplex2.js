@@ -42,7 +42,7 @@ avalon.directive("duplex", {
         }
         binding.expr = expr
         parse(binding)
-        return "vnode" + num + ".duplex_vm = __vmodel__;\n" +
+        return "vnode" + num + ".duplexVm = __vmodel__;\n" +
                 "vnode" + num + ".props['av-attr'] = " + quote(binding.exr) + ";\n"
     },
     diff: function (elem, pre, type) {

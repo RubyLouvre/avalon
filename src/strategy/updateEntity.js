@@ -17,31 +17,30 @@ function updateEntity(nodes, vnodes, parent) {
         var node = next
         if (node)
             next = node.nextSibling
-        if (!vnode.signature && false === execHooks(node, vnode, parent, "change")) {
-            //ms-if,ms-each,ms-repeat这些破坏原来结构的指令会这里进行中断
-            execHooks(node, vnode, parent, "afterChange")
-            continue
-        }
+       
         if (vnode.signature) {//ms-repeat
-           
+
             var entity = [node], cur = node
-            kk: 
-            while (cur = cur.nextSibling) {
+            innerLoop:
+                    while (cur && (cur = cur.nextSibling)) {
                 entity.push(cur)
-                if ((cur.nodeValue||"").indexOf("av-for-end:") === 0 ){
+                if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
                     next = cur.nextSibling
-                    break kk
+                    break innerLoop
                 }
             }
             vnode.entity = entity
-             execHooks(node, vnode, parent, "change")
-          //  updateEntity(repeatNodes, vnode.repeatNodes, parent)
+            execHooks(node, vnode, parent, "change")
+        } else if (false === execHooks(node, vnode, parent, "change")) {
+            //ms-if,ms-each,ms-repeat这些破坏原来结构的指令会这里进行中断
+            execHooks(node, vnode, parent, "afterChange")
+            continue
 
         } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
 
             updateEntity(avalon.slice(node.childNodes), vnode.children, node)
         }
-        
+
         execHooks(node, vnode, parent, "afterChange")
     }
 }

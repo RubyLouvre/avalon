@@ -10,7 +10,7 @@ var rdash = /\(([^)]*)\)/
 avalon.directive("on", {
     priority: 3000,
     parse: function (binding, num) {
-        return  "vnode" + num + ".$vm = __vmodel__\n" +
+        return  "vnode" + num + ".onVm = __vmodel__\n" +
                 "vnode" + num + ".props[" + quote(binding.name) + "] = " +
                 "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] = " +
                 
@@ -25,9 +25,9 @@ avalon.directive("on", {
             var uuid = markID(curValue)
             var search = type + ":" + uuid
             if (!avalon.__eventVM__[search]) {//注册事件回调
-                avalon.__eventVM__[search] = cur.$vm
+                avalon.__eventVM__[search] = cur.onVm
             }
-            delete cur.vm
+            delete cur.onVm
             cur.changeEvents = cur.changeEvents || {}
             cur.changeEvents[search] = curValue
             cur.change = cur.change || []

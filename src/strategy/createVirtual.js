@@ -146,6 +146,8 @@ function createVirtual(text, recursive) {
 
                 if (node.props["av-skip"]) {
                     node.skipContent = true
+                } else if (type === "textarea") {
+                    node.props.type = "textarea"
                 } else if (type === "option") {
                     node.children.push(new VText(trimHTML(innerHTML)))
                 } else if (type === "xmp") {
@@ -178,6 +180,9 @@ function createVirtual(text, recursive) {
                     children: [],
                     isVoidTag: true
                 })
+                if (type === "input" && !node.props.type) {
+                    node.props.type = "text"
+                }
                 //  controllerHook(node)
             }
         }

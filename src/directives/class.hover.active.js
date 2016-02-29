@@ -9,7 +9,7 @@ var directives = avalon.directives
 avalon.directive("class", {
     parse: function (binding, num) {
         //必须是布尔对象或字符串数组
-        return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding.expr) + ";\n"
+        return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding) + ";\n"
     },
     diff: function (cur, pre, type) {
         var curValue = cur.props["av-" + type]
