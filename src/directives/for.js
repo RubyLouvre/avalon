@@ -35,14 +35,46 @@ avalon.directive("for", {
         return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
     },
     diff: function (current, previous, i) {
-        var hasSign1 = "signature" in current[i]
+        var first = current[i]
+        var hasSign1 = "signature" in first
         var hasSign2 = "signature" in previous[i]
 
-        var array1 = hasSign1 ? getForBySignature(current, i) :
+        var curLoop = hasSign1 ? getForBySignature(current, i) :
                 getForByNodeValue(current, i)
-        var array2 = hasSign2 ? getForBySignature(previous, i) :
+
+
+        var preLoop = hasSign2 ? getForBySignature(previous, i) :
                 getForByNodeValue(previous, i)
-        console.log(array1, array2)
+
+        var n = curLoop.length - preLoop.length
+        if (n > 0) {
+            var spliceArgs = [i, 0]
+            for (var j = 0; j < n; j++) {
+                spliceArgs.push(null)
+            }
+            previous.splice.apply(previous, spliceArgs)
+        } else {
+            previous.splice.apply(previous, [i, Math.abs(n)])
+        }
+        // console.log(current)
+        if (!hasSign2) {
+            first.change = first.change || []
+            first.change.push(function (a, b, parent) {
+                var entity = b.entity
+                var virtual = b.virtual
+                console.log("a1", entity)
+                for (var i = 0, n = entity.length; i < n; i++) {
+                    parent.removeChild(entity[i])
+                }
+                var div = document.createElement("div")
+                div.innerHTML = "loop"
+                parent.appendChild(div)
+                //挖空它的内部
+                return false
+            })
+        }
+        first.virtual = curLoop
+        return i + curLoop.length - 1
 
     }
 })
@@ -50,19 +82,18 @@ function getForBySignature(nodes, i) {
     var start = nodes[i], node
     var endText = start.signature + ":end"
     var ret = []
-    while (node = nodes[++i]) {
+    while (node = nodes[i++]) {
+        ret.push(node)
         if (node.nodeValue === endText) {
             break
-        } else {
-            ret.push(node)
         }
     }
     return ret
 }
 
 function getForByNodeValue(nodes, i) {
-    var isBreak = 1, ret = [], node
-    while (node = nodes[++i]) {
+    var isBreak = 0, ret = [], node
+    while (node = nodes[i++]) {
         if (node.type === "#comment") {
             if (node.nodeValue.indexOf("av-for:") === 0) {
                 isBreak++
@@ -70,10 +101,10 @@ function getForByNodeValue(nodes, i) {
                 isBreak--
             }
         }
+        ret.push(node)
         if (isBreak === 0) {
             break
         }
-        ret.push(node)
     }
     return ret
 }
