@@ -54,7 +54,19 @@ avalon.patchUpdate([el],[vnode]) //在里面会触发 $scaned
 
 })
 ```
-
+前者直接修改了，store.dispatch ，很难找回最初那一个
+工业聚  19:41:40
+每个中间件都无法跳过后面的中间件，直接调用最初的 store.dispatch
+工业聚  19:43:22
+redux 的 applyMiddleWares 能拿到 store 和 next ，从 store 里拿最初的 dispatch ，从 next 里调用后面的中间件，更灵活
+工业聚  19:45:13
+而且中间件的 store 参数，也只是真正的 store 里拿出几个字段 getState dispatch 构造的新对象，真正的 store 保持  immutable 特征
+工业聚  19:46:19
+现在 redux 在讨论简化 api ，现在的中文文档，不知道是否过时了……
+工业聚  19:48:31
+Redux 的中间件角色很清晰，就是用来处理各类非 plain object 的 action 参数，转化为格式正确的 action 传递给最初的 store.dispatch
+工业聚  19:50:29
+redux-thunk 处理 function 类型的 action，redux-promise 处理 thenable 类型的 action ，还可以制定其他中间件，拓展 dispatch 的参数类型范围
 
 
 [^watch]: 这是一个函数

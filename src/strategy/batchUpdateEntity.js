@@ -19,7 +19,7 @@ function batchUpdateEntity(id, immediate) {
     if (isBatchingUpdates || avalon.repeatCount) {
         return
     }
-    
+
     var dom = document.getElementById(id)
 
     //document.all http://www.w3help.org/zh-cn/causes/BX9002
@@ -27,11 +27,10 @@ function batchUpdateEntity(id, immediate) {
     if (dom) {
         flushUpdate(function () {
             isBatchingUpdates = true
-            var old = dom.vnode
             var neo = vm.$render(vm)
-            diff(old,neo)
-
-          //  updateEntity([dom], [vnode])
+            diff(neo, dom.vnode)
+            updateEntity([dom], neo)
+            dom.vnode = neo
             isBatchingUpdates = false
             delete dirtyTrees[id]
             for (var i in dirtyTrees) {//更新其他子树

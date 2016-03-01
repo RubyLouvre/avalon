@@ -2856,7 +2856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        updateEntity([elem], vnodeHasData)
 	        console.log("render dom tree", new Date - now)
 	      
-	        elem.vnode = vnodeHasData[0]
+	        elem.vnode = vnodeHasData
 	       
 	    })
 
@@ -3448,7 +3448,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    mediatorFactory: mediatorFactory,
 	    define: define
 	}
-
+	//使用这个来扁平化数据  https://github.com/gaearon/normalizr
+	//使用Promise  https://github.com/stefanpenner/es6-promise
+	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
 /* 19 */
@@ -3742,6 +3744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var root = builtin.root
 	var document = builtin.document
+	var diff = __webpack_require__(32)
 
 	var vtree = builtin.vtree
 	var dtree = builtin.dtree
@@ -3749,54 +3752,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dirtyTrees = {}
 	var isBatchingUpdates = false
 	function batchUpdateEntity(id, immediate) {
-	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
-	        return
 	    var vm = avalon.vmodels[id]
-	    if (vm) { //确保是有效ID
-	        if (isBatchingUpdates|| avalon.repeatCount ) {
-	            dirtyTrees[id] = true
-	            return
-	        }
-	        dirtyTrees[id] = true
-	        var vnode = vtree[id]
-	        var tagName = vnode.type
-	        var dom = dtree[id]   //真实DOM
-	        if (dom) {
-	            if (!root.contains(dom)) {
-	                delete vtree[id]
-	                delete dtree[id]
-	                return
-	            }
-	        } else {
-	            //document.all http://www.w3help.org/zh-cn/causes/BX9002
-	            for (var i = 0, node, all = document.getElementsByTagName(tagName);
-	                    node = all[i++]; ) {
-	                if (
-	                        node.getAttribute("ms-controller") === id ||
-	                        node.getAttribute("ms-important") === id ||
-	                        node.getAttribute("av-controller") === id ||
-	                        node.getAttribute("av-important") === id ||
-	                        node.getAttribute("avalonctrl") === id
-	                        ) {
-	                    dom = dtree[id] = node
+	    if (!document.nodeName || !vm || !vm.$render)//如果是在mocha等测试环境中立即返回
+	        return
 
-	                    break
-	                }
-	            }
-	        }
-	        if (dom) {
-	            flushUpdate(function () {
-	                isBatchingUpdates = true
-	                updateEntity([dom], [vnode])
-	                isBatchingUpdates = false
-	                delete dirtyTrees[id]
-	                for (var i in dirtyTrees) {//更新其他子树
-	                    batchUpdateEntity(i, true)
-	                    break
-	                }
-	            }, immediate)
-	        }
+	    dirtyTrees[id] = true
+	    if (isBatchingUpdates || avalon.repeatCount) {
+	        return
 	    }
+
+	    var dom = document.getElementById(id)
+
+	    //document.all http://www.w3help.org/zh-cn/causes/BX9002
+
+	    if (dom) {
+	        flushUpdate(function () {
+	            isBatchingUpdates = true
+	            var neo = vm.$render(vm)
+	            diff(neo, dom.vnode)
+	            updateEntity([dom], neo)
+	            dom.vnode = neo
+	            isBatchingUpdates = false
+	            delete dirtyTrees[id]
+	            for (var i in dirtyTrees) {//更新其他子树
+	                batchUpdateEntity(i, true)
+	                break
+	            }
+	        }, immediate)
+	    }
+
 	}
 
 	function flushUpdate(callback, immediate ) {
@@ -4810,8 +4794,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre) {//curNode, preNode
 	        if (cur.nodeValue !== pre.nodeValue) {
-	            cur.change = cur.change || []
-	            avalon.Array.ensure(cur.change, this.update)
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
 	    update: function (node, vnode, parent) {
@@ -5581,7 +5565,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var document = builtin.document
 	var W3C = builtin.W3C
 	var root = builtin.root
-	var addHooks = __webpack_require__(40).addHooks
+	var parse = __webpack_require__(27)
+
 	function parseDisplay(nodeName, val) {
 	    //用于取得此类标签的默认display值
 	    var key = "_" + nodeName
@@ -5602,15 +5587,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.parseDisplay = parseDisplay
 
 	avalon.directive("visible", {
-	    is: function (a, b) {
-	        return Boolean(a) === Boolean(b)
+	    parse: function (binding, num) {
+	        return "vnode" + num + ".props['av-visible'] = " + parse(binding) + ";\n"
 	    },
-	    change: function (val, binding) {
-	        var vnode = binding.element
-	        if (!vnode || vnode.disposed)
-	            return
-	        vnode.isShow = val
-	        addHooks(this, binding)
+	    change: function (cur, pre) {
+	        var curValue = !!cur.props['av-visible']
+	        if (curValue !== Boolean(pre.props['av-visible'])) {
+	            cur.isShow = curValue
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+
 	    },
 	    update: function (node, vnode) {
 	        if (vnode.isShow) {
@@ -5780,15 +5767,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return  "vnode" + num + ".onVm = __vmodel__\n" +
 	                "vnode" + num + ".props[" + quote(binding.name) + "] = " +
 	                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] = " +
-	                
 	                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] || " +
 	                "avalon.parseExprProxy(" + quote(binding.expr) + ",'on');\n"
 	    },
 	    diff: function (cur, pre, type, name) {
 	        var curValue = cur.props[name]
 	        var preValue = pre.props[name]
+	        
 	        if (curValue !== preValue) {
-	            type = name.replace("av-on-","").replace(/-\d+$/,"")
+	            type = name.replace("av-on-", "").replace(/-\d+$/, "")
 	            var uuid = markID(curValue)
 	            var search = type + ":" + uuid
 	            if (!avalon.__eventVM__[search]) {//注册事件回调
@@ -5797,18 +5784,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete cur.onVm
 	            cur.changeEvents = cur.changeEvents || {}
 	            cur.changeEvents[search] = curValue
-	            cur.change = cur.change || []
-	            avalon.Array.ensure(cur.change, this.update)
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
-
 	    update: function (node, vnode) {
 	        if (!vnode.disposed) {
-	            vnode._ = node
+	            vnode.dom = node
 	            for (var key in vnode.changeEvents) {
 	                var type = key.split(":").shift()
 	                var listener = vnode.changeEvents[key]
-	                avalon.bind(node, type.replace(/-\d+$/,""), listener)
+	                avalon.bind(node, type.replace(/-\d+$/, ""), listener)
 	            }
 	            delete vnode.changeEvents
 	        }
@@ -5818,7 +5804,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function disposeOn() {
 	    if (this._) {
 	        avalon.unbind(this._)
-	        this._ = null
+	        this.dom = null
 	    }
 	}
 
@@ -5856,6 +5842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    getter: 1,
 	    setter: 1,
 	    elem: 1,
+	    vnode: 1,
 	    vmodel: 1,
 	    get: 1,
 	    set: 1,
@@ -5981,7 +5968,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            duplexData.get = function (val) {
 	                return this.getter(this.vmodel, val, this.elem)
 	            }
-	            
+
 	            var evaluatorPool = parse.caches
 	            var expr = elem.props["av-duplex"]
 	            duplexData.getter = evaluatorPool.get("duplex:" + expr)
@@ -6009,7 +5996,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (elem.type === "select") {
 	                avalon.Array.ensure(afterChange, duplexSelectAfter)
 	            }
-	            avalon.Array.ensure(afterChange, this.update)
+	            var list = elem.change || (elem.change = [])
+	            avalon.Array.ensure(list, this.update)
 	        }
 
 	    },
@@ -6026,7 +6014,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        }
-	        
+
 	        if (binding.watchValueInTimer) {//chrome 42及以下版本需要这个hack
 	            node.valueSet = duplexValue //#765
 	            watchValueInTimer(function () {
@@ -6082,7 +6070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function disposeDuplex() {
 	    var elem = this.duplexData.elem
 	    if (elem) {
-	        elem.oldValue = elem.valueSet = elem.duplexData =  void 0
+	        elem.oldValue = elem.valueSet = elem.duplexData = void 0
 	        avalon.unbind(elem)
 	        this.dom = null
 	    }
@@ -6304,7 +6292,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre) {
 	        if (cur.type !== pre.type) {
-	            cur.change = [this.update]
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
 	    update: function (dom, vnode, parent) {
@@ -6422,6 +6411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 	})
+
 	function getForBySignature(nodes, i) {
 	    var start = nodes[i], node
 	    var endText = start.signature + ":end"

@@ -81,7 +81,7 @@ function define(definition) {
         updateEntity([elem], vnodeHasData)
         console.log("render dom tree", new Date - now)
       
-        elem.vnode = vnodeHasData[0]
+        elem.vnode = vnodeHasData
        
     })
 
