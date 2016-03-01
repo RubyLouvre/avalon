@@ -231,10 +231,6 @@ function makeObservable(sid, spath, heirloom) {
             if (old === val) {
                 return
             }
-            if (val === "$$getpath$$") {
-                avalon.withPath = spath
-                return
-            }
             if (val && typeof val === "object") {
                 if (old && old.$id && val.$id && !Array.isArray(old)) {
                     //合并两个对象类型的子vm,比如proxy item中的el = newEl

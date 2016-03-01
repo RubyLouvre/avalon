@@ -61,7 +61,7 @@ avalon.directive("duplex", {
     diff: function (elem, pre) {
 
         elem.props.xtype = pre.props.xtype
-        if (pre.duplexData) {
+        if (pre.duplexData && pre.duplexData.set) {
             elem.duplexData = pre.duplexData
         } else {
 
