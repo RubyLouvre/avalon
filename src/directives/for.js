@@ -85,6 +85,7 @@ avalon.directive("for", {
 
     }
 })
+
 function getForBySignature(nodes, i) {
     var start = nodes[i], node
     var endText = start.signature + ":end"

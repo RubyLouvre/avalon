@@ -19,6 +19,7 @@ avalon.directive("on", {
     diff: function (cur, pre, type, name) {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
+        
         if (curValue !== preValue) {
             type = name.replace("av-on-", "").replace(/-\d+$/, "")
             var uuid = markID(curValue)
@@ -35,7 +36,7 @@ avalon.directive("on", {
     },
     update: function (node, vnode) {
         if (!vnode.disposed) {
-            vnode._ = node
+            vnode.dom = node
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
@@ -49,7 +50,7 @@ avalon.directive("on", {
 function disposeOn() {
     if (this._) {
         avalon.unbind(this._)
-        this._ = null
+        this.dom = null
     }
 }
 

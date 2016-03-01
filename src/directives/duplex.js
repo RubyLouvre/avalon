@@ -25,6 +25,7 @@ var getset = {
     getter: 1,
     setter: 1,
     elem: 1,
+    vnode: 1,
     vmodel: 1,
     get: 1,
     set: 1,

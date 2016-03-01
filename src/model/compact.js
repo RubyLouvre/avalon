@@ -673,3 +673,6 @@ module.exports = {
     mediatorFactory: mediatorFactory,
     define: define
 }
+//使用这个来扁平化数据  https://github.com/gaearon/normalizr
+//使用Promise  https://github.com/stefanpenner/es6-promise
+//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
