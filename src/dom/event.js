@@ -172,11 +172,11 @@ function dispatch(event) {
                 if (/move|scroll/.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(vm, event)
+                        fn.call(vm || elem, event)
                         last = curr
                     }
                 } else {
-                    fn.call(vm, event)
+                    fn.call(vm || elem, event)
                 }
             }
         }
