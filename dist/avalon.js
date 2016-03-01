@@ -1889,11 +1889,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (/move|scroll/.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        fn.call(vm, event)
+	                        fn.call(vm || elem, event)
 	                        last = curr
 	                    }
 	                } else {
-	                    fn.call(vm, event)
+	                    fn.call(vm || elem, event)
 	                }
 	            }
 	        }
@@ -3004,10 +3004,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        get: get,
 	        set: function (val) {
 	            if (old === val) {
-	                return
-	            }
-	            if (val === "$$getpath$$") {
-	                avalon.withPath = spath
 	                return
 	            }
 	            if (val && typeof val === "object") {
@@ -6393,7 +6389,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (elem, pre) {
 
 	        elem.props.xtype = pre.props.xtype
-	        if (pre.duplexData) {
+	        if (pre.duplexData && pre.duplexData.set) {
 	            elem.duplexData = pre.duplexData
 	        } else {
 
@@ -6528,7 +6524,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        
-	        if (binding.watchValueInTimer) {//这是一次性绑定
+	        if (binding.watchValueInTimer) {//chrome 42及以下版本需要这个hack
 	            node.valueSet = duplexValue //#765
 	            watchValueInTimer(function () {
 	                if (!vnode.disposed) {

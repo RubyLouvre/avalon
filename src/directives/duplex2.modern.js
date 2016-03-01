@@ -1,3 +1,5 @@
+
+
 //双工绑定
 var builtin = require("../base/builtin")
 var W3C = builtin.W3C
@@ -26,6 +28,7 @@ var getset = {
     setter: 1,
     elem: 1,
     vmodel: 1,
+    vnode: 1,
     get: 1,
     set: 1,
     watchValueInTimer: 1
@@ -83,7 +86,7 @@ avalon.directive("duplex", {
                     duplexData.click = duplexValue
                     break
                 case "checkbox":
-                    duplexData[msie < 9 ? "click" : "change"] = duplexCheckBox
+                    duplexData.change = duplexCheckBox
                     break
                 case "change":
                     duplexData.change = duplexValue
@@ -101,19 +104,12 @@ avalon.directive("duplex", {
                         duplexData.compositionend = compositionEnd
                         duplexData.DOMAutoComplete = duplexValue
                     } else {
-                        // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
-                        if (msie > 8) {
-                            if (msie === 9) {
-                                //IE9删除字符后再失去焦点不会同步 #1167
-                                duplexData.keyup = duplexValue
-                            }
-                            //IE9使用propertychange无法监听中文输入改动
-                            duplexData.input = duplexValue
-                        } else {
-                            //onpropertychange事件无法区分是程序触发还是用户触发
-                            //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
-                            duplexData.propertychange = duplexValueHack
-                        }
+
+                        //IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
+                        //IE9删除字符后再失去焦点不会同步 #1167
+                        duplexData.keyup = duplexValue
+                        //IE9使用propertychange无法监听中文输入改动
+                        duplexData.input = duplexValue
                         duplexData.dragend = duplexDragEnd
                         //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                         //http://www.matts411.com/post/internet-explorer-9-oninput/
@@ -150,7 +146,7 @@ avalon.directive("duplex", {
             duplexData.get = function (val) {
                 return this.getter(this.vmodel, val, this.elem)
             }
-            
+
             var evaluatorPool = parse.caches
             var expr = elem.props["av-duplex"]
             duplexData.getter = evaluatorPool.get("duplex:" + expr)
@@ -195,7 +191,7 @@ avalon.directive("duplex", {
                 }
             }
         }
-        
+
         if (binding.watchValueInTimer) {//chrome 42及以下版本需要这个hack
             node.valueSet = duplexValue //#765
             watchValueInTimer(function () {
@@ -224,17 +220,8 @@ avalon.directive("duplex", {
                 curValue = vnode.props.xtype === "checked" ? !!curValue :
                         curValue + "" === node.value
                 node.oldValue = curValue
-                if (msie === 6) {
-                    setTimeout(function () {
-                        //IE8 checkbox, radio是使用defaultChecked控制选中状态，
-                        //并且要先设置defaultChecked后设置checked
-                        //并且必须设置延迟
-                        node.defaultChecked = curValue
-                        node.checked = curValue
-                    }, 31)
-                } else {
-                    node.checked = curValue
-                }
+                node.checked = curValue
+
                 break
             case "checkbox":
                 var array = [].concat(curValue) //强制转换为数组
@@ -251,7 +238,7 @@ avalon.directive("duplex", {
 function disposeDuplex() {
     var elem = this.duplexData.elem
     if (elem) {
-        elem.oldValue = elem.valueSet = elem.duplexData =  void 0
+        elem.oldValue = elem.valueSet = elem.duplexData = void 0
         avalon.unbind(elem)
         this.dom = null
     }
@@ -276,12 +263,6 @@ function duplexChecked() {
 }
 
 
-function duplexValueHack(e) {
-    if (e.propertyName === "value") {
-        duplexValue.call(this, e)
-    }
-}
-
 function duplexDragEnd(e) {
     var elem = this
     setTimeout(function () {
@@ -294,16 +275,17 @@ function duplexCheckBox() {
     var val = elem.duplexData.get(elem.value)
     elem.duplexData.set(val, elem.checked)
 }
-function duplexValue(e) { //原来的updateVModel
+function duplexValue() { //原来的updateVModel
     var elem = this, fixCaret
     var val = elem.value //防止递归调用形成死循环
     if (elem.composing || val === elem.oldValue)
         return
     if (elem.msFocus) {
         try {
-            var pos = getCaret(elem)
-            if (pos.start === pos.end) {
-                pos = pos.start
+           var start = elem.selectionStart
+            var end = elem.selectionEnd
+            if (start === end) {
+                var pos = start
                 fixCaret = true
             }
         } catch (e) {
@@ -313,8 +295,8 @@ function duplexValue(e) { //原来的updateVModel
     var lastValue = elem.duplexData.get(val)
     try {
         elem.value = elem.oldValue = lastValue + ""
-        if (fixCaret) {
-            setCaret(elem, pos, pos)
+        if (fixCaret && !elem.readOnly) {
+            elem.selectionStart = elem.selectionEnd = pos
         }
         elem.duplexData.set(lastValue)
     } catch (ex) {
@@ -354,7 +336,6 @@ markID(compositionEnd)
 markID(duplexFocus)
 markID(duplexBlur)
 markID(duplexValue)
-markID(duplexValueHack)
 markID(duplexDragEnd)
 markID(duplexCheckBox)
 markID(duplexSelect)
@@ -422,35 +403,6 @@ var watchValueInTimer = avalon.noop
     }
 })()
 
-// jshint ignore:line
-function getCaret(ctrl) {
-    var start = NaN, end = NaN
-    if (ctrl.setSelectionRange) {
-        start = ctrl.selectionStart
-        end = ctrl.selectionEnd
-    } else if (document.selection && document.selection.createRange) {
-        var range = document.selection.createRange()
-        start = 0 - range.duplicate().moveStart('character', -100000)
-        end = start + range.text.length
-    }
-    return {
-        start: start,
-        end: end
-    }
-}
 
-function setCaret(ctrl, begin, end) {
-    if (!ctrl.value || ctrl.readOnly)
-        return
-    if (ctrl.createTextRange) {//IE6-8
-        var range = ctrl.createTextRange()
-        range.collapse(true)
-        range.moveStart("character", begin)
-        range.select()
-    } else {
-        ctrl.selectionStart = begin
-        ctrl.selectionEnd = end
-    }
-}
 
 //处理 货币 http://openexchangerates.github.io/accounting.js/
