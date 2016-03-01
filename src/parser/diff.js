@@ -37,7 +37,7 @@ function diffProps(current, previous) {
             try {
                 directives[type] && directives[type].diff(current, previous, type, name)
             } catch (e) {
-                avalon.log(current, previous, "diffProps error")
+                avalon.log(current, previous, e, "diffProps error")
             }
         }
     }

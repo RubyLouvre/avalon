@@ -98,7 +98,7 @@ function toTemplate(arr, num) {
 
             if (hasIf) {
 
-                str += "if(!(" + parse(hasIf) + ")){\n"
+                str += "if(!(" + parse(hasIf,'if') + ")){\n"
                 str += children + ".push({" +
                         "\n\ttype:'#comment'," +
                         "\n\tnodeValue: '<!--av-if:-->'," +
@@ -109,7 +109,7 @@ function toTemplate(arr, num) {
             }
             var hasBindings = parseBindings( el.props, num,  el )
             if (hasBindings) {
-                str += parseBindings(el.props, num)
+                str += hasBindings
             } else {
                 str += vnode + "template= " + quote(el.template) + "\n"
             }

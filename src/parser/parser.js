@@ -124,7 +124,7 @@ function parser(str, category) {
 
         setterBody.splice(3, 0, setterFilters.join("\n"))
         var fn = Function("return " + setterBody.join("\n"))()
-        evaluatorPool.put("duplex:" + input + ":setter", fn)
+        evaluatorPool.put("duplex:" + str.trim() + ":setter", fn)
 
         var getterFilters = filters.map(function (str) {
             return str.replace(");", ",__elem__);")
@@ -132,19 +132,17 @@ function parser(str, category) {
         var getterBody = [
             "function (__vmodel__, __value__, __elem__){",
             "try{",
-            "if(argument.length === 2)",
+            "if(arguments.length === 1)",
             "\treturn " + body,
-            "if(!__elem__ || __elem__.nodeType !== 1) ",
-            "return",
+            "if(!__elem__ || __elem__.nodeType !== 1) return ",
             "return __value__",
             "}catch(e){",
             "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
             "}",
             "}"]
-
         getterBody.splice(5, 0, getterFilters.join("\n"))
         fn = Function("return " + getterBody.join("\n"))()
-        evaluatorPool.put("duplex:" + input, fn)
+        evaluatorPool.put("duplex:" + str.trim(), fn)
         return
     } else {
         ret = [
