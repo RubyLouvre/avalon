@@ -11,8 +11,8 @@ avalon.directive("if", {
     },
     diff: function (cur, pre) {
         if (cur.type !== pre.type) {
-            cur.change = cur.change || []
-            avalon.Array.ensure(cur.change, this.update)
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
         }
     },
     update: function (dom, vnode, parent) {

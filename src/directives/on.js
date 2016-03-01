@@ -13,7 +13,6 @@ avalon.directive("on", {
         return  "vnode" + num + ".onVm = __vmodel__\n" +
                 "vnode" + num + ".props[" + quote(binding.name) + "] = " +
                 "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] = " +
-                
                 "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] || " +
                 "avalon.parseExprProxy(" + quote(binding.expr) + ",'on');\n"
     },
@@ -21,7 +20,7 @@ avalon.directive("on", {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
         if (curValue !== preValue) {
-            type = name.replace("av-on-","").replace(/-\d+$/,"")
+            type = name.replace("av-on-", "").replace(/-\d+$/, "")
             var uuid = markID(curValue)
             var search = type + ":" + uuid
             if (!avalon.__eventVM__[search]) {//注册事件回调
@@ -30,18 +29,17 @@ avalon.directive("on", {
             delete cur.onVm
             cur.changeEvents = cur.changeEvents || {}
             cur.changeEvents[search] = curValue
-            cur.change = cur.change || []
-            avalon.Array.ensure(cur.change, this.update)
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
         }
     },
-
     update: function (node, vnode) {
         if (!vnode.disposed) {
             vnode._ = node
             for (var key in vnode.changeEvents) {
                 var type = key.split(":").shift()
                 var listener = vnode.changeEvents[key]
-                avalon.bind(node, type.replace(/-\d+$/,""), listener)
+                avalon.bind(node, type.replace(/-\d+$/, ""), listener)
             }
             delete vnode.changeEvents
         }

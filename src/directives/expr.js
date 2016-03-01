@@ -4,8 +4,8 @@ avalon.directive("expr", {
     },
     diff: function (cur, pre) {//curNode, preNode
         if (cur.nodeValue !== pre.nodeValue) {
-            cur.change = cur.change || []
-            avalon.Array.ensure(cur.change, this.update)
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
         }
     },
     update: function (node, vnode, parent) {

@@ -24,7 +24,6 @@ function parseDisplay(nodeName, val) {
 avalon.parseDisplay = parseDisplay
 
 avalon.directive("visible", {
-
     parse: function (binding, num) {
         return "vnode" + num + ".props['av-visible'] = " + parse(binding) + ";\n"
     },
@@ -32,10 +31,10 @@ avalon.directive("visible", {
         var curValue = !!cur.props['av-visible']
         if (curValue !== Boolean(pre.props['av-visible'])) {
             cur.isShow = curValue
-            cur.change = cur.change || []
-            avalon.Array.ensure(cur.change, this.update)
+            var list = cur.change || (cur.change = [])
+            avalon.Array.ensure(list, this.update)
         }
-       
+
     },
     update: function (node, vnode) {
         if (vnode.isShow) {

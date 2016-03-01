@@ -150,7 +150,7 @@ avalon.directive("duplex", {
             duplexData.get = function (val) {
                 return this.getter(this.vmodel, val, this.elem)
             }
-            
+
             var evaluatorPool = parse.caches
             var expr = elem.props["av-duplex"]
             duplexData.getter = evaluatorPool.get("duplex:" + expr)
@@ -178,7 +178,8 @@ avalon.directive("duplex", {
             if (elem.type === "select") {
                 avalon.Array.ensure(afterChange, duplexSelectAfter)
             }
-            avalon.Array.ensure(afterChange, this.update)
+            var list = elem.change || (elem.change = [])
+            avalon.Array.ensure(list, this.update)
         }
 
     },
@@ -195,7 +196,7 @@ avalon.directive("duplex", {
                 }
             }
         }
-        
+
         if (binding.watchValueInTimer) {//chrome 42及以下版本需要这个hack
             node.valueSet = duplexValue //#765
             watchValueInTimer(function () {
@@ -251,7 +252,7 @@ avalon.directive("duplex", {
 function disposeDuplex() {
     var elem = this.duplexData.elem
     if (elem) {
-        elem.oldValue = elem.valueSet = elem.duplexData =  void 0
+        elem.oldValue = elem.valueSet = elem.duplexData = void 0
         avalon.unbind(elem)
         this.dom = null
     }
