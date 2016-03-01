@@ -2,7 +2,8 @@ var builtin = require("../base/builtin")
 var document = builtin.document
 var W3C = builtin.W3C
 var root = builtin.root
-var addHooks = require("../vdom/hooks").addHooks
+var parse = require("../parser/parser")
+
 function parseDisplay(nodeName, val) {
     //用于取得此类标签的默认display值
     var key = "_" + nodeName
@@ -23,15 +24,18 @@ function parseDisplay(nodeName, val) {
 avalon.parseDisplay = parseDisplay
 
 avalon.directive("visible", {
-    is: function (a, b) {
-        return Boolean(a) === Boolean(b)
+
+    parse: function (binding, num) {
+        return "vnode" + num + ".props['av-visible'] = " + parse(binding) + ";\n"
     },
-    change: function (val, binding) {
-        var vnode = binding.element
-        if (!vnode || vnode.disposed)
-            return
-        vnode.isShow = val
-        addHooks(this, binding)
+    change: function (cur, pre) {
+        var curValue = !!cur.props['av-visible']
+        if (curValue !== Boolean(pre.props['av-visible'])) {
+            cur.isShow = curValue
+            cur.change = cur.change || []
+            avalon.Array.ensure(cur.change, this.update)
+        }
+       
     },
     update: function (node, vnode) {
         if (vnode.isShow) {
