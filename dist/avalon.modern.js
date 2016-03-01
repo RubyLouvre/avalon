@@ -55,18 +55,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var buildin = global.buildin = __webpack_require__(2)
-	var avalon = global.avalon = __webpack_require__(59).avalon //这个版本兼容IE10+
+	var avalon = global.avalon = __webpack_require__(60).avalon //这个版本兼容IE10+
 
 	__webpack_require__(4)
-	__webpack_require__(60)
+	__webpack_require__(61)
 	__webpack_require__(10)
 
-	avalon.define = __webpack_require__(61).define
-	avalon.mediatorFactory = __webpack_require__(61).mediatorFactory
+	avalon.define = __webpack_require__(62).define
+	avalon.mediatorFactory = __webpack_require__(62).mediatorFactory
 
 	__webpack_require__(39)
-	__webpack_require__(52)
-	__webpack_require__(63)
+	__webpack_require__(53)
+	__webpack_require__(64)
 	module.exports = avalon
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
@@ -2169,33 +2169,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	            "}"]
 	        filters.unshift(2, 0)
 	    } else if (category === "duplex") {
-	        var setters = filters.map(function (str) {
+	        var setterFilters = filters.map(function (str) {
 	            str = str.replace("__read__", "__write__")
 	            return str.replace(");", ",__elem__);")
 	        })
 	        //setter
-	        ret = ["function (__vmodel__, __value__, __elem__){",
+	        var setterBody = [
+	            "function (__vmodel__, __value__, __elem__){",
 	            "if(!__elem__ || __elem__.nodeType !== 1) ",
-	            "return",
+	            "\treturn",
 	            "try{",
 	            "\t" + body + " = __value__",
 	            "}catch(e){",
 	            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
 	            "}",
 	            "}"]
-	        var setterArr = ret.concat()
-	        setterArr.splice(3, 0, setters.join("\n"))
-	        var fn = Function("return " + setterArr.join("\n"))()
-	        evaluatorPool.put("duplex:" + input + ":setter", fn)
 
-	        var getters = filters.map(function (str) {
+	        setterBody.splice(3, 0, setterFilters.join("\n"))
+	        var fn = Function("return " + setterBody.join("\n"))()
+	        evaluatorPool.put("duplex:" + str.trim() + ":setter", fn)
+
+	        var getterFilters = filters.map(function (str) {
 	            return str.replace(");", ",__elem__);")
 	        })
-	        ret[0] = "function (__vmodel__, __elem__){"
-	        ret[4] = "\treturn " + body
-	        ret.splice(3, 0, getters.join("\n"))
-	        fn = Function("return " + ret.join("\n"))()
-	        evaluatorPool.put("duplex:" + input, fn)
+	        var getterBody = [
+	            "function (__vmodel__, __value__, __elem__){",
+	            "try{",
+	            "if(arguments.length === 1)",
+	            "\treturn " + body,
+	            "if(!__elem__ || __elem__.nodeType !== 1) return ",
+	            "return __value__",
+	            "}catch(e){",
+	            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+	            "}",
+	            "}"]
+	        getterBody.splice(5, 0, getterFilters.join("\n"))
+	        fn = Function("return " + getterBody.join("\n"))()
+	        evaluatorPool.put("duplex:" + str.trim(), fn)
 	        return
 	    } else {
 	        ret = [
@@ -2843,8 +2853,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var VText = __webpack_require__(42)
 	var VElement = __webpack_require__(43)
-	var VComment = __webpack_require__(66)
-	var VComponent = __webpack_require__(44)
+	var VComment = __webpack_require__(44)
+	var VComponent = __webpack_require__(45)
 	avalon.vdomAdaptor = function (obj) {
 	    switch (obj.type) {
 	        case "#text":
@@ -3006,6 +3016,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 44 */
+/***/ function(module, exports) {
+
+	
+	function VComment(text) {
+	    if (typeof text === "string") {
+	        this.type = "#comment"
+	        this.nodeValue = text
+	        this.skipContent = true
+	    } else {
+	        for (var i in text) {
+	            this[i] = text[i]
+	        }
+	    }
+	}
+	VComment.prototype = {
+	    constructor: VComment,
+	    clone: function () {
+	        return new VComment(this)
+	    },
+	    toDOM: function () {
+	        return document.createComment(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return "<!--" + this.nodeValue + "-->"
+	    }
+	}
+
+	module.exports = VComment
+
+/***/ },
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pushArray = __webpack_require__(2).pushArray
@@ -3067,7 +3108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VComponent
 
 /***/ },
-/* 45 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -3126,7 +3167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
@@ -3255,7 +3296,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(2).markID
@@ -3319,8 +3360,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */,
-/* 49 */
+/* 49 */,
+/* 50 */
 /***/ function(module, exports) {
 
 	var getBindingValue = function (elem, name, vmodel) {
@@ -3337,7 +3378,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3381,7 +3422,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var parse = __webpack_require__(27)
@@ -3504,14 +3545,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
 	 *                           扫描系统                                 *
 	 **********************************************************************/
 	var rbind = avalon.config.rbind
-	var scanNodes = __webpack_require__(53)
+	var scanNodes = __webpack_require__(54)
 
 	var updateEntity = __webpack_require__(24)
 	var createVirtual = __webpack_require__(39)
@@ -3525,18 +3566,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	__webpack_require__(58)
+	__webpack_require__(59)
 
 
 
 /***/ },
-/* 53 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var rexpr = avalon.config.rexpr
-	var scanText = __webpack_require__(54)
-	var scanTag = __webpack_require__(56)
+	var scanText = __webpack_require__(55)
+	var scanTag = __webpack_require__(57)
 
 	//更新整个虚拟DOM树
 	function scanNodes(nodes, vm) {
@@ -3568,10 +3609,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanNodes
 
 /***/ },
-/* 54 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var scanExpr = __webpack_require__(55)
+	var scanExpr = __webpack_require__(56)
 	var addHooks = __webpack_require__(40).addHooks
 
 	function scanText(node, vmodel) {
@@ -3609,7 +3650,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanText
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports) {
 
 	var rline = /\r?\n/g
@@ -3660,10 +3701,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var scanAttrs = __webpack_require__(57)
+	var scanAttrs = __webpack_require__(58)
 
 	function scanTag(elem, vmodel, siblings) {
 	    var props = elem.props
@@ -3698,7 +3739,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanTag
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3787,7 +3828,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanAttrs
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -3825,7 +3866,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var vars = __webpack_require__(2)
@@ -3971,7 +4012,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
@@ -4402,10 +4443,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $$skipArray = __webpack_require__(62)
+	var $$skipArray = __webpack_require__(63)
 
 
 	var builtin = __webpack_require__(2)
@@ -5009,7 +5050,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports) {
 
 	/**
@@ -5025,24 +5066,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(34)
 	__webpack_require__(35)
 
 	__webpack_require__(36)
-	__webpack_require__(64)
+	__webpack_require__(65)
 	__webpack_require__(38)
-	__webpack_require__(45)
 	__webpack_require__(46)
 	__webpack_require__(47)
-	__webpack_require__(65)
-	__webpack_require__(50)
+	__webpack_require__(48)
+	__webpack_require__(66)
 	__webpack_require__(51)
+	__webpack_require__(52)
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var parse = __webpack_require__(27)
@@ -5084,7 +5125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//双工绑定
@@ -5094,7 +5135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var msie = builtin.msie
 	var markID = builtin.markID
 	var pushArray = builtin.pushArray
-	var getBindingValue = __webpack_require__(49)
+	var getBindingValue = __webpack_require__(50)
 	var createVirtual = __webpack_require__(39)
 
 	var hooks = __webpack_require__(40)
@@ -5485,37 +5526,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	})()
 
 
-
-/***/ },
-/* 66 */
-/***/ function(module, exports) {
-
-	
-	function VComment(text) {
-	    if (typeof text === "string") {
-	        this.type = "#comment"
-	        this.nodeValue = text
-	        this.skipContent = true
-	    } else {
-	        for (var i in text) {
-	            this[i] = text[i]
-	        }
-	    }
-	}
-	VComment.prototype = {
-	    constructor: VComment,
-	    clone: function () {
-	        return new VComment(this)
-	    },
-	    toDOM: function () {
-	        return document.createComment(this.nodeValue)
-	    },
-	    toHTML: function () {
-	        return "<!--" + this.nodeValue + "-->"
-	    }
-	}
-
-	module.exports = VComment
 
 /***/ }
 /******/ ])

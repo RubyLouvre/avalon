@@ -5,8 +5,10 @@ var document = builtin.document
 var msie = builtin.msie
 var markID = builtin.markID
 var pushArray = builtin.pushArray
-var getBindingValue = require("./var/getBindingValue")
+var quote = builtin.quote
+
 var createVirtual = require("../strategy/createVirtual")
+var parse = require("../parser/parser")
 
 var rcheckedType = /^(?:checkbox|radio)$/
 var rcheckedFilter = /\|\s*checked\b/
@@ -18,6 +20,12 @@ var oldName = {
     "number": "numeric",
     "bool": "boolean",
     "text": "string"
+}
+var getset = {
+    getter: 1,
+    setter: 1,
+    elem: 1,
+    watchValueInTimer: 1
 }
 avalon.directive("duplex", {
     priority: 2000,
@@ -32,7 +40,7 @@ avalon.directive("duplex", {
                 expr = expr.replace(rcheckedFilter, "")
             }
         }
-        if (rchangeFilter.test(binding.expr)) {
+        if (rchangeFilter.test(expr)) {
             if (rnoduplexInput.test(elemType)) {
                 avalon.log(elemType + "不支持change过滤器")
                 expr = expr.replace(rchangeFilter, "")
@@ -41,9 +49,9 @@ avalon.directive("duplex", {
             }
         }
         binding.expr = expr
-        parse(binding)
+        parse(binding, "duplex")
         return "vnode" + num + ".duplexVm = __vmodel__;\n" +
-                "vnode" + num + ".props['av-attr'] = " + quote(binding.exr) + ";\n"
+                "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
     },
     diff: function (elem, pre, type) {
 
@@ -115,22 +123,23 @@ avalon.directive("duplex", {
                     duplexData.focus = duplexFocus
                     duplexData.blur = duplexBlur
                 }
-                elem.watchValueInTimer = true
+                duplexData.watchValueInTimer = true
             }
             var expr = elem.props["av-duplex"]
-            var evaluatorPool = parser.caches
+            var evaluatorPool = parse.caches
+
             duplexData.getter = evaluatorPool.get("duplex:" + expr)
             duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")
-
             elem.duplexData = duplexData
             elem.dispose = disposeDuplex
 
         }
         duplexData.vmode = elem.duplexVm
+        var value = elem.props.value = duplexData.getter(duplexData.vmode)
         if (!duplexData.elem) {
             var isEqual = false
         } else {
-            var value = elem.props.value = duplexData.getter(duplexData.vmode, duplexData.elem)
+
             var preValue = pre.props.value
             if (Array.isArray(value)) {
                 isEqual = value + "" === preValue + ""
@@ -150,10 +159,9 @@ avalon.directive("duplex", {
     },
     update: function (node, vnode) {
         var binding = vnode.duplexData
-        binding.elem = node
+        binding.elem = node //方便进行垃圾回收
         var curValue = vnode.props.value
 
-        vnode.dom = node //方便进行垃圾回收
 
         if (vnode.props.xtype === "checkbox") {
             node.duplexSet = function (val, checked) {
@@ -177,14 +185,16 @@ avalon.directive("duplex", {
         }
 
 
-        var events = vnode.duplexData
-        if (events) {
-            for (var eventName in events) {
-                avalon.bind(node, eventName, events[eventName])
+        if (binding) {
+            for (var eventName in binding) {
+                var callback = binding[eventName]
+                if (!getset[eventName] && typeof callback === "function") {
+                    avalon.bind(node, eventName, binding[eventName])
+                    delete binding[eventName]
+                }
             }
-            delete vnode.duplexData
         }
-        if (vnode.watchValueInTimer) {
+        if (binding.watchValueInTimer) {
             node.valueSet = duplexValue //#765
             watchValueInTimer(function () {
                 if (!vnode.disposed) {
@@ -195,7 +205,7 @@ avalon.directive("duplex", {
                     return false
                 }
             })
-            delete vnode.watchValueInTimer
+            delete binding.watchValueInTimer
         }
 
         switch (vnode.props.xtype) {
@@ -235,7 +245,7 @@ avalon.directive("duplex", {
 })
 
 function disposeDuplex() {
-    var elem = this.dom
+    var elem = this.duplexData.elem
     if (elem) {
         elem.oldValue = elem.valueSet =
                 elem.duplexSet = elem.duplexGet = void 0
@@ -279,7 +289,7 @@ function duplexDragEnd(e) {
 function duplexCheckBox() {
     var elem = this
     var val = elem.duplexGet(elem.value)
-    var array = elem.duplexSet(val, elem.checked)
+    elem.duplexSet(val, elem.checked)
 }
 function duplexValue(e) { //原来的updateVModel
     var elem = this, fixCaret

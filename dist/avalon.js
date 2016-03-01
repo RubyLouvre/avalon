@@ -67,7 +67,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.mediatorFactory = __webpack_require__(18).mediatorFactory
 
 	__webpack_require__(39)
-	__webpack_require__(52)
+	__webpack_require__(53)
 	__webpack_require__(33)
 	module.exports = avalon
 
@@ -4281,33 +4281,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	            "}"]
 	        filters.unshift(2, 0)
 	    } else if (category === "duplex") {
-	        var setters = filters.map(function (str) {
+	        var setterFilters = filters.map(function (str) {
 	            str = str.replace("__read__", "__write__")
 	            return str.replace(");", ",__elem__);")
 	        })
 	        //setter
-	        ret = ["function (__vmodel__, __value__, __elem__){",
+	        var setterBody = [
+	            "function (__vmodel__, __value__, __elem__){",
 	            "if(!__elem__ || __elem__.nodeType !== 1) ",
-	            "return",
+	            "\treturn",
 	            "try{",
 	            "\t" + body + " = __value__",
 	            "}catch(e){",
 	            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
 	            "}",
 	            "}"]
-	        var setterArr = ret.concat()
-	        setterArr.splice(3, 0, setters.join("\n"))
-	        var fn = Function("return " + setterArr.join("\n"))()
-	        evaluatorPool.put("duplex:" + input + ":setter", fn)
 
-	        var getters = filters.map(function (str) {
+	        setterBody.splice(3, 0, setterFilters.join("\n"))
+	        var fn = Function("return " + setterBody.join("\n"))()
+	        evaluatorPool.put("duplex:" + str.trim() + ":setter", fn)
+
+	        var getterFilters = filters.map(function (str) {
 	            return str.replace(");", ",__elem__);")
 	        })
-	        ret[0] = "function (__vmodel__, __elem__){"
-	        ret[4] = "\treturn " + body
-	        ret.splice(3, 0, getters.join("\n"))
-	        fn = Function("return " + ret.join("\n"))()
-	        evaluatorPool.put("duplex:" + input, fn)
+	        var getterBody = [
+	            "function (__vmodel__, __value__, __elem__){",
+	            "try{",
+	            "if(arguments.length === 1)",
+	            "\treturn " + body,
+	            "if(!__elem__ || __elem__.nodeType !== 1) return ",
+	            "return __value__",
+	            "}catch(e){",
+	            "\tavalon.log(e, " + quote('parse "' + str + '" fail') + ")",
+	            "}",
+	            "}"]
+	        getterBody.splice(5, 0, getterFilters.join("\n"))
+	        fn = Function("return " + getterBody.join("\n"))()
+	        evaluatorPool.put("duplex:" + str.trim(), fn)
 	        return
 	    } else {
 	        ret = [
@@ -4527,7 +4537,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            if (hasIf) {
 
-	                str += "if(!(" + parse(hasIf) + ")){\n"
+	                str += "if(!(" + parse(hasIf,'if') + ")){\n"
 	                str += children + ".push({" +
 	                        "\n\ttype:'#comment'," +
 	                        "\n\tnodeValue: '<!--av-if:-->'," +
@@ -4538,7 +4548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var hasBindings = parseBindings( el.props, num,  el )
 	            if (hasBindings) {
-	                str += parseBindings(el.props, num)
+	                str += hasBindings
 	            } else {
 	                str += vnode + "template= " + quote(el.template) + "\n"
 	            }
@@ -4720,7 +4730,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            try {
 	                directives[type] && directives[type].diff(current, previous, type, name)
 	            } catch (e) {
-	                avalon.log(current, previous, "diffProps error")
+	                avalon.log(current, previous, e, "diffProps error")
 	            }
 	        }
 	    }
@@ -4738,12 +4748,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(36)
 	__webpack_require__(37)
 	__webpack_require__(38)
-	__webpack_require__(45)
 	__webpack_require__(46)
 	__webpack_require__(47)
 	__webpack_require__(48)
-	__webpack_require__(50)
+	__webpack_require__(67)
 	__webpack_require__(51)
+	__webpack_require__(52)
 
 /***/ },
 /* 34 */
@@ -5313,8 +5323,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var VText = __webpack_require__(42)
 	var VElement = __webpack_require__(43)
-	var VComment = __webpack_require__(66)
-	var VComponent = __webpack_require__(44)
+	var VComment = __webpack_require__(44)
+	var VComponent = __webpack_require__(45)
 	avalon.vdomAdaptor = function (obj) {
 	    switch (obj.type) {
 	        case "#text":
@@ -5476,6 +5486,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 44 */
+/***/ function(module, exports) {
+
+	
+	function VComment(text) {
+	    if (typeof text === "string") {
+	        this.type = "#comment"
+	        this.nodeValue = text
+	        this.skipContent = true
+	    } else {
+	        for (var i in text) {
+	            this[i] = text[i]
+	        }
+	    }
+	}
+	VComment.prototype = {
+	    constructor: VComment,
+	    clone: function () {
+	        return new VComment(this)
+	    },
+	    toDOM: function () {
+	        return document.createComment(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return "<!--" + this.nodeValue + "-->"
+	    }
+	}
+
+	module.exports = VComment
+
+/***/ },
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pushArray = __webpack_require__(2).pushArray
@@ -5537,7 +5578,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VComponent
 
 /***/ },
-/* 45 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -5596,7 +5637,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
@@ -5725,7 +5766,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(2).markID
@@ -5789,475 +5830,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */
-/***/ function(module, exports, __webpack_require__) {
-
-	//双工绑定
-	var builtin = __webpack_require__(2)
-	var W3C = builtin.W3C
-	var document = builtin.document
-	var msie = builtin.msie
-	var markID = builtin.markID
-	var pushArray = builtin.pushArray
-	var getBindingValue = __webpack_require__(49)
-	var createVirtual = __webpack_require__(39)
-
-	var hooks = __webpack_require__(40)
-	var addData = hooks.addData
-	var addAttrHook = hooks.addAttrHook
-
-	var addHooks = hooks.addHooks
-	var addHook = hooks.addHook
-
-	var rcheckedType = /^(?:checkbox|radio)$/
-	var rcheckedFilter = /\|\s*checked\b/
-	var rchangeFilter = /\|\s*change\b/
-
-	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
-	var oldName = {
-	    "radio": "checked",
-	    "number": "numeric",
-	    "bool": "boolean",
-	    "text": "string"
-	}
-	avalon.directive("duplex", {
-	    priority: 2000,
-	    init: function (binding) {
-	        var elem = binding.element
-	        var vmodel = binding.vmodel
-	        var fn = getBindingValue(elem, "data-duplex-changed", vmodel)
-	        if (typeof fn !== "function") {
-	            fn = avalon.noop
-	        }
-	        binding.changed = fn
-	        var nodeName = elem.type.toLowerCase()
-	        if (nodeName === "input" && !elem.props.type) {
-	            elem.props.type = "text"
-	        }
-	        var elemType = elem.props.type
-	        var ret = []
-	        binding.param.replace(/\w+/g, function (name) {
-	            var newName = oldName[name] || name
-	            avalon.log("ms-duplex-" + name + "已经被废掉,改成" + newName + "过滤器")
-	            ret.push(newName)
-	        })
-
-	        binding.param = ""
-	        binding.expr += ret.join("|")
-
-	        if (rcheckedFilter.test(binding.expr)) {
-	            if (rcheckedType.test(elem.props.type)) {
-	                elem.props.xtype = "checked"
-	            } else {
-	                avalon.log("只有radio与checkbox才能用checked过滤器")
-	                binding.expr = binding.expr.replace(rcheckedFilter, "")
-	            }
-	        }
-	        if (rchangeFilter.test(binding.expr)) {
-	            if (rnoduplexInput.test(elem.Type)) {
-	                avalon(elemType + "不支持change过滤器")
-	                binding.expr = binding.expr.replace(rchangeFilter, "")
-	            } else {
-	                elem.props.xtype = "change"
-	            }
-	        }
-	        if (!elem.props.xtype) {
-	            elem.props.xtype = nodeName === "select" ? "select" :
-	                    elemType === "checkbox" ? "checkbox" :
-	                    elemType === "radio" ? "radio" :
-	                    /^change/.test(elem.props["data-duplex-event"]) ? "change" :
-	                    "input"
-	        }
-	        var duplexEvents = {}
-	        switch (elem.props.xtype) {
-	            case "checked"://当用户指定了checked过滤器
-	                duplexEvents.click = duplexChecked
-	                break
-	            case "radio":
-	                duplexEvents.click = duplexValue
-	                break
-	            case "checkbox":
-	                duplexEvents[msie < 9 ? "click" : "change"] = duplexCheckBox
-	                break
-	            case "change":
-	                duplexEvents.change = duplexValue
-	                break
-	            case "select":
-	                if (!elem.children.length) {
-	                    pushArray(elem.children, createVirtual(elem.template))
-	                }
-	                duplexEvents.change = duplexSelect
-	                break
-	            case "input":
-	                if (!msie) { // W3C
-	                    duplexEvents.input = duplexValue
-	                    duplexEvents.compositionstart = compositionStart
-	                    duplexEvents.compositionend = compositionEnd
-	                    duplexEvents.DOMAutoComplete = duplexValue
-	                } else {
-	                    // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
-	                    if (msie > 8) {
-	                        if (msie === 9) {
-	                            //IE9删除字符后再失去焦点不会同步 #1167
-	                            duplexEvents.keyup = duplexValue
-	                        }
-	                        //IE9使用propertychange无法监听中文输入改动
-	                        duplexEvents.input = duplexValue
-	                    } else {
-	                        //onpropertychange事件无法区分是程序触发还是用户触发
-	                        //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
-	                        duplexEvents.propertychange = duplexValueHack
-	                    }
-	                    duplexEvents.dragend = duplexDragEnd
-	                    //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
-	                    //http://www.matts411.com/post/internet-explorer-9-oninput/
-	                }
-	                break
-
-	        }
-
-	        if (elem.props.xtype === "input" && !rnoduplexInput.test(elemType)) {
-	            if (elemType !== "hidden") {
-	                duplexEvents.focus = duplexFocus
-	                duplexEvents.blur = duplexBlur
-	            }
-	            elem.watchValueInTimer = true
-	        }
-	        elem.duplexEvents = duplexEvents
-	        elem.dispose = disposeDuplex
-	    }
-	    ,
-	    change: function (value, binding) {
-	        var elem = binding.element
-	        if (!elem || elem.disposed)
-	            return
-
-	        if (elem.type === "select") {
-	            addHook(elem, duplexSelectAfter, "afterChange")
-	        }
-
-	        elem.value = value
-	        elem.binding = binding
-	        addHooks(this, binding)
-	    },
-	    update: function (node, vnode) {
-	        var binding = vnode.binding
-
-	        var curValue = vnode.value
-
-	        vnode.dom = node //方便进行垃圾回收
-
-	        if (vnode.props.xtype === "checkbox") {
-	            node.duplexSet = function (val, checked) {
-	                var array = vnode.value
-	                if (!Array.isArray(array)) {
-	                    log("ms-duplex应用于checkbox上要对应一个数组")
-	                    array = [array]
-	                }
-	                var method = checked ? "ensure" : "remove"
-	                avalon.Array[method](array, val)
-	                return array
-	            }
-	        } else {
-	            node.duplexSet = function (value) {
-	                binding.setter(binding.vmodel, value, node)
-	            }
-	        }
-
-	        node.duplexGet = function (value) {
-	            return binding.getter(binding.vmodel, value, node)
-	        }
-
-	        node.changed = binding.changed
-
-	        var events = vnode.duplexEvents
-	        if (events) {
-	            for (var eventName in events) {
-	                avalon.bind(node, eventName, events[eventName])
-	            }
-	            delete vnode.duplexEvents
-	        }
-	        if (vnode.watchValueInTimer) {
-	            node.valueSet = duplexValue //#765
-	            watchValueInTimer(function () {
-	                if (!vnode.disposed) {
-	                    if (!node.msFocus) {
-	                        node.valueSet()
-	                    }
-	                } else {
-	                    return false
-	                }
-	            })
-	            delete vnode.watchValueInTimer
-	        }
-
-	        switch (vnode.props.xtype) {
-	            case "input":
-	            case "change":
-	                if (curValue !== node.oldValue) {
-	                    node.value = curValue
-	                }
-	                break
-	            case "checked":
-	            case "radio":
-	                curValue = vnode.props.xtype === "checked" ? !!curValue :
-	                        curValue + "" === node.value
-	                node.oldValue = curValue
-	                if (msie === 6) {
-	                    setTimeout(function () {
-	                        //IE8 checkbox, radio是使用defaultChecked控制选中状态，
-	                        //并且要先设置defaultChecked后设置checked
-	                        //并且必须设置延迟
-	                        node.defaultChecked = curValue
-	                        node.checked = curValue
-	                    }, 31)
-	                } else {
-	                    node.checked = curValue
-	                }
-	                break
-	            case "checkbox":
-	                var array = [].concat(curValue) //强制转换为数组
-	                curValue = node.duplexGet(node.value)
-	                node.checked = array.indexOf(curValue) > -1
-	                break
-	            case "select":
-	                //在afterChange中处理
-	                break
-	        }
-	    }
-	})
-
-	function disposeDuplex() {
-	    var elem = this.dom
-	    if (elem) {
-	        elem.changed = elem.oldValue = elem.valueSet =
-	                elem.duplexSet = elem.duplexGet = void 0
-	        avalon.unbind(elem)
-	        this.dom = null
-	    }
-	}
-	function compositionStart() {
-	    this.composing = true
-	}
-	function compositionEnd() {
-	    this.composing = false
-	}
-	function duplexFocus() {
-	    this.msFocus = true
-	}
-	function duplexBlur() {
-	    this.msFocus = false
-	}
-
-	function duplexChecked() {
-	    var elem = this
-	    var lastValue = elem.oldValue = elem.duplexGet()
-	    elem.duplexSet(lastValue)
-	    elem.changed(lastValue)
-	}
-
-
-	function duplexValueHack(e) {
-	    if (e.propertyName === "value") {
-	        duplexValue.call(this, e)
-	    }
-	}
-
-	function duplexDragEnd(e) {
-	    var elem = this
-	    setTimeout(function () {
-	        duplexValue.call(elem, e)
-	    }, 17)
-	}
-
-	function duplexCheckBox() {
-	    var elem = this
-	    var val = elem.duplexGet(elem.value)
-	    var array = elem.duplexSet(val, elem.checked)
-	    elem.changed(array)
-	}
-	function duplexValue(e) { //原来的updateVModel
-	    var elem = this, fixCaret
-	    var val = elem.value //防止递归调用形成死循环
-	    if (elem.composing || val === elem.oldValue)
-	        return
-	    if (elem.msFocus) {
-	        try {
-	            var pos = getCaret(elem)
-	            if (pos.start === pos.end) {
-	                pos = pos.start
-	                fixCaret = true
-	            }
-	        } catch (e) {
-	            avalon.log("fixCaret", e)
-	        }
-	    }
-	    var lastValue = elem.duplexGet(val)
-	    try {
-	        elem.value = elem.oldValue = lastValue + ""
-	        if (fixCaret) {
-	            setCaret(elem, pos, pos)
-	        }
-	        elem.duplexSet(lastValue)
-	        elem.changed(lastValue)
-	    } catch (ex) {
-	        avalon.log(ex)
-	    }
-	}
-
-	//用于更新VM
-	function duplexSelect() {
-	    var elem = this
-	    var val = avalon(elem).val() //字符串或字符串数组
-	    if (Array.isArray(val)) {
-	        val = val.map(function (v) {
-	            return elem.duplexGet(v)
-	        })
-	    } else {
-	        val = elem.duplexGet(val)
-	    }
-	    if (val + "" !== elem.oldValue) {
-	        try {
-	            elem.duplexSet(val)
-	        } catch (ex) {
-	            log(ex)
-	        }
-	    }
-	    elem.duplexSet(val)
-	    elem.changed(val)
-	}
-
-	function duplexSelectAfter(elem, vnode) {
-	    avalon(elem).val(vnode.value)
-	}
-
-
-	duplexSelectAfter.priority = 2001
-
-	markID(compositionStart)
-	markID(compositionEnd)
-	markID(duplexFocus)
-	markID(duplexBlur)
-	markID(duplexValue)
-	markID(duplexValueHack)
-	markID(duplexDragEnd)
-	markID(duplexCheckBox)
-	markID(duplexSelect)
-
-	if (msie) {
-	    avalon.bind(document, "selectionchange", function (e) {
-	        var el = document.activeElement || {}
-	        if (!el.msFocus && el.valueSet) {
-	            el.valueSet()
-	        }
-	    })
-	}
-
-
-	var TimerID, ribbon = []
-
-	avalon.tick = function (fn) {
-	    if (ribbon.push(fn) === 1) {
-	        TimerID = setInterval(ticker, 60)
-	    }
-	}
-
-	function ticker() {
-	    for (var n = ribbon.length - 1; n >= 0; n--) {
-	        var el = ribbon[n]
-	        if (el() === false) {
-	            ribbon.splice(n, 1)
-	        }
-	    }
-	    if (!ribbon.length) {
-	        clearInterval(TimerID)
-	    }
-	}
-
-	var watchValueInTimer = avalon.noop
-	        ;
-	(function () { // jshint ignore:line
-	    try { //#272 IE9-IE11, firefox
-	        var setters = {}
-	        var aproto = HTMLInputElement.prototype
-	        var bproto = HTMLTextAreaElement.prototype
-	        function newSetter(value) { // jshint ignore:line
-	            setters[this.tagName].call(this, value)
-	            if (!this.msFocus && this.valueSet) {
-	                this.valueSet()
-	            }
-	        }
-	        var inputProto = HTMLInputElement.prototype
-	        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-	        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
-
-	        Object.defineProperty(aproto, "value", {
-	            set: newSetter
-	        })
-	        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-	        Object.defineProperty(bproto, "value", {
-	            set: newSetter
-	        })
-	    } catch (e) {
-	        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
-	        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
-	        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-	        watchValueInTimer = avalon.tick
-	    }
-	})()
-
-	// jshint ignore:line
-	function getCaret(ctrl) {
-	    var start = NaN, end = NaN
-	    if (ctrl.setSelectionRange) {
-	        start = ctrl.selectionStart
-	        end = ctrl.selectionEnd
-	    } else if (document.selection && document.selection.createRange) {
-	        var range = document.selection.createRange()
-	        start = 0 - range.duplicate().moveStart('character', -100000)
-	        end = start + range.text.length
-	    }
-	    return {
-	        start: start,
-	        end: end
-	    }
-	}
-
-	function setCaret(ctrl, begin, end) {
-	    if (!ctrl.value || ctrl.readOnly)
-	        return
-	    if (ctrl.createTextRange) {//IE6-8
-	        var range = ctrl.createTextRange()
-	        range.collapse(true)
-	        range.moveStart("character", begin)
-	        range.select()
-	    } else {
-	        ctrl.selectionStart = begin
-	        ctrl.selectionEnd = end
-	    }
-	}
-
-
-
-/***/ },
-/* 49 */
-/***/ function(module, exports) {
-
-	var getBindingValue = function (elem, name, vmodel) {
-	    var callback = elem.props ? elem.props[name] : elem.getAttribute(name)
-	    if (callback) {
-	        if (vmodel.hasOwnProperty(callback) &&
-	                typeof vmodel[callback] === "function") {
-	            return vmodel[callback]
-	        }
-	    }
-	}
-
-	module.exports = getBindingValue
-
-
-/***/ },
-/* 50 */
+/* 49 */,
+/* 50 */,
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6301,7 +5876,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var parse = __webpack_require__(27)
@@ -6424,14 +5999,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
 	 *                           扫描系统                                 *
 	 **********************************************************************/
 	var rbind = avalon.config.rbind
-	var scanNodes = __webpack_require__(53)
+	var scanNodes = __webpack_require__(54)
 
 	var updateEntity = __webpack_require__(24)
 	var createVirtual = __webpack_require__(39)
@@ -6445,18 +6020,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	__webpack_require__(58)
+	__webpack_require__(59)
 
 
 
 /***/ },
-/* 53 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var rexpr = avalon.config.rexpr
-	var scanText = __webpack_require__(54)
-	var scanTag = __webpack_require__(56)
+	var scanText = __webpack_require__(55)
+	var scanTag = __webpack_require__(57)
 
 	//更新整个虚拟DOM树
 	function scanNodes(nodes, vm) {
@@ -6488,10 +6063,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanNodes
 
 /***/ },
-/* 54 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var scanExpr = __webpack_require__(55)
+	var scanExpr = __webpack_require__(56)
 	var addHooks = __webpack_require__(40).addHooks
 
 	function scanText(node, vmodel) {
@@ -6529,7 +6104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanText
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports) {
 
 	var rline = /\r?\n/g
@@ -6580,10 +6155,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var scanAttrs = __webpack_require__(57)
+	var scanAttrs = __webpack_require__(58)
 
 	function scanTag(elem, vmodel, siblings) {
 	    var props = elem.props
@@ -6618,7 +6193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanTag
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6707,7 +6282,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = scanAttrs
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -6745,42 +6320,470 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */,
 /* 60 */,
 /* 61 */,
 /* 62 */,
 /* 63 */,
 /* 64 */,
 /* 65 */,
-/* 66 */
-/***/ function(module, exports) {
+/* 66 */,
+/* 67 */
+/***/ function(module, exports, __webpack_require__) {
 
-	
-	function VComment(text) {
-	    if (typeof text === "string") {
-	        this.type = "#comment"
-	        this.nodeValue = text
-	        this.skipContent = true
-	    } else {
-	        for (var i in text) {
-	            this[i] = text[i]
+	//双工绑定
+	var builtin = __webpack_require__(2)
+	var W3C = builtin.W3C
+	var document = builtin.document
+	var msie = builtin.msie
+	var markID = builtin.markID
+	var pushArray = builtin.pushArray
+	var quote = builtin.quote
+
+	var createVirtual = __webpack_require__(39)
+	var parse = __webpack_require__(27)
+
+	var rcheckedType = /^(?:checkbox|radio)$/
+	var rcheckedFilter = /\|\s*checked\b/
+	var rchangeFilter = /\|\s*change\b/
+
+	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+	var oldName = {
+	    "radio": "checked",
+	    "number": "numeric",
+	    "bool": "boolean",
+	    "text": "string"
+	}
+	var getset = {
+	    getter: 1,
+	    setter: 1,
+	    elem: 1,
+	    watchValueInTimer: 1
+	}
+	avalon.directive("duplex", {
+	    priority: 2000,
+	    parse: function (binding, num, elem) {
+	        var expr = binding.expr
+	        var elemType = elem.props.type
+	        if (rcheckedFilter.test(expr)) {
+	            if (rcheckedType.test(elemType)) {
+	                elem.props.xtype = "checked"
+	            } else {
+	                avalon.log("只有radio与checkbox才能用checked过滤器")
+	                expr = expr.replace(rcheckedFilter, "")
+	            }
+	        }
+	        if (rchangeFilter.test(expr)) {
+	            if (rnoduplexInput.test(elemType)) {
+	                avalon.log(elemType + "不支持change过滤器")
+	                expr = expr.replace(rchangeFilter, "")
+	            } else {
+	                elem.props.xtype = "change"
+	            }
+	        }
+	        binding.expr = expr
+	        parse(binding, "duplex")
+	        return "vnode" + num + ".duplexVm = __vmodel__;\n" +
+	                "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
+	    },
+	    diff: function (elem, pre, type) {
+
+	        elem.props.xtype = pre.props.xtype
+	        if (pre.duplexData) {
+	            elem.duplexData = pre.duplexData
+	        } else {
+
+
+	            var elemType = elem.props.type
+	            //获取controll
+	            if (!elem.props.xtype) {
+	                elem.props.xtype = elem.type === "select" ? "select" :
+	                        elemType === "checkbox" ? "checkbox" :
+	                        elemType === "radio" ? "radio" :
+	                        /|\s*change/.test(value) ? "change" :
+	                        "input"
+	            }
+	            var duplexData = {}
+	            switch (elem.props.xtype) {
+	                case "checked"://当用户指定了checked过滤器
+	                    duplexData.click = duplexChecked
+	                    break
+	                case "radio":
+	                    duplexData.click = duplexValue
+	                    break
+	                case "checkbox":
+	                    duplexData[msie < 9 ? "click" : "change"] = duplexCheckBox
+	                    break
+	                case "change":
+	                    duplexData.change = duplexValue
+	                    break
+	                case "select":
+	                    if (!elem.children.length) {
+	                        pushArray(elem.children, createVirtual(elem.template))
+	                    }
+	                    duplexData.change = duplexSelect
+	                    break
+	                case "input":
+	                    if (!msie) { // W3C
+	                        duplexData.input = duplexValue
+	                        duplexData.compositionstart = compositionStart
+	                        duplexData.compositionend = compositionEnd
+	                        duplexData.DOMAutoComplete = duplexValue
+	                    } else {
+	                        // IE下通过selectionchange事件监听IE9+点击input右边的X的清空行为，及粘贴，剪切，删除行为
+	                        if (msie > 8) {
+	                            if (msie === 9) {
+	                                //IE9删除字符后再失去焦点不会同步 #1167
+	                                duplexData.keyup = duplexValue
+	                            }
+	                            //IE9使用propertychange无法监听中文输入改动
+	                            duplexData.input = duplexValue
+	                        } else {
+	                            //onpropertychange事件无法区分是程序触发还是用户触发
+	                            //IE6-8下第一次修改时不会触发,需要使用keydown或selectionchange修正
+	                            duplexData.propertychange = duplexValueHack
+	                        }
+	                        duplexData.dragend = duplexDragEnd
+	                        //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
+	                        //http://www.matts411.com/post/internet-explorer-9-oninput/
+	                    }
+	                    break
+
+	            }
+
+	            if (elem.props.xtype === "input" && !rnoduplexInput.test(elemType)) {
+	                if (elemType !== "hidden") {
+	                    duplexData.focus = duplexFocus
+	                    duplexData.blur = duplexBlur
+	                }
+	                duplexData.watchValueInTimer = true
+	            }
+	            var expr = elem.props["av-duplex"]
+	            var evaluatorPool = parse.caches
+
+	            duplexData.getter = evaluatorPool.get("duplex:" + expr)
+	            duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")
+	            elem.duplexData = duplexData
+	            elem.dispose = disposeDuplex
+
+	        }
+	        duplexData.vmode = elem.duplexVm
+	        var value = elem.props.value = duplexData.getter(duplexData.vmode)
+	        if (!duplexData.elem) {
+	            var isEqual = false
+	        } else {
+
+	            var preValue = pre.props.value
+	            if (Array.isArray(value)) {
+	                isEqual = value + "" === preValue + ""
+	            } else {
+	                isEqual = value === preValue
+	            }
+	        }
+
+	        if (!isEqual) {
+	            var afterChange = elem.afterChange || (elem.afterChange = [])
+	            if (elem.type === "select") {
+	                avalon.Array.ensure(afterChange, duplexSelectAfter)
+	            }
+	            avalon.Array.ensure(afterChange, this.update)
+	        }
+
+	    },
+	    update: function (node, vnode) {
+	        var binding = vnode.duplexData
+	        binding.elem = node //方便进行垃圾回收
+	        var curValue = vnode.props.value
+
+
+	        if (vnode.props.xtype === "checkbox") {
+	            node.duplexSet = function (val, checked) {
+	                var array = vnode.props.value
+	                if (!Array.isArray(array)) {
+	                    log("ms-duplex应用于checkbox上要对应一个数组")
+	                    array = [array]
+	                }
+	                var method = checked ? "ensure" : "remove"
+	                avalon.Array[method](array, val)
+	                return array
+	            }
+	        } else {
+	            node.duplexSet = function (value) {
+	                binding.setter(binding.vmodel, value, node)
+	            }
+	        }
+
+	        node.duplexGet = function (value) {
+	            return binding.getter(binding.vmodel, value, node)
+	        }
+
+
+	        if (binding) {
+	            for (var eventName in binding) {
+	                var callback = binding[eventName]
+	                if (!getset[eventName] && typeof callback === "function") {
+	                    avalon.bind(node, eventName, binding[eventName])
+	                    delete binding[eventName]
+	                }
+	            }
+	        }
+	        if (binding.watchValueInTimer) {
+	            node.valueSet = duplexValue //#765
+	            watchValueInTimer(function () {
+	                if (!vnode.disposed) {
+	                    if (!node.msFocus) {
+	                        node.valueSet()
+	                    }
+	                } else {
+	                    return false
+	                }
+	            })
+	            delete binding.watchValueInTimer
+	        }
+
+	        switch (vnode.props.xtype) {
+	            case "input":
+	            case "change":
+	                if (curValue !== node.oldValue) {
+	                    node.value = curValue
+	                }
+	                break
+	            case "checked":
+	            case "radio":
+	                curValue = vnode.props.xtype === "checked" ? !!curValue :
+	                        curValue + "" === node.value
+	                node.oldValue = curValue
+	                if (msie === 6) {
+	                    setTimeout(function () {
+	                        //IE8 checkbox, radio是使用defaultChecked控制选中状态，
+	                        //并且要先设置defaultChecked后设置checked
+	                        //并且必须设置延迟
+	                        node.defaultChecked = curValue
+	                        node.checked = curValue
+	                    }, 31)
+	                } else {
+	                    node.checked = curValue
+	                }
+	                break
+	            case "checkbox":
+	                var array = [].concat(curValue) //强制转换为数组
+	                curValue = node.duplexGet(node.value)
+	                node.checked = array.indexOf(curValue) > -1
+	                break
+	            case "select":
+	                //在afterChange中处理
+	                break
 	        }
 	    }
+	})
+
+	function disposeDuplex() {
+	    var elem = this.duplexData.elem
+	    if (elem) {
+	        elem.oldValue = elem.valueSet =
+	                elem.duplexSet = elem.duplexGet = void 0
+	        avalon.unbind(elem)
+	        this.dom = null
+	    }
 	}
-	VComment.prototype = {
-	    constructor: VComment,
-	    clone: function () {
-	        return new VComment(this)
-	    },
-	    toDOM: function () {
-	        return document.createComment(this.nodeValue)
-	    },
-	    toHTML: function () {
-	        return "<!--" + this.nodeValue + "-->"
+	function compositionStart() {
+	    this.composing = true
+	}
+	function compositionEnd() {
+	    this.composing = false
+	}
+	function duplexFocus() {
+	    this.msFocus = true
+	}
+	function duplexBlur() {
+	    this.msFocus = false
+	}
+
+	function duplexChecked() {
+	    var elem = this
+	    var lastValue = elem.oldValue = elem.duplexGet()
+	    elem.duplexSet(lastValue)
+	}
+
+
+	function duplexValueHack(e) {
+	    if (e.propertyName === "value") {
+	        duplexValue.call(this, e)
 	    }
 	}
 
-	module.exports = VComment
+	function duplexDragEnd(e) {
+	    var elem = this
+	    setTimeout(function () {
+	        duplexValue.call(elem, e)
+	    }, 17)
+	}
+
+	function duplexCheckBox() {
+	    var elem = this
+	    var val = elem.duplexGet(elem.value)
+	    elem.duplexSet(val, elem.checked)
+	}
+	function duplexValue(e) { //原来的updateVModel
+	    var elem = this, fixCaret
+	    var val = elem.value //防止递归调用形成死循环
+	    if (elem.composing || val === elem.oldValue)
+	        return
+	    if (elem.msFocus) {
+	        try {
+	            var pos = getCaret(elem)
+	            if (pos.start === pos.end) {
+	                pos = pos.start
+	                fixCaret = true
+	            }
+	        } catch (e) {
+	            avalon.log("fixCaret", e)
+	        }
+	    }
+	    var lastValue = elem.duplexGet(val)
+	    try {
+	        elem.value = elem.oldValue = lastValue + ""
+	        if (fixCaret) {
+	            setCaret(elem, pos, pos)
+	        }
+	        elem.duplexSet(lastValue)
+	    } catch (ex) {
+	        avalon.log(ex)
+	    }
+	}
+
+	//用于更新VM
+	function duplexSelect() {
+	    var elem = this
+	    var val = avalon(elem).val() //字符串或字符串数组
+	    if (Array.isArray(val)) {
+	        val = val.map(function (v) {
+	            return elem.duplexGet(v)
+	        })
+	    } else {
+	        val = elem.duplexGet(val)
+	    }
+	    if (val + "" !== elem.oldValue) {
+	        try {
+	            elem.duplexSet(val)
+	        } catch (ex) {
+	            log(ex)
+	        }
+	    }
+	    elem.duplexSet(val)
+	}
+
+	function duplexSelectAfter(elem, vnode) {
+	    avalon(elem).val(vnode.value)
+	}
+
+
+	duplexSelectAfter.priority = 2001
+
+	markID(compositionStart)
+	markID(compositionEnd)
+	markID(duplexFocus)
+	markID(duplexBlur)
+	markID(duplexValue)
+	markID(duplexValueHack)
+	markID(duplexDragEnd)
+	markID(duplexCheckBox)
+	markID(duplexSelect)
+
+	if (msie) {
+	    avalon.bind(document, "selectionchange", function (e) {
+	        var el = document.activeElement || {}
+	        if (!el.msFocus && el.valueSet) {
+	            el.valueSet()
+	        }
+	    })
+	}
+
+
+	var TimerID, ribbon = []
+
+	avalon.tick = function (fn) {
+	    if (ribbon.push(fn) === 1) {
+	        TimerID = setInterval(ticker, 60)
+	    }
+	}
+
+	function ticker() {
+	    for (var n = ribbon.length - 1; n >= 0; n--) {
+	        var el = ribbon[n]
+	        if (el() === false) {
+	            ribbon.splice(n, 1)
+	        }
+	    }
+	    if (!ribbon.length) {
+	        clearInterval(TimerID)
+	    }
+	}
+
+	var watchValueInTimer = avalon.noop
+
+	        ;
+	(function () { // jshint ignore:line
+	    try { //#272 IE9-IE11, firefox
+	        var setters = {}
+	        var aproto = HTMLInputElement.prototype
+	        var bproto = HTMLTextAreaElement.prototype
+	        function newSetter(value) { // jshint ignore:line
+	            setters[this.tagName].call(this, value)
+	            if (!this.msFocus && this.valueSet) {
+	                this.valueSet()
+	            }
+	        }
+	        var inputProto = HTMLInputElement.prototype
+	        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+	        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+
+	        Object.defineProperty(aproto, "value", {
+	            set: newSetter
+	        })
+	        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
+	        Object.defineProperty(bproto, "value", {
+	            set: newSetter
+	        })
+	    } catch (e) {
+	        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
+	        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+	        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+	        watchValueInTimer = avalon.tick
+	    }
+	})()
+
+	// jshint ignore:line
+	function getCaret(ctrl) {
+	    var start = NaN, end = NaN
+	    if (ctrl.setSelectionRange) {
+	        start = ctrl.selectionStart
+	        end = ctrl.selectionEnd
+	    } else if (document.selection && document.selection.createRange) {
+	        var range = document.selection.createRange()
+	        start = 0 - range.duplicate().moveStart('character', -100000)
+	        end = start + range.text.length
+	    }
+	    return {
+	        start: start,
+	        end: end
+	    }
+	}
+
+	function setCaret(ctrl, begin, end) {
+	    if (!ctrl.value || ctrl.readOnly)
+	        return
+	    if (ctrl.createTextRange) {//IE6-8
+	        var range = ctrl.createTextRange()
+	        range.collapse(true)
+	        range.moveStart("character", begin)
+	        range.select()
+	    } else {
+	        ctrl.selectionStart = begin
+	        ctrl.selectionEnd = end
+	    }
+	}
+
+	//处理 货币 http://openexchangerates.github.io/accounting.js/
 
 /***/ }
 /******/ ])
