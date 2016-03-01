@@ -329,7 +329,7 @@ function duplexSelect() {
             log(ex)
         }
     }
-    elem.duplexSet(val)
+    //elem.duplexSet(val)
     elem.changed(val)
 }
 
